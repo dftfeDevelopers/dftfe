@@ -81,7 +81,7 @@ namespace dftfe
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
-    class FEBasisOperationsBase
+    class FEBasisOperations
     {
     protected:
       mutable dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
@@ -99,7 +99,7 @@ namespace dftfe
        * be the same vector which was passed for the construction of the given
        * MatrixFree object.
        */
-      FEBasisOperationsBase(
+      FEBasisOperations(
         dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
         std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
           &constraintsVector,
@@ -110,7 +110,7 @@ namespace dftfe
       /**
        * @brief Default Destructor
        */
-      ~FEBasisOperationsBase() = default;
+      ~FEBasisOperations() = default;
 
       /**
        * @brief fills required data structures for the given dofHandlerID
@@ -130,9 +130,9 @@ namespace dftfe
        */
       template <dftfe::utils::MemorySpace memorySpaceSrc>
       void
-      init(const FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                       ValueTypeBasisData,
-                                       memorySpaceSrc> &basisOperationsSrc);
+      init(const FEBasisOperations<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData,
+                                   memorySpaceSrc> &basisOperationsSrc);
 
       /**
        * @brief sets internal variables and optionally resizes internal temp storage for interpolation operations
@@ -207,6 +207,16 @@ namespace dftfe
        */
       void
       initializeShapeFunctionAndJacobianBasisData();
+
+
+      /**
+       * @brief Computes the cell-level stiffness matrix.
+       */
+      void
+      computeCellStiffnessMatrix(const unsigned int quadratureID,
+                                 const unsigned int cellsBlockSize,
+                                 const bool         basisType = false,
+                                 const bool         ceoffType = true);
 
       /**
        * @brief Resizes the internal temp storage to be sufficient for the vector and cell block sizes provided in reinit.
@@ -292,17 +302,24 @@ namespace dftfe
        * d_nDofsPerCell + iNode] and if true it is indexed as [iNode *
        * d_nQuadsPerCell + iQuad].
        */
-      template <typename A = ValueTypeBasisCoeff,
-                typename B = ValueTypeBasisData,
-                typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
-      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-      shapeFunctionBasisData(bool transpose = false) const;
-      template <typename A = ValueTypeBasisCoeff,
-                typename B = ValueTypeBasisData,
-                typename std::enable_if_t<!std::is_same<A, B>::value, int> = 0>
-      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-      shapeFunctionBasisData(bool transpose = false) const;
-
+      const auto &
+      shapeFunctionBasisData(bool transpose = false) const
+      {
+        if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData>::value)
+          {
+            return transpose ?
+                     d_shapeFunctionDataTranspose.find(d_quadratureID)->second :
+                     d_shapeFunctionData.find(d_quadratureID)->second;
+          }
+        else
+          {
+            return transpose ?
+                     d_shapeFunctionBasisDataTranspose.find(d_quadratureID)
+                       ->second :
+                     d_shapeFunctionBasisData.find(d_quadratureID)->second;
+          }
+      }
       /**
        * @brief Shape function gradient values at quadrature points in ValueTypeBasisData.
        * @param[in] transpose if false the the data is indexed as [iDim *
@@ -310,16 +327,27 @@ namespace dftfe
        * if true it is indexed as [iDim * d_nQuadsPerCell * d_nDofsPerCell +
        * iNode * d_nQuadsPerCell + iQuad].
        */
-      template <typename A = ValueTypeBasisCoeff,
-                typename B = ValueTypeBasisData,
-                typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
-      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-      shapeFunctionGradientBasisData(bool transpose = false) const;
-      template <typename A = ValueTypeBasisCoeff,
-                typename B = ValueTypeBasisData,
-                typename std::enable_if_t<!std::is_same<A, B>::value, int> = 0>
-      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-      shapeFunctionGradientBasisData(bool transpose = false) const;
+      const auto &
+      shapeFunctionGradientBasisData(bool transpose = false) const
+      {
+        if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData>::value)
+          {
+            return transpose ?
+                     d_shapeFunctionGradientDataTranspose.find(d_quadratureID)
+                       ->second :
+                     d_shapeFunctionGradientData.find(d_quadratureID)->second;
+          }
+        else
+          {
+            return transpose ?
+                     d_shapeFunctionGradientBasisDataTranspose
+                       .find(d_quadratureID)
+                       ->second :
+                     d_shapeFunctionGradientBasisData.find(d_quadratureID)
+                       ->second;
+          }
+      }
 
       /**
        * @brief Inverse Jacobian matrices in ValueTypeBasisData, for cartesian cells returns the
@@ -327,31 +355,65 @@ namespace dftfe
        * affine cells returns the 3x3 inverse Jacobians for each cell otherwise
        * returns the 3x3 inverse Jacobians at each quad point for each cell.
        */
-      template <typename A = ValueTypeBasisCoeff,
-                typename B = ValueTypeBasisData,
-                typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
-      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-      inverseJacobiansBasisData() const;
-      template <typename A = ValueTypeBasisCoeff,
-                typename B = ValueTypeBasisData,
-                typename std::enable_if_t<!std::is_same<A, B>::value, int> = 0>
-      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-      inverseJacobiansBasisData() const;
+      const auto &
+      inverseJacobiansBasisData() const
+      {
+        if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData>::value)
+          {
+            return d_inverseJacobianData
+              .find(areAllCellsAffine ? 0 : d_quadratureID)
+              ->second;
+          }
+        else
+          {
+            return d_inverseJacobianBasisData
+              .find(areAllCellsAffine ? 0 : d_quadratureID)
+              ->second;
+          }
+      }
 
       /**
        * @brief determinant of Jacobian times the quadrature weight in ValueTypeBasisData at each
        * quad point for each cell.
        */
-      template <typename A = ValueTypeBasisCoeff,
-                typename B = ValueTypeBasisData,
-                typename std::enable_if_t<std::is_same<A, B>::value, int> = 0>
+      const auto &
+      JxWBasisData() const
+      {
+        if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData>::value)
+          {
+            return d_JxWData.find(d_quadratureID)->second;
+          }
+        else
+          {
+            return d_JxWBasisData.find(d_quadratureID)->second;
+          }
+      }
+
+      /**
+       * @brief Cell level stiffness matrix in ValueTypeBasisCoeff
+       */
+      const auto &
+      cellStiffnessMatrix() const
+      {
+        if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData>::value)
+          {
+            return d_cellStiffnessMatrixBasisType;
+          }
+        else
+          {
+            return d_cellStiffnessMatrixCoeffType;
+          }
+      }
+
+
+      /**
+       * @brief Cell level stiffness matrix in ValueTypeBasisData
+       */
       const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-      JxWBasisData() const;
-      template <typename A = ValueTypeBasisCoeff,
-                typename B = ValueTypeBasisData,
-                typename std::enable_if_t<!std::is_same<A, B>::value, int> = 0>
-      const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-      JxWBasisData() const;
+      cellStiffnessMatrixBasisData() const;
 
       /**
        * @brief returns 2 if all cells on current processor are Cartesian,
@@ -494,7 +556,10 @@ namespace dftfe
                dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>>
         d_shapeFunctionGradientBasisDataTranspose;
 
-
+      dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+        d_cellStiffnessMatrixBasisType;
+      dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+        d_cellStiffnessMatrixCoeffType;
       mutable std::map<
         unsigned int,
         std::vector<
@@ -518,129 +583,6 @@ namespace dftfe
 
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
         mpiPatternP2P;
-    };
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    class FEBasisOperations : FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                                    ValueTypeBasisData,
-                                                    memorySpace>
-    {};
-
-    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData>
-    class FEBasisOperations<ValueTypeBasisCoeff,
-                            ValueTypeBasisData,
-                            dftfe::utils::MemorySpace::HOST>
-      : public FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                     ValueTypeBasisData,
-                                     dftfe::utils::MemorySpace::HOST>
-    {
-    public:
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::FEBasisOperationsBase;
-
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::HOST>::d_nCells;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::HOST>::d_localSize;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_locallyOwnedSize;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::tempCellNodalData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::tempQuadratureGradientsData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::tempQuadratureGradientsDataNonAffine;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::HOST>::d_nVectors;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_BLASWrapperPtr;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_quadratureID;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_quadratureIndex;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_nQuadsPerCell;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_nDofsPerCell;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::areAllCellsAffine;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::areAllCellsCartesian;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_updateFlags;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_shapeFunctionData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_shapeFunctionDataTranspose;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_shapeFunctionGradientData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_shapeFunctionGradientDataTranspose;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::HOST>::
-        d_shapeFunctionGradientDataInternalLayout;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::HOST>::d_JxWData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_inverseJacobianData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_cellIndexToCellIdMap;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_cellDofIndexToProcessDofIndexMap;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::HOST>::
-        d_flattenedCellDofIndexToProcessDofIndexMap;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::HOST>::d_constraintsVector;
 
 
       /**
@@ -654,12 +596,10 @@ namespace dftfe
        * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
        */
       void
-      interpolate(
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
-          &                  nodalData,
-        ValueTypeBasisCoeff *quadratureValues,
-        ValueTypeBasisCoeff *quadratureGradients = NULL) const;
+      interpolate(dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
+                                                    memorySpace> &nodalData,
+                  ValueTypeBasisCoeff *quadratureValues,
+                  ValueTypeBasisCoeff *quadratureGradients = NULL) const;
 
       // FIXME Untested function
       /**
@@ -675,8 +615,7 @@ namespace dftfe
       integrateWithBasis(
         ValueTypeBasisCoeff *quadratureValues,
         ValueTypeBasisCoeff *quadratureGradients,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
+        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &nodalData) const;
 
       /**
@@ -688,8 +627,7 @@ namespace dftfe
        */
       void
       extractToCellNodalData(
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
+        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                  nodalData,
         ValueTypeBasisCoeff *cellNodalDataPtr) const;
       // FIXME Untested function
@@ -702,8 +640,7 @@ namespace dftfe
       void
       accumulateFromCellNodalData(
         const ValueTypeBasisCoeff *cellNodalDataPtr,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
+        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &nodalData) const;
 
       /**
@@ -721,9 +658,8 @@ namespace dftfe
       void
       interpolateKernel(
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                                dftfe::utils::MemorySpace::HOST>
-          &                                         nodalData,
-        ValueTypeBasisCoeff *                       quadratureValues,
+                                                memorySpace> &nodalData,
+        ValueTypeBasisCoeff *                                 quadratureValues,
         ValueTypeBasisCoeff *                       quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
@@ -762,8 +698,7 @@ namespace dftfe
       integrateWithBasisKernel(
         const ValueTypeBasisCoeff *quadratureValues,
         const ValueTypeBasisCoeff *quadratureGradients,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
+        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                         nodalData,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
@@ -780,10 +715,9 @@ namespace dftfe
       void
       extractToCellNodalDataKernel(
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                                dftfe::utils::MemorySpace::HOST>
-          &                                         nodalData,
-        ValueTypeBasisCoeff *                       cellNodalDataPtr,
-        const std::pair<unsigned int, unsigned int> cellRange) const;
+                                                memorySpace> &nodalData,
+        ValueTypeBasisCoeff *                                 cellNodalDataPtr,
+        const std::pair<unsigned int, unsigned int>           cellRange) const;
 
       // FIXME Untested function
       /**
@@ -797,318 +731,13 @@ namespace dftfe
       void
       accumulateFromCellNodalDataKernel(
         const ValueTypeBasisCoeff *cellNodalDataPtr,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::HOST>
+        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &                                         nodalData,
         const std::pair<unsigned int, unsigned int> cellRange) const;
     };
-#if defined(DFTFE_WITH_DEVICE)
-    template <typename ValueTypeBasisCoeff, typename ValueTypeBasisData>
-    class FEBasisOperations<ValueTypeBasisCoeff,
-                            ValueTypeBasisData,
-                            dftfe::utils::MemorySpace::DEVICE>
-      : public FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                     ValueTypeBasisData,
-                                     dftfe::utils::MemorySpace::DEVICE>
-    {
-    public:
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::FEBasisOperationsBase;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::DEVICE>::d_nCells;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_localSize;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_locallyOwnedSize;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::tempCellNodalData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_BLASWrapperPtr;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::tempQuadratureGradientsData;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::DEVICE>::
-        tempQuadratureGradientsDataNonAffine;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_nVectors;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_cellsBlockSize;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_quadratureID;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_quadratureIndex;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_nQuadsPerCell;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_nDofsPerCell;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::areAllCellsAffine;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::areAllCellsCartesian;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_updateFlags;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_shapeFunctionData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_shapeFunctionDataTranspose;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_shapeFunctionGradientData;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::DEVICE>::
-        d_shapeFunctionGradientDataTranspose;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::DEVICE>::
-        d_shapeFunctionGradientDataInternalLayout;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::DEVICE>::d_JxWData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_inverseJacobianData;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_cellIndexToCellIdMap;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_cellDofIndexToProcessDofIndexMap;
-      using FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                  ValueTypeBasisData,
-                                  dftfe::utils::MemorySpace::DEVICE>::
-        d_flattenedCellDofIndexToProcessDofIndexMap;
-      using FEBasisOperationsBase<
-        ValueTypeBasisCoeff,
-        ValueTypeBasisData,
-        dftfe::utils::MemorySpace::DEVICE>::d_constraintsVector;
-
-      // FIXME has to be removed in a future PR
-      /**
-       * @brief sets device blas handle for internal blas operations.
-       */
-      dftfe::utils::deviceBlasHandle_t *d_deviceBlasHandlePtr;
-      void
-      setDeviceBLASHandle(
-        dftfe::utils::deviceBlasHandle_t *deviceBlasHandlePtr);
-
-      // FIXME has to be removed in a future PR
-      /**
-       * @brief gets device blas handle for blas operations.
-       */
-      dftfe::utils::deviceBlasHandle_t &
-      getDeviceBLASHandle();
-
-
-
-      /**
-       * @brief Interpolate process level nodal data to cell level quadrature data.
-       * @param[in] nodalData process level nodal data, the multivector should
-       * already have ghost data and constraints should have been applied.
-       * @param[out] quadratureValues Cell level quadrature values, indexed by
-       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[out] quadratureGradients Cell level quadrature gradients,
-       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
-       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       */
-      void
-      interpolate(
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::DEVICE>
-          &                  nodalData,
-        ValueTypeBasisCoeff *quadratureValues,
-        ValueTypeBasisCoeff *quadratureGradients = NULL) const;
-
-
-      // FIXME Untested function
-      /**
-       * @brief Integrate cell level quadrature data times shape functions to process level nodal data.
-       * @param[in] quadratureValues Cell level quadrature values, indexed by
-       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[in] quadratureGradients Cell level quadrature gradients,
-       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
-       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[out] nodalData process level nodal data.
-       */
-      void
-      integrateWithBasis(
-        ValueTypeBasisCoeff *quadratureValues,
-        ValueTypeBasisCoeff *quadratureGradients,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::DEVICE>
-          &nodalData) const;
-
-      /**
-       * @brief Get cell level nodal data from process level nodal data.
-       * @param[in] nodalData process level nodal data, the multivector should
-       * already have ghost data and constraints should have been applied.
-       * @param[out] cellNodalDataPtr Cell level nodal values, indexed by
-       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
-       */
-      void
-      extractToCellNodalData(
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::DEVICE>
-          &                  nodalData,
-        ValueTypeBasisCoeff *cellNodalDataPtr) const;
-
-      // FIXME Untested function
-      /**
-       * @brief Accumulate cell level nodal data into process level nodal data.
-       * @param[in] cellNodalDataPtr Cell level nodal values, indexed by
-       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
-       * @param[out] nodalData process level nodal data.
-       */
-      void
-      accumulateFromCellNodalData(
-        const ValueTypeBasisCoeff *cellNodalDataPtr,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::DEVICE>
-          &nodalData) const;
-
-      /**
-       * @brief Interpolate process level nodal data to cell level quadrature data.
-       * @param[in] nodalData process level nodal data, the multivector should
-       * already have ghost data and constraints should have been applied.
-       * @param[out] quadratureValues Cell level quadrature values, indexed by
-       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[out] quadratureGradients Cell level quadrature gradients,
-       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
-       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[in] cellRange the range of cells for which interpolation has to
-       * be done.
-       */
-      void
-      interpolateKernel(
-        const dftfe::linearAlgebra::MultiVector<
-          ValueTypeBasisCoeff,
-          dftfe::utils::MemorySpace::DEVICE> &      nodalData,
-        ValueTypeBasisCoeff *                       quadratureValues,
-        ValueTypeBasisCoeff *                       quadratureGradients,
-        const std::pair<unsigned int, unsigned int> cellRange) const;
-
-      /**
-       * @brief Interpolate cell level nodal data to cell level quadrature data.
-       * @param[in] nodalData cell level nodal data, the multivector should
-       * already have ghost data and constraints should have been applied.
-       * @param[out] quadratureValues Cell level quadrature values, indexed by
-       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[out] quadratureGradients Cell level quadrature gradients,
-       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
-       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[in] cellRange the range of cells for which interpolation has to
-       * be done.
-       */
-      void
-      interpolateKernel(
-        const ValueTypeBasisCoeff *                 nodalData,
-        ValueTypeBasisCoeff *                       quadratureValues,
-        ValueTypeBasisCoeff *                       quadratureGradients,
-        const std::pair<unsigned int, unsigned int> cellRange) const;
-
-      // FIXME Untested function
-      /**
-       * @brief Integrate cell level quadrature data times shape functions to process level nodal data.
-       * @param[in] quadratureValues Cell level quadrature values, indexed by
-       * [iCell * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[in] quadratureGradients Cell level quadrature gradients,
-       * indexed by [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
-       * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
-       * @param[out] nodalData process level nodal data.
-       * @param[in] cellRange the range of cells for which integration has to be
-       * done.
-       */
-      void
-      integrateWithBasisKernel(
-        const ValueTypeBasisCoeff *quadratureValues,
-        const ValueTypeBasisCoeff *quadratureGradients,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::DEVICE>
-          &                                         nodalData,
-        const std::pair<unsigned int, unsigned int> cellRange) const;
-
-
-      /**
-       * @brief Get cell level nodal data from process level nodal data.
-       * @param[in] nodalData process level nodal data, the multivector should
-       * already have ghost data and constraints should have been applied.
-       * @param[out] cellNodalDataPtr Cell level nodal values, indexed by
-       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
-       * @param[in] cellRange the range of cells for which extraction has to be
-       * done.
-       */
-      void
-      extractToCellNodalDataKernel(
-        const dftfe::linearAlgebra::MultiVector<
-          ValueTypeBasisCoeff,
-          dftfe::utils::MemorySpace::DEVICE> &      nodalData,
-        ValueTypeBasisCoeff *                       cellNodalDataPtr,
-        const std::pair<unsigned int, unsigned int> cellRange) const;
-
-      // FIXME Untested function
-      /**
-       * @brief Accumulate cell level nodal data into process level nodal data.
-       * @param[in] cellNodalDataPtr Cell level nodal values, indexed by
-       * [iCell * d_nDofsPerCell * d_nVectors + iDoF * d_nVectors + iVec].
-       * @param[out] nodalData process level nodal data.
-       * @param[in] cellRange the range of cells for which extraction has to be
-       * done.
-       */
-      void
-      accumulateFromCellNodalDataKernel(
-        const ValueTypeBasisCoeff *cellNodalDataPtr,
-        dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
-                                          dftfe::utils::MemorySpace::DEVICE>
-          &                                         nodalData,
-        const std::pair<unsigned int, unsigned int> cellRange) const;
-    };
-#endif
   } // end of namespace basis
 } // end of namespace dftfe
-#include "../utils/FEBasisOperations.t.cc"
-#include "../utils/FEBasisOperationsHost.t.cc"
-#if defined(DFTFE_WITH_DEVICE)
-#  include "../utils/FEBasisOperationsDevice.t.cc"
-#endif
+// #include "../utils/FEBasisOperations.t.cc"
+// #include "../utils/FEBasisOperationsKernels.t.cc"
 
 #endif // dftfeBasisOperations_h

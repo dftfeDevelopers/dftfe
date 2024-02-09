@@ -45,6 +45,45 @@ namespace dftfe
            const double *      beta,
            double *            C,
            const unsigned int *INCY);
+
+    void
+    sgemv_(const char *        TRANS,
+           const unsigned int *M,
+           const unsigned int *N,
+           const float *       alpha,
+           const float *       A,
+           const unsigned int *LDA,
+           const float *       X,
+           const unsigned int *INCX,
+           const float *       beta,
+           float *             C,
+           const unsigned int *INCY);
+
+    void
+    zgemv_(const char *                TRANS,
+           const unsigned int *        M,
+           const unsigned int *        N,
+           const std::complex<double> *alpha,
+           const std::complex<double> *A,
+           const unsigned int *        LDA,
+           const std::complex<double> *X,
+           const unsigned int *        INCX,
+           const std::complex<double> *beta,
+           std::complex<double> *      C,
+           const unsigned int *        INCY);
+
+    void
+    cgemv_(const char *               TRANS,
+           const unsigned int *       M,
+           const unsigned int *       N,
+           const std::complex<float> *alpha,
+           const std::complex<float> *A,
+           const unsigned int *       LDA,
+           const std::complex<float> *X,
+           const unsigned int *       INCX,
+           const std::complex<float> *beta,
+           std::complex<float> *      C,
+           const unsigned int *       INCY);
     void
     dsymv_(const char *        UPLO,
            const unsigned int *N,
@@ -337,6 +376,14 @@ namespace dftfe
            const unsigned int *        incx,
            std::complex<double> *      y,
            const unsigned int *        incy);
+
+    void
+    ccopy_(const unsigned int *       n,
+           const std::complex<float> *x,
+           const unsigned int *       incx,
+           std::complex<float> *      y,
+           const unsigned int *       incy);
+
     std::complex<double>
     zdotc_(const unsigned int *        N,
            const std::complex<double> *X,

@@ -144,7 +144,10 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<NumberType,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
-      &                                         basisOperationsPtr,
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     double *                                    partialOccupVec,
@@ -194,36 +197,32 @@ namespace dftfe
       dftfe::utils::makeDataTypeDeviceCompatible(gradRhoCellsWfcContributions),
       isEvaluateGradRho);
 #endif
-    dftfe::utils::deviceBlasWrapper::gemv(
-      basisOperationsPtr->getDeviceBLASHandle(),
-      dftfe::utils::DEVICEBLAS_OP_T,
-      vectorsBlockSize,
-      cellsBlockSize * nQuadsPerCell,
-      &scalarCoeffAlphaRho,
-      rhoCellsWfcContributions,
-      vectorsBlockSize,
-      partialOccupVec,
-      1,
-      &scalarCoeffBetaRho,
-      rho + cellRange.first * nQuadsPerCell,
-      1);
+    BLASWrapperPtr->xgemv('T',
+                          vectorsBlockSize,
+                          cellsBlockSize * nQuadsPerCell,
+                          &scalarCoeffAlphaRho,
+                          rhoCellsWfcContributions,
+                          vectorsBlockSize,
+                          partialOccupVec,
+                          1,
+                          &scalarCoeffBetaRho,
+                          rho + cellRange.first * nQuadsPerCell,
+                          1);
 
 
     if (isEvaluateGradRho)
       {
-        dftfe::utils::deviceBlasWrapper::gemv(
-          basisOperationsPtr->getDeviceBLASHandle(),
-          dftfe::utils::DEVICEBLAS_OP_T,
-          vectorsBlockSize,
-          cellsBlockSize * nQuadsPerCell * 3,
-          &scalarCoeffAlphaGradRho,
-          gradRhoCellsWfcContributions,
-          vectorsBlockSize,
-          partialOccupVec,
-          1,
-          &scalarCoeffBetaGradRho,
-          gradRho + cellRange.first * nQuadsPerCell * 3,
-          1);
+        BLASWrapperPtr->xgemv('T',
+                              vectorsBlockSize,
+                              cellsBlockSize * nQuadsPerCell * 3,
+                              &scalarCoeffAlphaGradRho,
+                              gradRhoCellsWfcContributions,
+                              vectorsBlockSize,
+                              partialOccupVec,
+                              1,
+                              &scalarCoeffBetaGradRho,
+                              gradRho + cellRange.first * nQuadsPerCell * 3,
+                              1);
       }
   }
   template void
@@ -232,7 +231,10 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
-      &                                         basisOperationsPtr,
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     double *                                    partialOccupVec,

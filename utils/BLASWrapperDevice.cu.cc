@@ -35,6 +35,12 @@ namespace dftfe
       status = setMathMode(dftfe::utils::DEVICEBLAS_TF32_TENSOR_OP_MATH);
     }
 
+    dftfe::utils::deviceBlasHandle_t &
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::getDeviceBlasHandle()
+    {
+      return d_deviceBlasHandle;
+    }
+
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
@@ -255,6 +261,168 @@ namespace dftfe
       DEVICEBLAS_API_CHECK(status);
     }
 
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemv(
+      const char         transA,
+      const unsigned int m,
+      const unsigned int n,
+      const double *     alpha,
+      const double *     A,
+      const unsigned int lda,
+      const double *     x,
+      const unsigned int incx,
+      const double *     beta,
+      double *           y,
+      const unsigned int incy) const
+    {
+      dftfe::utils::deviceBlasOperation_t transa;
+      if (transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transA == 'T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else
+        {
+          // Assert Statement
+        }
+      dftfe::utils::deviceBlasStatus_t status = cublasDgemv(d_deviceBlasHandle,
+                                                            transa,
+                                                            int(m),
+                                                            int(n),
+                                                            alpha,
+                                                            A,
+                                                            int(lda),
+                                                            x,
+                                                            int(incx),
+                                                            beta,
+                                                            y,
+                                                            int(incy));
+      DEVICEBLAS_API_CHECK(status);
+    }
+
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemv(
+      const char         transA,
+      const unsigned int m,
+      const unsigned int n,
+      const float *      alpha,
+      const float *      A,
+      const unsigned int lda,
+      const float *      x,
+      const unsigned int incx,
+      const float *      beta,
+      float *            y,
+      const unsigned int incy) const
+    {
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if (transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transA == 'T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else
+        {
+          // Assert Statement
+        }
+
+      dftfe::utils::deviceBlasStatus_t status = cublasSgemv(d_deviceBlasHandle,
+                                                            transa,
+                                                            int(m),
+                                                            int(n),
+                                                            alpha,
+                                                            A,
+                                                            int(lda),
+                                                            x,
+                                                            int(incx),
+                                                            beta,
+                                                            y,
+                                                            int(incy));
+      DEVICEBLAS_API_CHECK(status);
+    }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemv(
+      const char                  transA,
+      const unsigned int          m,
+      const unsigned int          n,
+      const std::complex<double> *alpha,
+      const std::complex<double> *A,
+      const unsigned int          lda,
+      const std::complex<double> *x,
+      const unsigned int          incx,
+      const std::complex<double> *beta,
+      std::complex<double> *      y,
+      const unsigned int          incy) const
+    {
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if (transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transA == 'T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else if (transA == 'C')
+        transa = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          // Assert Statement
+        }
+
+      dftfe::utils::deviceBlasStatus_t status =
+        cublasZgemv(d_deviceBlasHandle,
+                    transa,
+                    int(m),
+                    int(n),
+                    dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+                    dftfe::utils::makeDataTypeDeviceCompatible(A),
+                    int(lda),
+                    dftfe::utils::makeDataTypeDeviceCompatible(x),
+                    int(incx),
+                    dftfe::utils::makeDataTypeDeviceCompatible(beta),
+                    dftfe::utils::makeDataTypeDeviceCompatible(y),
+                    int(incy));
+      DEVICEBLAS_API_CHECK(status);
+    }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemv(
+      const char                 transA,
+      const unsigned int         m,
+      const unsigned int         n,
+      const std::complex<float> *alpha,
+      const std::complex<float> *A,
+      const unsigned int         lda,
+      const std::complex<float> *x,
+      const unsigned int         incx,
+      const std::complex<float> *beta,
+      std::complex<float> *      y,
+      const unsigned int         incy) const
+    {
+      dftfe::utils::deviceBlasOperation_t transa, transb;
+      if (transA == 'N')
+        transa = dftfe::utils::DEVICEBLAS_OP_N;
+      else if (transA == 'T')
+        transa = dftfe::utils::DEVICEBLAS_OP_T;
+      else if (transA == 'C')
+        transa = dftfe::utils::DEVICEBLAS_OP_C;
+      else
+        {
+          // Assert Statement
+        }
+
+      dftfe::utils::deviceBlasStatus_t status =
+        cublasCgemv(d_deviceBlasHandle,
+                    transa,
+                    int(m),
+                    int(n),
+                    dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+                    dftfe::utils::makeDataTypeDeviceCompatible(A),
+                    int(lda),
+                    dftfe::utils::makeDataTypeDeviceCompatible(x),
+                    int(incx),
+                    dftfe::utils::makeDataTypeDeviceCompatible(beta),
+                    dftfe::utils::makeDataTypeDeviceCompatible(y),
+                    int(incy));
+      DEVICEBLAS_API_CHECK(status);
+    }
+
     dftfe::utils::deviceBlasStatus_t
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::create()
     {
@@ -327,6 +495,29 @@ namespace dftfe
                     int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
+
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const ValueType *              addFromVec,
+      ValueType *                    addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
+    {
+      axpyStridedBlockAtomicAddDeviceKernel<<<
+        (contiguousBlockSize * numContiguousBlocks) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
+        addToVecStartingContiguousBlockIds);
+    }
+
+
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
@@ -1167,6 +1358,22 @@ namespace dftfe
       const double *         s,
       std::complex<float> *  x);
 
+    // axpyStridedBlockAtomicAdd
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double *                 addFromVec,
+      double *                       addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const std::complex<double> *   addFromVec,
+      std::complex<double> *         addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     // for xscal
     template void
@@ -1192,6 +1399,49 @@ namespace dftfe
       std::complex<float> *     x,
       const std::complex<float> a,
       const dftfe::size_type    n) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double *                 copyFromVec,
+      double *                       copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const float *                  copyFromVec,
+      float *                        copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const std::complex<double> *   copyFromVec,
+      std::complex<double> *         copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const std::complex<float> *    copyFromVec,
+      std::complex<float> *          copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
+                                       const double *         valueType1Arr,
+                                       std::complex<double> * valueType2Arr);
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
+                                       const double *         valueType1Arr,
+                                       double *               valueType2Arr);
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

@@ -72,12 +72,6 @@ namespace dftfe
     distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle();
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientIntegral();
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientIntegralElectro();
-
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       &
       getShapeFunctionValues();

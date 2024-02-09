@@ -14,6 +14,8 @@
 //
 // ---------------------------------------------------------------------
 //
+#include <FEBasisOperations.h>
+#include <FEBasisOperationsKernelsInternal.h>
 
 namespace dftfe
 {
@@ -22,10 +24,8 @@ namespace dftfe
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::
-      FEBasisOperationsBase(
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      FEBasisOperations(
         dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
         std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
           &constraintsVector,
@@ -68,12 +68,10 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace>::init(const unsigned int &             dofHandlerID,
-                         const std::vector<unsigned int> &quadratureID,
-                         const std::vector<UpdateFlags>   updateFlags)
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      init(const unsigned int &             dofHandlerID,
+           const std::vector<unsigned int> &quadratureID,
+           const std::vector<UpdateFlags>   updateFlags)
     {
       AssertThrow(
         updateFlags.size() == quadratureID.size(),
@@ -87,7 +85,8 @@ namespace dftfe
       initializeIndexMaps();
       initializeMPIPattern();
       initializeShapeFunctionAndJacobianData();
-      if (!std::is_same<ValueTypeBasisCoeff, ValueTypeBasisData>::value)
+      if constexpr (!std::is_same<ValueTypeBasisCoeff,
+                                  ValueTypeBasisData>::value)
         initializeShapeFunctionAndJacobianBasisData();
     }
 
@@ -97,12 +96,10 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     template <dftfe::utils::MemorySpace memorySpaceSrc>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::
-      init(const FEBasisOperationsBase<ValueTypeBasisCoeff,
-                                       ValueTypeBasisData,
-                                       memorySpaceSrc> &basisOperationsSrc)
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      init(const FEBasisOperations<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData,
+                                   memorySpaceSrc> &basisOperationsSrc)
     {
       d_matrixFreeDataPtr   = basisOperationsSrc.d_matrixFreeDataPtr;
       d_constraintsVector   = basisOperationsSrc.d_constraintsVector;
@@ -196,7 +193,8 @@ namespace dftfe
                 }
             }
         }
-      if (!std::is_same<ValueTypeBasisCoeff, ValueTypeBasisData>::value)
+      if constexpr (!std::is_same<ValueTypeBasisCoeff,
+                                  ValueTypeBasisData>::value)
         for (unsigned int iQuadIndex = 0;
              iQuadIndex < d_quadratureIDsVector.size();
              ++iQuadIndex)
@@ -272,13 +270,11 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::reinit(const unsigned int &vecBlockSize,
-                                               const unsigned int
-                                                 &cellsBlockSize,
-                                               const unsigned int &quadratureID,
-                                               const bool isResizeTempStorage)
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      reinit(const unsigned int &vecBlockSize,
+             const unsigned int &cellsBlockSize,
+             const unsigned int &quadratureID,
+             const bool          isResizeTempStorage)
     {
       d_quadratureID = quadratureID;
       auto itr       = std::find(d_quadratureIDsVector.begin(),
@@ -304,9 +300,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     unsigned int
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::nQuadsPerCell() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      nQuadsPerCell() const
     {
       return d_nQuadsPerCell[d_quadratureIndex];
     }
@@ -315,9 +310,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     unsigned int
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::nDofsPerCell() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      nDofsPerCell() const
     {
       return d_nDofsPerCell;
     }
@@ -326,9 +320,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     unsigned int
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::nCells() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      nCells() const
     {
       return d_nCells;
     }
@@ -337,9 +330,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     unsigned int
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::nRelaventDofs() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      nRelaventDofs() const
     {
       return d_localSize;
     }
@@ -348,9 +340,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     unsigned int
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::nOwnedDofs() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      nOwnedDofs() const
     {
       return d_locallyOwnedSize;
     }
@@ -359,9 +350,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::shapeFunctionData(bool transpose) const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      shapeFunctionData(bool transpose) const
     {
       return transpose ?
                d_shapeFunctionDataTranspose.find(d_quadratureID)->second :
@@ -372,10 +362,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
-    FEBasisOperationsBase<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace>::shapeFunctionGradientData(bool transpose) const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      shapeFunctionGradientData(bool transpose) const
     {
       return transpose ?
                d_shapeFunctionGradientDataTranspose.find(d_quadratureID)
@@ -387,9 +375,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::inverseJacobians() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      inverseJacobians() const
     {
       return d_inverseJacobianData.find(areAllCellsAffine ? 0 : d_quadratureID)
         ->second;
@@ -400,9 +387,8 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     const dftfe::utils::MemoryStorage<ValueTypeBasisData,
                                       dftfe::utils::MemorySpace::HOST> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::quadPoints() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      quadPoints() const
     {
       return d_quadPoints.find(d_quadratureID)->second;
     }
@@ -413,141 +399,22 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::JxW() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      JxW() const
     {
       return d_JxWData.find(d_quadratureID)->second;
     }
 
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    template <typename A,
-              typename B,
-              typename std::enable_if_t<std::is_same<A, B>::value, int>>
-    const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::JxWBasisData() const
-    {
-      return d_JxWData.find(d_quadratureID)->second;
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    template <typename A,
-              typename B,
-              typename std::enable_if_t<!std::is_same<A, B>::value, int>>
-    const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::JxWBasisData() const
-    {
-      return d_JxWBasisData.find(d_quadratureID)->second;
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    template <typename A,
-              typename B,
-              typename std::enable_if_t<std::is_same<A, B>::value, int>>
-    const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::inverseJacobiansBasisData() const
-    {
-      return d_inverseJacobianData.find(areAllCellsAffine ? 0 : d_quadratureID)
-        ->second;
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    template <typename A,
-              typename B,
-              typename std::enable_if_t<!std::is_same<A, B>::value, int>>
-    const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::inverseJacobiansBasisData() const
-    {
-      return d_inverseJacobianBasisData
-        .find(areAllCellsAffine ? 0 : d_quadratureID)
-        ->second;
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    template <typename A,
-              typename B,
-              typename std::enable_if_t<std::is_same<A, B>::value, int>>
-    const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::shapeFunctionBasisData(bool transpose)
-      const
-    {
-      return transpose ?
-               d_shapeFunctionDataTranspose.find(d_quadratureID)->second :
-               d_shapeFunctionData.find(d_quadratureID)->second;
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    template <typename A,
-              typename B,
-              typename std::enable_if_t<!std::is_same<A, B>::value, int>>
-    const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::shapeFunctionBasisData(bool transpose)
-      const
-    {
-      return transpose ?
-               d_shapeFunctionBasisDataTranspose.find(d_quadratureID)->second :
-               d_shapeFunctionBasisData.find(d_quadratureID)->second;
-    }
 
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
-    template <typename A,
-              typename B,
-              typename std::enable_if_t<std::is_same<A, B>::value, int>>
     const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-    FEBasisOperationsBase<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace>::shapeFunctionGradientBasisData(bool transpose) const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      cellStiffnessMatrixBasisData() const
     {
-      return transpose ?
-               d_shapeFunctionGradientDataTranspose.find(d_quadratureID)
-                 ->second :
-               d_shapeFunctionGradientData.find(d_quadratureID)->second;
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    template <typename A,
-              typename B,
-              typename std::enable_if_t<!std::is_same<A, B>::value, int>>
-    const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
-    FEBasisOperationsBase<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace>::shapeFunctionGradientBasisData(bool transpose) const
-    {
-      return transpose ?
-               d_shapeFunctionGradientBasisDataTranspose.find(d_quadratureID)
-                 ->second :
-               d_shapeFunctionGradientBasisData.find(d_quadratureID)->second;
+      return d_cellStiffnessMatrixBasisType;
     }
 
 
@@ -555,9 +422,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     unsigned int
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::cellsTypeFlag() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      cellsTypeFlag() const
     {
       return (unsigned int)areAllCellsAffine +
              (unsigned int)areAllCellsCartesian;
@@ -567,9 +433,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     dealii::CellId
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::cellID(const unsigned int iElem) const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      cellID(const unsigned int iElem) const
     {
       return d_cellIndexToCellIdMap[iElem];
     }
@@ -578,10 +443,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     unsigned int
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::cellIndex(const dealii::CellId cellid)
-      const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      cellIndex(const dealii::CellId cellid) const
     {
       return d_cellIdToCellIndexMap.find(cellid)->second;
     }
@@ -591,9 +454,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     const dealii::MatrixFree<3, ValueTypeBasisData> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::matrixFreeData() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      matrixFreeData() const
     {
       return *d_matrixFreeDataPtr;
     }
@@ -602,9 +464,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     const dealii::DoFHandler<3> &
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::getDofHandler() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      getDofHandler() const
     {
       return d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID);
     }
@@ -615,9 +476,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::resizeTempStorage()
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      resizeTempStorage()
     {
       tempCellNodalData.resize(d_nVectors * d_nDofsPerCell * d_cellsBlockSize);
       if (d_updateFlags[d_quadratureIndex] & update_gradients)
@@ -638,9 +498,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::initializeFlattenedIndexMaps()
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      initializeFlattenedIndexMaps()
     {
 #if defined(DFTFE_WITH_DEVICE)
       dftfe::utils::MemoryStorage<dftfe::global_size_type,
@@ -670,9 +529,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::initializeMPIPattern()
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      initializeMPIPattern()
     {
       const std::pair<global_size_type, global_size_type> &locallyOwnedRange =
         d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
@@ -695,9 +553,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::initializeIndexMaps()
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      initializeIndexMaps()
     {
       d_nCells       = d_matrixFreeDataPtr->n_physical_cells();
       d_nDofsPerCell = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID)
@@ -747,9 +604,7 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       reinitializeConstraints(
         std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
           &constraintsVector)
@@ -763,9 +618,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::initializeConstraints()
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      initializeConstraints()
     {
       d_constraintInfo.clear();
       d_constraintInfo.resize((*d_constraintsVector).size());
@@ -781,9 +635,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::initializeShapeFunctionAndJacobianData()
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      initializeShapeFunctionAndJacobianData()
     {
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
       for (unsigned int iQuadIndex = 0;
@@ -1035,10 +888,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace>::initializeShapeFunctionAndJacobianBasisData()
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      initializeShapeFunctionAndJacobianBasisData()
     {
       for (unsigned int iQuadIndex = 0;
            iQuadIndex < d_quadratureIDsVector.size();
@@ -1240,9 +1091,221 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      computeCellStiffnessMatrix(const unsigned int quadratureID,
+                                 const unsigned int cellsBlockSize,
+                                 const bool         basisType,
+                                 const bool         ceoffType)
+    {
+      auto itr = std::find(d_quadratureIDsVector.begin(),
+                           d_quadratureIDsVector.end(),
+                           quadratureID);
+      AssertThrow(
+        itr != d_quadratureIDsVector.end(),
+        dealii::ExcMessage(
+          "DFT-FE Error: FEBasisOperations Class not initialized with this quadrature Index."));
+
+      if (basisType)
+        d_cellStiffnessMatrixBasisType.resize(d_nDofsPerCell * d_nDofsPerCell *
+                                              d_nCells);
+      if (ceoffType)
+        if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                   ValueTypeBasisData>::value)
+          {
+            if (!basisType)
+              d_cellStiffnessMatrixBasisType.resize(d_nDofsPerCell *
+                                                    d_nDofsPerCell * d_nCells);
+          }
+        else
+          d_cellStiffnessMatrixCoeffType.resize(d_nDofsPerCell *
+                                                d_nDofsPerCell * d_nCells);
+
+      unsigned int quadratureIndex =
+        std::distance(d_quadratureIDsVector.begin(), itr);
+      unsigned int nQuadsPerCell = d_nQuadsPerCell[quadratureIndex];
+      dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                  dftfe::utils::MemorySpace::HOST>
+        d_jacobianFactorHost;
+
+#if defined(DFTFE_WITH_DEVICE)
+      dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+        d_jacobianFactor;
+#else
+      auto &d_jacobianFactor = d_jacobianFactorHost;
+#endif
+      d_jacobianFactorHost.resize(9 * nQuadsPerCell * d_nCells);
+
+      const dealii::Quadrature<3> &quadrature =
+        d_matrixFreeDataPtr->get_quadrature(quadratureID);
+      dealii::FEValues<3> fe_values(
+        d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).get_fe(),
+        quadrature,
+        dealii::update_JxW_values | dealii::update_inverse_jacobians);
+      auto cellPtr =
+        d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
+      auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).end();
+      for (unsigned int iCell = 0; cellPtr != endcPtr; ++cellPtr)
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values.reinit(cellPtr);
+            const auto &inverseJacobians = fe_values.get_inverse_jacobians();
+            for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+              {
+                const auto &inverseJacobianQuad = inverseJacobians[iQuad];
+                const auto  jxw                 = fe_values.JxW(iQuad);
+                const auto  jacobianFactorPtr   = d_jacobianFactorHost.data() +
+                                               iCell * nQuadsPerCell * 9 +
+                                               iQuad * 9;
+                for (unsigned int kDim = 0; kDim < 3; ++kDim)
+                  for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                    for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                      jacobianFactorPtr[3 * jDim + iDim] +=
+                        inverseJacobianQuad[kDim][iDim] *
+                        inverseJacobianQuad[kDim][jDim] * jxw;
+              }
+            ++iCell;
+          }
+#if defined(DFTFE_WITH_DEVICE)
+      d_jacobianFactor.resize(d_jacobianFactorHost.size());
+      d_jacobianFactor.copyFrom(d_jacobianFactorHost);
+#endif
+      dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+        tempStiffnessMatrixBlock(d_nDofsPerCell * d_nDofsPerCell *
+                                 cellsBlockSize);
+      dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+        tempCellGradientsBlock(nQuadsPerCell * d_nDofsPerCell * cellsBlockSize *
+                               3);
+      dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+        tempCellGradientsBlock2(nQuadsPerCell * d_nDofsPerCell *
+                                cellsBlockSize * 3);
+      dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+        zeroIndexVec(cellsBlockSize - 1, 0);
+      if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+        {
+          if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                     ValueTypeBasisData>::value)
+            dftfe::basis::FEBasisOperationsKernelsInternal::
+              reshapeToNonAffineLayoutHost(
+                d_nDofsPerCell,
+                nQuadsPerCell,
+                1,
+                d_shapeFunctionGradientData[quadratureID].data(),
+                tempCellGradientsBlock.data());
+          else
+            dftfe::basis::FEBasisOperationsKernelsInternal::
+              reshapeToNonAffineLayoutHost(
+                d_nDofsPerCell,
+                nQuadsPerCell,
+                1,
+                d_shapeFunctionGradientBasisData[quadratureID].data(),
+                tempCellGradientsBlock.data());
+        }
+      else
+        {
+          if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                     ValueTypeBasisData>::value)
+            dftfe::basis::FEBasisOperationsKernelsInternal::
+              reshapeToNonAffineLayoutDevice(
+                d_nDofsPerCell,
+                nQuadsPerCell,
+                1,
+                d_shapeFunctionGradientData[quadratureID].data(),
+                tempCellGradientsBlock.data());
+          else
+            dftfe::basis::FEBasisOperationsKernelsInternal::
+              reshapeToNonAffineLayoutDevice(
+                d_nDofsPerCell,
+                nQuadsPerCell,
+                1,
+                d_shapeFunctionGradientBasisData[quadratureID].data(),
+                tempCellGradientsBlock.data());
+        }
+      if (cellsBlockSize > 1)
+        d_BLASWrapperPtr->stridedCopyToBlock(nQuadsPerCell * d_nDofsPerCell * 3,
+                                             cellsBlockSize - 1,
+                                             tempCellGradientsBlock.data(),
+                                             tempCellGradientsBlock.data() +
+                                               nQuadsPerCell * d_nDofsPerCell *
+                                                 3,
+                                             zeroIndexVec.data());
+      const ValueTypeBasisData scalarCoeffAlpha = ValueTypeBasisData(1.0),
+                               scalarCoeffBeta  = ValueTypeBasisData(0.0);
+
+      for (unsigned int iCell = 0; iCell < d_nCells; iCell += cellsBlockSize)
+        {
+          std::pair<unsigned int, unsigned int> cellRange(
+            iCell, std::min(iCell + cellsBlockSize, d_nCells));
+          d_BLASWrapperPtr->xgemmStridedBatched(
+            'N',
+            'N',
+            d_nDofsPerCell,
+            3,
+            3,
+            &scalarCoeffAlpha,
+            tempCellGradientsBlock.data(),
+            d_nDofsPerCell,
+            d_nDofsPerCell * 3,
+            d_jacobianFactor.data() + 9 * cellRange.first * nQuadsPerCell,
+            3,
+            9,
+            &scalarCoeffBeta,
+            tempCellGradientsBlock2.data(),
+            d_nDofsPerCell,
+            d_nDofsPerCell * 3,
+            (cellRange.second - cellRange.first) * nQuadsPerCell);
+          d_BLASWrapperPtr->xgemmStridedBatched('N',
+                                                'T',
+                                                d_nDofsPerCell,
+                                                d_nDofsPerCell,
+                                                nQuadsPerCell * 3,
+                                                &scalarCoeffAlpha,
+                                                tempCellGradientsBlock2.data(),
+                                                d_nDofsPerCell,
+                                                d_nDofsPerCell * nQuadsPerCell *
+                                                  3,
+                                                tempCellGradientsBlock.data(),
+                                                d_nDofsPerCell,
+                                                0,
+                                                &scalarCoeffBeta,
+                                                tempStiffnessMatrixBlock.data(),
+                                                d_nDofsPerCell,
+                                                d_nDofsPerCell * d_nDofsPerCell,
+                                                cellRange.second -
+                                                  cellRange.first);
+          if (basisType)
+            d_cellStiffnessMatrixBasisType.copyFrom(
+              tempStiffnessMatrixBlock,
+              d_nDofsPerCell * d_nDofsPerCell *
+                (cellRange.second - cellRange.first),
+              0,
+              cellRange.first * d_nDofsPerCell * d_nDofsPerCell);
+          if (ceoffType)
+            if constexpr (std::is_same<ValueTypeBasisCoeff,
+                                       ValueTypeBasisData>::value)
+              {
+                if (!basisType)
+                  d_cellStiffnessMatrixBasisType.copyFrom(
+                    tempStiffnessMatrixBlock,
+                    d_nDofsPerCell * d_nDofsPerCell *
+                      (cellRange.second - cellRange.first),
+                    0,
+                    cellRange.first * d_nDofsPerCell * d_nDofsPerCell);
+              }
+            else
+              d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+                d_nDofsPerCell * d_nDofsPerCell *
+                  (cellRange.second - cellRange.first),
+                tempStiffnessMatrixBlock.data(),
+                d_cellStiffnessMatrixCoeffType.data() +
+                  cellRange.first * d_nDofsPerCell * d_nDofsPerCell);
+        }
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       createMultiVector(
         const unsigned int blocksize,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
@@ -1255,9 +1318,7 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       createScratchMultiVectors(const unsigned int vecBlockSize,
                                 const unsigned int numMultiVecs) const
     {
@@ -1288,9 +1349,8 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::clearScratchMultiVectors() const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      clearScratchMultiVectors() const
     {
       scratchMultiVectors.clear();
     }
@@ -1299,11 +1359,9 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace> &
-    FEBasisOperationsBase<
-      ValueTypeBasisCoeff,
-      ValueTypeBasisData,
-      memorySpace>::getMultiVector(const unsigned int vecBlockSize,
-                                   const unsigned int index) const
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      getMultiVector(const unsigned int vecBlockSize,
+                     const unsigned int index) const
     {
       AssertThrow(scratchMultiVectors.find(vecBlockSize) !=
                     scratchMultiVectors.end(),
@@ -1317,9 +1375,7 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-    FEBasisOperationsBase<ValueTypeBasisCoeff,
-                          ValueTypeBasisData,
-                          memorySpace>::
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       distribute(dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                    memorySpace> &multiVector,
                  unsigned int constraintIndex) const
@@ -1331,6 +1387,35 @@ namespace dftfe
         .distribute(multiVector, multiVector.numVectors());
     }
 
-
+    template class FEBasisOperations<double,
+                                     double,
+                                     dftfe::utils::MemorySpace::HOST>;
+#if defined(USE_COMPLEX)
+    template class FEBasisOperations<std::complex<double>,
+                                     double,
+                                     dftfe::utils::MemorySpace::HOST>;
+#endif
+#if defined(DFTFE_WITH_DEVICE)
+    template class FEBasisOperations<double,
+                                     double,
+                                     dftfe::utils::MemorySpace::DEVICE>;
+    template void
+    FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>::init(
+      const FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>
+        &basisOperationsSrc);
+#  if defined(USE_COMPLEX)
+    template class FEBasisOperations<std::complex<double>,
+                                     double,
+                                     dftfe::utils::MemorySpace::DEVICE>;
+    template void
+    FEBasisOperations<std::complex<double>,
+                      double,
+                      dftfe::utils::MemorySpace::DEVICE>::
+      init(const FEBasisOperations<std::complex<double>,
+                                   double,
+                                   dftfe::utils::MemorySpace::HOST>
+             &basisOperationsSrc);
+#  endif
+#endif
   } // namespace basis
 } // namespace dftfe

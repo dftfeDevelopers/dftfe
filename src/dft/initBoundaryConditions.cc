@@ -294,6 +294,8 @@ namespace dftfe
             d_basisOperationsPtrHost->init(d_densityDofHandlerIndex,
                                            quadratureIndices,
                                            updateFlags);
+            d_basisOperationsPtrHost->computeCellStiffnessMatrix(
+              d_feOrderPlusOneQuadratureId, 1, true, false);
           }
       }
     if (!d_dftParamsPtr->useDevice && recomputeBasisData)
@@ -336,6 +338,8 @@ namespace dftfe
             else
               d_basisOperationsPtrDevice->createScratchMultiVectors(
                 BVec, (d_dftParamsPtr->spinPolarized + 1));
+            d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
+              d_feOrderPlusOneQuadratureId, 50, true, false);
           }
         else
           {
@@ -361,6 +365,9 @@ namespace dftfe
             d_basisOperationsPtrDevice->init(d_densityDofHandlerIndex,
                                              quadratureIndices,
                                              updateFlags);
+            if (FEOrder != FEOrderElectro)
+              d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
+                d_feOrderPlusOneQuadratureId, 50, true, false);
           }
       }
     else if (d_dftParamsPtr->useDevice)

@@ -77,14 +77,6 @@ namespace dftfe
     virtual distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle() = 0;
 
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientIntegral() = 0;
-
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientIntegralElectro() = 0;
-
     virtual const dftfe::utils::MemoryStorage<double,
                                               dftfe::utils::MemorySpace::DEVICE>
       &
@@ -404,12 +396,6 @@ namespace dftfe
     // matrix-free data
     //
     const dealii::MatrixFree<3, double> *d_matrix_free_data;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_cellShapeFunctionGradientIntegralFlattenedDevice;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunctionGradientValueNLPTransposedDevice;

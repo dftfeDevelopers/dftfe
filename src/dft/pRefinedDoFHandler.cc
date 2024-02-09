@@ -434,6 +434,9 @@ namespace dftfe
                                                     d_BLASWrapperPtr);
             d_basisOperationsPtrElectroDevice->init(
               *d_basisOperationsPtrElectroHost);
+            if (FEOrder != FEOrderElectro)
+              d_basisOperationsPtrElectroDevice->computeCellStiffnessMatrix(
+                d_phiTotAXQuadratureIdElectro, 50, true, false);
           }
         else
           {
@@ -447,6 +450,9 @@ namespace dftfe
               updateFlagsGradientsAndInvJacobians};
             d_basisOperationsPtrElectroDevice->init(
               d_baseDofHandlerIndexElectro, quadratureIndices, updateFlags);
+            if (FEOrder != FEOrderElectro)
+              d_basisOperationsPtrElectroDevice->computeCellStiffnessMatrix(
+                d_phiTotAXQuadratureIdElectro, 50, true, false);
           }
       }
 #endif

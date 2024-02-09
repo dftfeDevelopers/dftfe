@@ -404,7 +404,12 @@ namespace dftfe
 
     void
     solveVselfInBins(
-      operatorDFTDeviceClass &                 operatorMatrix,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &cellGradNIGradNJIntergralDevice,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                      BLASWrapperPtr,
       const dealii::MatrixFree<3, double> &    matrixFreeData,
       const unsigned int                       mfDofHandlerIndex,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
@@ -561,13 +566,11 @@ namespace dftfe
           << " poissonDevice::solveVselfInBins: time for mem allocation: "
           << time << std::endl;
 
-      cgSolver(operatorMatrix.getDeviceBlasHandle(),
+      cgSolver(BLASWrapperPtr->getDeviceBlasHandle(),
                constraintsMatrixDataInfoDevice,
                bD.begin(),
                diagonalAD.begin(),
-               isElectroFEOrderDifferentFromFEOrder ?
-                 operatorMatrix.getShapeFunctionGradientIntegralElectro() :
-                 operatorMatrix.getShapeFunctionGradientIntegral(),
+               cellGradNIGradNJIntergralDevice,
                inhomoIdsColoredVecFlattenedD,
                cellLocalProcIndexIdMapD,
                localSize,

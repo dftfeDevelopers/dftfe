@@ -156,7 +156,10 @@ SET(TARGET_SRC
   ./src/force/configurationalStressCompute/computeStressEself.cc
   ./src/force/configurationalStressCompute/stress.cc
   ./src/force/createBinObjectsForce.cc
-  ./src/force/locateAtomCoreNodesForce.cc)
+  ./src/force/locateAtomCoreNodesForce.cc  
+  ./utils/FEBasisOperationsKernelsInternalHost.cc
+  ./utils/FEBasisOperations.cc
+  ./utils/FEBasisOperationsKernels.cc)
 
 IF ("${GPU_LANG}" STREQUAL "cuda")
 
@@ -184,7 +187,7 @@ SET(DEVICE_SRC
   ./src/solvers/linearSolverProblemDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
-  ./utils/FEBasisOperationsKernelsDevice.cc
+  ./utils/FEBasisOperationsKernelsInternalDevice.cc
   )
 
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
@@ -213,7 +216,7 @@ SET(DEVICE_SRC
   ./src/solvers/linearSolverProblemDevice.cc
   ./src/poisson/poissonSolverProblemDevice.cc
   ./src/helmholtz/kerkerSolverProblemDevice.cc
-  ./utils/FEBasisOperationsKernelsDevice.cc
+  ./utils/FEBasisOperationsKernelsInternalDevice.cc
   )
 
 ENDIF()

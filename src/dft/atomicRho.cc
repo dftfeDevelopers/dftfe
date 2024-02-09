@@ -540,51 +540,6 @@ namespace dftfe
   }
 
   //
-  //
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  void
-  dftClass<FEOrder, FEOrderElectro>::subtractAtomicRhoQuadValuesGradients(
-    std::map<dealii::CellId, std::vector<double>> &quadratureValueData,
-    std::map<dealii::CellId, std::vector<double>> &quadratureGradValueData,
-    const bool                                     isConsiderGradData)
-  {
-    const dealii::Quadrature<3> &quadrature_formula =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
-    const unsigned int n_q_points = quadrature_formula.size();
-
-    dealii::DoFHandler<3>::active_cell_iterator cell =
-                                                  dofHandler.begin_active(),
-                                                endc = dofHandler.end();
-    for (; cell != endc; ++cell)
-      if (cell->is_locally_owned())
-        {
-          std::vector<double> &rhoValues =
-            quadratureValueData.find(cell->id())->second;
-          const std::vector<double> &rhoAtomicValues =
-            d_rhoAtomsValues.find(cell->id())->second;
-          for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-            rhoValues[q_point] -= rhoAtomicValues[q_point];
-
-          if (isConsiderGradData)
-            {
-              std::vector<double> &gradRhoValues =
-                quadratureGradValueData.find(cell->id())->second;
-              const std::vector<double> &gradRhoAtomicValues =
-                d_gradRhoAtomsValues.find(cell->id())->second;
-              for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-                {
-                  gradRhoValues[3 * q_point + 0] -=
-                    gradRhoAtomicValues[3 * q_point + 0];
-                  gradRhoValues[3 * q_point + 1] -=
-                    gradRhoAtomicValues[3 * q_point + 1];
-                  gradRhoValues[3 * q_point + 2] -=
-                    gradRhoAtomicValues[3 * q_point + 2];
-                }
-            }
-        }
-  }
-
-  //
   // compute l2 projection of quad data to nodal data
   //
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
