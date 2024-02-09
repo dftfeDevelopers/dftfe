@@ -93,16 +93,9 @@ namespace dftfe
 
     public:
       /**
-       * @brief Constructor, fills required data structures using deal.ii's MatrixFree and AffineConstraints objects
-       * @param[in] matrixFreeData MatrixFree object.
-       * @param[in] constraintsVector std::vector of AffineConstraints, should
-       * be the same vector which was passed for the construction of the given
-       * MatrixFree object.
+       * @brief Constructor
        */
       FEBasisOperations(
-        dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
-        std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
-          &constraintsVector,
         std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
           BLASWrapperPtr);
 
@@ -113,7 +106,17 @@ namespace dftfe
       ~FEBasisOperations() = default;
 
       /**
+       * @brief Clears the FEBasisOperations internal storage.
+       */
+      void
+      clear();
+
+      /**
        * @brief fills required data structures for the given dofHandlerID
+       * @param[in] matrixFreeData MatrixFree object.
+       * @param[in] constraintsVector std::vector of AffineConstraints, should
+       * be the same vector which was passed for the construction of the given
+       * MatrixFree object.
        * @param[in] dofHandlerID dofHandler index to be used for getting data
        * from the MatrixFree object.
        * @param[in] quadratureID std::vector of quadratureIDs to be used, should
@@ -121,9 +124,13 @@ namespace dftfe
        * MatrixFree object.
        */
       void
-      init(const unsigned int &             dofHandlerID,
-           const std::vector<unsigned int> &quadratureID,
-           const std::vector<UpdateFlags>   updateFlags);
+        init(dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
+             std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
+               &                              constraintsVector,
+             const unsigned int &             dofHandlerID,
+             const std::vector<unsigned int> &quadratureID,
+             const std::vector<UpdateFlags>   updateFlags);
+
       /**
        * @brief fills required data structures from another FEBasisOperations object
        * @param[in] basisOperationsSrc Source FEBasisOperations object.

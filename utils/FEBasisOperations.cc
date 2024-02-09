@@ -26,21 +26,71 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       FEBasisOperations(
-        dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
-        std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
-          &constraintsVector,
         std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
           BLASWrapperPtr)
     {
+      d_BLASWrapperPtr = BLASWrapperPtr;
+      d_nOMPThreads    = 1;
+      if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
+        d_nOMPThreads = std::stoi(std::string(penv));
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      clear()
+    {
+      d_constraintInfo.clear();
+      d_cellDofIndexToProcessDofIndexMap.clear();
+      d_quadPoints.clear();
+      d_flattenedCellDofIndexToProcessDofIndexMap.clear();
+      d_cellIndexToCellIdMap.clear();
+      d_cellIdToCellIndexMap.clear();
+      d_inverseJacobianData.clear();
+      d_JxWData.clear();
+      d_shapeFunctionData.clear();
+      d_shapeFunctionGradientDataInternalLayout.clear();
+      d_shapeFunctionGradientData.clear();
+      d_shapeFunctionDataTranspose.clear();
+      d_shapeFunctionGradientDataTranspose.clear();
+      d_inverseJacobianBasisData.clear();
+      d_JxWBasisData.clear();
+      d_shapeFunctionBasisData.clear();
+      d_shapeFunctionGradientBasisData.clear();
+      d_shapeFunctionBasisDataTranspose.clear();
+      d_shapeFunctionGradientBasisDataTranspose.clear();
+
+      d_cellStiffnessMatrixBasisType.clear();
+      d_cellStiffnessMatrixCoeffType.clear();
+      scratchMultiVectors.clear();
+      tempCellNodalData.clear();
+      tempQuadratureGradientsData.clear();
+      tempQuadratureGradientsDataNonAffine.clear();
+
+      d_quadratureIDsVector.clear();
+      d_nQuadsPerCell.clear();
+      d_updateFlags.clear();
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+      FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+        init(dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
+             std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
+               &                              constraintsVector,
+             const unsigned int &             dofHandlerID,
+             const std::vector<unsigned int> &quadratureID,
+             const std::vector<UpdateFlags>   updateFlags)
+    {
       d_matrixFreeDataPtr = &matrixFreeData;
       d_constraintsVector = &constraintsVector;
-      d_BLASWrapperPtr    = BLASWrapperPtr;
       d_dofHandlerID      = 0;
       d_nVectors          = 0;
       areAllCellsAffine   = true;
-      d_nOMPThreads       = 1;
-      if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
-        d_nOMPThreads = std::stoi(std::string(penv));
 
       for (unsigned int iMacroCell = 0;
            iMacroCell < d_matrixFreeDataPtr->n_cell_batches();
@@ -62,17 +112,6 @@ namespace dftfe
                iMacroCell) == dealii::internal::MatrixFreeFunctions::cartesian);
         }
       initializeConstraints();
-    }
-
-    template <typename ValueTypeBasisCoeff,
-              typename ValueTypeBasisData,
-              dftfe::utils::MemorySpace memorySpace>
-    void
-    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
-      init(const unsigned int &             dofHandlerID,
-           const std::vector<unsigned int> &quadratureID,
-           const std::vector<UpdateFlags>   updateFlags)
-    {
       AssertThrow(
         updateFlags.size() == quadratureID.size(),
         dealii::ExcMessage(

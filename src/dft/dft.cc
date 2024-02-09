@@ -1038,11 +1038,30 @@ namespace dftfe
 
     d_BLASWrapperPtrHost = std::make_shared<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
+    d_basisOperationsPtrHost = std::make_shared<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>(
+      d_BLASWrapperPtrHost);
+    d_basisOperationsPtrElectroHost = std::make_shared<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
+      d_BLASWrapperPtrHost);
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice)
       {
         d_BLASWrapperPtr = std::make_shared<dftfe::linearAlgebra::BLASWrapper<
           dftfe::utils::MemorySpace::DEVICE>>();
+        d_basisOperationsPtrDevice = std::make_shared<
+          dftfe::basis::FEBasisOperations<dataTypes::number,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>(
+          d_BLASWrapperPtr);
+        d_basisOperationsPtrElectroDevice = std::make_shared<
+          dftfe::basis::FEBasisOperations<double,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>(
+          d_BLASWrapperPtr);
       }
 #endif
     initImageChargesUpdateKPoints();
