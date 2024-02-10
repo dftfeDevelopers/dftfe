@@ -22,6 +22,7 @@
 #include "headers.h"
 #include "operator.h"
 #include "dftParameters.h"
+#include <BLASWrapper.h>
 
 #if defined(DFTFE_WITH_DEVICE)
 #  include "operatorDevice.h"
@@ -108,7 +109,10 @@ namespace dftfe
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams);
+    const dftParameters &dftParams,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      BLASWrapperPtr);
 #endif
 } // namespace dftfe
 #endif

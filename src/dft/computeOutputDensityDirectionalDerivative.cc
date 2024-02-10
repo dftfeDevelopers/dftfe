@@ -65,7 +65,8 @@ namespace dftfe
     // set up linear solver Device
     linearSolverCGDevice CGSolverDevice(d_mpiCommParent,
                                         mpi_communicator,
-                                        linearSolverCGDevice::CG);
+                                        linearSolverCGDevice::CG,
+                                        d_BLASWrapperPtr);
 #endif
 
 
@@ -130,12 +131,10 @@ namespace dftfe
         not d_dftParamsPtr->pinnedNodeForPBC)
       {
 #ifdef DFTFE_WITH_DEVICE
-        CGSolverDevice.solve(
-          d_phiTotalSolverProblemDevice,
-          d_dftParamsPtr->absPoissonSolverToleranceLRD,
-          d_dftParamsPtr->maxLinearSolverIterations,
-          d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
-          d_dftParamsPtr->verbosity);
+        CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                             d_dftParamsPtr->absPoissonSolverToleranceLRD,
+                             d_dftParamsPtr->maxLinearSolverIterations,
+                             d_dftParamsPtr->verbosity);
 #endif
       }
     else
@@ -527,7 +526,8 @@ namespace dftfe
             d_mpiCommParent,
             interpoolcomm,
             interBandGroupComm,
-            *d_dftParamsPtr);
+            *d_dftParamsPtr,
+            d_BLASWrapperPtr);
         else
           computeRhoFirstOrderResponseDevice<dataTypes::number,
                                              dataTypes::number>(
@@ -550,7 +550,8 @@ namespace dftfe
             d_mpiCommParent,
             interpoolcomm,
             interBandGroupComm,
-            *d_dftParamsPtr);
+            *d_dftParamsPtr,
+            d_BLASWrapperPtr);
       }
 #endif
     if (!d_dftParamsPtr->useDevice)

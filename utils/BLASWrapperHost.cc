@@ -113,6 +113,17 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
       const unsigned int n,
+      double *           x,
+      const unsigned int incx,
+      float *            y,
+      const unsigned int incy) const
+    {
+      std::memcpy(x, y, n * sizeof(x));
+    }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
+      const unsigned int n,
       const float *      x,
       const unsigned int incx,
       float *            y,
@@ -244,6 +255,17 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
+      const unsigned int    n,
+      std::complex<double> *x,
+      const unsigned int    incx,
+      std::complex<float> * y,
+      const unsigned int    incy) const
+    {
+      std::memcpy(x, y, n * sizeof(x));
+    }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
       const unsigned int         n,
       const std::complex<float> *x,
       const unsigned int         incx,
@@ -309,7 +331,7 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
       const unsigned int n,
       const double *     alpha,
-      const double *           x,
+      const double *     x,
       const unsigned int incx,
       double *           y,
       const unsigned int incy) const
@@ -321,7 +343,7 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
       const unsigned int          n,
       const std::complex<double> *alpha,
-      const std::complex<double> *      x,
+      const std::complex<double> *x,
       const unsigned int          incx,
       std::complex<double> *      y,
       const unsigned int          incy) const
@@ -366,12 +388,12 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::add(
       double *               y,
-          const double *         x,
-          const double           alpha,
-          const dftfe::size_type size)
+      const double *         x,
+      const double           alpha,
+      const dftfe::size_type size)
     {
       xaxpy(size, &alpha, x, 1, y, 1);
-    }      
+    }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
@@ -713,6 +735,14 @@ namespace dftfe
       float *                        copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
+    // template void
+    // BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
+    //   const dftfe::size_type         contiguousBlockSize,
+    //   const dftfe::size_type         numContiguousBlocks,
+    //   const double *                 copyFromVec,
+    //   float *                       copyToVecBlock,
+    //   const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
@@ -729,6 +759,14 @@ namespace dftfe
       std::complex<float> *          copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
+    // template void
+    // BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
+    //   const dftfe::size_type         contiguousBlockSize,
+    //   const dftfe::size_type         numContiguousBlocks,
+    //   const std::complex<double> *   copyFromVec,
+    //   std::complex<float> *         copyToVecBlock,
+    //   const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
@@ -740,6 +778,12 @@ namespace dftfe
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                        const double *         valueType1Arr,
                                        double *               valueType2Arr);
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::
+      copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
+                                       const double *         valueType1Arr,
+                                       float *                valueType2Arr);
+
     // axpyStridedBlockAtomicAdd
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::axpyStridedBlockAtomicAdd(

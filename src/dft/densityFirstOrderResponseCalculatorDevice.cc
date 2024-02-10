@@ -134,7 +134,10 @@ namespace dftfe
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams)
+    const dftParameters &dftParams,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      BLASWrapperPtr)
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
@@ -238,7 +241,7 @@ namespace dftfe
     shapeFunctionValuesTransposedDevice.setValue(zero);
 
 
-    dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
+    BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
       numNodesPerElement * numQuadPoints,
       (operatorMatrix.getShapeFunctionValuesTransposed(true)).begin(),
       shapeFunctionValuesTransposedDevice.begin());
@@ -272,16 +275,15 @@ namespace dftfe
                       .template copyTo<dftfe::utils::MemorySpace::DEVICE>(
                         densityMatDerFermiEnergyVecDevice);
 
-                    dftfe::utils::deviceKernelsGeneric::
-                      stridedCopyToBlockConstantStride(
-                        BVec,
-                        totalNumWaveFunctions,
-                        numLocalDofs,
-                        jvec,
-                        X + numLocalDofs * totalNumWaveFunctions *
-                              ((dftParams.spinPolarized + 1) * kPoint +
-                               spinIndex),
-                        deviceFlattenedArrayXBlock.begin());
+                    BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                      BVec,
+                      totalNumWaveFunctions,
+                      numLocalDofs,
+                      jvec,
+                      X +
+                        numLocalDofs * totalNumWaveFunctions *
+                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
+                      deviceFlattenedArrayXBlock.begin());
 
                     deviceFlattenedArrayXBlock.updateGhostValues();
 
@@ -289,16 +291,15 @@ namespace dftfe
                       ->distribute(deviceFlattenedArrayXBlock, BVec);
 
 
-                    dftfe::utils::deviceKernelsGeneric::
-                      stridedCopyToBlockConstantStride(
-                        BVec,
-                        totalNumWaveFunctions,
-                        numLocalDofs,
-                        jvec,
-                        XPrime + numLocalDofs * totalNumWaveFunctions *
-                                   ((dftParams.spinPolarized + 1) * kPoint +
-                                    spinIndex),
-                        deviceFlattenedArrayXPrimeBlock.begin());
+                    BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                      BVec,
+                      totalNumWaveFunctions,
+                      numLocalDofs,
+                      jvec,
+                      XPrime +
+                        numLocalDofs * totalNumWaveFunctions *
+                          ((dftParams.spinPolarized + 1) * kPoint + spinIndex),
+                      deviceFlattenedArrayXPrimeBlock.begin());
 
                     deviceFlattenedArrayXPrimeBlock.updateGhostValues();
 
@@ -318,16 +319,15 @@ namespace dftfe
 
 
 
-                            dftfe::utils::deviceKernelsGeneric::
-                              stridedCopyToBlock(
-                                BVec,
-                                currentCellsBlockSize * numNodesPerElement,
-                                deviceFlattenedArrayXBlock.begin(),
-                                cellWaveFunctionMatrix.begin(),
-                                (operatorMatrix
-                                   .getFlattenedArrayCellLocalProcIndexIdMap())
-                                    .begin() +
-                                  startingCellId * numNodesPerElement);
+                            BLASWrapperPtr->stridedCopyToBlock(
+                              BVec,
+                              currentCellsBlockSize * numNodesPerElement,
+                              deviceFlattenedArrayXBlock.begin(),
+                              cellWaveFunctionMatrix.begin(),
+                              (operatorMatrix
+                                 .getFlattenedArrayCellLocalProcIndexIdMap())
+                                  .begin() +
+                                startingCellId * numNodesPerElement);
 
                             NumberTypeLowPrec scalarCoeffAlpha = 1.0;
                             NumberTypeLowPrec scalarCoeffBeta  = 0.0;
@@ -336,10 +336,10 @@ namespace dftfe
                             int strideC = BVec * numQuadPoints;
 
 
-                            dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                              operatorMatrix.getDeviceBlasHandle(),
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              dftfe::utils::DEVICEBLAS_OP_N,
+
+                            BLASWrapperPtr->xgemmStridedBatched(
+                              'N',
+                              'N',
                               BVec,
                               numQuadPoints,
                               numNodesPerElement,
@@ -357,21 +357,19 @@ namespace dftfe
                               currentCellsBlockSize);
 
 
-                            dftfe::utils::deviceKernelsGeneric::
-                              stridedCopyToBlock(
-                                BVec,
-                                currentCellsBlockSize * numNodesPerElement,
-                                deviceFlattenedArrayXPrimeBlock.begin(),
-                                cellWaveFunctionMatrix.begin(),
-                                (operatorMatrix
-                                   .getFlattenedArrayCellLocalProcIndexIdMap())
-                                    .begin() +
-                                  startingCellId * numNodesPerElement);
+                            BLASWrapperPtr->stridedCopyToBlock(
+                              BVec,
+                              currentCellsBlockSize * numNodesPerElement,
+                              deviceFlattenedArrayXPrimeBlock.begin(),
+                              cellWaveFunctionMatrix.begin(),
+                              (operatorMatrix
+                                 .getFlattenedArrayCellLocalProcIndexIdMap())
+                                  .begin() +
+                                startingCellId * numNodesPerElement);
 
-                            dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                              operatorMatrix.getDeviceBlasHandle(),
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              dftfe::utils::DEVICEBLAS_OP_N,
+                            BLASWrapperPtr->xgemmStridedBatched(
+                              'N',
+                              'N',
                               BVec,
                               numQuadPoints,
                               numNodesPerElement,
@@ -387,6 +385,7 @@ namespace dftfe
                               BVec,
                               strideC,
                               currentCellsBlockSize);
+
 
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
                             computeRhoResponseFromInterpolatedValues<<<
@@ -415,10 +414,9 @@ namespace dftfe
                                 XPrimeQuadsDevice.begin()));
 #endif
 
-                            dftfe::utils::deviceBlasWrapper::gemm(
-                              operatorMatrix.getDeviceBlasHandle(),
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              dftfe::utils::DEVICEBLAS_OP_N,
+                            BLASWrapperPtr->xgemm(
+                              'N',
+                              'N',
                               1,
                               currentCellsBlockSize * numQuadPoints,
                               BVec,
@@ -432,10 +430,9 @@ namespace dftfe
                                 startingCellId * numQuadPoints,
                               1);
 
-                            dftfe::utils::deviceBlasWrapper::gemm(
-                              operatorMatrix.getDeviceBlasHandle(),
-                              dftfe::utils::DEVICEBLAS_OP_N,
-                              dftfe::utils::DEVICEBLAS_OP_N,
+                            BLASWrapperPtr->xgemm(
+                              'N',
+                              'N',
                               1,
                               currentCellsBlockSize * numQuadPoints,
                               BVec,
@@ -647,7 +644,10 @@ namespace dftfe
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams);
+    const dftParameters &dftParams,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      BLASWrapperPtr);
 
   template void
   computeRhoFirstOrderResponseDevice<dataTypes::number, dataTypes::numberFP32>(
@@ -672,5 +672,8 @@ namespace dftfe
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams);
+    const dftParameters &dftParams,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      BLASWrapperPtr);
 } // namespace dftfe

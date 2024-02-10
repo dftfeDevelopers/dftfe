@@ -76,17 +76,19 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
       const unsigned int smearedChargeQuadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                               rhoValues,
-      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>> BLASWrapperPtr,
-      const bool                        isComputeDiagonalA            = true,
-      const bool                        isComputeMeanValueConstraints = false,
-      const bool                        smearedNuclearCharges         = false,
-      const bool                        isRhoValues                   = true,
-      const bool                        isGradSmearedChargeRhs        = false,
-      const unsigned int                smearedChargeGradientComponentId = 0,
-      const bool                        storeSmearedChargeRhs       = false,
-      const bool                        reuseSmearedChargeRhs       = false,
-      const bool                        reinitializeFastConstraints = false);
+        &rhoValues,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                         BLASWrapperPtr,
+      const bool         isComputeDiagonalA               = true,
+      const bool         isComputeMeanValueConstraints    = false,
+      const bool         smearedNuclearCharges            = false,
+      const bool         isRhoValues                      = true,
+      const bool         isGradSmearedChargeRhs           = false,
+      const unsigned int smearedChargeGradientComponentId = 0,
+      const bool         storeSmearedChargeRhs            = false,
+      const bool         reuseSmearedChargeRhs            = false,
+      const bool         reinitializeFastConstraints      = false);
 
     /**
      * @brief Compute A matrix multipled by x.
@@ -320,8 +322,9 @@ namespace dftfe
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
       d_basisOperationsPtr;
     ///
-    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>> 
-      d_BLASWrapperPtr;
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+         d_BLASWrapperPtr;
     bool d_isFastConstraintsInitialized;
 
     const MPI_Comm             mpi_communicator;

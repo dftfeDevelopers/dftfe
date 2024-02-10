@@ -188,7 +188,7 @@ namespace dftfe
            const double *     Y,
            const unsigned int INCY,
            double *           result) const;
-      // Real dot proeuct with all Reduce call      
+      // Real dot proeuct with all Reduce call
       void
       xdot(const unsigned int N,
            const double *     X,
@@ -211,7 +211,7 @@ namespace dftfe
       void
       xaxpy(const unsigned int n,
             const double *     alpha,
-            const double *           x,
+            const double *     x,
             const unsigned int incx,
             double *           y,
             const unsigned int incy) const;
@@ -220,7 +220,7 @@ namespace dftfe
       void
       xaxpy(const unsigned int          n,
             const std::complex<double> *alpha,
-            const std::complex<double> *      x,
+            const std::complex<double> *x,
             const unsigned int          incx,
             std::complex<double> *      y,
             const unsigned int          incy) const;
@@ -231,6 +231,14 @@ namespace dftfe
             const double *     x,
             const unsigned int incx,
             double *           y,
+            const unsigned int incy) const;
+
+      // Real copy of double data to float
+      void
+      xcopy(const unsigned int n,
+            double *           x,
+            const unsigned int incx,
+            float *            y,
             const unsigned int incy) const;
 
       // Complex double copy of data
@@ -256,6 +264,13 @@ namespace dftfe
             const unsigned int         incx,
             std::complex<float> *      y,
             const unsigned int         incy) const;
+
+      void
+      xcopy(const unsigned int    n,
+            std::complex<double> *x,
+            const unsigned int    incx,
+            std::complex<float> * y,
+            const unsigned int    incy) const;
 
       // Real double symmetric matrix-vector product
       void
@@ -687,7 +702,7 @@ namespace dftfe
            double *           result) const;
 
       //
-            // Real dot product
+      // Real dot product
       void
       xdot(const unsigned int N,
            const double *     X,
@@ -695,7 +710,7 @@ namespace dftfe
            const double *     Y,
            const unsigned int INCY,
            const MPI_Comm &   mpi_communicator,
-           double *           result) const;      
+           double *           result) const;
 
       // Complex dot product
       void
@@ -710,7 +725,7 @@ namespace dftfe
       void
       xaxpy(const unsigned int n,
             const double *     alpha,
-            const double *           x,
+            const double *     x,
             const unsigned int incx,
             double *           y,
             const unsigned int incy) const;
@@ -719,7 +734,7 @@ namespace dftfe
       void
       xaxpy(const unsigned int          n,
             const std::complex<double> *alpha,
-            const std::complex<double> *      x,
+            const std::complex<double> *x,
             const unsigned int          incx,
             std::complex<double> *      y,
             const unsigned int          incy) const;
@@ -730,6 +745,14 @@ namespace dftfe
             const double *     x,
             const unsigned int incx,
             double *           y,
+            const unsigned int incy) const;
+
+      // Real copy of double data
+      void
+      xcopy(const unsigned int n,
+            double *           x,
+            const unsigned int incx,
+            float *            y,
             const unsigned int incy) const;
 
       // Complex double copy of data
@@ -755,6 +778,13 @@ namespace dftfe
             const unsigned int         incx,
             std::complex<float> *      y,
             const unsigned int         incy) const;
+
+      void
+      xcopy(const unsigned int    n,
+            std::complex<double> *x,
+            const unsigned int    incx,
+            std::complex<float> * y,
+            const unsigned int    incy) const;
 
       // Real double symmetric matrix-vector product
       void

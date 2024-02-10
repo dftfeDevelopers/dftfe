@@ -17,8 +17,8 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <deviceKernelsGeneric.h> //KFIX ME 
-#include <DeviceAPICalls.h> 
+#include <deviceKernelsGeneric.h> //KFIX ME
+#include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>

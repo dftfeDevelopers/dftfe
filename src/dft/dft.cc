@@ -2018,7 +2018,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     linearSolverCGDevice CGSolverDevice(d_mpiCommParent,
                                         mpi_communicator,
-                                        linearSolverCGDevice::CG);
+                                        linearSolverCGDevice::CG,
+                                        d_BLASWrapperPtr);
 #endif
 
     //
@@ -2617,12 +2618,10 @@ namespace dftfe
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_DEVICE
-            CGSolverDevice.solve(
-              d_phiTotalSolverProblemDevice,
-              d_dftParamsPtr->absLinearSolverTolerance,
-              d_dftParamsPtr->maxLinearSolverIterations,
-              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-              d_dftParamsPtr->verbosity);
+            CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                                 d_dftParamsPtr->absLinearSolverTolerance,
+                                 d_dftParamsPtr->maxLinearSolverIterations,
+                                 d_dftParamsPtr->verbosity);
 #endif
           }
         else
@@ -3387,12 +3386,10 @@ namespace dftfe
                   false,
                   true);
 
-                CGSolverDevice.solve(
-                  d_phiTotalSolverProblemDevice,
-                  d_dftParamsPtr->absLinearSolverTolerance,
-                  d_dftParamsPtr->maxLinearSolverIterations,
-                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-                  d_dftParamsPtr->verbosity);
+                CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                                     d_dftParamsPtr->absLinearSolverTolerance,
+                                     d_dftParamsPtr->maxLinearSolverIterations,
+                                     d_dftParamsPtr->verbosity);
 #endif
               }
             else
@@ -3606,12 +3603,10 @@ namespace dftfe
               false,
               true);
 
-            CGSolverDevice.solve(
-              d_phiTotalSolverProblemDevice,
-              d_dftParamsPtr->absLinearSolverTolerance,
-              d_dftParamsPtr->maxLinearSolverIterations,
-              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-              d_dftParamsPtr->verbosity);
+            CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                                 d_dftParamsPtr->absLinearSolverTolerance,
+                                 d_dftParamsPtr->maxLinearSolverIterations,
+                                 d_dftParamsPtr->verbosity);
 #endif
           }
         else
