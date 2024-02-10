@@ -48,11 +48,10 @@ namespace dftfe
       for (unsigned int index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const double psi                = wfcContributions[index];
-          const double psiPrime           = wfcContributions[index];
+          const double psi      = wfcContributions[index];
+          const double psiPrime = wfcContributions[index];
           rhoResponseFermiEnergyCellsWfcContributions[index] = psi * psi;
-          rhoResponseHamCellsWfcContributions[index] = psi * psiPrime;
-
+          rhoResponseHamCellsWfcContributions[index]         = psi * psiPrime;
         }
     }
 
@@ -64,7 +63,7 @@ namespace dftfe
       dftfe::utils::deviceDoubleComplex *wfcContributions,
       dftfe::utils::deviceDoubleComplex *wfcPrimeContributions,
       double *                           rhoResponseHamCellsWfcContributions,
-      double *                           rhoResponseFermiEnergyCellsWfcContributions)
+      double *rhoResponseFermiEnergyCellsWfcContributions)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
@@ -74,10 +73,12 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::utils::deviceDoubleComplex psi = wfcContributions[index];
-          const dftfe::utils::deviceDoubleComplex psiPrime = wfcPrimeContributions[index];          
-          rhoResponseFermiEnergyCellsWfcContributions[index] = psi.x * psi.x + psi.y * psi.y;
-          rhoResponseHamCellsWfcContributions[index] = psi.x * psiPrime.x + psi.y * psiPrime.y;          
-
+          const dftfe::utils::deviceDoubleComplex psiPrime =
+            wfcPrimeContributions[index];
+          rhoResponseFermiEnergyCellsWfcContributions[index] =
+            psi.x * psi.x + psi.y * psi.y;
+          rhoResponseHamCellsWfcContributions[index] =
+            psi.x * psiPrime.x + psi.y * psiPrime.y;
         }
     }
   } // namespace
@@ -98,17 +99,17 @@ namespace dftfe
     double *                                    partialOccupPrimeVec,
     NumberType *                                wfcQuadPointData,
     NumberType *                                wfcPrimeQuadPointData,
-    double *                                    rhoResponseHamCellsWfcContributions,
-    double *                                    rhoResponseFermiEnergyCellsWfcContributions,
-    double *                                    rhoResponseHam,
-    double *                                    rhoResponseFermiEnergy)
+    double *rhoResponseHamCellsWfcContributions,
+    double *rhoResponseFermiEnergyCellsWfcContributions,
+    double *rhoResponseHam,
+    double *rhoResponseFermiEnergy)
   {
     const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
     const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
     const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
     const unsigned int nCells           = basisOperationsPtr->nCells();
-    const double       scalarCoeffAlphaRho     = 1.0;
-    const double       scalarCoeffBetaRho      = 1.0;
+    const double       scalarCoeffAlphaRho = 1.0;
+    const double       scalarCoeffBetaRho  = 1.0;
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     computeRhoResponseFromInterpolatedValues<<<
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -119,8 +120,10 @@ namespace dftfe
       nQuadsPerCell,
       dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
       dftfe::utils::makeDataTypeDeviceCompatible(wfcPrimeQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(rhoResponseHamCellsWfcContributions),
-      dftfe::utils::makeDataTypeDeviceCompatible(rhoResponseFermiEnergyCellsWfcContributions));
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        rhoResponseHamCellsWfcContributions),
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        rhoResponseFermiEnergyCellsWfcContributions));
 #elif DFTFE_WITH_DEVICE_LANG_HIP
     hipLaunchKernelGGL(
       computeRhoResponseFromInterpolatedValues,
@@ -134,8 +137,10 @@ namespace dftfe
       nQuadsPerCell,
       dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
       dftfe::utils::makeDataTypeDeviceCompatible(wfcPrimeQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(rhoResponseHamCellsWfcContributions),
-      dftfe::utils::makeDataTypeDeviceCompatible(rhoResponseFermiEnergyCellsWfcContributions));
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        rhoResponseHamCellsWfcContributions),
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        rhoResponseFermiEnergyCellsWfcContributions));
 #endif
     BLASWrapperPtr->xgemv('T',
                           vectorsBlockSize,
@@ -158,9 +163,9 @@ namespace dftfe
                           partialOccupPrimeVec,
                           1,
                           &scalarCoeffBetaRho,
-                          rhoResponseFermiEnergy + cellRange.first * nQuadsPerCell,
+                          rhoResponseFermiEnergy +
+                            cellRange.first * nQuadsPerCell,
                           1);
-
   }
   template void
   computeRhoResponseFromInterpolatedValues(
@@ -177,9 +182,9 @@ namespace dftfe
     double *                                    partialOccupVec,
     dataTypes::number *                         wfcQuadPointData,
     dataTypes::number *                         wfcPrimeQuadPointData,
-    double *                                    rhoResponseHamCellsWfcContributions,
-    double *                                    rhoResponseFermiEnergyCellsWfcContributions,
-    double *                                    rhoResponseHam,
-    double *                                    rhoResponseFermiEnergy);
+    double *rhoResponseHamCellsWfcContributions,
+    double *rhoResponseFermiEnergyCellsWfcContributions,
+    double *rhoResponseHam,
+    double *rhoResponseFermiEnergy);
 
 } // namespace dftfe

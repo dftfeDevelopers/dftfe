@@ -37,10 +37,10 @@ namespace dftfe
   template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
   void
   computeRhoFirstOrderResponse(
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &  X,
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &  XPrime,
-    const unsigned int                             totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &X,
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &XPrime,
+    const unsigned int                      totalNumWaveFunctions,
+    const std::vector<std::vector<double>> &densityMatDerFermiEnergy,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
@@ -48,9 +48,13 @@ namespace dftfe
       &                        BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
-    const std::vector<double> &                    kPointWeights,
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesHam,
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesFermiEnergy,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoResponseValuesHam,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  rhoResponseValuesFermiEnergy,
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
@@ -86,9 +90,9 @@ namespace dftfe
     const unsigned int numSpinComponents =
       (dftParams.spinPolarized == 1) ? 2 : 1;
 
-    const NumberType zero                    = 0;
-    const NumberType scalarCoeffAlphaRho     = 1.0;
-    const NumberType scalarCoeffBetaRho      = 1.0;
+    const NumberType zero                = 0;
+    const NumberType scalarCoeffAlphaRho = 1.0;
+    const NumberType scalarCoeffBetaRho  = 1.0;
 
     const unsigned int cellsBlockSize =
       memorySpace == dftfe::utils::MemorySpace::DEVICE ? 50 : 1;
@@ -115,12 +119,16 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace> rhoResponseHam;
     dftfe::utils::MemoryStorage<double, memorySpace> rhoResponseFermiEnergy;
 #else
-    auto &rhoResponseHam             = rhoResponseHamHost;
-    auto &rhoResponseFermiEnergy     = rhoResponseFermiEnergyHost;
+    auto &rhoResponseHam         = rhoResponseHamHost;
+    auto &rhoResponseFermiEnergy = rhoResponseFermiEnergyHost;
 #endif
 
-    rhoResponseHam.resize(totalLocallyOwnedCells * numQuadPoints * numSpinComponents, 0.0);
-    rhoResponseFermiEnergy.resize(totalLocallyOwnedCells * numQuadPoints * numSpinComponents, 0.0);    
+    rhoResponseHam.resize(totalLocallyOwnedCells * numQuadPoints *
+                            numSpinComponents,
+                          0.0);
+    rhoResponseFermiEnergy.resize(totalLocallyOwnedCells * numQuadPoints *
+                                    numSpinComponents,
+                                  0.0);
     for (unsigned int spinIndex = 0; spinIndex < numSpinComponents; ++spinIndex)
       {
         wfcQuadPointData[spinIndex].resize(cellsBlockSize * numQuadPoints *
@@ -128,23 +136,21 @@ namespace dftfe
                                            zero);
 
         wfcPrimeQuadPointData[spinIndex].resize(cellsBlockSize * numQuadPoints *
-                                             BVec,
-                                           zero);
+                                                  BVec,
+                                                zero);
 
         if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-        {
-          rhoResponseHamWfcContributions[spinIndex].resize(cellsBlockSize * numQuadPoints *
-                                                  BVec,
-                                                0.0);
+          {
+            rhoResponseHamWfcContributions[spinIndex].resize(
+              cellsBlockSize * numQuadPoints * BVec, 0.0);
 
-          rhoResponseFermiEnergyWfcContributions[spinIndex].resize(cellsBlockSize * numQuadPoints *
-                                                  BVec,
-                                                0.0);          
-        }
+            rhoResponseFermiEnergyWfcContributions[spinIndex].resize(
+              cellsBlockSize * numQuadPoints * BVec, 0.0);
+          }
       }
 
 
-    dftfe::utils::MemoryStorage<double, memorySpace> onesVec(BVec,1.0);
+    dftfe::utils::MemoryStorage<double, memorySpace> onesVec(BVec, 1.0);
 
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -156,13 +162,14 @@ namespace dftfe
     std::vector<dftfe::utils::MemoryStorage<double, memorySpace>>
       partialOccupPrimeVec(numSpinComponents);
     for (unsigned int spinIndex = 0; spinIndex < numSpinComponents; ++spinIndex)
-      partialOccupPrimeVec[spinIndex].resize(partialOccupPrimeVecHost[spinIndex].size());
+      partialOccupPrimeVec[spinIndex].resize(
+        partialOccupPrimeVecHost[spinIndex].size());
 #else
-    auto &partialOccupPrimeVec = partialOccupPrimeVecHost;
+    auto &partialOccupPrimeVec   = partialOccupPrimeVecHost;
 #endif
 
     std::vector<dftfe::linearAlgebra::MultiVector<NumberType, memorySpace> *>
-      flattenedArrayBlock(numSpinComponents*2);
+      flattenedArrayBlock(numSpinComponents * 2);
 
     for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
@@ -181,8 +188,7 @@ namespace dftfe
             for (unsigned int icomp = 0; icomp < flattenedArrayBlock.size();
                  ++icomp)
               flattenedArrayBlock[icomp] =
-                &(basisOperationsPtr->getMultiVector(currentBlockSize,
-                                                     icomp));
+                &(basisOperationsPtr->getMultiVector(currentBlockSize, icomp));
 
             if ((jvec + currentBlockSize) <=
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -191,16 +197,16 @@ namespace dftfe
               {
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
                      ++spinIndex)
-                          for (unsigned int iEigenVec = 0;
-                               iEigenVec < currentBlockSize;
-                               ++iEigenVec)
-                            {
-                              *(partialOccupPrimeVecHost[spinIndex].begin() +
-                                iEigenVec) =
-                                  densityMatDerFermiEnergy[kPoint][totalNumWaveFunctions *
-                                                        spinIndex +
-                                                      jvec + iEigenVec]*kPointWeights[kPoint] * spinPolarizedFactor;
-                            }
+                  for (unsigned int iEigenVec = 0; iEigenVec < currentBlockSize;
+                       ++iEigenVec)
+                    {
+                      *(partialOccupPrimeVecHost[spinIndex].begin() +
+                        iEigenVec) =
+                        densityMatDerFermiEnergy[kPoint][totalNumWaveFunctions *
+                                                           spinIndex +
+                                                         jvec + iEigenVec] *
+                        kPointWeights[kPoint] * spinPolarizedFactor;
+                    }
 #if defined(DFTFE_WITH_DEVICE)
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
                      ++spinIndex)
@@ -227,7 +233,7 @@ namespace dftfe
                         numLocalDofs,
                         jvec,
                         X.data() + numLocalDofs * totalNumWaveFunctions *
-                                      (numSpinComponents * kPoint + spinIndex),
+                                     (numSpinComponents * kPoint + spinIndex),
                         flattenedArrayBlock[spinIndex]->data());
 #endif
 
@@ -236,13 +242,15 @@ namespace dftfe
                      ++spinIndex)
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
                     for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
-                      std::memcpy(flattenedArrayBlock[numSpinComponents+spinIndex]->data() +
-                                    iNode * currentBlockSize,
-                                  XPrime.data() +
-                                    numLocalDofs * totalNumWaveFunctions *
-                                      (numSpinComponents * kPoint + spinIndex) +
-                                    iNode * totalNumWaveFunctions + jvec,
-                                  currentBlockSize * sizeof(NumberType));
+                      std::memcpy(
+                        flattenedArrayBlock[numSpinComponents + spinIndex]
+                            ->data() +
+                          iNode * currentBlockSize,
+                        XPrime.data() +
+                          numLocalDofs * totalNumWaveFunctions *
+                            (numSpinComponents * kPoint + spinIndex) +
+                          iNode * totalNumWaveFunctions + jvec,
+                        currentBlockSize * sizeof(NumberType));
 #if defined(DFTFE_WITH_DEVICE)
                   else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
                     dftfe::utils::deviceKernelsGeneric::
@@ -251,9 +259,11 @@ namespace dftfe
                         totalNumWaveFunctions,
                         numLocalDofs,
                         jvec,
-                        XPrime.data() + numLocalDofs * totalNumWaveFunctions *
-                                      (numSpinComponents * kPoint + spinIndex),
-                        flattenedArrayBlock[numSpinComponents+spinIndex]->data());
+                        XPrime.data() +
+                          numLocalDofs * totalNumWaveFunctions *
+                            (numSpinComponents * kPoint + spinIndex),
+                        flattenedArrayBlock[numSpinComponents + spinIndex]
+                          ->data());
 #endif
 
                 basisOperationsPtr->reinit(currentBlockSize,
@@ -269,7 +279,8 @@ namespace dftfe
                     basisOperationsPtr->distribute(
                       *(flattenedArrayBlock[spinIndex]));
 
-                    flattenedArrayBlock[numSpinComponents+spinIndex]->updateGhostValues();
+                    flattenedArrayBlock[numSpinComponents + spinIndex]
+                      ->updateGhostValues();
                     basisOperationsPtr->distribute(
                       *(flattenedArrayBlock[spinIndex]));
                   }
@@ -290,7 +301,7 @@ namespace dftfe
                           basisOperationsPtr->interpolateKernel(
                             *(flattenedArrayBlock[spinIndex]),
                             wfcQuadPointData[spinIndex].data(),
-                              NULL,
+                            NULL,
                             std::pair<unsigned int, unsigned int>(
                               startingCellId,
                               startingCellId + currentCellsBlockSize));
@@ -299,9 +310,10 @@ namespace dftfe
                              spinIndex < numSpinComponents;
                              ++spinIndex)
                           basisOperationsPtr->interpolateKernel(
-                            *(flattenedArrayBlock[numSpinComponents+spinIndex]),
+                            *(flattenedArrayBlock[numSpinComponents +
+                                                  spinIndex]),
                             wfcPrimeQuadPointData[spinIndex].data(),
-                              NULL,
+                            NULL,
                             std::pair<unsigned int, unsigned int>(
                               startingCellId,
                               startingCellId + currentCellsBlockSize));
@@ -323,12 +335,14 @@ namespace dftfe
                             wfcQuadPointData[spinIndex].data(),
                             wfcPrimeQuadPointData[spinIndex].data(),
                             rhoResponseHamWfcContributions[spinIndex].data(),
-                            rhoResponseFermiEnergyWfcContributions[spinIndex].data(),
-                            rhoResponseHam.data() + spinIndex * totalLocallyOwnedCells *
-                                           numQuadPoints,
-                            rhoResponseFermiEnergy.data() + spinIndex *
-                                               totalLocallyOwnedCells *
-                                               numQuadPoints);
+                            rhoResponseFermiEnergyWfcContributions[spinIndex]
+                              .data(),
+                            rhoResponseHam.data() + spinIndex *
+                                                      totalLocallyOwnedCells *
+                                                      numQuadPoints,
+                            rhoResponseFermiEnergy.data() +
+                              spinIndex * totalLocallyOwnedCells *
+                                numQuadPoints);
                       } // non-trivial cell block check
                   }     // cells block loop
               }
@@ -341,7 +355,7 @@ namespace dftfe
 
     rhoResponseFermiEnergyHost.resize(rhoResponseFermiEnergy.size());
 
-    rhoResponseFermiEnergyHost.copyFrom(rhoResponseFermiEnergy);    
+    rhoResponseFermiEnergyHost.copyFrom(rhoResponseFermiEnergy);
 #endif
 
     int size;
@@ -363,7 +377,6 @@ namespace dftfe
                       dataTypes::mpi_type_id(rhoResponseFermiEnergyHost.data()),
                       MPI_SUM,
                       interpoolcomm);
-
       }
     MPI_Comm_size(interBandGroupComm, &size);
     if (size > 1)
@@ -390,34 +403,43 @@ namespace dftfe
         rhoResponseValuesHam[0].resize(totalLocallyOwnedCells * numQuadPoints);
         rhoResponseValuesHam[1].resize(totalLocallyOwnedCells * numQuadPoints);
         std::transform(rhoResponseHamHost.begin(),
-                       rhoResponseHamHost.begin() + totalLocallyOwnedCells * numQuadPoints,
-                       rhoResponseHamHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       rhoResponseHamHost.begin() +
+                         totalLocallyOwnedCells * numQuadPoints,
+                       rhoResponseHamHost.begin() +
+                         totalLocallyOwnedCells * numQuadPoints,
                        rhoResponseValuesHam[0].begin(),
                        std::plus<>{});
         std::transform(rhoResponseHamHost.begin(),
-                       rhoResponseHamHost.begin() + totalLocallyOwnedCells * numQuadPoints,
-                       rhoResponseHamHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       rhoResponseHamHost.begin() +
+                         totalLocallyOwnedCells * numQuadPoints,
+                       rhoResponseHamHost.begin() +
+                         totalLocallyOwnedCells * numQuadPoints,
                        rhoResponseValuesHam[1].begin(),
                        std::minus<>{});
 
-        rhoResponseValuesFermiEnergy[0].resize(totalLocallyOwnedCells * numQuadPoints);
-        rhoResponseValuesFermiEnergy[1].resize(totalLocallyOwnedCells * numQuadPoints);
+        rhoResponseValuesFermiEnergy[0].resize(totalLocallyOwnedCells *
+                                               numQuadPoints);
+        rhoResponseValuesFermiEnergy[1].resize(totalLocallyOwnedCells *
+                                               numQuadPoints);
         std::transform(rhoResponseFermiEnergyHost.begin(),
-                       rhoResponseFermiEnergyHost.begin() + totalLocallyOwnedCells * numQuadPoints,
-                       rhoResponseFermiEnergyHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       rhoResponseFermiEnergyHost.begin() +
+                         totalLocallyOwnedCells * numQuadPoints,
+                       rhoResponseFermiEnergyHost.begin() +
+                         totalLocallyOwnedCells * numQuadPoints,
                        rhoResponseValuesFermiEnergy[0].begin(),
                        std::plus<>{});
         std::transform(rhoResponseFermiEnergyHost.begin(),
-                       rhoResponseFermiEnergyHost.begin() + totalLocallyOwnedCells * numQuadPoints,
-                       rhoResponseFermiEnergyHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       rhoResponseFermiEnergyHost.begin() +
+                         totalLocallyOwnedCells * numQuadPoints,
+                       rhoResponseFermiEnergyHost.begin() +
+                         totalLocallyOwnedCells * numQuadPoints,
                        rhoResponseValuesFermiEnergy[1].begin(),
                        std::minus<>{});
-
       }
     else
       {
-        rhoResponseValuesHam[0] = rhoResponseHamHost;
-        rhoResponseValuesFermiEnergy[0] = rhoResponseFermiEnergyHost;        
+        rhoResponseValuesHam[0]         = rhoResponseHamHost;
+        rhoResponseValuesFermiEnergy[0] = rhoResponseFermiEnergyHost;
       }
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
@@ -450,10 +472,10 @@ namespace dftfe
     double *                                    partialOccupVecPrime,
     NumberType *                                wfcQuadPointData,
     NumberType *                                wfcPrimeQuadPointData,
-    double *                                    rhoResponseHamCellsWfcContributions,
-    double *                                    rhoResponseFermiEnergyCellsWfcContributions,
-    double *                                    rhoResponseHam,
-    double *                                    rhoResponseFermiEnergy)
+    double *rhoResponseHamCellsWfcContributions,
+    double *rhoResponseFermiEnergyCellsWfcContributions,
+    double *rhoResponseHam,
+    double *rhoResponseFermiEnergy)
   {
     const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
     const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
@@ -471,33 +493,43 @@ namespace dftfe
                                iQuad * vectorsBlockSize + iWave];
             const NumberType psiPrime =
               wfcPrimeQuadPointData[(iCell - cellRange.first) * nQuadsPerCell *
-                                 vectorsBlockSize +
-                               iQuad * vectorsBlockSize + iWave];                               
+                                      vectorsBlockSize +
+                                    iQuad * vectorsBlockSize + iWave];
             rhoResponseHam[iCell * nQuadsPerCell + iQuad] +=
-                dftfe::utils::realPart(psi * dftfe::utils::complexConj(psiPrime));
+              dftfe::utils::realPart(psi * dftfe::utils::complexConj(psiPrime));
 
             rhoResponseFermiEnergy[iCell * nQuadsPerCell + iQuad] +=
-              partialOccupVecPrime[iWave] * dftfe::utils::realPart(psi * dftfe::utils::complexConj(psi));
-
+              partialOccupVecPrime[iWave] *
+              dftfe::utils::realPart(psi * dftfe::utils::complexConj(psi));
           }
   }
 #if defined(DFTFE_WITH_DEVICE)
   template void
   computeRhoFirstOrderResponse(
-    const dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &  X,
-    const dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::DEVICE> &  XPrime,
-    const unsigned int                             totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
+    const dftfe::utils::MemoryStorage<dataTypes::number,
+                                      dftfe::utils::MemorySpace::DEVICE> &X,
+    const dftfe::utils::MemoryStorage<dataTypes::number,
+                                      dftfe::utils::MemorySpace::DEVICE>
+      &                                     XPrime,
+    const unsigned int                      totalNumWaveFunctions,
+    const std::vector<std::vector<double>> &densityMatDerFermiEnergy,
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<dataTypes::number, double,dftfe::utils::MemorySpace::DEVICE>>
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::DEVICE>>
       &basisOperationsPtr,
-    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       &                        BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
-    const std::vector<double> &                    kPointWeights,
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesHam,
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesFermiEnergy,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoResponseValuesHam,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  rhoResponseValuesFermiEnergy,
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
@@ -506,20 +538,29 @@ namespace dftfe
 
   template void
   computeRhoFirstOrderResponse(
-    const dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::HOST> &  X,
-    const dftfe::utils::MemoryStorage<dataTypes::number, dftfe::utils::MemorySpace::HOST> &  XPrime,
-    const unsigned int                             totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
+    const dftfe::utils::MemoryStorage<dataTypes::number,
+                                      dftfe::utils::MemorySpace::HOST> &X,
+    const dftfe::utils::MemoryStorage<dataTypes::number,
+                                      dftfe::utils::MemorySpace::HOST> &XPrime,
+    const unsigned int                      totalNumWaveFunctions,
+    const std::vector<std::vector<double>> &densityMatDerFermiEnergy,
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<dataTypes::number, double,dftfe::utils::MemorySpace::HOST>>
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
       &basisOperationsPtr,
-    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
       &                        BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
-    const std::vector<double> &                    kPointWeights,
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesHam,
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesFermiEnergy,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoResponseValuesHam,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  rhoResponseValuesFermiEnergy,
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,

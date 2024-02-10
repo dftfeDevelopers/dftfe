@@ -27,13 +27,13 @@
 
 namespace dftfe
 {
-  template <typename NumberType,dftfe::utils::MemorySpace memorySpace>
+  template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
   void
   computeRhoFirstOrderResponse(
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &  X,
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &  XPrime,
-    const unsigned int                             totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &X,
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &XPrime,
+    const unsigned int                      totalNumWaveFunctions,
+    const std::vector<std::vector<double>> &densityMatDerFermiEnergy,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
@@ -41,9 +41,13 @@ namespace dftfe
       &                        BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
-    const std::vector<double> &                    kPointWeights,
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesHam,
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesFermiEnergy,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoResponseValuesHam,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  rhoResponseValuesFermiEnergy,
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
@@ -66,10 +70,10 @@ namespace dftfe
     double *                                    partialOccupVecPrime,
     NumberType *                                wfcQuadPointData,
     NumberType *                                wfcPrimeQuadPointData,
-    double *                                    rhoResponseHamCellsWfcContributions,
-    double *                                    rhoResponseFermiEnergyCellsWfcContributions,
-    double *                                    rhoResponseHam,
-    double *                                    rhoResponseFermiEnergy);
+    double *rhoResponseHamCellsWfcContributions,
+    double *rhoResponseFermiEnergyCellsWfcContributions,
+    double *rhoResponseHam,
+    double *rhoResponseFermiEnergy);
 
 #if defined(DFTFE_WITH_DEVICE)
   template <typename NumberType>
@@ -89,10 +93,10 @@ namespace dftfe
     double *                                    partialOccupVecPrime,
     NumberType *                                wfcQuadPointData,
     NumberType *                                wfcPrimeQuadPointData,
-    double *                                    rhoResponseHamCellsWfcContributions,
-    double *                                    rhoResponseFermiEnergyCellsWfcContributions,
-    double *                                    rhoResponseHam,
-    double *                                    rhoResponseFermiEnergy);
+    double *rhoResponseHamCellsWfcContributions,
+    double *rhoResponseFermiEnergyCellsWfcContributions,
+    double *rhoResponseHam,
+    double *rhoResponseFermiEnergy);
 #endif
 
 } // namespace dftfe

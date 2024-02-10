@@ -321,7 +321,8 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_gllQuadratureId);
     const unsigned int numQuadPoints = quadrature_formula.size();
 
-    // get access to quadrature point coordinates and density DoFHandler nodal points
+    // get access to quadrature point coordinates and density DoFHandler nodal
+    // points
     const std::vector<dealii::Point<3>> &quadraturePointCoor =
       quadrature_formula.get_points();
     const std::vector<dealii::Point<3>> &supportPointNaturalCoor =

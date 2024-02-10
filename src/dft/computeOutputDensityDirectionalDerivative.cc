@@ -430,9 +430,11 @@ namespace dftfe
         fvFermiEnergySpin1 = 0;
       }
 
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       rhoResponseHamPRefinedNodalData;
-    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       rhoResponseFermiEnergyPRefinedNodalData;
 
 
@@ -451,7 +453,8 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_gllQuadratureId);
     const unsigned int numQuadPoints = quadrature_formula.size();
 
-    // get access to quadrature point coordinates and density DoFHandler nodal points
+    // get access to quadrature point coordinates and density DoFHandler nodal
+    // points
     const std::vector<dealii::Point<3>> &quadraturePointCoor =
       quadrature_formula.get_points();
     const std::vector<dealii::Point<3>> &supportPointNaturalCoor =
@@ -477,17 +480,20 @@ namespace dftfe
 
     // allocate the storage to compute 2p nodal values from wavefunctions
 
-    rhoResponseHamPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
-                                                                           1);
-    rhoResponseFermiEnergyPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
-                                                                           1);
+    rhoResponseHamPRefinedNodalData.resize(
+      d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    rhoResponseFermiEnergyPRefinedNodalData.resize(
+      d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
 
     for (unsigned int iComp = 0; iComp < rhoResponseHamPRefinedNodalData.size();
-             ++iComp)
-    {
-        rhoResponseHamPRefinedNodalData[iComp].resize(numLocallyOwnedCells*numQuadPoints,0);
-        rhoResponseFermiEnergyPRefinedNodalData[iComp].resize(numLocallyOwnedCells*numQuadPoints,0);        
-    }
+         ++iComp)
+      {
+        rhoResponseHamPRefinedNodalData[iComp].resize(numLocallyOwnedCells *
+                                                        numQuadPoints,
+                                                      0);
+        rhoResponseFermiEnergyPRefinedNodalData[iComp].resize(
+          numLocallyOwnedCells * numQuadPoints, 0);
+      }
 
 
       // compute first order density response at nodal locations of 2p
@@ -495,40 +501,40 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       {
-          computeRhoFirstOrderResponse(
-            d_eigenVectorsFlattenedDevice,
-            d_eigenVectorsDensityMatrixPrimeDevice,
-            d_numEigenValues,
-            d_densityMatDerFermiEnergy,
-            d_BLASWrapperPtr,
-            d_densityDofHandlerIndex,
-            d_gllQuadratureId,
-            d_kPointWeights,
-            rhoResponseHamPRefinedNodalData,
-            rhoResponseFermiEnergyPRefinedNodalData,
-            d_mpiCommParent,
-            interpoolcomm,
-            interBandGroupComm,
-            *d_dftParamsPtr);
+        computeRhoFirstOrderResponse(d_eigenVectorsFlattenedDevice,
+                                     d_eigenVectorsDensityMatrixPrimeDevice,
+                                     d_numEigenValues,
+                                     d_densityMatDerFermiEnergy,
+                                     d_basisOperationsPtrDevice,
+                                     d_BLASWrapperPtr,
+                                     d_densityDofHandlerIndex,
+                                     d_gllQuadratureId,
+                                     d_kPointWeights,
+                                     rhoResponseHamPRefinedNodalData,
+                                     rhoResponseFermiEnergyPRefinedNodalData,
+                                     d_mpiCommParent,
+                                     interpoolcomm,
+                                     interBandGroupComm,
+                                     *d_dftParamsPtr);
       }
 #endif
     if (!d_dftParamsPtr->useDevice)
       {
-          computeRhoFirstOrderResponse(
-            d_eigenVectorsFlattenedHost,
-            d_eigenVectorsDensityMatrixPrimeHost,
-            d_numEigenValues,
-            d_densityMatDerFermiEnergy,
-            d_BLASWrapperPtr,
-            d_densityDofHandlerIndex,
-            d_gllQuadratureId,
-            d_kPointWeights,
-            rhoResponseHamPRefinedNodalData,
-            rhoResponseFermiEnergyPRefinedNodalData,
-            d_mpiCommParent,
-            interpoolcomm,
-            interBandGroupComm,
-            *d_dftParamsPtr);
+        computeRhoFirstOrderResponse(d_eigenVectorsFlattenedHost,
+                                     d_eigenVectorsDensityMatrixPrimeHost,
+                                     d_numEigenValues,
+                                     d_densityMatDerFermiEnergy,
+                                     d_basisOperationsPtrHost,
+                                     d_BLASWrapperPtr,
+                                     d_densityDofHandlerIndex,
+                                     d_gllQuadratureId,
+                                     d_kPointWeights,
+                                     rhoResponseHamPRefinedNodalData,
+                                     rhoResponseFermiEnergyPRefinedNodalData,
+                                     d_mpiCommParent,
+                                     interpoolcomm,
+                                     interBandGroupComm,
+                                     *d_dftParamsPtr);
       }
 
     // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
@@ -544,12 +550,13 @@ namespace dftfe
           std::vector<dealii::types::global_dof_index> cell_dof_indices(
             dofs_per_cell);
           cellP->get_dof_indices(cell_dof_indices);
-          const double * nodalValuesResponseHam =
-              rhoResponseHamPRefinedNodalData[0].data() + iCell * dofs_per_cell;
+          const double *nodalValuesResponseHam =
+            rhoResponseHamPRefinedNodalData[0].data() + iCell * dofs_per_cell;
 
 
-          const double * nodalValuesResponseFermiEnergy =
-            rhoResponseFermiEnergyPRefinedNodalData[0].data() + iCell * dofs_per_cell;
+          const double *nodalValuesResponseFermiEnergy =
+            rhoResponseFermiEnergyPRefinedNodalData[0].data() +
+            iCell * dofs_per_cell;
 
           for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
             {
@@ -591,17 +598,21 @@ namespace dftfe
               std::vector<dealii::types::global_dof_index> cell_dof_indices(
                 dofs_per_cell);
               cellP->get_dof_indices(cell_dof_indices);
-              const double * nodalValuesRhoTotResponseHam =
-                rhoResponseHamPRefinedNodalData[0].data() + iCell * dofs_per_cell;
+              const double *nodalValuesRhoTotResponseHam =
+                rhoResponseHamPRefinedNodalData[0].data() +
+                iCell * dofs_per_cell;
 
-              const double * nodalValuesRhoTotResponseFermiEnergy =
-                rhoResponseFermiEnergyPRefinedNodalData[0].data() + iCell * dofs_per_cell;
+              const double *nodalValuesRhoTotResponseFermiEnergy =
+                rhoResponseFermiEnergyPRefinedNodalData[0].data() +
+                iCell * dofs_per_cell;
 
-              const double * nodalValuesRhoMagResponseHam =
-                rhoResponseHamPRefinedNodalData[1].data() + iCell * dofs_per_cell;
+              const double *nodalValuesRhoMagResponseHam =
+                rhoResponseHamPRefinedNodalData[1].data() +
+                iCell * dofs_per_cell;
 
-              const double * nodalValuesRhoMagResponseFermiEnergy =
-                rhoResponseFermiEnergyPRefinedNodalData[1].data() + iCell * dofs_per_cell;
+              const double *nodalValuesRhoMagResponseFermiEnergy =
+                rhoResponseFermiEnergyPRefinedNodalData[1].data() +
+                iCell * dofs_per_cell;
 
 
               for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
@@ -613,13 +624,25 @@ namespace dftfe
                       if (locallyOwnedDofs.is_element(nodeID))
                         {
                           fvHamSpin0(nodeID) =
-                            0.5*(nodalValuesRhoTotResponseHam[renumberingMap[iNode]]+nodalValuesRhoMagResponseHam[renumberingMap[iNode]]);
+                            0.5 * (nodalValuesRhoTotResponseHam
+                                     [renumberingMap[iNode]] +
+                                   nodalValuesRhoMagResponseHam
+                                     [renumberingMap[iNode]]);
                           fvHamSpin1(nodeID) =
-                            0.5*(nodalValuesRhoTotResponseHam[renumberingMap[iNode]]-nodalValuesRhoMagResponseHam[renumberingMap[iNode]]);
+                            0.5 * (nodalValuesRhoTotResponseHam
+                                     [renumberingMap[iNode]] -
+                                   nodalValuesRhoMagResponseHam
+                                     [renumberingMap[iNode]]);
                           fvFermiEnergySpin0(nodeID) =
-                            0.5*(nodalValuesRhoTotResponseFermiEnergy[renumberingMap[iNode]]+nodalValuesRhoMagResponseFermiEnergy[renumberingMap[iNode]]);
+                            0.5 * (nodalValuesRhoTotResponseFermiEnergy
+                                     [renumberingMap[iNode]] +
+                                   nodalValuesRhoMagResponseFermiEnergy
+                                     [renumberingMap[iNode]]);
                           fvFermiEnergySpin1(nodeID) =
-                            0.5*(nodalValuesRhoTotResponseFermiEnergy[renumberingMap[iNode]]-nodalValuesRhoMagResponseFermiEnergy[renumberingMap[iNode]]);
+                            0.5 * (nodalValuesRhoTotResponseFermiEnergy
+                                     [renumberingMap[iNode]] -
+                                   nodalValuesRhoMagResponseFermiEnergy
+                                     [renumberingMap[iNode]]);
                         }
                     }
                 }
