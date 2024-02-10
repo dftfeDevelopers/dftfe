@@ -246,6 +246,7 @@ namespace dftfe
 
             forceDevice::wfcContractionsForceKernelsAllH(
               dftPtr->d_basisOperationsPtrDevice,
+              dftPtr->d_BLASWrapperPtr,
               kohnShamDFTEigenOperatorDevice,
               dftPtr->d_eigenVectorsFlattenedDevice.begin(),
               d_dftParams.spinPolarized,

@@ -80,17 +80,19 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
     const unsigned int smearedChargeQuadratureId,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                               rhoValues,
-    dftfe::utils::deviceBlasHandle_t &deviceBlasHandle,
-    const bool                        isComputeDiagonalA,
-    const bool                        isComputeMeanValueConstraint,
-    const bool                        smearedNuclearCharges,
-    const bool                        isRhoValues,
-    const bool                        isGradSmearedChargeRhs,
-    const unsigned int                smearedChargeGradientComponentId,
-    const bool                        storeSmearedChargeRhs,
-    const bool                        reuseSmearedChargeRhs,
-    const bool                        reinitializeFastConstraints)
+      &rhoValues,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                       BLASWrapperPtr,
+    const bool         isComputeDiagonalA,
+    const bool         isComputeMeanValueConstraint,
+    const bool         smearedNuclearCharges,
+    const bool         isRhoValues,
+    const bool         isGradSmearedChargeRhs,
+    const unsigned int smearedChargeGradientComponentId,
+    const bool         storeSmearedChargeRhs,
+    const bool         reuseSmearedChargeRhs,
+    const bool         reinitializeFastConstraints)
   {
     int this_process;
     MPI_Comm_rank(mpi_communicator, &this_process);
@@ -125,7 +127,7 @@ namespace dftfe
     d_smearedChargeGradientComponentId = smearedChargeGradientComponentId;
     d_isStoreSmearedChargeRhs          = storeSmearedChargeRhs;
     d_isReuseSmearedChargeRhs          = reuseSmearedChargeRhs;
-    d_deviceBlasHandlePtr              = &deviceBlasHandle;
+    d_BLASWrapperPtr                   = BLASWrapperPtr;
     d_nLocalCells                      = d_matrixFreeDataPtr->n_cell_batches();
     d_xLocalDof = d_xDevice.locallyOwnedSize() * d_xDevice.numVectors();
     d_xLen      = d_xDevice.localSize() * d_xDevice.numVectors();
@@ -452,12 +454,21 @@ namespace dftfe
   {
     // -\sum_{i \neq o} a_i * u_i computation which involves summation across
     // MPI tasks
-    const double constrainedNodeValue = dftfe::utils::deviceKernelsGeneric::dot(
-      d_meanValueConstraintDeviceVec.begin(),
-      vec.begin(),
-      d_xLocalDof,
-      mpi_communicator,
-      *d_deviceBlasHandlePtr);
+    const unsigned int one                  = 1;
+    double             constrainedNodeValue = 0.0;
+    // dftfe::utils::deviceKernelsGeneric::dot(
+    // d_meanValueConstraintDeviceVec.begin(),
+    // vec.begin(),
+    // d_xLocalDof,
+    // mpi_communicator,
+    // *d_deviceBlasHandlePtr); //FIX ME
+    d_BLASWrapperPtr->xdot(d_xLocalDof,
+                           d_meanValueConstraintDeviceVec.begin(),
+                           one,
+                           vec.begin(),
+                           one,
+                           mpi_communicator,
+                           &constrainedNodeValue);
 
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) ==
         d_meanValueConstraintProcId)
@@ -494,12 +505,17 @@ namespace dftfe
               d_meanValueConstraintProcId,
               mpi_communicator);
 
-    dftfe::utils::deviceKernelsGeneric::add(
-      vec.begin(),
-      d_meanValueConstraintDeviceVec.begin(),
-      constrainedNodeValue,
-      d_xLocalDof,
-      *d_deviceBlasHandlePtr);
+    // dftfe::utils::deviceKernelsGeneric::add(
+    //   vec.begin(),
+    //   d_meanValueConstraintDeviceVec.begin(),
+    //   constrainedNodeValue,
+    //   d_xLocalDof,
+    //   *d_deviceBlasHandlePtr); //FIX ME
+
+    d_BLASWrapperPtr->add(vec.begin(),
+                          d_meanValueConstraintDeviceVec.begin(),
+                          constrainedNodeValue,
+                          d_xLocalDof);
 
     // meanValueConstraintSetZero
     if (d_isMeanValueConstraintComputed)

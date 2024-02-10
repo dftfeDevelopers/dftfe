@@ -22,6 +22,7 @@
 #include "headers.h"
 #include "dftParameters.h"
 #include "FEBasisOperations.h"
+#include <BLASWrapper.h>
 
 
 namespace dftfe

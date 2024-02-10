@@ -23,7 +23,7 @@
 
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
-#    include <DeviceBlasWrapper.h>
+#    include <DeviceBlasWrapper.h> //FIX ME
 #    include <MemoryStorage.h>
 #    include <headers.h>
 #    include "process_grid.h"
@@ -64,9 +64,6 @@ namespace dftfe
 
     virtual void
     destroyDeviceBlasHandle() = 0;
-
-    virtual dftfe::utils::deviceBlasHandle_t &
-    getDeviceBlasHandle() = 0;
 
     virtual const double *
     getSqrtMassVec() = 0;

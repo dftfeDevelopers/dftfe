@@ -154,7 +154,10 @@ namespace dftfe
   //
   double
   chebyshevOrthogonalizedSubspaceIterationSolverDevice::solve(
-    operatorDFTDeviceClass & operatorMatrix,
+    operatorDFTDeviceClass &operatorMatrix,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                      BLASWrapperPtr,
     elpaScalaManager &       elpaScala,
     dataTypes::number *      eigenVectorsFlattenedDevice,
     dataTypes::number *      eigenVectorsRotFracDensityFlattenedDevice,
@@ -178,7 +181,7 @@ namespace dftfe
       dealii::TimerOutput::wall_times);
 
     dftfe::utils::deviceBlasHandle_t &deviceBlasHandle =
-      operatorMatrix.getDeviceBlasHandle();
+      BLASWrapperPtr->getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up
@@ -566,19 +569,7 @@ namespace dftfe
     // if (d_dftParams.measureOnlyChebyTime)
     //  exit(0);
 
-    /*
-       int inc=1;
-       double result=0.0;
-       dftfe::utils::deviceBlasWrapper::nrm2(deviceBlasHandle,
-       flattenedSize,
-       eigenVectorsFlattenedDevice,
-       inc,
-       &result);
-       result=result*result;
-       result=dealii::Utilities::MPI::sum(result,operatorMatrix.getMPICommunicator());
-       std::cout<<"l2 norm Chebyshev filtered x:
-       "<<std::sqrt(result)<<std::endl;
-     */
+
 
     if (d_dftParams.orthogType.compare("GS") == 0)
       {
@@ -749,7 +740,10 @@ namespace dftfe
   //
   void
   chebyshevOrthogonalizedSubspaceIterationSolverDevice::solveNoRR(
-    operatorDFTDeviceClass & operatorMatrix,
+    operatorDFTDeviceClass &operatorMatrix,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                      BLASWrapperPtr,
     elpaScalaManager &       elpaScala,
     dataTypes::number *      eigenVectorsFlattenedDevice,
     const unsigned int       flattenedSize,
@@ -761,7 +755,7 @@ namespace dftfe
     const bool               useMixedPrecOverall)
   {
     dftfe::utils::deviceBlasHandle_t &deviceBlasHandle =
-      operatorMatrix.getDeviceBlasHandle();
+      BLASWrapperPtr->getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up
@@ -1088,7 +1082,10 @@ namespace dftfe
   void
   chebyshevOrthogonalizedSubspaceIterationSolverDevice::
     densityMatrixEigenBasisFirstOrderResponse(
-      operatorDFTDeviceClass &   operatorMatrix,
+      operatorDFTDeviceClass &operatorMatrix,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                        BLASWrapperPtr,
       dataTypes::number *        eigenVectorsFlattenedDevice,
       const unsigned int         flattenedSize,
       const unsigned int         totalNumberWaveFunctions,
@@ -1112,7 +1109,7 @@ namespace dftfe
       "Density matrix first order response on Device");
 
     dftfe::utils::deviceBlasHandle_t &deviceBlasHandle =
-      operatorMatrix.getDeviceBlasHandle();
+      BLASWrapperPtr->getDeviceBlasHandle();
 
     //
     // allocate memory for full flattened array on device and fill it up

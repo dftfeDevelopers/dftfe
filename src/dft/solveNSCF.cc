@@ -59,7 +59,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     linearSolverCGDevice CGSolverDevice(d_mpiCommParent,
                                         mpi_communicator,
-                                        linearSolverCGDevice::CG);
+                                        linearSolverCGDevice::CG,
+                                        d_BLASWrapperPtr);
 #endif
 
 
@@ -207,7 +208,7 @@ namespace dftfe
           d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
           d_densityInQuadValues[0],
-          kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
+          d_BLASWrapperPtr,
           true,
           d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
             d_dftParamsPtr->periodicZ && !d_dftParamsPtr->pinnedNodeForPBC,
@@ -251,12 +252,10 @@ namespace dftfe
         not d_dftParamsPtr->pinnedNodeForPBC)
       {
 #ifdef DFTFE_WITH_DEVICE
-        CGSolverDevice.solve(
-          d_phiTotalSolverProblemDevice,
-          d_dftParamsPtr->absLinearSolverTolerance,
-          d_dftParamsPtr->maxLinearSolverIterations,
-          kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-          d_dftParamsPtr->verbosity);
+        CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                             d_dftParamsPtr->absLinearSolverTolerance,
+                             d_dftParamsPtr->maxLinearSolverIterations,
+                             d_dftParamsPtr->verbosity);
 #endif
       }
     else
@@ -958,7 +957,7 @@ namespace dftfe
           d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
           d_densityInQuadValues[0],
-          kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
+          d_BLASWrapperPtr,
           false,
           false,
           d_dftParamsPtr->smearedNuclearCharges,
@@ -968,12 +967,10 @@ namespace dftfe
           false,
           true);
 
-        CGSolverDevice.solve(
-          d_phiTotalSolverProblemDevice,
-          d_dftParamsPtr->absLinearSolverTolerance,
-          d_dftParamsPtr->maxLinearSolverIterations,
-          kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-          d_dftParamsPtr->verbosity);
+        CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                             d_dftParamsPtr->absLinearSolverTolerance,
+                             d_dftParamsPtr->maxLinearSolverIterations,
+                             d_dftParamsPtr->verbosity);
 #endif
       }
     else

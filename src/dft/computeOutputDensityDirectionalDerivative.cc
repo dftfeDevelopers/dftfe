@@ -65,7 +65,8 @@ namespace dftfe
     // set up linear solver Device
     linearSolverCGDevice CGSolverDevice(d_mpiCommParent,
                                         mpi_communicator,
-                                        linearSolverCGDevice::CG);
+                                        linearSolverCGDevice::CG,
+                                        d_BLASWrapperPtr);
 #endif
 
 
@@ -103,7 +104,7 @@ namespace dftfe
           dummyMap,
           d_smearedChargeQuadratureIdElectro,
           charge,
-          d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
+          d_BLASWrapperPtr,
           false,
           false);
 #endif
@@ -130,12 +131,10 @@ namespace dftfe
         not d_dftParamsPtr->pinnedNodeForPBC)
       {
 #ifdef DFTFE_WITH_DEVICE
-        CGSolverDevice.solve(
-          d_phiTotalSolverProblemDevice,
-          d_dftParamsPtr->absPoissonSolverToleranceLRD,
-          d_dftParamsPtr->maxLinearSolverIterations,
-          d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
-          d_dftParamsPtr->verbosity);
+        CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                             d_dftParamsPtr->absPoissonSolverToleranceLRD,
+                             d_dftParamsPtr->maxLinearSolverIterations,
+                             d_dftParamsPtr->verbosity);
 #endif
       }
     else
@@ -501,7 +500,7 @@ namespace dftfe
             d_eigenVectorsDensityMatrixPrimeDevice,
             d_numEigenValues,
             d_densityMatDerFermiEnergy,
-            d_BLASWrapperPtrDevice,
+            d_BLASWrapperPtr,
             d_densityDofHandlerIndex,
             d_gllQuadratureId,
             d_kPointWeights,
@@ -520,7 +519,7 @@ namespace dftfe
             d_eigenVectorsDensityMatrixPrimeHost,
             d_numEigenValues,
             d_densityMatDerFermiEnergy,
-            d_BLASWrapperPtrHost,
+            d_BLASWrapperPtr,
             d_densityDofHandlerIndex,
             d_gllQuadratureId,
             d_kPointWeights,
