@@ -466,7 +466,7 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xaxpy(
       const unsigned int n,
       const double *     alpha,
-      double *           x,
+      const double *           x,
       const unsigned int incx,
       double *           y,
       const unsigned int incy) const
@@ -480,7 +480,7 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xaxpy(
       const unsigned int          n,
       const std::complex<double> *alpha,
-      std::complex<double> *      x,
+      const std::complex<double> *      x,
       const unsigned int          incx,
       std::complex<double> *      y,
       const unsigned int          incy) const
@@ -526,11 +526,31 @@ namespace dftfe
       const unsigned int INCX,
       const double *     Y,
       const unsigned int INCY,
+      const MPI_Comm &   mpi_communicator,
+      double *           result) const
+    {
+      double localResult  = 0.0;
+      dftfe::utils::deviceBlasStatus_t status = cublasDdot(
+        d_deviceBlasHandle, int(N), X, int(INCX), Y, int(INCY), &localResult);
+      DEVICEBLAS_API_CHECK(status);
+            MPI_Allreduce(
+        &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+
+    }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
+      const unsigned int N,
+      const double *     X,
+      const unsigned int INCX,
+      const double *     Y,
+      const unsigned int INCY,
       double *           result) const
     {
       dftfe::utils::deviceBlasStatus_t status = cublasDdot(
         d_deviceBlasHandle, int(N), X, int(INCX), Y, int(INCY), result);
       DEVICEBLAS_API_CHECK(status);
+
     }
 
 
@@ -1060,6 +1080,7 @@ namespace dftfe
       localresult *= localresult;
       MPI_Allreduce(
         &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+      *result = std::sqrt(*result);  
     }
 
     void
@@ -1078,6 +1099,16 @@ namespace dftfe
         &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
     }
 
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::add(
+      double *               y,
+          const double *         x,
+          const double           alpha,
+          const dftfe::size_type size)
+    {
+      xaxpy(size, &alpha, x, 1, y, 1);
+    }  
 
     template <typename ValueType1, typename ValueType2>
     void

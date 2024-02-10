@@ -23,7 +23,7 @@
 
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
-#    include <DeviceBlasWrapper.h>
+#    include <DeviceBlasWrapper.h> //FIX ME
 #    include <MemoryStorage.h>
 #    include <headers.h>
 #    include "process_grid.h"

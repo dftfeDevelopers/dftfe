@@ -23,10 +23,10 @@
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
 #    include <constants.h>
-#    include <deviceKernelsGeneric.h>
 #    include <dftUtils.h>
 #    include <headers.h>
 #    include "FEBasisOperations.h"
+#    include "BLASWrapper.h"
 
 namespace dftfe
 {
@@ -77,7 +77,7 @@ namespace dftfe
       const unsigned int smearedChargeQuadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &                               rhoValues,
-      dftfe::utils::deviceBlasHandle_t &deviceBlasHandle,
+      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>> BLASWrapperPtr,
       const bool                        isComputeDiagonalA            = true,
       const bool                        isComputeMeanValueConstraints = false,
       const bool                        smearedNuclearCharges         = false,
@@ -246,8 +246,6 @@ namespace dftfe
     double *d_jacobianFactorPtr;
     int *   d_mapPtr;
 
-    // cuBLAS handle for cuBLAS operations
-    dftfe::utils::deviceBlasHandle_t *d_deviceBlasHandlePtr;
 
     // constraints
     dftUtils::constraintMatrixInfoDevice d_constraintsTotalPotentialInfo;
@@ -322,6 +320,8 @@ namespace dftfe
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
       d_basisOperationsPtr;
     ///
+    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>> 
+      d_BLASWrapperPtr;
     bool d_isFastConstraintsInitialized;
 
     const MPI_Comm             mpi_communicator;

@@ -23,6 +23,7 @@
 #include <complex>
 #include <TypeConfig.h>
 #include <DeviceTypeConfig.h>
+#include <cmath>
 
 
 namespace dftfe
@@ -187,7 +188,15 @@ namespace dftfe
            const double *     Y,
            const unsigned int INCY,
            double *           result) const;
-
+      // Real dot proeuct with all Reduce call      
+      void
+      xdot(const unsigned int N,
+           const double *     X,
+           const unsigned int INCX,
+           const double *     Y,
+           const unsigned int INCY,
+           const MPI_Comm &   mpi_communicator,
+           double *           result) const;
 
       // Complex dot product
       void
@@ -202,7 +211,7 @@ namespace dftfe
       void
       xaxpy(const unsigned int n,
             const double *     alpha,
-            double *           x,
+            const double *           x,
             const unsigned int incx,
             double *           y,
             const unsigned int incy) const;
@@ -211,7 +220,7 @@ namespace dftfe
       void
       xaxpy(const unsigned int          n,
             const std::complex<double> *alpha,
-            std::complex<double> *      x,
+            const std::complex<double> *      x,
             const unsigned int          incx,
             std::complex<double> *      y,
             const unsigned int          incy) const;
@@ -677,6 +686,17 @@ namespace dftfe
            const unsigned int INCY,
            double *           result) const;
 
+      //
+            // Real dot product
+      void
+      xdot(const unsigned int N,
+           const double *     X,
+           const unsigned int INCX,
+           const double *     Y,
+           const unsigned int INCY,
+           const MPI_Comm &   mpi_communicator,
+           double *           result) const;      
+
       // Complex dot product
       void
       xdot(const unsigned int          N,
@@ -690,7 +710,7 @@ namespace dftfe
       void
       xaxpy(const unsigned int n,
             const double *     alpha,
-            double *           x,
+            const double *           x,
             const unsigned int incx,
             double *           y,
             const unsigned int incy) const;
@@ -699,7 +719,7 @@ namespace dftfe
       void
       xaxpy(const unsigned int          n,
             const std::complex<double> *alpha,
-            std::complex<double> *      x,
+            const std::complex<double> *      x,
             const unsigned int          incx,
             std::complex<double> *      y,
             const unsigned int          incy) const;

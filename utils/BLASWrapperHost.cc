@@ -309,7 +309,7 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
       const unsigned int n,
       const double *     alpha,
-      double *           x,
+      const double *           x,
       const unsigned int incx,
       double *           y,
       const unsigned int incy) const
@@ -321,7 +321,7 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
       const unsigned int          n,
       const std::complex<double> *alpha,
-      std::complex<double> *      x,
+      const std::complex<double> *      x,
       const unsigned int          incx,
       std::complex<double> *      y,
       const unsigned int          incy) const
@@ -363,6 +363,15 @@ namespace dftfe
       dsymv_(&UPLO, &N, alpha, A, &LDA, X, &INCX, beta, C, &INCY);
     }
 
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::add(
+      double *               y,
+          const double *         x,
+          const double           alpha,
+          const dftfe::size_type size)
+    {
+      xaxpy(size, &alpha, x, 1, y, 1);
+    }      
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(

@@ -207,7 +207,7 @@ namespace dftfe
           d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
           d_densityInQuadValues[0],
-          kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
+          d_BLASWrapperPtr,
           true,
           d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
             d_dftParamsPtr->periodicZ && !d_dftParamsPtr->pinnedNodeForPBC,
@@ -958,7 +958,7 @@ namespace dftfe
           d_bQuadValuesAllAtoms,
           d_smearedChargeQuadratureIdElectro,
           d_densityInQuadValues[0],
-          kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
+          d_BLASWrapperPtr,
           false,
           false,
           d_dftParamsPtr->smearedNuclearCharges,

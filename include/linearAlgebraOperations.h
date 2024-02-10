@@ -139,7 +139,7 @@ namespace dftfe
     void
     daxpy_(const unsigned int *n,
            const double *      alpha,
-           double *            x,
+           const double *            x,
            const unsigned int *incx,
            double *            y,
            const unsigned int *incy);
@@ -407,7 +407,7 @@ namespace dftfe
     void
     zaxpy_(const unsigned int *        n,
            const std::complex<double> *alpha,
-           std::complex<double> *      x,
+           const std::complex<double> *      x,
            const unsigned int *        incx,
            std::complex<double> *      y,
            const unsigned int *        incy);

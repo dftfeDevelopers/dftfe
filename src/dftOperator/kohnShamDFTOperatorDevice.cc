@@ -17,12 +17,12 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <deviceKernelsGeneric.h>
-#include <DeviceAPICalls.h>
+#include <deviceKernelsGeneric.h> //KFIX ME 
+#include <DeviceAPICalls.h> 
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
-#include <DeviceBlasWrapper.h>
+#include <DeviceBlasWrapper.h> //KFIX ME
 #include <kohnShamDFTOperatorDevice.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>

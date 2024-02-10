@@ -103,7 +103,7 @@ namespace dftfe
           dummyMap,
           d_smearedChargeQuadratureIdElectro,
           charge,
-          d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
+          d_BLASWrapperPtr,
           false,
           false);
 #endif
