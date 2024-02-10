@@ -15,11 +15,10 @@
 // ---------------------------------------------------------------------
 //
 
-#ifndef densityCalculatorDevice_H_
-#define densityCalculatorDevice_H_
+#ifndef densityCalculator_H_
+#define densityCalculator_H_
 
 #include <headers.h>
-#include <operatorDevice.h>
 #include "dftParameters.h"
 #include "FEBasisOperations.h"
 

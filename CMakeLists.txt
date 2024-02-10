@@ -48,7 +48,7 @@ SET(TARGET_SRC
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/dft/densityCalculator.cc
-  ./src/dft/densityFirstOrderResponseCalculatorCPU.cc
+  ./src/dft/densityFirstOrderResponseCalculator.cc
   ./src/excManager/excDensityBaseClass.cpp
   ./src/excManager/excDensityLDAClass.cpp
   ./src/excManager/excWavefunctionBaseClass.cpp
@@ -168,7 +168,7 @@ SET(DEVICE_SRC
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDeviceKernels.cc
-  ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
+  ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
   ./src/dftOperator/operatorDevice.cc
   ./src/dftOperator/kohnShamDFTOperatorDevice.cc
   ./src/dft/solveVselfInBinsDevice.cc
@@ -197,7 +197,7 @@ SET(DEVICE_SRC
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDeviceKernels.cc
-  ./src/dft/densityFirstOrderResponseCalculatorDevice.cc
+  ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
   ./src/dftOperator/operatorDevice.cc
   ./src/dftOperator/kohnShamDFTOperatorDevice.cc
   ./src/dft/solveVselfInBinsDevice.cc

@@ -20,95 +20,79 @@
 #define densityFirstOrderResponseCalculator_H_
 
 #include "headers.h"
-#include "operator.h"
 #include "dftParameters.h"
+#include "FEBasisOperations.h"
 
-#if defined(DFTFE_WITH_DEVICE)
-#  include "operatorDevice.h"
-#  include "dftfeDataTypes.h"
-#endif
 
 namespace dftfe
 {
+  template <typename NumberType,dftfe::utils::MemorySpace memorySpace>
+  void
+  computeRhoFirstOrderResponse(
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &  X,
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> &  XPrime,
+    const unsigned int                             totalNumWaveFunctions,
+    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
+      &basisOperationsPtr,
+    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+      &                        BLASWrapperPtr,
+    const unsigned int         matrixFreeDofhandlerIndex,
+    const unsigned int         quadratureIndex,
+    const std::vector<double> &                    kPointWeights,
+    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesHam,
+    std::vector<dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &rhoResponseValuesFermiEnergy,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
+
+
   template <typename NumberType>
   void
-  computeRhoFirstOrderResponseCPU(
-    const NumberType *                             X,
-    const NumberType *                             XPrime,
-    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
-    const unsigned int                             totalNumWaveFunctions,
-    const unsigned int                             numLocalDofs,
-    operatorDFTClass &                             operatorMatrix,
-    const unsigned int                             matrixFreeDofhandlerIndex,
-    const dealii::DoFHandler<3> &                  dofHandler,
-    const unsigned int                             totalLocallyOwnedCells,
-    const unsigned int                             numberNodesPerElement,
-    const unsigned int                             numQuadPoints,
-    const std::vector<double> &                    kPointWeights,
-    std::map<dealii::CellId, std::vector<double>> &rhoResponseValuesHam,
-    std::map<dealii::CellId, std::vector<double>> &rhoResponseValuesFermiEnergy,
-    std::map<dealii::CellId, std::vector<double>>
-      &rhoResponseValuesHamSpinPolarized,
-    std::map<dealii::CellId, std::vector<double>>
-      &                  rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams);
-
-  template <typename NumberType, typename NumberTypeLowPrec>
-  void
-  computeRhoFirstOrderResponseCPUMixedPrec(
-    const NumberType *                             X,
-    const NumberType *                             XPrime,
-    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
-    const unsigned int                             totalNumWaveFunctions,
-    const unsigned int                             numLocalDofs,
-    operatorDFTClass &                             operatorMatrix,
-    const unsigned int                             matrixFreeDofhandlerIndex,
-    const dealii::DoFHandler<3> &                  dofHandler,
-    const unsigned int                             totalLocallyOwnedCells,
-    const unsigned int                             numberNodesPerElement,
-    const unsigned int                             numQuadPoints,
-    const std::vector<double> &                    kPointWeights,
-    std::map<dealii::CellId, std::vector<double>> &rhoResponseValuesHam,
-    std::map<dealii::CellId, std::vector<double>> &rhoResponseValuesFermiEnergy,
-    std::map<dealii::CellId, std::vector<double>>
-      &rhoResponseValuesHamSpinPolarized,
-    std::map<dealii::CellId, std::vector<double>>
-      &                  rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams);
-
+  computeRhoResponseFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+      &                                         BLASWrapperPtr,
+    const std::pair<unsigned int, unsigned int> cellRange,
+    const std::pair<unsigned int, unsigned int> vecRange,
+    double *                                    onesVec,
+    double *                                    partialOccupVecPrime,
+    NumberType *                                wfcQuadPointData,
+    NumberType *                                wfcPrimeQuadPointData,
+    double *                                    rhoResponseHamCellsWfcContributions,
+    double *                                    rhoResponseFermiEnergyCellsWfcContributions,
+    double *                                    rhoResponseHam,
+    double *                                    rhoResponseFermiEnergy);
 
 #if defined(DFTFE_WITH_DEVICE)
-  template <typename NumberType, typename NumberTypeLowPrec>
+  template <typename NumberType>
   void
-  computeRhoFirstOrderResponseDevice(
-    const NumberType *                             X,
-    const NumberType *                             XPrime,
-    const std::vector<std::vector<double>> &       densityMatDerFermiEnergy,
-    const unsigned int                             totalNumWaveFunctions,
-    const unsigned int                             numLocalDofs,
-    operatorDFTDeviceClass &                       operatorMatrix,
-    const unsigned int                             matrixFreeDofhandlerIndex,
-    const dealii::DoFHandler<3> &                  dofHandler,
-    const unsigned int                             totalLocallyOwnedCells,
-    const unsigned int                             numberNodesPerElement,
-    const unsigned int                             numQuadPoints,
-    const std::vector<double> &                    kPointWeights,
-    std::map<dealii::CellId, std::vector<double>> &rhoResponseValuesHam,
-    std::map<dealii::CellId, std::vector<double>> &rhoResponseValuesFermiEnergy,
-    std::map<dealii::CellId, std::vector<double>>
-      &rhoResponseValuesHamSpinPolarized,
-    std::map<dealii::CellId, std::vector<double>>
-      &                  rhoResponseValuesFermiEnergySpinPolarized,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams);
+  computeRhoResponseFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<NumberType,
+                                      double,
+                                      dftfe::utils::MemorySpace::DEVICE>>
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                                         BLASWrapperPtr,
+    const std::pair<unsigned int, unsigned int> cellRange,
+    const std::pair<unsigned int, unsigned int> vecRange,
+    double *                                    onesVec,
+    double *                                    partialOccupVecPrime,
+    NumberType *                                wfcQuadPointData,
+    NumberType *                                wfcPrimeQuadPointData,
+    double *                                    rhoResponseHamCellsWfcContributions,
+    double *                                    rhoResponseFermiEnergyCellsWfcContributions,
+    double *                                    rhoResponseHam,
+    double *                                    rhoResponseFermiEnergy);
 #endif
+
 } // namespace dftfe
 #endif

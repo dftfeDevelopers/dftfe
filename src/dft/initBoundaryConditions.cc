@@ -306,14 +306,14 @@ namespace dftfe
                                      bandGroupLowHighPlusOneIndices[1]);
 
         d_basisOperationsPtrHost->createScratchMultiVectors(
-          BVec, (d_dftParamsPtr->spinPolarized + 1));
+          BVec, (d_dftParamsPtr->spinPolarized + 1)*2);
         if (d_numEigenValues % BVec != 0)
           d_basisOperationsPtrHost->createScratchMultiVectors(
-            d_numEigenValues % BVec, (d_dftParamsPtr->spinPolarized + 1));
+            d_numEigenValues % BVec, (d_dftParamsPtr->spinPolarized + 1)*2);
         if (d_numEigenValues != d_numEigenValuesRR &&
             d_numEigenValuesRR % BVec != 0)
           d_basisOperationsPtrHost->createScratchMultiVectors(
-            d_numEigenValuesRR % BVec, (d_dftParamsPtr->spinPolarized + 1));
+            d_numEigenValuesRR % BVec, (d_dftParamsPtr->spinPolarized + 1)*2);
       }
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice && recomputeBasisData)
@@ -325,11 +325,8 @@ namespace dftfe
             const unsigned int BVec =
               std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
-            if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-              d_basisOperationsPtrDevice->createScratchMultiVectors(BVec, 2);
-            else
-              d_basisOperationsPtrDevice->createScratchMultiVectors(
-                BVec, (d_dftParamsPtr->spinPolarized + 1));
+            d_basisOperationsPtrDevice->createScratchMultiVectors(
+                BVec, (d_dftParamsPtr->spinPolarized + 1)*2);
             d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
               d_feOrderPlusOneQuadratureId, 50, true, false);
           }
@@ -371,11 +368,8 @@ namespace dftfe
         const unsigned int BVec =
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
-        if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-          d_basisOperationsPtrDevice->createScratchMultiVectors(BVec, 2);
-        else
-          d_basisOperationsPtrDevice->createScratchMultiVectors(
-            BVec, (d_dftParamsPtr->spinPolarized + 1));
+        d_basisOperationsPtrDevice->createScratchMultiVectors(
+            BVec, (d_dftParamsPtr->spinPolarized + 1)*2);
       }
 #endif
 
