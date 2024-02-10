@@ -29,6 +29,8 @@
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceBlasWrapper.h>
 
+
+
 namespace dftfe
 {
   namespace forceDevice
@@ -423,7 +425,10 @@ namespace dftfe
           dftfe::basis::FEBasisOperations<dataTypes::number,
                                           double,
                                           dftfe::utils::MemorySpace::DEVICE>>
-          &                                      basisOperationsPtr,
+          &basisOperationsPtr,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+          &                                      BLASWrapperPtr,
         operatorDFTDeviceClass &                 operatorMatrix,
         distributedDeviceVec<dataTypes::number> &Xb,
         const unsigned int                       BVec,
@@ -605,7 +610,7 @@ namespace dftfe
 
 
                     dftfe::utils::deviceBlasWrapper::gemm(
-                      operatorMatrix.getDeviceBlasHandle(),
+                      BLASWrapperPtr->getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
                       1,
@@ -629,7 +634,7 @@ namespace dftfe
                     const int strideBNLP = 0;
 
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                      operatorMatrix.getDeviceBlasHandle(),
+                      BLASWrapperPtr->getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
@@ -652,7 +657,7 @@ namespace dftfe
 
                     // shapeGradRef^T*invJacobian^T
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                      operatorMatrix.getDeviceBlasHandle(),
+                      BLASWrapperPtr->getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
                       numNodesPerElement,
@@ -683,7 +688,7 @@ namespace dftfe
                       numNodesPerElement * 3 * numQuadsNLP;
 
                     dftfe::utils::deviceBlasWrapper::gemmStridedBatched(
-                      operatorMatrix.getDeviceBlasHandle(),
+                      BLASWrapperPtr->getDeviceBlasHandle(),
                       dftfe::utils::DEVICEBLAS_OP_N,
                       dftfe::utils::DEVICEBLAS_OP_N,
                       BVec,
@@ -711,6 +716,9 @@ namespace dftfe
       void
       nlpPsiContractionD(
         operatorDFTDeviceClass &operatorMatrix,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+          &BLASWrapperPtr,
 #ifdef USE_COMPLEX
         const dftfe::utils::MemoryStorage<dataTypes::number,
                                           dftfe::utils::MemorySpace::DEVICE>
@@ -814,7 +822,7 @@ namespace dftfe
 #endif
 
                 dftfe::utils::deviceBlasWrapper::gemm(
-                  operatorMatrix.getDeviceBlasHandle(),
+                  BLASWrapperPtr->getDeviceBlasHandle(),
                   dftfe::utils::DEVICEBLAS_OP_N,
                   dftfe::utils::DEVICEBLAS_OP_N,
                   1,
@@ -891,7 +899,7 @@ namespace dftfe
 #  endif
 
                 dftfe::utils::deviceBlasWrapper::gemm(
-                  operatorMatrix.getDeviceBlasHandle(),
+                  BLASWrapperPtr->getDeviceBlasHandle(),
                   dftfe::utils::DEVICEBLAS_OP_N,
                   dftfe::utils::DEVICEBLAS_OP_N,
                   1,
@@ -935,7 +943,10 @@ namespace dftfe
           dftfe::basis::FEBasisOperations<dataTypes::number,
                                           double,
                                           dftfe::utils::MemorySpace::DEVICE>>
-          &                                      basisOperationsPtr,
+          &basisOperationsPtr,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+          &                                      BLASWrapperPtr,
         operatorDFTDeviceClass &                 operatorMatrix,
         distributedDeviceVec<dataTypes::number> &deviceFlattenedArrayBlock,
         distributedDeviceVec<dataTypes::number> &projectorKetTimesVectorD,
@@ -1033,6 +1044,7 @@ namespace dftfe
         // double kernel1_time = MPI_Wtime();
 
         interpolatePsiComputeELocWfcEshelbyTensorD(basisOperationsPtr,
+                                                   BLASWrapperPtr,
                                                    operatorMatrix,
                                                    deviceFlattenedArrayBlock,
                                                    numPsi,
@@ -1097,6 +1109,7 @@ namespace dftfe
               {
                 nlpPsiContractionD(
                   operatorMatrix,
+                  BLASWrapperPtr,
 #ifdef USE_COMPLEX
                   psiQuadsNLPD,
 #endif
@@ -1139,7 +1152,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::DEVICE>>
-        &                                     basisOperationsPtr,
+        &basisOperationsPtr,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                     BLASWrapperPtr,
       operatorDFTDeviceClass &                operatorMatrix,
       const dataTypes::number *               X,
       const unsigned int                      spinPolarizedFlag,
@@ -1361,6 +1377,7 @@ namespace dftfe
 
                   devicePortedForceKernelsAllD(
                     basisOperationsPtr,
+                    BLASWrapperPtr,
                     operatorMatrix,
                     deviceFlattenedArrayBlock,
                     projectorKetTimesVectorD,

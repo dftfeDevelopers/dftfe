@@ -59,8 +59,6 @@ namespace dftfe
     void
     destroyDeviceBlasHandle();
 
-    dftfe::utils::deviceBlasHandle_t &
-    getDeviceBlasHandle();
 
     const double *
     getSqrtMassVec();

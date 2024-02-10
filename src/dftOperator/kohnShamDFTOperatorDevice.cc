@@ -310,12 +310,7 @@ namespace dftfe
     dftfe::utils::deviceBlasWrapper::destroy(d_deviceBlasHandle);
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::deviceBlasHandle_t &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getDeviceBlasHandle()
-  {
-    return d_deviceBlasHandle;
-  }
+
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const double *

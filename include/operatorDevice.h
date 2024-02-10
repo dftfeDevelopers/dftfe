@@ -65,9 +65,6 @@ namespace dftfe
     virtual void
     destroyDeviceBlasHandle() = 0;
 
-    virtual dftfe::utils::deviceBlasHandle_t &
-    getDeviceBlasHandle() = 0;
-
     virtual const double *
     getSqrtMassVec() = 0;
 

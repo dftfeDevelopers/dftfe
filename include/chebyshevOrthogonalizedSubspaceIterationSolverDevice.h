@@ -25,6 +25,7 @@
 #    include "operatorDevice.h"
 #    include "elpaScalaManager.h"
 #    include "dftParameters.h"
+#    include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -58,9 +59,11 @@ namespace dftfe
      * @brief Solve a generalized eigen problem.
      */
     double
-    solve(operatorDFTDeviceClass & operatorMatrix,
-          elpaScalaManager &       elpaScala,
-          dataTypes::number *      eigenVectorsFlattenedDevice,
+    solve(operatorDFTDeviceClass &               operatorMatrix,
+          const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
+            dftfe::utils::MemorySpace::DEVICE>> &BLASWrapperPtr,
+          elpaScalaManager &                     elpaScala,
+          dataTypes::number *                    eigenVectorsFlattenedDevice,
           dataTypes::number *      eigenVectorsRotFracDensityFlattenedDevice,
           const unsigned int       flattenedSize,
           const unsigned int       totalNumberWaveFunctions,
@@ -78,8 +81,10 @@ namespace dftfe
      * @brief Used for XL-BOMD.
      */
     void
-    solveNoRR(operatorDFTDeviceClass & operatorMatrix,
-              elpaScalaManager &       elpaScala,
+    solveNoRR(operatorDFTDeviceClass &               operatorMatrix,
+              const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
+                dftfe::utils::MemorySpace::DEVICE>> &BLASWrapperPtr,
+              elpaScalaManager &                     elpaScala,
               dataTypes::number *      eigenVectorsFlattenedDevice,
               const unsigned int       flattenedSize,
               const unsigned int       totalNumberWaveFunctions,
@@ -95,7 +100,10 @@ namespace dftfe
      */
     void
     densityMatrixEigenBasisFirstOrderResponse(
-      operatorDFTDeviceClass &   operatorMatrix,
+      operatorDFTDeviceClass &operatorMatrix,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                        BLASWrapperPtr,
       dataTypes::number *        eigenVectorsFlattenedDevice,
       const unsigned int         flattenedSize,
       const unsigned int         totalNumberWaveFunctions,
