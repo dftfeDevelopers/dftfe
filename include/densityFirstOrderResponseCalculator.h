@@ -67,7 +67,7 @@ namespace dftfe
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     double *                                    onesVec,
-    double *                                    partialOccupVecPrime,
+    double *                                    partialOccupPrimeVec,
     NumberType *                                wfcQuadPointData,
     NumberType *                                wfcPrimeQuadPointData,
     double *rhoResponseHamCellsWfcContributions,

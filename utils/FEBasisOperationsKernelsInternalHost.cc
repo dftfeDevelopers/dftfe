@@ -16,7 +16,11 @@
 //
 
 #include <FEBasisOperationsKernelsInternal.h>
-
+#include <TypeConfig.h>
+#include <complex>
+#include <vector>
+#include <cstring>
+#include <algorithm>
 
 namespace dftfe
 {

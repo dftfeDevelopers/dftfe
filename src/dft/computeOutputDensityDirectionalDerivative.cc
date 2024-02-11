@@ -502,7 +502,7 @@ namespace dftfe
     if (d_dftParamsPtr->useDevice)
       {
         computeRhoFirstOrderResponse(d_eigenVectorsFlattenedDevice,
-                                     d_eigenVectorsDensityMatrixPrimeDevice,
+                                     d_eigenVectorsDensityMatrixPrimeFlattenedDevice,
                                      d_numEigenValues,
                                      d_densityMatDerFermiEnergy,
                                      d_basisOperationsPtrDevice,
@@ -525,7 +525,7 @@ namespace dftfe
                                      d_numEigenValues,
                                      d_densityMatDerFermiEnergy,
                                      d_basisOperationsPtrHost,
-                                     d_BLASWrapperPtr,
+                                     d_BLASWrapperPtrHost,
                                      d_densityDofHandlerIndex,
                                      d_gllQuadratureId,
                                      d_kPointWeights,

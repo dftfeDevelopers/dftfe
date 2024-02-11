@@ -17,13 +17,15 @@
 #ifndef dftfeFEBasisOperationsKernelsInternal_h
 #define dftfeFEBasisOperationsKernelsInternal_h
 
+#include <TypeConfig.h>
+#include <BLASWrapper.h>
 #ifdef DFTFE_WITH_DEVICE
-#  include <TypeConfig.h>
 #  include <DeviceAPICalls.h>
 #  include <DeviceTypeConfig.h>
 #  include <DeviceKernelLauncherConstants.h>
 #  include <DeviceDataTypeOverloads.h>
-#  include <BLASWrapper.h>
+#endif // DFTFE_WITH_DEVICE
+
 namespace dftfe
 {
   namespace basis
@@ -84,5 +86,4 @@ namespace dftfe
   }   // namespace basis
 } // namespace dftfe
 
-#endif // DFTFE_WITH_DEVICE
 #endif // dftfeFEBasisOperationsKernelsInternal_h
