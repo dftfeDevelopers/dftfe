@@ -282,7 +282,7 @@ namespace dftfe
                     flattenedArrayBlock[numSpinComponents + spinIndex]
                       ->updateGhostValues();
                     basisOperationsPtr->distribute(
-                      *(flattenedArrayBlock[spinIndex]));
+                      *(flattenedArrayBlock[numSpinComponents + spinIndex]));
                   }
 
                 for (int iblock = 0; iblock < (numCellBlocks + 1); iblock++)
