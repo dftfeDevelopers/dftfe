@@ -179,6 +179,7 @@ namespace dftfe
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    double *                                    onesVec,
     double *                                    partialOccupVec,
     dataTypes::number *                         wfcQuadPointData,
     dataTypes::number *                         wfcPrimeQuadPointData,
