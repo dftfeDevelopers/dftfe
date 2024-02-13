@@ -501,21 +501,22 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       {
-        computeRhoFirstOrderResponse(d_eigenVectorsFlattenedDevice,
-                                     d_eigenVectorsDensityMatrixPrimeFlattenedDevice,
-                                     d_numEigenValues,
-                                     d_densityMatDerFermiEnergy,
-                                     d_basisOperationsPtrDevice,
-                                     d_BLASWrapperPtr,
-                                     d_densityDofHandlerIndex,
-                                     d_gllQuadratureId,
-                                     d_kPointWeights,
-                                     rhoResponseHamPRefinedNodalData,
-                                     rhoResponseFermiEnergyPRefinedNodalData,
-                                     d_mpiCommParent,
-                                     interpoolcomm,
-                                     interBandGroupComm,
-                                     *d_dftParamsPtr);
+        computeRhoFirstOrderResponse(
+          d_eigenVectorsFlattenedDevice,
+          d_eigenVectorsDensityMatrixPrimeFlattenedDevice,
+          d_numEigenValues,
+          d_densityMatDerFermiEnergy,
+          d_basisOperationsPtrDevice,
+          d_BLASWrapperPtr,
+          d_densityDofHandlerIndex,
+          d_gllQuadratureId,
+          d_kPointWeights,
+          rhoResponseHamPRefinedNodalData,
+          rhoResponseFermiEnergyPRefinedNodalData,
+          d_mpiCommParent,
+          interpoolcomm,
+          interBandGroupComm,
+          *d_dftParamsPtr);
       }
 #endif
     if (!d_dftParamsPtr->useDevice)
