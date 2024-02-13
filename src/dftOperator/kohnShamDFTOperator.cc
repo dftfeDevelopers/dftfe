@@ -395,15 +395,6 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const std::vector<double> &
   kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionValuesDensityGaussQuad() const
-  {
-    return d_densityGaussQuadShapeFunctionValues;
-  }
-
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::vector<double> &
-  kohnShamDFTOperatorClass<FEOrder, FEOrderElectro>::
     getShapeFunctionGradValuesDensityGaussQuad() const
   {
     return d_densityGaussQuadShapeFunctionGradientValues;

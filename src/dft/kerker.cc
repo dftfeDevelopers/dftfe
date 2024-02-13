@@ -80,13 +80,11 @@ namespace dftfe
         d_dftParamsPtr->poissonGPU)
       {
 #ifdef DFTFE_WITH_DEVICE
-        CGSolverDevice.solve(
-          kerkerPreconditionedResidualSolverProblemDevice,
-          d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
-          d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
-          d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle(),
-          d_dftParamsPtr->verbosity,
-          false);
+        CGSolverDevice.solve(kerkerPreconditionedResidualSolverProblemDevice,
+                             d_dftParamsPtr->absLinearSolverToleranceHelmholtz,
+                             d_dftParamsPtr->maxLinearSolverIterationsHelmholtz,
+                             d_dftParamsPtr->verbosity,
+                             false);
 #endif
       }
     else

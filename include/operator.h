@@ -263,10 +263,6 @@ namespace dftfe
     virtual distributedCPUMultiVec<dataTypes::number> &
     getParallelProjectorKetTimesBlockVector() = 0;
 
-
-    virtual const std::vector<double> &
-    getShapeFunctionValuesDensityGaussQuad() const = 0;
-
     virtual const std::vector<double> &
     getShapeFunctionGradValuesDensityGaussQuad() const = 0;
 

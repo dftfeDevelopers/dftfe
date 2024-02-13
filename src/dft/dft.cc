@@ -1038,11 +1038,30 @@ namespace dftfe
 
     d_BLASWrapperPtrHost = std::make_shared<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
+    d_basisOperationsPtrHost = std::make_shared<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>(
+      d_BLASWrapperPtrHost);
+    d_basisOperationsPtrElectroHost = std::make_shared<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
+      d_BLASWrapperPtrHost);
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice)
       {
         d_BLASWrapperPtr = std::make_shared<dftfe::linearAlgebra::BLASWrapper<
           dftfe::utils::MemorySpace::DEVICE>>();
+        d_basisOperationsPtrDevice = std::make_shared<
+          dftfe::basis::FEBasisOperations<dataTypes::number,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>(
+          d_BLASWrapperPtr);
+        d_basisOperationsPtrElectroDevice = std::make_shared<
+          dftfe::basis::FEBasisOperations<double,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>(
+          d_BLASWrapperPtr);
       }
 #endif
     initImageChargesUpdateKPoints();
@@ -1423,8 +1442,7 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     init_pseudo = MPI_Wtime();
 
-    initPseudoPotentialAll(d_dftParamsPtr->floatingNuclearCharges ? true :
-                                                                    false);
+    initPseudoPotentialAll();
 
     MPI_Barrier(d_mpiCommParent);
     init_pseudo = MPI_Wtime() - init_pseudo;
@@ -1772,12 +1790,6 @@ namespace dftfe
     if (d_dftParamsPtr->writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
 
-    /*if (d_dftParamsPtr->computeDipoleMoment)
-      {
-        dipole(d_dofHandlerPRefined, rhoOutValues, false);
-        dipole(d_dofHandlerPRefined, rhoOutValues, true);
-      } */
-
     if (d_dftParamsPtr->verbosity >= 1)
       pcout
         << std::endl
@@ -1843,8 +1855,6 @@ namespace dftfe
         if (initializeCublas)
           {
             kohnShamDFTEigenOperatorDevice.createDeviceBlasHandle();
-            d_basisOperationsPtrDevice->setDeviceBLASHandle(
-              &(kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle()));
           }
 
         AssertThrow(
@@ -1945,9 +1955,6 @@ namespace dftfe
 
         d_kohnShamDFTOperatorDevicePtr->reinit(
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues), true);
-
-        d_basisOperationsPtrDevice->setDeviceBLASHandle(
-          &(d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle()));
       }
 #endif
   }
@@ -2010,7 +2017,8 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     linearSolverCGDevice CGSolverDevice(d_mpiCommParent,
                                         mpi_communicator,
-                                        linearSolverCGDevice::CG);
+                                        linearSolverCGDevice::CG,
+                                        d_BLASWrapperPtr);
 #endif
 
     //
@@ -2074,7 +2082,10 @@ namespace dftfe
         d_baseDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_binsStartDofHandlerIndexElectro,
-        kohnShamDFTEigenOperatorDevice,
+        FEOrder == FEOrderElectro ?
+          d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
+          d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
+        d_BLASWrapperPtr,
         d_constraintsPRefined,
         d_imagePositionsTrunc,
         d_imageIdsTrunc,
@@ -2517,7 +2528,7 @@ namespace dftfe
                 d_bQuadValuesAllAtoms,
                 d_smearedChargeQuadratureIdElectro,
                 d_densityInQuadValues[0],
-                kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
+                d_BLASWrapperPtr,
                 false,
                 false,
                 d_dftParamsPtr->smearedNuclearCharges,
@@ -2539,7 +2550,7 @@ namespace dftfe
                   d_bQuadValuesAllAtoms,
                   d_smearedChargeQuadratureIdElectro,
                   d_densityInQuadValues[0],
-                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
+                  d_BLASWrapperPtr,
                   true,
                   d_dftParamsPtr->periodicX && d_dftParamsPtr->periodicY &&
                     d_dftParamsPtr->periodicZ &&
@@ -2606,12 +2617,10 @@ namespace dftfe
             not d_dftParamsPtr->pinnedNodeForPBC)
           {
 #ifdef DFTFE_WITH_DEVICE
-            CGSolverDevice.solve(
-              d_phiTotalSolverProblemDevice,
-              d_dftParamsPtr->absLinearSolverTolerance,
-              d_dftParamsPtr->maxLinearSolverIterations,
-              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-              d_dftParamsPtr->verbosity);
+            CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                                 d_dftParamsPtr->absLinearSolverTolerance,
+                                 d_dftParamsPtr->maxLinearSolverIterations,
+                                 d_dftParamsPtr->verbosity);
 #endif
           }
         else
@@ -3366,7 +3375,7 @@ namespace dftfe
                   d_bQuadValuesAllAtoms,
                   d_smearedChargeQuadratureIdElectro,
                   d_densityOutQuadValues[0],
-                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
+                  d_BLASWrapperPtr,
                   false,
                   false,
                   d_dftParamsPtr->smearedNuclearCharges,
@@ -3376,12 +3385,10 @@ namespace dftfe
                   false,
                   true);
 
-                CGSolverDevice.solve(
-                  d_phiTotalSolverProblemDevice,
-                  d_dftParamsPtr->absLinearSolverTolerance,
-                  d_dftParamsPtr->maxLinearSolverIterations,
-                  kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-                  d_dftParamsPtr->verbosity);
+                CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                                     d_dftParamsPtr->absLinearSolverTolerance,
+                                     d_dftParamsPtr->maxLinearSolverIterations,
+                                     d_dftParamsPtr->verbosity);
 #endif
               }
             else
@@ -3585,7 +3592,7 @@ namespace dftfe
               d_bQuadValuesAllAtoms,
               d_smearedChargeQuadratureIdElectro,
               d_densityOutQuadValues[0],
-              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
+              d_BLASWrapperPtr,
               false,
               false,
               d_dftParamsPtr->smearedNuclearCharges,
@@ -3595,12 +3602,10 @@ namespace dftfe
               false,
               true);
 
-            CGSolverDevice.solve(
-              d_phiTotalSolverProblemDevice,
-              d_dftParamsPtr->absLinearSolverTolerance,
-              d_dftParamsPtr->maxLinearSolverIterations,
-              kohnShamDFTEigenOperatorDevice.getDeviceBlasHandle(),
-              d_dftParamsPtr->verbosity);
+            CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
+                                 d_dftParamsPtr->absLinearSolverTolerance,
+                                 d_dftParamsPtr->maxLinearSolverIterations,
+                                 d_dftParamsPtr->verbosity);
 #endif
           }
         else
@@ -3811,11 +3816,6 @@ namespace dftfe
 #endif
         );
       }
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice)
-      d_basisOperationsPtrDevice->setDeviceBLASHandle(
-        &(d_kohnShamDFTOperatorDevicePtr->getDeviceBlasHandle()));
-#endif
 
     forcePtr->computeStress(matrix_free_data,
 #ifdef DFTFE_WITH_DEVICE
@@ -3903,13 +3903,6 @@ namespace dftfe
                        false,
                        d_dftParamsPtr->verbosity >= 4 ? true : false);
 
-#ifdef DFTFE_WITH_DEVICE
-          if (d_dftParamsPtr->useDevice)
-            kohnShamDFTEigenOperatorDevice
-              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
-                                                        true);
-#endif
-
           computing_timer.enter_subsection(
             "Nuclear self-potential perturbation solve");
 
@@ -3919,7 +3912,10 @@ namespace dftfe
             d_phiTotAXQuadratureIdElectro,
             d_binsStartDofHandlerIndexElectro,
 #ifdef DFTFE_WITH_DEVICE
-            kohnShamDFTEigenOperatorDevice,
+            FEOrder == FEOrderElectro ?
+              d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
+              d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
+            d_BLASWrapperPtr,
 #endif
             d_constraintsPRefined,
             d_imagePositionsTrunc,
@@ -3955,13 +3951,6 @@ namespace dftfe
                        false,
                        d_dftParamsPtr->verbosity >= 4 ? true : false);
 
-#ifdef DFTFE_WITH_DEVICE
-          if (d_dftParamsPtr->useDevice)
-            kohnShamDFTEigenOperatorDevice
-              .preComputeShapeFunctionGradientIntegrals(d_lpspQuadratureId,
-                                                        true);
-#endif
-
           computing_timer.enter_subsection(
             "Nuclear self-potential perturbation solve");
 
@@ -3971,7 +3960,10 @@ namespace dftfe
             d_phiTotAXQuadratureIdElectro,
             d_binsStartDofHandlerIndexElectro,
 #ifdef DFTFE_WITH_DEVICE
-            kohnShamDFTEigenOperatorDevice,
+            FEOrder == FEOrderElectro ?
+              d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
+              d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
+            d_BLASWrapperPtr,
 #endif
             d_constraintsPRefined,
             d_imagePositionsTrunc,
@@ -4006,12 +3998,6 @@ namespace dftfe
                  true,
                  false,
                  d_dftParamsPtr->verbosity >= 4 ? true : false);
-
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice)
-      kohnShamDFTEigenOperatorDevice.preComputeShapeFunctionGradientIntegrals(
-        d_lpspQuadratureId, true);
-#endif
   }
 
   // Output wfc

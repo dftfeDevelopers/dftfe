@@ -434,9 +434,6 @@ node is stored
     getParallelProjectorKetTimesBlockVector();
 
     const std::vector<double> &
-    getShapeFunctionValuesDensityGaussQuad() const;
-
-    const std::vector<double> &
     getShapeFunctionGradValuesDensityGaussQuad() const;
 
     const std::vector<double> &

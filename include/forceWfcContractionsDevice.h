@@ -23,6 +23,7 @@
 #    include "operatorDevice.h"
 #    include "dftParameters.h"
 #    include "FEBasisOperations.h"
+#    include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -34,7 +35,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::DEVICE>>
-        &                                     basisOperationsPtr,
+        &basisOperationsPtr,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                     BLASWrapperPtr,
       operatorDFTDeviceClass &                operatorMatrix,
       const dataTypes::number *               X,
       const unsigned int                      spinPolarizedFlag,

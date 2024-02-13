@@ -269,11 +269,7 @@ namespace dftfe
       {
         if (!vselfPerturbationUpdateForStress)
           {
-            d_basisOperationsPtrHost = std::make_shared<
-              dftfe::basis::FEBasisOperations<dataTypes::number,
-                                              double,
-                                              dftfe::utils::MemorySpace::HOST>>(
-              matrix_free_data, d_constraintsVector, d_BLASWrapperPtrHost);
+            d_basisOperationsPtrHost->clear();
             dftfe::basis::UpdateFlags updateFlagsAll =
               dftfe::basis::update_values | dftfe::basis::update_jxw |
               dftfe::basis::update_inversejacobians |
@@ -291,9 +287,13 @@ namespace dftfe
                                                                updateFlagsAll,
                                                                updateFlagsAll,
                                                                updateFlagsAll};
-            d_basisOperationsPtrHost->init(d_densityDofHandlerIndex,
+            d_basisOperationsPtrHost->init(matrix_free_data,
+                                           d_constraintsVector,
+                                           d_densityDofHandlerIndex,
                                            quadratureIndices,
                                            updateFlags);
+            d_basisOperationsPtrHost->computeCellStiffnessMatrix(
+              d_feOrderPlusOneQuadratureId, 1, true, false);
           }
       }
     if (!d_dftParamsPtr->useDevice && recomputeBasisData)
@@ -306,36 +306,29 @@ namespace dftfe
                                      bandGroupLowHighPlusOneIndices[1]);
 
         d_basisOperationsPtrHost->createScratchMultiVectors(
-          BVec, (d_dftParamsPtr->spinPolarized + 1));
+          BVec, (d_dftParamsPtr->spinPolarized + 1) * 2);
         if (d_numEigenValues % BVec != 0)
           d_basisOperationsPtrHost->createScratchMultiVectors(
-            d_numEigenValues % BVec, (d_dftParamsPtr->spinPolarized + 1));
+            d_numEigenValues % BVec, (d_dftParamsPtr->spinPolarized + 1) * 2);
         if (d_numEigenValues != d_numEigenValuesRR &&
             d_numEigenValuesRR % BVec != 0)
           d_basisOperationsPtrHost->createScratchMultiVectors(
-            d_numEigenValuesRR % BVec, (d_dftParamsPtr->spinPolarized + 1));
+            d_numEigenValuesRR % BVec, (d_dftParamsPtr->spinPolarized + 1) * 2);
       }
 #if defined(DFTFE_WITH_DEVICE)
     if (d_dftParamsPtr->useDevice && recomputeBasisData)
       {
         if (!vselfPerturbationUpdateForStress)
           {
-            d_basisOperationsPtrDevice =
-              std::make_shared<dftfe::basis::FEBasisOperations<
-                dataTypes::number,
-                double,
-                dftfe::utils::MemorySpace::DEVICE>>(matrix_free_data,
-                                                    d_constraintsVector,
-                                                    d_BLASWrapperPtr);
+            d_basisOperationsPtrDevice->clear();
             d_basisOperationsPtrDevice->init(*d_basisOperationsPtrHost);
             const unsigned int BVec =
               std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
-            if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-              d_basisOperationsPtrDevice->createScratchMultiVectors(BVec, 2);
-            else
-              d_basisOperationsPtrDevice->createScratchMultiVectors(
-                BVec, (d_dftParamsPtr->spinPolarized + 1));
+            d_basisOperationsPtrDevice->createScratchMultiVectors(
+              BVec, (d_dftParamsPtr->spinPolarized + 1) * 2);
+            d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
+              d_feOrderPlusOneQuadratureId, 50, true, false);
           }
         else
           {
@@ -358,9 +351,14 @@ namespace dftfe
               updateFlagsValuesGradients,
               updateFlagsAll,
               updateFlagsGradientsAndInvJacobians};
-            d_basisOperationsPtrDevice->init(d_densityDofHandlerIndex,
+            d_basisOperationsPtrDevice->init(matrix_free_data,
+                                             d_constraintsVector,
+                                             d_densityDofHandlerIndex,
                                              quadratureIndices,
                                              updateFlags);
+            if (FEOrder == FEOrderElectro)
+              d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
+                d_feOrderPlusOneQuadratureId, 50, true, false);
           }
       }
     else if (d_dftParamsPtr->useDevice)
@@ -369,11 +367,8 @@ namespace dftfe
         const unsigned int BVec =
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
-        if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-          d_basisOperationsPtrDevice->createScratchMultiVectors(BVec, 2);
-        else
-          d_basisOperationsPtrDevice->createScratchMultiVectors(
-            BVec, (d_dftParamsPtr->spinPolarized + 1));
+        d_basisOperationsPtrDevice->createScratchMultiVectors(
+          BVec, (d_dftParamsPtr->spinPolarized + 1) * 2);
       }
 #endif
 

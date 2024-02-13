@@ -248,50 +248,6 @@ kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
   const unsigned int numberPhysicalCells =
     dftPtr->matrix_free_data.n_physical_cells();
 
-  dftfe::utils::deviceSynchronize();
-  MPI_Barrier(d_mpiCommParent);
-  double device_time = MPI_Wtime();
-
-
-  d_basisOperationsPtrDevice->reinit(0,
-                                     0,
-                                     dftPtr->d_feOrderPlusOneQuadratureId);
-  unsigned int numberQuadraturePointsPlusOne =
-    d_basisOperationsPtrDevice->nQuadsPerCell();
-  shapeFuncDevice::computeShapeGradNINJIntegral(
-    d_basisOperationsPtrDevice,
-    d_cellShapeFunctionGradientIntegralFlattenedDevice);
-
-  dftfe::utils::deviceSynchronize();
-  MPI_Barrier(d_mpiCommParent);
-  device_time = MPI_Wtime() - device_time;
-
-  if (this_mpi_process == 0 && dftPtr->d_dftParamsPtr->verbosity >= 2)
-    std::cout
-      << "Time for shapeFuncDevice::computeShapeGradNINJIntegral for FEOrder: "
-      << device_time << std::endl;
-
-  if (FEOrderElectro != FEOrder)
-    {
-      dftfe::utils::deviceSynchronize();
-      MPI_Barrier(d_mpiCommParent);
-      device_time = MPI_Wtime();
-
-      dftPtr->d_basisOperationsPtrElectroDevice->reinit(
-        0, 0, dftPtr->d_phiTotAXQuadratureIdElectro);
-      shapeFuncDevice::computeShapeGradNINJIntegral(
-        dftPtr->d_basisOperationsPtrElectroDevice,
-        d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro);
-
-      dftfe::utils::deviceSynchronize();
-      MPI_Barrier(d_mpiCommParent);
-      device_time = MPI_Wtime() - device_time;
-
-      if (this_mpi_process == 0 && dftPtr->d_dftParamsPtr->verbosity >= 2)
-        std::cout
-          << "Time for shapeFuncDevice::computeShapeGradNINJIntegral for FEOrderElectro: "
-          << device_time << std::endl;
-    }
   if (!onlyUpdateGradNiNjIntegral)
     {
       dealii::QIterated<3> quadratureNLP(dealii::QGauss<1>(

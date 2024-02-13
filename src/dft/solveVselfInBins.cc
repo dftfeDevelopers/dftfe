@@ -822,11 +822,15 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                                      basisOperationsPtr,
-    const unsigned int                       mfBaseDofHandlerIndex,
-    const unsigned int                       matrixFreeQuadratureIdAX,
-    const unsigned int                       offset,
-    operatorDFTDeviceClass &                 operatorMatrix,
+      &                basisOperationsPtr,
+    const unsigned int mfBaseDofHandlerIndex,
+    const unsigned int matrixFreeQuadratureIdAX,
+    const unsigned int offset,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      &cellGradNIGradNJIntergralDevice,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                                      BLASWrapperPtr,
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
     const std::vector<std::vector<double>> & imagePositions,
     const std::vector<int> &                 imageIds,
@@ -1400,7 +1404,8 @@ namespace dftfe
     //
     // Device poisson solve
     //
-    poissonDevice::solveVselfInBins(operatorMatrix,
+    poissonDevice::solveVselfInBins(cellGradNIGradNJIntergralDevice,
+                                    BLASWrapperPtr,
                                     matrix_free_data,
                                     mfBaseDofHandlerIndex,
                                     hangingPeriodicConstraintMatrix,
@@ -1636,7 +1641,11 @@ namespace dftfe
     const unsigned int matrixFreeQuadratureIdAX,
     const unsigned int offset,
 #ifdef DFTFE_WITH_DEVICE
-    operatorDFTDeviceClass &operatorMatrix,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      &cellGradNIGradNJIntergralDevice,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &BLASWrapperPtr,
 #endif
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
     const std::vector<std::vector<double>> & imagePositions,
@@ -1668,7 +1677,8 @@ namespace dftfe
                              mfBaseDofHandlerIndex,
                              matrixFreeQuadratureIdAX,
                              offset,
-                             operatorMatrix,
+                             cellGradNIGradNJIntergralDevice,
+                             BLASWrapperPtr,
                              hangingPeriodicConstraintMatrix,
                              imagePositions,
                              imageIds,

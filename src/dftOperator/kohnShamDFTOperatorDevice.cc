@@ -17,12 +17,12 @@
 // @author Phani Motamarri, Sambit Das
 //
 
-#include <deviceKernelsGeneric.h>
+#include <deviceKernelsGeneric.h> //KFIX ME
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
-#include <DeviceBlasWrapper.h>
+#include <DeviceBlasWrapper.h> //KFIX ME
 #include <kohnShamDFTOperatorDevice.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
@@ -310,12 +310,7 @@ namespace dftfe
     dftfe::utils::deviceBlasWrapper::destroy(d_deviceBlasHandle);
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::deviceBlasHandle_t &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::getDeviceBlasHandle()
-  {
-    return d_deviceBlasHandle;
-  }
+
 
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   const double *
@@ -339,24 +334,6 @@ namespace dftfe
     getProjectorKetTimesVectorSingle()
   {
     return dftPtr->d_projectorKetTimesVectorPar[0];
-  }
-
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientIntegral()
-  {
-    return d_cellShapeFunctionGradientIntegralFlattenedDevice;
-  }
-
-
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &
-  kohnShamDFTOperatorDeviceClass<FEOrder, FEOrderElectro>::
-    getShapeFunctionGradientIntegralElectro()
-  {
-    return d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
   }
 
 

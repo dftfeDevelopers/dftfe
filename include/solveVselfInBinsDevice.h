@@ -21,15 +21,19 @@
 
 #    include <constraintMatrixInfoDevice.h>
 #    include <headers.h>
-#    include <operatorDevice.h>
-
+#    include <BLASWrapper.h>
 namespace dftfe
 {
   namespace poissonDevice
   {
     void
     solveVselfInBins(
-      operatorDFTDeviceClass &                 operatorMatrix,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &cellGradNIGradNJIntergralDevice,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                      BLASWrapperPtr,
       const dealii::MatrixFree<3, double> &    matrixFreeData,
       const unsigned int                       mfDofHandlerIndex,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,

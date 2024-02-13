@@ -15,11 +15,10 @@
 // ---------------------------------------------------------------------
 //
 
-#ifndef densityCalculatorDevice_H_
-#define densityCalculatorDevice_H_
+#ifndef densityCalculator_H_
+#define densityCalculator_H_
 
 #include <headers.h>
-#include <operatorDevice.h>
 #include "dftParameters.h"
 #include "FEBasisOperations.h"
 
@@ -38,7 +37,9 @@ namespace dftfe
     const double                            fermiEnergyDown,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
-      &                        basisOperationsPtr,
+      &basisOperationsPtr,
+    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+      &                        BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
@@ -61,7 +62,10 @@ namespace dftfe
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
-      &                                         basisOperationsPtr,
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+      &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     double *                                    partialOccupVec,
@@ -81,7 +85,10 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<NumberType,
                                       double,
                                       dftfe::utils::MemorySpace::DEVICE>>
-      &                                         basisOperationsPtr,
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     double *                                    partialOccupVec,

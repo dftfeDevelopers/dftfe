@@ -23,7 +23,7 @@
 
 #    include <constraintMatrixInfoDevice.h>
 #    include <constraintMatrixInfo.h>
-#    include <DeviceBlasWrapper.h>
+#    include <DeviceBlasWrapper.h> //FIX ME
 #    include <MemoryStorage.h>
 #    include <headers.h>
 #    include "process_grid.h"
@@ -65,9 +65,6 @@ namespace dftfe
     virtual void
     destroyDeviceBlasHandle() = 0;
 
-    virtual dftfe::utils::deviceBlasHandle_t &
-    getDeviceBlasHandle() = 0;
-
     virtual const double *
     getSqrtMassVec() = 0;
 
@@ -76,14 +73,6 @@ namespace dftfe
 
     virtual distributedCPUVec<dataTypes::number> &
     getProjectorKetTimesVectorSingle() = 0;
-
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientIntegral() = 0;
-
-    virtual dftfe::utils::MemoryStorage<double,
-                                        dftfe::utils::MemorySpace::DEVICE> &
-    getShapeFunctionGradientIntegralElectro() = 0;
 
     virtual const dftfe::utils::MemoryStorage<double,
                                               dftfe::utils::MemorySpace::DEVICE>
@@ -404,12 +393,6 @@ namespace dftfe
     // matrix-free data
     //
     const dealii::MatrixFree<3, double> *d_matrix_free_data;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_cellShapeFunctionGradientIntegralFlattenedDevice;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-      d_cellShapeFunctionGradientIntegralFlattenedDeviceElectro;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunctionGradientValueNLPTransposedDevice;
