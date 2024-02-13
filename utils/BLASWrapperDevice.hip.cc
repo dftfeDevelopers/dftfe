@@ -1606,5 +1606,21 @@ namespace dftfe
                                        std::complex<double> *      copyToVec);
 
 
+    // axpyStridedBlockAtomicAdd
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double *                 addFromVec,
+      double *                       addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const std::complex<double> *   addFromVec,
+      std::complex<double> *         addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
   } // End of namespace linearAlgebra
 } // End of namespace dftfe
