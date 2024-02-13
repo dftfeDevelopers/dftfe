@@ -332,7 +332,6 @@ namespace dftfe
           }
         else
           {
-            d_basisOperationsPtrDevice->clear();
             dftfe::basis::UpdateFlags updateFlagsGradientsAndInvJacobians =
               dftfe::basis::update_inversejacobians | dftfe::basis::update_jxw |
               dftfe::basis::update_gradients;
@@ -357,7 +356,7 @@ namespace dftfe
                                              d_densityDofHandlerIndex,
                                              quadratureIndices,
                                              updateFlags);
-            if (FEOrder != FEOrderElectro)
+            if (FEOrder == FEOrderElectro)
               d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
                 d_feOrderPlusOneQuadratureId, 50, true, false);
           }

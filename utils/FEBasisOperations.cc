@@ -161,6 +161,7 @@ namespace dftfe
       initializeMPIPattern();
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
       d_quadPoints = basisOperationsSrc.d_quadPoints;
+      initializeConstraints();
       for (unsigned int iQuadIndex = 0;
            iQuadIndex < d_quadratureIDsVector.size();
            ++iQuadIndex)
@@ -1195,12 +1196,12 @@ namespace dftfe
                 const auto  jacobianFactorPtr   = d_jacobianFactorHost.data() +
                                                iCell * nQuadsPerCell * 9 +
                                                iQuad * 9;
-                for (unsigned int kDim = 0; kDim < 3; ++kDim)
-                  for (unsigned int jDim = 0; jDim < 3; ++jDim)
-                    for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                  for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                    for (unsigned int kDim = 0; kDim < 3; ++kDim)
                       jacobianFactorPtr[3 * jDim + iDim] +=
-                        inverseJacobianQuad[kDim][iDim] *
-                        inverseJacobianQuad[kDim][jDim] * jxw;
+                        inverseJacobianQuad[iDim][kDim] *
+                        inverseJacobianQuad[jDim][kDim] * jxw;
               }
             ++iCell;
           }
