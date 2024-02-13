@@ -28,10 +28,46 @@
 #include "BLASWrapperDeviceKernels.cc"
 namespace dftfe
 {
-  namespace linearAlgebra
-  {
-    namespace
+
+   namespace utils
     {
+      inline double
+      makeDataTypeHipBlasCompatible(double a)
+      {
+        return a;
+      }
+
+      inline float
+      makeDataTypeHipBlasCompatible(float a)
+      {
+        return a;
+      }
+
+      inline float *
+      makeDataTypeHipBlasCompatible(float *a)
+      {
+        return reinterpret_cast<float *>(a);
+      }
+
+      inline const float *
+      makeDataTypeHipBlasCompatible(const float *a)
+      {
+        return reinterpret_cast<const float *>(a);
+      }
+
+      inline double *
+      makeDataTypeHipBlasCompatible(double *a)
+      {
+        return reinterpret_cast<double *>(a);
+      }
+
+      inline const double *
+      makeDataTypeHipBlasCompatible(const double *a)
+      {
+        return reinterpret_cast<const double *>(a);
+      }
+
+
       inline hipblasDoubleComplex
       makeDataTypeHipBlasCompatible(std::complex<double> a)
       {
@@ -67,9 +103,10 @@ namespace dftfe
       {
         return reinterpret_cast<const hipblasDoubleComplex *>(a);
       }
+    }
 
-    } // namespace
-
+  namespace linearAlgebra
+  {
 #ifdef DFTFE_WITH_DEVICE_AMD
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::initialize()
@@ -190,13 +227,13 @@ namespace dftfe
                      int(m),
                      int(n),
                      int(k),
-                     makeDataTypeHipBlasCompatible(alpha),
-                     makeDataTypeHipBlasCompatible(A),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(A),
                      int(lda),
-                     makeDataTypeHipBlasCompatible(B),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(B),
                      int(ldb),
-                     makeDataTypeHipBlasCompatible(beta),
-                     makeDataTypeHipBlasCompatible(C),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(beta),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(C),
                      int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
@@ -299,13 +336,13 @@ namespace dftfe
                      int(m),
                      int(n),
                      int(k),
-                     makeDataTypeHipBlasCompatible(alpha),
-                     makeDataTypeHipBlasCompatible(A),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(A),
                      int(lda),
-                     makeDataTypeHipBlasCompatible(B),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(B),
                      int(ldb),
-                     makeDataTypeHipBlasCompatible(beta),
-                     makeDataTypeHipBlasCompatible(C),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(beta),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(C),
                      int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
@@ -333,7 +370,7 @@ namespace dftfe
         {
           // Assert Statement
         }
-      deviceBlasStatus_t status = hipblasDgemv(d_deviceBlasHandle,
+      dftfe::utils::deviceBlasStatus_t status = hipblasDgemv(d_deviceBlasHandle,
                                                transa,
                                                int(m),
                                                int(n),
@@ -373,7 +410,7 @@ namespace dftfe
           // Assert Statement
         }
 
-      deviceBlasStatus_t status = hipblasSgemv(d_deviceBlasHandle,
+      dftfe::utils::deviceBlasStatus_t status = hipblasSgemv(d_deviceBlasHandle,
                                                transa,
                                                int(m),
                                                int(n),
@@ -414,7 +451,7 @@ namespace dftfe
           // Assert Statement
         }
 
-      deviceBlasStatus_t status =
+      dftfe::utils::deviceBlasStatus_t status =
         hipblasZgemv(d_deviceBlasHandle,
                      transa,
                      int(m),
@@ -456,7 +493,7 @@ namespace dftfe
           // Assert Statement
         }
 
-      deviceBlasStatus_t status =
+      dftfe::utils::deviceBlasStatus_t status =
         hipblasCgemv(d_deviceBlasHandle,
                      transa,
                      int(m),
@@ -530,10 +567,10 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZaxpy(d_deviceBlasHandle,
                      int(n),
-                     makeDataTypeHipBlasCompatible(alpha),
-                     makeDataTypeHipBlasCompatible(x),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(x),
                      int(incx),
-                     makeDataTypeHipBlasCompatible(y),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(y),
                      int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
@@ -607,11 +644,11 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZdotc(d_deviceBlasHandle,
                      int(N),
-                     makeDataTypeHipBlasCompatible(X),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(X),
                      int(INCX),
-                     makeDataTypeHipBlasCompatible(Y),
+                     dftfe::utils::makeDataTypeHipBlasCompatible(Y),
                      int(INCY),
-                     makeDataTypeHipBlasCompatible(result));
+                     dftfe::utils::makeDataTypeHipBlasCompatible(result));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -727,15 +764,15 @@ namespace dftfe
                                    int(m),
                                    int(n),
                                    int(k),
-                                   makeDataTypeHipBlasCompatible(alpha),
-                                   makeDataTypeHipBlasCompatible(A),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(A),
                                    int(lda),
                                    strideA,
-                                   makeDataTypeHipBlasCompatible(B),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(B),
                                    int(ldb),
                                    strideB,
-                                   makeDataTypeHipBlasCompatible(beta),
-                                   makeDataTypeHipBlasCompatible(C),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(beta),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(C),
                                    int(ldc),
                                    strideC,
                                    int(batchCount));
@@ -855,15 +892,15 @@ namespace dftfe
                                    int(m),
                                    int(n),
                                    int(k),
-                                   makeDataTypeHipBlasCompatible(alpha),
-                                   makeDataTypeHipBlasCompatible(A),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(A),
                                    int(lda),
                                    strideA,
-                                   makeDataTypeHipBlasCompatible(B),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(B),
                                    int(ldb),
                                    strideB,
-                                   makeDataTypeHipBlasCompatible(beta),
-                                   makeDataTypeHipBlasCompatible(C),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(beta),
+                                   dftfe::utils::makeDataTypeHipBlasCompatible(C),
                                    int(ldc),
                                    strideC,
                                    int(batchCount));
@@ -973,12 +1010,12 @@ namespace dftfe
                             int(m),
                             int(n),
                             int(k),
-                            makeDataTypeHipBlasCompatible(alpha),
+                            dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                             (const hipblasDoubleComplex **)A,
                             int(lda),
                             (const hipblasDoubleComplex **)B,
                             int(ldb),
-                            makeDataTypeHipBlasCompatible(beta),
+                            dftfe::utils::makeDataTypeHipBlasCompatible(beta),
                             (hipblasDoubleComplex **)C,
                             int(ldc),
                             int(batchCount));
@@ -1090,12 +1127,12 @@ namespace dftfe
                             int(m),
                             int(n),
                             int(k),
-                            makeDataTypeHipBlasCompatible(alpha),
+                            dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                             (const hipblasComplex **)A,
                             int(lda),
                             (const hipblasComplex **)B,
                             int(ldb),
-                            makeDataTypeHipBlasCompatible(beta),
+                            dftfe::utils::makeDataTypeHipBlasCompatible(beta),
                             (hipblasComplex **)C,
                             int(ldc),
                             int(batchCount));
@@ -1115,7 +1152,7 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status =
         hipblasDznrm2(d_deviceBlasHandle,
                       int(n),
-                      makeDataTypeHipBlasCompatible(x),
+                      dftfe::utils::makeDataTypeHipBlasCompatible(x),
                       int(incx),
                       &localresult);
       localresult *= localresult;
@@ -1210,8 +1247,8 @@ namespace dftfe
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
         d_streamId>>>(size,
-                      makeDataTypeHipBlasCompatible(valueType1Arr),
-                      makeDataTypeHipBlasCompatible(valueType2Arr));
+                      dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+                      dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
 
     template <typename ValueType1, typename ValueType2>
@@ -1232,8 +1269,8 @@ namespace dftfe
                          0,
                          contiguousBlockSize,
                          numContiguousBlocks,
-                         makeDataTypeHipBlasCompatible(copyFromVec),
-                         makeDataTypeHipBlasCompatible(copyToVecBlock),
+                         dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+                         dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
                          copyFromVecStartingContiguousBlockIds);
     }
 
@@ -1266,8 +1303,8 @@ namespace dftfe
                          0,
                          contiguousBlockSize,
                          numContiguousBlocks,
-                         makeDataTypeHipBlasCompatible(copyFromVecBlock),
-                         makeDataTypeHipBlasCompatible(copyToVec),
+                         dftfe::utils::makeDataTypeDeviceCompatible(copyFromVecBlock),
+                         dftfe::utils::makeDataTypeDeviceCompatible(copyToVec),
                          copyFromVecStartingContiguousBlockIds);
     }
 
@@ -1293,8 +1330,8 @@ namespace dftfe
                          blockSizeFrom,
                          numBlocks,
                          startingId,
-                         makeDataTypeHipBlasCompatible(copyFromVec),
-                         makeDataTypeHipBlasCompatible(copyToVec));
+                         dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+                         dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
     }
 
     template <typename ValueType1, typename ValueType2>
@@ -1322,8 +1359,8 @@ namespace dftfe
                          numBlocks,
                          startingToId,
                          startingFromId,
-                         makeDataTypeHipBlasCompatible(copyFromVec),
-                         makeDataTypeHipBlasCompatible(copyToVec));
+                         dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+                         dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
     }
 
 
