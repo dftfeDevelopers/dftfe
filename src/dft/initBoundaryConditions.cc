@@ -356,7 +356,7 @@ namespace dftfe
                                              d_densityDofHandlerIndex,
                                              quadratureIndices,
                                              updateFlags);
-            if (FEOrder != FEOrderElectro)
+            if (FEOrder == FEOrderElectro)
               d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
                 d_feOrderPlusOneQuadratureId, 50, true, false);
           }
