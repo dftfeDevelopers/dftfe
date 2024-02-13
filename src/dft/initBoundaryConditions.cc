@@ -332,7 +332,6 @@ namespace dftfe
           }
         else
           {
-            d_basisOperationsPtrDevice->clear();
             dftfe::basis::UpdateFlags updateFlagsGradientsAndInvJacobians =
               dftfe::basis::update_inversejacobians | dftfe::basis::update_jxw |
               dftfe::basis::update_gradients;

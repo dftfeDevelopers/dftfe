@@ -161,6 +161,7 @@ namespace dftfe
       initializeMPIPattern();
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
       d_quadPoints = basisOperationsSrc.d_quadPoints;
+      initializeConstraints();
       for (unsigned int iQuadIndex = 0;
            iQuadIndex < d_quadratureIDsVector.size();
            ++iQuadIndex)
