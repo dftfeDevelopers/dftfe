@@ -245,9 +245,13 @@ namespace dftfe
   }
 
   // constructor
-  linearSolverCGDevice::linearSolverCGDevice(const MPI_Comm & mpi_comm_parent,
-                                             const MPI_Comm & mpi_comm_domain,
-                                             const solverType type)
+  linearSolverCGDevice::linearSolverCGDevice(
+    const MPI_Comm & mpi_comm_parent,
+    const MPI_Comm & mpi_comm_domain,
+    const solverType type,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      BLASWrapperPtr)
     : d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , d_type(type)
@@ -256,18 +260,17 @@ namespace dftfe
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain))
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
+    , d_BLASWrapperPtr(BLASWrapperPtr)
   {}
 
 
   // solve
   void
-  linearSolverCGDevice::solve(
-    linearSolverProblemDevice &       problem,
-    const double                      absTolerance,
-    const unsigned int                maxNumberIterations,
-    dftfe::utils::deviceBlasHandle_t &deviceBlasHandle,
-    const int                         debugLevel,
-    bool                              distributeFlag)
+  linearSolverCGDevice::solve(linearSolverProblemDevice &problem,
+                              const double               absTolerance,
+                              const unsigned int         maxNumberIterations,
+                              const int                  debugLevel,
+                              bool                       distributeFlag)
   {
     int this_process;
     MPI_Comm_rank(mpi_communicator, &this_process);
@@ -328,23 +331,27 @@ namespace dftfe
             double alpha = 0.0;
             double beta  = 0.0;
             double delta = 0.0;
-
             // r = Ax
             problem.computeAX(d_rvec, x);
 
             // r = Ax - rhs
-            dftfe::utils::deviceKernelsGeneric::add(d_rvec.begin(),
-                                                    rhsDevice.begin(),
-                                                    -1.,
-                                                    d_xLocalDof,
-                                                    deviceBlasHandle);
-
+            // dftfe::utils::deviceKernelsGeneric::add(d_rvec.begin(),
+            //                                         rhsDevice.begin(),
+            //                                         -1.,
+            //                                         d_xLocalDof,
+            //                                         deviceBlasHandle);
+            d_BLASWrapperPtr->add(d_rvec.begin(),
+                                  rhsDevice.begin(),
+                                  -1,
+                                  d_xLocalDof);
             // res = r.r
-            res = dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
-                                                              d_xLocalDof,
-                                                              mpi_communicator,
-                                                              deviceBlasHandle);
+            // res = dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
+            //                                                   d_xLocalDof,
+            //                                                   mpi_communicator,
+            //                                                   deviceBlasHandle);
 
+            d_BLASWrapperPtr->xnrm2(
+              d_xLocalDof, d_rvec.begin(), 1, mpi_communicator, &res);
             initial_res = res;
 
             if (res < absTolerance)
@@ -385,12 +392,20 @@ namespace dftfe
                 problem.computeAX(d_dvec, d_qvec);
 
                 // alpha = q.d
-                alpha =
-                  dftfe::utils::deviceKernelsGeneric::dot(d_qvec.begin(),
-                                                          d_dvec.begin(),
-                                                          d_xLocalDof,
-                                                          mpi_communicator,
-                                                          deviceBlasHandle);
+                // alpha =
+                //   dftfe::utils::deviceKernelsGeneric::dot(d_qvec.begin(),
+                //                                           d_dvec.begin(),
+                //                                           d_xLocalDof,
+                //                                           mpi_communicator,
+                //                                           deviceBlasHandle);
+
+                d_BLASWrapperPtr->xdot(d_xLocalDof,
+                                       d_qvec.begin(),
+                                       1,
+                                       d_dvec.begin(),
+                                       1,
+                                       mpi_communicator,
+                                       &alpha);
 
                 AssertThrow(std::abs(alpha) != 0.,
                             dealii::ExcMessage("Division by zero\n"));

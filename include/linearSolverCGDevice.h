@@ -23,6 +23,7 @@
 #    include <linearSolverDevice.h>
 #    include <linearSolverProblemDevice.h>
 #    include <MemoryStorage.h>
+#    include <BLASWrapper.h>
 namespace dftfe
 {
   /**
@@ -46,9 +47,13 @@ namespace dftfe
      * @param mpi_comm_domain domain mpi communicator
      * @param type enum specifying the choice of the linear solver
      */
-    linearSolverCGDevice(const MPI_Comm & mpi_comm_parent,
-                         const MPI_Comm & mpi_comm_domain,
-                         const solverType type);
+    linearSolverCGDevice(
+      const MPI_Comm & mpi_comm_parent,
+      const MPI_Comm & mpi_comm_domain,
+      const solverType type,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        BLASWrapperPtr);
 
     /**
      * @brief Solve linear system, A*x=Rhs
@@ -62,12 +67,11 @@ namespace dftfe
      *                   2 - all debug output.
      */
     void
-    solve(linearSolverProblemDevice &       problem,
-          const double                      absTolerance,
-          const unsigned int                maxNumberIterations,
-          dftfe::utils::deviceBlasHandle_t &handle,
-          const int                         debugLevel     = 0,
-          bool                              distributeFlag = true);
+    solve(linearSolverProblemDevice &problem,
+          const double               absTolerance,
+          const unsigned int         maxNumberIterations,
+          const int                  debugLevel     = 0,
+          bool                       distributeFlag = true);
 
   private:
     /// enum denoting the choice of the linear solver
@@ -86,6 +90,9 @@ namespace dftfe
     const unsigned int         n_mpi_processes;
     const unsigned int         this_mpi_process;
     dealii::ConditionalOStream pcout;
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      d_BLASWrapperPtr;
 
     /**
      * @brief Combines precondition and dot product
