@@ -36,8 +36,8 @@ namespace dftfe
       const unsigned int numVectors,
       const unsigned int numCells,
       const unsigned int nQuadsPerCell,
-      double *           wfcContributions,
-      double *           wfcPrimeContributions,
+      const double *     wfc,
+      const double *     wfcPrime,
       double *           rhoResponseHamCellsWfcContributions,
       double *           rhoResponseFermiEnergyCellsWfcContributions)
     {
@@ -48,8 +48,8 @@ namespace dftfe
       for (unsigned int index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const double psi      = wfcContributions[index];
-          const double psiPrime = wfcContributions[index];
+          const double psi                                   = wfc[index];
+          const double psiPrime                              = wfcPrime[index];
           rhoResponseFermiEnergyCellsWfcContributions[index] = psi * psi;
           rhoResponseHamCellsWfcContributions[index]         = psi * psiPrime;
         }
@@ -57,12 +57,12 @@ namespace dftfe
 
     __global__ void
     computeRhoResponseFromInterpolatedValues(
-      const unsigned int                 numVectors,
-      const unsigned int                 numCells,
-      const unsigned int                 nQuadsPerCell,
-      dftfe::utils::deviceDoubleComplex *wfcContributions,
-      dftfe::utils::deviceDoubleComplex *wfcPrimeContributions,
-      double *                           rhoResponseHamCellsWfcContributions,
+      const unsigned int                       numVectors,
+      const unsigned int                       numCells,
+      const unsigned int                       nQuadsPerCell,
+      const dftfe::utils::deviceDoubleComplex *wfc,
+      const dftfe::utils::deviceDoubleComplex *wfcPrime,
+      double *rhoResponseHamCellsWfcContributions,
       double *rhoResponseFermiEnergyCellsWfcContributions)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -72,9 +72,8 @@ namespace dftfe
       for (unsigned int index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const dftfe::utils::deviceDoubleComplex psi = wfcContributions[index];
-          const dftfe::utils::deviceDoubleComplex psiPrime =
-            wfcPrimeContributions[index];
+          const dftfe::utils::deviceDoubleComplex psi      = wfc[index];
+          const dftfe::utils::deviceDoubleComplex psiPrime = wfcPrime[index];
           rhoResponseFermiEnergyCellsWfcContributions[index] =
             psi.x * psi.x + psi.y * psi.y;
           rhoResponseHamCellsWfcContributions[index] =
