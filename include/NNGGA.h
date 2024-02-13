@@ -31,8 +31,8 @@ namespace dftfe
     std::string                          d_ptcFilename;
     torch::jit::script::Module *         d_model;
     const bool                           d_isSpinPolarized;
-    double                         d_rhoTol;
-    double                         d_sThreshold;
+    double                               d_rhoTol;
+    double                               d_sThreshold;
     const excDensityPositivityCheckTypes d_densityPositivityCheckType;
   };
 } // namespace dftfe

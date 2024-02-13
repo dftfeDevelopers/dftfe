@@ -637,7 +637,7 @@ namespace dftfe
           "MODEL XC INPUT FILE",
           "",
           dealii::Patterns::Anything(),
-          "[Developer] Parameter specifying the filename that contains the data for an externally supplied XC model. This is an experimental feature to test out any new XC functional developed using machine learning. Currently, it assumes an LDA type functional.");
+          "[Developer] File that contains both the pytorch ML-XC NN model (.ptc file) and the tolerances. This is an experimental feature to test out any new XC functional developed using machine learning.");
 
 
         prm.declare_entry(
