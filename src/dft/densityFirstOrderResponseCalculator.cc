@@ -150,7 +150,8 @@ namespace dftfe
       }
 
 
-    dftfe::utils::MemoryStorage<double, memorySpace> onesVec(BVec, spinPolarizedFactor);
+    dftfe::utils::MemoryStorage<double, memorySpace> onesVec(
+      BVec, spinPolarizedFactor);
 
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
