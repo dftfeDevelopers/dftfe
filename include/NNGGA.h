@@ -12,8 +12,7 @@ namespace dftfe
     NNGGA(std::string                          modelFileName,
           const bool                           isSpinPolarized = false,
           const excDensityPositivityCheckTypes densityPositivityCheckType =
-            excDensityPositivityCheckTypes::MAKE_POSITIVE,
-          const double rhoTol = 1.0e-8);
+            excDensityPositivityCheckTypes::MAKE_POSITIVE);
     ~NNGGA();
     void
     evaluateexc(const double *     rho,
@@ -28,10 +27,12 @@ namespace dftfe
                 double *           dexc);
 
   private:
-    std::string                          d_modelFileName;
+    std::string                          d_modelFilename;
+    std::string                          d_ptcFilename;
     torch::jit::script::Module *         d_model;
     const bool                           d_isSpinPolarized;
-    const double                         d_rhoTol;
+    double                         d_rhoTol;
+    double                         d_sThreshold;
     const excDensityPositivityCheckTypes d_densityPositivityCheckType;
   };
 } // namespace dftfe

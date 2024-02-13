@@ -444,7 +444,7 @@ IF (WITH_TORCH)
 #
 # TORCH. Set with -DTORCH_DIR=/path/to/prefix
 #
-FIND_PACKAGE(Torch PATHS "/scratch/vikramg_root/vikramg/shared_data/conda_envs/pytorch_cpu/lib/python3.9/site-packages/torch/share/cmake/Torch/" Required) 
+FIND_PACKAGE(Torch PATHS ${TORCH_DIR} Required) 
 target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES}) 
 ADD_DEFINITIONS(-DDFTFE_WITH_TORCH)
 ENDIF()
