@@ -202,8 +202,8 @@ namespace dftfe
                     {
                       *(partialOccupPrimeVecHost[spinIndex].begin() +
                         iEigenVec) =
-                        densityMatDerFermiEnergy[numSpinComponents* kPoint +
-                                       spinIndex][jvec + iEigenVec] *
+                        densityMatDerFermiEnergy[numSpinComponents * kPoint +
+                                                 spinIndex][jvec + iEigenVec] *
                         kPointWeights[kPoint] * spinPolarizedFactor;
                     }
 #if defined(DFTFE_WITH_DEVICE)

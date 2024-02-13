@@ -56,7 +56,7 @@ $ make install
 \end{verbatim}
 There might be errors complaining that it can not create regular file libxml2.py in /usr/lib/python2.7/site-packages, but that should not matter.
 
-\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via ELPA for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.2.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
+\item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via ELPA for its parallel linear algebra routines involving dense matrices, as well being a dependency for ELPA. \textcolor{red}{\bf If Intel MKL math library is available, please skip this step, as the ScaLAPACK libraries therein can be used directly.} If Intel MKL math library is not available, Netlib ScaLAPACK \url{http://www.netlib.org/scalapack/} needs to be installed using the instructions below. Download the current release version (2.2.0) from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON|, \verb|BUILD_STATIC_LIBS=OFF| and \verb|BUILD_TESTING=OFF|) installation of ScaLAPACK using cmake. We recommend using the ccmake gui interface for the installation.  Further, use the appropriate compilers for \verb|CMAKE_C_COMPILER| and \verb|CMAKE_FORTRAN_COMPILER|, and also use \verb|-fPIC| flag for \verb|CMAKE_C_FLAGS| and \verb|-fPIC -fallow-argument-mismatch| for \verb|CMAKE_Fortran_FLAGS|. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK libraries (MKL, OpenBlas, ESSL etc.) during the cmake configuration. 
 %Alternatively one can also use the python based installer~\url{http://www.netlib.org/scalapack/scalapack_installer.tgz} for Linux.
 
 \item {\bf ELPA}: ELPA library is used by DFT-FE for its parallel linear algebra routines involving dense matrices. ELPA requires the ScaLAPACK library (see above) as a dependency. Download the latest version elpa-2022.11.001 from \url{https://elpa.mpcdf.mpg.de/software/} and follow the installation instructions in there. Example of ELPA installation on UMICH Greatlakes supercomputer with GNU compiler, Open MPI library, and Intel MKL math library:
@@ -171,7 +171,7 @@ $ make install
 \end{verbatim}
 {\bf ``otherCmakeOptions'' include} the following options for CPU installation:
 \begin{verbatim}
--DCMAKE_CXX_STANDARD=14
+-DCMAKE_CXX_STANDARD=17
 -DCMAKE_C_COMPILER=c_compiler
 -DCMAKE_CXX_COMPILER=cxx_compiler
 -DCMAKE_Fortran_COMPILER=fortran_compiler
@@ -189,6 +189,7 @@ $ make install
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
+-DDEAL_II_FORCE_BUNDLED_BOOST=ON
 \end{verbatim}
 
 
@@ -199,21 +200,22 @@ $ make install
 $ mkdir build
 $ cd build
 $ cmake
--DCMAKE_CXX_STANDARD=14
+-DCMAKE_CXX_STANDARD=17
 -DCMAKE_C_COMPILER=gcc 
 -DCMAKE_CXX_COMPILER=g++
 -DCMAKE_Fortran_COMPILER=gfortran
 -DMPI_C_COMPILER=mpicc 
 -DMPI_CXX_COMPILER=mpicxx 
 -DMPI_Fortran_COMPILER=mpif90
--DCMAKE_CXX_FLAGS="-march=native -std=c++14"
--DCMAKE_C_FLAGS="-march=native -std=c++14"
+-DCMAKE_CXX_FLAGS="-march=native -std=c++17"
+-DCMAKE_C_FLAGS="-march=native -std=c++17"
 -DDEAL_II_CXX_FLAGS_RELEASE="-O2"
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
 -DDEAL_II_WITH_MPI=ON
 -DDEAL_II_WITH_64BIT_INDICES=ON
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF 
+-DDEAL_II_FORCE_BUNDLED_BOOST=ON
 -DDEAL_II_WITH_P4EST=ON 
 -DP4EST_DIR=p4est_install_path 
 -DDEAL_II_WITH_LAPACK=ON -DLAPACK_DIR="${MKLROOT}/lib/intel64"
@@ -252,7 +254,7 @@ $ FC=gfortran cmake -B _build
 $ cmake --build _build
 $ cmake --install _build 
 \end{verbatim}
-	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.460 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
+	\item   {\bf dftd4}: Used by \dftfe{} to provide dftd4 corrections to energy, force and stress. Download the current release (3.6.0 at the time of writing) of dftd4 from \url{https://github.com/dftd4/dftd4/releases}. After downloading and unpacking, use cmake to build the library. For example, using GNU compiler and Intel MKL for BLAS and LAPACK, do
 \begin{verbatim}
 $ cd dftd4-3.6.0
 $ mkdir build 
