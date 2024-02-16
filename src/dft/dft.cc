@@ -4179,7 +4179,14 @@ namespace dftfe
         dataOutRho.add_data_vector(magNodalField, std::string("magDensity"));
       }
     dataOutRho.build_patches(FEOrder);
-
+    dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
+      std::numeric_limits<double>::min(),
+      std::numeric_limits<unsigned int>::min(),
+      true,
+      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+        best_speed, // This flag is version dependent for dealII 9.5.0 it is
+                    // dealii::DataOutBase::CompressionLevel::best_speed
+      true)); // higher order cells set to true
     std::string tempFolder = "densityOutputFolder";
     mkdir(tempFolder.c_str(), ACCESSPERMS);
 
