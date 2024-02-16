@@ -557,8 +557,12 @@ namespace dftfe
               l1 << mesh[j1] << " ";
               for (int j = 0; j < l1_vec.size(); ++j)
                 {
-                  l1 << std::fixed << std::setprecision(14) << l1_vec[j][i]
-                     << " ";
+                  if (i == 0)
+                    l1 << std::fixed << std::setprecision(14) << l1_vec[j][1]
+                       << " ";
+                  else
+                    l1 << std::fixed << std::setprecision(14) << l1_vec[j][i]
+                       << " ";
                 }
               l1 << std::endl;
               j1 += 1;
@@ -573,8 +577,12 @@ namespace dftfe
               l2 << mesh[j2] << " ";
               for (int j = 0; j < l2_vec.size(); ++j)
                 {
-                  l2 << std::fixed << std::setprecision(14) << l2_vec[j][i]
-                     << " ";
+                  if (i == 0)
+                    l2 << std::fixed << std::setprecision(14) << l2_vec[j][1]
+                       << " ";
+                  else
+                    l2 << std::fixed << std::setprecision(14) << l2_vec[j][i]
+                       << " ";
                 }
               l2 << std::endl;
               j2 += 1;
@@ -589,8 +597,12 @@ namespace dftfe
               l3 << mesh[j3] << " ";
               for (int j = 0; j < l3_vec.size(); ++j)
                 {
-                  l3 << std::fixed << std::setprecision(14) << l3_vec[j][i]
-                     << " ";
+                  if (i == 0)
+                    l3 << std::fixed << std::setprecision(14) << l3_vec[j][1]
+                       << " ";
+                  else
+                    l3 << std::fixed << std::setprecision(14) << l3_vec[j][i]
+                       << " ";
                 }
               l3 << std::endl;
               j3 += 1;
