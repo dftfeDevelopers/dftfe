@@ -4120,7 +4120,14 @@ namespace dftfe
           }
 
     data_outEigen.build_patches(FEOrder);
-
+    data_outEigen.set_flags(dealii::DataOutBase::VtkFlags(
+      std::numeric_limits<double>::min(),
+      std::numeric_limits<unsigned int>::min(),
+      true,
+      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+        best_speed, // This flag is version dependent for dealII 9.5.0 it is
+                    // dealii::DataOutBase::CompressionLevel::best_speed
+      true)); // higher order cells set to true
     std::string tempFolder = "waveFunctionOutputFolder";
     mkdir(tempFolder.c_str(), ACCESSPERMS);
 
@@ -4634,7 +4641,7 @@ namespace dftfe
                             d_constraintsRhoNodal,
                             d_densityDofHandlerIndexElectro,
                             d_densityQuadratureIdElectro,
-                            d_densityOutQuadValues[0],
+                            d_densityInQuadValues[0],
                             rhoNodalField);
 
     //
@@ -4645,7 +4652,14 @@ namespace dftfe
     dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
 
     dataOutRho.build_patches(FEOrder);
-
+    dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
+      std::numeric_limits<double>::min(),
+      std::numeric_limits<unsigned int>::min(),
+      true,
+      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+        best_speed, // This flag is version dependent for dealII 9.5.0 it is
+                    // dealii::DataOutBase::CompressionLevel::best_speed
+      true)); // higher order cells set to true
     std::string tempFolder = "meshOutputFolder";
     mkdir(tempFolder.c_str(), ACCESSPERMS);
 
