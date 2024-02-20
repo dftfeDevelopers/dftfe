@@ -51,7 +51,7 @@ SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.89374902
+             Total energy:         -19.89374904
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.89423785
+             Total energy:         -19.89423777
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------

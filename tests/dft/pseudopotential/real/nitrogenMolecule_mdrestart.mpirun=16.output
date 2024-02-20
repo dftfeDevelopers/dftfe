@@ -17,8 +17,8 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.296487328264226191e+00 5.365505101184674802e-03 5.261732997562832553e-03
-AtomId 1:  1.296487640120558504e+00 -5.365505125989161392e-03 -5.261733025434332800e-03
+AtomId 0:  -1.296487328892820257e+00 5.365505448996827145e-03 5.261733345322480888e-03
+AtomId 1:  1.296487640749363734e+00 -5.365505473837222511e-03 -5.261733373112462142e-03
 -----------------------------------------------------------------------------------------
 Reading tria info and rho data from checkpoint in progress...
 ...Reading from checkpoint done.
@@ -46,7 +46,7 @@ SCF iterations converged to the specified tolerance after: 4 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78841164
+             Total energy:         -19.78841149
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.79364559
+             Total energy:         -19.79364586
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
