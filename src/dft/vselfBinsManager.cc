@@ -1076,7 +1076,7 @@ namespace dftfe
                       {
                         double           closestAtomChargeSolved;
                         dealii::Point<3> closestAtomLocationSolved;
-                        Assert(numSolvedNodes * closestChargeIdSolvedNode ==
+                        AssertThrow(numSolvedNodes * closestChargeIdSolvedNode ==
                                  closestChargeIdSolvedSum,
                                dealii::ExcMessage("BUG"));
                         if (closestChargeIdSolvedNode < numberGlobalAtoms)
@@ -1178,10 +1178,10 @@ namespace dftfe
                             iFaceGlobalDofIndices[iFaceDof];
                           if (!constraintMatrix.is_constrained(nodeId))
                             {
-                              Assert(boundaryNodeMap.find(nodeId) !=
+                              AssertThrow(boundaryNodeMap.find(nodeId) !=
                                        boundaryNodeMap.end(),
                                      dealii::ExcMessage("BUG"));
-                              Assert(closestAtomBinMap.find(nodeId) !=
+                              AssertThrow(closestAtomBinMap.find(nodeId) !=
                                        closestAtomBinMap.end(),
                                      dealii::ExcMessage("BUG"));
 
@@ -1299,15 +1299,15 @@ namespace dftfe
           }
 
 
-        d_vselfBinConstraintMatrices[4 * iBin].merge(
-          onlyHangingNodeConstraints,
-          dealii::AffineConstraints<
-            double>::MergeConflictBehavior::left_object_wins);
-        d_vselfBinConstraintMatrices[4 * iBin].close();
+        //d_vselfBinConstraintMatrices[4 * iBin].merge(
+        //  onlyHangingNodeConstraints,
+        //  dealii::AffineConstraints<
+        //    double>::MergeConflictBehavior::right_object_wins);
+        //d_vselfBinConstraintMatrices[4 * iBin].close();
         d_vselfBinConstraintMatrices[4 * iBin].merge(
           constraintMatrix,
           dealii::AffineConstraints<
-            double>::MergeConflictBehavior::left_object_wins);
+            double>::MergeConflictBehavior::right_object_wins);
         d_vselfBinConstraintMatrices[4 * iBin].close();
         constraintsVector.push_back(&(d_vselfBinConstraintMatrices[4 * iBin]));
 
@@ -1330,12 +1330,12 @@ namespace dftfe
             d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
               onlyHangingNodeConstraints,
               dealii::AffineConstraints<
-                double>::MergeConflictBehavior::left_object_wins);
+                double>::MergeConflictBehavior::right_object_wins);
             d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
             d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
               constraintMatrix,
               dealii::AffineConstraints<
-                double>::MergeConflictBehavior::left_object_wins);
+                double>::MergeConflictBehavior::right_object_wins);
             d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
             constraintsVector.push_back(
               &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));

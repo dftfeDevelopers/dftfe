@@ -101,6 +101,7 @@ namespace dftfe
             (d_matrixFreeDataPtr->get_mapping_info().get_cell_type(
                iMacroCell) <= dealii::internal::MatrixFreeFunctions::affine);
         }
+      areAllCellsAffine=false;
       areAllCellsCartesian = true;
       for (unsigned int iMacroCell = 0;
            iMacroCell < d_matrixFreeDataPtr->n_cell_batches();

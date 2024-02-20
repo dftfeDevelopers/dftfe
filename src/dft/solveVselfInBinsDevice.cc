@@ -49,8 +49,8 @@ namespace dftfe
              index += blockDim.x * gridDim.x)
           {
             const unsigned int blockIndex = index / blockSize;
-            *(dstArray + index) =
-              *(srcArray + index) * (*(scalingVector + blockIndex));
+            *(dstArray + index) =*(srcArray + index);
+             // *(srcArray + index) * (*(scalingVector + blockIndex));
           }
       }
 
@@ -188,6 +188,30 @@ namespace dftfe
         // src.update_ghost_values();
         // constraintsMatrixDataInfoDevice.distribute(src,numberVectors);
         temp.updateGhostValues();
+
+        if ((localSize + ghostSize) > 0)
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+          scaleKernel<<<
+            (numberVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+              dftfe::utils::DEVICE_BLOCK_SIZE *(localSize + ghostSize),
+            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+            numberVectors * (localSize + ghostSize),
+            temp.begin(),
+            inhomoIdsColoredVecFlattenedD.begin());
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
+          hipLaunchKernelGGL(scaleKernel,
+                             (numberVectors +
+                              (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                               dftfe::utils::DEVICE_BLOCK_SIZE *
+                               (localSize + ghostSize),
+                             dftfe::utils::DEVICE_BLOCK_SIZE,
+                             0,
+                             0,
+                             numberVectors * (localSize + ghostSize),
+                             temp.begin(),
+                             inhomoIdsColoredVecFlattenedD.begin());
+#  endif	
+
         constraintsMatrixDataInfoDevice.distribute(temp, numberVectors);
 
         if ((localSize + ghostSize) > 0)

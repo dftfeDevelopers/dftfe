@@ -548,10 +548,10 @@ namespace dftfe
                   !d_vselfBinConstraintMatrices[4 * iBin].is_constrained(
                     iterNodalCoorMap->first))
                 {
-                  iterMapVal = vSelfBinNodeMap.find(iterNodalCoorMap->first);
-                  if (iterMapVal != vSelfBinNodeMap.end())
-                    vselfBinScratch(iterNodalCoorMap->first) =
-                      iterMapVal->second;
+                  //iterMapVal = vSelfBinNodeMap.find(iterNodalCoorMap->first);
+                  //if (iterMapVal != vSelfBinNodeMap.end())
+                  //  vselfBinScratch(iterNodalCoorMap->first) =
+                  //    iterMapVal->second;
                 }
 
             if (useSmearedCharges)
@@ -1357,10 +1357,7 @@ namespace dftfe
           {
             if (std::abs(
                   d_vselfBinConstraintMatrices[4 * iBin].get_inhomogeneity(
-                    globalNodeId)) > 1e-10 &&
-                d_vselfBinConstraintMatrices[4 * iBin]
-                    .get_constraint_entries(globalNodeId)
-                    ->size() == 0)
+                    globalNodeId)) > 1e-10)
               {
                 inhomoIdsColoredVecFlattened[i * numberPoissonSolves +
                                              binStride * iBin] = 0.0;
@@ -1382,10 +1379,7 @@ namespace dftfe
             for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
               {
                 if (std::abs(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
-                               .get_inhomogeneity(globalNodeId)) > 1e-10 &&
-                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1]
-                        .get_constraint_entries(globalNodeId)
-                        ->size() == 0)
+                               .get_inhomogeneity(globalNodeId)) > 1e-10)
                   inhomoIdsColoredVecFlattened[i * numberPoissonSolves +
                                                binStride * iBin + idim + 1] =
                     0.0;

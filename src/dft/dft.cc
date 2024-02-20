@@ -2155,7 +2155,7 @@ namespace dftfe
                                  d_lpspQuadratureIdElectro,
                                  d_matrixFreeDataPRefined,
                                  d_phiExtDofHandlerIndexElectro,
-                                 d_constraintsPRefinedOnlyHanging,
+                                 d_constraintsPRefined,
                                  d_supportPointsPRefined,
                                  d_vselfBinsManager,
                                  d_phiExt,

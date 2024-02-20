@@ -694,7 +694,7 @@ namespace dftfe
       {
         fe_eval.reinit(cell);
         // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::gradients);
-        fe_eval.read_dof_values(src);
+        fe_eval.read_dof_values_plain(src);
         fe_eval.evaluate(false, true, false);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
           {
@@ -714,28 +714,95 @@ namespace dftfe
     distributedCPUVec<double> &x)
   {
     Ax = 0.0;
+    const unsigned int ghostSize=d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent)->n_ghost_indices();
 
     if (d_isMeanValueConstraintComputed)
       {
         meanValueConstraintDistribute(x);
 
         x.update_ghost_values();
+
+	d_constraintsInfo.distribute(x);
+
+        for (unsigned int i = 0; i < (x.local_size()+ghostSize); ++i)
+        {
+          const dealii::types::global_dof_index globalNodeId =
+          d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent)
+            ->local_to_global(i);
+          if (std::abs(
+                  d_constraintMatrixPtr->get_inhomogeneity(
+                    globalNodeId)) > 1e-10 &&
+                d_constraintMatrixPtr->get_constraint_entries(globalNodeId)
+                    ->size() == 0)
+               x.local_element(i) = 0.0;
+	}
+
+
         AX(*d_matrixFreeDataPtr,
            Ax,
            x,
            std::make_pair(0, d_matrixFreeDataPtr->n_cell_batches()));
-        Ax.compress(dealii::VectorOperation::add);
 
+	d_constraintsInfo.distribute_slave_to_master(Ax,1);
+
+        for (unsigned int i = 0; i < (Ax.local_size()+ghostSize); ++i)
+        {
+          const dealii::types::global_dof_index globalNodeId =
+          d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent)
+            ->local_to_global(i);
+          if (std::abs(
+                  d_constraintMatrixPtr->get_inhomogeneity(
+                    globalNodeId)) > 1e-10 &&
+                d_constraintMatrixPtr->get_constraint_entries(globalNodeId)
+                    ->size() == 0)
+               Ax.local_element(i) = 0.0;
+        }
+
+        Ax.compress(dealii::VectorOperation::add);
 
         meanValueConstraintDistributeSlaveToMaster(Ax);
       }
     else
       {
         x.update_ghost_values();
+ 
+	d_constraintsInfo.distribute(x);
+
+        for (unsigned int i = 0; i < (x.local_size()+ghostSize); ++i)
+        {
+          const dealii::types::global_dof_index globalNodeId =
+          d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent)
+            ->local_to_global(i);
+          if (std::abs(
+                  d_constraintMatrixPtr->get_inhomogeneity(
+                    globalNodeId)) > 1e-10 &&
+                d_constraintMatrixPtr->get_constraint_entries(globalNodeId)
+                    ->size() == 0)
+               x.local_element(i) = 0.0;
+        }
+
+
         AX(*d_matrixFreeDataPtr,
            Ax,
            x,
            std::make_pair(0, d_matrixFreeDataPtr->n_cell_batches()));
+
+	d_constraintsInfo.distribute_slave_to_master(Ax,1);
+
+        for (unsigned int i = 0; i < (Ax.local_size()+ghostSize); ++i)
+        {
+          const dealii::types::global_dof_index globalNodeId =
+          d_matrixFreeDataPtr->get_vector_partitioner(d_matrixFreeVectorComponent)
+            ->local_to_global(i);
+          if (std::abs(
+                  d_constraintMatrixPtr->get_inhomogeneity(
+                    globalNodeId)) > 1e-10 &&
+                d_constraintMatrixPtr->get_constraint_entries(globalNodeId)
+                    ->size() == 0)
+               Ax.local_element(i) = 0.0;
+        }
+
+
         Ax.compress(dealii::VectorOperation::add);
       }
   }

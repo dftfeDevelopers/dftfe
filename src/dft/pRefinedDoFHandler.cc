@@ -288,7 +288,7 @@ namespace dftfe
       {
         computing_timer.enter_subsection("Create atom bins");
         d_vselfBinsManager.createAtomBins(d_constraintsVectorElectro,
-                                          d_constraintsPRefinedOnlyHanging,
+                                          d_constraintsPRefined,
                                           d_dofHandlerPRefined,
                                           d_constraintsPRefined,
                                           atomLocations,
@@ -310,7 +310,7 @@ namespace dftfe
         << "updateAtomPositionsAndMoveMesh: initBoundaryConditions: Time taken for bins update: "
         << init_bins << std::endl;
 
-    d_constraintsVectorElectro.push_back(&d_constraintsPRefinedOnlyHanging);
+    d_constraintsVectorElectro.push_back(&d_constraintsPRefined);
     d_phiExtDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
 
     if (d_dftParamsPtr->constraintsParallelCheck)
