@@ -1287,6 +1287,25 @@ namespace dftfe
             << radiusAtomBallReduced << std::endl;
 
         inhomogBoundaryVec.update_ghost_values();
+
+        for (auto index : locally_relevant_dofs)
+          {
+              if (constraintMatrix.is_identity_constrained(index) && std::abs(inhomogBoundaryVec[index]) > 1e-10)
+	      {
+                     const std::vector<
+                                std::pair<dealii::types::global_dof_index,
+                                          double>> *rowData =
+                                constraintMatrix.get_constraint_entries(nodeId);
+                     for (unsigned int j = 0; j < rowData->size(); ++j)
+		       if (std::abs(inhomogBoundaryVec[(*rowData)[j].first]) < 1e-10)
+		       {
+			       std::cout<<"BUG"<<std::endl;
+		               inhomogBoundaryVec[(*rowData)[j].first]=	inhomogBoundaryVec[index];       
+		       }					      
+		      
+	      }
+          }	
+
         for (auto index : locally_relevant_dofs)
           {
             if (!onlyHangingNodeConstraints.is_constrained(index) &&
