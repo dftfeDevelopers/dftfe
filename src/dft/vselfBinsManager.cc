@@ -1295,7 +1295,7 @@ namespace dftfe
                      const std::vector<
                                 std::pair<dealii::types::global_dof_index,
                                           double>> *rowData =
-                                constraintMatrix.get_constraint_entries(nodeId);
+                                constraintMatrix.get_constraint_entries(index);
                      for (unsigned int j = 0; j < rowData->size(); ++j)
 		       if (std::abs(inhomogBoundaryVec[(*rowData)[j].first]) < 1e-10)
 		       {
