@@ -1086,6 +1086,10 @@ namespace dftfe
         // update_ghost_values is called inside distribute
         constraintsMatrixDataInfo.distribute(tempvec);
 
+        double l2normtempvec=tempvec.l2_norm();
+        pcout <<"bin: "<<iBin<<" tempvec l2 norm: "<< l2normtempvec << std::endl;
+
+
         std::map<dealii::CellId, std::vector<double>> &bQuadValuesBin =
           bQuadValuesBins[iBin];
 
