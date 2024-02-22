@@ -405,6 +405,11 @@ namespace dftfe
 
     // FIXME: check if this is really required
     d_constraintMatrixPtr->set_zero(rhs);
+
+    const double l2norm=rhs.l2_norm();
+    pcout <<" rhs l2 norm: "<< l2norm << std::endl;
+
+
   }
 
   // Matrix-Free Jacobi preconditioner application
