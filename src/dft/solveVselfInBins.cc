@@ -1291,6 +1291,10 @@ namespace dftfe
               // FIXME: check if this is really required
               d_vselfBinConstraintMatrices[4 * iBin + idim + 1].set_zero(rhs);
 
+              const double l2norm=rhs.l2_norm();
+	      pcout <<"bin: "<<iBin<<" rhs l2 norm: "<< l2norm << std::endl;
+
+
               for (unsigned int i = 0; i < localSize; ++i)
                 rhsFlattened[i * numberPoissonSolves + binStride * iBin + idim +
                              1] = rhs.local_element(i);
@@ -1446,6 +1450,10 @@ namespace dftfe
               vselfField.local_element(i) =
                 vselfBinsFieldsFlattened[numberPoissonSolves * i +
                                          binStride * iBin];
+
+            const double l2norm=vselfField.l2_norm();
+            pcout <<"bin: "<<iBin<<" vselfField l2 norm: "<< l2norm << std::endl;
+
 
             const unsigned int constraintMatrixId = 4 * iBin + offset;
 
