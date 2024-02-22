@@ -1112,7 +1112,11 @@ namespace dftfe
             fe_eval.integrate(false, true);
             fe_eval.distribute_local_to_global(rhs);
           }
+        
+	double l2norm=rhs.l2_norm();
+        pcout <<"bin: "<<iBin<<" rhs no charge l2 norm: "<< l2norm << std::endl;
 
+	
         // rhs contribution from atomic charge at fem nodes
         if (useSmearedCharges)
           {
@@ -1182,7 +1186,7 @@ namespace dftfe
         // FIXME: check if this is really required
         d_vselfBinConstraintMatrices[4 * iBin].set_zero(rhs);
 
-        double l2norm=rhs.l2_norm();
+        l2norm=rhs.l2_norm();
         pcout <<"bin: "<<iBin<<" rhs l2 norm: "<< l2norm << std::endl;
 
 
