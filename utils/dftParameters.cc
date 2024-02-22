@@ -1345,7 +1345,7 @@ namespace dftfe
 
     prm.enter_subsection("GPU");
     {
-      useDevice                  = prm.get_bool("USE GPU");
+      useDevice                  = prm.get_bool("USE GPU"); 
       useTF32Device              = useDevice && prm.get_bool("USE TF32 OP");
       deviceFineGrainedTimings   = useDevice && prm.get_bool("FINE GRAINED GPU TIMINGS");
       allowFullCPUMemSubspaceRot = useDevice && prm.get_bool("SUBSPACE ROT FULL CPU MEM");
