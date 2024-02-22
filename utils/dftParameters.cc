@@ -1346,13 +1346,13 @@ namespace dftfe
     prm.enter_subsection("GPU");
     {
       useDevice                  = prm.get_bool("USE GPU");
-      useTF32Device              = prm.get_bool("USE TF32 OP");
-      deviceFineGrainedTimings   = prm.get_bool("FINE GRAINED GPU TIMINGS");
-      allowFullCPUMemSubspaceRot = prm.get_bool("SUBSPACE ROT FULL CPU MEM");
-      autoDeviceBlockSizes       = prm.get_bool("AUTO GPU BLOCK SIZES");
-      useDeviceDirectAllReduce   = prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
-      useELPADeviceKernel        = prm.get_bool("USE ELPA GPU KERNEL");
-      deviceMemOptMode           = prm.get_bool("GPU MEM OPT MODE");
+      useTF32Device              = useDevice && prm.get_bool("USE TF32 OP");
+      deviceFineGrainedTimings   = useDevice && prm.get_bool("FINE GRAINED GPU TIMINGS");
+      allowFullCPUMemSubspaceRot = useDevice && prm.get_bool("SUBSPACE ROT FULL CPU MEM");
+      autoDeviceBlockSizes       = useDevice && prm.get_bool("AUTO GPU BLOCK SIZES");
+      useDeviceDirectAllReduce   = useDevice && prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
+      useELPADeviceKernel        = useDevice && prm.get_bool("USE ELPA GPU KERNEL");
+      deviceMemOptMode           = useDevice && prm.get_bool("GPU MEM OPT MODE");
     }
     prm.leave_subsection();
 
