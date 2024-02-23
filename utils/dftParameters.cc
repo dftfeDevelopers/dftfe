@@ -1352,7 +1352,7 @@ namespace dftfe
       autoDeviceBlockSizes       = useDevice && prm.get_bool("AUTO GPU BLOCK SIZES");
       useDeviceDirectAllReduce   = useDevice && prm.get_bool("USE GPUDIRECT MPI ALL REDUCE");
       useELPADeviceKernel        = useDevice && prm.get_bool("USE ELPA GPU KERNEL");
-      deviceMemOptMode           = useDevice && prm.get_bool("GPU MEM OPT MODE");
+      deviceMemOptMode           = prm.get_bool("GPU MEM OPT MODE");
     }
     prm.leave_subsection();
 
