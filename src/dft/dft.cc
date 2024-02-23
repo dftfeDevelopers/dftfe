@@ -1296,7 +1296,8 @@ namespace dftfe
     // false option reinitializes vself bins from scratch wheras true option
     // only updates the boundary conditions
     const bool updateOnlyBinsBc = !updateImagesAndKPointsAndVselfBins;
-    initBoundaryConditions(isMeshDeformed, updateOnlyBinsBc);
+    initBoundaryConditions(isMeshDeformed || d_dftParamsPtr->isCellStress,
+                           updateOnlyBinsBc);
 
     MPI_Barrier(d_mpiCommParent);
     init_bc = MPI_Wtime() - init_bc;
