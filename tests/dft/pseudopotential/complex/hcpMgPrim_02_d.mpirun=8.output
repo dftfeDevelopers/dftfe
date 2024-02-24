@@ -33,21 +33,21 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 12 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -138.23777769
+             Total energy:        -138.23777830
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000011,0.000007,0.008599
-AtomId    1:  0.006122,0.003534,0.008599
+AtomId    0:  0.000013,0.000007,0.008617
+AtomId    1:  0.006120,0.003534,0.008617
 --------------------------------------------------------------------------------------------
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.005460  0.001399  0.000000
-0.001399  0.003844  0.000000
+0.005461  0.001399  0.000000
+0.001399  0.003845  0.000000
 0.000000  0.000000  0.001757
 ------------------------------------------------------------------------
