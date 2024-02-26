@@ -4127,7 +4127,7 @@ namespace dftfe
       dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
         best_speed, // This flag is version dependent for dealII 9.5.0 it is
                     // dealii::DataOutBase::CompressionLevel::best_speed
-      true)); // higher order cells set to true
+      true));       // higher order cells set to true
     data_outEigen.build_patches(FEOrder);
 
     std::string tempFolder = "waveFunctionOutputFolder";
@@ -4194,7 +4194,7 @@ namespace dftfe
       dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
         best_speed, // This flag is version dependent for dealII 9.5.0 it is
                     // dealii::DataOutBase::CompressionLevel::best_speed
-      true)); // higher order cells set to true
+      true));       // higher order cells set to true
     dataOutRho.build_patches(FEOrder);
 
     std::string tempFolder = "densityOutputFolder";
@@ -4660,7 +4660,7 @@ namespace dftfe
       dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
         best_speed, // This flag is version dependent for dealII 9.5.0 it is
                     // dealii::DataOutBase::CompressionLevel::best_speed
-      true)); // higher order cells set to true
+      true));       // higher order cells set to true
     dataOutRho.build_patches(FEOrder);
 
     std::string tempFolder = "meshOutputFolder";
