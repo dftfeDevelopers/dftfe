@@ -178,15 +178,38 @@ namespace dftfe
           std::vector<std::string> attr_type;
           std::vector<std::string> attr_value;
           XmlTagReaderAttr(tag_name, file_path_in, &attr_type, &attr_value);
-          ang_mom_list.push_back(std::stod(attr_value[4]));
+          unsigned int index     = 0;
+          std::string  to_search = "angular_momentum";
+          auto it = std::find(attr_type.begin(), attr_type.end(), to_search);
+          if (it == attr_type.end())
+            {
+              throw std::invalid_argument(
+                "angular momentum attribute not found");
+            }
+          else
+            {
+              index = std::distance(attr_type.begin(), it);
+              ang_mom_list.push_back(std::stoi(attr_value[index]));
+            }
         }
-
       // Unique angular momentum values
-      std::vector<int> ang_mom_unique_list = ang_mom_list;
-      std::sort(ang_mom_unique_list.begin(), ang_mom_unique_list.end());
-      auto it = ang_mom_unique_list.erase(
-        std::unique(ang_mom_unique_list.begin(), ang_mom_unique_list.end()));
-      ang_mom_unique_list.resize(distance(ang_mom_unique_list.begin(), it));
+      std::vector<int> ang_mom_unique_list;
+      auto             is_unique =
+        std::adjacent_find(ang_mom_list.begin(), ang_mom_list.end()) ==
+        ang_mom_list.end();
+      if (!is_unique)
+        {
+          ang_mom_unique_list = ang_mom_list;
+          std::sort(ang_mom_unique_list.begin(), ang_mom_unique_list.end());
+          auto it =
+            ang_mom_unique_list.erase(std::unique(ang_mom_unique_list.begin(),
+                                                  ang_mom_unique_list.end()));
+          ang_mom_unique_list.resize(distance(ang_mom_unique_list.begin(), it));
+        }
+      else
+        {
+          ang_mom_unique_list = ang_mom_list;
+        }
 
       // Multiplicity of unique angular momentum values
       std::vector<int> ang_mom_multiplicity_list;
@@ -266,7 +289,25 @@ namespace dftfe
               std::vector<std::string> attr_type;
               std::vector<std::string> attr_value;
               XmlTagReaderAttr(chi_tag, file_path_in, &attr_type, &attr_value);
-              file << attr_value[6] + ".dat" << std::endl;
+              unsigned int index     = 0;
+              std::string  to_search = "label";
+              auto         it =
+                std::find(attr_type.begin(), attr_type.end(), to_search);
+              if (it == attr_type.end())
+                {
+                  throw std::invalid_argument(
+                    "orbital label attribute not found");
+                }
+              else
+                {
+                  index = std::distance(attr_type.begin(), it);
+                }
+              std::string orbital_string = attr_value[index];
+              for (auto &w : orbital_string)
+                {
+                  w = tolower(w);
+                }
+              file << orbital_string + ".dat" << std::endl;
             }
         }
       file.close();
@@ -289,15 +330,39 @@ namespace dftfe
           std::vector<std::string> attr_type;
           std::vector<std::string> attr_value;
           XmlTagReaderAttr(tag_name, file_path_in, &attr_type, &attr_value);
-          ang_mom_list.push_back(std::stod(attr_value[4]));
+          unsigned int index     = 0;
+          std::string  to_search = "angular_momentum";
+          auto it = std::find(attr_type.begin(), attr_type.end(), to_search);
+          if (it == attr_type.end())
+            {
+              throw std::invalid_argument(
+                "angular momentum attribute not found");
+            }
+          else
+            {
+              index = std::distance(attr_type.begin(), it);
+              ang_mom_list.push_back(std::stoi(attr_value[index]));
+            }
         }
 
-      // // Unique angular momentum values
-      std::vector<int> ang_mom_unique_list = ang_mom_list;
-      std::sort(ang_mom_unique_list.begin(), ang_mom_unique_list.end());
-      auto it = ang_mom_unique_list.erase(
-        std::unique(ang_mom_unique_list.begin(), ang_mom_unique_list.end()));
-      ang_mom_unique_list.resize(distance(ang_mom_unique_list.begin(), it));
+      // Unique angular momentum values
+      std::vector<int> ang_mom_unique_list;
+      auto             is_unique =
+        std::adjacent_find(ang_mom_list.begin(), ang_mom_list.end()) ==
+        ang_mom_list.end();
+      if (!is_unique)
+        {
+          ang_mom_unique_list = ang_mom_list;
+          std::sort(ang_mom_unique_list.begin(), ang_mom_unique_list.end());
+          auto it =
+            ang_mom_unique_list.erase(std::unique(ang_mom_unique_list.begin(),
+                                                  ang_mom_unique_list.end()));
+          ang_mom_unique_list.resize(distance(ang_mom_unique_list.begin(), it));
+        }
+      else
+        {
+          ang_mom_unique_list = ang_mom_list;
+        }
 
       // Multiplicity of unique angular momentum values
       std::vector<int> ang_mom_multiplicity_list;
@@ -458,7 +523,19 @@ namespace dftfe
       std::vector<std::string> attr_value;
       header_tag.push_back("PP_HEADER");
       XmlTagReaderAttr(header_tag, file_path_in, &attr_type, &attr_value);
-      if (attr_value[13] == "T")
+      unsigned int index     = 0;
+      std::string  to_search = "core_correction";
+      auto it = std::find(attr_type.begin(), attr_type.end(), to_search);
+      if (it == attr_type.end())
+        {
+          throw std::invalid_argument("core correction attribute not found");
+        }
+      else
+        {
+          index = std::distance(attr_type.begin(), it);
+        }
+
+      if (attr_value[index] == "T")
         {
           // Extracting radial coordinates
           std::vector<double>      radial_coord;
@@ -552,9 +629,24 @@ namespace dftfe
           std::vector<std::string> attr_type;
           std::vector<std::string> attr_value;
           XmlTagReaderAttr(chi_tag, file_path_in, &attr_type, &attr_value);
-
+          unsigned int index     = 0;
+          std::string  to_search = "label";
+          auto it = std::find(attr_type.begin(), attr_type.end(), to_search);
+          if (it == attr_type.end())
+            {
+              throw std::invalid_argument("orbital label attribute not found");
+            }
+          else
+            {
+              index = std::distance(attr_type.begin(), it);
+            }
+          std::string orbital_string = attr_value[index];
+          for (auto &w : orbital_string)
+            {
+              w = tolower(w);
+            }
           std::fstream file;
-          file.open(file_path_out + "/" + attr_value[6] + ".dat",
+          file.open(file_path_out + "/" + orbital_string + ".dat",
                     std::ios::out);
           file << std::setprecision(12);
           if (file.is_open())
@@ -580,9 +672,9 @@ namespace dftfe
       xmltoProjectorFile(file_path_in, file_path_out);
       xmltoLocalPotential(file_path_in, file_path_out);
       xmltoDenomFile(file_path_in, file_path_out);
-      xmltoCoreDensityFile(file_path_in, file_path_out);
       xmltoDensityFile(file_path_in, file_path_out);
       xmltoOrbitalFile(file_path_in, file_path_out);
+
 
       std::vector<std::string> header_tag;
       std::vector<std::string> attr_type;
@@ -590,19 +682,54 @@ namespace dftfe
       header_tag.push_back("PP_HEADER");
       XmlTagReaderAttr(header_tag, file_path_in, &attr_type, &attr_value);
       // NLCC
-      if (attr_value[13] == "T")
-        nlccFlag = 1;
+      unsigned int index     = 0;
+      std::string  to_search = "core_correction";
+      auto it = std::find(attr_type.begin(), attr_type.end(), to_search);
+      if (it == attr_type.end())
+        {
+          throw std::invalid_argument("core correction attribute not found");
+        }
+      else
+        {
+          index = std::distance(attr_type.begin(), it);
+        }
+      if (attr_value[index] == "T")
+        {
+          nlccFlag = 1;
+          xmltoCoreDensityFile(file_path_in, file_path_out);
+        }
       else
         nlccFlag = 0;
 
       // SOC
-      if (attr_value[10] == "T")
+      to_search = "has_so";
+      it        = std::find(attr_type.begin(), attr_type.end(), to_search);
+      if (it == attr_type.end())
+        {
+          throw std::invalid_argument(
+            "spin orbit coupling attribute not found");
+        }
+      else
+        {
+          index = std::distance(attr_type.begin(), it);
+        }
+      if (attr_value[index] == "T")
         socFlag = 1;
       else
         socFlag = 0;
 
       // PAW
-      if (attr_value[8] == "T")
+      to_search = "is_paw";
+      it        = std::find(attr_type.begin(), attr_type.end(), to_search);
+      if (it == attr_type.end())
+        {
+          throw std::invalid_argument("PAW attribute not found");
+        }
+      else
+        {
+          index = std::distance(attr_type.begin(), it);
+        }
+      if (attr_value[index] == "T")
         pawFlag = 1;
       else
         pawFlag = 0;
