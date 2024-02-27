@@ -25,7 +25,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "../pseudoConverters/pseudoPotentialToDftfeParser.cc"
+#include "../pseudoConverters/pseudoPotentialToDftfeConverter.cc"
 
 namespace dftfe
 {
@@ -106,7 +106,7 @@ namespace dftfe
                   unsigned int nlccFlag = 0;
                   unsigned int socFlag  = 0;
                   unsigned int pawFlag  = 0;
-                  errorFlag             = pseudoPotentialToDftfeParser(
+                  errorFlag = dftfe::pseudoUtils::pseudoPotentialToDftfeParser(
                     newPath, newFolder, verbosity, nlccFlag, socFlag, pawFlag);
                   nlccSum += nlccFlag;
                 }
@@ -115,8 +115,8 @@ namespace dftfe
                   unsigned int nlccFlag = 0;
                   unsigned int socFlag  = 0;
                   unsigned int pawFlag  = 0;
-                  errorFlag             = pseudoPotentialToDftfeParser(
-                    newPath, newFolder, verbosity, nlccFlag, socFlag, pawFlag);
+                  errorFlag = dftfe::pseudoUtils::pseudoPotentialToDftfeParser(
+                    toParse, newFolder, verbosity, nlccFlag, socFlag, pawFlag);
                   nlccSum += nlccFlag;
 
                   if (verbosity >= 1)

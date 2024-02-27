@@ -108,7 +108,6 @@ SET(TARGET_SRC
   ./utils/BLASWrapperHost.cc
   ./utils/MPIWriteOnFile.cpp
   ./utils/QuadDataCompositeWrite.cpp
-  ./pseudoConverters/pseudoPotentialToDftfeConvertor.cc
   ./utils/PeriodicTable.cc
   ./src/dft/dftd.cc
   ./src/mdi/MDIEngine.cpp
