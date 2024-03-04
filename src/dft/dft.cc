@@ -4120,6 +4120,14 @@ namespace dftfe
             count += 1;
           }
 
+    data_outEigen.set_flags(dealii::DataOutBase::VtkFlags(
+      std::numeric_limits<double>::min(),
+      std::numeric_limits<unsigned int>::min(),
+      true,
+      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+        best_speed, // This flag is version dependent for dealII 9.5.0 it is
+                    // dealii::DataOutBase::CompressionLevel::best_speed
+      true));       // higher order cells set to true
     data_outEigen.build_patches(FEOrder);
 
     std::string tempFolder = "waveFunctionOutputFolder";
@@ -4179,6 +4187,14 @@ namespace dftfe
       {
         dataOutRho.add_data_vector(magNodalField, std::string("magDensity"));
       }
+    dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
+      std::numeric_limits<double>::min(),
+      std::numeric_limits<unsigned int>::min(),
+      true,
+      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+        best_speed, // This flag is version dependent for dealII 9.5.0 it is
+                    // dealii::DataOutBase::CompressionLevel::best_speed
+      true));       // higher order cells set to true
     dataOutRho.build_patches(FEOrder);
 
     std::string tempFolder = "densityOutputFolder";
@@ -4628,7 +4644,7 @@ namespace dftfe
                             d_constraintsRhoNodal,
                             d_densityDofHandlerIndexElectro,
                             d_densityQuadratureIdElectro,
-                            d_densityOutQuadValues[0],
+                            d_densityInQuadValues[0],
                             rhoNodalField);
 
     //
@@ -4637,7 +4653,14 @@ namespace dftfe
     dealii::DataOut<3> dataOutRho;
     dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
     dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
-
+    dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
+      std::numeric_limits<double>::min(),
+      std::numeric_limits<unsigned int>::min(),
+      true,
+      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+        best_speed, // This flag is version dependent for dealII 9.5.0 it is
+                    // dealii::DataOutBase::CompressionLevel::best_speed
+      true));       // higher order cells set to true
     dataOutRho.build_patches(FEOrder);
 
     std::string tempFolder = "meshOutputFolder";

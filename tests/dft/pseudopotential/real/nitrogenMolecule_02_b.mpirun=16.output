@@ -37,7 +37,7 @@ SCF iterations converged to the specified tolerance after: 8 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78639014
+             Total energy:         -19.78639023
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.82259346
+             Total energy:         -19.82259344
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -76,7 +76,7 @@ v2 : 0.000000 80.000000 0.000000
 v3 : 0.000000 0.000000 80.000000
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -0.753095 0.000000 0.000000
+AtomId 0:  -0.753094 0.000000 0.000000
 AtomId 1:  0.736615 0.000000 0.000000
 -----------------------------------------------------------------------------------------
 
@@ -98,12 +98,12 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.31590135
+             Total energy:         -19.31589703
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  2.827978,0.000000,0.000000
-AtomId    1:  2.824180,0.000000,0.000000
+AtomId    0:  2.827994,0.000000,0.000000
+AtomId    1:  2.824197,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -124,7 +124,7 @@ SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.86696011
+             Total energy:         -19.86695997
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -150,12 +150,12 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.87629060
+             Total energy:         -19.87628936
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.279909,0.000000,0.000000
-AtomId    1:  0.281853,0.000000,0.000000
+AtomId    0:  0.279919,0.000000,0.000000
+AtomId    1:  0.281863,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -176,12 +176,12 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.89197685
+             Total energy:         -19.89197669
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.082114,0.000000,0.000000
-AtomId    1:  0.083570,0.000000,0.000000
+AtomId    0:  0.082116,0.000000,0.000000
+AtomId    1:  0.083572,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -202,10 +202,10 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.89451818
+             Total energy:         -19.89451816
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.023707,0.000000,0.000000
-AtomId    1:  0.023163,0.000000,0.000000
+AtomId    0:  0.023708,0.000000,0.000000
+AtomId    1:  0.023164,0.000000,0.000000
 --------------------------------------------------------------------------------------------

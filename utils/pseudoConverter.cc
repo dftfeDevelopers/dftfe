@@ -19,14 +19,13 @@
 #include <headers.h>
 #include <pseudoConverter.h>
 #include <sys/stat.h>
-#include <xmlTodftfeParser.h>
 
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
-#include "../pseudoConverters/upfToxml.h"
+#include "../pseudoConverters/pseudoPotentialToDftfeConverter.cc"
 
 namespace dftfe
 {
@@ -46,7 +45,12 @@ namespace dftfe
     {
       return (ends_with(fname, ".upf") || ends_with(fname, ".UPF"));
     }
-
+    // Function to check if the file extension .qso
+    bool
+    isxml(const std::string &fname)
+    {
+      return (ends_with(fname, ".xml") || ends_with(fname, ".XML"));
+    }
 
 
     int
@@ -58,7 +62,6 @@ namespace dftfe
     {
       dealii::ConditionalOStream pcout(std::cout);
 
-      xmlTodftfeParser xmlParse;
 
       std::ifstream input_file;
       input_file.open(fileName);
@@ -101,15 +104,19 @@ namespace dftfe
 #endif
 
                   unsigned int nlccFlag = 0;
-                  errorFlag =
-                    upfToxml(newPath, xmlFileName, verbosity, nlccFlag);
+                  unsigned int socFlag  = 0;
+                  unsigned int pawFlag  = 0;
+                  errorFlag = dftfe::pseudoUtils::pseudoPotentialToDftfeParser(
+                    newPath, newFolder, verbosity, nlccFlag, socFlag, pawFlag);
                   nlccSum += nlccFlag;
                 }
               else
                 {
                   unsigned int nlccFlag = 0;
-                  errorFlag =
-                    upfToxml(toParse, xmlFileName, verbosity, nlccFlag);
+                  unsigned int socFlag  = 0;
+                  unsigned int pawFlag  = 0;
+                  errorFlag = dftfe::pseudoUtils::pseudoPotentialToDftfeParser(
+                    toParse, newFolder, verbosity, nlccFlag, socFlag, pawFlag);
                   nlccSum += nlccFlag;
 
                   if (verbosity >= 1)
@@ -128,10 +135,8 @@ namespace dftfe
                 }
 
               AssertThrow(errorFlag == 0,
-                          dealii::ExcMessage("Error in reading upf format"));
-
-              xmlParse.parseFile(xmlFileName);
-              xmlParse.outputData(newFolder);
+                          dealii::ExcMessage(
+                            "Error in reading Pseudopotential File"));
             }
         }
 
