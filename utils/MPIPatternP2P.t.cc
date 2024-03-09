@@ -422,10 +422,8 @@ namespace dftfe
         const int tag = static_cast<int>(MPITags::MPI_P2P_PATTERN_TAG);
         for (unsigned int iGhost = 0; iGhost < d_numGhostProcs; ++iGhost)
           {
-            const size_type numGhostIndicesInProc =
-              d_numGhostIndicesInGhostProcs[iGhost];
             const int ghostProcId = d_ghostProcIds[iGhost];
-            err                   = MPI_Isend(&numGhostIndicesInProc,
+            err                   = MPI_Isend(&d_numGhostIndicesInGhostProcs[iGhost],
                             1,
                             MPI_UNSIGNED,
                             ghostProcId,
