@@ -1,0 +1,44 @@
+number of atoms: 2
+number of atoms types: 1
+Z:7
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 8
+=============================================================================================================================
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 2.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 2.000000000000000000e+01 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 2.000000000000000000e+01
+-----------------------------------------------------------------------------------------
+------------Cartesian coordinates of atoms (origin at center of domain)------------------
+AtomId 0:  -1.300000000000000044e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  1.300000000000000044e+00 0.000000000000000000e+00 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
+FE interpolating polynomial order for electrostatics solve: 2
+FE interpolating polynomial order for nodal electron density computation: 4
+number of elements: 400
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 4529
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 9 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -19.66693754
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.323342,0.000000,0.000000
+AtomId    1:  0.323342,0.000000,0.000000
+--------------------------------------------------------------------------------------------
