@@ -1,0 +1,74 @@
+set VERBOSITY=0
+set REPRODUCIBLE OUTPUT=true
+
+subsection GPU
+  set USE GPU =true
+  set AUTO GPU BLOCK SIZES=false
+end
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = coordinates.inp 
+  set DOMAIN VECTORS FILE = domainVectors.inp
+  subsection Optimization
+    set ION FORCE = true
+  end
+end
+
+subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+  set CONSTRAINTS FROM SERIAL DOFHANDLER = false
+  set CONSTRAINTS PARALLEL CHECK         = false
+  set SELF POTENTIAL RADIUS=4.0
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=2
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set MESH SIZE AROUND ATOM = 0.7
+    set ATOM BALL RADIUS=2.0
+    set BASE MESH SIZE        = 10.0
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
+end
+
+subsection Parallelization
+  set NPBAND=2
+end
+
+subsection SCF parameters
+  set MIXING HISTORY   = 70
+  set MIXING PARAMETER = 0.5
+  set MAXIMUM ITERATIONS               = 100
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 1e-6
+  set STARTING WFC                     = ATOMIC
+  subsection Eigen-solver parameters
+      set CHEBYSHEV POLYNOMIAL DEGREE=15
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 8
+      set SUBSPACE ROT DOFS BLOCK SIZE        = 2000
+      set WFC BLOCK SIZE=2
+      set CHEBY WFC BLOCK SIZE=2
+      set CHEBYSHEV FILTER TOLERANCE=1e-5
+      set USE ELPA=true
+      set SCALAPACKPROCS=2
+      set OVERLAP COMPUTE COMMUN CHEBY=true
+      set OVERLAP COMPUTE COMMUN ORTHO RR=false
+  end
+end
+
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end

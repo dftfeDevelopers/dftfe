@@ -1,0 +1,70 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT=true
+
+subsection GPU
+  set USE GPU=true
+  set AUTO GPU BLOCK SIZES=false
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudoMg.inp
+end
+
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set ATOM BALL RADIUS      = 2.0
+    set BASE MESH SIZE        = 4.0
+    set MESH SIZE AROUND ATOM = 1.0
+    set MESH SIZE AT ATOM     = 1.0
+  end
+end
+
+subsection Geometry
+  set NATOMS=31
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = coordinatesMg2x.inp
+  set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
+  subsection Optimization
+    set ION FORCE                 = true
+  end
+end
+
+subsection SCF parameters
+  set COMPUTE ENERGY EACH ITER = false
+  set MIXING PARAMETER =0.7
+  set MIXING METHOD=LOW_RANK_DIELECM_PRECOND
+  set MAXIMUM ITERATIONS               = 100
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 1e-6
+  set STARTING WFC=ATOMIC
+  subsection LOW RANK DIELECM PRECOND
+    set METHOD SUB TYPE=ADAPTIVE
+    set STARTING NORM LARGE DAMPING=2.0
+    set ADAPTIVE RANK REL TOL=0.1
+    set POISSON SOLVER ABS TOL=1.0e-10
+  end
+  subsection Eigen-solver parameters
+       set CHEBYSHEV POLYNOMIAL DEGREE       = 20
+       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
+       set CHEBY WFC BLOCK SIZE=45
+       set WFC BLOCK SIZE=45
+       set CHEBYSHEV FILTER TOLERANCE=1e-5
+  end
+end
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end

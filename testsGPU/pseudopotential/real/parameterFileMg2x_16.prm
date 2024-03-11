@@ -1,0 +1,79 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT=true
+
+subsection GPU
+  set USE GPU=true
+  set AUTO GPU BLOCK SIZES=false
+  set USE GPUDIRECT MPI ALL REDUCE = true
+end
+
+subsection Boundary conditions
+  set SMEARED NUCLEAR CHARGES=false
+  set FLOATING NUCLEAR CHARGES=false
+  set CONSTRAINTS FROM SERIAL DOFHANDLER = false
+  set CONSTRAINTS PARALLEL CHECK         = false
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+  set SELF POTENTIAL RADIUS           = 3.0
+  set POINT WISE DIRICHLET CONSTRAINT  =true
+end
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudoMg.inp
+end
+
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  subsection Auto mesh generation parameters
+    set AUTO ADAPT BASE MESH SIZE=false
+    set ATOM BALL RADIUS      = 2.0
+    set BASE MESH SIZE        = 4.0
+    set MESH SIZE AROUND ATOM = 1.0
+    set MESH SIZE AT ATOM     = 1.0
+  end
+end
+
+subsection Geometry
+  set NATOMS=31
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = coordinatesMg2x.inp
+  set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
+  subsection Optimization
+    set ION FORCE                 = false
+  end
+end
+
+subsection Parallelization
+ set NPBAND=2
+end
+
+subsection SCF parameters
+  set COMPUTE ENERGY EACH ITER = false
+  set MAXIMUM ITERATIONS               = 100
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 1e-6
+  set STARTING WFC=ATOMIC
+  subsection Eigen-solver parameters
+       set CHEBYSHEV POLYNOMIAL DEGREE       = 20
+       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
+       set SPECTRUM SPLIT CORE EIGENSTATES=90
+       set CHEBY WFC BLOCK SIZE=45
+       set WFC BLOCK SIZE=45
+       set CHEBYSHEV FILTER TOLERANCE=1e-5
+       set OVERLAP COMPUTE COMMUN ORTHO RR=true
+       set USE MIXED PREC XTHX SPECTRUM SPLIT=true
+       set USE MIXED PREC CGS SR=true
+       set USE MIXED PREC CGS O=false
+  end
+end
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end
+
