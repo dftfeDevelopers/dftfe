@@ -645,12 +645,16 @@ namespace dftfe
       const ValueType2   beta,
       ValueType1 *       y) const
     {
-      hipLaunchKernelGGL(axpbyDeviceKernel,n / dftfe::utils::DEVICE_BLOCK_SIZE) +
-          1,dftfe::utils::DEVICE_BLOCK_SIZE,0,0,n,
-                      dftfe::utils::makeDataTypeDeviceCompatible(x),
-                      dftfe::utils::makeDataTypeDeviceCompatible(y),
-                      alpha,
-                      beta);
+      hipLaunchKernelGGL(axpbyDeviceKernel,
+                         n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         n,
+                         dftfe::utils::makeDataTypeDeviceCompatible(x),
+                         dftfe::utils::makeDataTypeDeviceCompatible(y),
+                         alpha,
+                         beta);
     }
 
 

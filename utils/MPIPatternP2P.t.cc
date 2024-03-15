@@ -423,14 +423,14 @@ namespace dftfe
         for (unsigned int iGhost = 0; iGhost < d_numGhostProcs; ++iGhost)
           {
             const int ghostProcId = d_ghostProcIds[iGhost];
-            err                   = MPI_Isend(&d_numGhostIndicesInGhostProcs[iGhost],
+            err = MPI_Isend(&d_numGhostIndicesInGhostProcs[iGhost],
                             1,
                             MPI_UNSIGNED,
                             ghostProcId,
                             tag,
                             d_mpiComm,
                             &sendRequests[iGhost]);
-            std::string errMsg    = "Error occured while using MPI_Isend. "
+            std::string errMsg = "Error occured while using MPI_Isend. "
                                  "Error code: " +
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
