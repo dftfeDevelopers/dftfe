@@ -2077,7 +2077,7 @@ namespace dftfe
     computing_timer.enter_subsection("Nuclear self-potential solve");
     computingTimerStandard.enter_subsection("Nuclear self-potential solve");
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice)
+    if (d_dftParamsPtr->useDevice and false)
       d_vselfBinsManager.solveVselfInBinsDevice(
         d_basisOperationsPtrElectroHost,
         d_baseDofHandlerIndexElectro,
