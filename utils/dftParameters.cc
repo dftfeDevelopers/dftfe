@@ -1040,6 +1040,11 @@ namespace dftfe
                           "false",
                           dealii::Patterns::Bool(),
                           "[Advanced] Toggle GPU MODE in Poisson solve.");
+
+        prm.declare_entry("VSELF GPU MODE",
+                          "false",
+                          dealii::Patterns::Bool(),
+                          "[Advanced] Toggle GPU MODE in vself Poisson solve.");
       }
       prm.leave_subsection();
 
@@ -1613,6 +1618,7 @@ namespace dftfe
       maxLinearSolverIterations = prm.get_integer("MAXIMUM ITERATIONS");
       absLinearSolverTolerance  = prm.get_double("TOLERANCE");
       poissonGPU                = prm.get_bool("GPU MODE");
+      vselfGPU                  = prm.get_bool("VSELF GPU MODE");
     }
     prm.leave_subsection();
 
