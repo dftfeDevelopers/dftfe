@@ -44,6 +44,7 @@ namespace dftfe
       maxLinearSolverIterationsHelmholtz;
 
     bool        poissonGPU;
+    bool        vselfGPU;
     std::string modelXCInputFile;
 
     double radiusAtomBall, mixingParameter;
