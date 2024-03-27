@@ -1672,7 +1672,7 @@ namespace dftfe
     std::vector<double> smearedChargeScaling;
 
 #ifdef DFTFE_WITH_DEVICE
-    if (d_dftParams.useDevice and d_dftParamsPtr->vselfGPU)
+    if (d_dftParams.useDevice and d_dftParams.vselfGPU)
       solveVselfInBinsDevice(basisOperationsPtr,
                              mfBaseDofHandlerIndex,
                              matrixFreeQuadratureIdAX,
