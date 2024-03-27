@@ -1,0 +1,15 @@
+var searchData=
+[
+  ['operator_21_3d_0',['operator!=',['../classdftfe_1_1dealii_linear_solver_problem.html#ab505308c2a47b84efddc2298f5d0b141',1,'dftfe::dealiiLinearSolverProblem::operator!=()'],['../classdftfe_1_1kerker_solver_problem.html#ab434f839021844216ceaa1bce2d84bf4',1,'dftfe::kerkerSolverProblem::operator!=()'],['../classdftfe_1_1poisson_solver_problem.html#aa4252fce0d7ccd44f2220aef7a217521',1,'dftfe::poissonSolverProblem::operator!=()']]],
+  ['operator_26_1',['operator&amp;',['../namespacedftfe_1_1basis.html#a968aecdead1f0467074cacbbedc3492c',1,'dftfe::basis']]],
+  ['operator_26_3d_2',['operator&amp;=',['../namespacedftfe_1_1basis.html#aae43e26dc49262b93899c9a9edccc420',1,'dftfe::basis']]],
+  ['operator_3d_3',['operator=',['../classdftfe_1_1utils_1_1_memory_storage.html#ac4e3dd36624251164ff929fe6e67a71b',1,'dftfe::utils::MemoryStorage::operator=(const MemoryStorage &amp;rhs)'],['../classdftfe_1_1utils_1_1_memory_storage.html#a0c57b7d1e9e4c9f95c3dbdd73fff9f0a',1,'dftfe::utils::MemoryStorage::operator=(MemoryStorage &amp;&amp;rhs) noexcept'],['../classdftfe_1_1linear_algebra_1_1_multi_vector.html#add96302dfff873a70466a452066fbad1',1,'dftfe::linearAlgebra::MultiVector::operator=(const MultiVector &amp;u)'],['../classdftfe_1_1linear_algebra_1_1_multi_vector.html#af882bffcec0872a8b97ab7530eaabeb3',1,'dftfe::linearAlgebra::MultiVector::operator=(MultiVector &amp;&amp;u)']]],
+  ['operator_3d_3d_4',['operator==',['../classdftfe_1_1utils_1_1_optimized_index_set.html#a53dfa9d6fd66e0ca486d2d7158ccc2ef',1,'dftfe::utils::OptimizedIndexSet']]],
+  ['operator_5b_5d_5',['operator[]',['../classdftfe_1_1utils_1_1_memory_storage.html#abea95dd493fb885a5e5cc04d4dcb6a9a',1,'dftfe::utils::MemoryStorage::operator[](std::size_t i)'],['../classdftfe_1_1utils_1_1_memory_storage.html#a67dd18067d1916d6cbb2f43e188854e8',1,'dftfe::utils::MemoryStorage::operator[](std::size_t i) const']]],
+  ['operatordftclass_6',['operatorDFTClass',['../classdftfe_1_1operator_d_f_t_class.html#a98f799df477536a14ae62cf8fd1e4e95',1,'dftfe::operatorDFTClass::operatorDFTClass()'],['../classdftfe_1_1operator_d_f_t_class.html#a21c349c2ed44312e3f345ba6ee3ee6cb',1,'dftfe::operatorDFTClass::operatorDFTClass(const MPI_Comm &amp;mpi_comm_replica, const dealii::MatrixFree&lt; 3, double &gt; &amp;matrix_free_data, dftUtils::constraintMatrixInfo &amp;constraintMatrixNone)']]],
+  ['operator_7c_7',['operator|',['../namespacedftfe_1_1basis.html#a1e087bcab2de5ca7747d1d306c752a29',1,'dftfe::basis']]],
+  ['operator_7c_3d_8',['operator|=',['../namespacedftfe_1_1basis.html#a2cc9c04d0f959faadd30c609ced094f6',1,'dftfe::basis']]],
+  ['optimizedindexset_9',['OptimizedIndexSet',['../classdftfe_1_1utils_1_1_optimized_index_set.html#ae1cdc43da5fc7bfc110dde70d2833d53',1,'dftfe::utils::OptimizedIndexSet']]],
+  ['outputdensity_10',['outputDensity',['../classdftfe_1_1dft_class.html#a7571c3a8d2766d49946e22b8e416fdc0',1,'dftfe::dftClass']]],
+  ['outputwfc_11',['outputWfc',['../classdftfe_1_1dft_class.html#a96e05a04b8d5dd0e624da876a91cc6e6',1,'dftfe::dftClass']]]
+];

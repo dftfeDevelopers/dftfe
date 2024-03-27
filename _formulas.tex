@@ -1,0 +1,123 @@
+\documentclass{article}
+\usepackage{ifthen}
+\usepackage{epsfig}
+\usepackage[utf8]{inputenc}
+\usepackage{xcolor}
+% Packages requested by user
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\usepackage{newunicodechar}
+  \makeatletter
+    \def\doxynewunicodechar#1#2{%
+    \@tempswafalse
+    \edef\nuc@tempa{\detokenize{#1}}%
+    \if\relax\nuc@tempa\relax
+      \nuc@emptyargerr
+    \else
+      \edef\@tempb{\expandafter\@car\nuc@tempa\@nil}%
+      \nuc@check
+      \if@tempswa
+        \@namedef{u8:\nuc@tempa}{#2}%
+      \fi
+    \fi
+  }
+  \makeatother
+  \doxynewunicodechar{⁻}{${}^{-}$}% Superscript minus
+  \doxynewunicodechar{²}{${}^{2}$}% Superscript two
+  \doxynewunicodechar{³}{${}^{3}$}% Superscript three
+
+\pagestyle{empty}
+\begin{document}
+$(a,b)$
+\pagebreak
+
+$a$
+\pagebreak
+
+$b$
+\pagebreak
+
+$[a_0,b_0,a_1,b_1,\ldots,a_{P-1},b_{P-1}]$
+\pagebreak
+
+$(a_i,b_i)$
+\pagebreak
+
+$i-$
+\pagebreak
+
+$L_i = \{g^{(k_i)}_1,g^{(k_i)}_2,\ldots,g^{(k_i)}_{N_i}\}$
+\pagebreak
+
+$g$
+\pagebreak
+
+$k_i$
+\pagebreak
+
+$i$
+\pagebreak
+
+$N_i$
+\pagebreak
+
+$L_i$
+\pagebreak
+
+$0, 1,\ldots,P-1$
+\pagebreak
+
+$[N_0,N_1), [N_1, N_2), [N_2, N_3), ..., [N_{P-1},N_P)$
+\pagebreak
+
+$N_0, N_1,\ldots, N_P$
+\pagebreak
+
+$L=\{a_1,b_1, a_2, b_2, \ldots, a_G, b_G\}$
+\pagebreak
+
+$a_i$
+\pagebreak
+
+$b_i$
+\pagebreak
+
+$[a_i,b_i)$
+\pagebreak
+
+$\sum_i$
+\pagebreak
+
+$L_i = \{o^{(k_i)}_1,o^{(k_i)}_2,\ldots,o^{(k_i)}_{N_i}\}$
+\pagebreak
+
+$o$
+\pagebreak
+
+$N$
+\pagebreak
+
+$M \times N$
+\pagebreak
+
+$M $
+\pagebreak
+
+$[a,b)$
+\pagebreak
+
+$b-a$
+\pagebreak
+
+\begin{align*}
+\mathrm{sub}(C) &\dealcoloneq \alpha
+op(\mathrm{sub}(A))op(\mathrm{sub}(B))
+                           + \beta \mathrm{sub}(C), \\
+\mathrm{sub}(C) &\dealcoloneq \alpha
+op(\mathrm{sub}(A))op(\mathrm{sub}(B))
+                           + beta sub(C),
+\end{align*}
+\pagebreak
+
+\end{document}

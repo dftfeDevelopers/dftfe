@@ -1,0 +1,13 @@
+var searchData=
+[
+  ['thisprocessid_0',['thisProcessId',['../classdftfe_1_1utils_1_1mpi_1_1_m_p_i_pattern_p2_p.html#a2c31fb840cc600d3bceeacb368869b5c',1,'dftfe::utils::mpi::MPIPatternP2P']]],
+  ['throwexception_1',['throwException',['../namespacedftfe_1_1utils.html#a1e850c2ac1993e0c5b5677ecb4a49cd2',1,'dftfe::utils::throwException(bool condition, std::string msg=&quot;&quot;)'],['../namespacedftfe_1_1utils.html#ac54eca2707f27846f6964e10d603688e',1,'dftfe::utils::throwException(bool condition, std::string msg=&quot;&quot;)']]],
+  ['tmmult_2',['Tmmult',['../classdftfe_1_1_sca_l_a_p_a_c_k_matrix.html#a6f9a582f73de96239b2ffa4ead2934cd',1,'dftfe::ScaLAPACKMatrix']]],
+  ['tmtmult_3',['TmTmult',['../classdftfe_1_1_sca_l_a_p_a_c_k_matrix.html#aac663b0fe6a673b3fef08226fdd24d9b',1,'dftfe::ScaLAPACKMatrix']]],
+  ['totalcharge_4',['totalCharge',['../classdftfe_1_1dft_class.html#a6526ff0dc26022b4be5c0a77a70485b8',1,'dftfe::dftClass::totalCharge(const dealii::DoFHandler&lt; 3 &gt; &amp;dofHandlerOfField, const distributedCPUVec&lt; double &gt; &amp;rhoNodalField)'],['../classdftfe_1_1dft_class.html#a38b0460996f081071f8c32ed103c5a1f',1,'dftfe::dftClass::totalCharge(const dealii::DoFHandler&lt; 3 &gt; &amp;dofHandlerOfField, const std::map&lt; dealii::CellId, std::vector&lt; double &gt; &gt; *rhoQuadValues)'],['../classdftfe_1_1dft_class.html#a8bb5dec0fdde5441321f64eabbb19cb5',1,'dftfe::dftClass::totalCharge(const dealii::DoFHandler&lt; 3 &gt; &amp;dofHandlerOfField, const dftfe::utils::MemoryStorage&lt; double, dftfe::utils::MemorySpace::HOST &gt; &amp;rhoQuadValues)'],['../classdftfe_1_1dft_class.html#ad4a2a7fa78e6fe75f4278ff7bff4f545',1,'dftfe::dftClass::totalCharge(const dealii::MatrixFree&lt; 3, double &gt; &amp;matrixFreeDataObject, const distributedCPUVec&lt; double &gt; &amp;rhoNodalField)']]],
+  ['totalmagnetization_5',['totalMagnetization',['../classdftfe_1_1dft_class.html#ad32acb6709987bb2e3f0e8ce0511ee25',1,'dftfe::dftClass']]],
+  ['transform_6',['transform',['../classdftfe_1_1mesh_movement_affine_transform.html#a6385bbaa67561110576ecf617d59a05d',1,'dftfe::meshMovementAffineTransform']]],
+  ['transformdomainboundingvectors_7',['transformDomainBoundingVectors',['../namespacedftfe_1_1dft_utils.html#a1f7afbc91240286b736b7d5b8b44114c',1,'dftfe::dftUtils']]],
+  ['triangulationmanager_8',['triangulationManager',['../classdftfe_1_1triangulation_manager.html#a17674b06487db0d720498947732c0f18',1,'dftfe::triangulationManager']]],
+  ['trivialsolveforstress_9',['trivialSolveForStress',['../classdftfe_1_1dft_class.html#a6e0f1ba395a49e457f47429b0a8719d4',1,'dftfe::dftClass::trivialSolveForStress()'],['../classdftfe_1_1dft_base.html#ab876a152d60a2dcd491f5f308226d947',1,'dftfe::dftBase::trivialSolveForStress()']]]
+];
