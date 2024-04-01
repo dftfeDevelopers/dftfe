@@ -267,6 +267,13 @@ namespace dftfe
       else
         pcout << "Anderson mixing parameter for Rho: "
               << d_mixingParameter[mixingVariable::rho] << std::endl;
+    if (d_verbosity > 0)
+      if (d_adaptMixingParameter[mixingVariable::magZ])
+        pcout << "Adaptive Anderson mixing parameter for magZ: "
+              << d_mixingParameter[mixingVariable::rho] << std::endl;
+      else
+        pcout << "Anderson mixing parameter for magZ: "
+              << d_mixingParameter[mixingVariable::magZ] << std::endl;
   }
 
   // Fucntions to add to the history

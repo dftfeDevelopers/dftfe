@@ -189,6 +189,9 @@ namespace dftfe
       optimizationSolver        = prm.get("NEB OPT SOLVER");
       ionRelaxFlagsFile         = prm.get("ION RELAX FLAGS FILE");
     }
+#ifndef DFTFE_WITH_DEVICE
+    useDevice = false;
+#endif
   }
 
 } // namespace dftfe

@@ -3819,7 +3819,6 @@ namespace dftfe
       if (dftParams.verbosity >= 4)
         if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
           std::cout << std::endl;
-
     }
 
     // X^{T}*HConj*XConj

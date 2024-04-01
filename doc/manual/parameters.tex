@@ -52,6 +52,23 @@
 
 
 {\it Possible values:} Any one of GS, MD, NEB, GEOOPT, NONE, NSCF
+\item {\it Parameter name:} {\tt USE GPU}
+\phantomsection\label{parameters:USE GPU}
+\label{parameters:USE_20GPU}
+
+
+\index[prmindex]{USE GPU}
+\index[prmindexfull]{USE GPU}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Use GPU for compute.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt VERBOSITY}
 \phantomsection\label{parameters:VERBOSITY}
 
@@ -117,6 +134,23 @@
 
 
 {\it Description:} [Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, lattice vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma\_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt MEM OPT MODE}
+\phantomsection\label{parameters:MEM OPT MODE}
+\label{parameters:MEM_20OPT_20MODE}
+
+
+\index[prmindex]{MEM OPT MODE}
+\index[prmindexfull]{MEM OPT MODE}
+{\it Value:} true
+
+
+{\it Default:} true
+
+
+{\it Description:} [Advanced] Uses algorithms which have lower peak memory but with a marginal performance degradation. Default: true.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -1094,23 +1128,6 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt GPU MEM OPT MODE}
-\phantomsection\label{parameters:GPU/GPU MEM OPT MODE}
-\label{parameters:GPU/GPU_20MEM_20OPT_20MODE}
-
-
-\index[prmindex]{GPU MEM OPT MODE}
-\index[prmindexfull]{GPU!GPU MEM OPT MODE}
-{\it Value:} true
-
-
-{\it Default:} true
-
-
-{\it Description:} [Adavanced] Uses algorithms which have lower peak memory on GPUs but with a marginal performance degradation. Recommended when using more than 100k degrees of freedom per GPU. Default: true.
-
-
-{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt SUBSPACE ROT FULL CPU MEM}
 \phantomsection\label{parameters:GPU/SUBSPACE ROT FULL CPU MEM}
 \label{parameters:GPU/SUBSPACE_20ROT_20FULL_20CPU_20MEM}
@@ -1128,6 +1145,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE DCCL}
+\phantomsection\label{parameters:GPU/USE DCCL}
+\label{parameters:GPU/USE_20DCCL}
+
+
+\index[prmindex]{USE DCCL}
+\index[prmindexfull]{GPU!USE DCCL}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Use NCCL/RCCL for GPUDIRECT communications. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt USE ELPA GPU KERNEL}
 \phantomsection\label{parameters:GPU/USE ELPA GPU KERNEL}
 \label{parameters:GPU/USE_20ELPA_20GPU_20KERNEL}
@@ -1142,23 +1176,6 @@
 
 
 {\it Description:} [Advanced] If DFT-FE is linked to ELPA eigensolver library configured to run on GPUs, this parameter toggles the use of ELPA GPU kernels for dense symmetric matrix diagonalization calls in DFT-FE. ELPA version>=2020.11.001 is required for this feature. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE GPU}
-\phantomsection\label{parameters:GPU/USE GPU}
-\label{parameters:GPU/USE_20GPU}
-
-
-\index[prmindex]{USE GPU}
-\index[prmindexfull]{GPU!USE GPU}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Use GPU for compute.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2354,6 +2371,23 @@
 
 
 {\it Possible values:} A floating point number $v$ such that $-1e-12 \leq v \leq 1$
+\item {\it Parameter name:} {\tt SPIN MIXING ENHANCEMENT FACTOR}
+\phantomsection\label{parameters:SCF parameters/SPIN MIXING ENHANCEMENT FACTOR}
+\label{parameters:SCF_20parameters/SPIN_20MIXING_20ENHANCEMENT_20FACTOR}
+
+
+\index[prmindex]{SPIN MIXING ENHANCEMENT FACTOR}
+\index[prmindexfull]{SCF parameters!SPIN MIXING ENHANCEMENT FACTOR}
+{\it Value:} 4.0
+
+
+{\it Default:} 4.0
+
+
+{\it Description:} [Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.
+
+
+{\it Possible values:} A floating point number $v$ such that $-1e-12 \leq v \leq 10$
 \item {\it Parameter name:} {\tt RESTA FERMI WAVEVECTOR}
 \phantomsection\label{parameters:SCF parameters/RESTA FERMI WAVEVECTOR}
 \label{parameters:SCF_20parameters/RESTA_20FERMI_20WAVEVECTOR}
@@ -2549,23 +2583,6 @@
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
-\item {\it Parameter name:} {\tt ENABLE HAMILTONIAN TIMES VECTOR OPTIM}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ENABLE HAMILTONIAN TIMES VECTOR OPTIM}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ENABLE_20HAMILTONIAN_20TIMES_20VECTOR_20OPTIM}
-
-
-\index[prmindex]{ENABLE HAMILTONIAN TIMES VECTOR OPTIM}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!ENABLE HAMILTONIAN TIMES VECTOR OPTIM}
-{\it Value:} true
-
-
-{\it Default:} true
-
-
-{\it Description:} [Advanced] Turns on optimization for hamiltonian times vector multiplication. Operations involving data movement from global vector to finite-element cell level and vice versa are done by employing different data structures for interior nodes and surfaces nodes of a given cell and this allows reduction of memory access costs
-
-
-{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/HIGHEST_20STATE_20OF_20INTEREST_20FOR_20CHEBYSHEV_20FILTERING}

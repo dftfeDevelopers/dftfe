@@ -742,6 +742,12 @@ namespace dftfe
           "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson, and 0.5 for Kerker and LRD.");
 
         prm.declare_entry(
+          "SPIN MIXING ENHANCEMENT FACTOR",
+          "4.0",
+          dealii::Patterns::Double(-1e-12, 10.0),
+          "[Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.");
+
+        prm.declare_entry(
           "ADAPT ANDERSON MIXING PARAMETER",
           "false",
           dealii::Patterns::Bool(),
@@ -1154,6 +1160,7 @@ namespace dftfe
 
     radiusAtomBall                    = 0.0;
     mixingParameter                   = 0.5;
+    spinMixingEnhancementFactor       = 4.0;
     absLinearSolverTolerance          = 1e-10;
     selfConsistentSolverTolerance     = 1e-10;
     TVal                              = 500;
@@ -1538,6 +1545,8 @@ namespace dftfe
       selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
       mixingHistory                 = prm.get_integer("MIXING HISTORY");
       mixingParameter               = prm.get_double("MIXING PARAMETER");
+      spinMixingEnhancementFactor =
+        prm.get_double("SPIN MIXING ENHANCEMENT FACTOR");
       adaptAndersonMixingParameter =
         prm.get_bool("ADAPT ANDERSON MIXING PARAMETER");
       kerkerParameter         = prm.get_double("KERKER MIXING PARAMETER");
@@ -1975,6 +1984,11 @@ namespace dftfe
           mixingParameter = 0.5;
         else
           mixingParameter = 0.2;
+      }
+
+    if (reproducible_output)
+      {
+        spinMixingEnhancementFactor = 1.0;
       }
   }
 

@@ -47,7 +47,7 @@ namespace dftfe
     bool        vselfGPU;
     std::string modelXCInputFile;
 
-    double radiusAtomBall, mixingParameter;
+    double radiusAtomBall, mixingParameter, spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
       start_magnetization, absLinearSolverToleranceHelmholtz;
