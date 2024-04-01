@@ -394,29 +394,34 @@ namespace dftfe
         // maximum of the residual norm of the state closest to and
         // below the Fermi level among all k points, and also the
         // maximum between the two spins
-        double maxRes = 0.0;
+        double                           maxRes = 0.0;
+        std::vector<std::vector<double>> maxResidualsAllkPoints(2);
         if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
           {
             maxRes = std::max(computeMaximumHighestOccupiedStateResidualNorm(
                                 residualNormWaveFunctionsAllkPointsSpins[0],
                                 eigenValuesSpins[0],
-                                fermiEnergy),
+                                fermiEnergy,
+                                maxResidualsAllkPoints[0]),
                               computeMaximumHighestOccupiedStateResidualNorm(
                                 residualNormWaveFunctionsAllkPointsSpins[1],
                                 eigenValuesSpins[1],
-                                fermiEnergy));
+                                fermiEnergy,
+                                maxResidualsAllkPoints[1]));
           }
         else
           {
-            maxRes = std::max(
-              computeMaximumHighestOccupiedStateResidualNorm(
-                residualNormWaveFunctionsAllkPointsSpins[0],
-                eigenValuesSpins[0],
-                d_dftParamsPtr->highestStateOfInterestForChebFiltering),
-              computeMaximumHighestOccupiedStateResidualNorm(
-                residualNormWaveFunctionsAllkPointsSpins[1],
-                eigenValuesSpins[1],
-                d_dftParamsPtr->highestStateOfInterestForChebFiltering));
+            maxRes =
+              std::max(computeMaximumHighestOccupiedStateResidualNorm(
+                         residualNormWaveFunctionsAllkPointsSpins[0],
+                         eigenValuesSpins[0],
+                         d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                         maxResidualsAllkPoints[0]),
+                       computeMaximumHighestOccupiedStateResidualNorm(
+                         residualNormWaveFunctionsAllkPointsSpins[1],
+                         eigenValuesSpins[1],
+                         d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                         maxResidualsAllkPoints[1]));
           }
 
 
@@ -461,49 +466,55 @@ namespace dftfe
                 for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                      ++kPoint)
                   {
-                    if (d_dftParamsPtr->verbosity >= 2)
-                      pcout << "Beginning Chebyshev filter pass " << 1 + count
-                            << " for spin " << s + 1 << std::endl;
-
-                    kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
-                    if (d_dftParamsPtr->memOptMode)
+                    if (maxResidualsAllkPoints[s][kPoint] > chebyTol)
                       {
-                        computing_timer.enter_subsection(
-                          "Hamiltonian Matrix Computation");
-                        kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
-                        computing_timer.leave_subsection(
-                          "Hamiltonian Matrix Computation");
-                      }
+                        if (d_dftParamsPtr->verbosity >= 2)
+                          pcout << "Beginning Chebyshev filter pass "
+                                << 1 + count << " for spin " << s + 1
+                                << std::endl;
+
+                        kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,
+                                                                       s);
+                        if (d_dftParamsPtr->memOptMode)
+                          {
+                            computing_timer.enter_subsection(
+                              "Hamiltonian Matrix Computation");
+                            kohnShamDFTEigenOperator
+                              .computeCellHamiltonianMatrix();
+                            computing_timer.leave_subsection(
+                              "Hamiltonian Matrix Computation");
+                          }
 
 #ifdef DFTFE_WITH_DEVICE
-                    if constexpr (dftfe::utils::MemorySpace::DEVICE ==
-                                  memorySpace)
-                      kohnShamEigenSpaceCompute(
-                        s,
-                        kPoint,
-                        kohnShamDFTEigenOperator,
-                        *d_elpaScala,
-                        d_subspaceIterationSolverDevice,
-                        residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                        true,
-                        0,
-                        false,
-                        false,
-                        true);
+                        if constexpr (dftfe::utils::MemorySpace::DEVICE ==
+                                      memorySpace)
+                          kohnShamEigenSpaceCompute(
+                            s,
+                            kPoint,
+                            kohnShamDFTEigenOperator,
+                            *d_elpaScala,
+                            d_subspaceIterationSolverDevice,
+                            residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+                            true,
+                            0,
+                            false,
+                            false,
+                            true);
 #endif
-                    if constexpr (dftfe::utils::MemorySpace::HOST ==
-                                  memorySpace)
-                      kohnShamEigenSpaceCompute(
-                        s,
-                        kPoint,
-                        kohnShamDFTEigenOperator,
-                        *d_elpaScala,
-                        d_subspaceIterationSolver,
-                        residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                        true,
-                        false,
-                        false,
-                        true);
+                        if constexpr (dftfe::utils::MemorySpace::HOST ==
+                                      memorySpace)
+                          kohnShamEigenSpaceCompute(
+                            s,
+                            kPoint,
+                            kohnShamDFTEigenOperator,
+                            *d_elpaScala,
+                            d_subspaceIterationSolver,
+                            residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+                            true,
+                            false,
+                            false,
+                            true);
+                      }
                   }
               }
 
@@ -527,11 +538,13 @@ namespace dftfe
                   std::max(computeMaximumHighestOccupiedStateResidualNorm(
                              residualNormWaveFunctionsAllkPointsSpins[0],
                              eigenValuesSpins[0],
-                             fermiEnergy),
+                             fermiEnergy,
+                             maxResidualsAllkPoints[0]),
                            computeMaximumHighestOccupiedStateResidualNorm(
                              residualNormWaveFunctionsAllkPointsSpins[1],
                              eigenValuesSpins[1],
-                             fermiEnergy));
+                             fermiEnergy,
+                             maxResidualsAllkPoints[1]));
               }
             else
               {
@@ -539,11 +552,13 @@ namespace dftfe
                   computeMaximumHighestOccupiedStateResidualNorm(
                     residualNormWaveFunctionsAllkPointsSpins[0],
                     eigenValuesSpins[0],
-                    d_dftParamsPtr->highestStateOfInterestForChebFiltering),
+                    d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                    maxResidualsAllkPoints[0]),
                   computeMaximumHighestOccupiedStateResidualNorm(
                     residualNormWaveFunctionsAllkPointsSpins[1],
                     eigenValuesSpins[1],
-                    d_dftParamsPtr->highestStateOfInterestForChebFiltering));
+                    d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                    maxResidualsAllkPoints[1]));
               }
 
             if (d_dftParamsPtr->verbosity >= 2)
@@ -652,19 +667,23 @@ namespace dftfe
         // maximum of the residual norm of the state closest to and
         // below the Fermi level among all k points
         //
-        double maxRes = 0.0;
-
+        double              maxRes = 0.0;
+        std::vector<double> maxResidualsAllkPoints;
         if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
           {
             maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-              residualNormWaveFunctionsAllkPoints, eigenValues, fermiEnergy);
+              residualNormWaveFunctionsAllkPoints,
+              eigenValues,
+              fermiEnergy,
+              maxResidualsAllkPoints);
           }
         else
           {
             maxRes = computeMaximumHighestOccupiedStateResidualNorm(
               residualNormWaveFunctionsAllkPoints,
               eigenValues,
-              d_dftParamsPtr->highestStateOfInterestForChebFiltering);
+              d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+              maxResidualsAllkPoints);
           }
 
         if (d_dftParamsPtr->verbosity >= 2)
@@ -694,48 +713,54 @@ namespace dftfe
             for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                  ++kPoint)
               {
-                if (d_dftParamsPtr->verbosity >= 2)
-                  pcout << "Beginning Chebyshev filter pass " << 1 + count
-                        << std::endl;
-
-                kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
-                if (d_dftParamsPtr->memOptMode && d_kPointWeights.size() > 0)
+                if (maxResidualsAllkPoints[kPoint] > chebyTol)
                   {
-                    computing_timer.enter_subsection(
-                      "Hamiltonian Matrix Computation");
-                    kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
-                    computing_timer.leave_subsection(
-                      "Hamiltonian Matrix Computation");
-                  }
+                    if (d_dftParamsPtr->verbosity >= 2)
+                      pcout << "Beginning Chebyshev filter pass " << 1 + count
+                            << std::endl;
+
+                    kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
+                    if (d_dftParamsPtr->memOptMode &&
+                        d_kPointWeights.size() > 0)
+                      {
+                        computing_timer.enter_subsection(
+                          "Hamiltonian Matrix Computation");
+                        kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
+                        computing_timer.leave_subsection(
+                          "Hamiltonian Matrix Computation");
+                      }
 
 #ifdef DFTFE_WITH_DEVICE
-                if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
-                  kohnShamEigenSpaceCompute(
-                    0,
-                    kPoint,
-                    kohnShamDFTEigenOperator,
-                    *d_elpaScala,
-                    d_subspaceIterationSolverDevice,
-                    residualNormWaveFunctionsAllkPoints[kPoint],
-                    true,
-                    0,
-                    false,
-                    true,
-                    true);
+                    if constexpr (dftfe::utils::MemorySpace::DEVICE ==
+                                  memorySpace)
+                      kohnShamEigenSpaceCompute(
+                        0,
+                        kPoint,
+                        kohnShamDFTEigenOperator,
+                        *d_elpaScala,
+                        d_subspaceIterationSolverDevice,
+                        residualNormWaveFunctionsAllkPoints[kPoint],
+                        true,
+                        0,
+                        false,
+                        true,
+                        true);
 
 #endif
-                if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
-                  kohnShamEigenSpaceCompute(
-                    0,
-                    kPoint,
-                    kohnShamDFTEigenOperator,
-                    *d_elpaScala,
-                    d_subspaceIterationSolver,
-                    residualNormWaveFunctionsAllkPoints[kPoint],
-                    true,
-                    false,
-                    true,
-                    true);
+                    if constexpr (dftfe::utils::MemorySpace::HOST ==
+                                  memorySpace)
+                      kohnShamEigenSpaceCompute(
+                        0,
+                        kPoint,
+                        kohnShamDFTEigenOperator,
+                        *d_elpaScala,
+                        d_subspaceIterationSolver,
+                        residualNormWaveFunctionsAllkPoints[kPoint],
+                        true,
+                        false,
+                        true,
+                        true);
+                  }
               }
 
             //
@@ -749,14 +774,16 @@ namespace dftfe
                 maxRes = computeMaximumHighestOccupiedStateResidualNorm(
                   residualNormWaveFunctionsAllkPoints,
                   eigenValues,
-                  fermiEnergy);
+                  fermiEnergy,
+                  maxResidualsAllkPoints);
               }
             else
               {
                 maxRes = computeMaximumHighestOccupiedStateResidualNorm(
                   residualNormWaveFunctionsAllkPoints,
                   eigenValues,
-                  d_dftParamsPtr->highestStateOfInterestForChebFiltering);
+                  d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                  maxResidualsAllkPoints);
               }
             if (d_dftParamsPtr->verbosity >= 2)
               {

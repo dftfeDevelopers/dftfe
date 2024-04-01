@@ -1551,7 +1551,8 @@ namespace dftfe
       const std::vector<std::vector<double>>
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-      const double                            _fermiEnergy);
+      const double                            _fermiEnergy,
+      std::vector<double> &                   maxResidualsAllkPoints);
 
 
     /**
@@ -1562,7 +1563,8 @@ namespace dftfe
       const std::vector<std::vector<double>>
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-      const unsigned int                      highestState);
+      const unsigned int                      highestState,
+      std::vector<double> &                   maxResidualsAllkPoints);
 
 
     void

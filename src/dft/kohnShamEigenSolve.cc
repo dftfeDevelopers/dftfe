@@ -950,18 +950,27 @@ namespace dftfe
       const std::vector<std::vector<double>>
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-      const unsigned int                      highestState)
+      const unsigned int                      highestState,
+      std::vector<double> &                   maxResidualsAllkPoints)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
+    maxResidualsAllkPoints.clear();
+    maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size(), -1e+6);
     for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
-        if (residualNormWaveFunctionsAllkPoints[kPoint][highestState] >
-            maxHighestOccupiedStateResNorm)
+        for (unsigned int i = 0; i < highestState; i++)
           {
-            maxHighestOccupiedStateResNorm =
-              residualNormWaveFunctionsAllkPoints[kPoint][highestState];
+            if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
+                maxResidualsAllkPoints[kPoint])
+              {
+                maxResidualsAllkPoints[kPoint] =
+                  residualNormWaveFunctionsAllkPoints[kPoint][i];
+              }
           }
       }
+    maxHighestOccupiedStateResNorm =
+      *std::max_element(maxResidualsAllkPoints.begin(),
+                        maxResidualsAllkPoints.end());
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
@@ -978,9 +987,12 @@ namespace dftfe
       const std::vector<std::vector<double>>
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-      const double                            fermiEnergy)
+      const double                            fermiEnergy,
+      std::vector<double> &                   maxResidualsAllkPoints)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
+    maxResidualsAllkPoints.clear();
+    maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size(), -1e+6);
     for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
         unsigned int highestOccupiedState = 0;
@@ -990,17 +1002,35 @@ namespace dftfe
             const double factor =
               (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
               (C_kb * d_dftParamsPtr->TVal);
-            if (factor < 0)
+            double functionValue;
+            if (factor <= 0.0)
+              {
+                double temp2  = 1.0 / (1.0 + exp(factor));
+                functionValue = (2.0 - d_dftParamsPtr->spinPolarized) *
+                                d_kPointWeights[kPoint] * temp2;
+              }
+            else
+              {
+                double temp2  = 1.0 / (1.0 + exp(-factor));
+                functionValue = (2.0 - d_dftParamsPtr->spinPolarized) *
+                                d_kPointWeights[kPoint] * exp(-factor) * temp2;
+              }
+            if (functionValue > 1e-3)
               highestOccupiedState = i;
           }
-
-        if (residualNormWaveFunctionsAllkPoints[kPoint][highestOccupiedState] >
-            maxHighestOccupiedStateResNorm)
+        for (unsigned int i = 0; i < highestOccupiedState; i++)
           {
-            maxHighestOccupiedStateResNorm =
-              residualNormWaveFunctionsAllkPoints[kPoint][highestOccupiedState];
+            if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
+                maxResidualsAllkPoints[kPoint])
+              {
+                maxResidualsAllkPoints[kPoint] =
+                  residualNormWaveFunctionsAllkPoints[kPoint][i];
+              }
           }
       }
+    maxHighestOccupiedStateResNorm =
+      *std::max_element(maxResidualsAllkPoints.begin(),
+                        maxResidualsAllkPoints.end());
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
