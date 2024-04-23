@@ -114,7 +114,7 @@ echo
 echo "Build FAST version in $BUILD_FAST"
 mkdir -p "$BUILD_FAST"
 cd "$BUILD_FAST"
-"$SRCDIR/configure" -host=x86_64 CC=mpicc CXX=mpicxx FC=mpif90 F77=mpif90 \
+"$SRCDIR/configure" -host=x86_64 CC=cc CXX=CC FC=ftn F77=ftn \
         --enable-mpi --enable-shared \
         --disable-vtk-binary --without-blas \
         --prefix="$INSTALL_FAST" CFLAGS="$CFLAGS_FAST" \
@@ -133,7 +133,7 @@ echo
 echo "Build DEBUG version in $BUILD_DEBUG"
 mkdir -p "$BUILD_DEBUG"
 cd "$BUILD_DEBUG"
-"$SRCDIR/configure" -host=x86_64 CC=mpicc CXX=mpicxx FC=mpif90 F77=mpif90 \
+"$SRCDIR/configure" -host=x86_64 CC=cc CXX=CC FC=ftn F77=ftn \
                     --enable-debug --enable-mpi --enable-shared \
         --disable-vtk-binary --without-blas \
         --prefix="$INSTALL_DEBUG" CFLAGS="$CFLAGS_DEBUG" \
