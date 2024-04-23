@@ -522,21 +522,37 @@ namespace dftfe
     else
       {
         const int numberGlobalAtoms = d_dftPtr->getAtomLocationsCart().size();
+        const int numberImageAtoms =
+          d_dftPtr->getImageAtomLocationsCart().size();
         std::vector<std::vector<double>> NNdistances(numberGlobalAtoms);
         double                           rNN = 0;
         for (int i = 0; i < numberGlobalAtoms; ++i)
           {
             double riMin = 0;
-            for (int j = 0; j < numberGlobalAtoms; ++j)
+            for (int j = 0; j < numberGlobalAtoms + numberImageAtoms; ++j)
               {
                 double rij = 0;
-                for (int k = 2; k < 5; ++k)
-                  {
-                    rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
-                            d_dftPtr->getAtomLocationsCart()[j][k]) *
-                           (d_dftPtr->getAtomLocationsCart()[i][k] -
-                            d_dftPtr->getAtomLocationsCart()[j][k]);
-                  }
+                if (j < numberGlobalAtoms)
+                  for (int k = 2; k < 5; ++k)
+                    {
+                      rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
+                              d_dftPtr->getAtomLocationsCart()[j][k]) *
+                             (d_dftPtr->getAtomLocationsCart()[i][k] -
+                              d_dftPtr->getAtomLocationsCart()[j][k]);
+                    }
+                else
+                  for (int k = 2; k < 5; ++k)
+                    {
+                      rij +=
+                        (d_dftPtr->getAtomLocationsCart()[i][k] -
+                         d_dftPtr
+                           ->getImageAtomLocationsCart()[j - numberGlobalAtoms]
+                                                        [k - 2]) *
+                        (d_dftPtr->getAtomLocationsCart()[i][k] -
+                         d_dftPtr
+                           ->getImageAtomLocationsCart()[j - numberGlobalAtoms]
+                                                        [k - 2]);
+                    }
                 rij = std::sqrt(rij);
                 if ((riMin > rij && i != j) || j == 0)
                   {
@@ -554,22 +570,44 @@ namespace dftfe
         std::vector<double> L(numberGlobalAtoms * numberGlobalAtoms, 0.0);
         for (int i = 0; i < numberGlobalAtoms; ++i)
           {
-            for (int j = i + 1; j < numberGlobalAtoms; ++j)
+            for (int j = i + 1; j < numberGlobalAtoms + numberImageAtoms; ++j)
               {
                 double rij = 0;
-                for (int k = 2; k < 5; ++k)
-                  {
-                    rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
-                            d_dftPtr->getAtomLocationsCart()[j][k]) *
-                           (d_dftPtr->getAtomLocationsCart()[i][k] -
-                            d_dftPtr->getAtomLocationsCart()[j][k]);
-                  }
+                int    jatomId =
+                  j < numberGlobalAtoms ?
+                    j :
+                    d_dftPtr->getImageAtomIDs()[j - numberGlobalAtoms];
+                if (j < numberGlobalAtoms)
+                  for (int k = 2; k < 5; ++k)
+                    {
+                      rij += (d_dftPtr->getAtomLocationsCart()[i][k] -
+                              d_dftPtr->getAtomLocationsCart()[j][k]) *
+                             (d_dftPtr->getAtomLocationsCart()[i][k] -
+                              d_dftPtr->getAtomLocationsCart()[j][k]);
+                    }
+                else
+                  for (int k = 2; k < 5; ++k)
+                    {
+                      rij +=
+                        (d_dftPtr->getAtomLocationsCart()[i][k] -
+                         d_dftPtr
+                           ->getImageAtomLocationsCart()[j - numberGlobalAtoms]
+                                                        [k - 2]) *
+                        (d_dftPtr->getAtomLocationsCart()[i][k] -
+                         d_dftPtr
+                           ->getImageAtomLocationsCart()[j - numberGlobalAtoms]
+                                                        [k - 2]);
+                    }
                 rij = std::sqrt(rij);
                 if (rij < rCut)
                   {
-                    L[i * numberGlobalAtoms + j] =
-                      -std::exp(-3.0 * (rij / rNN - 1));
-                    L[j * numberGlobalAtoms + i] = L[i * numberGlobalAtoms + j];
+                    double preconVal = -std::exp(-3.0 * (rij / rNN - 1));
+                    if (preconVal < L[i * numberGlobalAtoms + jatomId])
+                      {
+                        L[i * numberGlobalAtoms + jatomId] = preconVal;
+                        L[jatomId * numberGlobalAtoms + i] =
+                          L[i * numberGlobalAtoms + jatomId];
+                      }
                   }
               }
           }

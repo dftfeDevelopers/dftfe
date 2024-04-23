@@ -281,6 +281,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt MULTIPOLE BOUNDARY CONDITIONS}
+\phantomsection\label{parameters:Boundary conditions/MULTIPOLE BOUNDARY CONDITIONS}
+\label{parameters:Boundary_20conditions/MULTIPOLE_20BOUNDARY_20CONDITIONS}
+
+
+\index[prmindex]{MULTIPOLE BOUNDARY CONDITIONS}
+\index[prmindexfull]{Boundary conditions!MULTIPOLE BOUNDARY CONDITIONS}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Flag to set point wise multipole boundary conditions (upto quadrupole term) for non-periodic systems.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt SELF POTENTIAL RADIUS}
 \phantomsection\label{parameters:Boundary conditions/SELF POTENTIAL RADIUS}
 \label{parameters:Boundary_20conditions/SELF_20POTENTIAL_20RADIUS}
@@ -522,6 +539,23 @@
 
 
 {\it Possible values:} Any string
+\item {\it Parameter name:} {\tt NET CHARGE}
+\phantomsection\label{parameters:DFT functional parameters/NET CHARGE}
+\label{parameters:DFT_20functional_20parameters/NET_20CHARGE}
+
+
+\index[prmindex]{NET CHARGE}
+\index[prmindexfull]{DFT functional parameters!NET CHARGE}
+{\it Value:} 0
+
+
+{\it Default:} 0
+
+
+{\it Description:} [Standard] Net charge of the system in atomic units, positive quantity implies addition of electrons. In case of non-periodic boundary conditions, this capability is implemented using multipole Dirichlet inhomogeneous boundary conditions for the electrostatics. In case of periodic and semi-periodic conditions a uniform background charge is used to create a neutral system.
+
+
+{\it Possible values:}  A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
 \item {\it Parameter name:} {\tt PSEUDOPOTENTIAL CALCULATION}
 \phantomsection\label{parameters:DFT functional parameters/PSEUDOPOTENTIAL CALCULATION}
 \label{parameters:DFT_20functional_20parameters/PSEUDOPOTENTIAL_20CALCULATION}

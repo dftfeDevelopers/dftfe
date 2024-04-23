@@ -59,7 +59,8 @@ namespace dftfe
       initialize(
         const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
           &                                      partitioner,
-        const dealii::AffineConstraints<double> &constraintMatrixData);
+        const dealii::AffineConstraints<double> &constraintMatrixData,
+        const bool                               useInhomogeneties = true);
 
       /**
        * @brief overloaded dealii internal function distribute for flattened dealii array  which sets

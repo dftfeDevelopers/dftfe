@@ -373,6 +373,261 @@ namespace dftfe
 
     return dealii::Utilities::MPI::sum(value, mpi_communicator);
   }
+
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeMultipoleMoments(
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      &                basisOperationsPtr,
+    const unsigned int densityQuadratureId,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                                                  rhoQuadValues,
+    const std::map<dealii::CellId, std::vector<double>> *bQuadValues)
+  {
+    basisOperationsPtr->reinit(0, 0, densityQuadratureId, false);
+    const unsigned int nQuadsPerCellDensity =
+      basisOperationsPtr->nQuadsPerCell();
+    auto matrixFreeDataObject = basisOperationsPtr->matrixFreeData();
+
+    std::vector<std::function<dealii::VectorizedArray<double>(
+      dealii::VectorizedArray<double> &,
+      dealii::Point<3, dealii::VectorizedArray<double>>)>>
+      momentsAtQuadPoints;
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) { return i; });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return i * q[0];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return i * q[1];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return i * q[2];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return i * (3.0 * q[0] * q[0] - q.norm_square());
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return 3.0 * i * q[0] * q[1];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return 3.0 * i * q[0] * q[2];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return 3.0 * i * q[1] * q[0];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return i * (3.0 * q[1] * q[1] - q.norm_square());
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return 3.0 * i * q[1] * q[2];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return 3.0 * i * q[2] * q[0];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return 3.0 * i * q[2] * q[1];
+      });
+
+    momentsAtQuadPoints.push_back(
+      [](dealii::VectorizedArray<double> &                 i,
+         dealii::Point<3, dealii::VectorizedArray<double>> q) {
+        return i * (3.0 * q[2] * q[2] - q.norm_square());
+      });
+    if (!d_smearedChargeMomentsComputed)
+      {
+        dealii::FEEvaluation<3,
+                             C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+                             C_num1DQuadSmearedCharge() *
+                               C_numCopies1DQuadSmearedCharge(),
+                             1,
+                             double>
+          FEEvalb(matrixFreeDataObject,
+                  d_densityDofHandlerIndexElectro,
+                  d_smearedChargeQuadratureIdElectro);
+        d_smearedChargeMoments.clear();
+        d_smearedChargeMoments.resize(13, 0.0);
+        for (unsigned int iMacroCell = 0;
+             iMacroCell < matrixFreeDataObject.n_cell_batches();
+             ++iMacroCell)
+          {
+            FEEvalb.reinit(iMacroCell);
+            dealii::AlignedVector<dealii::VectorizedArray<double>> bVec(
+              FEEvalb.n_q_points, 0.0);
+            for (unsigned int iSubCell = 0;
+                 iSubCell <
+                 matrixFreeDataObject.n_active_entries_per_cell_batch(
+                   iMacroCell);
+                 ++iSubCell)
+              {
+                dealii::CellId subCellId =
+                  matrixFreeDataObject
+                    .get_cell_iterator(iMacroCell,
+                                       iSubCell,
+                                       d_densityDofHandlerIndexElectro)
+                    ->id();
+                const std::vector<double> &tempbVec =
+                  bQuadValues->find(subCellId)->second;
+                if (tempbVec.size() != 0)
+                  for (unsigned int iQuad = 0; iQuad < FEEvalb.n_q_points;
+                       ++iQuad)
+                    {
+                      bVec[iQuad][iSubCell] = tempbVec[iQuad];
+                    }
+              }
+            for (unsigned int iMomentComponent = 0; iMomentComponent < 13;
+                 ++iMomentComponent)
+              {
+                for (unsigned int iQuad = 0; iQuad < FEEvalb.n_q_points;
+                     ++iQuad)
+                  {
+                    FEEvalb.submit_value(momentsAtQuadPoints[iMomentComponent](
+                                           bVec[iQuad],
+                                           FEEvalb.quadrature_point(iQuad)),
+                                         iQuad);
+                  }
+                auto bMacroCellIntegral = FEEvalb.integrate_value();
+                for (unsigned int iSubCell = 0;
+                     iSubCell <
+                     matrixFreeDataObject.n_active_entries_per_cell_batch(
+                       iMacroCell);
+                     ++iSubCell)
+                  {
+                    d_smearedChargeMoments[iMomentComponent] +=
+                      bMacroCellIntegral[iSubCell];
+                  }
+              }
+          }
+        dealii::Utilities::MPI::sum(d_smearedChargeMoments,
+                                    mpi_communicator,
+                                    d_smearedChargeMoments);
+        d_smearedChargeMomentsComputed = true;
+      }
+    std::vector<double> moments(13, 0.0);
+    dealii::FEEvaluation<
+      3,
+      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
+      1,
+      double>
+      FEEvalRho(matrixFreeDataObject,
+                d_densityDofHandlerIndexElectro,
+                d_densityQuadratureIdElectro);
+    for (unsigned int iMacroCell = 0;
+         iMacroCell < matrixFreeDataObject.n_cell_batches();
+         ++iMacroCell)
+      {
+        FEEvalRho.reinit(iMacroCell);
+        dealii::AlignedVector<dealii::VectorizedArray<double>> rhoVec(
+          FEEvalRho.n_q_points, 0.0);
+        for (unsigned int iSubCell = 0;
+             iSubCell <
+             matrixFreeDataObject.n_active_entries_per_cell_batch(iMacroCell);
+             ++iSubCell)
+          {
+            dealii::CellId subCellId =
+              matrixFreeDataObject
+                .get_cell_iterator(iMacroCell,
+                                   iSubCell,
+                                   d_densityDofHandlerIndexElectro)
+                ->id();
+            const unsigned int cellIndex =
+              basisOperationsPtr->cellIndex(subCellId);
+            const double *tempVec =
+              rhoQuadValues.data() + cellIndex * FEEvalRho.n_q_points;
+            for (unsigned int iQuad = 0; iQuad < FEEvalRho.n_q_points; ++iQuad)
+              {
+                rhoVec[iQuad][iSubCell] = tempVec[iQuad];
+              }
+          }
+        for (unsigned int iMomentComponent = 0; iMomentComponent < 13;
+             ++iMomentComponent)
+          {
+            for (unsigned int iQuad = 0; iQuad < FEEvalRho.n_q_points; ++iQuad)
+              {
+                FEEvalRho.submit_value((momentsAtQuadPoints[iMomentComponent])(
+                                         rhoVec[iQuad],
+                                         FEEvalRho.quadrature_point(iQuad)),
+                                       iQuad);
+              }
+            auto rhoMacroCellIntegral = FEEvalRho.integrate_value();
+            for (unsigned int iSubCell = 0;
+                 iSubCell <
+                 matrixFreeDataObject.n_active_entries_per_cell_batch(
+                   iMacroCell);
+                 ++iSubCell)
+              {
+                moments[iMomentComponent] += rhoMacroCellIntegral[iSubCell];
+              }
+          }
+      }
+    dealii::Utilities::MPI::sum(moments, mpi_communicator, moments);
+    for (unsigned int iMomentComponent = 0; iMomentComponent < 13;
+         ++iMomentComponent)
+      {
+        moments[iMomentComponent] += d_smearedChargeMoments[iMomentComponent];
+      }
+    if (d_dftParamsPtr->verbosity >= 2)
+      {
+        pcout << "Monopole Moment        : " << moments[0] << std::endl;
+        pcout << "Dipole Moment          : " << moments[1] << " " << moments[2]
+              << " " << moments[3] << std::endl;
+        pcout << "Quadrupole Moment      : " << std::endl
+              << moments[4] << " " << moments[5] << " " << moments[6]
+              << std::endl
+              << moments[7] << " " << moments[8] << " " << moments[9]
+              << std::endl
+              << moments[10] << " " << moments[11] << " " << moments[12]
+              << std::endl;
+      }
+    d_monopole = moments[0];
+    d_dipole.clear();
+    d_dipole.resize(3);
+    d_quadrupole.clear();
+    d_quadrupole.resize(9);
+    std::copy(moments.begin() + 1, moments.begin() + 4, d_dipole.begin());
+    std::copy(moments.begin() + 4, moments.end(), d_quadrupole.begin());
+  }
+
 #include "dft.inst.cc"
 
 } // namespace dftfe

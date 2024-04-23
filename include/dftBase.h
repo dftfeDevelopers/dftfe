@@ -88,10 +88,10 @@ namespace dftfe
     virtual double
     getFreeEnergy() const = 0;
 
-    virtual distributedCPUVec<double>
+    virtual const distributedCPUVec<double> &
     getRhoNodalOut() const = 0;
 
-    virtual distributedCPUVec<double>
+    virtual const distributedCPUVec<double> &
     getRhoNodalSplitOut() const = 0;
 
     virtual double
@@ -107,14 +107,28 @@ namespace dftfe
      * @brief Gets the current atom Locations in cartesian form
      * (origin at center of domain) from dftClass
      */
-    virtual std::vector<std::vector<double>>
+    virtual const std::vector<std::vector<double>> &
     getAtomLocationsCart() const = 0;
+
+    /**
+     * @brief Gets the current image atom Locations in cartesian form
+     * (origin at center of domain) from dftClass
+     */
+    virtual const std::vector<std::vector<double>> &
+    getImageAtomLocationsCart() const = 0;
+
+    /**
+     * @brief Gets the current image atom ids from dftClass
+     */
+    virtual const std::vector<int> &
+    getImageAtomIDs() const = 0;
+
 
     /**
      * @brief Gets the current atom Locations in fractional form
      * from dftClass (only applicable for periodic and semi-periodic BCs)
      */
-    virtual std::vector<std::vector<double>>
+    virtual const std::vector<std::vector<double>> &
     getAtomLocationsFrac() const = 0;
 
 
@@ -125,7 +139,7 @@ namespace dftfe
      *  @return std::vector<std::vector<double>> 3 \times 3 matrix,lattice[i][j]
      *  corresponds to jth component of ith lattice vector
      */
-    virtual std::vector<std::vector<double>>
+    virtual const std::vector<std::vector<double>> &
     getCell() const = 0;
 
     /**
@@ -138,20 +152,20 @@ namespace dftfe
     /**
      * @brief Gets the current atom types from dftClass
      */
-    virtual std::set<unsigned int>
+    virtual const std::set<unsigned int> &
     getAtomTypes() const = 0;
 
     /**
      * @brief Gets the current atomic forces (configurational forces) from dftClass
      */
-    virtual std::vector<double>
+    virtual const std::vector<double> &
     getForceonAtoms() const = 0;
 
 
     /**
      * @brief Gets the current cell stress from dftClass
      */
-    virtual dealii::Tensor<2, 3, double>
+    virtual const dealii::Tensor<2, 3, double> &
     getCellStress() const = 0;
 
     /**

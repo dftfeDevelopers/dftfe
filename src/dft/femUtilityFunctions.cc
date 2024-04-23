@@ -208,7 +208,7 @@ namespace dftfe
          ++cell)
       {
         feEvalObj.reinit(cell);
-        feEvalObj.read_dof_values(nodalField);
+        feEvalObj.read_dof_values_plain(nodalField);
         feEvalObj.evaluate(true, isEvaluateGradData ? true : false);
 
         for (unsigned int iSubCell = 0;

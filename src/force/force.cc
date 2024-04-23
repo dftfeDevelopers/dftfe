@@ -569,7 +569,7 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  std::vector<double>
+  std::vector<double> &
   forceClass<FEOrder, FEOrderElectro, memorySpace>::getAtomsForces()
   {
     return d_globalAtomsForces;
@@ -578,7 +578,7 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  dealii::Tensor<2, 3, double>
+  dealii::Tensor<2, 3, double> &
   forceClass<FEOrder, FEOrderElectro, memorySpace>::getStress()
   {
     return d_stress;

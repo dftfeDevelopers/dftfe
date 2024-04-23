@@ -487,7 +487,8 @@ namespace dftfe
     constraintMatrixInfoDevice::initialize(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
         &                                      partitioner,
-      const dealii::AffineConstraints<double> &constraintMatrixData)
+      const dealii::AffineConstraints<double> &constraintMatrixData,
+      const bool                               useInhomogeneties)
 
     {
       clear();
@@ -505,8 +506,11 @@ namespace dftfe
             {
               const dealii::types::global_dof_index lineDof = *it;
               d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
-              d_inhomogenities.push_back(
-                constraintMatrixData.get_inhomogeneity(lineDof));
+              if (useInhomogeneties)
+                d_inhomogenities.push_back(
+                  constraintMatrixData.get_inhomogeneity(lineDof));
+              else
+                d_inhomogenities.push_back(0.0);
               const std::vector<
                 std::pair<dealii::types::global_dof_index, double>> *rowData =
                 constraintMatrixData.get_constraint_entries(lineDof);
@@ -537,8 +541,11 @@ namespace dftfe
             {
               const dealii::types::global_dof_index lineDof = *it;
               d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
-              d_inhomogenities.push_back(
-                constraintMatrixData.get_inhomogeneity(lineDof));
+              if (useInhomogeneties)
+                d_inhomogenities.push_back(
+                  constraintMatrixData.get_inhomogeneity(lineDof));
+              else
+                d_inhomogenities.push_back(0.0);
               const std::vector<
                 std::pair<dealii::types::global_dof_index, double>> *rowData =
                 constraintMatrixData.get_constraint_entries(lineDof);

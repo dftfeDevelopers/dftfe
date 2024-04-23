@@ -36,6 +36,8 @@ namespace dftfe
       d_phiTotRhoIn, d_phiTotDofHandlerIndexElectro);
     d_phiTotRhoOut.reinit(d_phiTotRhoIn);
     d_matrixFreeDataPRefined.initialize_dof_vector(
+      d_phiPrime, d_phiPrimeDofHandlerIndexElectro);
+    d_matrixFreeDataPRefined.initialize_dof_vector(
       d_phiExt, d_phiExtDofHandlerIndexElectro);
 
     d_densityInNodalValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
@@ -90,26 +92,28 @@ namespace dftfe
         mpi_communicator, "Overloaded constraint matrices initialized");
 
     //
-    // initialize density and PSI/ interpolate from previous ground state
-    // solution
+    // initialize PSI and density
     //
-    for (unsigned int kPoint = 0;
-         kPoint < (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-         ++kPoint)
+
+    AssertThrow(
+      (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
+          d_numEigenValues <
+        INT_MAX / matrix_free_data.get_vector_partitioner()->local_size(),
+      dealii::ExcMessage(
+        "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
+
+    d_eigenVectorsFlattenedHost.resize(
+      (d_numEigenValues *
+       matrix_free_data.get_vector_partitioner()->local_size()) *
+        (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
+      dataTypes::number(0.0));
+    if (d_numEigenValuesRR != d_numEigenValues)
       {
-        d_eigenVectorsFlattenedHost.resize(
-          (d_numEigenValues *
-           matrix_free_data.get_vector_partitioner()->local_size()) *
+        d_eigenVectorsRotFracDensityFlattenedHost.resize(
+          d_numEigenValuesRR *
+            matrix_free_data.get_vector_partitioner()->local_size() *
             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
           dataTypes::number(0.0));
-        if (d_numEigenValuesRR != d_numEigenValues)
-          {
-            d_eigenVectorsRotFracDensityFlattenedHost.resize(
-              d_numEigenValuesRR *
-                matrix_free_data.get_vector_partitioner()->local_size() *
-                (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
-              dataTypes::number(0.0));
-          }
       }
 
     pcout << std::endl

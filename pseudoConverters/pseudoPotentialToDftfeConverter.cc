@@ -606,14 +606,12 @@ namespace dftfe
     }
     void
     xmltoOrbitalFile(std::string file_path_in, std::string file_path_out)
-    {
-      // Extracting radial coordinates
+    { // Extracting radial coordinates
       std::vector<double>      radial_coord;
       std::vector<std::string> radial_tag;
       radial_tag.push_back("PP_MESH");
       radial_tag.push_back("PP_R");
       radial_coord = XmlTagReaderMain(radial_tag, file_path_in);
-
       std::vector<std::string> pswfc_tag;
       pswfc_tag.push_back("PP_PSWFC");
       for (int i = 1; i <= xmlNodeChildCount(pswfc_tag, file_path_in); i++)
@@ -640,13 +638,32 @@ namespace dftfe
             {
               index = std::distance(attr_type.begin(), it);
             }
-          std::string orbital_string = attr_value[index];
-          for (auto &w : orbital_string)
+          std::string orbital_string_nl = attr_value[index];
+          for (auto &w : orbital_string_nl)
             {
               w = tolower(w);
             }
+          char n = orbital_string_nl[0];
+          char l;
+          if (orbital_string_nl[1] == 's')
+            {
+              l = '0';
+            }
+          if (orbital_string_nl[1] == 'p')
+            {
+              l = '1';
+            }
+          if (orbital_string_nl[1] == 'd')
+            {
+              l = '2';
+            }
+          if (orbital_string_nl[1] == 'f')
+            {
+              l = '3';
+            }
+          std::string  orbital_string = "psi";
           std::fstream file;
-          file.open(file_path_out + "/" + orbital_string + ".dat",
+          file.open(file_path_out + "/" + orbital_string + n + l + ".inp",
                     std::ios::out);
           file << std::setprecision(12);
           if (file.is_open())

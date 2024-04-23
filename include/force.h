@@ -171,7 +171,7 @@ namespace dftfe
      *  the three force components on each atom being the leading dimension.
      * Units- Hartree/Bohr
      */
-    std::vector<double>
+    std::vector<double> &
     getAtomsForces();
 
     /** @brief prints the currently stored configurational forces on atoms and the Gaussian generator constant
@@ -244,7 +244,7 @@ namespace dftfe
      *
      *  @return dealii::Tensor<2,3,double>  second order stress Tensor in Hartree/Bohr^3
      */
-    dealii::Tensor<2, 3, double>
+    dealii::Tensor<2, 3, double> &
     getStress();
 
     /** @brief get the value of Gaussian generator parameter (d_gaussianConstant).

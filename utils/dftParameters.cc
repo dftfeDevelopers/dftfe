@@ -404,6 +404,12 @@ namespace dftfe
           "[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.");
 
         prm.declare_entry(
+          "MULTIPOLE BOUNDARY CONDITIONS",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Flag to set point wise multipole boundary conditions (upto quadrupole term) for non-periodic systems.");
+
+        prm.declare_entry(
           "CONSTRAINTS PARALLEL CHECK",
           "false",
           dealii::Patterns::Bool(),
@@ -641,6 +647,12 @@ namespace dftfe
           dealii::Patterns::Anything(),
           "[Developer] File that contains both the pytorch ML-XC NN model (.ptc file) and the tolerances. This is an experimental feature to test out any new XC functional developed using machine learning.");
 
+
+        prm.declare_entry(
+          "NET CHARGE",
+          "0.0",
+          dealii::Patterns::Double(),
+          "[Standard] Net charge of the system in atomic units, positive quantity implies addition of electrons. In case of non-periodic boundary conditions, this capability is implemented using multipole Dirichlet inhomogeneous boundary conditions for the electrostatics. In case of periodic and semi-periodic conditions a uniform background charge is used to create a neutral system.");
 
         prm.declare_entry(
           "SPIN POLARIZATION",
@@ -1248,7 +1260,7 @@ namespace dftfe
     useMixedPrecXTHXSpectrumSplit                  = false;
     useMixedPrecSubspaceRotRR                      = false;
     useMixedPrecCommunOnlyXTHXCGSO                 = false;
-    spectrumSplitStartingScfIter                   = 1;
+    spectrumSplitStartingScfIter                   = 0;
     useELPA                                        = false;
     constraintsParallelCheck                       = true;
     createConstraintsFromSerialDofhandler          = true;
@@ -1277,11 +1289,13 @@ namespace dftfe
     useDensityMatrixPerturbationRankUpdates        = false;
     smearedNuclearCharges                          = false;
     floatingNuclearCharges                         = false;
+    multipoleBoundaryConditions                    = false;
     nonLinearCoreCorrection                        = false;
     maxLineSearchIterCGPRP                         = 5;
     atomicMassesFile                               = "";
     useDeviceDirectAllReduce                       = false;
     pspCutoffImageCharges                          = 15.0;
+    netCharge                                      = 0;
     reuseLanczosUpperBoundFromFirstCall            = false;
     allowMultipleFilteringPassesAfterFirstScf      = true;
     useELPADeviceKernel                            = false;
@@ -1456,6 +1470,8 @@ namespace dftfe
       pinnedNodeForPBC       = prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
       smearedNuclearCharges  = prm.get_bool("SMEARED NUCLEAR CHARGES");
       floatingNuclearCharges = prm.get_bool("FLOATING NUCLEAR CHARGES");
+      multipoleBoundaryConditions =
+        prm.get_bool("MULTIPOLE BOUNDARY CONDITIONS");
     }
     prm.leave_subsection();
 
@@ -1535,6 +1551,7 @@ namespace dftfe
       modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
       start_magnetization   = prm.get_double("START MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
+      netCharge             = prm.get_double("NET CHARGE");
     }
     prm.leave_subsection();
 
@@ -1687,6 +1704,7 @@ namespace dftfe
         (writeLdosFile || writePdosFile)),
       dealii::ExcMessage(
         "DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
+
 
     if (floatingNuclearCharges)
       AssertThrow(
@@ -1986,10 +2004,18 @@ namespace dftfe
           mixingParameter = 0.2;
       }
 
+    if (std::fabs(netCharge - 0.0) > 1.0e-12 &&
+        !(periodicX || periodicY || periodicZ))
+      {
+        multipoleBoundaryConditions = true;
+      }
     if (reproducible_output)
       {
         spinMixingEnhancementFactor = 1.0;
       }
+
+    if (numCoreWfcRR == 0)
+      spectrumSplitStartingScfIter = 10000;
   }
 
 

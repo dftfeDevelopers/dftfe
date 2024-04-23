@@ -250,7 +250,8 @@ namespace dftfe
 
 
     // constraints
-    dftUtils::constraintMatrixInfoDevice d_constraintsTotalPotentialInfo;
+    dftUtils::constraintMatrixInfoDevice d_constraintsTotalPotentialInfo,
+      d_inhomogenousConstraintsTotalPotentialInfo;
 
     /// pointer to dealii dealii::AffineConstraints<double> object
     const dealii::AffineConstraints<double> *d_constraintMatrixPtr;
@@ -326,6 +327,7 @@ namespace dftfe
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
          d_BLASWrapperPtr;
     bool d_isFastConstraintsInitialized;
+    bool d_isHomogenousConstraintsInitialized;
 
     const MPI_Comm             mpi_communicator;
     const unsigned int         n_mpi_processes;
