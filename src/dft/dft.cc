@@ -4456,7 +4456,8 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   const std::vector<std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getImageAtomLocationsCart() const
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::getImageAtomLocationsCart()
+    const
   {
     return d_imagePositionsTrunc;
   }
