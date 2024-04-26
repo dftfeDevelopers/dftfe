@@ -1058,6 +1058,9 @@ namespace dftfe
           }
       }
     maxHighestOccupiedStateResNorm =
+      *std::max_element(maxResidualsAllkPoints.begin(),
+                        maxResidualsAllkPoints.end());
+    maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
     return maxHighestOccupiedStateResNorm;
