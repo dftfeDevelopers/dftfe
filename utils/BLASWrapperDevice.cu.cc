@@ -32,7 +32,6 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status;
       status = create();
       status = setStream(NULL);
-      status = setMathMode(dftfe::utils::DEVICEBLAS_TF32_TENSOR_OP_MATH);
     }
 
     dftfe::utils::deviceBlasHandle_t &

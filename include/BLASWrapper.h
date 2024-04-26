@@ -1084,6 +1084,12 @@ namespace dftfe
       dftfe::utils::deviceBlasHandle_t &
       getDeviceBlasHandle();
 
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+      dftfe::utils::deviceBlasStatus_t
+      setMathMode(dftfe::utils::deviceBlasMath_t mathMode);
+#  endif
+
+
     private:
 #  ifdef DFTFE_WITH_DEVICE_AMD
       void
@@ -1102,11 +1108,6 @@ namespace dftfe
 
       dftfe::utils::deviceBlasStatus_t
       setStream(dftfe::utils::deviceStream_t streamId);
-
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      dftfe::utils::deviceBlasStatus_t
-      setMathMode(dftfe::utils::deviceBlasMath_t mathMode);
-#  endif
     };
 #endif
 

@@ -1078,7 +1078,8 @@ namespace dftfe
         rhs.reinit(tempvec);
         rhs = 0;
 
-        dftUtils::constraintMatrixInfo constraintsMatrixDataInfo;
+        dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+          constraintsMatrixDataInfo;
         constraintsMatrixDataInfo.initialize(
           matrix_free_data.get_vector_partitioner(4 * iBin + offset),
           d_vselfBinConstraintMatrices[4 * iBin]);
@@ -1199,7 +1200,8 @@ namespace dftfe
               rhs.reinit(tempvec);
               rhs = 0;
 
-              dftUtils::constraintMatrixInfo constraintsMatrixDataInfo2;
+              dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+                constraintsMatrixDataInfo2;
               constraintsMatrixDataInfo2.initialize(
                 matrix_free_data.get_vector_partitioner(4 * iBin + idim + 1 +
                                                         offset),
@@ -1449,7 +1451,8 @@ namespace dftfe
 
             const unsigned int constraintMatrixId = 4 * iBin + offset;
 
-            dftUtils::constraintMatrixInfo constraintsMatrixDataInfo;
+            dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+              constraintsMatrixDataInfo;
             constraintsMatrixDataInfo.initialize(
               matrix_free_data.get_vector_partitioner(constraintMatrixId),
               d_vselfBinConstraintMatrices[4 * iBin]);
@@ -1471,7 +1474,9 @@ namespace dftfe
                       vselfBinsFieldsFlattened[numberPoissonSolves * i +
                                                binStride * iBin + idim + 1];
 
-                  dftUtils::constraintMatrixInfo constraintsMatrixDataInfo2;
+                  dftUtils::constraintMatrixInfo<
+                    dftfe::utils::MemorySpace::HOST>
+                    constraintsMatrixDataInfo2;
                   constraintsMatrixDataInfo2.initialize(
                     matrix_free_data.get_vector_partitioner(
                       constraintMatrixId2),
@@ -1612,7 +1617,8 @@ namespace dftfe
 
             const unsigned int constraintMatrixId = 4 * iBin + offset;
 
-            dftUtils::constraintMatrixInfo constraintsMatrixDataInfo;
+            dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+              constraintsMatrixDataInfo;
             constraintsMatrixDataInfo.initialize(
               matrix_free_data.get_vector_partitioner(constraintMatrixId),
               d_vselfBinConstraintMatrices[4 * iBin]);

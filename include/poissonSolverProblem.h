@@ -264,7 +264,8 @@ namespace dftfe
     unsigned int d_meanValueConstraintProcId;
 
     /// duplicate constraints object with flattened maps for faster access
-    dftUtils::constraintMatrixInfo d_constraintsInfo;
+    dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+      d_constraintsInfo;
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>

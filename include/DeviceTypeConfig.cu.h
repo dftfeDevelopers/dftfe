@@ -38,10 +38,11 @@ namespace dftfe
     typedef cublasStatus_t    deviceBlasStatus_t;
     typedef cublasMath_t      deviceBlasMath_t;
 
-    static const cublasOperation_t DEVICEBLAS_OP_N = CUBLAS_OP_N;
-    static const cublasOperation_t DEVICEBLAS_OP_T = CUBLAS_OP_T;
-    static const cublasOperation_t DEVICEBLAS_OP_C = CUBLAS_OP_C;
-    static const cublasMath_t      DEVICEBLAS_TF32_TENSOR_OP_MATH =
+    static const cublasOperation_t DEVICEBLAS_OP_N    = CUBLAS_OP_N;
+    static const cublasOperation_t DEVICEBLAS_OP_T    = CUBLAS_OP_T;
+    static const cublasOperation_t DEVICEBLAS_OP_C    = CUBLAS_OP_C;
+    static const cublasMath_t DEVICEBLAS_DEFAULT_MATH = CUBLAS_DEFAULT_MATH;
+    static const cublasMath_t DEVICEBLAS_TF32_TENSOR_OP_MATH =
       CUBLAS_TF32_TENSOR_OP_MATH;
   } // namespace utils
 } // namespace dftfe

@@ -306,7 +306,8 @@ namespace dftfe
     std::vector<std::vector<double>> d_atomLocations;
 
     /// storage for optimized constraints handling object
-    dftUtils::constraintMatrixInfo d_constraintsOnlyHangingInfo;
+    dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+      d_constraintsOnlyHangingInfo;
 
     /// vector of constraint matrices for vself bins
     std::vector<dealii::AffineConstraints<double>> d_vselfBinConstraintMatrices;

@@ -1067,6 +1067,9 @@ namespace dftfe
       {
         d_BLASWrapperPtr = std::make_shared<dftfe::linearAlgebra::BLASWrapper<
           dftfe::utils::MemorySpace::DEVICE>>();
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+        d_BLASWrapperPtr->setMathMode(dftfe::utils::DEVICEBLAS_DEFAULT_MATH);
+#  endif
         d_basisOperationsPtrDevice = std::make_shared<
           dftfe::basis::FEBasisOperations<dataTypes::number,
                                           double,

@@ -28,7 +28,6 @@
 
 #include <vector>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <constraintMatrixInfoDevice.h>
 #  include <DeviceBlasWrapper.h> //FIX ME
 #  include "deviceDirectCCLWrapper.h"
 #endif
@@ -52,15 +51,6 @@ namespace dftfe
      */
     virtual ~operatorDFTClass(){};
 
-#if defined(DFTFE_WITH_DEVICE)
-    using constraintInfoClass =
-      typename std::conditional<memorySpace ==
-                                  dftfe::utils::MemorySpace::DEVICE,
-                                dftUtils::constraintMatrixInfoDevice,
-                                dftUtils::constraintMatrixInfo>::type;
-#else
-    using constraintInfoClass = dftUtils::constraintMatrixInfo;
-#endif
 
     virtual dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &
     getScratchFEMultivector(const unsigned int numVectors,
@@ -98,10 +88,10 @@ namespace dftfe
       const bool skip2                                         = false,
       const bool skip3                                         = false) = 0;
 
-    virtual dftUtils::constraintMatrixInfo *
+    virtual dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST> *
     getOverloadedConstraintMatrixHost() const = 0;
 
-    virtual constraintInfoClass *
+    virtual dftUtils::constraintMatrixInfo<memorySpace> *
     getOverloadedConstraintMatrix() const = 0;
 
     virtual const MPI_Comm &

@@ -58,21 +58,24 @@ namespace dftfe
     //
     // constructor
     //
-    constraintMatrixInfo::constraintMatrixInfo()
+    template <dftfe::utils::MemorySpace memorySpace>
+    constraintMatrixInfo<memorySpace>::constraintMatrixInfo()
     {}
 
     //
     // destructor
     //
-    constraintMatrixInfo::~constraintMatrixInfo()
+    template <dftfe::utils::MemorySpace memorySpace>
+    constraintMatrixInfo<memorySpace>::~constraintMatrixInfo()
     {}
 
 
     //
     // store constraintMatrix row data in STL vector
     //
+    template <dftfe::utils::MemorySpace memorySpace>
     void
-    constraintMatrixInfo::initialize(
+    constraintMatrixInfo<memorySpace>::initialize(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
         &                                      partitioner,
       const dealii::AffineConstraints<double> &constraintMatrixData)
@@ -171,11 +174,10 @@ namespace dftfe
         }
     }
 
-
+    template <dftfe::utils::MemorySpace memorySpace>
     void
-    constraintMatrixInfo::initializeScaledConstraints(
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &invSqrtMassVec)
+    constraintMatrixInfo<memorySpace>::initializeScaledConstraints(
+      const dftfe::utils::MemoryStorage<double, memorySpace> &invSqrtMassVec)
     {
       unsigned int count = 0;
       for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
@@ -189,8 +191,9 @@ namespace dftfe
     }
 
 
+    template <dftfe::utils::MemorySpace memorySpace>
     void
-    constraintMatrixInfo::initializeScaledConstraints(
+    constraintMatrixInfo<memorySpace>::initializeScaledConstraints(
       const distributedCPUVec<double> &invSqrtMassVec)
     {
       unsigned int count = 0;
@@ -209,8 +212,9 @@ namespace dftfe
     // set the constrained degrees of freedom to values so that constraints
     // are satisfied
     //
+    template <dftfe::utils::MemorySpace memorySpace>
     void
-    constraintMatrixInfo::distribute(
+    constraintMatrixInfo<memorySpace>::distribute(
       distributedCPUVec<double> &fieldVector) const
     {
       fieldVector.update_ghost_values();
@@ -229,10 +233,12 @@ namespace dftfe
     }
 
 
+    template <dftfe::utils::MemorySpace memorySpace>
     template <typename T>
     void
-    constraintMatrixInfo::distribute(distributedCPUVec<T> &fieldVector,
-                                     const unsigned int    blockSize) const
+    constraintMatrixInfo<memorySpace>::distribute(
+      distributedCPUVec<T> &fieldVector,
+      const unsigned int    blockSize) const
     {
       unsigned int       count = 0;
       const unsigned int inc   = 1;
@@ -275,10 +281,11 @@ namespace dftfe
     }
 
 
+    template <dftfe::utils::MemorySpace memorySpace>
     template <typename T>
     void
-    constraintMatrixInfo::distribute(
-      distributedCPUMultiVec<T> &fieldVector) const
+    constraintMatrixInfo<memorySpace>::distribute(
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &fieldVector) const
     {
       const unsigned int blockSize = fieldVector.numVectors();
       unsigned int       count     = 0;
@@ -327,9 +334,10 @@ namespace dftfe
     // set the constrained degrees of freedom to values so that constraints
     // are satisfied for flattened array
     //
+    template <dftfe::utils::MemorySpace memorySpace>
     template <typename T>
     void
-    constraintMatrixInfo::distribute_slave_to_master(
+    constraintMatrixInfo<memorySpace>::distribute_slave_to_master(
       distributedCPUVec<T> &fieldVector,
       const unsigned int    blockSize) const
     {
@@ -366,10 +374,11 @@ namespace dftfe
         }
     }
 
+    template <dftfe::utils::MemorySpace memorySpace>
     template <typename T>
     void
-    constraintMatrixInfo::distribute_slave_to_master(
-      distributedCPUMultiVec<T> &fieldVector) const
+    constraintMatrixInfo<memorySpace>::distribute_slave_to_master(
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &fieldVector) const
     {
       const unsigned int blockSize = fieldVector.numVectors();
       unsigned int       count     = 0;
@@ -405,10 +414,12 @@ namespace dftfe
         }
     }
 
+    template <dftfe::utils::MemorySpace memorySpace>
     template <typename T>
     void
-    constraintMatrixInfo::set_zero(distributedCPUVec<T> &fieldVector,
-                                   const unsigned int    blockSize) const
+    constraintMatrixInfo<memorySpace>::set_zero(
+      distributedCPUVec<T> &fieldVector,
+      const unsigned int    blockSize) const
     {
       for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
         {
@@ -422,9 +433,11 @@ namespace dftfe
         }
     }
 
+    template <dftfe::utils::MemorySpace memorySpace>
     template <typename T>
     void
-    constraintMatrixInfo::set_zero(distributedCPUMultiVec<T> &fieldVector) const
+    constraintMatrixInfo<memorySpace>::set_zero(
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &fieldVector) const
     {
       const unsigned int blockSize = fieldVector.numVectors();
       for (unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
@@ -443,8 +456,9 @@ namespace dftfe
     //
     // clear the data variables
     //
+    template <dftfe::utils::MemorySpace memorySpace>
     void
-    constraintMatrixInfo::clear()
+    constraintMatrixInfo<memorySpace>::clear()
     {
       d_rowIdsGlobal.clear();
       d_rowIdsLocal.clear();
@@ -457,35 +471,46 @@ namespace dftfe
 
 
     template void
-    constraintMatrixInfo::distribute(
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::distribute(
       distributedCPUVec<dataTypes::number> &fieldVector,
       const unsigned int                    blockSize) const;
 
     template void
-    constraintMatrixInfo::distribute_slave_to_master(
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::
+      distribute_slave_to_master(
+        distributedCPUVec<dataTypes::number> &fieldVector,
+        const unsigned int                    blockSize) const;
+
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::set_zero(
       distributedCPUVec<dataTypes::number> &fieldVector,
       const unsigned int                    blockSize) const;
 
     template void
-    constraintMatrixInfo::set_zero(
-      distributedCPUVec<dataTypes::number> &fieldVector,
-      const unsigned int                    blockSize) const;
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::distribute(
+      dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
+        &fieldVector) const;
 
     template void
-    constraintMatrixInfo::distribute(
-      distributedCPUMultiVec<double> &fieldVector) const;
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::distribute(
+      dftfe::linearAlgebra::MultiVector<std::complex<double>,
+                                        dftfe::utils::MemorySpace::HOST>
+        &fieldVector) const;
 
     template void
-    constraintMatrixInfo::distribute(
-      distributedCPUMultiVec<std::complex<double>> &fieldVector) const;
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::
+      distribute_slave_to_master(
+        dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                          dftfe::utils::MemorySpace::HOST>
+          &fieldVector) const;
 
     template void
-    constraintMatrixInfo::distribute_slave_to_master(
-      distributedCPUMultiVec<dataTypes::number> &fieldVector) const;
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::set_zero(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST>
+        &fieldVector) const;
 
-    template void
-    constraintMatrixInfo::set_zero(
-      distributedCPUMultiVec<dataTypes::number> &fieldVector) const;
+    template class constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>;
 
   } // namespace dftUtils
 

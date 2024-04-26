@@ -20,7 +20,7 @@
 #define constraintMatrixInfo_H_
 
 #include <vector>
-
+#include <MemoryStorage.h>
 #include "headers.h"
 
 namespace dftfe
@@ -38,6 +38,7 @@ namespace dftfe
      *  @author Phani Motamarri
      *
      */
+    template <dftfe::utils::MemorySpace memorySpace>
     class constraintMatrixInfo
     {
     public:
@@ -85,7 +86,8 @@ namespace dftfe
 
       template <typename T>
       void
-      distribute(distributedCPUMultiVec<T> &fieldVector) const;
+      distribute(
+        dftfe::linearAlgebra::MultiVector<T, memorySpace> &fieldVector) const;
 
       /**
        * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
@@ -104,7 +106,8 @@ namespace dftfe
 
       template <typename T>
       void
-      distribute_slave_to_master(distributedCPUMultiVec<T> &fieldVector) const;
+      distribute_slave_to_master(
+        dftfe::linearAlgebra::MultiVector<T, memorySpace> &fieldVector) const;
 
       /**
        * @brief Scales the constraints with the inverse diagonal mass matrix so that the scaling of the vector can be done at the cell level
@@ -117,9 +120,7 @@ namespace dftfe
 
       void
       initializeScaledConstraints(
-        const dftfe::utils::MemoryStorage<double,
-                                          dftfe::utils::MemorySpace::HOST>
-          &invSqrtMassVec);
+        const dftfe::utils::MemoryStorage<double, memorySpace> &invSqrtMassVec);
 
 
       /**
@@ -134,7 +135,8 @@ namespace dftfe
                const unsigned int    blockSize) const;
       template <typename T>
       void
-      set_zero(distributedCPUMultiVec<T> &fieldVector) const;
+      set_zero(
+        dftfe::linearAlgebra::MultiVector<T, memorySpace> &fieldVector) const;
 
       /**
        * clear data members
@@ -154,6 +156,179 @@ namespace dftfe
       std::vector<dealii::types::global_dof_index>
         d_localIndexMapUnflattenedToFlattened;
     };
+
+#if defined(DFTFE_WITH_DEVICE)
+    /**
+     *  @brief Overloads dealii's distribute and distribute_local_to_global functions associated with constraints class.
+     *  Stores the dealii's constraint matrix data into STL vectors for faster
+     * memory access costs
+     *
+     *  @author Sambit Das, Phani Motamarri
+     *
+     */
+    template <>
+    class constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
+    {
+    public:
+      /**
+       * class constructor
+       */
+      constraintMatrixInfo();
+
+      /**
+       * class destructor
+       */
+      ~constraintMatrixInfo();
+
+      /**
+       * @brief convert a given constraintMatrix to simple arrays (STL) for fast access
+       *
+       * @param partitioner associated with the dealii vector
+       * @param constraintMatrixData dealii constraint matrix from which the data is extracted
+       */
+      void
+      initialize(
+        const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+          &                                      partitioner,
+        const dealii::AffineConstraints<double> &constraintMatrixData,
+        const bool                               useInhomogeneties = true);
+
+      void
+      distribute(distributedCPUVec<double> &fieldVector) const;
+
+      template <typename T>
+      void
+      distribute(distributedCPUVec<T> &fieldVector,
+                 const unsigned int    blockSize) const;
+
+      /**
+       * @brief overloaded dealii internal function distribute for flattened dealii array  which sets
+       * the slave node field values from master nodes
+       *
+       * @param blockSize number of components for a given node
+       */
+      template <typename NumberType>
+      void
+      distribute(
+        dftfe::linearAlgebra::MultiVector<NumberType,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &fieldVector) const;
+
+
+      /**
+       * @brief Scales the constraints with the inverse diagonal mass matrix so that the scaling of the vector can be done at the cell level
+       *
+       * @param invSqrtMassVec the inverse diagonal mass matrix
+       */
+      void
+      initializeScaledConstraints(
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::DEVICE>
+          &invSqrtMassVec);
+
+
+      /**
+       * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
+       * slave nodes are the nodes which are to the right of the constraint
+       * equation and master nodes are the nodes which are left of the
+       * constraint equation.
+       *
+       * @param fieldVector parallel dealii vector which is the result of matrix-vector product(vmult) withot taking
+       * care of constraints
+       * @param blockSize number of components for a given node
+       */
+      void
+      distribute_slave_to_master(
+        distributedDeviceVec<double> &fieldVector) const;
+
+      void
+      distribute_slave_to_master(
+        distributedDeviceVec<std::complex<double>> &fieldVector) const;
+
+
+      template <typename T>
+      void
+      distribute_slave_to_master(distributedCPUVec<T> &fieldVector,
+                                 const unsigned int    blockSize) const;
+
+      void
+      initializeScaledConstraints(
+        const distributedCPUVec<double> &invSqrtMassVec);
+
+      /**
+       * @brief sets field values at constrained nodes to be zero
+       *
+       * @param fieldVector parallel dealii vector with fields stored in a flattened format
+       * @param blockSize number of field components for a given node
+       */
+      template <typename NumberType>
+      void
+      set_zero(distributedDeviceVec<NumberType> &fieldVector) const;
+
+      template <typename T>
+      void
+      set_zero(distributedCPUVec<T> &fieldVector,
+               const unsigned int    blockSize) const;
+
+      /**
+       * clear data members
+       */
+      void
+      clear();
+
+
+    private:
+      std::vector<unsigned int> d_rowIdsLocal;
+      std::vector<unsigned int> d_columnIdsLocal;
+      std::vector<double>       d_columnValues;
+      std::vector<double>       d_inhomogenities;
+      std::vector<unsigned int> d_rowSizes;
+      std::vector<unsigned int> d_rowSizesAccumulated;
+      std::vector<dealii::types::global_dof_index>
+        d_localIndexMapUnflattenedToFlattened;
+
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_rowIdsLocalDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_columnIdsLocalDevice;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        d_columnValuesDevice;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        d_inhomogenitiesDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_rowSizesDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_rowSizesAccumulatedDevice;
+      dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_localIndexMapUnflattenedToFlattenedDevice;
+
+      std::vector<unsigned int> d_rowIdsLocalBins;
+      std::vector<unsigned int> d_columnIdsLocalBins;
+      std::vector<unsigned int> d_columnIdToRowIdMapBins;
+      std::vector<double>       d_columnValuesBins;
+      std::vector<unsigned int> d_binColumnSizes;
+      std::vector<unsigned int> d_binColumnSizesAccumulated;
+
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_rowIdsLocalBinsDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_columnIdsLocalBinsDevice;
+      dftfe::utils::MemoryStorage<unsigned int,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        d_columnIdToRowIdMapBinsDevice;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        d_columnValuesBinsDevice;
+
+      unsigned int d_numConstrainedDofs;
+    };
+#endif
 
   } // namespace dftUtils
 

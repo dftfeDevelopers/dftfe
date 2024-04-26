@@ -35,7 +35,6 @@
 
 #ifdef DFTFE_WITH_DEVICE
 #  include <chebyshevOrthogonalizedSubspaceIterationSolverDevice.h>
-#  include <constraintMatrixInfoDevice.h>
 #  include "deviceKernelsGeneric.h"
 #  include <poissonSolverProblemDevice.h>
 #  include <kerkerSolverProblemDevice.h>
@@ -1336,7 +1335,8 @@ namespace dftfe
      *has hanging node constraints and periodic constraints(for periodic
      *problems) used in eigen solve
      */
-    dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+    dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+      constraintsNoneEigenDataInfo;
 
 
     /**
@@ -1345,11 +1345,13 @@ namespace dftfe
      *has hanging node constraints used in Poisson problem solution
      *
      */
-    dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
+    dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+      constraintsNoneDataInfo;
 
 
 #ifdef DFTFE_WITH_DEVICE
-    dftUtils::constraintMatrixInfoDevice d_constraintsNoneDataInfoDevice;
+    dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
+      d_constraintsNoneDataInfoDevice;
 #endif
 
 
@@ -1370,7 +1372,8 @@ namespace dftfe
 
     dealii::AffineConstraints<double> d_constraintsRhoNodalOnlyHanging;
 
-    dftUtils::constraintMatrixInfo d_constraintsRhoNodalInfo;
+    dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
+      d_constraintsRhoNodalInfo;
 
     /**
      * data storage for Kohn-Sham wavefunctions

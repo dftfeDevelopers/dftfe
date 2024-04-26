@@ -133,7 +133,6 @@ namespace dftfe
     bool         createConstraintsFromSerialDofhandler;
     bool         bandParalOpt;
     bool         useDevice;
-    bool         useTF32Device;
     bool         deviceFineGrainedTimings;
     bool         allowFullCPUMemSubspaceRot;
     bool         useMixedPrecCheby;

@@ -21,7 +21,6 @@
 #include <MultiVector.h>
 #include <headers.h>
 #include <constraintMatrixInfo.h>
-#include <constraintMatrixInfoDevice.h>
 #include <DeviceTypeConfig.h>
 #include <BLASWrapper.h>
 
@@ -164,16 +163,6 @@ namespace dftfe
              const bool          isResizeTempStorageForCellMatrices = false);
 
       // private:
-#if defined(DFTFE_WITH_DEVICE)
-      using constraintInfoClass =
-        typename std::conditional<memorySpace ==
-                                    dftfe::utils::MemorySpace::DEVICE,
-                                  dftUtils::constraintMatrixInfoDevice,
-                                  dftUtils::constraintMatrixInfo>::type;
-#else
-      using constraintInfoClass = dftUtils::constraintMatrixInfo;
-#endif
-
 
 
       /**
@@ -761,8 +750,8 @@ namespace dftfe
 
 
 
-      std::vector<constraintInfoClass> d_constraintInfo;
-      unsigned int                     d_nOMPThreads;
+      std::vector<dftUtils::constraintMatrixInfo<memorySpace>> d_constraintInfo;
+      unsigned int                                             d_nOMPThreads;
       std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
         *                                              d_constraintsVector;
       const dealii::MatrixFree<3, ValueTypeBasisData> *d_matrixFreeDataPtr;
