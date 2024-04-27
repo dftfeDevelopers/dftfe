@@ -989,71 +989,41 @@ namespace dftfe
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
       const double                            fermiEnergy,
       std::vector<double> &                   maxResidualsAllkPoints)
-    {
+  {
     double maxHighestOccupiedStateResNorm = -1e+6;
-    if (d_dftParamsPtr->reproducible_output)
+    maxResidualsAllkPoints.clear();
+    maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size(), -1e+6);
+    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
-        for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+        unsigned int highestOccupiedState = 0;
+
+        for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
           {
-            unsigned int highestOccupiedState = 0;
-
-            for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size();
-                 i++)
+            const double factor =
+              (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
+              (C_kb * d_dftParamsPtr->TVal);
+            double functionValue;
+            if (factor <= 0.0)
               {
-                const double factor =
-                  (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
-                  (C_kb * d_dftParamsPtr->TVal);
-                if (factor < 0)
-                  highestOccupiedState = i;
+                double temp2  = 1.0 / (1.0 + exp(factor));
+                functionValue = (2.0 - d_dftParamsPtr->spinPolarized) * temp2;
               }
-
-            if (residualNormWaveFunctionsAllkPoints[kPoint]
-                                                   [highestOccupiedState] >
-                maxHighestOccupiedStateResNorm)
+            else
               {
-                maxHighestOccupiedStateResNorm =
-                  residualNormWaveFunctionsAllkPoints[kPoint]
-                                                     [highestOccupiedState];
+                double temp2 = 1.0 / (1.0 + exp(-factor));
+                functionValue =
+                  (2.0 - d_dftParamsPtr->spinPolarized) * exp(-factor) * temp2;
               }
+            if (functionValue > 1e-3)
+              highestOccupiedState = i;
           }
-      }
-    else
-      {
-        maxResidualsAllkPoints.clear();
-        maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size(), -1e+6);
-        for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+        for (unsigned int i = 0; i <= highestOccupiedState; i++)
           {
-            unsigned int highestOccupiedState = 0;
-
-            for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size();
-                 i++)
+            if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
+                maxResidualsAllkPoints[kPoint])
               {
-                const double factor =
-                  (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
-                  (C_kb * d_dftParamsPtr->TVal);
-                double functionValue;
-                if (factor <= 0.0)
-                  {
-                    double temp2  = 1.0 / (1.0 + exp(factor));
-                    functionValue = (2.0 - d_dftParamsPtr->spinPolarized) * temp2;
-                  }
-                else
-                  {
-                    double temp2 = 1.0 / (1.0 + exp(-factor));
-                    functionValue =
-                      (2.0 - d_dftParamsPtr->spinPolarized) * exp(-factor) * temp2;
-                  }
-                if (functionValue > 1e-3)
-                  highestOccupiedState = i;
-              }
-            for (unsigned int i = 0; i <= highestOccupiedState; i++)
-              {
-                if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
-                    maxResidualsAllkPoints[kPoint])
-                  {
-                    maxResidualsAllkPoints[kPoint] =
-                      residualNormWaveFunctionsAllkPoints[kPoint][i];
-                  }
+                maxResidualsAllkPoints[kPoint] =
+                  residualNormWaveFunctionsAllkPoints[kPoint][i];
               }
           }
       }
