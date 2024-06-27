@@ -57,6 +57,37 @@ namespace dftfe
     }
     template <typename T>
     double
+    computeFieldTimesDensityResidual(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
+        &                                                  basisOperationsPtr,
+      const unsigned int                                   quadratureId,
+      const std::map<dealii::CellId, std::vector<double>> &fieldValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densityQuadValuesIn,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densityQuadValuesOut)
+    {
+      double result = 0.0;
+      basisOperationsPtr->reinit(0, 0, quadratureId, false);
+      const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+      for (unsigned int iCell = 0; iCell < basisOperationsPtr->nCells();
+           ++iCell)
+        {
+          const std::vector<double> &cellFieldValues =
+            fieldValues.find(basisOperationsPtr->cellID(iCell))->second;
+          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+            result +=
+              cellFieldValues[iQuad] *
+              (densityQuadValuesOut[iCell * nQuadsPerCell + iQuad] -
+               densityQuadValuesIn[iCell * nQuadsPerCell + iQuad]) *
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+        }
+      return result;
+    }
+    template <typename T>
+    double
     computeFieldTimesDensity(
       const std::shared_ptr<
         dftfe::basis::
@@ -78,6 +109,36 @@ namespace dftfe
             result +=
               fieldValues[iCell * nQuadsPerCell + iQuad] *
               densityQuadValues[iCell * nQuadsPerCell + iQuad] *
+              basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+        }
+      return result;
+    }
+    template <typename T>
+    double
+    computeFieldTimesDensityResidual(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int quadratureId,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &fieldValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densityQuadValuesIn,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densityQuadValuesOut)
+    {
+      double result = 0.0;
+      basisOperationsPtr->reinit(0, 0, quadratureId, false);
+      const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+      for (unsigned int iCell = 0; iCell < basisOperationsPtr->nCells();
+           ++iCell)
+        {
+          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+            result +=
+              fieldValues[iCell * nQuadsPerCell + iQuad] *
+              (densityQuadValuesOut[iCell * nQuadsPerCell + iQuad] -
+               densityQuadValuesIn[iCell * nQuadsPerCell + iQuad]) *
               basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
         }
       return result;
@@ -117,7 +178,7 @@ namespace dftfe
           pcout << std::endl << "Energy computations (Hartree) " << std::endl;
           pcout << "-------------------" << std::endl;
           if (dftParams.useMixedPrecCGS_O || dftParams.useMixedPrecCGS_SR ||
-              dftParams.useMixedPrecCheby)
+              dftParams.useSinglePrecCommunCheby)
             pcout << std::setw(25) << "Total energy"
                   << ": " << std::fixed << std::setprecision(6) << std::setw(20)
                   << totalEnergyTrunc << std::endl;
@@ -374,6 +435,71 @@ namespace dftfe
       return 0.5 * (phiContribution - vSelfContribution);
     }
 
+    double
+    nuclearElectrostaticEnergyResidualLocal(
+      const distributedCPUVec<double> &                    phiTotRhoIn,
+      const distributedCPUVec<double> &                    phiTotRhoOut,
+      const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
+      const std::map<dealii::CellId, std::vector<unsigned int>>
+        &                          smearedbNonTrivialAtomIds,
+      const dealii::DoFHandler<3> &dofHandlerElectrostatic,
+      const dealii::Quadrature<3> &quadratureSmearedCharge,
+      const std::map<dealii::types::global_dof_index, double>
+        &        atomElectrostaticNodeIdToChargeMap,
+      const bool smearedNuclearCharges = false)
+    {
+      double phiContribution = 0.0, vSelfContribution = 0.0;
+
+      if (!smearedNuclearCharges)
+        {
+          for (std::map<dealii::types::global_dof_index, double>::const_iterator
+                 it = atomElectrostaticNodeIdToChargeMap.begin();
+               it != atomElectrostaticNodeIdToChargeMap.end();
+               ++it)
+            phiContribution +=
+              (-it->second) * (phiTotRhoOut(it->first) -
+                               phiTotRhoIn(it->first)); //-charge*potential
+        }
+      else
+        {
+          distributedCPUVec<double> phiRes;
+          phiRes = phiTotRhoOut;
+          phiRes -= phiTotRhoIn;
+          dealii::FEValues<3> fe_values(dofHandlerElectrostatic.get_fe(),
+                                        quadratureSmearedCharge,
+                                        dealii::update_values |
+                                          dealii::update_JxW_values);
+          const unsigned int  n_q_points = quadratureSmearedCharge.size();
+          dealii::DoFHandler<3>::active_cell_iterator
+            cell = dofHandlerElectrostatic.begin_active(),
+            endc = dofHandlerElectrostatic.end();
+
+          for (; cell != endc; ++cell)
+            if (cell->is_locally_owned())
+              {
+                if ((smearedbNonTrivialAtomIds.find(cell->id())->second)
+                      .size() > 0)
+                  {
+                    const std::vector<double> &bQuadValuesCell =
+                      smearedbValues.find(cell->id())->second;
+                    fe_values.reinit(cell);
+
+                    std::vector<double> tempPhiTot(n_q_points);
+                    fe_values.get_function_values(phiRes, tempPhiTot);
+
+                    double temp = 0;
+                    for (unsigned int q = 0; q < n_q_points; ++q)
+                      temp +=
+                        tempPhiTot[q] * bQuadValuesCell[q] * fe_values.JxW(q);
+
+                    phiContribution += temp;
+                  }
+              }
+        }
+
+      return 0.5 * (phiContribution);
+    }
+
 
     double
     computeRepulsiveEnergy(
@@ -625,6 +751,154 @@ namespace dftfe
       }
 
     return totalEnergy;
+  }
+
+  // compute energie residual,
+  // E_KS-E_HWF=\int(V_{in}(\rho_{out}-\rho_{in}))+E_{pot}[\rho_{out}]-E_{pot}[\rho_{in}]
+  double
+  energyCalculator::computeEnergyResidual(
+    const std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+      &basisOperationsPtr,
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+      &                               basisOperationsPtrElectro,
+    const unsigned int                densityQuadratureID,
+    const unsigned int                densityQuadratureIDElectro,
+    const unsigned int                smearedChargeQuadratureIDElectro,
+    const unsigned int                lpspQuadratureIDElectro,
+    const std::shared_ptr<excManager> excManagerPtr,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &phiTotRhoInValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &                              phiTotRhoOutValues,
+    const distributedCPUVec<double> &phiTotRhoIn,
+    const distributedCPUVec<double> &phiTotRhoOut,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityInValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityOutValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradDensityInValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                                                  gradDensityOutValues,
+    const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
+    const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
+    const std::map<dealii::CellId, std::vector<unsigned int>>
+      &                                     smearedbNonTrivialAtomIds,
+    const std::vector<std::vector<double>> &localVselfs,
+    const std::map<dealii::types::global_dof_index, double>
+      &        atomElectrostaticNodeIdToChargeMap,
+    const bool smearedNuclearCharges)
+  {
+    const dealii::ConditionalOStream scout(
+      std::cout,
+      (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0));
+    double excCorrPotentialTimesRho = 0.0, electrostaticPotentialTimesRho = 0.0,
+           exchangeEnergy = 0.0, correlationEnergy = 0.0,
+           electrostaticEnergyTotPot = 0.0;
+
+
+    electrostaticPotentialTimesRho =
+      internal::computeFieldTimesDensityResidual(basisOperationsPtr,
+                                                 densityQuadratureID,
+                                                 phiTotRhoInValues,
+                                                 densityInValues[0],
+                                                 densityOutValues[0]);
+    electrostaticEnergyTotPot =
+      0.5 * (internal::computeFieldTimesDensity(basisOperationsPtrElectro,
+                                                densityQuadratureIDElectro,
+                                                phiTotRhoOutValues,
+                                                densityOutValues[0]) -
+             internal::computeFieldTimesDensity(basisOperationsPtrElectro,
+                                                densityQuadratureIDElectro,
+                                                phiTotRhoInValues,
+                                                densityInValues[0]));
+    if (d_dftParams.spinPolarized == 1)
+      computeXCEnergyTermsSpinPolarized(basisOperationsPtr,
+                                        densityQuadratureID,
+                                        excManagerPtr,
+                                        densityInValues,
+                                        densityInValues,
+                                        gradDensityInValues,
+                                        gradDensityInValues,
+                                        rhoCoreValues,
+                                        gradRhoCoreValues,
+                                        exchangeEnergy,
+                                        correlationEnergy,
+                                        excCorrPotentialTimesRho);
+    else
+      computeXCEnergyTerms(basisOperationsPtr,
+                           densityQuadratureID,
+                           excManagerPtr,
+                           densityInValues,
+                           densityInValues,
+                           gradDensityInValues,
+                           gradDensityInValues,
+                           rhoCoreValues,
+                           gradRhoCoreValues,
+                           exchangeEnergy,
+                           correlationEnergy,
+                           excCorrPotentialTimesRho);
+    excCorrPotentialTimesRho *= -1.0;
+    exchangeEnergy *= -1.0;
+    correlationEnergy *= -1.0;
+    if (d_dftParams.spinPolarized == 1)
+      computeXCEnergyTermsSpinPolarized(basisOperationsPtr,
+                                        densityQuadratureID,
+                                        excManagerPtr,
+                                        densityInValues,
+                                        densityOutValues,
+                                        gradDensityInValues,
+                                        gradDensityOutValues,
+                                        rhoCoreValues,
+                                        gradRhoCoreValues,
+                                        exchangeEnergy,
+                                        correlationEnergy,
+                                        excCorrPotentialTimesRho);
+    else
+      computeXCEnergyTerms(basisOperationsPtr,
+                           densityQuadratureID,
+                           excManagerPtr,
+                           densityInValues,
+                           densityOutValues,
+                           gradDensityInValues,
+                           gradDensityOutValues,
+                           rhoCoreValues,
+                           gradRhoCoreValues,
+                           exchangeEnergy,
+                           correlationEnergy,
+                           excCorrPotentialTimesRho);
+    const double potentialTimesRho =
+      excCorrPotentialTimesRho + electrostaticPotentialTimesRho;
+    const double nuclearElectrostaticEnergy =
+      internal::nuclearElectrostaticEnergyResidualLocal(
+        phiTotRhoIn,
+        phiTotRhoOut,
+        smearedbValues,
+        smearedbNonTrivialAtomIds,
+        basisOperationsPtrElectro->getDofHandler(),
+        basisOperationsPtrElectro->matrixFreeData().get_quadrature(
+          smearedChargeQuadratureIDElectro),
+        atomElectrostaticNodeIdToChargeMap,
+        smearedNuclearCharges);
+
+    double energy = -potentialTimesRho + exchangeEnergy + correlationEnergy +
+                    electrostaticEnergyTotPot + nuclearElectrostaticEnergy;
+
+
+    // sum over all processors
+    double totalEnergy = dealii::Utilities::MPI::sum(energy, mpi_communicator);
+
+    return std::abs(totalEnergy);
   }
 
   void

@@ -18,16 +18,16 @@ Note the above are shown only as an example. We strongly recommend using the lat
 
 \subsection{Compiling and installing external libraries}
 \dftfe{} is primarily based on the open source finite element library \href{http://www.dealii.org/}{deal.II}, through which external dependencies
-on \href{http://p4est.org/}{p4est} and BLAS-LAPACK are set. The other required external libraries, which are
+on \href{http://p4est.org/}{p4est}, \href{https://github.com/kokkos/kokkos}{kokkos} and BLAS-LAPACK are set. The other required external libraries, which are
 not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, \href{http://www.xmlsoft.org/}{Libxml2} and \href{https://elpa.mpcdf.mpg.de/}{ELPA} (ELPA requires \href{http://www.netlib.org/scalapack/}{ScaLAPACK}). DFT-FE also optionally links to \href{https://www.mcs.anl.gov/petsc/}{PETSc} (via deali.II), \href{http://slepc.upv.es/}{SLEPc} (via deali.II) and to \href{https://developer.nvidia.com/nccl}{nccl} (for GPU compilation). The optional dependencies of PETSc and SLEPc are only required for all-electron calculations using DFT-FE, which uses the more stable Gram-Schmidt orthogonalization routine instead of the default Cholesky-Gram-Schmidt orthognalization. For pseudopotential calculations, PETSc and SLEPc dependencies are not required as the default Cholesky-Gram-Schmidt orthogonalization is very robust. \dftfe{} can also be linked to \href{https://github.com/awvwgk/simple-dftd3}{simple-dftd3} and \href{https://github.com/dftd4/dftd4}{dftd4} in order to provide support for the dftd family of dispersion corrections by Grimme et. al.. Below, we give brief installation instructions for each of the above libraries.
-\subsubsection{Instructions for dependencies: ALGLIB, Libxc, spglib, Libxml2, ScaLAPACK, ELPA, p4est and nccl (nccl is optional)}
+\subsubsection{Instructions for dependencies: ALGLIB, Libxc, spglib, Libxml2, ScaLAPACK, ELPA, p4est, kokkos, and nccl (nccl is optional)}
 \begin{enumerate}
 	\item   {\bf ALGLIB}: Used by \dftfe{} for spline fitting for various radial data. Download the current release of the Alglib free C++ edition from \url{http://www.alglib.net/download.php}. After downloading and unpacking, go to \verb|cpp/src|, and create a shared library using a C++ compiler. For example, using GCC compiler do
 \begin{verbatim}
 $ g++ -c -fPIC -O2 *.cpp
 $ g++ *.o -shared -o libAlglib.so
 \end{verbatim}
-\item {\bf Libxc}: Used by \dftfe{} for exchange-correlation functionals. Download the current release from \url{http://www.tddft.org/programs/libxc/download/}, and do 
+\item {\bf Libxc}: Used by \dftfe{} for exchange-correlation functionals. Download the current release from \url{https://libxc.gitlab.io/download/}, and do 
 \begin{verbatim}
 $ ./configure --prefix=libxc_install_dir_path
               CC=c_compiler CXX=c++_compiler FC=fortran_compiler
@@ -40,9 +40,9 @@ Do not forget to replace \verb|libxc_install_dir_path| by some appropriate path 
 
 \item {\bf spglib}: Used by \dftfe{} to find crystal symmetries. To install spglib, first obtain the development version of spglib from their github repository by
 \begin{verbatim}
-$ git clone https://github.com/atztogo/spglib.git	
+$ git clone https://github.com/spglib/spglib.git	
 \end{verbatim}	
-and next follow the ``Compiling using cmake'' installation procedure described in \url{https://atztogo.github.io/spglib/install.html}.   	
+and next follow the ``Compiling using cmake'' installation procedure described in \url{https://spglib.readthedocs.io/en/stable/install.html}.   	
 We recommend using the ccmake gui interface for the installation and also use appropriate compiler for \verb|CMAKE_C_COMPILER|.
 
 \item {\bf Libxml2}: Libxml2 is used by \dftfe{} to read \verb|.xml| files. Most likely, Libxml2 might be already installed in the high-performance computer you are working with. It is usually installed in the default locations like \verb|/usr/lib64| (library path which contains \verb|.so| file for Libxml2, something like \verb|libxml2.so.2|) and \verb|/usr/include/libxml2| (include path). 
@@ -135,13 +135,27 @@ export LD_LIBRARY_PATH=
 $LD_LIBRARY_PATH:$ROCM_PATH/lib:$ROCM_PATH/hip/lib:$ROCM_PATH/lib:$ROCM_PATH/rocblas/lib
 \end{verbatim}
 
-\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the v2.2 tarball of p4est from \url{https://github.com/p4est/p4est.github.io/raw/master/release/p4est-2.2.tar.gz}. Next download the \verb|p4est-setup.sh| script from \url{https://raw.githubusercontent.com/dftfeDevelopers/dftfe/manual/p4est-setup.sh}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
+\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the latest release tarball of p4est from \url{https://www.p4est.org}. Next download the \verb|p4est-setup.sh| script from \url{https://raw.githubusercontent.com/dftfeDevelopers/dftfe/manual/p4est-setup.sh}. Use the script to automatically compile and install a debug and optimized version of p4est by doing
 \begin{verbatim}
 $ chmod u+x p4est-setup.sh
 $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
 \end{verbatim}
 
 %Also download the script from \url{https://github.com/dftfeDevelopers/dftfe/raw/manual/p4est-setup.sh} if using Intel compilers, or from \url{https://dealii.org/developer/external-libs/p4est.html} if using GCC compilers. Use the script to automatically compile and install a debug and optimized version of p4est by doing
+
+\item   {\bf kokkos}: This library is used by deal.II to performance portability across architectures. Download the latest release tarball of p4est from \url{https://github.com/kokkos/kokkos}, and use cmake based compilation. For example,
+\begin{verbatim}
+$ cd kokkos-4.3.00
+$ mkdir build && cd build
+$ cmake -DCMAKE_C_COMPILER=cc -DCMAKE_C_FLAGS="-O2 -fPIC"
+        -DCMAKE_CXX_COMPILER=CC 
+        -DCMAKE_CXX_FLAGS="-O2 -fPIC" 
+        -DCMAKE_INSTALL_PREFIX=kokkos_install_dir_path
+        ..
+$ make -j 4
+$ make install
+\end{verbatim}
+
 
 \item {\bf nccl/rccl (optional)}: nccl (CUDA) and rccl (ROCm) libraries are optional dependency for DFT-FE for optimal GPU Direct MPI collective communication calls. This library is recommended for running very large system sizes (greater than 20,000 electrons) on GPUs using DFT-FE. Caution: nccl/rccl library requires appropriate hardware support for GPU Direct MPI communication and GPU Aware MPI library. To install nccl/rccl, use the appropriate release version (corresponding to the CUDA/ROCm compiler version) from \url{https://github.com/NVIDIA/nccl} (CUDA) \url{https://github.com/ROCmSoftwarePlatform/rccl} (ROCm) and follow installation instructions therein.
 
@@ -153,12 +167,9 @@ Assuming the above p4est dependency is installed, we now briefly discuss the ste
 
 \begin{enumerate}
 
-\item Obtain the customized version of deal.II library via
-\begin{verbatim}
-$ git clone -b dealiiCustomizedCUDARelease https://github.com/dftfeDevelopers/dealii.git
-\end{verbatim}
+\item Obtain the latest release version (9.5.2) of deal.II
 
-\item In addition to requiring C, C++ and Fortran compilers, MPI library, and CMake, deal.II additionally requires BOOST library. If not found externally, cmake will resort to the bundled BOOST that comes along with deal.II. Based on our experience, we recommend to use the deal.II's bundled boost (enforced by unsetting/unloading external BOOST library environment paths) to avoid compilation issues. Please do not install deal.II with GPU support as that is not needed by DFT-FE. Further, when installing deal.II for (DFT-FE with GPU support), one must use \verb|-DDEAL_II_ALLOW_PLATFORM_INTROSPECTION=OFF| to avoid compilation failure of DFT-FE.
+\item In addition to requiring C, C++ and Fortran compilers, MPI library, CMake, and Kokkos. deal.II additionally requires BOOST library. If not found externally, deal.II will resort to the bundled BOOST. Based on our experience, we recommend to use the deal.II's bundled boost (enforced by unsetting/unloading external BOOST library environment paths). Please do not install deal.II with GPU support as that is not needed by DFT-FE. Further, when installing deal.II for (DFT-FE with GPU support), one must use \verb|-DDEAL_II_ALLOW_PLATFORM_INTROSPECTION=OFF| to avoid compilation failure of DFT-FE.
 
 \item
 \begin{verbatim}
@@ -182,6 +193,7 @@ $ make install
 -DCMAKE_C_FLAGS=c_flags
 -DDEAL_II_WITH_MPI=ON -DDEAL_II_WITH_64BIT_INDICES=ON
 -DDEAL_II_WITH_P4EST=ON -DP4EST_DIR=p4est_install_dir_path
+-DKOKKOS_DIR=kokkos_install_dir_path
 -DDEAL_II_WITH_LAPACK=ON
 -DLAPACK_DIR=lapack_dir_paths (both BLAS and LAPACK directory paths)
 -DLAPACK_FOUND=true
@@ -190,6 +202,7 @@ $ make install
 -DDEAL_II_WITH_TASKFLOW=OFF
 -DDEAL_II_COMPONENT_EXAMPLES=OFF
 -DDEAL_II_FORCE_BUNDLED_BOOST=ON
+-DDEAL_II_ALLOW_PLATFORM_INTROSPECTION=OFF
 \end{verbatim}
 
 
@@ -216,6 +229,7 @@ $ cmake
 -DDEAL_II_WITH_TBB=OFF
 -DDEAL_II_WITH_TASKFLOW=OFF 
 -DDEAL_II_FORCE_BUNDLED_BOOST=ON
+-DDEAL_II_ALLOW_PLATFORM_INTROSPECTION=OFF
 -DDEAL_II_WITH_P4EST=ON 
 -DP4EST_DIR=p4est_install_path 
 -DDEAL_II_WITH_LAPACK=ON -DLAPACK_DIR="${MKLROOT}/lib/intel64"

@@ -53,6 +53,28 @@ namespace dftfe
       zaxpy_(n, alpha, x, incx, y, incy);
     }
 
+    void
+    callaxpy(const unsigned int *n,
+             const float *       alpha,
+             float *             x,
+             const unsigned int *incx,
+             float *             y,
+             const unsigned int *incy)
+    {
+      saxpy_(n, alpha, x, incx, y, incy);
+    }
+
+    void
+    callaxpy(const unsigned int *       n,
+             const std::complex<float> *alpha,
+             std::complex<float> *      x,
+             const unsigned int *       incx,
+             std::complex<float> *      y,
+             const unsigned int *       incy)
+    {
+      caxpy_(n, alpha, x, incx, y, incy);
+    }
+
 
 
     //
@@ -498,9 +520,27 @@ namespace dftfe
         &fieldVector) const;
 
     template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::distribute(
+      dftfe::linearAlgebra::MultiVector<float, dftfe::utils::MemorySpace::HOST>
+        &fieldVector) const;
+
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::distribute(
+      dftfe::linearAlgebra::MultiVector<std::complex<float>,
+                                        dftfe::utils::MemorySpace::HOST>
+        &fieldVector) const;
+
+    template void
     constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::
       distribute_slave_to_master(
         dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                          dftfe::utils::MemorySpace::HOST>
+          &fieldVector) const;
+
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::
+      distribute_slave_to_master(
+        dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
                                           dftfe::utils::MemorySpace::HOST>
           &fieldVector) const;
 
@@ -510,6 +550,11 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::HOST>
         &fieldVector) const;
 
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::set_zero(
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::HOST>
+        &fieldVector) const;
     template class constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>;
 
   } // namespace dftUtils

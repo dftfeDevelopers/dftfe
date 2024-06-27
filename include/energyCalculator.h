@@ -147,6 +147,50 @@ namespace dftfe
       const bool         print,
       const bool         smearedNuclearCharges = false);
 
+    double
+    computeEnergyResidual(
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+        &basisOperationsPtr,
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                               basisOperationsPtrElectro,
+      const unsigned int                densityQuadratureID,
+      const unsigned int                densityQuadratureIDElectro,
+      const unsigned int                smearedChargeQuadratureIDElectro,
+      const unsigned int                lpspQuadratureIDElectro,
+      const std::shared_ptr<excManager> excManagerPtr,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &phiTotRhoInValues,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                              phiTotRhoOutValues,
+      const distributedCPUVec<double> &phiTotRhoIn,
+      const distributedCPUVec<double> &phiTotRhoOut,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &gradDensityInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &                                                  gradDensityOutValues,
+      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
+      const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
+      const std::map<dealii::CellId, std::vector<unsigned int>>
+        &                                     smearedbNonTrivialAtomIds,
+      const std::vector<std::vector<double>> &localVselfs,
+      const std::map<dealii::types::global_dof_index, double>
+        &        atomElectrostaticNodeIdToChargeMap,
+      const bool smearedNuclearCharges);
+
 
     void
     computeXCEnergyTermsSpinPolarized(

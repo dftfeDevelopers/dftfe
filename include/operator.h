@@ -56,6 +56,11 @@ namespace dftfe
     getScratchFEMultivector(const unsigned int numVectors,
                             const unsigned int index) = 0;
 
+    virtual dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                              memorySpace> &
+    getScratchFEMultivectorSinglePrec(const unsigned int numVectors,
+                                      const unsigned int index) = 0;
+
     virtual void
     init(const std::vector<double> &kPointCoordinates,
          const std::vector<double> &kPointWeights) = 0;
@@ -87,6 +92,19 @@ namespace dftfe
       const bool skip1                                         = false,
       const bool skip2                                         = false,
       const bool skip3                                         = false) = 0;
+
+    virtual void
+    HXCheby(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                              memorySpace> &src,
+            const double                                    scalarHX,
+            const double                                    scalarY,
+            const double                                    scalarX,
+            dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                              memorySpace> &dst,
+            const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
+            const bool skip1                                         = false,
+            const bool skip2                                         = false,
+            const bool skip3 = false) = 0;
 
     virtual dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST> *
     getOverloadedConstraintMatrixHost() const = 0;

@@ -24,7 +24,7 @@
 #include "operator.h"
 #include "elpaScalaManager.h"
 #include "dftParameters.h"
-
+#include "BLASWrapper.h"
 
 namespace dftfe
 {
@@ -65,7 +65,10 @@ namespace dftfe
      */
     void
     solve(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-          elpaScalaManager &                                 elpaScala,
+          const std::shared_ptr<
+            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+            &                  BLASWrapperPtr,
+          elpaScalaManager &   elpaScala,
           dataTypes::number *  eigenVectorsFlattened,
           dataTypes::number *  eigenVectorsRotFracDensityFlattened,
           const unsigned int   totalNumberWaveFunctions,
@@ -74,6 +77,7 @@ namespace dftfe
           std::vector<double> &residuals,
           const MPI_Comm &     interBandGroupComm,
           const MPI_Comm &     mpiCommDomain,
+          const bool           isFirstFilteringCall,
           const bool           computeResidual,
           const bool           useMixedPrec = false,
           const bool           isFirstScf   = false);

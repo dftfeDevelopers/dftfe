@@ -140,8 +140,11 @@ namespace dftfe
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(
     operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-    elpaScalaManager &                                 elpaScala,
-    dataTypes::number *                                eigenVectorsFlattened,
+    const std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+      &                  BLASWrapperPtr,
+    elpaScalaManager &   elpaScala,
+    dataTypes::number *  eigenVectorsFlattened,
     dataTypes::number *  eigenVectorsRotFracDensityFlattened,
     const unsigned int   totalNumberWaveFunctions,
     const unsigned int   localVectorSize,
@@ -149,6 +152,7 @@ namespace dftfe
     std::vector<double> &residualNorms,
     const MPI_Comm &     interBandGroupComm,
     const MPI_Comm &     mpiCommDomain,
+    const bool           isFirstFilteringCall,
     const bool           computeResidual,
     const bool           useMixedPrec,
     const bool           isFirstScf)
@@ -240,6 +244,20 @@ namespace dftfe
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock2 =
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 1);
+    distributedCPUMultiVec<dataTypes::numberFP32>
+      *eigenVectorsFlattenedArrayBlockFP32 =
+        d_dftParams.useSinglePrecCheby ?
+          &operatorMatrix.getScratchFEMultivectorSinglePrec(vectorsBlockSize,
+                                                            0) :
+          NULL;
+    distributedCPUMultiVec<dataTypes::numberFP32>
+      *eigenVectorsFlattenedArrayBlock2FP32 =
+        d_dftParams.useSinglePrecCheby ?
+          &operatorMatrix.getScratchFEMultivectorSinglePrec(vectorsBlockSize,
+                                                            1) :
+          NULL;
+
+    std::vector<double> eigenValuesBlock(vectorsBlockSize);
     /// storage for cell wavefunction matrix
     std::vector<dataTypes::number> cellWaveFunctionMatrix;
 
@@ -267,6 +285,15 @@ namespace dftfe
                   &operatorMatrix.getScratchFEMultivector(BVec, 0);
                 eigenVectorsFlattenedArrayBlock2 =
                   &operatorMatrix.getScratchFEMultivector(BVec, 1);
+                if (d_dftParams.useSinglePrecCheby)
+                  {
+                    eigenVectorsFlattenedArrayBlockFP32 =
+                      &operatorMatrix.getScratchFEMultivectorSinglePrec(BVec,
+                                                                        0);
+                    eigenVectorsFlattenedArrayBlock2FP32 =
+                      &operatorMatrix.getScratchFEMultivectorSinglePrec(BVec,
+                                                                        1);
+                  }
               }
 
             // fill the eigenVectorsFlattenedArrayBlock from
@@ -288,17 +315,36 @@ namespace dftfe
             // call Chebyshev filtering function only for the current block to
             // be filtered and does in-place filtering
             computing_timer.enter_subsection("Chebyshev filtering");
+            if (d_dftParams.useSinglePrecCheby && !isFirstFilteringCall)
+              {
+                eigenValuesBlock.resize(BVec);
+                for (unsigned int i = 0; i < BVec; i++)
+                  {
+                    eigenValuesBlock[i] = eigenValues[jvec + i];
+                  }
 
-
-
-            linearAlgebraOperations::chebyshevFilter(
-              operatorMatrix,
-              *eigenVectorsFlattenedArrayBlock,
-              *eigenVectorsFlattenedArrayBlock2,
-              chebyshevOrder,
-              d_lowerBoundUnWantedSpectrum,
-              d_upperBoundUnWantedSpectrum,
-              d_lowerBoundWantedSpectrum);
+                linearAlgebraOperations::chebyshevFilterSinglePrec(
+                  BLASWrapperPtr,
+                  operatorMatrix,
+                  (*eigenVectorsFlattenedArrayBlock),
+                  (*eigenVectorsFlattenedArrayBlock2),
+                  (*eigenVectorsFlattenedArrayBlockFP32),
+                  (*eigenVectorsFlattenedArrayBlock2FP32),
+                  eigenValuesBlock,
+                  chebyshevOrder,
+                  d_lowerBoundUnWantedSpectrum,
+                  d_upperBoundUnWantedSpectrum,
+                  d_lowerBoundWantedSpectrum);
+              }
+            else
+              linearAlgebraOperations::chebyshevFilter(
+                operatorMatrix,
+                *eigenVectorsFlattenedArrayBlock,
+                *eigenVectorsFlattenedArrayBlock2,
+                chebyshevOrder,
+                d_lowerBoundUnWantedSpectrum,
+                d_upperBoundUnWantedSpectrum,
+                d_lowerBoundWantedSpectrum);
 
             computing_timer.leave_subsection("Chebyshev filtering");
 

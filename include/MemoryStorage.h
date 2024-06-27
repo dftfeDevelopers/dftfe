@@ -522,6 +522,6 @@ namespace dftfe
   } // namespace utils
 } // end of namespace dftfe
 
-#include "../utils/MemoryStorage.t.cc"
+#include "MemoryStorage.t.cc"
 
 #endif

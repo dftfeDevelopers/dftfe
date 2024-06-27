@@ -21,6 +21,7 @@
 // deal.II header
 //
 #include <deal.II/base/data_out_base.h>
+#include <deal.II/base/multithread_info.h>
 #include <p4est_bits.h>
 
 #ifdef USE_PETSC
@@ -1260,6 +1261,18 @@ namespace dftfe
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     return d_dftfeBasePtr;
   }
+
+
+  dftParameters *
+  dftfeWrapper::getDftfeParamsPtr()
+  {
+    AssertThrow(
+      d_mpi_comm_parent != MPI_COMM_NULL,
+      dealii::ExcMessage(
+        "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
+    return d_dftfeParamsPtr;
+  }
+
 
 
   void

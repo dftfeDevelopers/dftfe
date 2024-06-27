@@ -67,10 +67,24 @@ namespace dftfe
         l);
     else if (d_dftParamsPtr->isPseudopotential &&
              !d_dftParamsPtr->pseudoTestsFlag)
-      strcpy(psiFile,
-             (d_dftfeScratchFolderName + "/z" + std::to_string(Z) + "/" +
-              "psi" + std::to_string(n) + std::to_string(l) + ".inp")
-               .c_str());
+      {
+        strcpy(psiFile,
+               (d_dftfeScratchFolderName + "/z" + std::to_string(Z) + "/" +
+                "psi" + std::to_string(n) + std::to_string(l) + ".inp")
+                 .c_str());
+        std::vector<std::vector<double>> values;
+        fileReadFlag = dftUtils::readPsiFile(2, values, psiFile);
+        if (fileReadFlag == 0)
+          {
+            sprintf(
+              psiFile,
+              "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp",
+              DFTFE_PATH,
+              Z,
+              n,
+              l);
+          }
+      }
     else
       sprintf(
         psiFile,
@@ -81,7 +95,6 @@ namespace dftfe
         l);
 
     std::vector<std::vector<double>> values;
-
     fileReadFlag = dftUtils::readPsiFile(2, values, psiFile);
 
     const double truncationTol =

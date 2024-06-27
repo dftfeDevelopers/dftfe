@@ -16,7 +16,7 @@
 //
 // @author Kartick Ramakrishnan
 //
-
+#include <oncvClass.h>
 namespace dftfe
 {
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -118,7 +118,8 @@ namespace dftfe
     unsigned int                            densityQuadratureIdElectro,
     std::shared_ptr<excManager>             excFunctionalPtr,
     const std::vector<std::vector<double>> &atomLocations,
-    unsigned int                            numEigenValues)
+    unsigned int                            numEigenValues,
+    const bool                              singlePrecNonLocalOperator)
   {
     MPI_Barrier(d_mpiCommParent);
     d_BasisOperatorHostPtr = basisOperationsHostPtr;
@@ -142,6 +143,7 @@ namespace dftfe
     d_nlpspQuadratureId             = nlpspQuadratureId;
     d_excManagerPtr                 = excFunctionalPtr;
     d_numEigenValues                = numEigenValues;
+    d_singlePrecNonLocalOperator    = singlePrecNonLocalOperator;
 
     createAtomCenteredSphericalFunctionsForDensities();
     createAtomCenteredSphericalFunctionsForProjectors();
@@ -161,6 +163,15 @@ namespace dftfe
             d_BasisOperatorHostPtr,
             d_atomicProjectorFnsContainer,
             d_mpiCommParent);
+        if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
+          if (d_singlePrecNonLocalOperator)
+            d_nonLocalOperatorSinglePrec =
+              std::make_shared<AtomicCenteredNonLocalOperator<
+                typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+                memorySpace>>(d_BLASWrapperHostPtr,
+                              d_BasisOperatorHostPtr,
+                              d_atomicProjectorFnsContainer,
+                              d_mpiCommParent);
       }
 #if defined(DFTFE_WITH_DEVICE)
     else
@@ -172,6 +183,15 @@ namespace dftfe
             d_BasisOperatorDevicePtr,
             d_atomicProjectorFnsContainer,
             d_mpiCommParent);
+        if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+          if (d_singlePrecNonLocalOperator)
+            d_nonLocalOperatorSinglePrec =
+              std::make_shared<AtomicCenteredNonLocalOperator<
+                typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+                memorySpace>>(d_BLASWrapperDevicePtr,
+                              d_BasisOperatorDevicePtr,
+                              d_atomicProjectorFnsContainer,
+                              d_mpiCommParent);
       }
 #endif
 
@@ -206,7 +226,8 @@ namespace dftfe
 
     if (updateNonlocalSparsity)
       {
-        d_HamiltonianCouplingMatrixEntriesUpdated = false;
+        d_HamiltonianCouplingMatrixEntriesUpdated           = false;
+        d_HamiltonianCouplingMatrixSinglePrecEntriesUpdated = false;
         MPI_Barrier(d_mpiCommParent);
         double InitTime = MPI_Wtime();
         d_atomicProjectorFnsContainer->computeSparseStructure(
@@ -226,6 +247,15 @@ namespace dftfe
       kPointCoordinates,
       d_BasisOperatorHostPtr,
       d_nlpspQuadratureId);
+    if (d_singlePrecNonLocalOperator)
+      d_nonLocalOperatorSinglePrec
+        ->intitialisePartitionerKPointsAndComputeCMatrixEntries(
+          updateNonlocalSparsity,
+          kPointWeights,
+          kPointCoordinates,
+          d_BasisOperatorHostPtr,
+          d_nlpspQuadratureId);
+
 
     MPI_Barrier(d_mpiCommParent);
     double TotalTime = MPI_Wtime() - InitTimeTotal;
@@ -270,7 +300,8 @@ namespace dftfe
 
     if (updateNonlocalSparsity)
       {
-        d_HamiltonianCouplingMatrixEntriesUpdated = false;
+        d_HamiltonianCouplingMatrixEntriesUpdated           = false;
+        d_HamiltonianCouplingMatrixSinglePrecEntriesUpdated = false;
         MPI_Barrier(d_mpiCommParent);
         double InitTime = MPI_Wtime();
         d_atomicProjectorFnsContainer->getDataForSparseStructure(
@@ -295,6 +326,15 @@ namespace dftfe
       kPointCoordinates,
       d_BasisOperatorHostPtr,
       d_nlpspQuadratureId);
+    if (d_singlePrecNonLocalOperator)
+      d_nonLocalOperatorSinglePrec
+        ->intitialisePartitionerKPointsAndComputeCMatrixEntries(
+          updateNonlocalSparsity,
+          kPointWeights,
+          kPointCoordinates,
+          d_BasisOperatorHostPtr,
+          d_nlpspQuadratureId);
+
     MPI_Barrier(d_mpiCommParent);
     double TotalTime = MPI_Wtime() - InitTimeTotal;
     if (d_verbosity >= 2)
@@ -678,12 +718,51 @@ namespace dftfe
 #endif
   }
 
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  const dftfe::utils::MemoryStorage<
+    typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+    memorySpace> &
+  oncvClass<ValueType, memorySpace>::getCouplingMatrixSinglePrec()
+  {
+    getCouplingMatrix();
+    if (!d_HamiltonianCouplingMatrixSinglePrecEntriesUpdated)
+      {
+        d_couplingMatrixEntriesSinglePrec.resize(
+          d_couplingMatrixEntries.size());
+        if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+          d_BLASWrapperHostPtr->copyValueType1ArrToValueType2Arr(
+            d_couplingMatrixEntriesSinglePrec.size(),
+            d_couplingMatrixEntries.data(),
+            d_couplingMatrixEntriesSinglePrec.data());
+#if defined(DFTFE_WITH_DEVICE)
+        else
+          d_BLASWrapperDevicePtr->copyValueType1ArrToValueType2Arr(
+            d_couplingMatrixEntriesSinglePrec.size(),
+            d_couplingMatrixEntries.data(),
+            d_couplingMatrixEntriesSinglePrec.data());
+#endif
+
+        d_HamiltonianCouplingMatrixSinglePrecEntriesUpdated = true;
+      }
+
+    return (d_couplingMatrixEntriesSinglePrec);
+  }
+
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   const std::shared_ptr<AtomicCenteredNonLocalOperator<ValueType, memorySpace>>
   oncvClass<ValueType, memorySpace>::getNonLocalOperator()
   {
     return d_nonLocalOperator;
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  const std::shared_ptr<AtomicCenteredNonLocalOperator<
+    typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+    memorySpace>>
+  oncvClass<ValueType, memorySpace>::getNonLocalOperatorSinglePrec()
+  {
+    return d_nonLocalOperatorSinglePrec;
   }
 
 
@@ -716,4 +795,9 @@ namespace dftfe
       d_atomicProjectorFnsContainer->getTotalNumberOfSphericalFunctionsPerAtom(
         atomicNumbers[atomId]));
   }
+  template class oncvClass<dataTypes::number, dftfe::utils::MemorySpace::HOST>;
+#if defined(DFTFE_WITH_DEVICE)
+  template class oncvClass<dataTypes::number,
+                           dftfe::utils::MemorySpace::DEVICE>;
+#endif
 } // namespace dftfe

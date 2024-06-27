@@ -372,7 +372,16 @@ namespace dftfe
                 fe_eval_sc.distribute_local_to_global(rhs);
 
                 if (d_isStoreSmearedChargeRhs)
-                  fe_eval_sc.distribute_local_to_global(d_rhsSmearedCharge);
+                  {
+                    fe_eval_sc.reinit(macrocell);
+                    for (unsigned int q = 0; q < fe_eval_sc.n_q_points; ++q)
+                      {
+                        fe_eval_sc.submit_value(smearedbQuads[q], q);
+                      }
+                    fe_eval_sc.integrate(true, false);
+
+                    fe_eval_sc.distribute_local_to_global(d_rhsSmearedCharge);
+                  }
               }
           }
       }

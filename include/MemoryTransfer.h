@@ -128,6 +128,6 @@ namespace dftfe
   }    // namespace utils
 } // namespace dftfe
 
-#include "../utils/MemoryTransfer.t.cc"
+#include "MemoryTransfer.t.cc"
 
 #endif // dftfeMemoryTransfer_h

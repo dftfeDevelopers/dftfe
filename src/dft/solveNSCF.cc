@@ -317,6 +317,46 @@ namespace dftfe
     //
     // eigen solve
     //
+    if (d_dftParamsPtr->writeBandsFile)
+      {
+        std::ifstream file("fermiEnergy.out");
+        std::string   line;
+
+        if (file.is_open())
+          {
+            if (d_dftParamsPtr->constraintMagnetization)
+              {
+                std::vector<double> temp;
+                while (getline(file, line))
+                  {
+                    if (!line.empty())
+                      {
+                        std::istringstream iss(line);
+                        double             temp1;
+                        while (iss >> temp1)
+                          {
+                            temp.push_back(temp1);
+                          }
+                      }
+                  }
+                fermiEnergy     = temp[0];
+                fermiEnergyUp   = temp[1];
+                fermiEnergyDown = temp[2];
+              }
+            else
+              {
+                getline(file, line);
+                std::istringstream iss(line);
+                iss >> fermiEnergy;
+              }
+          }
+        else
+          {
+            pcout
+              << "Unable to open file fermiEnergy.out. Check if it is present.";
+          }
+      }
+
     if (d_dftParamsPtr->spinPolarized == 1)
       {
         std::vector<std::vector<std::vector<double>>> eigenValuesSpins(
@@ -408,10 +448,13 @@ namespace dftfe
         //
         // fermi energy
         //
-        if (d_dftParamsPtr->constraintMagnetization)
-          compute_fermienergy_constraintMagnetization(eigenValues);
-        else
-          compute_fermienergy(eigenValues, numElectrons);
+        if (!(d_dftParamsPtr->writeBandsFile))
+          {
+            if (d_dftParamsPtr->constraintMagnetization)
+              compute_fermienergy_constraintMagnetization(eigenValues);
+            else
+              compute_fermienergy(eigenValues, numElectrons);
+          }
 
         unsigned int count = 1;
 
@@ -551,12 +594,14 @@ namespace dftfe
                     eigenValuesSpins[s][kPoint][i] =
                       eigenValues[kPoint][d_numEigenValues * s + i];
                 }
-            //
-            if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
-            else
-              compute_fermienergy(eigenValues, numElectrons);
-            //
+            if (!(d_dftParamsPtr->writeBandsFile))
+              {
+                if (d_dftParamsPtr->constraintMagnetization)
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
+
             if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
               {
                 maxRes =
@@ -681,10 +726,13 @@ namespace dftfe
         //
         // fermi energy
         //
-        if (d_dftParamsPtr->constraintMagnetization)
-          compute_fermienergy_constraintMagnetization(eigenValues);
-        else
-          compute_fermienergy(eigenValues, numElectrons);
+        if (!(d_dftParamsPtr->writeBandsFile))
+          {
+            if (d_dftParamsPtr->constraintMagnetization)
+              compute_fermienergy_constraintMagnetization(eigenValues);
+            else
+              compute_fermienergy(eigenValues, numElectrons);
+          }
 
         unsigned int count = 1;
 
@@ -788,11 +836,14 @@ namespace dftfe
                   }
               }
 
-            //
-            if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
-            else
-              compute_fermienergy(eigenValues, numElectrons);
+            // //
+            if (!(d_dftParamsPtr->writeBandsFile))
+              {
+                if (d_dftParamsPtr->constraintMagnetization)
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
             //
             if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
               {

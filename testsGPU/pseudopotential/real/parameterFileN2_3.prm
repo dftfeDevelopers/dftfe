@@ -62,7 +62,7 @@ subsection SCF parameters
       set USE ELPA=true
       set SCALAPACKPROCS=2
       set OVERLAP COMPUTE COMMUN CHEBY=true
-      set USE MIXED PREC CHEBY=true
+      set USE SINGLE PREC COMMUN CHEBY=true
       set OVERLAP COMPUTE COMMUN ORTHO RR=false
   end
 end

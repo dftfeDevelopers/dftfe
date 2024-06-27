@@ -50,7 +50,8 @@ namespace dftfe
     double radiusAtomBall, mixingParameter, spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
-      start_magnetization, absLinearSolverToleranceHelmholtz;
+      selfConsistentSolverEnergyTolerance, start_magnetization,
+      absLinearSolverToleranceHelmholtz;
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
@@ -114,6 +115,7 @@ namespace dftfe
     unsigned int subspaceRotDofsBlockSize;
     unsigned int nbandGrps;
     bool         computeEnergyEverySCF;
+    bool         useEnergyResidualTolerance;
     unsigned int scalapackParalProcs;
     unsigned int scalapackBlockSize;
     unsigned int natoms;
@@ -135,7 +137,8 @@ namespace dftfe
     bool         useDevice;
     bool         deviceFineGrainedTimings;
     bool         allowFullCPUMemSubspaceRot;
-    bool         useMixedPrecCheby;
+    bool         useSinglePrecCommunCheby;
+    bool         useSinglePrecCheby;
     bool         overlapComputeCommunCheby;
     bool         overlapComputeCommunOrthoRR;
     bool         autoDeviceBlockSizes;

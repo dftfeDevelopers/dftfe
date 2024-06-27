@@ -109,12 +109,20 @@ namespace dftfe
             tempCellNodalData.data(),
             std::pair<unsigned int, unsigned int>(
               iCell, std::min(d_nCells, iCell + d_cellsBlockSize)));
-          interpolateKernel(tempCellNodalData.data(),
-                            quadratureValues,
-                            quadratureGradients,
-                            std::pair<unsigned int, unsigned int>(
-                              iCell,
-                              std::min(d_nCells, iCell + d_cellsBlockSize)));
+          interpolateKernel(
+            tempCellNodalData.data(),
+            quadratureValues == NULL ?
+              NULL :
+              (quadratureValues + (iCell - cellRange.first) *
+                                    d_nQuadsPerCell[d_quadratureIndex] *
+                                    d_nVectors),
+            quadratureGradients == NULL ?
+              NULL :
+              (quadratureGradients + (iCell - cellRange.first) *
+                                       d_nQuadsPerCell[d_quadratureIndex] * 3 *
+                                       d_nVectors),
+            std::pair<unsigned int, unsigned int>(
+              iCell, std::min(d_nCells, iCell + d_cellsBlockSize)));
         }
     }
     template <typename ValueTypeBasisCoeff,

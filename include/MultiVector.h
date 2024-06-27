@@ -522,5 +522,5 @@ namespace dftfe
 
   } // end of namespace linearAlgebra
 } // end of namespace dftfe
-#include "../src/linAlg/MultiVector.t.cc"
+#include "MultiVector.t.cc"
 #endif // dftfeMultiVector_h

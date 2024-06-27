@@ -58,22 +58,6 @@ namespace dftfe
       };
 
 
-      template <typename T>
-      struct singlePrecType
-      {
-        typedef T type;
-      };
-      template <>
-      struct singlePrecType<double>
-      {
-        typedef float type;
-      };
-      template <>
-      struct singlePrecType<std::complex<double>>
-      {
-        typedef std::complex<float> type;
-      };
-
       template <typename ValueType, MemorySpace memorySpace>
       class MPICommunicatorP2P
       {
@@ -136,10 +120,14 @@ namespace dftfe
 
         MemoryStorage<float, memorySpace> d_tempFloatImagArrayForAtomics;
 
-        MemoryStorage<typename singlePrecType<ValueType>::type, memorySpace>
+        MemoryStorage<
+          typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+          memorySpace>
           d_sendRecvBufferSinglePrec;
 
-        MemoryStorage<typename singlePrecType<ValueType>::type, memorySpace>
+        MemoryStorage<
+          typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+          memorySpace>
           d_ghostDataCopySinglePrec;
 
 #ifdef DFTFE_WITH_DEVICE
@@ -149,12 +137,14 @@ namespace dftfe
         std::shared_ptr<MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>
           d_sendRecvBufferHostPinnedPtr;
 
-        std::shared_ptr<MemoryStorage<typename singlePrecType<ValueType>::type,
-                                      MemorySpace::HOST_PINNED>>
+        std::shared_ptr<MemoryStorage<
+          typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+          MemorySpace::HOST_PINNED>>
           d_ghostDataCopySinglePrecHostPinnedPtr;
 
-        std::shared_ptr<MemoryStorage<typename singlePrecType<ValueType>::type,
-                                      MemorySpace::HOST_PINNED>>
+        std::shared_ptr<MemoryStorage<
+          typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+          MemorySpace::HOST_PINNED>>
           d_sendRecvBufferSinglePrecHostPinnedPtr;
 #endif // DFTFE_WITH_DEVICE
 

@@ -338,6 +338,12 @@ namespace dftfe
     std::vector<double> eigenValuesTemp(isSpectrumSplit ? d_numEigenValuesRR :
                                                           d_numEigenValues,
                                         0.0);
+    if (d_dftParamsPtr->useSinglePrecCheby)
+      for (unsigned int i = 0; i < d_numEigenValues; i++)
+        {
+          eigenValuesTemp[i] =
+            eigenValues[kPointIndex][spinType * d_numEigenValues + i];
+        }
 
     if (d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) *
                                  kPointIndex +
@@ -405,6 +411,7 @@ namespace dftfe
 
     subspaceIterationSolver.solve(
       kohnShamDFTEigenOperator,
+      d_BLASWrapperPtrHost,
       elpaScala,
       d_eigenVectorsFlattenedHost.data() +
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
@@ -420,6 +427,8 @@ namespace dftfe
       residualNormWaveFunctions,
       interBandGroupComm,
       mpi_communicator,
+      d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
+                             spinType],
       computeResidual,
       useMixedPrec,
       isFirstScf);
@@ -519,13 +528,18 @@ namespace dftfe
         if (d_dftParamsPtr->spinPolarized == 1)
           pcout << "spin: " << spinType + 1 << std::endl;
       }
-
     std::vector<double> eigenValuesTemp(isSpectrumSplit ? d_numEigenValuesRR :
                                                           d_numEigenValues,
                                         0.0);
     std::vector<double> eigenValuesDummy(isSpectrumSplit ? d_numEigenValuesRR :
                                                            d_numEigenValues,
                                          0.0);
+    if (d_dftParamsPtr->useSinglePrecCheby)
+      for (unsigned int i = 0; i < d_numEigenValues; i++)
+        {
+          eigenValuesTemp[i] =
+            eigenValues[kPointIndex][spinType * d_numEigenValues + i];
+        }
 
     subspaceIterationSolverDevice.reinitSpectrumBounds(
       a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType],
@@ -813,6 +827,13 @@ namespace dftfe
 
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
+    if (d_dftParamsPtr->useSinglePrecCheby)
+      for (unsigned int i = 0; i < d_numEigenValues; i++)
+        {
+          eigenValuesTemp[i] =
+            eigenValues[kPointIndex][spinType * d_numEigenValues + i];
+        }
+
 
     if (d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) *
                                  kPointIndex +
@@ -868,6 +889,7 @@ namespace dftfe
 
     subspaceIterationSolver.solve(
       kohnShamDFTEigenOperator,
+      d_BLASWrapperPtrHost,
       *d_elpaScala,
       d_eigenVectorsFlattenedHost.data() +
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
@@ -883,6 +905,8 @@ namespace dftfe
       residualNormWaveFunctions,
       interBandGroupComm,
       mpi_communicator,
+      d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
+                             spinType],
       true,
       false);
 

@@ -2125,9 +2125,42 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     void
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      createScratchMultiVectorsSinglePrec(const unsigned int vecBlockSize,
+                                          const unsigned int numMultiVecs) const
+    {
+      auto iter = scratchMultiVectorsSinglePrec.find(vecBlockSize);
+      if (iter == scratchMultiVectorsSinglePrec.end())
+        {
+          scratchMultiVectorsSinglePrec[vecBlockSize] =
+            std::vector<dftfe::linearAlgebra::MultiVector<
+              typename dftfe::dataTypes::singlePrecType<
+                ValueTypeBasisCoeff>::type,
+              memorySpace>>(numMultiVecs);
+          for (unsigned int iVec = 0; iVec < numMultiVecs; ++iVec)
+            scratchMultiVectorsSinglePrec[vecBlockSize][iVec].reinit(
+              mpiPatternP2P, vecBlockSize);
+        }
+      else
+        {
+          scratchMultiVectorsSinglePrec[vecBlockSize].resize(
+            scratchMultiVectorsSinglePrec[vecBlockSize].size() + numMultiVecs);
+          for (unsigned int iVec = 0;
+               iVec < scratchMultiVectorsSinglePrec[vecBlockSize].size();
+               ++iVec)
+            scratchMultiVectorsSinglePrec[vecBlockSize][iVec].reinit(
+              mpiPatternP2P, vecBlockSize);
+        }
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       clearScratchMultiVectors() const
     {
       scratchMultiVectors.clear();
+      scratchMultiVectorsSinglePrec.clear();
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -2143,6 +2176,23 @@ namespace dftfe
                   dealii::ExcMessage(
                     "DFT-FE Error: MultiVector not found in scratch storage."));
       return scratchMultiVectors[vecBlockSize][index];
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    dftfe::linearAlgebra::MultiVector<
+      typename dftfe::dataTypes::singlePrecType<ValueTypeBasisCoeff>::type,
+      memorySpace> &
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      getMultiVectorSinglePrec(const unsigned int vecBlockSize,
+                               const unsigned int index) const
+    {
+      AssertThrow(scratchMultiVectorsSinglePrec.find(vecBlockSize) !=
+                    scratchMultiVectorsSinglePrec.end(),
+                  dealii::ExcMessage(
+                    "DFT-FE Error: MultiVector not found in scratch storage."));
+      return scratchMultiVectorsSinglePrec[vecBlockSize][index];
     }
 
 

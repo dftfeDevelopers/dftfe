@@ -4,6 +4,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Set the name of the project and target:
 SET(TARGET "dftfe_exe")
 SET(TARGETLIB "dftfe")
@@ -161,6 +162,7 @@ SET(TARGET_SRC
   ./utils/FEBasisOperations.cc
   ./utils/FEBasisOperationsKernels.cc
   ./src/force/locateAtomCoreNodesForce.cc
+  ./src/atom/AtomicCenteredNonLocalOperator.cc
   ./src/atom/AtomPseudoWavefunctions.cc
   ./src/atom/AtomCenteredSphericalFunctionContainer.cc
   ./src/atom/AtomCenteredSphericalFunctionBase.cc
@@ -171,7 +173,8 @@ SET(TARGET_SRC
   ./src/atom/AtomCenteredSphericalFunctionValenceDensitySpline.cc
   ./src/atom/AtomCenteredSphericalFunctionCoreDensitySpline.cc
   ./src/atom/AtomCenteredSphericalFunctionLocalPotentialSpline.cc
-  ./src/atom/AtomCenteredSphericalFunctionProjectorSpline.cc)
+  ./src/atom/AtomCenteredSphericalFunctionProjectorSpline.cc
+  ./src/pseudo/oncv/oncvClass.cc)
 
 IF ("${GPU_LANG}" STREQUAL "cuda")
 
@@ -347,7 +350,7 @@ TARGET_LINK_LIBRARIES(${TARGETLIB} PUBLIC ${DFTFE_MPI_LIBRARIES})
 #Dependencies
 #
 
-FIND_PACKAGE(deal.II 9.1.0 REQUIRED
+FIND_PACKAGE(deal.II 9.5.1 REQUIRED
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
   )
 IF(NOT ${deal.II_FOUND})
@@ -385,11 +388,11 @@ ENDIF()
 #DEAL_II_INITIALIZE_CACHED_VARIABLES()
 
 
-TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${DEAL_II_INCLUDE_DIRS})
+TARGET_INCLUDE_DIRECTORIES(${TARGETLIB} PUBLIC ${DEAL_II_INCLUDE_RELDIR})
 IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC ${DEAL_II_LIBRARIES_RELEASE})
+    TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC dealii::dealii_release)
 ELSE()
-   TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC ${DEAL_II_LIBRARIES_DEBUG})
+   TARGET_LINK_LIBRARIES (${TARGETLIB} PUBLIC dealii::dealii_debug)
 ENDIF()
 
 IF (WITH_CUSTOMIZED_DEALII)
@@ -616,7 +619,7 @@ IF (WITH_TESTING)
   ENABLE_TESTING()
   INCLUDE(CTest)
   # default 600sec is not enough for some tests, increase:
-  SET (TEST_TIME_LIMIT 3600)
+  SET (TEST_TIME_LIMIT 5000)
   #
   IF (WITH_COMPLEX)
      ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)

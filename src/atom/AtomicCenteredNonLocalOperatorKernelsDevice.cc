@@ -246,38 +246,38 @@ namespace dftfe
 
     template void
     copyToDealiiParallelNonLocalVec(
-      const unsigned int  numWfcs,
-      const unsigned int  totalEntries,
-      const double *      sphericalFnTimesWfcParallelVec,
-      double *            sphericalFnTimesWfcDealiiParallelVec,
-      const unsigned int *indexMapDealiiParallelNumbering);
+      const unsigned int       numWfcs,
+      const unsigned int       totalEntries,
+      const dataTypes::number *sphericalFnTimesWfcParallelVec,
+      dataTypes::number *      sphericalFnTimesWfcDealiiParallelVec,
+      const unsigned int *     indexMapDealiiParallelNumbering);
 
     template void
     copyToDealiiParallelNonLocalVec(
-      const unsigned int          numWfcs,
-      const unsigned int          totalEntries,
-      const std::complex<double> *sphericalFnTimesWfcParallelVec,
-      std::complex<double> *      sphericalFnTimesWfcDealiiParallelVec,
-      const unsigned int *        indexMapDealiiParallelNumbering);
+      const unsigned int           numWfcs,
+      const unsigned int           totalEntries,
+      const dataTypes::numberFP32 *sphericalFnTimesWfcParallelVec,
+      dataTypes::numberFP32 *      sphericalFnTimesWfcDealiiParallelVec,
+      const unsigned int *         indexMapDealiiParallelNumbering);
 
     template void
     copyFromParallelNonLocalVecToAllCellsVec(
-      const unsigned int numWfcs,
-      const unsigned int numNonLocalCells,
-      const unsigned int maxSingleAtomContribution,
-      const double *     sphericalFnTimesWfcParallelVec,
-      double *           sphericalFnTimesWfcAllCellsVec,
-      const int *        indexMapPaddedToParallelVec);
+      const unsigned int       numWfcs,
+      const unsigned int       numNonLocalCells,
+      const unsigned int       maxSingleAtomContribution,
+      const dataTypes::number *sphericalFnTimesWfcParallelVec,
+      dataTypes::number *      sphericalFnTimesWfcAllCellsVec,
+      const int *              indexMapPaddedToParallelVec);
 
 
     template void
     copyFromParallelNonLocalVecToAllCellsVec(
-      const unsigned int          numWfcs,
-      const unsigned int          numNonLocalCells,
-      const unsigned int          maxSingleAtomContribution,
-      const std::complex<double> *sphericalFnTimesWfcParallelVec,
-      std::complex<double> *      sphericalFnTimesWfcAllCellsVec,
-      const int *                 indexMapPaddedToParallelVec);
+      const unsigned int           numWfcs,
+      const unsigned int           numNonLocalCells,
+      const unsigned int           maxSingleAtomContribution,
+      const dataTypes::numberFP32 *sphericalFnTimesWfcParallelVec,
+      dataTypes::numberFP32 *      sphericalFnTimesWfcAllCellsVec,
+      const int *                  indexMapPaddedToParallelVec);
 
 
     template void
@@ -286,10 +286,10 @@ namespace dftfe
       const unsigned int numberNodesPerElement,
       const unsigned int numberWfc,
       const unsigned int numberCellsTraversed,
-      const dftfe::utils::MemoryStorage<double,
+      const dftfe::utils::MemoryStorage<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &     nonLocalContribution,
-      double *TotalContribution,
+        &                nonLocalContribution,
+      dataTypes::number *TotalContribution,
       const dftfe::utils::MemoryStorage<unsigned int,
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal);
@@ -300,10 +300,10 @@ namespace dftfe
       const unsigned int numberNodesPerElement,
       const unsigned int numberWfc,
       const unsigned int numberCellsTraversed,
-      const dftfe::utils::MemoryStorage<std::complex<double>,
+      const dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &                   nonLocalContribution,
-      std::complex<double> *TotalContribution,
+        &                    nonLocalContribution,
+      dataTypes::numberFP32 *TotalContribution,
       const dftfe::utils::MemoryStorage<unsigned int,
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal);

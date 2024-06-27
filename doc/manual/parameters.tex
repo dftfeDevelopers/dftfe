@@ -2066,7 +2066,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. This option is by default on for NSCF mode of solve. Outputs a file name 'bands.out'. The first line has 3 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point and third the fermi energy in Ha. Subsequent lines have 4 columns with first column indicating the k-point index, second column indicating band index, third column indicating corresponding eigenvalue and fourth column indicating the corresponding occupation number.
+{\it Description:} [Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. If it is set to true, Fermi energy is obtained from "fermiEnergy.out" file, created from previous GS calculation with "SAVE RHO DATA" set to true. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 4 columns with first column indicating the k-point index, second column indicating band index, third column indicating corresponding eigenvalue and fourth column indicating the corresponding occupation number.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2242,7 +2242,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve.
+{\it Description:} [Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve. If the value is "true", the SOLVER MODE is GS and if the SCF loop converges, an outputfile "fermiEnergy.out" is written that contains the fermi energy in the units of Ha. This Fermi energy is used when "WRITE BANDS" is true.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2283,6 +2283,23 @@
 
 
 {\it Description:} [Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE ENERGY RESIDUAL METRIC}
+\phantomsection\label{parameters:SCF parameters/USE ENERGY RESIDUAL METRIC}
+\label{parameters:SCF_20parameters/USE_20ENERGY_20RESIDUAL_20METRIC}
+
+
+\index[prmindex]{USE ENERGY RESIDUAL METRIC}
+\index[prmindexfull]{SCF parameters!USE ENERGY RESIDUAL METRIC}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Boolean parameter specifying whether to use the energy residual metric (equation 7.23 of Richard Matrin second edition) for convergence check. Setting it to false can lead to some computational time savings. Default value is false
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2872,20 +2889,20 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE MIXED PREC CHEBY}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC CHEBY}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20CHEBY}
+\item {\it Parameter name:} {\tt USE SINGLE PREC COMMUN CHEBY}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE USE SINGLE PREC COMMUN CHEBY}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20SINGLE_20PREC_20COMMUN_20CHEBY}
 
 
-\index[prmindex]{USE MIXED PREC CHEBY}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE MIXED PREC CHEBY}
+\index[prmindex]{USE SINGLE PREC COMMUN CHEBY}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE SINGLE PREC COMMUN CHEBY}
 {\it Value:} false
 
 
 {\it Default:} false
 
 
-{\it Description:} [Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.
+{\it Description:} [Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2906,6 +2923,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE SINGLE PREC CHEBY}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE USE SINGLE PREC CHEBY}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20SINGLE_20PREC_20CHEBY}
+
+
+\index[prmindex]{USE SINGLE PREC CHEBY}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE SINGLE PREC CHEBY}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Use a modified single precision algorithm for Chebyshev filtering. This cannot be used in conjunction with spectrum splitting. Default setting is false.
+
+{\it Possible values:} A boolean value (true or false)
+
 \item {\it Parameter name:} {\tt USE MIXED PREC RR\_SR}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC RR_5fSR}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20RR_5fSR}

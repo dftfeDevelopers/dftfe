@@ -61,7 +61,7 @@ namespace dftfe
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         BLASWrapperPtr,
       std::shared_ptr<
-        dftfe::basis::FEBasisOperations<ValueType, double, memorySpace>>
+        dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
         basisOperatorPtr,
       std::shared_ptr<AtomCenteredSphericalFunctionContainer>
                       atomCenteredSphericalFunctionContainer,
@@ -102,8 +102,9 @@ namespace dftfe
       const std::vector<double> &kPointWeights,
       const std::vector<double> &kPointCoordinates,
       std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<ValueType, double, dftfe::utils::MemorySpace::HOST>>
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
                          basisOperationsPtr,
       const unsigned int quadratureIndex);
 #if defined(DFTFE_WITH_DEVICE)
@@ -313,7 +314,7 @@ namespace dftfe
     std::vector<unsigned int> d_numberCellsForEachAtom;
 
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<ValueType, double, memorySpace>>
+      dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
       d_basisOperatorPtr;
 
 
@@ -419,11 +420,11 @@ namespace dftfe
      */
     void
     computeCMatrixEntries(
-      std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<ValueType, double, dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
-      const unsigned int quadratureIndex);
+      std::shared_ptr<dftfe::basis::FEBasisOperations<
+        dataTypes::number,
+        double,
+        dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
+      const unsigned int                  quadratureIndex);
 
     std::map<
       unsigned int,
@@ -477,6 +478,4 @@ namespace dftfe
 
 
 } // namespace dftfe
-#include "../src/atom/AtomicCenteredNonLocalOperator.t.cc"
-
 #endif // DFTFE_ATOMICCENTEREDNONLOCALOPERATOR_H

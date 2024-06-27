@@ -1400,11 +1400,12 @@ namespace dftfe
               pcout
                 << "Hanging node and periodic constraints parallel consistency not achieved."
                 << std::endl;
-
+#ifdef DFTFE_WITH_CUSTOMIZED_DEALII
             AssertThrow(
               d_dftParams.createConstraintsFromSerialDofhandler,
               dealii::ExcMessage(
                 "DFT-FE error: this is due to a known issue related to hanging node constraints in dealii. Please set CONSTRAINTS FROM SERIAL DOFHANDLER = true under the Boundary conditions subsection in the input parameters file to circumvent this issue."));
+#endif
           }
       }
 

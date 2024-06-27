@@ -25,6 +25,7 @@
 #    include "elpaScalaManager.h"
 #    include "deviceDirectCCLWrapper.h"
 #    include "dftParameters.h"
+#    include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -93,6 +94,38 @@ namespace dftfe
       const double                                                          a,
       const double                                                          b,
       const double                                                          a0);
+
+    void
+    chebyshevFilterOverlapComputeCommunicationSinglePrec(
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                                  BLASWrapperPtr,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X1,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y1,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X2,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y2,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &X1_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &Y1_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &X2_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &                 Y2_SP,
+      std::vector<double> eigenvalues,
+      const unsigned int  m,
+      const double        a,
+      const double        b,
+      const double        a0);
 
     /** @brief Computes Sc=X^{T}*Xc.
      *

@@ -336,7 +336,7 @@ namespace dftfe
     d_constraintsVectorElectro.push_back(&d_constraintsForPhiPrimeElectro);
     d_phiPrimeDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
 
-
+#ifdef DFTFE_WITH_CUSTOMIZED_DEALII
     if (d_dftParamsPtr->constraintsParallelCheck)
       {
         dealii::IndexSet locally_active_dofs_debug;
@@ -355,6 +355,7 @@ namespace dftfe
           dealii::ExcMessage(
             "DFT-FE Error: Constraints are not consistent in parallel."));
       }
+#endif
 
     // Fill dofHandler vector
     std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;

@@ -108,6 +108,25 @@ namespace dftfe
     {
       return MPI_DOUBLE_COMPLEX;
     }
+
+    template <typename T>
+    struct singlePrecType
+    {
+      typedef T type;
+    };
+
+    template <>
+    struct singlePrecType<double>
+    {
+      typedef float type;
+    };
+
+    template <>
+    struct singlePrecType<std::complex<double>>
+    {
+      typedef std::complex<float> type;
+    };
+
   } // namespace dataTypes
 } // namespace dftfe
 

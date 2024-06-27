@@ -372,6 +372,9 @@ namespace dftfe
     dftBase *
     getDftfeBasePtr();
 
+    dftParameters *
+    getDftfeParamsPtr();
+
   private:
     void
     createScratchFolder();

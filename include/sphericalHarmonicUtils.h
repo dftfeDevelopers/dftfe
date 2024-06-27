@@ -18,7 +18,7 @@
 //
 #ifndef DFTFE_SPHERICALHARMONICUTILS_H
 #define DFTFE_SPHERICALHARMONICUTILS_H
-
+#include <interpolation.h>
 namespace dftfe
 {
   namespace sphericalHarmonicUtils

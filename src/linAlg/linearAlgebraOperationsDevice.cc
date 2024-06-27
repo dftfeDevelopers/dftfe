@@ -490,6 +490,301 @@ namespace dftfe
       X2 = Y2;
     }
 
+    void
+    chebyshevFilterOverlapComputeCommunicationSinglePrec(
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                                  BLASWrapperPtr,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X1,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y1,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X2,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y2,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &X1_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &Y1_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &X2_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &                 Y2_SP,
+      std::vector<double> eigenvalues,
+      const unsigned int  m,
+      const double        a,
+      const double        b,
+      const double        a0)
+    {
+      double e, c, sigma, sigma1, sigma2, gamma, alpha1Old, alpha2Old;
+      e      = (b - a) / 2.0;
+      c      = (b + a) / 2.0;
+      sigma  = e / (a0 - c);
+      sigma1 = sigma;
+      gamma  = 2.0 / sigma1;
+
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+        eigenValuesFiltered, eigenValuesFiltered1, eigenValuesFiltered2;
+      eigenValuesFiltered.resize(eigenvalues.size());
+      eigenValuesFiltered.copyFrom(eigenvalues);
+      eigenValuesFiltered1 = eigenValuesFiltered;
+      eigenValuesFiltered2 = eigenValuesFiltered;
+      eigenValuesFiltered1.setValue(1.0);
+
+      //
+      // create YArray
+      // initialize to zeros.
+      // x
+      operatorMatrix.HXCheby(X1, 1.0, 0.0, 0.0, Y1);
+
+
+      //
+      // call HX
+      //
+
+
+      double alpha1 = sigma1 / e, alpha2 = -c;
+      eigenValuesFiltered2.setValue(alpha1 * alpha2);
+      BLASWrapperPtr->ApaBD(1,
+                            eigenValuesFiltered2.size(),
+                            alpha1,
+                            eigenValuesFiltered2.data(),
+                            eigenValuesFiltered1.data(),
+                            eigenValuesFiltered.data(),
+                            eigenValuesFiltered2.data());
+      BLASWrapperPtr->ApaBD(X1.locallyOwnedSize(),
+                            X1.numVectors(),
+                            -1.0,
+                            Y1.data(),
+                            X1.data(),
+                            eigenValuesFiltered.data(),
+                            Y1.data());
+      X1_SP.setValue(0.0);
+      X2_SP.setValue(0.0);
+      BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+        X1.locallyOwnedSize() * X1.numVectors(), Y1.data(), Y1_SP.data());
+      BLASWrapperPtr->xscal(Y1_SP.data(),
+                            dataTypes::numberFP32(alpha1),
+                            X2.locallyOwnedSize() * X2.numVectors());
+      X2.updateGhostValues();
+      operatorMatrix.HXCheby(X2, 1.0, 0.0, 0.0, Y2, false, false, true, true);
+      //
+      // polynomial loop
+      //
+      for (unsigned int degree = 2; degree < m + 1; ++degree)
+        {
+          sigma2    = 1.0 / (gamma - sigma);
+          alpha1Old = alpha1, alpha2Old = alpha2;
+          alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
+
+          if (degree == 2)
+            {
+              operatorMatrix.HXCheby(
+                X2, 1.0, 0.0, 0.0, Y2, false, true, false, true);
+              Y1_SP.updateGhostValuesBegin();
+              operatorMatrix.HXCheby(
+                X2, 1.0, 0.0, 0.0, Y2, false, true, true, false);
+              Y1_SP.updateGhostValuesEnd();
+              Y2.accumulateAddLocallyOwnedBegin();
+            }
+          else
+            {
+              operatorMatrix.HXCheby(Y2_SP,
+                                     alpha1Old,
+                                     alpha2Old,
+                                     -c * alpha1Old,
+                                     X2_SP,
+                                     false,
+                                     true,
+                                     false,
+                                     true);
+              Y1_SP.updateGhostValuesBegin();
+              operatorMatrix.HXCheby(Y2_SP,
+                                     alpha1Old,
+                                     alpha2Old,
+                                     -c * alpha1Old,
+                                     X2_SP,
+                                     false,
+                                     true,
+                                     true,
+                                     false);
+              Y1_SP.updateGhostValuesEnd();
+              X2_SP.accumulateAddLocallyOwnedBegin();
+            }
+
+
+          //
+          // call HX
+          //
+          operatorMatrix.HXCheby(Y1_SP,
+                                 alpha1,
+                                 alpha2,
+                                 -c * alpha1,
+                                 X1_SP,
+                                 false,
+                                 false,
+                                 true,
+                                 true);
+          if (degree == 2)
+            {
+              Y2.accumulateAddLocallyOwnedEnd();
+              Y2.zeroOutGhosts();
+              BLASWrapperPtr->ApaBD(X2.locallyOwnedSize(),
+                                    X2.numVectors(),
+                                    -1.0,
+                                    Y2.data(),
+                                    X2.data(),
+                                    eigenValuesFiltered.data() +
+                                      X1.numVectors(),
+                                    Y2.data());
+              BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+                X2.locallyOwnedSize() * X2.numVectors(),
+                Y2.data(),
+                Y2_SP.data());
+              BLASWrapperPtr->xscal(Y2_SP.data(),
+                                    dataTypes::numberFP32(alpha1Old),
+                                    X2.locallyOwnedSize() * X2.numVectors());
+            }
+          else
+            {
+              X2_SP.accumulateAddLocallyOwnedEnd();
+              X2_SP.zeroOutGhosts();
+              BLASWrapperPtr->ApaBD(X2_SP.locallyOwnedSize(),
+                                    X2_SP.numVectors(),
+                                    alpha1Old,
+                                    X2_SP.data(),
+                                    Y2.data(),
+                                    eigenValuesFiltered2.data() +
+                                      X1_SP.numVectors(),
+                                    X2_SP.data());
+              BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
+                                    -c * alpha1Old,
+                                    eigenValuesFiltered2.data(),
+                                    alpha2Old,
+                                    eigenValuesFiltered1.data());
+              BLASWrapperPtr->ApaBD(1,
+                                    eigenValuesFiltered1.size(),
+                                    alpha1Old,
+                                    eigenValuesFiltered1.data(),
+                                    eigenValuesFiltered2.data(),
+                                    eigenValuesFiltered.data(),
+                                    eigenValuesFiltered1.data());
+              X2_SP.swap(Y2_SP);
+              eigenValuesFiltered1.swap(eigenValuesFiltered2);
+            }
+
+          operatorMatrix.HXCheby(Y1_SP,
+                                 alpha1,
+                                 alpha2,
+                                 -c * alpha1,
+                                 X1_SP,
+                                 false,
+                                 true,
+                                 false,
+                                 true);
+          Y2_SP.updateGhostValuesBegin();
+          operatorMatrix.HXCheby(Y1_SP,
+                                 alpha1,
+                                 alpha2,
+                                 -c * alpha1,
+                                 X1_SP,
+                                 false,
+                                 true,
+                                 true,
+                                 false);
+          Y2_SP.updateGhostValuesEnd();
+          X1_SP.accumulateAddLocallyOwnedBegin();
+          operatorMatrix.HXCheby(Y2_SP,
+                                 alpha1,
+                                 alpha2,
+                                 -c * alpha1,
+                                 X2_SP,
+                                 false,
+                                 false,
+                                 true,
+                                 true);
+          X1_SP.accumulateAddLocallyOwnedEnd();
+          X1_SP.zeroOutGhosts();
+          BLASWrapperPtr->ApaBD(X1_SP.locallyOwnedSize(),
+                                X1_SP.numVectors(),
+                                alpha1,
+                                X1_SP.data(),
+                                Y1.data(),
+                                eigenValuesFiltered2.data(),
+                                X1_SP.data());
+
+          //
+          // XArray = YArray
+          //
+          X1_SP.swap(Y1_SP);
+
+          if (degree == m)
+            {
+              operatorMatrix.HXCheby(Y2_SP,
+                                     alpha1,
+                                     alpha2,
+                                     -c * alpha1,
+                                     X2_SP,
+                                     false,
+                                     true,
+                                     false,
+                                     false);
+              X2_SP.accumulateAddLocallyOwned();
+              X2_SP.zeroOutGhosts();
+              BLASWrapperPtr->ApaBD(X2_SP.locallyOwnedSize(),
+                                    X2_SP.numVectors(),
+                                    alpha1,
+                                    X2_SP.data(),
+                                    Y2.data(),
+                                    eigenValuesFiltered2.data() +
+                                      X1_SP.numVectors(),
+                                    X2_SP.data());
+              BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
+                                    -c * alpha1,
+                                    eigenValuesFiltered2.data(),
+                                    alpha2,
+                                    eigenValuesFiltered1.data());
+              BLASWrapperPtr->ApaBD(1,
+                                    eigenValuesFiltered1.size(),
+                                    alpha1,
+                                    eigenValuesFiltered1.data(),
+                                    eigenValuesFiltered2.data(),
+                                    eigenValuesFiltered.data(),
+                                    eigenValuesFiltered1.data());
+              X2_SP.swap(Y2_SP);
+              eigenValuesFiltered1.swap(eigenValuesFiltered2);
+            }
+
+          //
+          // YArray = YNewArray
+          //
+          sigma = sigma2;
+        }
+
+      // copy back YArray to XArray
+      BLASWrapperPtr->ApaBD(X1.locallyOwnedSize(),
+                            X1.numVectors(),
+                            1.0,
+                            Y1_SP.data(),
+                            X1.data(),
+                            eigenValuesFiltered2.data(),
+                            X1.data());
+
+      BLASWrapperPtr->ApaBD(X2.locallyOwnedSize(),
+                            X2.numVectors(),
+                            1.0,
+                            Y2_SP.data(),
+                            X2.data(),
+                            eigenValuesFiltered2.data() + X1.numVectors(),
+                            X2.data());
+    }
+
 
     void
     subspaceRotationSpectrumSplitScalapack(
@@ -2168,8 +2463,7 @@ namespace dftfe
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
 
-      dftfe::utils::deviceStream_t streamDeviceCCL;
-      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
+      dftfe::utils::deviceStream_t streamDeviceCCL = 0;
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
@@ -2278,9 +2572,6 @@ namespace dftfe
 
             } // band parallelization
         }     // end block loop
-
-
-      dftfe::utils::deviceStreamDestroy(streamDeviceCCL);
 
       if (numberBandGroups > 1)
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
@@ -2655,8 +2946,7 @@ namespace dftfe
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
 
-      dftfe::utils::deviceStream_t streamDeviceCCL;
-      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
+      dftfe::utils::deviceStream_t streamDeviceCCL = 0;
 
       const dataTypes::number     scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0);
@@ -2836,9 +3126,6 @@ namespace dftfe
                     }
             } // band parallelization
         }     // end block loop
-
-
-      dftfe::utils::deviceStreamDestroy(streamDeviceCCL);
 
       if (numberBandGroups > 1)
         linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(

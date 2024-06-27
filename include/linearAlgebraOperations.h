@@ -144,6 +144,13 @@ namespace dftfe
            double *            y,
            const unsigned int *incy);
     void
+    saxpy_(const unsigned int *n,
+           const float *       alpha,
+           const float *       x,
+           const unsigned int *incx,
+           float *             y,
+           const unsigned int *incy);
+    void
     dgemm_(const char *        transA,
            const char *        transB,
            const unsigned int *m,
@@ -412,6 +419,13 @@ namespace dftfe
            std::complex<double> *      y,
            const unsigned int *        incy);
     void
+    caxpy_(const unsigned int *       n,
+           const std::complex<float> *alpha,
+           const std::complex<float> *x,
+           const unsigned int *       incx,
+           std::complex<float> *      y,
+           const unsigned int *       incy);
+    void
     dpotrf_(const char *        uplo,
             const unsigned int *n,
             double *            a,
@@ -617,6 +631,21 @@ namespace dftfe
                     const double                                       b,
                     const double                                       a0);
 
+    template <typename T, typename TFP32, dftfe::utils::MemorySpace memorySpace>
+    void
+    chebyshevFilterSinglePrec(
+      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+        &                                                    BLASWrapperPtr,
+      operatorDFTClass<memorySpace> &                        operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &    X,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &    Y,
+      dftfe::linearAlgebra::MultiVector<TFP32, memorySpace> &X_SP,
+      dftfe::linearAlgebra::MultiVector<TFP32, memorySpace> &Y_SP,
+      std::vector<double>                                    eigenvalues,
+      const unsigned int                                     m,
+      const double                                           a,
+      const double                                           b,
+      const double                                           a0);
 
 
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization

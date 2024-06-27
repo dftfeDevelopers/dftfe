@@ -261,19 +261,23 @@ namespace dftfe
           d_mixingParameter[key] *= ci;
         }
     if (d_verbosity > 0)
-      if (d_adaptMixingParameter[mixingVariable::rho])
-        pcout << "Adaptive Anderson mixing parameter for Rho: "
-              << d_mixingParameter[mixingVariable::rho] << std::endl;
-      else
-        pcout << "Anderson mixing parameter for Rho: "
-              << d_mixingParameter[mixingVariable::rho] << std::endl;
-    if (d_verbosity > 0)
-      if (d_adaptMixingParameter[mixingVariable::magZ])
-        pcout << "Adaptive Anderson mixing parameter for magZ: "
-              << d_mixingParameter[mixingVariable::rho] << std::endl;
-      else
-        pcout << "Anderson mixing parameter for magZ: "
-              << d_mixingParameter[mixingVariable::magZ] << std::endl;
+      for (const auto &[key, value] : d_variableHistoryIn)
+        {
+          if (key == mixingVariable::rho &&
+              d_adaptMixingParameter[mixingVariable::rho])
+            pcout << "Adaptive Anderson mixing parameter for Rho: "
+                  << d_mixingParameter[mixingVariable::rho] << std::endl;
+          else if (key == mixingVariable::rho)
+            pcout << "Anderson mixing parameter for Rho: "
+                  << d_mixingParameter[mixingVariable::rho] << std::endl;
+          if (key == mixingVariable::magZ &&
+              d_adaptMixingParameter[mixingVariable::magZ])
+            pcout << "Adaptive Anderson mixing parameter for magZ: "
+                  << d_mixingParameter[mixingVariable::magZ] << std::endl;
+          else if (key == mixingVariable::magZ)
+            pcout << "Anderson mixing parameter for magZ: "
+                  << d_mixingParameter[mixingVariable::magZ] << std::endl;
+        }
   }
 
   // Fucntions to add to the history

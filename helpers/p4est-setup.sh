@@ -15,7 +15,7 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
-# [1] http://www.p4est.org
+# [1] https://www.p4est.org
 #
 
 # This program comes with ABSOLUTELY NO WARRANTY.
@@ -114,7 +114,8 @@ echo
 echo "Build FAST version in $BUILD_FAST"
 mkdir -p "$BUILD_FAST"
 cd "$BUILD_FAST"
-"$SRCDIR/configure" -host=x86_64 CC=mpicc CXX=mpicxx FC=mpif90 F77=mpif90 --enable-mpi --enable-shared \
+"$SRCDIR/configure" -host=x86_64 CC=mpicc CXX=mpicxx FC=mpif90 F77=mpif90 \
+        --enable-mpi --enable-shared \
         --disable-vtk-binary --without-blas \
         --prefix="$INSTALL_FAST" CFLAGS="$CFLAGS_FAST" \
         CPPFLAGS="-DSC_LOG_PRIORITY=SC_LP_ESSENTIAL" \
@@ -132,7 +133,8 @@ echo
 echo "Build DEBUG version in $BUILD_DEBUG"
 mkdir -p "$BUILD_DEBUG"
 cd "$BUILD_DEBUG"
-"$SRCDIR/configure" -host=x86_64 CC=mpicc CXX=mpicxx FC=mpif90 F77=mpif90 --enable-debug --enable-mpi --enable-shared \
+"$SRCDIR/configure" -host=x86_64 CC=mpicc CXX=mpicxx FC=mpif90 F77=mpif90 \
+                    --enable-debug --enable-mpi --enable-shared \
         --disable-vtk-binary --without-blas \
         --prefix="$INSTALL_DEBUG" CFLAGS="$CFLAGS_DEBUG" \
         CPPFLAGS="-DSC_LOG_PRIORITY=SC_LP_ESSENTIAL" \

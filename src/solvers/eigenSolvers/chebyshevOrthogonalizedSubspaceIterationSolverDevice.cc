@@ -216,7 +216,26 @@ namespace dftfe
       d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
         NULL;
+    distributedDeviceVec<dataTypes::numberFP32> *XBlockFP32 =
+      d_dftParams.useSinglePrecCheby ?
+        &operatorMatrix.getScratchFEMultivectorSinglePrec(vectorsBlockSize, 0) :
+        NULL;
+    distributedDeviceVec<dataTypes::numberFP32> *HXBlockFP32 =
+      d_dftParams.useSinglePrecCheby ?
+        &operatorMatrix.getScratchFEMultivectorSinglePrec(vectorsBlockSize, 1) :
+        NULL;
+
+    distributedDeviceVec<dataTypes::numberFP32> *XBlock2FP32 =
+      d_dftParams.overlapComputeCommunCheby && d_dftParams.useSinglePrecCheby ?
+        &operatorMatrix.getScratchFEMultivectorSinglePrec(vectorsBlockSize, 2) :
+        NULL;
+    distributedDeviceVec<dataTypes::numberFP32> *HXBlock2FP32 =
+      d_dftParams.overlapComputeCommunCheby && d_dftParams.useSinglePrecCheby ?
+        &operatorMatrix.getScratchFEMultivectorSinglePrec(vectorsBlockSize, 3) :
+        NULL;
+
     operatorMatrix.reinitNumberWavefunctions(vectorsBlockSize);
+    std::vector<double> eigenValuesBlock(vectorsBlockSize);
 
     if (isFirstFilteringCall)
       {
@@ -396,10 +415,100 @@ namespace dftfe
             // call Chebyshev filtering function only for the current block
             // or two simulataneous blocks (in case of overlap computation
             // and communication) to be filtered and does in-place filtering
-            if (d_dftParams.overlapComputeCommunCheby &&
-                numSimultaneousBlocksCurrent == 2)
+            if (d_dftParams.useSinglePrecCheby && !isFirstFilteringCall)
               {
-                if (useMixedPrecOverall && d_dftParams.useMixedPrecCheby)
+                eigenValuesBlock.resize(vectorsBlockSize *
+                                        numSimultaneousBlocksCurrent);
+                if (d_dftParams.overlapComputeCommunCheby &&
+                    numSimultaneousBlocksCurrent == 2)
+                  {
+                    for (unsigned int i = 0; i < 2 * BVec; i++)
+                      {
+                        eigenValuesBlock[i] = eigenValues[jvec + i];
+                      }
+                    if (useMixedPrecOverall &&
+                        d_dftParams.useSinglePrecCommunCheby)
+                      {
+                        (*XBlock).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::single);
+                        (*HXBlock).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::single);
+                        (*XBlock2).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::single);
+                        (*HXBlock2).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::single);
+                      }
+                    linearAlgebraOperationsDevice::
+                      chebyshevFilterOverlapComputeCommunicationSinglePrec(
+                        BLASWrapperPtr,
+                        operatorMatrix,
+                        (*XBlock),
+                        (*HXBlock),
+                        (*XBlock2),
+                        (*HXBlock2),
+                        (*XBlockFP32),
+                        (*HXBlockFP32),
+                        (*XBlock2FP32),
+                        (*HXBlock2FP32),
+                        eigenValuesBlock,
+                        chebyshevOrder,
+                        d_lowerBoundUnWantedSpectrum,
+                        d_upperBoundUnWantedSpectrum,
+                        d_lowerBoundWantedSpectrum);
+                    if (useMixedPrecOverall &&
+                        d_dftParams.useSinglePrecCommunCheby)
+                      {
+                        (*XBlock).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::full);
+                        (*HXBlock).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::full);
+                        (*XBlock2).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::full);
+                        (*HXBlock2).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::full);
+                      }
+                  }
+                else
+                  {
+                    for (unsigned int i = 0; i < BVec; i++)
+                      {
+                        eigenValuesBlock[i] = eigenValues[jvec + i];
+                      }
+                    if (useMixedPrecOverall &&
+                        d_dftParams.useSinglePrecCommunCheby)
+                      {
+                        (*XBlock).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::single);
+                        (*HXBlock).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::single);
+                      }
+                    linearAlgebraOperations::chebyshevFilterSinglePrec(
+                      BLASWrapperPtr,
+                      operatorMatrix,
+                      (*XBlock),
+                      (*HXBlock),
+                      (*XBlockFP32),
+                      (*HXBlockFP32),
+                      eigenValuesBlock,
+                      chebyshevOrder,
+                      d_lowerBoundUnWantedSpectrum,
+                      d_upperBoundUnWantedSpectrum,
+                      d_lowerBoundWantedSpectrum);
+
+                    if (useMixedPrecOverall &&
+                        d_dftParams.useSinglePrecCommunCheby)
+                      {
+                        (*XBlock).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::full);
+                        (*HXBlock).setCommunicationPrecision(
+                          dftfe::utils::mpi::communicationPrecision::full);
+                      }
+                  }
+              }
+            else if (d_dftParams.overlapComputeCommunCheby &&
+                     numSimultaneousBlocksCurrent == 2)
+              {
+                if (useMixedPrecOverall && d_dftParams.useSinglePrecCommunCheby)
                   {
                     (*XBlock).setCommunicationPrecision(
                       dftfe::utils::mpi::communicationPrecision::single);
@@ -421,7 +530,7 @@ namespace dftfe
                     d_lowerBoundUnWantedSpectrum,
                     d_upperBoundUnWantedSpectrum,
                     d_lowerBoundWantedSpectrum);
-                if (useMixedPrecOverall && d_dftParams.useMixedPrecCheby)
+                if (useMixedPrecOverall && d_dftParams.useSinglePrecCommunCheby)
                   {
                     (*XBlock).setCommunicationPrecision(
                       dftfe::utils::mpi::communicationPrecision::full);
@@ -435,7 +544,7 @@ namespace dftfe
               }
             else
               {
-                if (useMixedPrecOverall && d_dftParams.useMixedPrecCheby)
+                if (useMixedPrecOverall && d_dftParams.useSinglePrecCommunCheby)
                   {
                     (*XBlock).setCommunicationPrecision(
                       dftfe::utils::mpi::communicationPrecision::single);
@@ -450,7 +559,7 @@ namespace dftfe
                   d_lowerBoundUnWantedSpectrum,
                   d_upperBoundUnWantedSpectrum,
                   d_lowerBoundWantedSpectrum);
-                if (useMixedPrecOverall && d_dftParams.useMixedPrecCheby)
+                if (useMixedPrecOverall && d_dftParams.useSinglePrecCommunCheby)
                   {
                     (*XBlock).setCommunicationPrecision(
                       dftfe::utils::mpi::communicationPrecision::full);
@@ -920,7 +1029,7 @@ namespace dftfe
                         numSimultaneousBlocksCurrent == 2)
                       {
                         if (useMixedPrecOverall &&
-                            d_dftParams.useMixedPrecCheby)
+                            d_dftParams.useSinglePrecCommunCheby)
                           {
                             (*XBlock).setCommunicationPrecision(
                               dftfe::utils::mpi::communicationPrecision::
@@ -948,7 +1057,7 @@ namespace dftfe
                             d_upperBoundUnWantedSpectrum,
                             d_lowerBoundWantedSpectrum);
                         if (useMixedPrecOverall &&
-                            d_dftParams.useMixedPrecCheby)
+                            d_dftParams.useSinglePrecCommunCheby)
                           {
                             (*XBlock).setCommunicationPrecision(
                               dftfe::utils::mpi::communicationPrecision::full);
@@ -963,7 +1072,7 @@ namespace dftfe
                     else
                       {
                         if (useMixedPrecOverall &&
-                            d_dftParams.useMixedPrecCheby)
+                            d_dftParams.useSinglePrecCommunCheby)
                           {
                             (*XBlock).setCommunicationPrecision(
                               dftfe::utils::mpi::communicationPrecision::
@@ -981,7 +1090,7 @@ namespace dftfe
                           d_upperBoundUnWantedSpectrum,
                           d_lowerBoundWantedSpectrum);
                         if (useMixedPrecOverall &&
-                            d_dftParams.useMixedPrecCheby)
+                            d_dftParams.useSinglePrecCommunCheby)
                           {
                             (*XBlock).setCommunicationPrecision(
                               dftfe::utils::mpi::communicationPrecision::full);

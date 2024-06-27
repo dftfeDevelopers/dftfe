@@ -381,5 +381,5 @@ namespace dftfe
   }   // end of namespace utils
 } // end of namespace dftfe
 
-#include "../utils/MPIPatternP2P.t.cc"
+#include "MPIPatternP2P.t.cc"
 #endif // dftfeMPIPatternP2P_h

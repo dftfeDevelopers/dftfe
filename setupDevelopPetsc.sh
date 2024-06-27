@@ -17,8 +17,8 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii/install_real_cpu"
-dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii/install_complex_cpu"
+dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_real_cpu"
+dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_complex_cpu"
 alglibDir="/home/vikramg/DFT-softwares-gcc/alglib/alglib-cpp/src"
 libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/libxc-5.2.3/install_libxc5.2.3"
 spglibDir="/home/vikramg/DFT-softwares-gcc/spglib/install"
@@ -46,7 +46,7 @@ withGPUAwareMPI=OFF #Please use this option with care
 withDCCL=OFF
 withMDI=OFF
 withTorch=OFF
-withCustomizedDealii=ON
+withCustomizedDealii=OFF
 
 #Compiler options and flags
 cxx_compiler=/sw/pkgs/arc/stacks/gcc/10.3.0/openmpi/4.1.6/bin/mpicxx  #sets DCMAKE_CXX_COMPILER

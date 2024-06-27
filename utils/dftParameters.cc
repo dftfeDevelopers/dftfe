@@ -153,7 +153,7 @@ namespace dftfe
           "WRITE BANDS",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. This option is by default on for NSCF mode of solve. Outputs a file name 'bands.out'. The first line has 3 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point and third the fermi energy in Ha. Subsequent lines have 4 columns with first column indicating the k-point index, second column indicating band index, third column indicating corresponding eigenvalue and fourth column indicating the corresponding occupation number.");
+          "[Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. If it is set to true, Fermi energy is obtained from 'fermiEnergy.out' file, created from previous GS calculation with 'SAVE RHO DATA' set to true. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 4 columns with first column indicating the k-point index, second column indicating band index, third column indicating corresponding eigenvalue and fourth column indicating the corresponding occupation number.");
       }
       prm.leave_subsection();
 
@@ -191,7 +191,7 @@ namespace dftfe
           "SAVE RHO DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve.");
+          "[Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve. If the value is 'true', the SOLVER MODE is GS and if the SCF loop converges, an outputfile 'fermiEnergy.out' is written that contains the fermi energy in the units of Ha. This Fermi energy is used when 'WRITE BANDS' is true");
 
         prm.declare_entry(
           "LOAD RHO DATA",
@@ -735,6 +735,12 @@ namespace dftfe
           "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. The default tolerance of is set to a tight value of 1e-5 for accurate ionic forces and cell stresses keeping structural optimization and molecular dynamics in mind. A tolerance of 1e-4 would be accurate enough for calculations without structural optimization and dynamics. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
 
         prm.declare_entry(
+          "ENERGY TOLERANCE",
+          "1e-07",
+          dealii::Patterns::Double(1e-12, 1.0),
+          "[Standard] SCF iterations stopping tolerance in terms of difference between Harris-Foulkes and Kohn-Sham energies. The default tolerance of is set to a tight value of 1e-7 for accurate ionic forces and cell stresses keeping structural optimization and molecular dynamics in mind. A tolerance of 1e-6 would be accurate enough for calculations without structural optimization and dynamics.");
+
+        prm.declare_entry(
           "MIXING HISTORY",
           "10",
           dealii::Patterns::Integer(1, 1000),
@@ -749,7 +755,7 @@ namespace dftfe
         prm.declare_entry(
           "SPIN MIXING ENHANCEMENT FACTOR",
           "4.0",
-          dealii::Patterns::Double(-1e-12, 10.0),
+          dealii::Patterns::Double(-1e-12, 100.0),
           "[Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.");
 
         prm.declare_entry(
@@ -801,6 +807,12 @@ namespace dftfe
           "false",
           dealii::Patterns::Bool(),
           "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings. Default value is false but is internally set to true if VERBOSITY==5");
+
+        prm.declare_entry(
+          "USE ENERGY RESIDUAL METRIC",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Advanced] Boolean parameter specifying whether to use the energy residual metric (equation 7.23 of Richard Matrin second edition) for convergence check. Setting it to false can lead to some computational time savings. Default value is false");
 
 
         prm.enter_subsection("LOW RANK DIELECM PRECOND");
@@ -970,16 +982,22 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC CHEBY",
+            "USE SINGLE PREC COMMUN CHEBY",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
+            "[Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTX XTHX",
             "false",
             dealii::Patterns::Bool(),
             "[Advanced] Use mixed precision communication only for XtX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.");
+
+          prm.declare_entry(
+            "USE SINGLE PREC CHEBY",
+            "false",
+            dealii::Patterns::Bool(),
+            "[Advanced] Use a modified single precision algorithm for Chebyshev filtering. This cannot be used in conjunction with spectrum splitting. Default setting is false.");
 
           prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
@@ -1048,7 +1066,7 @@ namespace dftfe
                           "[Advanced] Toggle GPU MODE in Poisson solve.");
 
         prm.declare_entry("VSELF GPU MODE",
-                          "false",
+                          "true",
                           dealii::Patterns::Bool(),
                           "[Advanced] Toggle GPU MODE in vself Poisson solve.");
       }
@@ -1159,6 +1177,7 @@ namespace dftfe
     numSCFIterations                           = 1;
     maxLinearSolverIterations                  = 1;
     poissonGPU                                 = true;
+    vselfGPU                                   = true;
     mixingHistory                              = 1;
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
@@ -1263,7 +1282,7 @@ namespace dftfe
     useDevice                                      = false;
     deviceFineGrainedTimings                       = false;
     allowFullCPUMemSubspaceRot                     = true;
-    useMixedPrecCheby                              = false;
+    useSinglePrecCommunCheby                       = false;
     overlapComputeCommunCheby                      = false;
     overlapComputeCommunOrthoRR                    = false;
     autoDeviceBlockSizes                           = true;
@@ -1551,19 +1570,21 @@ namespace dftfe
       TVal                          = prm.get_double("TEMPERATURE");
       numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
       selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
-      mixingHistory                 = prm.get_integer("MIXING HISTORY");
-      mixingParameter               = prm.get_double("MIXING PARAMETER");
+      selfConsistentSolverEnergyTolerance = prm.get_double("ENERGY TOLERANCE");
+      mixingHistory                       = prm.get_integer("MIXING HISTORY");
+      mixingParameter                     = prm.get_double("MIXING PARAMETER");
       spinMixingEnhancementFactor =
         prm.get_double("SPIN MIXING ENHANCEMENT FACTOR");
       adaptAndersonMixingParameter =
         prm.get_bool("ADAPT ANDERSON MIXING PARAMETER");
-      kerkerParameter         = prm.get_double("KERKER MIXING PARAMETER");
-      restaFermiWavevector    = prm.get_double("RESTA FERMI WAVEVECTOR");
-      restaScreeningLength    = prm.get_double("RESTA SCREENING LENGTH");
-      mixingMethod            = prm.get("MIXING METHOD");
-      constraintMagnetization = prm.get_bool("CONSTRAINT MAGNETIZATION");
-      startingWFCType         = prm.get("STARTING WFC");
-      computeEnergyEverySCF   = prm.get_bool("COMPUTE ENERGY EACH ITER");
+      kerkerParameter            = prm.get_double("KERKER MIXING PARAMETER");
+      restaFermiWavevector       = prm.get_double("RESTA FERMI WAVEVECTOR");
+      restaScreeningLength       = prm.get_double("RESTA SCREENING LENGTH");
+      mixingMethod               = prm.get("MIXING METHOD");
+      constraintMagnetization    = prm.get_bool("CONSTRAINT MAGNETIZATION");
+      startingWFCType            = prm.get("STARTING WFC");
+      computeEnergyEverySCF      = prm.get_bool("COMPUTE ENERGY EACH ITER");
+      useEnergyResidualTolerance = prm.get_bool("USE ENERGY RESIDUAL METRIC");
 
       prm.enter_subsection("LOW RANK DIELECM PRECOND");
       {
@@ -1604,7 +1625,8 @@ namespace dftfe
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
         useMixedPrecCommunOnlyXTHXCGSO =
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
-        useMixedPrecCheby = prm.get_bool("USE MIXED PREC CHEBY");
+        useSinglePrecCommunCheby = prm.get_bool("USE SINGLE PREC COMMUN CHEBY");
+        useSinglePrecCheby       = prm.get_bool("USE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -1929,7 +1951,7 @@ namespace dftfe
         useMixedPrecCGS_O                   = true;
         useMixedPrecCGS_SR                  = true;
         useMixedPrecXTHXSpectrumSplit       = true;
-        useMixedPrecCheby                   = true;
+        useSinglePrecCommunCheby            = true;
         reuseLanczosUpperBoundFromFirstCall = true;
       }
 
@@ -1961,12 +1983,9 @@ namespace dftfe
 #if !defined(DFTFE_WITH_CUDA_NCCL) && !defined(DFTFE_WITH_HIP_RCCL)
     useDCCL = false;
 #endif
-
-    if (useMixedPrecCheby)
-      AssertThrow(
-        useELPA,
-        dealii::ExcMessage(
-          "DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
+#if !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+    useDeviceDirectAllReduce = useDCCL && useDeviceDirectAllReduce;
+#endif
 
     if (verbosity >= 5)
       computeEnergyEverySCF = true;
@@ -2007,6 +2026,9 @@ namespace dftfe
 
     if (numCoreWfcRR == 0)
       spectrumSplitStartingScfIter = 10000;
+
+    if (numCoreWfcRR != 0)
+      useSinglePrecCheby = false;
   }
 
 
