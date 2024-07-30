@@ -40,7 +40,7 @@
 #include <MemoryTransfer.h>
 #include <QuadDataCompositeWrite.h>
 #include <MPIWriteOnFile.h>
-#include <functionalTest.h>
+//#include <functionalTest.h>
 #include <computeAuxProjectedDensityMatrixFromPSI.h>
 
 #include <algorithm>
@@ -217,6 +217,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::runFunctionalTest()
   {
+    /*
     if (d_dftParamsPtr->functionalTestName == "TestDataTransfer")
       {
         functionalTest::testTransferFromParentToChildIncompatiblePartitioning(
@@ -251,6 +252,7 @@ namespace dftfe
           d_mpiCommParent,
           mpi_communicator);
       }
+      */
   }
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,

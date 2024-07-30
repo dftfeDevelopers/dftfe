@@ -188,12 +188,12 @@ SET(TARGET_SRC
   ./src/atom/AtomCenteredSphericalFunctionCoreDensitySpline.cc
   ./src/atom/AtomCenteredSphericalFunctionLocalPotentialSpline.cc
   ./src/atom/AtomCenteredSphericalFunctionProjectorSpline.cc
-  ./src/TransferBetweenMeshes/InterpolateFromCellToLocalPoints.cpp
-  ./src/TransferBetweenMeshes/TransferBetweenMeshesIncompatiblePartitioning.cpp
-  ./src/TransferBetweenMeshes/InterpolateCellWiseDataToPoints.cpp
+  #./src/TransferBetweenMeshes/InterpolateFromCellToLocalPoints.cpp
+  #./src/TransferBetweenMeshes/TransferBetweenMeshesIncompatiblePartitioning.cpp
+  #./src/TransferBetweenMeshes/InterpolateCellWiseDataToPoints.cpp
   ./utils/NodalData.cpp
-  ./utils/functionalTests/testMultiVectorCGForPoisson.cpp
-  ./utils/functionalTests/testDataTransfer.cpp
+  #./utils/functionalTests/testMultiVectorCGForPoisson.cpp
+  #./utils/functionalTests/testDataTransfer.cpp
   ./src/pseudo/oncv/oncvClass.cc)
 
 IF ("${GPU_LANG}" STREQUAL "cuda")

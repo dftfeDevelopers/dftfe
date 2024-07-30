@@ -141,13 +141,13 @@ cd $out
 withComplex=OFF
 echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
 mkdir -p real && cd real
-cmake_configure "$SRC" && make -j8
+cmake_configure "$SRC" && make -j1
 cd ..
 
 withComplex=ON
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
 mkdir -p complex && cd complex
-cmake_configure "$SRC" && make -j8
+cmake_configure "$SRC" && make -j1
 cd ..
 
 echo -e "${Blu}Build complete.${RCol}"
