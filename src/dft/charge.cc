@@ -473,6 +473,9 @@ namespace dftfe
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return i * (3.0 * q[2] * q[2] - q.norm_square());
       });
+    
+    if(d_dftParamsPtr->smearedNuclearCharges)
+    {
     if (!d_smearedChargeMomentsComputed)
       {
         dealii::FEEvaluation<3,
@@ -542,6 +545,7 @@ namespace dftfe
                                     d_smearedChargeMoments);
         d_smearedChargeMomentsComputed = true;
       }
+    }
     std::vector<double> moments(13, 0.0);
     dealii::FEEvaluation<
       3,

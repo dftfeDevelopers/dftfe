@@ -716,6 +716,20 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<unsigned int>> &
     getbCellNonTrivialAtomIds() const;
 
+    void
+    updatePRefinedConstraints();
+
+    void
+    computeMultipoleMoments(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int densityQuadratureId,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                                                  rhoQuadValues,
+      const std::map<dealii::CellId, std::vector<double>> *bQuadValues);
+
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based
@@ -833,9 +847,6 @@ namespace dftfe
                         const bool vselfPerturbationUpdateForStress = false);
 
 
-    void
-    updatePRefinedConstraints();
-
     /**
      *@brief Sets inhomegeneous dirichlet boundary conditions upto quadrupole for total potential constraints on
      * non-periodic boundary (boundary id==0).
@@ -849,18 +860,6 @@ namespace dftfe
       const dealii::DoFHandler<3> &            _dofHandler,
       const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
       dealii::AffineConstraints<double> &      constraintMatrix);
-
-
-    void
-    computeMultipoleMoments(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                basisOperationsPtr,
-      const unsigned int densityQuadratureId,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                                                  rhoQuadValues,
-      const std::map<dealii::CellId, std::vector<double>> *bQuadValues);
 
 
     /**

@@ -209,6 +209,10 @@ namespace dftfe
       d_dftParamsPtr->reproducible_output ?
         30.0 :
         (std::max(d_dftParamsPtr->pspCutoffImageCharges, d_pspCutOffTrunc));
+
+            d_smearedChargeMoments.resize(13, 0.0);
+            std::fill(d_smearedChargeMoments.begin(),d_smearedChargeMoments.end(),0.0);
+
   }
 
   template <unsigned int              FEOrder,
