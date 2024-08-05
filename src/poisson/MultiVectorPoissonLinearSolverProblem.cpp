@@ -101,7 +101,6 @@ namespace dftfe
     d_locallyOwnedSize     = d_basisOperationsPtr->nOwnedDofs();
     d_numberDofsPerElement = d_basisOperationsPtr->nDofsPerCell();
     d_numCells             = d_basisOperationsPtr->nCells();
-    d_nQuadsPerCell        = d_basisOperationsPtr->nQuadsPerCell();
 
     // d_cellBlockSize = std::min(d_cellBlockSize, d_numCells);
     d_cellBlockSize = d_numCells;
@@ -110,6 +109,9 @@ namespace dftfe
                                  d_matrixFreeQuadratureComponentRhs,
                                  false,  // TODO should this be set to true
                                  false); // TODO should this be set to true
+
+    d_nQuadsPerCell        = d_basisOperationsPtr->nQuadsPerCell();
+
     d_dofHandler =
       &d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
