@@ -939,3 +939,21 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
     const float *                      valueType1Arr,
     double *                           valueType2Arr,
     const dftfe::utils::deviceStream_t streamId);
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
+  const dftfe::size_type contiguousBlockSize,
+  const dftfe::size_type numContiguousBlocks,
+  const double *         addFromVec,
+  const double *         scalingVector,
+  const double           a,
+  double *               addToVec) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
+  const dftfe::size_type      contiguousBlockSize,
+  const dftfe::size_type      numContiguousBlocks,
+  const std::complex<double> *addFromVec,
+  const std::complex<double> *scalingVector,
+  const std::complex<double>  a,
+  std::complex<double> *      addToVec) const;

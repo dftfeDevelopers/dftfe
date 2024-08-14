@@ -1683,6 +1683,29 @@ namespace dftfe
 
     template <typename ValueType>
     void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType *      addFromVec,
+      const ValueType *      scalingVector,
+      const ValueType        a,
+      ValueType *            addToVec) const
+    {
+      stridedBlockAxpyDeviceKernel<<<(contiguousBlockSize *
+                                      numContiguousBlocks) /
+                                         dftfe::utils::DEVICE_BLOCK_SIZE +
+                                       1,
+                                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(a),
+        dftfe::utils::makeDataTypeDeviceCompatible(scalingVector),
+        dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(addToVec));
+    }
+
+    template <typename ValueType>
+    void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       stridedBlockScaleAndAddTwoVecColumnWise(
         const dftfe::size_type contiguousBlockSize,

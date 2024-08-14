@@ -439,6 +439,247 @@ namespace dftfe
       const dftParameters &dftParams);
 #endif
 
+    //
+    // evaluate upper bound of the spectrum using k-step Lanczos iteration
+    //
+    template <typename T, dftfe::utils::MemorySpace memorySpace>
+    std::pair<double, double>
+    generalisedLanczosLowerUpperBoundEigenSpectrum(
+      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+        &                                                BLASWrapperPtr,
+      operatorDFTClass<memorySpace> &                    operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Z,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &tempVec,
+      const dftParameters &                              dftParams)
+    {
+      const unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(
+          operatorMatrix.getMPICommunicatorDomain());
+
+      const unsigned int lanczosIterations =
+        dftParams.reproducible_output ? 200 : 50;
+      double beta, betaNeg;
+      T      betaTemp;
+
+      T alpha, alphaNeg;
+
+      //
+      // generate random vector v
+      //
+      X.setValue(T(0.0));
+      Y.setValue(T(0.0));
+      Z.setValue(T(0.0));
+      tempVec.setValue(T(0.0));
+      const unsigned int local_size = X.locallyOwnedSize();
+#if defined(DFTFE_WITH_DEVICE)
+      dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST> XHost(
+        local_size, T(0.0));
+      T *XHostDataPtr = XHost.data();
+#else
+      T *                 XHostDataPtr = X.data();
+#endif
+
+
+      std::srand(this_mpi_process);
+      for (unsigned int i = 0; i < local_size; i++)
+        XHostDataPtr[i] = ((double)std::rand()) / ((double)RAND_MAX);
+
+#if defined(DFTFE_WITH_DEVICE)
+      XHost.template copyTo<memorySpace>(X.data());
+#endif
+
+      operatorMatrix.getOverloadedConstraintMatrix()->set_zero(X);
+      X.zeroOutGhosts();
+      //
+      // evaluate l2 norm
+      //
+
+      T Onormsq;
+      operatorMatrix.overlapMatrixTimesX(X, 1.0, 0.0, 0.0, tempVec, true);
+
+      BLASWrapperPtr->xdot(local_size,
+                           X.data(),
+                           1,
+                           tempVec.data(),
+                           1,
+                           operatorMatrix.getMPICommunicatorDomain(),
+                           &Onormsq);
+
+      BLASWrapperPtr->xscal(X.data(),
+                            1.0 / sqrt(std::abs(Onormsq)),
+                            local_size);
+
+
+      operatorMatrix.HX(X, 1.0, 0.0, 0.0, tempVec);
+      operatorMatrix.HXCheby(X, 1.0, 0.0, 0.0, Y);
+
+      BLASWrapperPtr->xdot(local_size,
+                           tempVec.data(),
+                           1,
+                           X.data(),
+                           1,
+                           operatorMatrix.getMPICommunicatorDomain(),
+                           &alpha);
+
+      alphaNeg = -alpha;
+      BLASWrapperPtr->xaxpy(local_size, &alphaNeg, X.data(), 1, Y.data(), 1);
+
+      std::vector<T> Tlanczos(lanczosIterations * lanczosIterations, 0.0);
+
+      Tlanczos[0]    = alpha;
+      unsigned index = 0;
+
+      // filling only lower triangular part
+      for (unsigned int j = 1; j < lanczosIterations; j++)
+        {
+          operatorMatrix.overlapMatrixTimesX(Y, 1.0, 0.0, 0.0, tempVec, true);
+          BLASWrapperPtr->xdot(local_size,
+                               Y.data(),
+                               1,
+                               tempVec.data(),
+                               1,
+                               operatorMatrix.getMPICommunicatorDomain(),
+                               &betaTemp);
+          beta = sqrt(std::abs(betaTemp));
+          Z    = X;
+          BLASWrapperPtr->axpby(
+            local_size, 1.0 / beta, Y.data(), 0.0, X.data());
+
+          operatorMatrix.HXCheby(X, 1.0, 0.0, 0.0, Y);
+
+          alphaNeg = -beta;
+          BLASWrapperPtr->xaxpy(
+            local_size, &alphaNeg, Z.data(), 1, Y.data(), 1);
+          operatorMatrix.HX(X, 1.0, 0.0, 0.0, tempVec);
+          BLASWrapperPtr->xdot(local_size,
+                               tempVec.data(),
+                               1,
+                               X.data(),
+                               1,
+                               operatorMatrix.getMPICommunicatorDomain(),
+                               &alpha);
+          alphaNeg = -alpha;
+          BLASWrapperPtr->xaxpy(
+            local_size, &alphaNeg, X.data(), 1, Y.data(), 1);
+
+          index += 1;
+          Tlanczos[index] = beta;
+          index += lanczosIterations;
+          Tlanczos[index] = alpha;
+        }
+      operatorMatrix.overlapMatrixTimesX(Y, 1.0, 0.0, 0.0, tempVec, true);
+      BLASWrapperPtr->xdot(local_size,
+                           Y.data(),
+                           1,
+                           tempVec.data(),
+                           1,
+                           operatorMatrix.getMPICommunicatorDomain(),
+                           &betaTemp);
+      beta = sqrt(std::abs(betaTemp));
+      // eigen decomposition to find max eigen value of T matrix
+      std::vector<double> eigenValuesT(lanczosIterations);
+      char                jobz = 'N', uplo = 'L';
+      const unsigned int  n = lanczosIterations, lda = lanczosIterations;
+      int                 info;
+      const unsigned int  lwork = 1 + 6 * n + 2 * n * n, liwork = 3 + 5 * n;
+      std::vector<int>    iwork(liwork, 0);
+
+#ifdef USE_COMPLEX
+      const unsigned int                lrwork = 1 + 5 * n + 2 * n * n;
+      std::vector<double>               rwork(lrwork, 0.0);
+      std::vector<std::complex<double>> work(lwork);
+      zheevd_(&jobz,
+              &uplo,
+              &n,
+              &Tlanczos[0],
+              &lda,
+              &eigenValuesT[0],
+              &work[0],
+              &lwork,
+              &rwork[0],
+              &lrwork,
+              &iwork[0],
+              &liwork,
+              &info);
+#else
+      std::vector<double> work(lwork, 0.0);
+      dsyevd_(&jobz,
+              &uplo,
+              &n,
+              &Tlanczos[0],
+              &lda,
+              &eigenValuesT[0],
+              &work[0],
+              &lwork,
+              &iwork[0],
+              &liwork,
+              &info);
+#endif
+
+
+      std::sort(eigenValuesT.begin(), eigenValuesT.end());
+      //
+      double YNorm;
+      BLASWrapperPtr->xnrm2(local_size,
+                            Y.data(),
+                            1,
+                            operatorMatrix.getMPICommunicatorDomain(),
+                            &YNorm);
+      double lowerBound = std::floor(eigenValuesT[0]);
+      double upperBound =
+        std::ceil(eigenValuesT[lanczosIterations - 1] +
+                  (dftParams.reproducible_output ? YNorm : YNorm / 10.0));
+
+      if (dftParams.verbosity >= 5 && this_mpi_process == 0)
+        {
+          std::cout << "bUp1: " << eigenValuesT[lanczosIterations - 1]
+                    << ", fvector norm: " << beta << std::endl;
+          std::cout << "aLow: " << eigenValuesT[0] << std::endl;
+          std::cout << "boundL: " << lowerBound << std::endl;
+          std::cout << "boundU: " << upperBound << std::endl;
+        }
+
+      return (std::make_pair(lowerBound, upperBound));
+    }
+
+
+
+    template std::pair<double, double>
+    generalisedLanczosLowerUpperBoundEigenSpectrum(
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &BLASWrapperPtr,
+      operatorDFTClass<dftfe::utils::MemorySpace::HOST> &,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST> &,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST> &,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST> &,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST> &,
+      const dftParameters &dftParams);
+#ifdef DFTFE_WITH_DEVICE
+    template std::pair<double, double>
+    generalisedLanczosLowerUpperBoundEigenSpectrum(
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &BLASWrapperPtr,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &,
+      const dftParameters &dftParams);
+#endif
+
+
 
     template void
     chebyshevFilter(

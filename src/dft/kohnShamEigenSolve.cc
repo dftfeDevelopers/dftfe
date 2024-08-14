@@ -700,14 +700,14 @@ namespace dftfe
     //
     // scale the eigenVectors to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
-    internal::pointWiseScaleWithDiagonal(
-      kohnShamDFTEigenOperator.getSqrtMassVector().data(),
-      d_numEigenValues,
-      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-      d_eigenVectorsDensityMatrixPrimeHost.data() +
-        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValues *
-          matrix_free_data.get_vector_partitioner()->locally_owned_size());
+    // internal::pointWiseScaleWithDiagonal(
+    //   kohnShamDFTEigenOperator.getSqrtMassVector().data(),
+    //   d_numEigenValues,
+    //   matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+    //   d_eigenVectorsDensityMatrixPrimeHost.data() +
+    //     ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+    //       d_numEigenValues *
+    //       matrix_free_data.get_vector_partitioner()->locally_owned_size());
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
     for (unsigned int i = 0; i < d_numEigenValues; i++)
@@ -719,6 +719,7 @@ namespace dftfe
 
     linearAlgebraOperations::densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
+      d_BLASWrapperPtrHost,
       d_eigenVectorsDensityMatrixPrimeHost.data() +
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
           d_numEigenValues *

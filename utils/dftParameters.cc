@@ -977,6 +977,13 @@ namespace dftfe
             "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.");
 
           prm.declare_entry(
+            "USE APPROXIMATE OVERLAP MATRIX MATRIX",
+            "true",
+            dealii::Patterns::Bool(),
+            "[Standard] Use approximate overlap matrix (diagonal for FE basis overlap).  Default setting is true.");
+
+
+          prm.declare_entry(
             "SUBSPACE PROJ SHEP GPU",
             "true",
             dealii::Patterns::Bool(),
@@ -1647,8 +1654,10 @@ namespace dftfe
         numCoreWfcXtHX = prm.get_integer("XTHX CORE EIGENSTATES");
         spectrumSplitStartingScfIter =
           prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
-        chebyshevOrder     = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-        useELPA            = prm.get_bool("USE ELPA");
+        chebyshevOrder = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+        useELPA        = prm.get_bool("USE ELPA");
+        approxOverlapMatrix =
+          prm.get_bool("USE APPROXIMATE OVERLAP MATRIX MATRIX");
         orthogType         = prm.get("ORTHOGONALIZATION TYPE");
         chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
         wfcBlockSize       = prm.get_integer("WFC BLOCK SIZE");

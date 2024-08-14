@@ -1228,6 +1228,27 @@ namespace dftfe
 
     template <typename ValueType>
     void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType *      addFromVec,
+      const ValueType *      scalingVector,
+      const ValueType        a,
+      ValueType *            addToVec) const
+    {
+      for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
+        {
+          ValueType coeff = a * scalingVector[iBlock];
+          std::transform(addFromVec + iBlock * contiguousBlockSize,
+                         addFromVec + (iBlock + 1) * contiguousBlockSize,
+                         addToVec + iBlock * contiguousBlockSize,
+                         addToVec + iBlock * contiguousBlockSize,
+                         [&coeff](auto &p, auto &q) { return p * coeff + q; });
+        }
+    }
+
+    template <typename ValueType>
+    void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       stridedBlockScaleAndAddTwoVecColumnWise(
         const dftfe::size_type contiguousBlockSize,
@@ -1705,7 +1726,23 @@ namespace dftfe
       const double *         imagArr,
       std::complex<double> * complexArr);
 
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const double *         addFromVec,
+      const double *         scalingVector,
+      const double           a,
+      double *               addToVec) const;
 
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
+      const dftfe::size_type      contiguousBlockSize,
+      const dftfe::size_type      numContiguousBlocks,
+      const std::complex<double> *addFromVec,
+      const std::complex<double> *scalingVector,
+      const std::complex<double>  a,
+      std::complex<double> *      addToVec) const;
 
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

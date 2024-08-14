@@ -664,15 +664,6 @@ namespace dftfe
     // if (d_dftParams.measureOnlyChebyTime)
     //  exit(0);
 
-    //
-    // scale the eigenVectors (initial guess of single atom wavefunctions or
-    // previous guess) to convert into Lowden Orthonormalized FE basis
-    // multiply by M^{1/2}
-    BLASWrapperPtr->stridedBlockScale(totalNumberWaveFunctions,
-                                      localVectorSize,
-                                      1.0,
-                                      operatorMatrix.getSqrtMassVector().data(),
-                                      eigenVectorsFlattenedDevice);
 
 
     if (d_dftParams.orthogType.compare("GS") == 0)
@@ -810,25 +801,7 @@ namespace dftfe
           }
       }
 
-    //
-    // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
-    // the usual FE basis
-    //
-    BLASWrapperPtr->stridedBlockScale(
-      totalNumberWaveFunctions,
-      localVectorSize,
-      1.0,
-      operatorMatrix.getInverseSqrtMassVector().data(),
-      eigenVectorsFlattenedDevice);
 
-
-    if (eigenValues.size() != totalNumberWaveFunctions)
-      BLASWrapperPtr->stridedBlockScale(
-        eigenValues.size(),
-        localVectorSize,
-        1.0,
-        operatorMatrix.getInverseSqrtMassVector().data(),
-        eigenVectorsRotFracDensityFlattenedDevice);
 
     return d_upperBoundUnWantedSpectrum;
   }
@@ -1216,16 +1189,6 @@ namespace dftfe
     distributedDeviceVec<dataTypes::number> *HXBlock =
       &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 1);
 
-    //
-    // scale the eigenVectors (initial guess of single atom wavefunctions or
-    // previous guess) to convert into Lowden Orthonormalized FE basis
-    // multiply by M^{1/2}
-    BLASWrapperPtr->stridedBlockScale(totalNumberWaveFunctions,
-                                      localVectorSize,
-                                      1.0,
-                                      operatorMatrix.getSqrtMassVector().data(),
-                                      eigenVectorsFlattenedDevice);
-
 
 
     linearAlgebraOperationsDevice::densityMatrixEigenBasisFirstOrderResponse(
@@ -1246,18 +1209,6 @@ namespace dftfe
       BLASWrapperPtr,
       d_dftParams);
 
-
-
-    //
-    // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
-    // the usual FE basis
-    //
-    BLASWrapperPtr->stridedBlockScale(
-      totalNumberWaveFunctions,
-      localVectorSize,
-      1.0,
-      operatorMatrix.getInverseSqrtMassVector().data(),
-      eigenVectorsFlattenedDevice);
 
     dftfe::utils::deviceSynchronize();
     computingTimerStandard.leave_subsection(

@@ -375,16 +375,19 @@ namespace dftfe
     void
     rayleighRitzGEP(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      T *                                                X,
-      const unsigned int                                 numberWaveFunctions,
-      const unsigned int                                 localVectorSize,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   interBandGroupComm,
-      const MPI_Comm &                                   mpi_communicator,
-      std::vector<double> &                              eigenValues,
-      const bool                                         useMixedPrec,
-      const dftParameters &                              dftParams)
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                  BLASWrapperPtr,
+      elpaScalaManager &   elpaScala,
+      T *                  X,
+      const unsigned int   numberWaveFunctions,
+      const unsigned int   localVectorSize,
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm &     mpi_communicator,
+      std::vector<double> &eigenValues,
+      const bool           useMixedPrec,
+      const dftParameters &dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -429,6 +432,7 @@ namespace dftfe
       if (!(useMixedPrec) || dftParams.numCoreWfcXtHX == 0)
         {
           XtHXXtOX(operatorMatrix,
+                   BLASWrapperPtr,
                    X,
                    numberWaveFunctions,
                    localVectorSize,
@@ -442,6 +446,7 @@ namespace dftfe
       else
         {
           XtHXXtOXMixedPrec(operatorMatrix,
+                            BLASWrapperPtr,
                             X,
                             numberWaveFunctions,
                             dftParams.numCoreWfcXtHX,
@@ -662,6 +667,7 @@ namespace dftfe
 
       if (!(dftParams.useMixedPrecSubspaceRotRR && useMixedPrec))
         internal::subspaceRotation(X,
+                                   BLASWrapperPtr,
                                    numberWaveFunctions * localVectorSize,
                                    numberWaveFunctions,
                                    processGrid,
@@ -677,6 +683,7 @@ namespace dftfe
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationMixedPrec<T, std::complex<float>>(
               X,
+              BLASWrapperPtr,
               numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
@@ -689,6 +696,7 @@ namespace dftfe
           else
             internal::subspaceRotationMixedPrec<T, float>(
               X,
+              BLASWrapperPtr,
               numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
@@ -710,16 +718,19 @@ namespace dftfe
     void
     XtHXXtOXMixedPrec(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      const dataTypes::number *                          X,
-      const unsigned int                                 N,
-      const unsigned int                                 Ncore,
-      const unsigned int                                 numberDofs,
-      const std::shared_ptr<const dftfe::ProcessGrid> &  processGrid,
-      const MPI_Comm &                                   mpiCommDomain,
-      const MPI_Comm &                                   interBandGroupComm,
-      const dftParameters &                              dftParams,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &        projHamPar,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &        projOverlapPar,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                                              BLASWrapperPtr,
+      const dataTypes::number *                        X,
+      const unsigned int                               N,
+      const unsigned int                               Ncore,
+      const unsigned int                               numberDofs,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftParameters &                            dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projOverlapPar,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       //
@@ -832,19 +843,19 @@ namespace dftfe
                   const unsigned int D = N - jvec;
 
                   // Comptute local XTrunc^{T}*HXcBlock.
-                  xgemm(&transA,
-                        &transB,
-                        &D,
-                        &B,
-                        &numberDofs,
-                        &alpha,
-                        &X[0] + jvec,
-                        &N,
-                        HXBlock->data(),
-                        &B,
-                        &beta,
-                        &projHamBlock[0],
-                        &D);
+                  BLASWrapperPtr->xgemm(transA,
+                                        transB,
+                                        D,
+                                        B,
+                                        numberDofs,
+                                        &alpha,
+                                        &X[0] + jvec,
+                                        N,
+                                        HXBlock->data(),
+                                        B,
+                                        &beta,
+                                        &projHamBlock[0],
+                                        D);
 
                   // Sum local XTrunc^{T}*HXcBlock across domain decomposition
                   // processors
@@ -887,37 +898,37 @@ namespace dftfe
                   const unsigned int D = N - jvec;
 
                   // full prec gemm
-                  xgemm(&transA,
-                        &transB,
-                        &B,
-                        &B,
-                        &numberDofs,
-                        &alpha,
-                        &X[0] + jvec,
-                        &N,
-                        HXBlock->data(),
-                        &B,
-                        &beta,
-                        &projHamBlockDoublePrec[0],
-                        &B);
+                  BLASWrapperPtr->xgemm(transA,
+                                        transB,
+                                        B,
+                                        B,
+                                        numberDofs,
+                                        &alpha,
+                                        &X[0] + jvec,
+                                        N,
+                                        HXBlock->data(),
+                                        B,
+                                        &beta,
+                                        &projHamBlockDoublePrec[0],
+                                        B);
                   const unsigned int DRem = D - B;
                   if (DRem != 0)
                     {
                       for (unsigned int i = 0; i < numberDofs * B; ++i)
                         HXBlockSinglePrec[i] = HXBlock->data()[i];
-                      xgemm(&transA,
-                            &transB,
-                            &DRem,
-                            &B,
-                            &numberDofs,
-                            &alphaSinglePrec,
-                            &XSinglePrec[0] + jvec + B,
-                            &N,
-                            &HXBlockSinglePrec[0],
-                            &B,
-                            &betaSinglePrec,
-                            &projHamBlockSinglePrec[0],
-                            &DRem);
+                      BLASWrapperPtr->xgemm(transA,
+                                            transB,
+                                            DRem,
+                                            B,
+                                            numberDofs,
+                                            &alphaSinglePrec,
+                                            &XSinglePrec[0] + jvec + B,
+                                            N,
+                                            &HXBlockSinglePrec[0],
+                                            B,
+                                            &betaSinglePrec,
+                                            &projHamBlockSinglePrec[0],
+                                            DRem);
                     }
 
                   MPI_Allreduce(MPI_IN_PLACE,
@@ -974,19 +985,19 @@ namespace dftfe
 
               const unsigned int D = N - jvec;
 
-              xgemm(&transA,
-                    &transB,
-                    &B,
-                    &B,
-                    &numberDofs,
-                    &alpha,
-                    &X[0] + jvec,
-                    &N,
-                    &X[0] + jvec,
-                    &N,
-                    &beta,
-                    &projHamBlockDoublePrec[0],
-                    &B);
+              BLASWrapperPtr->xgemm(transA,
+                                    transB,
+                                    B,
+                                    B,
+                                    numberDofs,
+                                    &alpha,
+                                    &X[0] + jvec,
+                                    N,
+                                    &X[0] + jvec,
+                                    N,
+                                    &beta,
+                                    &projHamBlockDoublePrec[0],
+                                    B);
               const unsigned int DRem = D - B;
               if (DRem != 0)
                 {
@@ -996,19 +1007,19 @@ namespace dftfe
                                                 dataTypes::numberFP32(0.0);
                   // for (unsigned int i = 0; i < numberDofs * B; ++i)
                   //   HXBlockSinglePrec[i] = HXBlock->data()[i];
-                  xgemm(&transA,
-                        &transB,
-                        &DRem,
-                        &B,
-                        &numberDofs,
-                        &alphaSinglePrec,
-                        &XSinglePrec[0] + jvec + B,
-                        &N,
-                        &XSinglePrec[0] + jvec,
-                        &N,
-                        &betaSinglePrec,
-                        &projHamBlockSinglePrec[0],
-                        &DRem);
+                  BLASWrapperPtr->xgemm(transA,
+                                        transB,
+                                        DRem,
+                                        B,
+                                        numberDofs,
+                                        &alphaSinglePrec,
+                                        &XSinglePrec[0] + jvec + B,
+                                        N,
+                                        &XSinglePrec[0] + jvec,
+                                        N,
+                                        &betaSinglePrec,
+                                        &projHamBlockSinglePrec[0],
+                                        DRem);
                 }
 
               // Sum local XTrunc^{T}*XcBlock for double precision across
@@ -1080,16 +1091,19 @@ namespace dftfe
     void
     rayleighRitz(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      T *                                                X,
-      const unsigned int                                 numberWaveFunctions,
-      const unsigned int                                 localVectorSize,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   interBandGroupComm,
-      const MPI_Comm &                                   mpi_communicator,
-      std::vector<double> &                              eigenValues,
-      const dftParameters &                              dftParams,
-      const bool                                         doCommAfterBandParal)
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                  BLASWrapperPtr,
+      elpaScalaManager &   elpaScala,
+      T *                  X,
+      const unsigned int   numberWaveFunctions,
+      const unsigned int   localVectorSize,
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm &     mpi_communicator,
+      std::vector<double> &eigenValues,
+      const dftParameters &dftParams,
+      const bool           doCommAfterBandParal)
 
     {
       dealii::ConditionalOStream pcout(
@@ -1121,6 +1135,7 @@ namespace dftfe
 
       computing_timer.enter_subsection("Blocked XtHX, RR step");
       XtHX(operatorMatrix,
+           BLASWrapperPtr,
            X,
            numberWaveFunctions,
            localVectorSize,
@@ -1239,6 +1254,7 @@ namespace dftfe
                                                rowsBlockSize);
       projHamParCopy.copy_conjugate_transposed(projHamPar);
       internal::subspaceRotation(X,
+                                 BLASWrapperPtr,
                                  numberWaveFunctions * localVectorSize,
                                  numberWaveFunctions,
                                  processGrid,
@@ -1257,18 +1273,21 @@ namespace dftfe
     void
     rayleighRitzGEPSpectrumSplitDirect(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      T *                                                X,
-      T *                                                Y,
-      const unsigned int                                 numberWaveFunctions,
-      const unsigned int                                 localVectorSize,
-      const unsigned int                                 numberCoreStates,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   interBandGroupComm,
-      const MPI_Comm &                                   mpiComm,
-      const bool                                         useMixedPrec,
-      std::vector<double> &                              eigenValues,
-      const dftParameters &                              dftParams)
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                  BLASWrapperPtr,
+      elpaScalaManager &   elpaScala,
+      T *                  X,
+      T *                  Y,
+      const unsigned int   numberWaveFunctions,
+      const unsigned int   localVectorSize,
+      const unsigned int   numberCoreStates,
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm &     mpiComm,
+      const bool           useMixedPrec,
+      std::vector<double> &eigenValues,
+      const dftParameters &dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -1308,6 +1327,7 @@ namespace dftfe
       if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
         {
           internal::fillParallelOverlapMatrix(X,
+                                              BLASWrapperPtr,
                                               numberWaveFunctions *
                                                 localVectorSize,
                                               numberWaveFunctions,
@@ -1323,6 +1343,7 @@ namespace dftfe
             internal::fillParallelOverlapMatrixMixedPrec<T,
                                                          std::complex<float>>(
               X,
+              BLASWrapperPtr,
               numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
@@ -1333,6 +1354,7 @@ namespace dftfe
           else
             internal::fillParallelOverlapMatrixMixedPrec<T, float>(
               X,
+              BLASWrapperPtr,
               numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
@@ -1445,6 +1467,7 @@ namespace dftfe
       if (useMixedPrec && dftParams.useMixedPrecXTHXSpectrumSplit)
         {
           XtHXMixedPrec(operatorMatrix,
+                        BLASWrapperPtr,
                         X,
                         numberWaveFunctions,
                         numberCoreStates,
@@ -1458,6 +1481,7 @@ namespace dftfe
       else
         {
           XtHX(operatorMatrix,
+               BLASWrapperPtr,
                X,
                numberWaveFunctions,
                localVectorSize,
@@ -1639,6 +1663,7 @@ namespace dftfe
         "Xfr^{T}={QfrConjPrime}^{C}*LConj^{-1}*X^{T}, RR step");
 
       internal::subspaceRotationSpectrumSplit(X,
+                                              BLASWrapperPtr,
                                               Y,
                                               numberWaveFunctions *
                                                 localVectorSize,
@@ -1660,6 +1685,7 @@ namespace dftfe
         {
           computing_timer.enter_subsection("X^{T}=Lconj^{-1}*X^{T}, RR step");
           internal::subspaceRotation(X,
+                                     BLASWrapperPtr,
                                      numberWaveFunctions * localVectorSize,
                                      numberWaveFunctions,
                                      processGrid,
@@ -1679,6 +1705,7 @@ namespace dftfe
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationCGSMixedPrec<T, std::complex<float>>(
               X,
+              BLASWrapperPtr,
               numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
@@ -1691,6 +1718,7 @@ namespace dftfe
           else
             internal::subspaceRotationCGSMixedPrec<T, float>(
               X,
+              BLASWrapperPtr,
               numberWaveFunctions * localVectorSize,
               numberWaveFunctions,
               processGrid,
@@ -1710,18 +1738,21 @@ namespace dftfe
     void
     rayleighRitzSpectrumSplitDirect(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      const T *                                          X,
-      T *                                                Y,
-      const unsigned int                                 numberWaveFunctions,
-      const unsigned int                                 localVectorSize,
-      const unsigned int                                 numberCoreStates,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   interBandGroupComm,
-      const MPI_Comm &                                   mpi_communicator,
-      const bool                                         useMixedPrec,
-      std::vector<double> &                              eigenValues,
-      const dftParameters &                              dftParams)
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                  BLASWrapperPtr,
+      elpaScalaManager &   elpaScala,
+      const T *            X,
+      T *                  Y,
+      const unsigned int   numberWaveFunctions,
+      const unsigned int   localVectorSize,
+      const unsigned int   numberCoreStates,
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm &     mpi_communicator,
+      const bool           useMixedPrec,
+      std::vector<double> &eigenValues,
+      const dftParameters &dftParams)
 
     {
       dealii::ConditionalOStream pcout(
@@ -1756,6 +1787,7 @@ namespace dftfe
         {
           computing_timer.enter_subsection("Blocked XtHX Mixed Prec, RR step");
           XtHXMixedPrec(operatorMatrix,
+                        BLASWrapperPtr,
                         X,
                         numberWaveFunctions,
                         numberCoreStates,
@@ -1772,6 +1804,7 @@ namespace dftfe
         {
           computing_timer.enter_subsection("Blocked XtHX, RR step");
           XtHX(operatorMatrix,
+               BLASWrapperPtr,
                X,
                numberWaveFunctions,
                localVectorSize,
@@ -1927,6 +1960,7 @@ namespace dftfe
       computing_timer.enter_subsection("Blocked subspace rotation, RR step");
 
       internal::subspaceRotationSpectrumSplit(X,
+                                              BLASWrapperPtr,
                                               Y,
                                               numberWaveFunctions *
                                                 localVectorSize,
@@ -2535,15 +2569,18 @@ namespace dftfe
     void
     computeEigenResidualNorm(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      T *                                                X,
-      const std::vector<double> &                        eigenValues,
-      const unsigned int                                 totalNumberVectors,
-      const unsigned int                                 localVectorSize,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   mpiCommDomain,
-      const MPI_Comm &                                   interBandGroupComm,
-      std::vector<double> &                              residualNorm,
-      const dftParameters &                              dftParams)
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                        BLASWrapperPtr,
+      T *                        X,
+      const std::vector<double> &eigenValues,
+      const unsigned int         totalNumberVectors,
+      const unsigned int         localVectorSize,
+      const MPI_Comm &           mpiCommParent,
+      const MPI_Comm &           mpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      std::vector<double> &      residualNorm,
+      const dftParameters &      dftParams)
 
     {
       //
@@ -2597,15 +2634,41 @@ namespace dftfe
 
               MPI_Barrier(mpiCommDomain);
               // evaluate H times XBlock and store in HXBlock
-              operatorMatrix.HX(*XBlock, 1.0, 0.0, 0.0, *HXBlock);
+              operatorMatrix.overlapMatrixTimesX(*XBlock,
+                                                 1.0,
+                                                 0.0,
+                                                 0.0,
+                                                 *HXBlock,
+                                                 dftParams.approxOverlapMatrix);
+              for (unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
+                for (unsigned int iWave = 0; iWave < B; iWave++)
+                  {
+                    HXBlock->data()[B * iDof + iWave] *=
+                      eigenValues[jvec + iWave];
+                  }
+
+              operatorMatrix.HX(*XBlock, 1.0, -1.0, 0.0, *HXBlock);
+              if (dftParams.reproducible_output &&
+                  dftParams.approxOverlapMatrix)
+                {
+                  BLASWrapperPtr->stridedBlockScale(
+                    B,
+                    localVectorSize,
+                    1.0,
+                    operatorMatrix.getInverseSqrtMassVector().data(),
+                    HXBlock->data());
+                }
+              //   pointWiseScaleWithDiagonal(
+              //     operatorMatrix.getInverseSqrtMassVector().data(),
+              //     B,
+              //     localVectorSize,
+              //     HXBlock->data());
               // compute residual norms:
               for (unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
                 for (unsigned int iWave = 0; iWave < B; iWave++)
                   {
                     const double temp =
-                      std::abs(HXBlock->data()[B * iDof + iWave] -
-                               eigenValues[jvec + iWave] *
-                                 XBlock->data()[B * iDof + iWave]);
+                      std::abs(HXBlock->data()[B * iDof + iWave]);
                     residualNormSquare[jvec + iWave] += temp * temp;
                   }
             }
@@ -3028,17 +3091,20 @@ namespace dftfe
     void
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      T *                                                X,
-      const unsigned int                                 N,
-      const unsigned int                                 numberLocalDofs,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   mpiCommDomain,
-      const MPI_Comm &                                   interBandGroupComm,
-      const std::vector<double> &                        eigenValues,
-      const double                                       fermiEnergy,
-      std::vector<double> &    densityMatDerFermiEnergy,
-      dftfe::elpaScalaManager &elpaScala,
-      const dftParameters &    dftParams)
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                        BLASWrapperPtr,
+      T *                        X,
+      const unsigned int         N,
+      const unsigned int         numberLocalDofs,
+      const MPI_Comm &           mpiCommParent,
+      const MPI_Comm &           mpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      const std::vector<double> &eigenValues,
+      const double               fermiEnergy,
+      std::vector<double> &      densityMatDerFermiEnergy,
+      dftfe::elpaScalaManager &  elpaScala,
+      const dftParameters &      dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,
@@ -3073,6 +3139,7 @@ namespace dftfe
       if (dftParams.singlePrecLRD)
         {
           XtHXMixedPrec(operatorMatrix,
+                        BLASWrapperPtr,
                         X,
                         N,
                         N,
@@ -3086,6 +3153,7 @@ namespace dftfe
         }
       else
         XtHX(operatorMatrix,
+             BLASWrapperPtr,
              X,
              N,
              numberLocalDofs,
@@ -3207,6 +3275,7 @@ namespace dftfe
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationMixedPrec<T, std::complex<float>>(
               X,
+              BLASWrapperPtr,
               numberLocalDofs * N,
               N,
               processGrid,
@@ -3219,6 +3288,7 @@ namespace dftfe
           else
             internal::subspaceRotationMixedPrec<T, float>(
               X,
+              BLASWrapperPtr,
               numberLocalDofs * N,
               N,
               processGrid,
@@ -3232,6 +3302,7 @@ namespace dftfe
       else
         {
           internal::subspaceRotation(X,
+                                     BLASWrapperPtr,
                                      numberLocalDofs * N,
                                      N,
                                      processGrid,
@@ -3252,13 +3323,16 @@ namespace dftfe
 
     void
     XtHX(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-         const dataTypes::number *                          X,
-         const unsigned int                                 numberWaveFunctions,
-         const unsigned int                                 numberDofs,
-         const MPI_Comm &                                   mpiCommDomain,
-         const MPI_Comm &                                   interBandGroupComm,
-         const dftParameters &                              dftParams,
-         std::vector<dataTypes::number> &                   ProjHam)
+         const std::shared_ptr<
+           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+           &                             BLASWrapperPtr,
+         const dataTypes::number *       X,
+         const unsigned int              numberWaveFunctions,
+         const unsigned int              numberDofs,
+         const MPI_Comm &                mpiCommDomain,
+         const MPI_Comm &                interBandGroupComm,
+         const dftParameters &           dftParams,
+         std::vector<dataTypes::number> &ProjHam)
     {
       //
       // Get access to number of locally owned nodes on the current processor
@@ -3336,14 +3410,17 @@ namespace dftfe
 
     void
     XtHX(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-         const dataTypes::number *                          X,
-         const unsigned int                                 numberWaveFunctions,
-         const unsigned int                                 numberDofs,
-         const std::shared_ptr<const dftfe::ProcessGrid> &  processGrid,
-         const MPI_Comm &                                   mpiCommDomain,
-         const MPI_Comm &                                   interBandGroupComm,
-         const dftParameters &                              dftParams,
-         dftfe::ScaLAPACKMatrix<dataTypes::number> &        projHamPar,
+         const std::shared_ptr<
+           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+           &                                              BLASWrapperPtr,
+         const dataTypes::number *                        X,
+         const unsigned int                               numberWaveFunctions,
+         const unsigned int                               numberDofs,
+         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+         const MPI_Comm &                                 mpiCommDomain,
+         const MPI_Comm &                                 interBandGroupComm,
+         const dftParameters &                            dftParams,
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
          const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       //
@@ -3450,19 +3527,19 @@ namespace dftfe
               const unsigned int D = numberWaveFunctions - jvec;
 
               // Comptute local XTrunc^{T}*HXcBlock.
-              xgemm(&transA,
-                    &transB,
-                    &D,
-                    &B,
-                    &numberDofs,
-                    &alpha,
-                    &X[0] + jvec,
-                    &numberWaveFunctions,
-                    HXBlock->data(),
-                    &B,
-                    &beta,
-                    &projHamBlock[0],
-                    &D);
+              BLASWrapperPtr->xgemm(transA,
+                                    transB,
+                                    D,
+                                    B,
+                                    numberDofs,
+                                    &alpha,
+                                    &X[0] + jvec,
+                                    numberWaveFunctions,
+                                    HXBlock->data(),
+                                    B,
+                                    &beta,
+                                    &projHamBlock[0],
+                                    D);
 
               MPI_Barrier(mpiCommDomain);
               // Sum local XTrunc^{T}*HXcBlock across domain decomposition
@@ -3509,15 +3586,18 @@ namespace dftfe
     void
     XtHXMixedPrec(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      const dataTypes::number *                          X,
-      const unsigned int                                 N,
-      const unsigned int                                 Ncore,
-      const unsigned int                                 numberDofs,
-      const std::shared_ptr<const dftfe::ProcessGrid> &  processGrid,
-      const MPI_Comm &                                   mpiCommDomain,
-      const MPI_Comm &                                   interBandGroupComm,
-      const dftParameters &                              dftParams,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &        projHamPar,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                                              BLASWrapperPtr,
+      const dataTypes::number *                        X,
+      const unsigned int                               N,
+      const unsigned int                               Ncore,
+      const unsigned int                               numberDofs,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftParameters &                            dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       //
@@ -3633,19 +3713,19 @@ namespace dftfe
                   const unsigned int D = N - jvec;
 
                   // Comptute local XTrunc^{T}*HXcBlock.
-                  xgemm(&transA,
-                        &transB,
-                        &D,
-                        &B,
-                        &numberDofs,
-                        &alpha,
-                        &X[0] + jvec,
-                        &N,
-                        HXBlock->data(),
-                        &B,
-                        &beta,
-                        &projHamBlock[0],
-                        &D);
+                  BLASWrapperPtr->xgemm(transA,
+                                        transB,
+                                        D,
+                                        B,
+                                        numberDofs,
+                                        &alpha,
+                                        &X[0] + jvec,
+                                        N,
+                                        HXBlock->data(),
+                                        B,
+                                        &beta,
+                                        &projHamBlock[0],
+                                        D);
 
                   MPI_Barrier(mpiCommDomain);
                   // Sum local XTrunc^{T}*HXcBlock across domain decomposition
@@ -3691,19 +3771,19 @@ namespace dftfe
                   const unsigned int D = N - jvec;
 
                   // single prec gemm
-                  xgemm(&transA,
-                        &transB,
-                        &D,
-                        &B,
-                        &numberDofs,
-                        &alphaSinglePrec,
-                        &XSinglePrec[0] + jvec,
-                        &N,
-                        &HXBlockSinglePrec[0],
-                        &B,
-                        &betaSinglePrec,
-                        &projHamBlockSinglePrec[0],
-                        &D);
+                  BLASWrapperPtr->xgemm(transA,
+                                        transB,
+                                        D,
+                                        B,
+                                        numberDofs,
+                                        &alphaSinglePrec,
+                                        &XSinglePrec[0] + jvec,
+                                        N,
+                                        &HXBlockSinglePrec[0],
+                                        B,
+                                        &betaSinglePrec,
+                                        &projHamBlockSinglePrec[0],
+                                        D);
 
                   MPI_Barrier(mpiCommDomain);
                   MPI_Allreduce(MPI_IN_PLACE,
@@ -3749,6 +3829,8 @@ namespace dftfe
 
     void
     XtHXXtOX(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
+             const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
+               dftfe::utils::MemorySpace::HOST>> &              BLASWrapperPtr,
              const dataTypes::number *                          X,
              const unsigned int                               numberComponents,
              const unsigned int                               numberLocalDofs,
@@ -3861,19 +3943,19 @@ namespace dftfe
               const unsigned int D = numberComponents - jvec;
 
               // Comptute local XTrunc^{T}*HXcBlock.
-              xgemm(&transA,
-                    &transB,
-                    &D,
-                    &B,
-                    &numberLocalDofs,
-                    &alpha,
-                    &X[0] + jvec,
-                    &numberComponents,
-                    &X[0] + jvec,
-                    &numberComponents,
-                    &beta,
-                    &projBlock[0],
-                    &D);
+              BLASWrapperPtr->xgemm(transA,
+                                    transB,
+                                    D,
+                                    B,
+                                    numberLocalDofs,
+                                    &alpha,
+                                    &X[0] + jvec,
+                                    numberComponents,
+                                    &X[0] + jvec,
+                                    numberComponents,
+                                    &beta,
+                                    &projBlock[0],
+                                    D);
 
               MPI_Barrier(mpiCommDomain);
               // Sum local XTrunc^{T}*HXcBlock across domain decomposition
@@ -3919,19 +4001,19 @@ namespace dftfe
 
 
               // Comptute local XTrunc^{T}*HXcBlock.
-              xgemm(&transA,
-                    &transB,
-                    &D,
-                    &B,
-                    &numberLocalDofs,
-                    &alpha,
-                    &X[0] + jvec,
-                    &numberComponents,
-                    OXBlock->data(),
-                    &B,
-                    &beta,
-                    &projBlock[0],
-                    &D);
+              BLASWrapperPtr->xgemm(transA,
+                                    transB,
+                                    D,
+                                    B,
+                                    numberLocalDofs,
+                                    &alpha,
+                                    &X[0] + jvec,
+                                    numberComponents,
+                                    OXBlock->data(),
+                                    B,
+                                    &beta,
+                                    &projBlock[0],
+                                    D);
 
               MPI_Barrier(mpiCommDomain);
               // Sum local XTrunc^{T}*HXcBlock across domain decomposition
@@ -3986,20 +4068,27 @@ namespace dftfe
                                  const MPI_Comm &);
 
     template unsigned int
-    pseudoGramSchmidtOrthogonalization(elpaScalaManager &elpaScala,
-                                       dataTypes::number *,
-                                       const unsigned int,
-                                       const unsigned int localVectorSize,
-                                       const MPI_Comm &,
-                                       const MPI_Comm &,
-                                       const MPI_Comm &     mpiComm,
-                                       const bool           useMixedPrec,
-                                       const dftParameters &dftParams);
+    pseudoGramSchmidtOrthogonalization(
+      elpaScalaManager &elpaScala,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &BLASWrapperPtr,
+      dataTypes::number *,
+      const unsigned int,
+      const unsigned int localVectorSize,
+      const MPI_Comm &,
+      const MPI_Comm &,
+      const MPI_Comm &     mpiComm,
+      const bool           useMixedPrec,
+      const dftParameters &dftParams);
 
     template void
     rayleighRitz(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &               BLASWrapperPtr,
+      elpaScalaManager &elpaScala,
       dataTypes::number *,
       const unsigned int numberWaveFunctions,
       const unsigned int localVectorSize,
@@ -4013,7 +4102,10 @@ namespace dftfe
     template void
     rayleighRitzGEP(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &               BLASWrapperPtr,
+      elpaScalaManager &elpaScala,
       dataTypes::number *,
       const unsigned int numberWaveFunctions,
       const unsigned int localVectorSize,
@@ -4028,7 +4120,10 @@ namespace dftfe
     template void
     rayleighRitzSpectrumSplitDirect(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &               BLASWrapperPtr,
+      elpaScalaManager &elpaScala,
       const dataTypes::number *,
       dataTypes::number *,
       const unsigned int numberWaveFunctions,
@@ -4044,46 +4139,55 @@ namespace dftfe
     template void
     rayleighRitzGEPSpectrumSplitDirect(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      dataTypes::number *                                X,
-      dataTypes::number *                                Y,
-      const unsigned int                                 numberWaveFunctions,
-      const unsigned int                                 localVectorSize,
-      const unsigned int                                 numberCoreStates,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   interBandGroupComm,
-      const MPI_Comm &                                   mpiCommDomain,
-      const bool                                         useMixedPrec,
-      std::vector<double> &                              eigenValues,
-      const dftParameters &                              dftParams);
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                  BLASWrapperPtr,
+      elpaScalaManager &   elpaScala,
+      dataTypes::number *  X,
+      dataTypes::number *  Y,
+      const unsigned int   numberWaveFunctions,
+      const unsigned int   localVectorSize,
+      const unsigned int   numberCoreStates,
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm &     mpiCommDomain,
+      const bool           useMixedPrec,
+      std::vector<double> &eigenValues,
+      const dftParameters &dftParams);
 
     template void
     computeEigenResidualNorm(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      dataTypes::number *                                X,
-      const std::vector<double> &                        eigenValues,
-      const unsigned int                                 totalNumberVectors,
-      const unsigned int                                 localVectorSize,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   mpiCommDomain,
-      const MPI_Comm &                                   interBandGroupComm,
-      std::vector<double> &                              residualNorm,
-      const dftParameters &                              dftParams);
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                        BLASWrapperPtr,
+      dataTypes::number *        X,
+      const std::vector<double> &eigenValues,
+      const unsigned int         totalNumberVectors,
+      const unsigned int         localVectorSize,
+      const MPI_Comm &           mpiCommParent,
+      const MPI_Comm &           mpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      std::vector<double> &      residualNorm,
+      const dftParameters &      dftParams);
 
     template void
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      dataTypes::number *                                X,
-      const unsigned int                                 N,
-      const unsigned int                                 numberLocalDofs,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   mpiCommDomain,
-      const MPI_Comm &                                   interBandGroupComm,
-      const std::vector<double> &                        eigenValues,
-      const double                                       fermiEnergy,
-      std::vector<double> &densityMatDerFermiEnergy,
-      elpaScalaManager &   elpaScala,
-      const dftParameters &dftParams);
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                        BLASWrapperPtr,
+      dataTypes::number *        X,
+      const unsigned int         N,
+      const unsigned int         numberLocalDofs,
+      const MPI_Comm &           mpiCommParent,
+      const MPI_Comm &           mpiCommDomain,
+      const MPI_Comm &           interBandGroupComm,
+      const std::vector<double> &eigenValues,
+      const double               fermiEnergy,
+      std::vector<double> &      densityMatDerFermiEnergy,
+      elpaScalaManager &         elpaScala,
+      const dftParameters &      dftParams);
 
   } // namespace linearAlgebraOperations
 

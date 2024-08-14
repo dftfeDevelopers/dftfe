@@ -178,7 +178,7 @@ namespace dftfe
     unsigned int highestStateOfInterestForChebFiltering;
     bool         useELPADeviceKernel;
     bool         memOptMode;
-
+    bool         approxOverlapMatrix;
 
     unsigned int dc_dispersioncorrectiontype;
     unsigned int dc_d3dampingtype;

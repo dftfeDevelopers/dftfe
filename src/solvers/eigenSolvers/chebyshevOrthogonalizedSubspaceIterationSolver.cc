@@ -479,11 +479,7 @@ namespace dftfe
     // scale the eigenVectors (initial guess of single atom wavefunctions or
     // previous guess) to convert into Lowden Orthonormalized FE basis multiply
     // by M^{1/2}
-    chebyshevOrthogonalizedSubspaceIterationSolverInternal::
-      pointWiseScaleWithDiagonal(operatorMatrix.getSqrtMassVector().data(),
-                                 totalNumberWaveFunctions,
-                                 localVectorSize,
-                                 eigenVectorsFlattened);
+
 
 
     if (d_dftParams.orthogType.compare("CGS") == 0)
@@ -493,6 +489,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(
               operatorMatrix,
+              BLASWrapperPtr,
               elpaScala,
               eigenVectorsFlattened,
               eigenVectorsRotFracDensityFlattened,
@@ -509,6 +506,7 @@ namespace dftfe
         else
           {
             linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
+                                                     BLASWrapperPtr,
                                                      elpaScala,
                                                      eigenVectorsFlattened,
                                                      totalNumberWaveFunctions,
@@ -527,6 +525,7 @@ namespace dftfe
           {
             linearAlgebraOperations::computeEigenResidualNorm(
               operatorMatrix,
+              BLASWrapperPtr,
               eigenVectorsRotFracDensityFlattened,
               eigenValues,
               eigenValues.size(),
@@ -541,6 +540,7 @@ namespace dftfe
           {
             linearAlgebraOperations::computeEigenResidualNorm(
               operatorMatrix,
+              BLASWrapperPtr,
               eigenVectorsFlattened,
               eigenValues,
               totalNumberWaveFunctions,
@@ -572,6 +572,7 @@ namespace dftfe
           {
             linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(
               operatorMatrix,
+              BLASWrapperPtr,
               elpaScala,
               eigenVectorsFlattened,
               eigenVectorsRotFracDensityFlattened,
@@ -588,6 +589,7 @@ namespace dftfe
         else
           {
             linearAlgebraOperations::rayleighRitz(operatorMatrix,
+                                                  BLASWrapperPtr,
                                                   elpaScala,
                                                   eigenVectorsFlattened,
                                                   totalNumberWaveFunctions,
@@ -617,6 +619,7 @@ namespace dftfe
               {
                 linearAlgebraOperations::computeEigenResidualNorm(
                   operatorMatrix,
+                  BLASWrapperPtr,
                   eigenVectorsRotFracDensityFlattened,
                   eigenValues,
                   eigenValues.size(),
@@ -630,6 +633,7 @@ namespace dftfe
             else
               linearAlgebraOperations::computeEigenResidualNorm(
                 operatorMatrix,
+                BLASWrapperPtr,
                 eigenVectorsFlattened,
                 eigenValues,
                 totalNumberWaveFunctions,
@@ -650,26 +654,6 @@ namespace dftfe
         pcout << std::endl;
       }
 
-    //
-    // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
-    // the usual FE basis
-    //
-    chebyshevOrthogonalizedSubspaceIterationSolverInternal::
-      pointWiseScaleWithDiagonal(
-        operatorMatrix.getInverseSqrtMassVector().data(),
-        totalNumberWaveFunctions,
-        localVectorSize,
-        eigenVectorsFlattened);
-
-    if (eigenValues.size() != totalNumberWaveFunctions)
-      {
-        chebyshevOrthogonalizedSubspaceIterationSolverInternal::
-          pointWiseScaleWithDiagonal(
-            operatorMatrix.getInverseSqrtMassVector().data(),
-            eigenValues.size(),
-            localVectorSize,
-            eigenVectorsRotFracDensityFlattened);
-      }
 
 
     if (d_dftParams.verbosity >= 4)
