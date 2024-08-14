@@ -977,9 +977,9 @@ namespace dftfe
                 }
 
               // evaluate H times XBlock and store in HXBlock^{T}
-              // operatorMatrix.overlapMatrixTimesX(
-              //   *XBlock, 1.0, 0.0, 0.0, *HXBlock,
-              //   dftParams.diagonalMassMatrix);
+              operatorMatrix.overlapMatrixTimesX(
+                *XBlock, 1.0, 0.0, 0.0, *HXBlock,
+                dftParams.approxOverlapMatrix);
 
 
 
@@ -993,8 +993,8 @@ namespace dftfe
                                     &alpha,
                                     &X[0] + jvec,
                                     N,
-                                    &X[0] + jvec,
-                                    N,
+                                    HXBlock->data(),
+                                     B,
                                     &beta,
                                     &projHamBlockDoublePrec[0],
                                     B);
@@ -1005,8 +1005,8 @@ namespace dftfe
                                                 dataTypes::numberFP32(1.0),
                                               betaSinglePrec =
                                                 dataTypes::numberFP32(0.0);
-                  // for (unsigned int i = 0; i < numberDofs * B; ++i)
-                  //   HXBlockSinglePrec[i] = HXBlock->data()[i];
+                  for (unsigned int i = 0; i < numberDofs * B; ++i)
+                    HXBlockSinglePrec[i] = HXBlock->data()[i];
                   BLASWrapperPtr->xgemm(transA,
                                         transB,
                                         DRem,
@@ -1015,8 +1015,8 @@ namespace dftfe
                                         &alphaSinglePrec,
                                         &XSinglePrec[0] + jvec + B,
                                         N,
-                                        &XSinglePrec[0] + jvec,
-                                        N,
+                                        &HXBlockSinglePrec[0],
+                                        B,
                                         &betaSinglePrec,
                                         &projHamBlockSinglePrec[0],
                                         DRem);
@@ -3923,9 +3923,9 @@ namespace dftfe
 
               // XtOX operations
 
-              // operatorMatrix.overlapMatrixTimesX(
-              //   *XBlock, 1.0, 0.0, 0.0, *OXBlock,
-              //   dftParams.diagonalMassMatrix);
+              operatorMatrix.overlapMatrixTimesX(
+                *XBlock, 1.0, 0.0, 0.0, *OXBlock,
+                dftParams.approxOverlapMatrix);
               MPI_Barrier(mpiCommDomain);
 
               const char transA = 'N';
@@ -3951,8 +3951,8 @@ namespace dftfe
                                     &alpha,
                                     &X[0] + jvec,
                                     numberComponents,
-                                    &X[0] + jvec,
-                                    numberComponents,
+                                    OXBlock->data(),
+                                    B,
                                     &beta,
                                     &projBlock[0],
                                     D);

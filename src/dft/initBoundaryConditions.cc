@@ -302,7 +302,7 @@ namespace dftfe
             d_basisOperationsPtrHost->computeCellStiffnessMatrix(
               d_feOrderPlusOneQuadratureId, 1, true, false);
             d_basisOperationsPtrHost->computeCellMassMatrix(
-              d_feOrderPlusOneQuadratureId, 1, true, false);
+              d_feOrderPlusOneQuadratureId, 1, true, !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
           }
       }
@@ -373,9 +373,9 @@ namespace dftfe
 
             d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
               d_feOrderPlusOneQuadratureId, 50, true, false);
-            if (std::is_same<dataTypes::number, std::complex<double>>::value)
+            if (std::is_same<dataTypes::number, std::complex<double>>::value || !d_dftParamsPtr->approxOverlapMatrix)
               d_basisOperationsPtrDevice->computeCellMassMatrix(
-                d_feOrderPlusOneQuadratureId, 50, true, false);
+                d_feOrderPlusOneQuadratureId, 50, true, !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrDevice->computeInverseSqrtMassVector(true,
                                                                      false);
           }
