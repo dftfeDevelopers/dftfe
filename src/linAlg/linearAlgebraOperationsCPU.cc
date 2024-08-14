@@ -977,9 +977,12 @@ namespace dftfe
                 }
 
               // evaluate H times XBlock and store in HXBlock^{T}
-              operatorMatrix.overlapMatrixTimesX(
-                *XBlock, 1.0, 0.0, 0.0, *HXBlock,
-                dftParams.approxOverlapMatrix);
+              operatorMatrix.overlapMatrixTimesX(*XBlock,
+                                                 1.0,
+                                                 0.0,
+                                                 0.0,
+                                                 *HXBlock,
+                                                 dftParams.approxOverlapMatrix);
 
 
 
@@ -994,7 +997,7 @@ namespace dftfe
                                     &X[0] + jvec,
                                     N,
                                     HXBlock->data(),
-                                     B,
+                                    B,
                                     &beta,
                                     &projHamBlockDoublePrec[0],
                                     B);
@@ -3923,9 +3926,12 @@ namespace dftfe
 
               // XtOX operations
 
-              operatorMatrix.overlapMatrixTimesX(
-                *XBlock, 1.0, 0.0, 0.0, *OXBlock,
-                dftParams.approxOverlapMatrix);
+              operatorMatrix.overlapMatrixTimesX(*XBlock,
+                                                 1.0,
+                                                 0.0,
+                                                 0.0,
+                                                 *OXBlock,
+                                                 dftParams.approxOverlapMatrix);
               MPI_Barrier(mpiCommDomain);
 
               const char transA = 'N';

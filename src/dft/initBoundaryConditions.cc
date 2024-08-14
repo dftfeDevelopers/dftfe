@@ -302,7 +302,10 @@ namespace dftfe
             d_basisOperationsPtrHost->computeCellStiffnessMatrix(
               d_feOrderPlusOneQuadratureId, 1, true, false);
             d_basisOperationsPtrHost->computeCellMassMatrix(
-              d_feOrderPlusOneQuadratureId, 1, true, !d_dftParamsPtr->approxOverlapMatrix);
+              d_feOrderPlusOneQuadratureId,
+              1,
+              true,
+              !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
           }
       }
@@ -316,7 +319,7 @@ namespace dftfe
                                      bandGroupLowHighPlusOneIndices[1]);
 
 
-        d_basisOperationsPtrHost->createScratchMultiVectors(1, 3);
+        d_basisOperationsPtrHost->createScratchMultiVectors(1, 4);
         d_basisOperationsPtrHost->createScratchMultiVectors(BVec, 2);
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrHost->createScratchMultiVectorsSinglePrec(BVec,
@@ -364,7 +367,7 @@ namespace dftfe
             const unsigned int BVec =
               std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
-            d_basisOperationsPtrDevice->createScratchMultiVectors(1, 3);
+            d_basisOperationsPtrDevice->createScratchMultiVectors(1, 4);
             d_basisOperationsPtrDevice->createScratchMultiVectors(
               BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);
             if (d_dftParamsPtr->useSinglePrecCheby)
@@ -373,9 +376,13 @@ namespace dftfe
 
             d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
               d_feOrderPlusOneQuadratureId, 50, true, false);
-            if (std::is_same<dataTypes::number, std::complex<double>>::value || !d_dftParamsPtr->approxOverlapMatrix)
+            if (std::is_same<dataTypes::number, std::complex<double>>::value ||
+                !d_dftParamsPtr->approxOverlapMatrix)
               d_basisOperationsPtrDevice->computeCellMassMatrix(
-                d_feOrderPlusOneQuadratureId, 50, true, !d_dftParamsPtr->approxOverlapMatrix);
+                d_feOrderPlusOneQuadratureId,
+                50,
+                true,
+                !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrDevice->computeInverseSqrtMassVector(true,
                                                                      false);
           }
@@ -416,7 +423,7 @@ namespace dftfe
         const unsigned int BVec =
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
-        d_basisOperationsPtrDevice->createScratchMultiVectors(1, 3);
+        d_basisOperationsPtrDevice->createScratchMultiVectors(1, 4);
         d_basisOperationsPtrDevice->createScratchMultiVectors(
           BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);
         if (d_dftParamsPtr->useSinglePrecCheby)

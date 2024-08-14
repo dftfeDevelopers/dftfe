@@ -917,7 +917,7 @@ namespace dftfe
             cellRange.first * numDoFsPerCell * numberWavefunctions,
           d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
               .data() +
-            cellRange.first * numDoFsPerCell);        
+            cellRange.first * numDoFsPerCell);
         if (hasNonlocalComponents)
           d_ONCVnonLocalOperator->applyCconjtransOnX(
             d_cellWaveFunctionMatrixSrc.data() +
@@ -983,7 +983,7 @@ namespace dftfe
           dst.data(),
           d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
               .data() +
-            cellRange.first * numDoFsPerCell);        
+            cellRange.first * numDoFsPerCell);
       }
 
     inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr

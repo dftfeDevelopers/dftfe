@@ -4056,9 +4056,7 @@ namespace dftfe
                         1.0,
                         operatorMatrix.getInverseSqrtMassVector().data(),
                         HXBlock.data());
-
-
-                    }                    
+                    }
                   BLASWrapperPtr->stridedCopyFromBlockConstantStride(
                     B,
                     chebyBlockSize,
