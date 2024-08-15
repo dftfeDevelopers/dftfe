@@ -411,6 +411,7 @@ namespace dftfe
                 kohnShamDFTEigenOperator.getScratchFEMultivector(1, 2),
                 kohnShamDFTEigenOperator.getScratchFEMultivector(1, 3),
                 *d_dftParamsPtr);
+
             d_upperBoundUnwantedSpectrumValues
               [(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
                 bounds.second;

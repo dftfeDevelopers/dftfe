@@ -243,7 +243,7 @@ namespace dftfe
           operatorMatrix.getMPICommunicatorDomain());
 
       const unsigned int lanczosIterations =
-        dftParams.reproducible_output ? 40 : 20;
+        dftParams.reproducible_output ? 100 : 40;
       double beta, betaNeg;
 
 
@@ -459,7 +459,7 @@ namespace dftfe
           operatorMatrix.getMPICommunicatorDomain());
 
       const unsigned int lanczosIterations =
-        dftParams.reproducible_output ? 200 : 50;
+        dftParams.reproducible_output ? 200 : 40;
       double beta, betaNeg;
       T      betaTemp;
 
@@ -630,7 +630,7 @@ namespace dftfe
       double lowerBound = std::floor(eigenValuesT[0]);
       double upperBound =
         std::ceil(eigenValuesT[lanczosIterations - 1] +
-                  (dftParams.reproducible_output ? YNorm : YNorm / 10.0));
+                  (dftParams.reproducible_output ? beta : beta / 10.0));
 
       if (dftParams.verbosity >= 5 && this_mpi_process == 0)
         {
