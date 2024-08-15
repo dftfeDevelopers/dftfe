@@ -333,6 +333,29 @@ namespace dftfe
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param numberComponents number of wavefunctions associated with a given node
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    void
+    XtOX(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
+         const std::shared_ptr<
+           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+           &                                              BLASWrapperPtr,
+         const dataTypes::number *                        X,
+         const unsigned int                               numberComponents,
+         const unsigned int                               numberLocalDofs,
+         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+         const MPI_Comm &                                 mpiCommDomain,
+         const MPI_Comm &                                 interBandGroupComm,
+         const dftParameters &                            dftParams,
+         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projOverlapPar);
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
      * @param totalNumberComponents number of wavefunctions associated with a given node
      * @param singlePrecComponents number of wavecfuntions starting from the first for
      * which the project Hamiltionian block will be computed in single
@@ -358,6 +381,36 @@ namespace dftfe
       const dftParameters &                            dftParams,
       dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
+
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param totalNumberComponents number of wavefunctions associated with a given node
+     * @param singlePrecComponents number of wavecfuntions starting from the first for
+     * which the project Hamiltionian block will be computed in single
+     * procession. However the cross blocks will still be computed in double
+     * precision.
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    void
+    XtOXMixedPrec(
+      operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                                              BLASWrapperPtr,
+      const dataTypes::number *                        X,
+      const unsigned int                               totalNumberComponents,
+      const unsigned int                               singlePrecComponents,
+      const unsigned int                               numberLocalDofs,
+      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
+      const MPI_Comm &                                 mpiCommDomain,
+      const MPI_Comm &                                 interBandGroupComm,
+      const dftParameters &                            dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projOverlapPar);
 
     /**
      * @brief Computes the projection of Hamiltonian and Overlap with only a single extraction.
