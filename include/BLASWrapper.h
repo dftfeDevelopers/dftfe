@@ -553,14 +553,14 @@ namespace dftfe
                                          const ValueType1 *     copyFromVec,
                                          ValueType2 *           copyToVec);
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       void
       stridedBlockAxpy(const dftfe::size_type contiguousBlockSize,
                        const dftfe::size_type numContiguousBlocks,
-                       const ValueType *      addFromVec,
-                       const ValueType *      scalingVector,
-                       const ValueType        a,
-                       ValueType *            addToVec) const;
+                       const ValueType1 *     addFromVec,
+                       const ValueType2 *     scalingVector,
+                       const ValueType2       a,
+                       ValueType1 *           addToVec) const;
 
       template <typename ValueType1, typename ValueType2>
       void
@@ -1191,14 +1191,14 @@ namespace dftfe
             const ValueType2   beta,
             ValueType1 *       y) const;
 
-      template <typename ValueType>
+      template <typename ValueType1, typename ValueType2>
       void
       stridedBlockAxpy(const dftfe::size_type contiguousBlockSize,
                        const dftfe::size_type numContiguousBlocks,
-                       const ValueType *      addFromVec,
-                       const ValueType *      scalingVector,
-                       const ValueType        a,
-                       ValueType *            addToVec) const;
+                       const ValueType1 *     addFromVec,
+                       const ValueType2 *     scalingVector,
+                       const ValueType2       a,
+                       ValueType1 *           addToVec) const;
 
       template <typename ValueType0,
                 typename ValueType1,

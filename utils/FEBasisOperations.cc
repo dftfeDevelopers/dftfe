@@ -67,6 +67,7 @@ namespace dftfe
       d_cellMassMatrixBasisType.clear();
       d_cellMassMatrixCoeffType.clear();
       d_cellInverseMassVectorBasisType.clear();
+      d_cellInverseMassVectorBasisTypeSinglePrec.clear();
       d_cellInverseMassVectorCoeffType.clear();
       d_cellInverseSqrtMassVectorBasisType.clear();
       d_cellInverseSqrtMassVectorCoeffType.clear();
@@ -184,6 +185,8 @@ namespace dftfe
       d_cellDofIndexToProcessDofIndexMap =
         basisOperationsSrc.d_cellDofIndexToProcessDofIndexMap;
       d_cellIndexToCellIdMap = basisOperationsSrc.d_cellIndexToCellIdMap;
+      d_cellIndexToCellIteratorMap =
+        basisOperationsSrc.d_cellIndexToCellIteratorMap;
       d_cellIdToCellIndexMap = basisOperationsSrc.d_cellIdToCellIndexMap;
       d_nQuadsPerCell        = basisOperationsSrc.d_nQuadsPerCell;
       initializeMPIPattern();
@@ -557,6 +560,17 @@ namespace dftfe
     {
       return d_cellInverseMassVectorBasisType;
     }
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    const dftfe::utils::MemoryStorage<
+      typename dftfe::dataTypes::singlePrecType<ValueTypeBasisData>::type,
+      memorySpace> &
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      cellInverseMassVectorBasisDataSinglePrec() const
+    {
+      return d_cellInverseMassVectorBasisTypeSinglePrec;
+    }
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
@@ -638,6 +652,15 @@ namespace dftfe
       cellID(const unsigned int iElem) const
     {
       return d_cellIndexToCellIdMap[iElem];
+    }
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    dealii::DoFHandler<3>::active_cell_iterator
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      getCellIterator(const unsigned int iElem) const
+    {
+      return d_cellIndexToCellIteratorMap[iElem];
     }
 
     template <typename ValueTypeBasisCoeff,
@@ -824,6 +847,9 @@ namespace dftfe
       d_cellIndexToCellIdMap.clear();
       d_cellIndexToCellIdMap.resize(d_nCells);
 
+      d_cellIndexToCellIteratorMap.clear();
+      d_cellIndexToCellIteratorMap.resize(d_nCells);
+
       d_cellIdToCellIndexMap.clear();
       auto cellPtr =
         d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
@@ -845,6 +871,7 @@ namespace dftfe
 
             d_cellIndexToCellIdMap[iCell]         = cellPtr->id();
             d_cellIdToCellIndexMap[cellPtr->id()] = iCell;
+            d_cellIndexToCellIteratorMap[iCell]   = cellPtr;
 
 
             ++iCell;
@@ -1132,10 +1159,6 @@ namespace dftfe
           d_shapeFunctionGradientDataTranspose[quadID].copyFrom(
             d_shapeFunctionGradientDataTransposeHost);
 #endif
-          // std::cout<<" quad id = "<<quadID<<" size of sha = "<<
-          //  d_shapeFunctionData.find(quadID)->second.size()
-          //  <<" size of tra =
-          //  "<<d_shapeFunctionDataTranspose.find(quadID)->second.size()<<"\n";
         }
     }
 
@@ -2023,7 +2046,13 @@ namespace dftfe
           d_cellMassVectorBasisType.resize(cellMassVectorHost.size());
           d_cellMassVectorBasisType.copyFrom(cellMassVectorHost);
           d_cellInverseMassVectorBasisType.resize(cellInvMassVectorHost.size());
+          d_cellInverseMassVectorBasisTypeSinglePrec.resize(
+            cellInvMassVectorHost.size());
           d_cellInverseMassVectorBasisType.copyFrom(cellInvMassVectorHost);
+          d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+            cellInvMassVectorHost.size(),
+            d_cellInverseMassVectorBasisType.data(),
+            d_cellInverseMassVectorBasisTypeSinglePrec.data());
           d_cellSqrtMassVectorBasisType.resize(cellSqrtMassVectorHost.size());
           d_cellSqrtMassVectorBasisType.copyFrom(cellSqrtMassVectorHost);
           d_cellInverseSqrtMassVectorBasisType.resize(
@@ -2046,9 +2075,15 @@ namespace dftfe
               sqrtMassVector.begin(), d_sqrtMassVectorBasisType.size(), 0, 0);
           d_inverseMassVectorBasisType.resize(mpiPatternP2P->localOwnedSize() +
                                               mpiPatternP2P->localGhostSize());
+          d_inverseMassVectorBasisTypeSinglePrec.resize(
+            mpiPatternP2P->localOwnedSize() + mpiPatternP2P->localGhostSize());
           d_inverseMassVectorBasisType
             .template copyFrom<dftfe::utils::MemorySpace::HOST>(
               invMassVector.begin(), d_inverseMassVectorBasisType.size(), 0, 0);
+          d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+            d_inverseMassVectorBasisTypeSinglePrec.size(),
+            d_inverseMassVectorBasisType.data(),
+            d_inverseMassVectorBasisTypeSinglePrec.data());
           d_massVectorBasisType.resize(mpiPatternP2P->localOwnedSize() +
                                        mpiPatternP2P->localGhostSize());
           d_massVectorBasisType
@@ -2063,7 +2098,13 @@ namespace dftfe
               d_cellMassVectorBasisType.copyFrom(cellMassVectorHost);
               d_cellInverseMassVectorBasisType.resize(
                 cellInvMassVectorHost.size());
+              d_cellInverseMassVectorBasisTypeSinglePrec.resize(
+                cellInvMassVectorHost.size());
               d_cellInverseMassVectorBasisType.copyFrom(cellInvMassVectorHost);
+              d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+                cellInvMassVectorHost.size(),
+                d_cellInverseMassVectorBasisType.data(),
+                d_cellInverseMassVectorBasisTypeSinglePrec.data());
               d_cellSqrtMassVectorBasisType.resize(
                 cellSqrtMassVectorHost.size());
               d_cellSqrtMassVectorBasisType.copyFrom(cellSqrtMassVectorHost);
@@ -2089,6 +2130,9 @@ namespace dftfe
                   d_sqrtMassVectorBasisType.size(),
                   0,
                   0);
+              d_inverseMassVectorBasisTypeSinglePrec.resize(
+                mpiPatternP2P->localOwnedSize() +
+                mpiPatternP2P->localGhostSize());
               d_inverseMassVectorBasisType.resize(
                 mpiPatternP2P->localOwnedSize() +
                 mpiPatternP2P->localGhostSize());
@@ -2098,6 +2142,10 @@ namespace dftfe
                   d_inverseMassVectorBasisType.size(),
                   0,
                   0);
+              d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+                d_inverseMassVectorBasisTypeSinglePrec.size(),
+                d_inverseMassVectorBasisType.data(),
+                d_inverseMassVectorBasisTypeSinglePrec.data());
               d_massVectorBasisType.resize(mpiPatternP2P->localOwnedSize() +
                                            mpiPatternP2P->localGhostSize());
               d_massVectorBasisType
@@ -2132,26 +2180,26 @@ namespace dftfe
                 d_cellSqrtMassVectorCoeffType.data());
               d_inverseSqrtMassVectorCoeffType.resize(
                 mpiPatternP2P->localOwnedSize() +
-                mpiPatternP2P->localOwnedSize());
+                mpiPatternP2P->localGhostSize());
               d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
                 d_inverseSqrtMassVectorCoeffType.size(),
                 d_inverseSqrtMassVectorBasisType.data(),
                 d_inverseSqrtMassVectorCoeffType.data());
               d_sqrtMassVectorCoeffType.resize(mpiPatternP2P->localOwnedSize() +
-                                               mpiPatternP2P->localOwnedSize());
+                                               mpiPatternP2P->localGhostSize());
               d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
                 d_sqrtMassVectorCoeffType.size(),
                 d_sqrtMassVectorBasisType.data(),
                 d_sqrtMassVectorCoeffType.data());
               d_massVectorCoeffType.resize(mpiPatternP2P->localOwnedSize() +
-                                           mpiPatternP2P->localOwnedSize());
+                                           mpiPatternP2P->localGhostSize());
               d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
                 d_massVectorCoeffType.size(),
                 d_massVectorBasisType.data(),
                 d_massVectorCoeffType.data());
               d_inverseMassVectorCoeffType.resize(
                 mpiPatternP2P->localOwnedSize() +
-                mpiPatternP2P->localOwnedSize());
+                mpiPatternP2P->localGhostSize());
               d_BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
                 d_inverseMassVectorCoeffType.size(),
                 d_inverseMassVectorBasisType.data(),
@@ -2495,6 +2543,19 @@ namespace dftfe
         const unsigned int blocksize,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &multiVector) const
+    {
+      multiVector.reinit(mpiPatternP2P, blocksize);
+    }
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      createMultiVectorSinglePrec(
+        const unsigned int blocksize,
+        dftfe::linearAlgebra::MultiVector<
+          typename dftfe::dataTypes::singlePrecType<ValueTypeBasisCoeff>::type,
+          memorySpace> &multiVector) const
     {
       multiVector.reinit(mpiPatternP2P, blocksize);
     }

@@ -957,3 +957,12 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const std::complex<double> *scalingVector,
   const std::complex<double>  a,
   std::complex<double> *      addToVec) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
+  const dftfe::size_type      contiguousBlockSize,
+  const dftfe::size_type      numContiguousBlocks,
+  const std::complex<double> *addFromVec,
+  const double *              scalingVector,
+  const double                a,
+  std::complex<double> *      addToVec) const;

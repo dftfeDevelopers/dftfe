@@ -1003,8 +1003,8 @@ namespace dftfe
           blockSize,
           src.locallyOwnedSize(),
           src.data(),
-          d_basisOperationsPtr->massVector().data(),
-          dataTypes::number(1.0),
+          d_basisOperationsPtr->massVectorBasisData().data(),
+          1.0,
           dst.data());
       }
     else

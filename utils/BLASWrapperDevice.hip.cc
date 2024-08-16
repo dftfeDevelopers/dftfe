@@ -705,15 +705,15 @@ namespace dftfe
                          dftfe::utils::makeDataTypeDeviceCompatible(C));
     }
 
-    template <typename ValueType>
+    template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType *      addFromVec,
-      const ValueType *      scalingVector,
-      const ValueType        a,
-      ValueType *            addToVec) const
+      const ValueType1 *     addFromVec,
+      const ValueType2 *     scalingVector,
+      const ValueType2       a,
+      ValueType1 *           addToVec) const
     {
       hipLaunchKernelGGL(stridedBlockAxpyDeviceKernel,
                          (contiguousBlockSize * numContiguousBlocks) /

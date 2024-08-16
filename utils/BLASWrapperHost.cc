@@ -1226,19 +1226,19 @@ namespace dftfe
         }
     }
 
-    template <typename ValueType>
+    template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType *      addFromVec,
-      const ValueType *      scalingVector,
-      const ValueType        a,
-      ValueType *            addToVec) const
+      const ValueType1 *     addFromVec,
+      const ValueType2 *     scalingVector,
+      const ValueType2       a,
+      ValueType1 *           addToVec) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
         {
-          ValueType coeff = a * scalingVector[iBlock];
+          ValueType2 coeff = a * scalingVector[iBlock];
           std::transform(addFromVec + iBlock * contiguousBlockSize,
                          addFromVec + (iBlock + 1) * contiguousBlockSize,
                          addToVec + iBlock * contiguousBlockSize,
@@ -1742,6 +1742,14 @@ namespace dftfe
       const std::complex<double> *addFromVec,
       const std::complex<double> *scalingVector,
       const std::complex<double>  a,
+      std::complex<double> *      addToVec) const;
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
+      const dftfe::size_type      contiguousBlockSize,
+      const dftfe::size_type      numContiguousBlocks,
+      const std::complex<double> *addFromVec,
+      const double *              scalingVector,
+      const double                a,
       std::complex<double> *      addToVec) const;
 
   } // End of namespace linearAlgebra
