@@ -2423,9 +2423,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapack(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -2467,7 +2470,9 @@ namespace dftfe
       std::memset(overlapMatrixBlockHost.begin(),
                   0,
                   vectorsBlockSize * N * sizeof(dataTypes::number));
-
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+                                   HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
       dftfe::utils::deviceStream_t streamDeviceCCL = 0;
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
@@ -2497,6 +2502,33 @@ namespace dftfe
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
+              const unsigned int chebyBlockSize =
+                std::min(dftParams.chebyWfcBlockSize, N);
+
+              for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+                {
+                  BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                    chebyBlockSize, N, M, k, X, XBlock.begin());
+
+                  // evaluate XBlock^{T} times H^{T} and store in HXBlock
+                  operatorMatrix.overlapMatrixTimesX(
+                    XBlock,
+                    1.0,
+                    0.0,
+                    0.0,
+                    HXBlock,
+                    dftParams.approxOverlapMatrix);
+
+                  BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                    B,
+                    chebyBlockSize,
+                    M,
+                    k - ivec,
+                    HXBlock.begin(),
+                    HXBlockFull.begin());
+                }
+
+
               // Comptute local XTrunc^{T}*XcBlock.
               BLASWrapperPtr->xgemm(
                 'N',
@@ -2509,8 +2541,8 @@ namespace dftfe
                 &scalarCoeffAlpha,
                 X + ivec,
                 N,
-                X + ivec,
-                N,
+                HXBlockFull.begin(),
+                B,
                 &scalarCoeffBeta,
                 overlapMatrixBlock.begin(),
                 D);
@@ -2614,9 +2646,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -2681,6 +2716,9 @@ namespace dftfe
       // allocate device vectors to be used later
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
+        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlock(N * vectorsBlockSize, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -2715,6 +2753,32 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock.
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
+                  const unsigned int chebyBlockSize =
+                    std::min(dftParams.chebyWfcBlockSize, N);
+
+                  for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+                    {
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
+
+                      // evaluate XBlock^{T} times H^{T} and store in HXBlock
+                      operatorMatrix.overlapMatrixTimesX(
+                        XBlock,
+                        1.0,
+                        0.0,
+                        0.0,
+                        HXBlock,
+                        dftParams.approxOverlapMatrix);
+
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        chebyBlockSize,
+                        M,
+                        k - ivec,
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
+                    }
+
                   BLASWrapperPtr->xgemm(
                     'N',
                     std::is_same<dataTypes::number,
@@ -2727,8 +2791,8 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivec,
                     N,
-                    X + ivec,
-                    N,
+                    HXBlockFull.begin(),
+                    B,
                     &scalarCoeffBeta,
                     overlapMatrixBlock.begin(),
                     D);
@@ -2759,6 +2823,33 @@ namespace dftfe
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
+                  const unsigned int chebyBlockSize =
+                    std::min(dftParams.chebyWfcBlockSize, N);
+
+                  for (unsigned int k = ivecNew; k < ivecNew + BNew;
+                       k += chebyBlockSize)
+                    {
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
+
+                      // evaluate XBlock^{T} times H^{T} and store in HXBlock
+                      operatorMatrix.overlapMatrixTimesX(
+                        XBlock,
+                        1.0,
+                        0.0,
+                        0.0,
+                        HXBlock,
+                        dftParams.approxOverlapMatrix);
+
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        BNew,
+                        BNew,
+                        M,
+                        (BNew / chebyBlockSize),
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
+                    }
+
                   // evaluate X^{T} times XBlock
                   BLASWrapperPtr->xgemm(
                     'N',
@@ -2772,8 +2863,8 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivecNew,
                     N,
-                    X + ivecNew,
-                    N,
+                    HXBlockFull.begin(),
+                    BNew,
                     &scalarCoeffBeta,
                     overlapMatrixBlockNext.begin(),
                     DNew);
@@ -2885,9 +2976,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -2942,6 +3036,12 @@ namespace dftfe
                   0,
                   vectorsBlockSize * vectorsBlockSize *
                     sizeof(dataTypes::number));
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        HXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
@@ -2992,6 +3092,32 @@ namespace dftfe
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
+              const unsigned int chebyBlockSize =
+                std::min(dftParams.chebyWfcBlockSize, N);
+              for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+                {
+                  BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                    chebyBlockSize, N, M, k, X, XBlock.begin());
+
+                  // evaluate H times XBlock^{T} and store in HXBlock^{T}
+                  operatorMatrix.overlapMatrixTimesX(
+                    XBlock,
+                    1.0,
+                    0.0,
+                    0.0,
+                    HXBlock,
+                    dftParams.approxOverlapMatrix);
+
+                  BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                    B,
+                    chebyBlockSize,
+                    M,
+                    k - ivec,
+                    HXBlock.begin(),
+                    HXBlockFull.begin());
+                }
+
+
               BLASWrapperPtr->xgemm(
                 'N',
                 std::is_same<dataTypes::number, std::complex<double>>::value ?
@@ -3003,8 +3129,8 @@ namespace dftfe
                 &scalarCoeffAlpha,
                 X + ivec,
                 N,
-                X + ivec,
-                N,
+                HXBlockFull.data(),
+                B,
                 &scalarCoeffBeta,
                 overlapMatrixBlockDP.begin(),
                 B);
@@ -3013,6 +3139,14 @@ namespace dftfe
 
               if (DRem != 0)
                 {
+                  BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                    B,
+                    B,
+                    M,
+                    (B / chebyBlockSize),
+                    HXBlockFull.begin(),
+                    HXBlockFullFP32.begin());
+
                   BLASWrapperPtr->xgemm(
                     'N',
                     std::is_same<dataTypes::number,
@@ -3025,8 +3159,8 @@ namespace dftfe
                     &scalarCoeffAlphaSP,
                     XSP.begin() + ivec + B,
                     N,
-                    XSP.begin() + ivec,
-                    N,
+                    HXBlockFullFP32.data(),
+                    B,
                     &scalarCoeffBetaSP,
                     overlapMatrixBlockSP.begin(),
                     DRem);
@@ -3168,9 +3302,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -3291,13 +3428,21 @@ namespace dftfe
           tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        HXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
+
       unsigned int blockCount = 0;
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
           const unsigned int B = std::min(vectorsBlockSize, N - ivec);
           const unsigned int D = N - ivec;
-
+          const unsigned int chebyBlockSize =
+            std::min(dftParams.chebyWfcBlockSize, N);
           if ((ivec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
@@ -3305,6 +3450,28 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
+                  for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+                    {
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
+
+                      operatorMatrix.overlapMatrixTimesX(
+                        XBlock,
+                        1.0,
+                        0.0,
+                        0.0,
+                        HXBlock,
+                        dftParams.approxOverlapMatrix);
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        chebyBlockSize,
+                        M,
+                        k - ivec,
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
+                    }
+
+
                   BLASWrapperPtr->xgemm(
                     'N',
                     std::is_same<dataTypes::number,
@@ -3317,8 +3484,8 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivec,
                     N,
-                    X + ivec,
-                    N,
+                    HXBlockFull.begin(),
+                    B,
                     &scalarCoeffBeta,
                     overlapMatrixBlockDP.begin(),
                     B);
@@ -3327,6 +3494,14 @@ namespace dftfe
 
                   if (DRem != 0)
                     {
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        B,
+                        M,
+                        (B / chebyBlockSize),
+                        HXBlockFull.begin(),
+                        HXBlockFullFP32.begin());
+
                       BLASWrapperPtr->xgemm(
                         'N',
                         std::is_same<dataTypes::number,
@@ -3339,8 +3514,8 @@ namespace dftfe
                         &scalarCoeffAlphaSP,
                         XSP.begin() + ivec + B,
                         N,
-                        XSP.begin() + ivec,
-                        N,
+                        HXBlockFullFP32.begin(),
+                        B,
                         &scalarCoeffBetaSP,
                         overlapMatrixBlockSP.begin(),
                         DRem);
@@ -3375,6 +3550,28 @@ namespace dftfe
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
+                  for (unsigned int k = ivecNew; k < ivecNew + B;
+                       k += chebyBlockSize)
+                    {
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
+
+                      operatorMatrix.overlapMatrixTimesX(
+                        XBlock,
+                        1.0,
+                        0.0,
+                        0.0,
+                        HXBlock,
+                        dftParams.approxOverlapMatrix);
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        chebyBlockSize,
+                        M,
+                        k - ivecNew,
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
+                    }
+
                   // evaluate X^{T} times XBlock
                   BLASWrapperPtr->xgemm(
                     dftfe::utils::DEVICEBLAS_OP_N,
@@ -3388,8 +3585,8 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivecNew,
                     N,
-                    X + ivecNew,
-                    N,
+                    HXBlockFull.begin(),
+                    BNew,
                     &scalarCoeffBeta,
                     overlapMatrixBlockDPNext.begin(),
                     BNew);
@@ -3398,6 +3595,14 @@ namespace dftfe
 
                   if (DRemNew != 0)
                     {
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        BNew,
+                        BNew,
+                        M,
+                        (BNew / chebyBlockSize),
+                        HXBlockFull.begin(),
+                        HXBlockFullFP32.begin());
+
                       BLASWrapperPtr->xgemm(
                         'N',
                         std::is_same<dataTypes::number,
@@ -3410,8 +3615,8 @@ namespace dftfe
                         &scalarCoeffAlphaSP,
                         XSP.begin() + ivecNew + BNew,
                         N,
-                        XSP.begin() + ivecNew,
-                        N,
+                        HXBlockFullFP32.begin(),
+                        BNew,
                         &scalarCoeffBetaSP,
                         overlapMatrixBlockSPNext.begin(),
                         DRemNew);
@@ -3566,9 +3771,12 @@ namespace dftfe
 
     void
     fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -3642,6 +3850,10 @@ namespace dftfe
       // allocate device vectors to be used later
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
+        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlock(N * vectorsBlockSize, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -3697,6 +3909,34 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock.
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
+                  const unsigned int chebyBlockSize =
+                    std::min(dftParams.chebyWfcBlockSize, N);
+
+                  for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+                    {
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
+
+                      // evaluate XBlock^{T} times H^{T} and store in HXBlock
+                      operatorMatrix.overlapMatrixTimesX(
+                        XBlock,
+                        1.0,
+                        0.0,
+                        0.0,
+                        HXBlock,
+                        dftParams.approxOverlapMatrix);
+
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        chebyBlockSize,
+                        M,
+                        k - ivec,
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
+                    }
+
+
+
                   BLASWrapperPtr->xgemm(
                     dftfe::utils::DEVICEBLAS_OP_N,
                     std::is_same<dataTypes::number,
@@ -3709,8 +3949,8 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivec,
                     N,
-                    X + ivec,
-                    N,
+                    HXBlockFull.data(),
+                    B,
                     &scalarCoeffBeta,
                     overlapMatrixBlock.begin(),
                     D);
@@ -3742,6 +3982,33 @@ namespace dftfe
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
                   // evaluate X^{T} times XBlock
+                  const unsigned int chebyBlockSize =
+                    std::min(dftParams.chebyWfcBlockSize, N);
+
+                  for (unsigned int k = ivecNew; k < ivecNew + B;
+                       k += chebyBlockSize)
+                    {
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        chebyBlockSize, N, M, k, X, XBlock.begin());
+
+                      // evaluate XBlock^{T} times H^{T} and store in HXBlock
+                      operatorMatrix.overlapMatrixTimesX(
+                        XBlock,
+                        1.0,
+                        0.0,
+                        0.0,
+                        HXBlock,
+                        dftParams.approxOverlapMatrix);
+
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        chebyBlockSize,
+                        M,
+                        k - ivecNew,
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
+                    }
+
                   BLASWrapperPtr->xgemm(
                     'N',
                     std::is_same<dataTypes::number,
@@ -3754,8 +4021,8 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivecNew,
                     N,
-                    X + ivecNew,
-                    N,
+                    HXBlockFull.begin(),
+                    B,
                     &scalarCoeffBeta,
                     overlapMatrixBlockNext.begin(),
                     DNew);

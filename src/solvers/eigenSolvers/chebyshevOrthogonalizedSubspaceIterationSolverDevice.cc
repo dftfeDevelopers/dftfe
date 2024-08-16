@@ -702,8 +702,11 @@ namespace dftfe
         if (d_dftParams.useSubspaceProjectedSHEPGPU)
           {
             linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
+              operatorMatrix,
               elpaScala,
               eigenVectorsFlattenedDevice,
+              (*XBlock),
+              (*HXBlock),
               localVectorSize,
               totalNumberWaveFunctions,
               d_mpiCommParent,
@@ -1126,8 +1129,11 @@ namespace dftfe
 
 
         linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
+          operatorMatrix,
           elpaScala,
           eigenVectorsFlattenedDevice,
+          (*XBlock),
+          (*HXBlock),
           localVectorSize,
           totalNumberWaveFunctions,
           d_mpiCommParent,

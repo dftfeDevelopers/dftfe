@@ -80,12 +80,15 @@ namespace dftfe
 
     void
     pseudoGramSchmidtOrthogonalization(
-      elpaScalaManager &       elpaScala,
-      dataTypes::number *      X,
-      const unsigned int       M,
-      const unsigned int       N,
-      const MPI_Comm &         mpiCommParent,
-      const MPI_Comm &         mpiCommDomain,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      elpaScalaManager &                                   elpaScala,
+      dataTypes::number *                                  X,
+      distributedDeviceVec<dataTypes::number> &            Xb,
+      distributedDeviceVec<dataTypes::number> &            HXb,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
+      const MPI_Comm &                                     mpiCommParent,
+      const MPI_Comm &                                     mpiCommDomain,
       utils::DeviceCCLWrapper &devicecclMpiCommDomain,
       const MPI_Comm &         interBandGroupComm,
       std::shared_ptr<
@@ -139,7 +142,10 @@ namespace dftfe
               if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
                 linearAlgebraOperationsDevice::
                   fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
+                    operatorMatrix,
                     X,
+                    Xb,
+                    HXb,
                     M,
                     N,
                     BLASWrapperPtr,
@@ -152,7 +158,10 @@ namespace dftfe
               else
                 linearAlgebraOperationsDevice::
                   fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
+                    operatorMatrix,
                     X,
+                    Xb,
+                    HXb,
                     M,
                     N,
                     BLASWrapperPtr,
@@ -165,7 +174,10 @@ namespace dftfe
             }
           else
             linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapack(X,
+              fillParallelOverlapMatMixedPrecScalapack(operatorMatrix,
+                                                       X,
+                                                       Xb,
+                                                       HXb,
                                                        M,
                                                        N,
                                                        BLASWrapperPtr,
@@ -181,7 +193,10 @@ namespace dftfe
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatScalapackAsyncComputeCommun(
+                operatorMatrix,
                 X,
+                Xb,
+                HXb,
                 M,
                 N,
                 BLASWrapperPtr,
@@ -193,7 +208,10 @@ namespace dftfe
                 dftParams);
           else
             linearAlgebraOperationsDevice::fillParallelOverlapMatScalapack(
+              operatorMatrix,
               X,
+              Xb,
+              HXb,
               M,
               N,
               BLASWrapperPtr,

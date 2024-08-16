@@ -429,7 +429,10 @@ namespace dftfe
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
+                operatorMatrix,
                 X,
+                Xb,
+                HXb,
                 M,
                 N,
                 BLASWrapperPtr,
@@ -441,7 +444,10 @@ namespace dftfe
                 dftParams);
           else
             linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapack(X,
+              fillParallelOverlapMatMixedPrecScalapack(operatorMatrix,
+                                                       X,
+                                                       Xb,
+                                                       HXb,
                                                        M,
                                                        N,
                                                        BLASWrapperPtr,
@@ -457,7 +463,10 @@ namespace dftfe
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatScalapackAsyncComputeCommun(
+                operatorMatrix,
                 X,
+                Xb,
+                HXb,
                 M,
                 N,
                 BLASWrapperPtr,
@@ -469,7 +478,10 @@ namespace dftfe
                 dftParams);
           else
             linearAlgebraOperationsDevice::fillParallelOverlapMatScalapack(
+              operatorMatrix,
               X,
+              Xb,
+              HXb,
               M,
               N,
               BLASWrapperPtr,
@@ -903,7 +915,10 @@ namespace dftfe
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
+                operatorMatrix,
                 X,
+                Xb,
+                HXb,
                 M,
                 N,
                 BLASWrapperPtr,
@@ -915,7 +930,10 @@ namespace dftfe
                 dftParams);
           else
             linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapack(X,
+              fillParallelOverlapMatMixedPrecScalapack(operatorMatrix,
+                                                       X,
+                                                       Xb,
+                                                       HXb,
                                                        M,
                                                        N,
                                                        BLASWrapperPtr,
@@ -931,7 +949,10 @@ namespace dftfe
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatScalapackAsyncComputeCommun(
+                operatorMatrix,
                 X,
+                Xb,
+                HXb,
                 M,
                 N,
                 BLASWrapperPtr,
@@ -943,7 +964,10 @@ namespace dftfe
                 dftParams);
           else
             linearAlgebraOperationsDevice::fillParallelOverlapMatScalapack(
+              operatorMatrix,
               X,
+              Xb,
+              HXb,
               M,
               N,
               BLASWrapperPtr,

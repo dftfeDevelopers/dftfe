@@ -133,9 +133,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapack(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -154,9 +157,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -175,9 +181,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -194,9 +203,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -213,9 +225,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -232,12 +247,15 @@ namespace dftfe
      */
     void
     pseudoGramSchmidtOrthogonalization(
-      elpaScalaManager &       elpaScala,
-      dataTypes::number *      X,
-      const unsigned int       M,
-      const unsigned int       N,
-      const MPI_Comm &         mpiCommParent,
-      const MPI_Comm &         mpiCommDomain,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      elpaScalaManager &                                   elpaScala,
+      dataTypes::number *                                  X,
+      distributedDeviceVec<dataTypes::number> &            Xb,
+      distributedDeviceVec<dataTypes::number> &            HXb,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
+      const MPI_Comm &                                     mpiCommParent,
+      const MPI_Comm &                                     mpiCommDomain,
       utils::DeviceCCLWrapper &devicecclMpiCommDomain,
       const MPI_Comm &         interBandGroupComm,
       std::shared_ptr<
