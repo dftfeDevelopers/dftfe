@@ -487,23 +487,7 @@ namespace dftfe
     void
     inverse(double *A, int N);
 
-    /** @brief Calculates an estimate of lower and upper bounds of a matrix using
-     *  k-step Lanczos method.
-     *
-     *  @param  operatorMatrix An object which has access to the given matrix
-     *  @param  vect A dummy vector
-     *  @return std::pair<double,double> An estimate of the lower and upper bound of the given matrix
-     */
-    template <typename T, dftfe::utils::MemorySpace memorySpace>
-    std::pair<double, double>
-    lanczosLowerUpperBoundEigenSpectrum(
-      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                BLASWrapperPtr,
-      operatorDFTClass<memorySpace> &                    operatorMatrix,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Z,
-      const dftParameters &                              dftParams);
+
 
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
      *  k-step Generalised Lanczos method. Algo is present in PAW PRB paper

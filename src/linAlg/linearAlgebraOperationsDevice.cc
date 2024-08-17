@@ -2447,7 +2447,6 @@ namespace dftfe
         overlapMatPar,
         globalToLocalRowIdMap,
         globalToLocalColumnIdMap);
-
       // band group parallelization data structures
       const unsigned int numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
@@ -2670,7 +2669,6 @@ namespace dftfe
         overlapMatPar,
         globalToLocalRowIdMap,
         globalToLocalColumnIdMap);
-
       // band group parallelization data structures
       const unsigned int numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
@@ -2842,10 +2840,10 @@ namespace dftfe
                         dftParams.approxOverlapMatrix);
 
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                        BNew,
-                        BNew,
+                        B,
+                        chebyBlockSize,
                         M,
-                        (BNew / chebyBlockSize),
+                        k - ivecNew,
                         HXBlock.begin(),
                         HXBlockFull.begin());
                     }
