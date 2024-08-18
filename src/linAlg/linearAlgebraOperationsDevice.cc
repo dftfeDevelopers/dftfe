@@ -3138,12 +3138,7 @@ namespace dftfe
               if (DRem != 0)
                 {
                   BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                    B,
-                    B,
-                    M,
-                    (B / chebyBlockSize),
-                    HXBlockFull.begin(),
-                    HXBlockFullFP32.begin());
+                    B, B, M, 0, HXBlockFull.begin(), HXBlockFullFP32.begin());
 
                   BLASWrapperPtr->xgemm(
                     'N',
@@ -3496,7 +3491,7 @@ namespace dftfe
                         B,
                         B,
                         M,
-                        (B / chebyBlockSize),
+                        0,
                         HXBlockFull.begin(),
                         HXBlockFullFP32.begin());
 
@@ -3548,7 +3543,7 @@ namespace dftfe
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-                  for (unsigned int k = ivecNew; k < ivecNew + B;
+                  for (unsigned int k = ivecNew; k < ivecNew + BNew;
                        k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
@@ -3562,7 +3557,7 @@ namespace dftfe
                         HXBlock,
                         dftParams.approxOverlapMatrix);
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                        B,
+                        BNew,
                         chebyBlockSize,
                         M,
                         k - ivecNew,
@@ -3597,7 +3592,7 @@ namespace dftfe
                         BNew,
                         BNew,
                         M,
-                        (BNew / chebyBlockSize),
+                        0,
                         HXBlockFull.begin(),
                         HXBlockFullFP32.begin());
 
