@@ -1059,6 +1059,7 @@ namespace dftfe
         d_basisOperationsPtr->distribute(src);
         const dataTypes::number scalarCoeffAlpha = scalarOX,
                                 scalarCoeffBeta  = dataTypes::number(0.0);
+#pragma omp parallel for num_threads(d_nOMPThreads)
         for (unsigned int iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
@@ -1096,14 +1097,19 @@ namespace dftfe
               numDoFsPerCell,
               numDoFsPerCell * numDoFsPerCell,
               &scalarCoeffBeta,
-              d_cellWaveFunctionMatrixDst.data(),
+              d_cellWaveFunctionMatrixDst.data() +
+                omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
+                  numberWavefunctions,
               numberWavefunctions,
               numDoFsPerCell * numberWavefunctions,
               cellRange.second - cellRange.first);
+#pragma omp critical(hx_assembly)
             d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
               numberWavefunctions,
               numDoFsPerCell * (cellRange.second - cellRange.first),
-              d_cellWaveFunctionMatrixDst.data(),
+              d_cellWaveFunctionMatrixDst.data() +
+                omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
+                  numberWavefunctions,
               dst.data(),
               d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
                   .data() +
