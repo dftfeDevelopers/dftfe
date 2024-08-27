@@ -995,6 +995,7 @@ namespace dftfe
         d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
           numberWavefunctions,
           numDoFsPerCell * (cellRange.second - cellRange.first),
+          scalarHX,
           d_cellWaveFunctionMatrixDst.data() +
             omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
               numberWavefunctions,

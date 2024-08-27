@@ -415,6 +415,61 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   std::complex<float> *          addToVec,
   const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+  const dftfe::size_type         contiguousBlockSize,
+  const dftfe::size_type         numContiguousBlocks,
+  const double                   a,
+  const double *                 addFromVec,
+  double *                       addToVec,
+  const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+  const dftfe::size_type         contiguousBlockSize,
+  const dftfe::size_type         numContiguousBlocks,
+  const double                   a,
+  const std::complex<double> *   addFromVec,
+  std::complex<double> *         addToVec,
+  const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+  const dftfe::size_type         contiguousBlockSize,
+  const dftfe::size_type         numContiguousBlocks,
+  const double                   a,
+  const float *                  addFromVec,
+  float *                        addToVec,
+  const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+  const dftfe::size_type         contiguousBlockSize,
+  const dftfe::size_type         numContiguousBlocks,
+  const double                   a,
+  const std::complex<float> *    addFromVec,
+  std::complex<float> *          addToVec,
+  const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+  const dftfe::size_type         contiguousBlockSize,
+  const dftfe::size_type         numContiguousBlocks,
+  const float                    a,
+  const float *                  addFromVec,
+  float *                        addToVec,
+  const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+  const dftfe::size_type         contiguousBlockSize,
+  const dftfe::size_type         numContiguousBlocks,
+  const float                    a,
+  const std::complex<float> *    addFromVec,
+  std::complex<float> *          addToVec,
+  const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpby(const unsigned int n,
                                                       const double       alpha,

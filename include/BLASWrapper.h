@@ -602,6 +602,15 @@ namespace dftfe
                                 ValueType3 *           addToVec,
                                 const dftfe::global_size_type
                                   *addToVecStartingContiguousBlockIds) const;
+      template <typename ValueType1, typename ValueType2, typename ValueType3>
+      void
+      axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
+                                const dftfe::size_type numContiguousBlocks,
+                                const ValueType1       a,
+                                const ValueType2 *     addFromVec,
+                                ValueType3 *           addToVec,
+                                const dftfe::global_size_type
+                                  *addToVecStartingContiguousBlockIds) const;
 
       template <typename ValueType1, typename ValueType2>
       void
@@ -1230,6 +1239,15 @@ namespace dftfe
                                 const dftfe::size_type numContiguousBlocks,
                                 const ValueType1       a,
                                 const ValueType1 *     s,
+                                const ValueType2 *     addFromVec,
+                                ValueType3 *           addToVec,
+                                const dftfe::global_size_type
+                                  *addToVecStartingContiguousBlockIds) const;
+      template <typename ValueType1, typename ValueType2, typename ValueType3>
+      void
+      axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
+                                const dftfe::size_type numContiguousBlocks,
+                                const ValueType1       a,
                                 const ValueType2 *     addFromVec,
                                 ValueType3 *           addToVec,
                                 const dftfe::global_size_type
