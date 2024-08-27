@@ -232,7 +232,8 @@ namespace dftfe
                     vselfEvalSmearedCharge.reinit(cell);
                     vselfEvalSmearedCharge.read_dof_values_plain(
                       vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
-                    vselfEvalSmearedCharge.evaluate(false, true);
+                    vselfEvalSmearedCharge.evaluate(
+                      dealii::EvaluationFlags::gradients);
 
                     std::fill(smearedbQuads.begin(),
                               smearedbQuads.end(),
@@ -285,7 +286,8 @@ namespace dftfe
 
                     if (!d_dftParams.floatingNuclearCharges)
                       {
-                        forceEvalSmearedCharge.integrate(true, false);
+                        forceEvalSmearedCharge.integrate(
+                          dealii::EvaluationFlags::values);
                         forceEvalSmearedCharge.distribute_local_to_global(
                           d_configForceVectorLinFEElectro);
                       }
@@ -460,9 +462,8 @@ namespace dftfe
                                     FEForce.face_to_cell_index(
                                       baseIndexFaceDofsForceVec[3 * ibase],
                                       faceId,
-                                      cellForce->face_orientation(faceId),
-                                      cellForce->face_flip(faceId),
-                                      cellForce->face_rotation(faceId)),
+                                      cellForce->combined_face_orientation(
+                                        faceId)),
                                     qPoint);
 
                               } // q point loop
@@ -520,7 +521,8 @@ namespace dftfe
         forceEval.reinit(cell);
         eshelbyEval.reinit(cell);
         eshelbyEval.read_dof_values_plain(dftPtr->d_phiExt);
-        eshelbyEval.evaluate(true, true);
+        eshelbyEval.evaluate(dealii::EvaluationFlags::values |
+                             dealii::EvaluationFlags::gradients);
         for (unsigned int q = 0; q < forceEval.n_q_points; ++q)
           {
             dealii::VectorizedArray<double> phiExt_q = eshelbyEval.get_value(q);
@@ -529,7 +531,7 @@ namespace dftfe
             forceEval.submit_gradient(
               eshelbyTensor::getPhiExtEshelbyTensor(phiExt_q, gradPhiExt_q), q);
           }
-        forceEval.integrate(false, true);
+        forceEval.integrate(dealii::EvaluationFlags::gradients);
         forceEval.distribute_local_to_global(
           d_configForceVectorLinFE); // also takes care of constraints
       }
@@ -570,7 +572,7 @@ namespace dftfe
             eshelbyEval.reinit(cell);
             eshelbyEval.read_dof_values_plain(
               dftPtr->d_vselfBinsManager.getVselfFieldBins()[iBin]);
-            eshelbyEval.evaluate(false, true);
+            eshelbyEval.evaluate(dealii::EvaluationFlags::gradients);
             for (unsigned int q = 0; q < forceEval.n_q_points; ++q)
               {
                 dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
@@ -579,7 +581,7 @@ namespace dftfe
                 forceEval.submit_gradient(
                   eshelbyTensor::getVselfBallEshelbyTensor(gradVself_q), q);
               }
-            forceEval.integrate(false, true);
+            forceEval.integrate(dealii::EvaluationFlags::gradients);
             forceEval.distribute_local_to_global(d_configForceVectorLinFE);
           }
       }

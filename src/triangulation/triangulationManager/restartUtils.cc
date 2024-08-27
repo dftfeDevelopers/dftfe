@@ -160,7 +160,7 @@ namespace dftfe
         solutionVectors[i]->reinit(locally_owned_dofs,
                                    ghost_indices,
                                    mpi_communicator);
-        solutionVectors[i]->zero_out_ghosts();
+        solutionVectors[i]->zero_out_ghost_values();
       }
 
     // assumes solution vectors are not ghosted

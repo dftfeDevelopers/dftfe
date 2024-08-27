@@ -394,7 +394,7 @@ namespace dftfe
                   forceEval.submit_gradient(spinPolarizedFactorVect * EQuad[q],
                                             q);
 
-                forceEval.integrate(false, true);
+                forceEval.integrate(dealii::EvaluationFlags::gradients);
 #ifdef USE_COMPLEX
                 forceEval.distribute_local_to_global(
                   d_configForceVectorLinFEKPoints);
@@ -446,7 +446,7 @@ namespace dftfe
                                                   FVectQuads[q],
                                                 q);
 
-                    forceEvalNLP.integrate(true, false);
+                    forceEvalNLP.integrate(dealii::EvaluationFlags::values);
 
 #ifdef USE_COMPLEX
                     forceEvalNLP.distribute_local_to_global(
@@ -891,7 +891,8 @@ namespace dftfe
                     forceEval.submit_gradient(E, q);
                   } // quad point loop
 
-                forceEval.integrate(true, true);
+                forceEval.integrate(dealii::EvaluationFlags::values |
+                                    dealii::EvaluationFlags::gradients);
                 forceEval.distribute_local_to_global(
                   d_configForceVectorLinFE); // also takes care of
                                              // constraints
@@ -1140,7 +1141,8 @@ namespace dftfe
 
             phiTotEvalElectro.reinit(cell);
             phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
-            phiTotEvalElectro.evaluate(true, true);
+            phiTotEvalElectro.evaluate(dealii::EvaluationFlags::values |
+                                       dealii::EvaluationFlags::gradients);
 
             if (d_dftParams.smearedNuclearCharges &&
                 nonTrivialSmearedChargeAtomIdsMacroCell.size() > 0)
@@ -1306,14 +1308,17 @@ namespace dftfe
                   forceEvalElectroLpsp.submit_gradient(E, q);
                 }
 
-            forceEvalElectro.integrate(true, true);
+            forceEvalElectro.integrate(dealii::EvaluationFlags::values |
+                                       dealii::EvaluationFlags::gradients);
             forceEvalElectro.distribute_local_to_global(
               d_configForceVectorLinFEElectro);
 
             if (d_dftParams.isPseudopotential ||
                 d_dftParams.smearedNuclearCharges)
               {
-                forceEvalElectroLpsp.integrate(true, true);
+                forceEvalElectroLpsp.integrate(
+                  dealii::EvaluationFlags::values |
+                  dealii::EvaluationFlags::gradients);
                 forceEvalElectroLpsp.distribute_local_to_global(
                   d_configForceVectorLinFEElectro);
               }
@@ -1323,7 +1328,8 @@ namespace dftfe
               {
                 phiTotEvalSmearedCharge.read_dof_values_plain(
                   phiTotRhoOutElectro);
-                phiTotEvalSmearedCharge.evaluate(false, true);
+                phiTotEvalSmearedCharge.evaluate(
+                  dealii::EvaluationFlags::gradients);
 
                 for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
                   {
@@ -1338,7 +1344,8 @@ namespace dftfe
                   }
 
 
-                forceEvalSmearedCharge.integrate(true, false);
+                forceEvalSmearedCharge.integrate(
+                  dealii::EvaluationFlags::values);
                 forceEvalSmearedCharge.distribute_local_to_global(
                   d_configForceVectorLinFEElectro);
 

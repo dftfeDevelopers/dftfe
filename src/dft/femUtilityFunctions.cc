@@ -88,9 +88,13 @@ namespace dftfe
       {
         feEvalObj.reinit(cell);
         feEvalObj.read_dof_values(nodalField);
-        feEvalObj.evaluate(true,
-                           isEvaluateGradData ? true : false,
-                           isEvaluateHessianData ? true : false);
+        auto evalFlags = dealii::EvaluationFlags::values;
+        if (isEvaluateGradData)
+          evalFlags = evalFlags | dealii::EvaluationFlags::gradients;
+        if (isEvaluateHessianData)
+          evalFlags = evalFlags | dealii::EvaluationFlags::hessians;
+
+        feEvalObj.evaluate(evalFlags);
 
         for (unsigned int iSubCell = 0;
              iSubCell < basisOperationsPtr->matrixFreeData()
@@ -209,7 +213,11 @@ namespace dftfe
       {
         feEvalObj.reinit(cell);
         feEvalObj.read_dof_values_plain(nodalField);
-        feEvalObj.evaluate(true, isEvaluateGradData ? true : false);
+
+        auto evalFlags = dealii::EvaluationFlags::values;
+        if (isEvaluateGradData)
+          evalFlags = evalFlags | dealii::EvaluationFlags::gradients;
+        feEvalObj.evaluate(evalFlags);
 
         for (unsigned int iSubCell = 0;
              iSubCell < basisOperationsPtr->matrixFreeData()
@@ -308,7 +316,12 @@ namespace dftfe
       {
         feEvalObj.reinit(cell);
         feEvalObj.read_dof_values(nodalField);
-        feEvalObj.evaluate(true, isEvaluateGradData ? true : false, false);
+
+        auto evalFlags = dealii::EvaluationFlags::values;
+        if (isEvaluateGradData)
+          evalFlags = evalFlags | dealii::EvaluationFlags::gradients;
+
+        feEvalObj.evaluate(evalFlags);
 
         for (unsigned int iSubCell = 0;
              iSubCell < basisOperationsPtr->matrixFreeData()
@@ -387,7 +400,7 @@ namespace dftfe
       {
         fe_evalField.reinit(cell);
         fe_evalField.read_dof_values(nodalField);
-        fe_evalField.evaluate(false, true);
+        fe_evalField.evaluate(dealii::EvaluationFlags::gradients);
         for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
           {
             dealii::VectorizedArray<double> temp =

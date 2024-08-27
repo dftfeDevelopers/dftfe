@@ -59,8 +59,8 @@ SET(TARGET_SRC
   ./src/excManager/excDensityGGAClass.cpp
   ./src/excManager/excDensityLLMGGAClass.cpp
   ./src/excManager/excManager.cpp
-        ./src/excManager/AuxDensityMatrixFE.cpp
-        ./src/excManager/ExcDFTPlusU.cpp
+  ./src/excManager/AuxDensityMatrixFE.cpp
+  ./src/excManager/ExcDFTPlusU.cpp
   ./src/excManager/AuxDensityMatrixSlater.cpp
   ./src/excManager/NNGGA.cc
   ./src/excManager/NNLDA.cc
@@ -74,7 +74,7 @@ SET(TARGET_SRC
   ./src/dftOperator/KohnShamHamiltonianOperator.cc
   ./src/dftOperator/veffPrimeForLRDM.cc
   ./src/force/force.cc
-  ./src/force/forceWfcContractions.cc  
+  ./src/force/forceWfcContractions.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
   ./src/triangulation/meshMovement/meshMovement.cc
@@ -170,7 +170,7 @@ SET(TARGET_SRC
   ./src/force/configurationalStressCompute/computeStressEself.cc
   ./src/force/configurationalStressCompute/stress.cc
   ./src/force/createBinObjectsForce.cc
-  ./src/force/locateAtomCoreNodesForce.cc  
+  ./src/force/locateAtomCoreNodesForce.cc
   ./utils/FEBasisOperationsKernelsInternalHost.cc
   ./utils/FEBasisOperations.cc
   ./utils/FEBasisOperationsKernels.cc
@@ -221,6 +221,7 @@ SET(DEVICE_SRC
   ./src/helmholtz/kerkerSolverProblemDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/matrixFree/MatrixFree.cc
   )
 
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
@@ -249,6 +250,7 @@ SET(DEVICE_SRC
   ./src/helmholtz/kerkerSolverProblemDevice.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/matrixFree/MatrixFree.cc
   )
 
 ENDIF()
@@ -337,7 +339,7 @@ ENDIF()
 #
 IF (WITH_GPU)
   ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE)
-  
+
   IF ("${GPU_VENDOR}" STREQUAL "nvidia")
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_NVIDIA)
   ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
@@ -473,8 +475,8 @@ IF (WITH_TORCH)
 #
 # TORCH. Set with -DTORCH_DIR=/path/to/prefix
 #
-FIND_PACKAGE(Torch PATHS ${TORCH_DIR} Required) 
-target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES}) 
+FIND_PACKAGE(Torch PATHS ${TORCH_DIR} Required)
+target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES})
 ADD_DEFINITIONS(-DDFTFE_WITH_TORCH)
 ENDIF()
 

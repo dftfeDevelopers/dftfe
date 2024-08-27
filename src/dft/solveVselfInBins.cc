@@ -736,7 +736,7 @@ namespace dftfe
                       {
                         fe_eval_sc.reinit(macrocell);
                         fe_eval_sc.read_dof_values_plain(vselfBinScratch);
-                        fe_eval_sc.evaluate(true, false);
+                        fe_eval_sc.evaluate(dealii::EvaluationFlags::values);
                         for (unsigned int q = 0; q < fe_eval_sc.n_q_points; ++q)
                           {
                             fe_eval_sc.submit_value(fe_eval_sc.get_value(q) *
@@ -937,7 +937,7 @@ namespace dftfe
             d_vselfFieldPerturbedBins[iBin], 4 * iBin + offset);
       }
 
-    const unsigned int localSize = d_vselfFieldBins[0].local_size();
+    const unsigned int localSize = d_vselfFieldBins[0].locally_owned_size();
     const unsigned int numberPoissonSolves =
       (useSmearedCharges && !isVselfPerturbationSolve) ? numberBins * 4 :
                                                          numberBins;
@@ -1105,12 +1105,12 @@ namespace dftfe
           {
             fe_eval.reinit(macrocell);
             fe_eval.read_dof_values_plain(tempvec);
-            fe_eval.evaluate(false, true);
+            fe_eval.evaluate(dealii::EvaluationFlags::gradients);
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
                 fe_eval.submit_gradient(-quarter * fe_eval.get_gradient(q), q);
               }
-            fe_eval.integrate(false, true);
+            fe_eval.integrate(dealii::EvaluationFlags::gradients);
             fe_eval.distribute_local_to_global(rhs);
           }
 
@@ -1157,7 +1157,7 @@ namespace dftfe
                       {
                         fe_eval_sc.submit_value(smearedbQuads[q], q);
                       }
-                    fe_eval_sc.integrate(true, false);
+                    fe_eval_sc.integrate(dealii::EvaluationFlags::values);
                     fe_eval_sc.distribute_local_to_global(rhs);
                   }
               }
@@ -1226,14 +1226,14 @@ namespace dftfe
                 {
                   fe_eval2.reinit(macrocell);
                   fe_eval2.read_dof_values_plain(tempvec);
-                  fe_eval2.evaluate(false, true);
+                  fe_eval2.evaluate(dealii::EvaluationFlags::gradients);
                   for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
                     {
                       fe_eval2.submit_gradient(-quarter *
                                                  fe_eval2.get_gradient(q),
                                                q);
                     }
-                  fe_eval2.integrate(false, true);
+                  fe_eval2.integrate(dealii::EvaluationFlags::gradients);
                   fe_eval2.distribute_local_to_global(rhs);
                 }
 
@@ -1282,7 +1282,7 @@ namespace dftfe
                         {
                           fe_eval_sc2.submit_gradient(smearedbQuads[q], q);
                         }
-                      fe_eval_sc2.integrate(false, true);
+                      fe_eval_sc2.integrate(dealii::EvaluationFlags::gradients);
                       fe_eval_sc2.distribute_local_to_global(rhs);
                     }
                 }
@@ -1544,7 +1544,7 @@ namespace dftfe
                         fe_eval_sc.reinit(macrocell);
                         fe_eval_sc.read_dof_values_plain(
                           d_vselfFieldBins[iBin]);
-                        fe_eval_sc.evaluate(true, false);
+                        fe_eval_sc.evaluate(dealii::EvaluationFlags::values);
                         for (unsigned int q = 0; q < fe_eval_sc.n_q_points; ++q)
                           {
                             fe_eval_sc.submit_value(fe_eval_sc.get_value(q) *

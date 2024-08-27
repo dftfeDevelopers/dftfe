@@ -181,7 +181,7 @@ namespace dftfe
       {
         fe_evalField.reinit(cell);
         fe_evalField.read_dof_values(nodalField);
-        fe_evalField.evaluate(true, false);
+        fe_evalField.evaluate(dealii::EvaluationFlags::values);
         for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
           {
             dealii::VectorizedArray<double> temp =
@@ -279,7 +279,7 @@ namespace dftfe
       {
         fe_evalField.reinit(cell);
         fe_evalField.read_dof_values(nodalField);
-        fe_evalField.evaluate(true, false);
+        fe_evalField.evaluate(dealii::EvaluationFlags::values);
         for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
           {
             dealii::VectorizedArray<double> temp =
@@ -337,7 +337,7 @@ namespace dftfe
       {
         fe_evalField.reinit(cell);
         fe_evalField.read_dof_values(nodalField1);
-        fe_evalField.evaluate(true, false);
+        fe_evalField.evaluate(dealii::EvaluationFlags::values);
         dealii::AlignedVector<dealii::VectorizedArray<double>> temp1(
           numQuadPoints, dealii::make_vectorized_array(0.0));
         for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
@@ -346,7 +346,7 @@ namespace dftfe
           }
 
         fe_evalField.read_dof_values(nodalField2);
-        fe_evalField.evaluate(true, false);
+        fe_evalField.evaluate(dealii::EvaluationFlags::values);
         dealii::AlignedVector<dealii::VectorizedArray<double>> temp2(
           numQuadPoints, dealii::make_vectorized_array(0.0));
         for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)

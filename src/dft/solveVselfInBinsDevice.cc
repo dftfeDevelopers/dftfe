@@ -317,7 +317,7 @@ namespace dftfe
                              inhomoIdsColoredVecFlattenedD.begin());
 #  endif
 
-        // src.zero_out_ghosts();
+        // src.zero_out_ghost_values();
         // constraintsMatrixDataInfoDevice.set_zero(src,numberVectors);
       }
 

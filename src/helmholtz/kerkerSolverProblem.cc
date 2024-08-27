@@ -134,7 +134,7 @@ namespace dftfe
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
           fe_eval.submit_value(residualQuads[q], q);
 
-        fe_eval.integrate(true, false);
+        fe_eval.integrate(dealii::EvaluationFlags::values);
 
         fe_eval.distribute_local_to_global(rhs);
       }
@@ -241,14 +241,16 @@ namespace dftfe
         fe_eval.reinit(cell);
         // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::values|dealii::EvaluationFlags::gradients);
         fe_eval.read_dof_values(src);
-        fe_eval.evaluate(true, true, false);
+        fe_eval.evaluate(dealii::EvaluationFlags::values |
+                         dealii::EvaluationFlags::gradients);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
           {
             fe_eval.submit_gradient(fe_eval.get_gradient(q), q);
             fe_eval.submit_value(fe_eval.get_value(q) * kerkerConst, q);
           }
         // fe_eval.integrate_scatter(dealii::EvaluationFlags::values|dealii::EvaluationFlags::gradients,dst);
-        fe_eval.integrate(true, true);
+        fe_eval.integrate(dealii::EvaluationFlags::values |
+                          dealii::EvaluationFlags::gradients);
         fe_eval.distribute_local_to_global(dst);
       }
   }

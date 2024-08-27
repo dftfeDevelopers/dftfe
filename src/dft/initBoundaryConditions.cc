@@ -278,9 +278,21 @@ namespace dftfe
             dftfe::basis::UpdateFlags updateFlagsAll =
               dftfe::basis::update_values | dftfe::basis::update_jxw |
               dftfe::basis::update_inversejacobians |
-              dftfe::basis::update_gradients | dftfe::basis::update_quadpoints |
-              dftfe::basis::update_transpose;
-
+              dftfe::basis::update_gradients | dftfe::basis::update_quadpoints;
+            dftfe::basis::UpdateFlags updateFlagsGLL =
+              dftfe::basis::update_values | dftfe::basis::update_jxw;
+            if (d_dftParamsPtr->auxBasisTypeXC == "SlaterAE")
+              updateFlagsGLL = updateFlagsGLL | dftfe::basis::update_quadpoints;
+            dftfe::basis::UpdateFlags updateFlagsLPSP =
+              dftfe::basis::update_values | dftfe::basis::update_jxw;
+            dftfe::basis::UpdateFlags updateFlagsfeOrderPlusOne =
+              dftfe::basis::update_gradients;
+            if (std::is_same<dataTypes::number, std::complex<double>>::value)
+              updateFlagsfeOrderPlusOne = updateFlagsfeOrderPlusOne |
+                                          dftfe::basis::update_values |
+                                          dftfe::basis::update_jxw;
+            dftfe::basis::UpdateFlags updateFlagssparsityPattern =
+              dftfe::basis::update_quadpoints;
             std::vector<unsigned int> quadratureIndices{
               d_densityQuadratureId,
               d_nlpspQuadratureId,
@@ -288,12 +300,13 @@ namespace dftfe
               d_lpspQuadratureId,
               d_feOrderPlusOneQuadratureId,
               d_sparsityPatternQuadratureId};
-            std::vector<dftfe::basis::UpdateFlags> updateFlags{updateFlagsAll,
-                                                               updateFlagsAll,
-                                                               updateFlagsAll,
-                                                               updateFlagsAll,
-                                                               updateFlagsAll,
-                                                               updateFlagsAll};
+            std::vector<dftfe::basis::UpdateFlags> updateFlags{
+              updateFlagsAll,
+              updateFlagsAll,
+              updateFlagsGLL,
+              updateFlagsLPSP,
+              updateFlagsfeOrderPlusOne,
+              updateFlagssparsityPattern};
             d_basisOperationsPtrHost->init(matrix_free_data,
                                            d_constraintsVector,
                                            d_densityDofHandlerIndex,
@@ -394,10 +407,9 @@ namespace dftfe
             dftfe::basis::UpdateFlags updateFlagsAll =
               dftfe::basis::update_values | dftfe::basis::update_jxw |
               dftfe::basis::update_inversejacobians |
-              dftfe::basis::update_gradients | dftfe::basis::update_transpose;
+              dftfe::basis::update_gradients;
             dftfe::basis::UpdateFlags updateFlagsValuesGradients =
-              dftfe::basis::update_values | dftfe::basis::update_gradients |
-              dftfe::basis::update_transpose;
+              dftfe::basis::update_values | dftfe::basis::update_gradients;
 
             std::vector<unsigned int> quadratureIndices{
               d_nlpspQuadratureId,

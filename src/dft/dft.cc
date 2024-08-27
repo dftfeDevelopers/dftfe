@@ -357,9 +357,6 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::set()
   {
     computingTimerStandard.enter_subsection("Atomic system initialization");
-    if (d_dftParamsPtr->verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-                                        "Entered call to set");
 
     d_numEigenValues = d_dftParamsPtr->numberEigenValues;
 
@@ -517,7 +514,6 @@ namespace dftfe
 
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
-
     //
     // determine number of electrons
     //
@@ -602,7 +598,6 @@ namespace dftfe
                   << d_dftParamsPtr->numCoreWfcRR << std::endl;
           }
       }
-
 
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice && d_dftParamsPtr->autoDeviceBlockSizes)
@@ -762,7 +757,6 @@ namespace dftfe
           }
       }
 #endif
-
     if (d_dftParamsPtr->constraintMagnetization)
       {
         numElectronsUp   = std::ceil(static_cast<double>(numElectrons) / 2.0);
@@ -819,7 +813,6 @@ namespace dftfe
         "DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES should be less than the total number of wavefunctions."));
     d_numEigenValuesRR = d_numEigenValues - d_dftParamsPtr->numCoreWfcRR;
 
-
 #ifdef USE_COMPLEX
     if (d_dftParamsPtr->solverMode == "NSCF")
       {
@@ -868,7 +861,6 @@ namespace dftfe
                                           d_numEigenValuesRR);
       }
 
-
     if (d_dftParamsPtr->isPseudopotential == true)
       {
         // pcout<<"dft.cc 827 ONCV Number of cells DEBUG:
@@ -885,7 +877,6 @@ namespace dftfe
             d_dftParamsPtr->verbosity,
             d_dftParamsPtr->useDevice);
       }
-
     if (d_dftParamsPtr->verbosity >= 1)
       if (d_dftParamsPtr->nonLinearCoreCorrection == true)
         pcout
@@ -895,7 +886,6 @@ namespace dftfe
     d_elpaScala->processGridELPASetup(d_numEigenValues,
                                       d_numEigenValuesRR,
                                       *d_dftParamsPtr);
-
     MPI_Barrier(d_mpiCommParent);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
@@ -1091,9 +1081,6 @@ namespace dftfe
   {
     computingTimerStandard.enter_subsection("KSDFT problem initialization");
 
-    if (d_dftParamsPtr->verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator, "Entering init");
-
     d_BLASWrapperPtrHost = std::make_shared<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
     d_basisOperationsPtrHost = std::make_shared<
@@ -1274,7 +1261,8 @@ namespace dftfe
 
         // Note: d_rhoInNodalValuesRead is not compatible with
         // d_matrixFreeDataPRefined
-        for (unsigned int i = 0; i < d_densityInNodalValues[0].local_size();
+        for (unsigned int i = 0;
+             i < d_densityInNodalValues[0].locally_owned_size();
              i++)
           d_densityInNodalValues[0].local_element(i) =
             d_rhoInNodalValuesRead.local_element(i);
@@ -1308,7 +1296,8 @@ namespace dftfe
         if (d_dftParamsPtr->spinPolarized == 1)
           {
             d_densityInNodalValues[1] = 0;
-            for (unsigned int i = 0; i < d_densityInNodalValues[1].local_size();
+            for (unsigned int i = 0;
+                 i < d_densityInNodalValues[1].locally_owned_size();
                  i++)
               {
                 d_densityInNodalValues[1].local_element(i) =

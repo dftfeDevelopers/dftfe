@@ -230,7 +230,7 @@ namespace dftfe
 
     d_incrementalDisplacement = 0.0;
 
-    d_incrementalDisplacement.zero_out_ghosts();
+    d_incrementalDisplacement.zero_out_ghost_values();
   }
 
   void

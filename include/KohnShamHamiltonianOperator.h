@@ -285,6 +285,7 @@ namespace dftfe
     unsigned int               d_cellsBlockSizeHamiltonianConstruction;
     unsigned int               d_cellsBlockSizeHX;
     unsigned int               d_numVectorsInternal;
+    unsigned int               d_nOMPThreads;
     dealii::ConditionalOStream pcout;
 
     // compute-time logger

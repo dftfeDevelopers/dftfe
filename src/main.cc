@@ -27,6 +27,7 @@
 #include "nudgedElasticBandClass.h"
 #include "geometryOptimizationClass.h"
 
+#include <dftUtils.h>
 
 
 //

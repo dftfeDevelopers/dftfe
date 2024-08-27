@@ -28,6 +28,7 @@
 #    include <MemoryStorage.h>
 #    include <dftUtils.h>
 #    include <FEBasisOperations.h>
+#    include <MatrixFree.h>
 
 
 namespace dftfe
@@ -163,18 +164,11 @@ namespace dftfe
 
   private:
     /**
-     * @brief Sets up the matrixfree shapefunction, gradient, jacobian and map for matrixfree computeAX
-     *
-     */
-    void
-    setupMatrixFree();
-
-    /**
      * @brief Sets up the constraints matrix
      *
      */
     void
-    setupconstraints();
+    setupConstraints();
 
     /**
      * @brief Compute the diagonal of A.
@@ -200,6 +194,9 @@ namespace dftfe
 
     // kerker mixing constant
     double d_gamma;
+
+    /// pointer to MatrixFree Base object
+    std::unique_ptr<dftfe::MatrixFreeBase> d_matrixFreeBasePtr;
 
     // shape function value, gradient, jacobian and map for matrixfree
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>

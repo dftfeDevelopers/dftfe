@@ -2217,7 +2217,7 @@ namespace dftfe
                       numberSphericalFunctions,
                       &one,
                       &Xout[(iElem - cellRange.first) *
-                            d_numberNodesPerElement * d_numberNodesPerElement],
+                            d_numberNodesPerElement * d_numberWaveFunctions],
                       d_numberWaveFunctions);
 
                   } // iAtom
