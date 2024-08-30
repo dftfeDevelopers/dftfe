@@ -6,43 +6,62 @@
 #define DFTFE_EXCDENSITYLLMGGACLASS_H
 
 #include <xc.h>
-#include <excDensityBaseClass.h>
+#include <ExcSSDFunctionalBaseClass.h>
 namespace dftfe
 {
   class NNLLMGGA;
   template <dftfe::utils::MemorySpace memorySpace>
-  class excDensityLLMGGAClass : public excDensityBaseClass<memorySpace>
+  class excDensityLLMGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityLLMGGAClass(xc_func_type *funcXPtr, xc_func_type *funcCPtr);
+    excDensityLLMGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
+                          std::shared_ptr<xc_func_type> funcCPtr);
 
-    excDensityLLMGGAClass(xc_func_type *funcXPtr,
-                          xc_func_type *funcCPtr,
-                          std::string   modelXCInputFile);
+    excDensityLLMGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
+                          std::shared_ptr<xc_func_type> funcCPtr,
+                          std::string                   modelXCInputFile);
 
     ~excDensityLLMGGAClass();
 
     void
-    computeExcVxcFxc(
+    computeOutputXCData(
       AuxDensityMatrix<memorySpace> &auxDensityMatrix,
       const std::vector<double> &    quadPoints,
-      const std::vector<double> &    quadWeights,
-      std::unordered_map<xcOutputDataAttributes, std::vector<double>> &xDataOut,
-      std::unordered_map<xcOutputDataAttributes, std::vector<double>> &cDataout)
-      const override;
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &xDataOut,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &cDataout) const override;
 
     void
     checkInputOutputDataAttributesConsistency(
-      const std::vector<xcOutputDataAttributes> &outputDataAttributes)
+      const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
       const override;
+
+    void
+    applyWaveFunctionDependentFuncDer(
+      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+        &                                                                src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const unsigned int inputVecSize,
+      const double       factor,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex) override;
+    void
+    updateWaveFunctionDependentFuncDer(
+      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+      const std::vector<double> &    kPointWeights) override;
+    double
+    computeWaveFunctionDependentExcEnergy(
+      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+      const std::vector<double> &    kPointWeights) override;
 
 
   private:
-    NNLLMGGA *          d_NNLLMGGAPtr;
-    xc_func_type *      d_funcXPtr;
-    xc_func_type *      d_funcCPtr;
-    std::vector<double> d_spacingFDStencil;
-    unsigned int        d_vxcDivergenceTermFDStencilSize;
+    NNLLMGGA *                    d_NNLLMGGAPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
+    std::vector<double>           d_spacingFDStencil;
+    unsigned int                  d_vxcDivergenceTermFDStencilSize;
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYLLMGGACLASS_H

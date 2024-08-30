@@ -9,7 +9,7 @@ namespace dftfe
   class NNGGA
   {
   public:
-    NNGGA(std::string                          modelFileName,
+    NNGGA(std::string                          modelFilename,
           const bool                           isSpinPolarized = false,
           const excDensityPositivityCheckTypes densityPositivityCheckType =
             excDensityPositivityCheckTypes::MAKE_POSITIVE);

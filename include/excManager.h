@@ -19,16 +19,9 @@
 #define DFTFE_EXCMANAGER_H
 
 #include <xc.h>
-#include <excDensityBaseClass.h>
 #include <ExcSSDFunctionalBaseClass.h>
 namespace dftfe
 {
-  enum class XCPrimaryVariable
-  {
-    DENSITY,
-    SSDETERMINANT
-  };
-
   template <dftfe::utils::MemorySpace memorySpace>
   class excManager
   {
@@ -53,37 +46,21 @@ namespace dftfe
          bool        isSpinPolarized,
          std::string modelXCInputFile);
 
-    //    densityFamilyType
-    //    getDensityBasedFamilyType() const;
-
-
-
-    excDensityBaseClass<memorySpace> *
-    getExcDensityObj();
-
     ExcSSDFunctionalBaseClass<memorySpace> *
     getExcSSDFunctionalObj();
 
 
-    const excDensityBaseClass<memorySpace> *
-    getExcDensityObj() const;
-
     const ExcSSDFunctionalBaseClass<memorySpace> *
     getExcSSDFunctionalObj() const;
 
-    XCPrimaryVariable
-    getXCPrimaryVariable() const;
 
 
   private:
     /// objects for various exchange-correlations (from libxc package)
-    xc_func_type *d_funcXPtr;
-    xc_func_type *d_funcCPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
 
-    excDensityBaseClass<memorySpace> *      d_excDensityObjPtr;
-    ExcSSDFunctionalBaseClass<memorySpace> *d_SSDObjPtr;
-
-    XCPrimaryVariable d_xcPrimVariable;
+    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> d_excObj;
   };
 } // namespace dftfe
 

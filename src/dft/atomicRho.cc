@@ -39,20 +39,9 @@ namespace dftfe
     d_gradRhoAtomsValuesSeparate.clear();
     d_hessianRhoAtomsValuesSeparate.clear();
 
-    bool isGradDensityDataDependent = false;
-    if (d_excManagerPtr->getXCPrimaryVariable() == XCPrimaryVariable::DENSITY)
-      {
-        isGradDensityDataDependent =
-          (d_excManagerPtr->getExcDensityObj()->getDensityBasedFamilyType() ==
-           densityFamilyType::GGA);
-      }
-    else if (d_excManagerPtr->getXCPrimaryVariable() ==
-             XCPrimaryVariable::SSDETERMINANT)
-      {
-        isGradDensityDataDependent =
-          (d_excManagerPtr->getExcSSDFunctionalObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
 
     // Reading single atom rho initial guess
     pcout << std::endl
@@ -476,20 +465,9 @@ namespace dftfe
         << "Total charge rho single atomic before normalizing to number of electrons: "
         << charge << std::endl;
 
-    bool isGradDensityDataDependent = false;
-    if (d_excManagerPtr->getXCPrimaryVariable() == XCPrimaryVariable::DENSITY)
-      {
-        isGradDensityDataDependent =
-          (d_excManagerPtr->getExcDensityObj()->getDensityBasedFamilyType() ==
-           densityFamilyType::GGA);
-      }
-    else if (d_excManagerPtr->getXCPrimaryVariable() ==
-             XCPrimaryVariable::SSDETERMINANT)
-      {
-        isGradDensityDataDependent =
-          (d_excManagerPtr->getExcSSDFunctionalObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
 
     for (auto it1 = d_rhoAtomsValues.begin(); it1 != d_rhoAtomsValues.end();
          ++it1)

@@ -23,8 +23,13 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   ExcSSDFunctionalBaseClass<memorySpace>::ExcSSDFunctionalBaseClass(
-    const densityFamilyType densityFamilyType)
-    : d_densityFamilyType(densityFamilyType)
+    const ExcFamilyType     excFamType,
+    const densityFamilyType densityFamType,
+    const std::vector<DensityDescriptorDataAttributes>
+      &densityDescriptorAttributesList)
+    : d_ExcFamilyType(excFamType)
+    , d_densityFamilyType(densityFamType)
+    , d_densityDescriptorAttributesList(densityDescriptorAttributesList)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -32,10 +37,10 @@ namespace dftfe
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
-  SSDFamilyType
-  ExcSSDFunctionalBaseClass<memorySpace>::getSSDFamilyType() const
+  ExcFamilyType
+  ExcSSDFunctionalBaseClass<memorySpace>::getExcFamilyType() const
   {
-    return d_SSDFamilyType;
+    return d_ExcFamilyType;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -44,6 +49,15 @@ namespace dftfe
   {
     return d_densityFamilyType;
   }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  const std::vector<DensityDescriptorDataAttributes> &
+  ExcSSDFunctionalBaseClass<memorySpace>::getDensityDescriptorAttributesList()
+    const
+  {
+    return d_densityDescriptorAttributesList;
+  }
+
 
 
 } // namespace dftfe

@@ -715,6 +715,10 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<unsigned int>> &
     getbCellNonTrivialAtomIds() const;
 
+
+    void
+    computeFractionalOccupancies();
+
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based
@@ -1611,6 +1615,11 @@ namespace dftfe
      * data storage for Kohn-Sham wavefunctions
      */
     std::vector<std::vector<double>> eigenValues;
+
+    /**
+     * data storage for the occupancy of Kohn-Sham wavefunctions
+     */
+    std::vector<std::vector<double>> d_fracOccupancy;
 
     std::vector<std::vector<double>> d_densityMatDerFermiEnergy;
 

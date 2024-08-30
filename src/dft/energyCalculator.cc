@@ -667,20 +667,9 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
           densityOutValues[0].size(), 0.0));
 
-    bool isIntegrationByPartsGradDensityDependenceVxc = false;
-    if (excManagerPtr->getXCPrimaryVariable() == XCPrimaryVariable::DENSITY)
-      {
-        isIntegrationByPartsGradDensityDependenceVxc =
-          (excManagerPtr->getExcDensityObj()->getDensityBasedFamilyType() ==
-           densityFamilyType::GGA);
-      }
-    else if (excManagerPtr->getXCPrimaryVariable() ==
-             XCPrimaryVariable::SSDETERMINANT)
-      {
-        isIntegrationByPartsGradDensityDependenceVxc =
-          (excManagerPtr->getExcSSDFunctionalObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
+    bool isIntegrationByPartsGradDensityDependenceVxc =
+      (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
 
     if (isIntegrationByPartsGradDensityDependenceVxc)
       {
@@ -865,20 +854,9 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       gradDensityOutQuadValuesSpinPolarized;
 
-    bool isIntegrationByPartsGradDensityDependenceVxc = false;
-    if (excManagerPtr->getXCPrimaryVariable() == XCPrimaryVariable::DENSITY)
-      {
-        isIntegrationByPartsGradDensityDependenceVxc =
-          (excManagerPtr->getExcDensityObj()->getDensityBasedFamilyType() ==
-           densityFamilyType::GGA);
-      }
-    else if (excManagerPtr->getXCPrimaryVariable() ==
-             XCPrimaryVariable::SSDETERMINANT)
-      {
-        isIntegrationByPartsGradDensityDependenceVxc =
-          (excManagerPtr->getExcSSDFunctionalObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
+    bool isIntegrationByPartsGradDensityDependenceVxc =
+      (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
 
     if (isIntegrationByPartsGradDensityDependenceVxc)
       {
@@ -986,50 +964,39 @@ namespace dftfe
     const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
 
 
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       xDensityInDataOut;
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       cDensityInDataOut;
 
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       xDensityOutDataOut;
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       cDensityOutDataOut;
 
     std::vector<double> &xEnergyDensityOut =
-      xDensityOutDataOut[xcOutputDataAttributes::e];
+      xDensityOutDataOut[xcRemainderOutputDataAttributes::e];
     std::vector<double> &cEnergyDensityOut =
-      cDensityOutDataOut[xcOutputDataAttributes::e];
+      cDensityOutDataOut[xcRemainderOutputDataAttributes::e];
 
     std::vector<double> &pdexDensityInSpinUp =
-      xDensityInDataOut[xcOutputDataAttributes::pdeDensitySpinUp];
+      xDensityInDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
     std::vector<double> &pdexDensityInSpinDown =
-      xDensityInDataOut[xcOutputDataAttributes::pdeDensitySpinDown];
+      xDensityInDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
     std::vector<double> &pdecDensityInSpinUp =
-      cDensityInDataOut[xcOutputDataAttributes::pdeDensitySpinUp];
+      cDensityInDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
     std::vector<double> &pdecDensityInSpinDown =
-      cDensityInDataOut[xcOutputDataAttributes::pdeDensitySpinDown];
+      cDensityInDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
-    bool isIntegrationByPartsGradDensityDependenceVxc = false;
-    if (excManagerPtr->getXCPrimaryVariable() == XCPrimaryVariable::DENSITY)
-      {
-        isIntegrationByPartsGradDensityDependenceVxc =
-          (excManagerPtr->getExcDensityObj()->getDensityBasedFamilyType() ==
-           densityFamilyType::GGA);
-      }
-    else if (excManagerPtr->getXCPrimaryVariable() ==
-             XCPrimaryVariable::SSDETERMINANT)
-      {
-        isIntegrationByPartsGradDensityDependenceVxc =
-          (excManagerPtr->getExcSSDFunctionalObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
+    bool isIntegrationByPartsGradDensityDependenceVxc =
+      (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
 
     if (isIntegrationByPartsGradDensityDependenceVxc)
       {
-        xDensityInDataOut[xcOutputDataAttributes::pdeSigma] =
+        xDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
           std::vector<double>();
-        cDensityInDataOut[xcOutputDataAttributes::pdeSigma] =
+        cDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
           std::vector<double>();
       }
 
@@ -1062,48 +1029,26 @@ namespace dftfe
               std::real(quadWeightsAll[iCell * nQuadsPerCell + iQuad]);
           }
 
-        if (excManagerPtr->getXCPrimaryVariable() == XCPrimaryVariable::DENSITY)
-          {
-            excManagerPtr->getExcDensityObj()->computeExcVxcFxc(
-              *auxDensityXCInRepresentationPtr,
-              quadPointsInCell,
-              quadWeightsInCell,
-              xDensityInDataOut,
-              cDensityInDataOut);
+        excManagerPtr->getExcSSDFunctionalObj()->computeOutputXCData(
+          *auxDensityXCInRepresentationPtr,
+          quadPointsInCell,
+          xDensityInDataOut,
+          cDensityInDataOut);
 
-            excManagerPtr->getExcDensityObj()->computeExcVxcFxc(
-              *auxDensityXCOutRepresentationPtr,
-              quadPointsInCell,
-              quadWeightsInCell,
-              xDensityOutDataOut,
-              cDensityOutDataOut);
-          }
-        else if (excManagerPtr->getXCPrimaryVariable() ==
-                 XCPrimaryVariable::SSDETERMINANT)
-          {
-            excManagerPtr->getExcSSDFunctionalObj()->computeOutputXCData(
-              *auxDensityXCInRepresentationPtr,
-              quadPointsInCell,
-              quadWeightsInCell,
-              xDensityInDataOut,
-              cDensityInDataOut);
-
-            excManagerPtr->getExcSSDFunctionalObj()->computeOutputXCData(
-              *auxDensityXCOutRepresentationPtr,
-              quadPointsInCell,
-              quadWeightsInCell,
-              xDensityOutDataOut,
-              cDensityOutDataOut);
-          }
+        excManagerPtr->getExcSSDFunctionalObj()->computeOutputXCData(
+          *auxDensityXCOutRepresentationPtr,
+          quadPointsInCell,
+          xDensityOutDataOut,
+          cDensityOutDataOut);
 
         std::vector<double> pdexDensityInSigma;
         std::vector<double> pdecDensityInSigma;
         if (isIntegrationByPartsGradDensityDependenceVxc)
           {
             pdexDensityInSigma =
-              xDensityInDataOut[xcOutputDataAttributes::pdeSigma];
+              xDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma];
             pdecDensityInSigma =
-              cDensityInDataOut[xcOutputDataAttributes::pdeSigma];
+              cDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma];
           }
 
         std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>

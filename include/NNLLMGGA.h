@@ -9,7 +9,7 @@ namespace dftfe
   class NNLLMGGA
   {
   public:
-    NNLLMGGA(std::string                          modelFileName,
+    NNLLMGGA(std::string                          modelFilename,
              const bool                           isSpinPolarized = false,
              const excDensityPositivityCheckTypes densityPositivityCheckType =
                excDensityPositivityCheckTypes::MAKE_POSITIVE);
