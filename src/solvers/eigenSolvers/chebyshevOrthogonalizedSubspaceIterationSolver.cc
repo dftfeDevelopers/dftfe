@@ -245,6 +245,11 @@ namespace dftfe
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock2 =
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 1);
+    distributedCPUMultiVec<dataTypes::number>
+      *eigenVectorsFlattenedArrayBlock3 =
+        (d_dftParams.approxOverlapMatrix || true) ?
+          &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
+          NULL; //@Kartick
     distributedCPUMultiVec<dataTypes::numberFP32>
       *eigenVectorsFlattenedArrayBlockFP32 =
         d_dftParams.useSinglePrecCheby ?
@@ -285,6 +290,8 @@ namespace dftfe
                 eigenVectorsFlattenedArrayBlock =
                   &operatorMatrix.getScratchFEMultivector(BVec, 0);
                 eigenVectorsFlattenedArrayBlock2 =
+                  &operatorMatrix.getScratchFEMultivector(BVec, 1);
+                if (d_dftParams.approxOverlapMatrix || true) //@Kartick
                   &operatorMatrix.getScratchFEMultivector(BVec, 1);
                 if (d_dftParams.useSinglePrecCheby)
                   {
@@ -338,14 +345,33 @@ namespace dftfe
                   d_lowerBoundWantedSpectrum);
               }
             else
-              linearAlgebraOperations::chebyshevFilter(
-                operatorMatrix,
-                *eigenVectorsFlattenedArrayBlock,
-                *eigenVectorsFlattenedArrayBlock2,
-                chebyshevOrder,
-                d_lowerBoundUnWantedSpectrum,
-                d_upperBoundUnWantedSpectrum,
-                d_lowerBoundWantedSpectrum);
+              {
+                if (d_dftParams.approxOverlapMatrix ||
+                    true) // set to true now to get this to run always @Kartick
+                  linearAlgebraOperations::chebyshevFilterNew(
+                    BLASWrapperPtr,
+                    operatorMatrix,
+                    *eigenVectorsFlattenedArrayBlock,
+                    *eigenVectorsFlattenedArrayBlock2,
+                    *eigenVectorsFlattenedArrayBlock3,
+                    eigenValuesBlock,
+                    chebyshevOrder,
+                    d_lowerBoundUnWantedSpectrum,
+                    d_upperBoundUnWantedSpectrum,
+                    d_lowerBoundWantedSpectrum,
+                    d_dftParams.approxOverlapMatrix,
+                    false);
+
+                else
+                  linearAlgebraOperations::chebyshevFilter(
+                    operatorMatrix,
+                    *eigenVectorsFlattenedArrayBlock,
+                    *eigenVectorsFlattenedArrayBlock2,
+                    chebyshevOrder,
+                    d_lowerBoundUnWantedSpectrum,
+                    d_upperBoundUnWantedSpectrum,
+                    d_lowerBoundWantedSpectrum);
+              }
 
             computing_timer.leave_subsection("Chebyshev filtering");
 

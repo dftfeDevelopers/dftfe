@@ -179,6 +179,7 @@ namespace dftfe
     bool         useELPADeviceKernel;
     bool         memOptMode;
     bool         approxOverlapMatrix;
+    bool         useCorrectionEquation;
 
     unsigned int dc_dispersioncorrectiontype;
     unsigned int dc_d3dampingtype;

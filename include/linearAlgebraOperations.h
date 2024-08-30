@@ -548,6 +548,23 @@ namespace dftfe
       const double                                           a0);
 
 
+    template <typename T, dftfe::utils::MemorySpace memorySpace>
+    void
+    chebyshevFilterNew(
+      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+        &                                                BLASWrapperPtr,
+      operatorDFTClass<memorySpace> &                    operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Residual,
+      std::vector<double>                                eigenvalues,
+      const unsigned int                                 m,
+      const double                                       a,
+      const double                                       b,
+      const double                                       a0,
+      const bool                                         approxOverlapMatrix,
+      const bool                                         useCorrectionEquation);
+
 
   } // namespace linearAlgebraOperations
 

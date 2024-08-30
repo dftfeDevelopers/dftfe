@@ -209,6 +209,11 @@ namespace dftfe
       d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
         NULL;
+    distributedDeviceVec<dataTypes::number> *ResidualBlock =
+      (d_dftParams.approxOverlapMatrix || true) ?
+        &operatorMatrix.getScratchFEMultivector(
+          vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 4 : 2)) :
+        NULL; //@Kartick
     distributedDeviceVec<dataTypes::number> *HXBlock2 =
       d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
@@ -550,14 +555,31 @@ namespace dftfe
                     (*HXBlock).setCommunicationPrecision(
                       dftfe::utils::mpi::communicationPrecision::single);
                   }
-                linearAlgebraOperations::chebyshevFilter(
-                  operatorMatrix,
-                  (*XBlock),
-                  (*HXBlock),
-                  chebyshevOrder,
-                  d_lowerBoundUnWantedSpectrum,
-                  d_upperBoundUnWantedSpectrum,
-                  d_lowerBoundWantedSpectrum);
+
+                if (d_dftParams.approxOverlapMatrix || true) //@Kartick
+                  linearAlgebraOperations::chebyshevFilterNew(
+                    BLASWrapperPtr,
+                    operatorMatrix,
+                    (*XBlock),
+                    (*HXBlock),
+                    (*ResidualBlock),
+                    eigenValuesBlock,
+                    chebyshevOrder,
+                    d_lowerBoundUnWantedSpectrum,
+                    d_upperBoundUnWantedSpectrum,
+                    d_lowerBoundWantedSpectrum,
+                    d_dftParams.approxOverlapMatrix,
+                    false);
+
+                else
+                  linearAlgebraOperations::chebyshevFilter(
+                    operatorMatrix,
+                    (*XBlock),
+                    (*HXBlock),
+                    chebyshevOrder,
+                    d_lowerBoundUnWantedSpectrum,
+                    d_upperBoundUnWantedSpectrum,
+                    d_lowerBoundWantedSpectrum);
                 if (useMixedPrecOverall && d_dftParams.useSinglePrecCommunCheby)
                   {
                     (*XBlock).setCommunicationPrecision(

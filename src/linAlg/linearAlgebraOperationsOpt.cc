@@ -224,7 +224,23 @@ namespace dftfe
       // copy back YArray to XArray
     }
 
-
+    template <typename T, dftfe::utils::MemorySpace memorySpace>
+    void
+    chebyshevFilterNew(
+      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+        &                                                BLASWrapperPtr,
+      operatorDFTClass<memorySpace> &                    operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Residual,
+      std::vector<double>                                eigenvalues,
+      const unsigned int                                 m,
+      const double                                       a,
+      const double                                       b,
+      const double                                       a0,
+      const bool                                         approxOverlapMatrix,
+      const bool                                         useCorrectionEquation)
+    {}
 
     //
     // evaluate upper bound of the spectrum using k-step Lanczos iteration
@@ -497,6 +513,27 @@ namespace dftfe
       const double        b,
       const double        a0);
 
+    template void
+    chebyshevFilterNew(
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                                                BLASWrapperPtr,
+      operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST> &X,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST> &Y,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST>
+        &                 Residual,
+      std::vector<double> eigenvalues,
+      const unsigned int  m,
+      const double        a,
+      const double        b,
+      const double        a0,
+      const bool          approxOverlapMatrix,
+      const bool          useCorrectionEquation);
+
 #ifdef DFTFE_WITH_DEVICE
     template void
     chebyshevFilter(
@@ -530,6 +567,30 @@ namespace dftfe
       const double        a,
       const double        b,
       const double        a0);
+
+    template void
+    chebyshevFilterNew(
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                                  BLASWrapperPtr,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &                 Residual,
+      std::vector<double> eigenvalues,
+      const unsigned int  m,
+      const double        a,
+      const double        b,
+      const double        a0,
+      const bool          approxOverlapMatrix,
+      const bool          useCorrectionEquation);
+
+
+
 #endif
 
 

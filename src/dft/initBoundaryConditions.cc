@@ -333,29 +333,36 @@ namespace dftfe
 
 
         d_basisOperationsPtrHost->createScratchMultiVectors(1, 4);
-        d_basisOperationsPtrHost->createScratchMultiVectors(BVec, 2);
+        d_basisOperationsPtrHost->createScratchMultiVectors(
+          BVec,
+          (d_dftParamsPtr->approxOverlapMatrix || true) ? 3 : 2); //@Kartick
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrHost->createScratchMultiVectorsSinglePrec(BVec,
                                                                         2);
         if (d_numEigenValues % BVec != 0)
-          d_basisOperationsPtrHost->createScratchMultiVectors(d_numEigenValues %
-                                                                BVec,
-                                                              2);
+          d_basisOperationsPtrHost->createScratchMultiVectors(
+            d_numEigenValues % BVec,
+            (d_dftParamsPtr->approxOverlapMatrix || true) ? 3 : 2); //@Kartick
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrHost->createScratchMultiVectorsSinglePrec(
             d_numEigenValues % BVec, 2);
         if (d_numEigenValues != d_numEigenValuesRR &&
             d_numEigenValuesRR % BVec != 0)
           d_basisOperationsPtrHost->createScratchMultiVectors(
-            d_numEigenValuesRR % BVec, 2);
+            d_numEigenValuesRR % BVec,
+            (d_dftParamsPtr->approxOverlapMatrix || true) ? 3 : 2); //@Kartick
         unsigned int BVec2 = std::min(d_dftParamsPtr->wfcBlockSize,
                                       bandGroupLowHighPlusOneIndices[1]);
         if (BVec != BVec2)
           {
-            d_basisOperationsPtrHost->createScratchMultiVectors(BVec2, 2);
+            d_basisOperationsPtrHost->createScratchMultiVectors(
+              BVec2,
+              (d_dftParamsPtr->approxOverlapMatrix || true) ? 3 : 2); //@Kartick
             if (d_numEigenValues % BVec2 != 0)
               d_basisOperationsPtrHost->createScratchMultiVectors(
-                d_numEigenValues % BVec2, 2);
+                d_numEigenValues % BVec2,
+                (d_dftParamsPtr->approxOverlapMatrix || true) ? 3 :
+                                                                2); //@Kartick
           }
         if (d_numEigenValues != d_numEigenValuesRR)
           {
@@ -382,7 +389,11 @@ namespace dftfe
 
             d_basisOperationsPtrDevice->createScratchMultiVectors(1, 4);
             d_basisOperationsPtrDevice->createScratchMultiVectors(
-              BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);
+              BVec,
+              d_dftParamsPtr->overlapComputeCommunCheby ?
+                (d_dftParamsPtr->approxOverlapMatrix || true) ? 5 : 4 :
+                (d_dftParamsPtr->approxOverlapMatrix || true) ? 3 :
+                                                                2); //@Kartick
             if (d_dftParamsPtr->useSinglePrecCheby)
               d_basisOperationsPtrDevice->createScratchMultiVectorsSinglePrec(
                 BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);
@@ -437,7 +448,10 @@ namespace dftfe
 
         d_basisOperationsPtrDevice->createScratchMultiVectors(1, 4);
         d_basisOperationsPtrDevice->createScratchMultiVectors(
-          BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);
+          BVec,
+          d_dftParamsPtr->overlapComputeCommunCheby ?
+            ((d_dftParamsPtr->approxOverlapMatrix || true) ? 5 : 4) :
+            ((d_dftParamsPtr->approxOverlapMatrix || true) ? 3 : 2)); //@Kartick
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrDevice->createScratchMultiVectorsSinglePrec(
             BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);
