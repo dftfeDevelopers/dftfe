@@ -171,6 +171,14 @@ namespace dftfe
       const bool useApproximateMatrixEntries = true);
 
     void
+    overlapInverseMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarOinvX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst);
+
+    void
     HXCheby(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       const double scalarHX,
@@ -194,6 +202,19 @@ namespace dftfe
             const bool skip1,
             const bool skip2,
             const bool skip3);
+
+    void
+    HXChebyNew(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarHX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
+      const bool skip1                                         = false,
+      const bool skip2                                         = false,
+      const bool skip3                                         = false);
+
 
     void
     HXRR(
@@ -250,7 +271,14 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       d_ONCVNonLocalProjectorTimesVectorBlock;
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-                                                     d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec;
+      d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec;
+
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+      d_tempBlockVectorOverlapInvX;
+    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+      d_tempBlockVectorOverlapInvXSinglePrec;
+
+
     dftfe::utils::MemoryStorage<double, memorySpace> d_VeffJxW;
     dftfe::utils::MemoryStorage<double, memorySpace> d_VeffExtPotJxW;
 
