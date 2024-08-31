@@ -1107,7 +1107,7 @@ namespace dftfe
       blockSize,
       src.locallyOwnedSize(),
       src.data(),
-      d_basisOperationsPtr->massVectorBasisData().data(),
+      d_basisOperationsPtr->inverseMassVectorBasisData().data(),
       scalarOinvX,
       dst.data());
   }
@@ -1124,6 +1124,8 @@ namespace dftfe
     const bool skip2,
     const bool skip3)
   {
+
+
     const unsigned int numCells       = d_basisOperationsPtr->nCells();
     const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
     const unsigned int numberWavefunctions = src.numVectors();
@@ -1148,7 +1150,7 @@ namespace dftfe
       src.updateGhostValues();
     if (!skip1)
       {
-        d_basisOperationsPtr->distribute(src);
+        inverseMassVectorScaledConstraintsNoneDataInfoPtr->distribute(src);
         if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
           if (d_dftParamsPtr->isPseudopotential)
             d_ONCVnonLocalOperator->initialiseOperatorActionOnX(d_kPointIndex);
