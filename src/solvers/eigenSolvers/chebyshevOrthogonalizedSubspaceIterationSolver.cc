@@ -250,6 +250,11 @@ namespace dftfe
         (d_dftParams.approxOverlapMatrix || true) ?
           &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
           NULL; //@Kartick
+    distributedCPUMultiVec<dataTypes::number>
+      *eigenVectorsFlattenedArrayBlock4 =
+        (d_dftParams.approxOverlapMatrix || true) ?
+          &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
+          NULL; //@Kartick
     distributedCPUMultiVec<dataTypes::numberFP32>
       *eigenVectorsFlattenedArrayBlockFP32 =
         d_dftParams.useSinglePrecCheby ?
@@ -291,8 +296,14 @@ namespace dftfe
                   &operatorMatrix.getScratchFEMultivector(BVec, 0);
                 eigenVectorsFlattenedArrayBlock2 =
                   &operatorMatrix.getScratchFEMultivector(BVec, 1);
+
                 if (d_dftParams.approxOverlapMatrix || true) //@Kartick
-                  &operatorMatrix.getScratchFEMultivector(BVec, 1);
+                  {
+                    eigenVectorsFlattenedArrayBlock3 =
+                      &operatorMatrix.getScratchFEMultivector(BVec, 2);
+                    eigenVectorsFlattenedArrayBlock4 =
+                      &operatorMatrix.getScratchFEMultivector(BVec, 3);
+                  }
                 if (d_dftParams.useSinglePrecCheby)
                   {
                     eigenVectorsFlattenedArrayBlockFP32 =
@@ -354,6 +365,7 @@ namespace dftfe
                     *eigenVectorsFlattenedArrayBlock,
                     *eigenVectorsFlattenedArrayBlock2,
                     *eigenVectorsFlattenedArrayBlock3,
+                    *eigenVectorsFlattenedArrayBlock4,
                     eigenValuesBlock,
                     chebyshevOrder,
                     d_lowerBoundUnWantedSpectrum,

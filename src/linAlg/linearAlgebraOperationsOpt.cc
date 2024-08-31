@@ -233,6 +233,7 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Residual,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &ResidualNew,
       std::vector<double>                                eigenvalues,
       const unsigned int                                 m,
       const double                                       a,
@@ -240,7 +241,107 @@ namespace dftfe
       const double                                       a0,
       const bool                                         approxOverlapMatrix,
       const bool                                         useCorrectionEquation)
-    {}
+    {
+      double e, c, sigma, sigma1, sigma2, gamma;
+      e      = (b - a) / 2.0;
+      c      = (b + a) / 2.0;
+      sigma  = e / (a0 - c);
+      sigma1 = sigma;
+      gamma  = 2.0 / sigma1;
+
+      dftfe::utils::MemoryStorage<double, memorySpace> eigenValuesFiltered,
+        eigenValuesFiltered1, eigenValuesFiltered2;
+      eigenValuesFiltered.resize(eigenvalues.size());
+      eigenValuesFiltered.copyFrom(eigenvalues);
+      eigenValuesFiltered1 = eigenValuesFiltered;
+      eigenValuesFiltered2 = eigenValuesFiltered;
+      eigenValuesFiltered1.setValue(1.0);
+
+      // //compute initial Residual
+      operatorMatrix.HX(X, 1.0, 0.0, 0.0, Y);
+      operatorMatrix.overlapMatrixTimesX(
+        X, 1.0, 0.0, 0.0, Residual, approxOverlapMatrix);
+      BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
+                            X.numVectors(),
+                            -1.0,
+                            Y.data(),
+                            Residual.data(),
+                            eigenValuesFiltered.data(),
+                            Residual.data());
+      Y.setValue(0.0);
+      ResidualNew = Residual;
+
+      double alpha1 = sigma1 / e, alpha2 = -c;
+      // //m=1 operations
+      eigenValuesFiltered2.setValue(alpha1 * alpha2);
+      BLASWrapperPtr->ApaBD(1,
+                            eigenValuesFiltered2.size(),
+                            alpha1,
+                            eigenValuesFiltered2.data(),
+                            eigenValuesFiltered1.data(),
+                            eigenValuesFiltered.data(),
+                            eigenValuesFiltered2.data());
+      BLASWrapperPtr->xscal(ResidualNew.data(),
+                            alpha1,
+                            X.locallyOwnedSize() * X.numVectors());
+      // //
+      // // polynomial loop
+      // //
+      for (unsigned int degree = 2; degree < m + 1; ++degree)
+        {
+          sigma2 = 1.0 / (gamma - sigma);
+          alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
+
+          operatorMatrix.HXChebyNew(
+            ResidualNew, alpha1, alpha2, -c * alpha1, Y);
+          BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
+                                X.numVectors(),
+                                alpha1,
+                                Y.data(),
+                                Residual.data(),
+                                eigenValuesFiltered2.data(),
+                                Y.data());
+          BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
+                                -c * alpha1,
+                                eigenValuesFiltered2.data(),
+                                alpha2,
+                                eigenValuesFiltered1.data());
+          BLASWrapperPtr->ApaBD(1,
+                                eigenValuesFiltered1.size(),
+                                alpha1,
+                                eigenValuesFiltered1.data(),
+                                eigenValuesFiltered2.data(),
+                                eigenValuesFiltered.data(),
+                                eigenValuesFiltered1.data());
+          //
+          // XArray = YArray
+          //
+          ResidualNew.swap(Y);
+          eigenValuesFiltered1.swap(eigenValuesFiltered2);
+
+          //
+          // YArray = YNewArray
+          //
+          sigma = sigma2;                                
+        }
+
+      if (useCorrectionEquation)
+        {
+          // Use the correction equation to compute X
+        }
+      else
+        {
+          // X = overlapInverse Residual + Residual\Lambda_m; with
+          operatorMatrix.overlapInverseMatrixTimesX(ResidualNew, 1.0, 0.0, 0.0, Y);
+          BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
+                                X.numVectors(),
+                                1.0,
+                                Y.data(),
+                                X.data(),
+                                eigenValuesFiltered2.data(),
+                                X.data());
+        }
+    }
 
     //
     // evaluate upper bound of the spectrum using k-step Lanczos iteration
@@ -525,7 +626,10 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::HOST> &Y,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::HOST>
-        &                 Residual,
+        &Residual,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::HOST>
+        &                 ResidualNew,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,
@@ -580,7 +684,10 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE> &Y,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &                 Residual,
+        &Residual,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &                 ResidualNew,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,

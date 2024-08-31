@@ -214,6 +214,11 @@ namespace dftfe
         &operatorMatrix.getScratchFEMultivector(
           vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 4 : 2)) :
         NULL; //@Kartick
+    distributedDeviceVec<dataTypes::number> *ResidualBlockNew =
+      (d_dftParams.approxOverlapMatrix || true) ?
+        &operatorMatrix.getScratchFEMultivector(
+          vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 5 : 2)) :
+        NULL; //@Kartick
     distributedDeviceVec<dataTypes::number> *HXBlock2 =
       d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
@@ -563,6 +568,7 @@ namespace dftfe
                     (*XBlock),
                     (*HXBlock),
                     (*ResidualBlock),
+                    (*ResidualBlockNew),
                     eigenValuesBlock,
                     chebyshevOrder,
                     d_lowerBoundUnWantedSpectrum,

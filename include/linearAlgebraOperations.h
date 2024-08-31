@@ -557,6 +557,7 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Residual,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &ResidualNew,
       std::vector<double>                                eigenvalues,
       const unsigned int                                 m,
       const double                                       a,
