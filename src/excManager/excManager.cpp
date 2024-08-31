@@ -25,47 +25,151 @@
 
 namespace dftfe
 {
+  namespace
+  {
+    std::string
+    lastN(std::string input, unsigned int n)
+    {
+      if (input.size() < n)
+        return input;
+
+      return input.substr(input.size() - n);
+    }
+
+    template <dftfe::utils::MemorySpace memorySpace>
+    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>>
+    initializeSSDPtr(std::string                   XCType,
+                     std::shared_ptr<xc_func_type> funcXPtr,
+                     std::shared_ptr<xc_func_type> funcCPtr,
+                     std::string                   modelXCInputFile)
+    {
+      int exceptParamX = -1, exceptParamC = -1;
+
+      std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> excObj;
+      if (XCType == "LDA-PZ")
+        {
+          exceptParamX = xc_func_init(funcXPtr.get(), XC_LDA_X, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_LDA_C_PZ, XC_POLARIZED);
+          excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
+                                                                     funcCPtr);
+        }
+      else if (XCType == "LDA-PW")
+        {
+          exceptParamX = xc_func_init(funcXPtr.get(), XC_LDA_X, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_LDA_C_PW, XC_POLARIZED);
+          excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
+                                                                     funcCPtr);
+        }
+      else if (XCType == "LDA-VWN")
+        {
+          exceptParamX = xc_func_init(funcXPtr.get(), XC_LDA_X, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_LDA_C_VWN, XC_POLARIZED);
+          excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
+                                                                     funcCPtr);
+        }
+      else if (XCType == "GGA-PBE")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_GGA_X_PBE, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
+          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
+                                                                     funcCPtr);
+        }
+      else if (XCType == "GGA-RPBE")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_GGA_X_RPBE, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
+          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
+                                                                     funcCPtr);
+        }
+      else if (XCType == "GGA-LBxPBEc")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_GGA_X_LB, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
+
+          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
+                                                                     funcCPtr);
+        }
+      else if (XCType == "MLXC-NNLDA")
+        {
+          exceptParamX = xc_func_init(funcXPtr.get(), XC_LDA_X, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_LDA_C_PW, XC_POLARIZED);
+          excObj =
+            std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
+                                                              funcCPtr,
+                                                              modelXCInputFile);
+        }
+      else if (XCType == "MLXC-NNGGA")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_GGA_X_PBE, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
+          excObj =
+            std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
+                                                              funcCPtr,
+                                                              modelXCInputFile);
+        }
+      else if (XCType == "MLXC-NNLLMGGA")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_GGA_X_PBE, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
+          excObj = std::make_shared<excDensityLLMGGAClass<memorySpace>>(
+            funcXPtr, funcCPtr, modelXCInputFile);
+        }
+      else
+        {
+          std::cout << "Error in xc code \n";
+          if (exceptParamX != 0 || exceptParamC != 0)
+            {
+              std::cout << "-------------------------------------" << std::endl;
+              std::cout << "Exchange or Correlation Functional not found"
+                        << std::endl;
+              std::cout << "-------------------------------------" << std::endl;
+              exit(-1);
+            }
+        }
+      return excObj;
+    }
+  } // namespace
   template <dftfe::utils::MemorySpace memorySpace>
   excManager<memorySpace>::excManager()
-  {
-    d_funcXPtr         = nullptr;
-    d_funcCPtr         = nullptr;
-    d_excDensityObjPtr = nullptr;
-    d_SSDObjPtr        = nullptr;
-  }
+  {}
 
   template <dftfe::utils::MemorySpace memorySpace>
   excManager<memorySpace>::~excManager()
   {
-    clear();
+    //    clear();
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excManager<memorySpace>::clear()
   {
-    if (d_funcXPtr != nullptr)
-      {
-        xc_func_end(d_funcXPtr);
-        delete d_funcXPtr;
-      }
-
-    if (d_funcCPtr != nullptr)
-      {
-        xc_func_end(d_funcCPtr);
-        delete d_funcCPtr;
-      }
-
-    if (d_excDensityObjPtr != nullptr)
-      delete d_excDensityObjPtr;
-
-    if (d_SSDObjPtr != nullptr)
-      delete d_SSDObjPtr;
-
-    d_funcXPtr         = nullptr;
-    d_funcCPtr         = nullptr;
-    d_excDensityObjPtr = nullptr;
-    d_SSDObjPtr        = nullptr;
+    //    d_excObj.reset();
+    //    if (d_funcXPtr.get() != nullptr)
+    //      {
+    //        xc_func_end(d_funcXPtr.get());
+    //      }
+    //
+    //    if (d_funcCPtr.get() != nullptr)
+    //      {
+    //        xc_func_end(d_funcCPtr.get());
+    //      }
+    //
+    //    d_funcXPtr.reset();
+    //    d_funcCPtr.reset();
   }
 
 
@@ -77,177 +181,56 @@ namespace dftfe
   {
     clear();
 
-    d_funcXPtr = new xc_func_type;
-    d_funcCPtr = new xc_func_type;
+    d_funcXPtr = std::make_shared<xc_func_type>();
+    d_funcCPtr = std::make_shared<xc_func_type>();
 
+    bool enableHubbard = false;
 
-    int exceptParamX = -1, exceptParamC = -1;
-
-
-    if (XCType == "LDA-PZ")
+    if (lastN(XCType, 2) == "+U")
       {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_LDA_X, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_LDA_C_PZ, XC_POLARIZED);
-        d_excDensityObjPtr =
-          new excDensityLDAClass<memorySpace>(d_funcXPtr, d_funcCPtr);
-
-        d_SSDObjPtr = nullptr;
-
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
+        enableHubbard = true;
       }
-    else if (XCType == "LDA-PW")
+
+    if (enableHubbard)
       {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_LDA_X, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_LDA_C_PW, XC_POLARIZED);
-        d_excDensityObjPtr =
-          new excDensityLDAClass<memorySpace>(d_funcXPtr, d_funcCPtr);
-
-
-        d_SSDObjPtr      = nullptr;
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
-      }
-    else if (XCType == "LDA-VWN")
-      {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_LDA_X, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_LDA_C_VWN, XC_POLARIZED);
-        d_excDensityObjPtr =
-          new excDensityLDAClass<memorySpace>(d_funcXPtr, d_funcCPtr);
-
-        d_SSDObjPtr      = nullptr;
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
-      }
-    else if (XCType == "GGA-PBE")
-      {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_GGA_X_PBE, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_GGA_C_PBE, XC_POLARIZED);
-        d_excDensityObjPtr =
-          new excDensityGGAClass<memorySpace>(d_funcXPtr, d_funcCPtr);
-
-        d_SSDObjPtr      = nullptr;
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
-      }
-    else if (XCType == "GGA-RPBE")
-      {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_GGA_X_RPBE, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_GGA_C_PBE, XC_POLARIZED);
-        d_excDensityObjPtr =
-          new excDensityGGAClass<memorySpace>(d_funcXPtr, d_funcCPtr);
-
-        d_SSDObjPtr      = nullptr;
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
-      }
-    else if (XCType == "GGA-LBxPBEc")
-      {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_GGA_X_LB, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_GGA_C_PBE, XC_POLARIZED);
-
-        d_excDensityObjPtr =
-          new excDensityGGAClass<memorySpace>(d_funcXPtr, d_funcCPtr);
-
-        d_SSDObjPtr      = nullptr;
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
-      }
-    else if (XCType == "MLXC-NNLDA")
-      {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_LDA_X, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_LDA_C_PW, XC_POLARIZED);
-        d_excDensityObjPtr =
-          new excDensityLDAClass<memorySpace>(d_funcXPtr,
-                                              d_funcCPtr,
-                                              modelXCInputFile);
-
-        d_SSDObjPtr      = nullptr;
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
-      }
-    else if (XCType == "MLXC-NNGGA")
-      {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_GGA_X_PBE, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_GGA_C_PBE, XC_POLARIZED);
-        d_excDensityObjPtr =
-          new excDensityGGAClass<memorySpace>(d_funcXPtr,
-                                              d_funcCPtr,
-                                              modelXCInputFile);
-
-        d_SSDObjPtr      = nullptr;
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
-      }
-    else if (XCType == "MLXC-NNLLMGGA")
-      {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_GGA_X_PBE, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_GGA_C_PBE, XC_POLARIZED);
-        d_excDensityObjPtr =
-          new excDensityLLMGGAClass<memorySpace>(d_funcXPtr,
-                                                 d_funcCPtr,
-                                                 modelXCInputFile);
-
-        d_SSDObjPtr      = nullptr;
-        d_xcPrimVariable = XCPrimaryVariable::DENSITY;
-      }
-    else if (XCType == "PBE+U")
-      {
-        exceptParamX = xc_func_init(d_funcXPtr, XC_GGA_X_PBE, XC_POLARIZED);
-        exceptParamC = xc_func_init(d_funcCPtr, XC_GGA_C_PBE, XC_POLARIZED);
-        unsigned int numSpin = 0;
+        unsigned int numSpin = 1;
         if (isSpinPolarized == true)
-          {
-            numSpin = 1;
-          }
-        d_SSDObjPtr = new ExcDFTPlusU<memorySpace>(d_funcXPtr,
-                                                   d_funcCPtr,
-                                                   numSpin,
-                                                   densityFamilyType::GGA);
+          numSpin = 2;
 
-        d_excDensityObjPtr = nullptr;
-        d_xcPrimVariable   = XCPrimaryVariable::SSDETERMINANT;
+        std::string XCInput = "";
+        if (XCType.size() > 2)
+          XCInput = XCType.substr(0, XCType.size() - 2);
+
+        d_excObj = std::make_shared<ExcDFTPlusU<memorySpace>>(
+          initializeSSDPtr<memorySpace>(
+            XCInput, d_funcXPtr, d_funcCPtr, modelXCInputFile),
+          numSpin);
       }
     else
       {
-        std::cout << "Error in xc code \n";
-        if (exceptParamX != 0 || exceptParamC != 0)
-          {
-            std::cout << "-------------------------------------" << std::endl;
-            std::cout << "Exchange or Correlation Functional not found"
-                      << std::endl;
-            std::cout << "-------------------------------------" << std::endl;
-            exit(-1);
-          }
+        d_excObj = initializeSSDPtr<memorySpace>(XCType,
+                                                 d_funcXPtr,
+                                                 d_funcCPtr,
+                                                 modelXCInputFile);
       }
   }
 
-  template <dftfe::utils::MemorySpace memorySpace>
-  excDensityBaseClass<memorySpace> *
-  excManager<memorySpace>::getExcDensityObj()
-  {
-    return d_excDensityObjPtr;
-  }
 
   template <dftfe::utils::MemorySpace memorySpace>
   ExcSSDFunctionalBaseClass<memorySpace> *
   excManager<memorySpace>::getExcSSDFunctionalObj()
   {
-    return d_SSDObjPtr;
+    return d_excObj.get();
   }
 
-  template <dftfe::utils::MemorySpace memorySpace>
-  const excDensityBaseClass<memorySpace> *
-  excManager<memorySpace>::getExcDensityObj() const
-  {
-    return d_excDensityObjPtr;
-  }
 
   template <dftfe::utils::MemorySpace memorySpace>
   const ExcSSDFunctionalBaseClass<memorySpace> *
   excManager<memorySpace>::getExcSSDFunctionalObj() const
   {
-    return d_SSDObjPtr;
+    return d_excObj.get();
   }
 
-  template <dftfe::utils::MemorySpace memorySpace>
-  XCPrimaryVariable
-  excManager<memorySpace>::getXCPrimaryVariable() const
-  {
-    return d_xcPrimVariable;
-  }
 
   template class excManager<dftfe::utils::MemorySpace::HOST>;
 #ifdef DFTFE_WITH_DEVICE

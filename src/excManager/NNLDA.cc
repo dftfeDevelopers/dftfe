@@ -248,17 +248,17 @@ namespace dftfe
     }
   } // namespace
 
-  NNLDA::NNLDA(std::string                          modelFileName,
+  NNLDA::NNLDA(std::string                          modelFilename,
                const bool                           isSpinPolarized /*=false*/,
                const excDensityPositivityCheckTypes densityPositivityCheckType,
                const double                         rhoTol)
-    : d_modelFileName(modelFileName)
+    : d_modelFilename(modelFilename)
     , d_isSpinPolarized(isSpinPolarized)
     , d_densityPositivityCheckType(densityPositivityCheckType)
     , d_rhoTol(rhoTol)
   {
     d_model  = new torch::jit::script::Module;
-    *d_model = torch::jit::load(d_modelFileName);
+    *d_model = torch::jit::load(d_modelFilename);
     // Explicitly load model onto CPU, you can use kGPU if you are on Linux
     // and have libtorch version with CUDA support (and a GPU)
     d_model->to(torch::kCPU);

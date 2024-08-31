@@ -22,43 +22,103 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include "excDensityBaseClass.h"
 namespace dftfe
 {
-  enum class SSDFamilyType
+  enum class ExcFamilyType
   {
+    LDA,
+    GGA,
+    LLMGGA,
     HYBRID,
     DFTPlusU,
     MGGA
   };
 
+  enum class densityFamilyType
+  {
+    LDA,
+    GGA,
+    LLMGGA,
+  };
+
+
+  /*
+   * XC attributes for the derivatives for the remainder functional
+   *
+   */
+
+  enum class xcRemainderOutputDataAttributes
+  {
+    e,       // energy density per unit volume for the remainder functional
+    vSpinUp, // the local multiplicative potential for spin up arising from
+    // remainder functional
+    vSpinDown, // the local multiplicative potential for spin down arising from
+               // remainder functional
+    pdeDensitySpinUp,
+    pdeDensitySpinDown,
+    pdeSigma,
+    pdeLaplacianSpinUp,
+    pdeLaplacianSpinDown,
+    pdeTauSpinUp,
+    pdeTauSpinDown
+  };
+
+
+
   /**
    * @brief This class provides the structure for all
-   * Exc functional dependent on Single Slater Determinant
-   * such as DFT+U, Hybrid and Tau dependent MGGA.
-   * This derived class of this class provides the
-   * description to handle non-multiplicative potential
-   * arising for the above formualtions
+   * Exc functionals that can be written as a combination of
+   * functional of Single Slater determinant that results in a
+   * non-multiplicative potential plus a remainder functional
+   * dependent on density and Tau.
    *
+   * Exc = S{\phi} + R [\rho, \tau]
    * @author Vishal Subramanian, Sambit Das
    */
   template <dftfe::utils::MemorySpace memorySpace>
   class ExcSSDFunctionalBaseClass
   {
   public:
-    ExcSSDFunctionalBaseClass(const densityFamilyType densityFamilyType);
+    ExcSSDFunctionalBaseClass(const ExcFamilyType     excFamType,
+                              const densityFamilyType densityFamType,
+                              const std::vector<DensityDescriptorDataAttributes>
+                                &densityDescriptorAttributesList);
+
+    virtual ~ExcSSDFunctionalBaseClass();
+
+    const std::vector<DensityDescriptorDataAttributes> &
+    getDensityDescriptorAttributesList() const;
 
     densityFamilyType
     getDensityBasedFamilyType() const;
 
-    virtual ~ExcSSDFunctionalBaseClass();
 
+    /*
+     * @brief The apply function that will be called in HX()
+     * param[in] src The input vector
+     * param[out] dst The output vector
+     * param[in] inputVecSize The size of the input vector
+     * param[in] factor the factor with which the output is scaled in HX()
+     * param[in] kPointIndex the k point for which the HX() is called
+     * param[in] spinIndex the spin index for which the HX() is called
+     */
     virtual void
-    applyWaveFunctionDependentVxc() const = 0;
+    applyWaveFunctionDependentFuncDer(
+      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+        &                                                                src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const unsigned int inputVecSize,
+      const double       factor,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex) = 0;
     virtual void
-    updateWaveFunctionDependentVxc() const = 0;
+    updateWaveFunctionDependentFuncDer(
+      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+      const std::vector<double> &    kPointWeights) = 0;
     virtual double
-    computeWaveFunctionDependentExcEnergy() const = 0;
+    computeWaveFunctionDependentExcEnergy(
+      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+      const std::vector<double> &    kPointWeights) = 0;
 
     /**
      * x and c denotes exchange and correlation respectively.
@@ -69,17 +129,25 @@ namespace dftfe
     computeOutputXCData(
       AuxDensityMatrix<memorySpace> &auxDensityMatrix,
       const std::vector<double> &    quadPoints,
-      const std::vector<double> &    quadWeights,
-      std::unordered_map<xcOutputDataAttributes, std::vector<double>> &xDataOut,
-      std::unordered_map<xcOutputDataAttributes, std::vector<double>> &cDataout)
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &xDataOut,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &cDataout) const = 0;
+
+    ExcFamilyType
+    getExcFamilyType() const;
+
+    virtual void
+    checkInputOutputDataAttributesConsistency(
+      const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
       const = 0;
 
-    SSDFamilyType
-    getSSDFamilyType() const;
-
   protected:
+    const std::vector<DensityDescriptorDataAttributes>
+      d_densityDescriptorAttributesList;
+
+    ExcFamilyType     d_ExcFamilyType;
     densityFamilyType d_densityFamilyType;
-    SSDFamilyType     d_SSDFamilyType;
   };
 } // namespace dftfe
 

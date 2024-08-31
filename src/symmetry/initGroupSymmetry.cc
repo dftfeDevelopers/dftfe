@@ -77,21 +77,11 @@ namespace dftfe
     rhoRecvd.clear();
     groupOffsets.clear();
 
-    bool isGradDensityDataRequired = false;
-    if (dftPtr->d_excManagerPtr->getXCPrimaryVariable() ==
-        XCPrimaryVariable::DENSITY)
-      {
-        isGradDensityDataRequired =
-          (dftPtr->d_excManagerPtr->getExcDensityObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
-    else if (dftPtr->d_excManagerPtr->getXCPrimaryVariable() ==
-             XCPrimaryVariable::SSDETERMINANT)
-      {
-        isGradDensityDataRequired =
-          (dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
+    bool isGradDensityDataRequired =
+      (dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
+         ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+    ;
+
     if (isGradDensityDataRequired)
       gradRhoRecvd.clear();
   }
@@ -155,21 +145,11 @@ namespace dftfe
     rhoRecvd.resize(numSymm);
     groupOffsets.resize(numSymm);
 
-    bool isGradDensityDataRequired = false;
-    if (dftPtr->d_excManagerPtr->getXCPrimaryVariable() ==
-        XCPrimaryVariable::DENSITY)
-      {
-        isGradDensityDataRequired =
-          (dftPtr->d_excManagerPtr->getExcDensityObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
-    else if (dftPtr->d_excManagerPtr->getXCPrimaryVariable() ==
-             XCPrimaryVariable::SSDETERMINANT)
-      {
-        isGradDensityDataRequired =
-          (dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-      }
+    bool isGradDensityDataRequired =
+      (dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
+         ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+    ;
+
     if (isGradDensityDataRequired)
       gradRhoRecvd.resize(numSymm);
     //

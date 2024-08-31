@@ -28,40 +28,16 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   ExcDFTPlusU<memorySpace>::ExcDFTPlusU(
-    xc_func_type *          funcXPtr,
-    xc_func_type *          funcCPtr,
-    unsigned int            numSpins,
-    const densityFamilyType densityFamilyType)
-    : ExcSSDFunctionalBaseClass<memorySpace>(densityFamilyType)
+    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> excSSDObjPtr,
+    unsigned int                                            numSpins)
+    : ExcSSDFunctionalBaseClass<memorySpace>(*(excSSDObjPtr.get()))
   {
-    if (densityFamilyType == densityFamilyType::LDA)
-      {
-        d_excDensityObjPtr =
-          new excDensityLDAClass<memorySpace>(funcXPtr, funcCPtr);
-      }
-    else if (densityFamilyType == densityFamilyType::GGA)
-      {
-        d_excDensityObjPtr =
-          new excDensityGGAClass<memorySpace>(funcXPtr, funcCPtr);
-      }
-    else if (densityFamilyType == densityFamilyType::LLMGGA)
-      {
-        d_excDensityObjPtr =
-          new excDensityLLMGGAClass<memorySpace>(funcXPtr, funcCPtr);
-      }
-    else
-      {
-        std::string errMsg = "Not implemented";
-        dftfe::utils::throwException(false, errMsg);
-      }
+    d_excSSDObjPtr = excSSDObjPtr;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   ExcDFTPlusU<memorySpace>::~ExcDFTPlusU()
-  {
-    if (d_excDensityObjPtr != nullptr)
-      delete d_excDensityObjPtr;
-  }
+  {}
 
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -69,34 +45,56 @@ namespace dftfe
   ExcDFTPlusU<memorySpace>::computeOutputXCData(
     AuxDensityMatrix<memorySpace> &auxDensityMatrix,
     const std::vector<double> &    quadPoints,
-    const std::vector<double> &    quadWeights,
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>> &xDataOut,
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>> &cDataOut)
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      &xDataOut,
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      &cDataOut) const
+  {
+    d_excSSDObjPtr->computeOutputXCData(auxDensityMatrix,
+                                        quadPoints,
+                                        xDataOut,
+                                        cDataOut);
+  }
+
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  ExcDFTPlusU<memorySpace>::checkInputOutputDataAttributesConsistency(
+    const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
     const
   {
-    d_excDensityObjPtr->computeExcVxcFxc(
-      auxDensityMatrix, quadPoints, quadWeights, xDataOut, cDataOut);
+    d_excSSDObjPtr->checkInputOutputDataAttributesConsistency(
+      outputDataAttributes);
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  ExcDFTPlusU<memorySpace>::applyWaveFunctionDependentVxc() const
+  ExcDFTPlusU<memorySpace>::applyWaveFunctionDependentFuncDer(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+      &                                                                src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+    const unsigned int inputVecSize,
+    const double       factor,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
   {
     std::string errMsg = "Not implemented";
     dftfe::utils::throwException(false, errMsg);
   }
-
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  ExcDFTPlusU<memorySpace>::updateWaveFunctionDependentVxc() const
+  ExcDFTPlusU<memorySpace>::updateWaveFunctionDependentFuncDer(
+    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+    const std::vector<double> &    kPointWeights)
   {
     std::string errMsg = "Not implemented";
     dftfe::utils::throwException(false, errMsg);
   }
-
   template <dftfe::utils::MemorySpace memorySpace>
   double
-  ExcDFTPlusU<memorySpace>::computeWaveFunctionDependentExcEnergy() const
+  ExcDFTPlusU<memorySpace>::computeWaveFunctionDependentExcEnergy(
+    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+    const std::vector<double> &    kPointWeights)
   {
     std::string errMsg = "Not implemented";
     dftfe::utils::throwException(false, errMsg);

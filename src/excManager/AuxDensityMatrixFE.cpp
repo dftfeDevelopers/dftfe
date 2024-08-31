@@ -112,6 +112,17 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
+  AuxDensityMatrixFE<memorySpace>::setDensityMatrixComponents(
+    const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+      &                                     eigenVectorsFlattenedMemSpace,
+    const std::vector<std::vector<double>> &fractionalOccupancies)
+  {
+    d_eigenVectorsFlattenedMemSpacePtr = &(eigenVectorsFlattenedMemSpace);
+    d_fractionalOccupancies            = &fractionalOccupancies;
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
   AuxDensityMatrixFE<memorySpace>::evalOverlapMatrixStart(
     const std::vector<double> &quadpts,
     const std::vector<double> &quadWt)
@@ -132,9 +143,11 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   AuxDensityMatrixFE<memorySpace>::projectDensityMatrixStart(
-    std::unordered_map<std::string, std::vector<double>> &projectionInputs,
-    int                                                   iSpin)
-
+    const std::unordered_map<std::string, std::vector<dataTypes::number>>
+      &projectionInputsDataType,
+    const std::unordered_map<std::string, std::vector<double>>
+      &       projectionInputsReal,
+    const int iSpin)
   {
     std::string errMsg = "Not implemented";
     dftfe::utils::throwException(false, errMsg);
@@ -153,10 +166,11 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   AuxDensityMatrixFE<memorySpace>::projectDensityStart(
-    std::unordered_map<std::string, std::vector<double>> &projectionInputs)
+    const std::unordered_map<std::string, std::vector<double>>
+      &projectionInputs)
   {
-    d_quadPointsAll  = projectionInputs["quadpts"];
-    d_quadWeightsAll = projectionInputs["quadWt"];
+    d_quadPointsAll  = projectionInputs.find("quadpts")->second;
+    d_quadWeightsAll = projectionInputs.find("quadWt")->second;
     const std::vector<double> &densityVals =
       projectionInputs.find("densityFunc")->second;
     const unsigned int nQ = d_quadWeightsAll.size();
@@ -176,7 +190,7 @@ namespace dftfe
     if (projectionInputs.find("gradDensityFunc") != projectionInputs.end())
       {
         const std::vector<double> &gradDensityVals =
-          projectionInputs["gradDensityFunc"];
+          projectionInputs.find("gradDensityFunc")->second;
         d_gradDensityValsSpinUpAllQuads.resize(nQ * 3, 0);
         d_gradDensityValsSpinDownAllQuads.resize(nQ * 3, 0);
 
@@ -193,22 +207,19 @@ namespace dftfe
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
-  void
-  AuxDensityMatrixFE<memorySpace>::getDensityMatrixComponents_occupancies(
-    const std::vector<double> &occupancies) const
+  const std::vector<std::vector<double>> *
+  AuxDensityMatrixFE<memorySpace>::getDensityMatrixComponents_occupancies()
+    const
   {
-    std::string errMsg = "Not implemented";
-    dftfe::utils::throwException(false, errMsg);
+    return d_fractionalOccupancies;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
-  void
-  AuxDensityMatrixFE<memorySpace>::getDensityMatrixComponents_wavefunctions(
-    const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      &eigenVectors) const
+  const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> *
+  AuxDensityMatrixFE<memorySpace>::getDensityMatrixComponents_wavefunctions()
+    const
   {
-    std::string errMsg = "Not implemented";
-    dftfe::utils::throwException(false, errMsg);
+    return d_eigenVectorsFlattenedMemSpacePtr;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>

@@ -151,8 +151,8 @@ namespace dftfe
                   quadPointsBatch[3 * iQuad + idim] =
                     allQuadPointsHost[startingCellId * numQuadPoints * 3 +
                                       3 * iQuad + idim];
-                quadWeightsBatch[iQuad] =
-                  allQuadWeightsHost[startingCellId * numQuadPoints + iQuad];
+                quadWeightsBatch[iQuad] = std::real(
+                  allQuadWeightsHost[startingCellId * numQuadPoints + iQuad]);
               }
 
             auxDensityMatrixRepresentation.evalOverlapMatrixStart(
@@ -162,16 +162,18 @@ namespace dftfe
 
     auxDensityMatrixRepresentation.evalOverlapMatrixEnd(domainComm);
 
+    std::unordered_map<std::string, std::vector<NumberType>>
+      densityMatrixProjectionInputsDataType;
     std::unordered_map<std::string, std::vector<double>>
-                         densityMatrixProjectionInputs;
-    std::vector<double> &wfcQuadPointDataBatchHost =
-      densityMatrixProjectionInputs["psiFunc"];
+                             densityMatrixProjectionInputsRealType;
+    std::vector<NumberType> &wfcQuadPointDataBatchHost =
+      densityMatrixProjectionInputsDataType["psiFunc"];
     std::vector<double> &quadPointsBatch =
-      densityMatrixProjectionInputs["quadpts"];
+      densityMatrixProjectionInputsRealType["quadpts"];
     std::vector<double> &quadWeightsBatch =
-      densityMatrixProjectionInputs["quadWt"];
+      densityMatrixProjectionInputsRealType["quadWt"];
     std::vector<double> &fValuesBatch =
-      densityMatrixProjectionInputs["fValues"];
+      densityMatrixProjectionInputsRealType["fValues"];
 
     for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
@@ -286,9 +288,9 @@ namespace dftfe
                                                       numQuadPoints * 3 +
                                                     3 * iQuad + idim];
                               quadWeightsBatch[iQuad] =
-                                allQuadWeightsHost[startingCellId *
-                                                     numQuadPoints +
-                                                   iQuad];
+                                std::real(allQuadWeightsHost[startingCellId *
+                                                               numQuadPoints +
+                                                             iQuad]);
                             }
 
                           basisOperationsPtr->interpolateKernel(
@@ -300,12 +302,16 @@ namespace dftfe
                               startingCellId + currentCellsBlockSize));
 
 
-
+                          wfcQuadPointDataBatchHost.resize(
+                            currentCellsBlockSize * numQuadPoints *
+                            currentBlockSize);
                           wfcQuadPointData.copyTo(wfcQuadPointDataBatchHost);
 
                           auxDensityMatrixRepresentation
                             .projectDensityMatrixStart(
-                              densityMatrixProjectionInputs, spinIndex);
+                              densityMatrixProjectionInputsDataType,
+                              densityMatrixProjectionInputsRealType,
+                              spinIndex);
 
                         } // non-trivial cell block check
                     }     // cells block loop
@@ -345,8 +351,7 @@ namespace dftfe
   }
 
 
-#ifndef USE_COMPLEX
-#  if defined(DFTFE_WITH_DEVICE)
+#if defined(DFTFE_WITH_DEVICE)
   template void
   computeAuxProjectedDensityMatrixFromPSI(
     const dftfe::utils::MemoryStorage<dataTypes::number,
@@ -374,7 +379,7 @@ namespace dftfe
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
     const dftParameters &dftParams);
-#  endif
+#endif
   template void
   computeAuxProjectedDensityMatrixFromPSI(
     const dftfe::utils::MemoryStorage<dataTypes::number,
@@ -402,5 +407,4 @@ namespace dftfe
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
     const dftParameters &dftParams);
-#endif
 } // namespace dftfe
