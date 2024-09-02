@@ -653,7 +653,11 @@ namespace dftfe
                                  d_densityQuadratureID,
                                  false,
                                  false);
+
     d_numVectorsInternal = numWaveFunctions;
+    if(d_dftParamsPtr->useCorrectionEquation)
+                  d_basisOperationsPtr->createMultiVector(numWaveFunctions,
+                                                    d_tempBlockVectorOverlapInvX);
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -1113,6 +1117,32 @@ namespace dftfe
   }
   template <dftfe::utils::MemorySpace memorySpace>
   void
+  KohnShamHamiltonianOperator<memorySpace>::inverseOverlapOverlapMatrixTimesX(
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+    const double scalarOinvX,
+    const double scalarY,
+    const double scalarX,
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+    const bool useApproximateMatrixEntries)
+  {
+    overlapMatrixTimesX(src, 1.0, 0.0, 0.0, d_tempBlockVectorOverlapInvX, useApproximateMatrixEntries);
+    const unsigned int blockSize = src.numVectors();
+    d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * blockSize,
+                            scalarX,
+                            src.data(),
+                            scalarY,
+                            dst.data());
+    d_BLASWrapperPtr->stridedBlockAxpy(
+      blockSize,
+      src.locallyOwnedSize(),
+      d_tempBlockVectorOverlapInvX.data(),
+      d_basisOperationsPtr->inverseMassVectorBasisData().data(),
+      scalarOinvX,
+      dst.data());
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
   KohnShamHamiltonianOperator<memorySpace>::HXChebyNew(
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
     const double                                                       scalarHX,
@@ -1124,8 +1154,6 @@ namespace dftfe
     const bool skip2,
     const bool skip3)
   {
-
-
     const unsigned int numCells       = d_basisOperationsPtr->nCells();
     const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
     const unsigned int numberWavefunctions = src.numVectors();

@@ -357,22 +357,32 @@ namespace dftfe
               }
             else
               {
-                if (d_dftParams.approxOverlapMatrix ||
-                    true) // set to true now to get this to run always @Kartick
-                  linearAlgebraOperations::chebyshevFilterNew(
-                    BLASWrapperPtr,
-                    operatorMatrix,
-                    *eigenVectorsFlattenedArrayBlock,
-                    *eigenVectorsFlattenedArrayBlock2,
-                    *eigenVectorsFlattenedArrayBlock3,
-                    *eigenVectorsFlattenedArrayBlock4,
-                    eigenValuesBlock,
-                    chebyshevOrder,
-                    d_lowerBoundUnWantedSpectrum,
-                    d_upperBoundUnWantedSpectrum,
-                    d_lowerBoundWantedSpectrum,
-                    d_dftParams.approxOverlapMatrix,
-                    false);
+                if ((!d_dftParams.approxOverlapMatrix || true) &&
+                    !isFirstFilteringCall) // set to true now to get this to run
+                                           // always @Kartick
+                  {
+                    pcout << "Using the new ChFSI method: " << std::endl;
+                    MPI_Barrier(d_mpiCommParent);
+                    eigenValuesBlock.resize(BVec);
+                    for (unsigned int i = 0; i < BVec; i++)
+                      {
+                        eigenValuesBlock[i] = eigenValues[jvec + i];
+                      }
+                    linearAlgebraOperations::chebyshevFilterNew(
+                      BLASWrapperPtr,
+                      operatorMatrix,
+                      *eigenVectorsFlattenedArrayBlock,
+                      *eigenVectorsFlattenedArrayBlock2,
+                      *eigenVectorsFlattenedArrayBlock3,
+                      *eigenVectorsFlattenedArrayBlock4,
+                      eigenValuesBlock,
+                      chebyshevOrder,
+                      d_lowerBoundUnWantedSpectrum,
+                      d_upperBoundUnWantedSpectrum,
+                      d_lowerBoundWantedSpectrum,
+                      d_dftParams.approxOverlapMatrix,
+                      d_dftParams.useCorrectionEquation);
+                  }
 
                 else
                   linearAlgebraOperations::chebyshevFilter(

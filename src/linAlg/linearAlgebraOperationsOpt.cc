@@ -322,25 +322,35 @@ namespace dftfe
           //
           // YArray = YNewArray
           //
-          sigma = sigma2;                                
+          sigma = sigma2;
         }
 
+      operatorMatrix.overlapInverseMatrixTimesX(ResidualNew, 1.0, 0.0, 0.0, Y);
+      ResidualNew = Y;
       if (useCorrectionEquation)
         {
-          // Use the correction equation to compute X
+          bool flag = false;
+          int counter = 0;
+          while (!flag)
+            {
+              Residual = Y;
+              Y        = ResidualNew;
+              operatorMatrix.inverseOverlapOverlapMatrixTimesX(
+                Residual, -1.0, 1.0, 1.0, Y, approxOverlapMatrix);
+              if(counter == 0)
+              flag = true;
+              counter++;
+            }
         }
-      else
-        {
-          // X = overlapInverse Residual + Residual\Lambda_m; with
-          operatorMatrix.overlapInverseMatrixTimesX(ResidualNew, 1.0, 0.0, 0.0, Y);
-          BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
-                                X.numVectors(),
-                                1.0,
-                                Y.data(),
-                                X.data(),
-                                eigenValuesFiltered2.data(),
-                                X.data());
-        }
+
+
+      BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
+                            X.numVectors(),
+                            1.0,
+                            Y.data(),
+                            X.data(),
+                            eigenValuesFiltered2.data(),
+                            X.data());
     }
 
     //

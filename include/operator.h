@@ -99,6 +99,15 @@ namespace dftfe
         &dst) = 0;
 
     virtual void
+    inverseOverlapOverlapMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarOinvX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const bool useApproximateMatrixEntries = true) = 0;
+
+    virtual void
     HXCheby(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       const double scalarHX,

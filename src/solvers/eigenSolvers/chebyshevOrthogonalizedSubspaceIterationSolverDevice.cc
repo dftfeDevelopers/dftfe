@@ -377,7 +377,13 @@ namespace dftfe
         const unsigned int BVec =
           vectorsBlockSize; // std::min(vectorsBlockSize,
                             // totalNumberWaveFunctions-jvec);
-
+                    // MPI_Barrier(d_mpiCommParent);
+                    // for (unsigned int i = 0; i < BVec; i++)
+                    //   {
+                    //     eigenValuesBlock[i] = eigenValues[jvec + i];
+                    //     pcout<<"Print EigenValue: "<<i <<" "<<eigenValuesBlock[i]<<std::endl;
+                    //   }
+                    // MPI_Barrier(d_mpiCommParent);
         // handle edge case when total number of blocks in a given band
         // group is not even in case of overlapping computation and
         // communciation in chebyshev filtering
@@ -479,10 +485,6 @@ namespace dftfe
                   }
                 else
                   {
-                    for (unsigned int i = 0; i < BVec; i++)
-                      {
-                        eigenValuesBlock[i] = eigenValues[jvec + i];
-                      }
                     if (useMixedPrecOverall &&
                         d_dftParams.useSinglePrecCommunCheby)
                       {
@@ -561,21 +563,32 @@ namespace dftfe
                       dftfe::utils::mpi::communicationPrecision::single);
                   }
 
-                if (d_dftParams.approxOverlapMatrix || true) //@Kartick
-                  linearAlgebraOperations::chebyshevFilterNew(
-                    BLASWrapperPtr,
-                    operatorMatrix,
-                    (*XBlock),
-                    (*HXBlock),
-                    (*ResidualBlock),
-                    (*ResidualBlockNew),
-                    eigenValuesBlock,
-                    chebyshevOrder,
-                    d_lowerBoundUnWantedSpectrum,
-                    d_upperBoundUnWantedSpectrum,
-                    d_lowerBoundWantedSpectrum,
-                    d_dftParams.approxOverlapMatrix,
-                    false);
+                if ((!d_dftParams.approxOverlapMatrix || true) &&
+                    !isFirstFilteringCall) //@Kartick
+                  {
+                    pcout << "Using the new ChFSI method GPU: " << std::endl;
+                    // MPI_Barrier(d_mpiCommParent);
+                    // for (unsigned int i = 0; i < BVec; i++)
+                    //   {
+                    //     eigenValuesBlock[i] = eigenValues[jvec + i];
+                    //     pcout<<"Print EigenValue: "<<i <<" "<<eigenValuesBlock[i]<<std::endl;
+                    //   }
+                    // MPI_Barrier(d_mpiCommParent);   
+                    linearAlgebraOperations::chebyshevFilterNew(
+                      BLASWrapperPtr,
+                      operatorMatrix,
+                      (*XBlock),
+                      (*HXBlock),
+                      (*ResidualBlock),
+                      (*ResidualBlockNew),
+                      eigenValuesBlock,
+                      chebyshevOrder,
+                      d_lowerBoundUnWantedSpectrum,
+                      d_upperBoundUnWantedSpectrum,
+                      d_lowerBoundWantedSpectrum,
+                      d_dftParams.approxOverlapMatrix,
+                      d_dftParams.useCorrectionEquation);
+                  }
 
                 else
                   linearAlgebraOperations::chebyshevFilter(

@@ -287,7 +287,8 @@ namespace dftfe
               dftfe::basis::update_values | dftfe::basis::update_jxw;
             dftfe::basis::UpdateFlags updateFlagsfeOrderPlusOne =
               dftfe::basis::update_gradients;
-            if (std::is_same<dataTypes::number, std::complex<double>>::value||!d_dftParamsPtr->approxOverlapMatrix)
+            if (std::is_same<dataTypes::number, std::complex<double>>::value ||
+                !d_dftParamsPtr->approxOverlapMatrix)
               updateFlagsfeOrderPlusOne = updateFlagsfeOrderPlusOne |
                                           dftfe::basis::update_values |
                                           dftfe::basis::update_jxw;
@@ -314,12 +315,13 @@ namespace dftfe
                                            updateFlags);
             d_basisOperationsPtrHost->computeCellStiffnessMatrix(
               d_feOrderPlusOneQuadratureId, 1, true, false);
-            if (std::is_same<dataTypes::number, std::complex<double>>::value||!d_dftParamsPtr->approxOverlapMatrix)  
-            d_basisOperationsPtrHost->computeCellMassMatrix(
-              d_feOrderPlusOneQuadratureId,
-              1,
-              true,
-              !d_dftParamsPtr->approxOverlapMatrix);
+            if (std::is_same<dataTypes::number, std::complex<double>>::value ||
+                !d_dftParamsPtr->approxOverlapMatrix)
+              d_basisOperationsPtrHost->computeCellMassMatrix(
+                d_feOrderPlusOneQuadratureId,
+                1,
+                true,
+                !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
           }
       }
