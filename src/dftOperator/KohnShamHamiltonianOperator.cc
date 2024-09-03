@@ -655,9 +655,9 @@ namespace dftfe
                                  false);
 
     d_numVectorsInternal = numWaveFunctions;
-    if(d_dftParamsPtr->useCorrectionEquation)
-                  d_basisOperationsPtr->createMultiVector(numWaveFunctions,
-                                                    d_tempBlockVectorOverlapInvX);
+    if (d_dftParamsPtr->useCorrectionEquation)
+      d_basisOperationsPtr->createMultiVector(numWaveFunctions,
+                                              d_tempBlockVectorOverlapInvX);
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -1125,7 +1125,12 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
     const bool useApproximateMatrixEntries)
   {
-    overlapMatrixTimesX(src, 1.0, 0.0, 0.0, d_tempBlockVectorOverlapInvX, useApproximateMatrixEntries);
+    overlapMatrixTimesX(src,
+                        1.0,
+                        0.0,
+                        0.0,
+                        d_tempBlockVectorOverlapInvX,
+                        useApproximateMatrixEntries);
     const unsigned int blockSize = src.numVectors();
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * blockSize,
                             scalarX,

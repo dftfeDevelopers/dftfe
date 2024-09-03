@@ -329,16 +329,16 @@ namespace dftfe
       ResidualNew = Y;
       if (useCorrectionEquation)
         {
-          bool flag = false;
-          int counter = 0;
+          bool flag    = false;
+          int  counter = 0;
           while (!flag)
             {
               Residual = Y;
               Y        = ResidualNew;
               operatorMatrix.inverseOverlapOverlapMatrixTimesX(
                 Residual, -1.0, 1.0, 1.0, Y, approxOverlapMatrix);
-              if(counter == 0)
-              flag = true;
+              if (counter == 0)
+                flag = true;
               counter++;
             }
         }

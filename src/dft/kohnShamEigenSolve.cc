@@ -351,7 +351,7 @@ namespace dftfe
     std::vector<double> eigenValuesTemp(isSpectrumSplit ? d_numEigenValuesRR :
                                                           d_numEigenValues,
                                         0.0);
-    if (d_dftParamsPtr->useSinglePrecCheby|| true)
+    if (d_dftParamsPtr->useSinglePrecCheby || true)
       for (unsigned int i = 0; i < d_numEigenValues; i++)
         {
           eigenValuesTemp[i] =
@@ -550,7 +550,7 @@ namespace dftfe
     std::vector<double> eigenValuesDummy(isSpectrumSplit ? d_numEigenValuesRR :
                                                            d_numEigenValues,
                                          0.0);
-    if (d_dftParamsPtr->useSinglePrecCheby|| true)
+    if (d_dftParamsPtr->useSinglePrecCheby || true)
       for (unsigned int i = 0; i < d_numEigenValues; i++)
         {
           eigenValuesTemp[i] =
@@ -844,7 +844,7 @@ namespace dftfe
 
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
-    if (d_dftParamsPtr->useSinglePrecCheby|| true)
+    if (d_dftParamsPtr->useSinglePrecCheby || true)
       for (unsigned int i = 0; i < d_numEigenValues; i++)
         {
           eigenValuesTemp[i] =

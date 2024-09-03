@@ -377,13 +377,14 @@ namespace dftfe
         const unsigned int BVec =
           vectorsBlockSize; // std::min(vectorsBlockSize,
                             // totalNumberWaveFunctions-jvec);
-                    // MPI_Barrier(d_mpiCommParent);
-                    // for (unsigned int i = 0; i < BVec; i++)
-                    //   {
-                    //     eigenValuesBlock[i] = eigenValues[jvec + i];
-                    //     pcout<<"Print EigenValue: "<<i <<" "<<eigenValuesBlock[i]<<std::endl;
-                    //   }
-                    // MPI_Barrier(d_mpiCommParent);
+                            // MPI_Barrier(d_mpiCommParent);
+                            // for (unsigned int i = 0; i < BVec; i++)
+                            //   {
+                            //     eigenValuesBlock[i] = eigenValues[jvec + i];
+                            //     pcout<<"Print EigenValue: "<<i <<"
+                            //     "<<eigenValuesBlock[i]<<std::endl;
+                            //   }
+                            // MPI_Barrier(d_mpiCommParent);
         // handle edge case when total number of blocks in a given band
         // group is not even in case of overlapping computation and
         // communciation in chebyshev filtering
@@ -571,9 +572,10 @@ namespace dftfe
                     // for (unsigned int i = 0; i < BVec; i++)
                     //   {
                     //     eigenValuesBlock[i] = eigenValues[jvec + i];
-                    //     pcout<<"Print EigenValue: "<<i <<" "<<eigenValuesBlock[i]<<std::endl;
+                    //     pcout<<"Print EigenValue: "<<i <<"
+                    //     "<<eigenValuesBlock[i]<<std::endl;
                     //   }
-                    // MPI_Barrier(d_mpiCommParent);   
+                    // MPI_Barrier(d_mpiCommParent);
                     linearAlgebraOperations::chebyshevFilterNew(
                       BLASWrapperPtr,
                       operatorMatrix,
