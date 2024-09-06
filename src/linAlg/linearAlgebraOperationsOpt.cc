@@ -2421,6 +2421,14 @@ namespace dftfe
       const unsigned int vectorsBlockSize =
         std::min(dftParams.wfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
+
+      //TODO delete after use 
+//////////////////////////////////////
+      std::vector<double> residualFieldNormSquare(totalNumberVectors, 0.0);
+auto sqrtMassMatTemp = operatorMatrix.getSqrtMassVector();
+///////////////////////////////////////////
+
+
       for (unsigned int jvec = 0; jvec < totalNumberVectors;
            jvec += vectorsBlockSize)
         {
@@ -2457,7 +2465,13 @@ namespace dftfe
                                eigenValues[jvec + iWave] *
                                  XBlock->data()[B * iDof + iWave]);
                     residualNormSquare[jvec + iWave] += temp * temp;
-                  }
+                  
+
+		    // TODO delete after use
+		    // //////////////////////////////////////////////
+		    residualFieldNormSquare[jvec + iWave] += temp * temp * sqrtMassMatTemp.data()[iDof] * sqrtMassMatTemp.data()[iDof];
+		    ///////////////////////////////////////////////////
+		  }
             }
         }
 
@@ -2469,6 +2483,28 @@ namespace dftfe
       dealii::Utilities::MPI::sum(residualNormSquare,
                                   interBandGroupComm,
                                   residualNormSquare);
+
+      // TODO delete after use
+      //
+      // ///////////////////////////////////////////////////////
+      dealii::Utilities::MPI::sum(residualFieldNormSquare,
+                                  mpiCommDomain,
+                                  residualFieldNormSquare);
+
+      dealii::Utilities::MPI::sum(residualFieldNormSquare,
+                                  interBandGroupComm,
+                                  residualFieldNormSquare);
+
+
+      if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
+            std::cout << "L-2 Field Norm of residue   :" << std::endl;
+
+      if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
+        for (unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
+          std::cout << "eigen vector field res" << iWave << ": " << std::sqrt(residualFieldNormSquare[iWave])
+                    << std::endl;
+
+ ////////////////////////////////////////////////////////
 
       if (dftParams.verbosity >= 4)
         {

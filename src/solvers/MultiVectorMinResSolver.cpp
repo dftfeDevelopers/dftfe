@@ -491,7 +491,7 @@ namespace dftfe
       {
         if (hasConvergedHost[i] == false)
           {
-            pcout << " MINRES SOlVER not converging for iBlock = " << i << "\n";
+            pcout << " MINRES SOlVER not converging for iBlock = " << i << "with res = "<<rnormHost[i]<< "\n";
             updateUncovergedFlag = true;
             coeffForXMemHost[i]  = 0.0;
             coeffForXTmpHost[i]  = 1.0;
@@ -500,6 +500,12 @@ namespace dftfe
 
     if (updateUncovergedFlag)
       {
+	      pcout<<" Inside update for unconverged \n";
+	      for (unsigned int i = 0; i < blockSize; ++i)
+	      {
+		      pcout<<" i = "<<i<<" coeffForXMemHost = "<<coeffForXMemHost[i]<< " coeffForXTmpHost = "<<coeffForXTmpHost[i]<<"\n";
+
+	      }
         coeffForXMemInMemSpace.copyFrom(coeffForXMemHost);
         //        dftfe::utils::MemoryTransfer::copy<memorySpace,dftfe::utils::MemorySpace::HOST>(blockSize,
         //                                                                                         coeffForXMemInMemSpace.begin(),
@@ -510,6 +516,25 @@ namespace dftfe
         //                                                                                         coeffForXTmpMemSpace.begin(),
         //                                                                                         coeffForXTmpHost.begin());
 
+
+	   std::vector<double> l2NormVec1(blockSize, 0.0);
+
+    xMemSpace.l2Norm(&l2NormVec1[0]);
+
+        pcout<<" xMemSpace before dist = \n";
+        for(unsigned int iB = 0; iB  < blockSize ; iB++)
+        {
+                pcout<<" iB = "<<iB<<" norm = "<<l2NormVec1[iB]<<"\n";
+        }
+
+	xTmpMemSpace.l2Norm(&l2NormVec1[0]);
+
+	pcout<<" xTmpMemSpace before dist = \n";
+        for(unsigned int iB = 0; iB  < blockSize ; iB++)
+        {
+                pcout<<" iB = "<<iB<<" norm = "<<l2NormVec1[iB]<<"\n";
+        }
+
         BLASWrapperPtr->stridedBlockScaleAndAddTwoVecColumnWise(
           blockSize,
           locallyOwned,
@@ -518,29 +543,39 @@ namespace dftfe
           xTmpMemSpace.data(),
           coeffForXTmpMemSpace.data(),
           xMemSpace.data());
+      
+	xMemSpace.l2Norm(&l2NormVec1[0]);
+
+        pcout<<" xMemSpace before dist = \n";
+        for(unsigned int iB = 0; iB  < blockSize ; iB++)
+        {
+                pcout<<" iB = "<<iB<<" norm = "<<l2NormVec1[iB]<<"\n";
+        }
+
+      
       }
 
 
     std::vector<double> l2NormVec(blockSize, 0.0);
 
-    // xMemSpace.l2Norm(&l2NormVec[0]);
-    /*
+    xMemSpace.l2Norm(&l2NormVec[0]);
+    
         pcout<<" xMemSpace before dist = \n";
         for(unsigned int iB = 0; iB  < blockSize ; iB++)
         {
                 pcout<<" iB = "<<iB<<" norm = "<<l2NormVec[iB]<<"\n";
         }
-    */
+   
     problem.distributeX();
 
-    // xMemSpace.l2Norm(&l2NormVec[0]);
-/*
+     xMemSpace.l2Norm(&l2NormVec[0]);
+
     pcout<<" xMemSpace after dist = \n";
     for(unsigned int iB = 0; iB  < blockSize ; iB++)
     {
             pcout<<" iB = "<<iB<<" norm = "<<l2NormVec[iB]<<"\n";
     }
-    */
+    
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       dftfe::utils::deviceSynchronize();

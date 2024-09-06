@@ -497,7 +497,10 @@ namespace dftfe
     double
     getNumElectrons() const;
 
-    elpaScalaManager *
+     void
+    setNumElectrons(unsigned int inputNumElectrons);
+    
+     elpaScalaManager *
     getElpaScalaManager() const;
 #ifdef DFTFE_WITH_DEVICE
 

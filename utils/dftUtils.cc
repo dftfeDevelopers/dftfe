@@ -78,7 +78,6 @@ namespace dftfe
                 (1.0 + std::exp(factor)));
     }
 
-
     dealii::BoundingBox<3>
     createBoundingBoxForSphere(const dealii::Point<3> &center,
                                const double            sphereRadius)

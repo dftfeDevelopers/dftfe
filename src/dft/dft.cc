@@ -5019,6 +5019,15 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::setNumElectrons(unsigned int inputNumElectrons)
+  {
+    this->numElectrons = inputNumElectrons;
+  }
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
   const std::vector<std::vector<double>> &
   dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenValues() const
   {
