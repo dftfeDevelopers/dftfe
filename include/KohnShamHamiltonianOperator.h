@@ -171,6 +171,11 @@ namespace dftfe
       const bool useApproximateMatrixEntries = true);
 
     void
+    applyOverlapMatrixCorrection(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src0);
+
+    void
     inverseOverlapOverlapMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       const double scalarOinvX,

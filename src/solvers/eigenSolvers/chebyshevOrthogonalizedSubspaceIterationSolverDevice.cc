@@ -217,7 +217,7 @@ namespace dftfe
     distributedDeviceVec<dataTypes::number> *ResidualBlockNew =
       (d_dftParams.approxOverlapMatrix || true) ?
         &operatorMatrix.getScratchFEMultivector(
-          vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 5 : 2)) :
+          vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 5 : 3)) :
         NULL; //@Kartick
     distributedDeviceVec<dataTypes::number> *HXBlock2 =
       d_dftParams.overlapComputeCommunCheby ?
@@ -374,17 +374,8 @@ namespace dftfe
          jvec += numSimultaneousBlocksCurrent * vectorsBlockSize)
       {
         // Correct block dimensions if block "goes off edge of" the matrix
-        const unsigned int BVec =
-          vectorsBlockSize; // std::min(vectorsBlockSize,
-                            // totalNumberWaveFunctions-jvec);
-                            // MPI_Barrier(d_mpiCommParent);
-                            // for (unsigned int i = 0; i < BVec; i++)
-                            //   {
-                            //     eigenValuesBlock[i] = eigenValues[jvec + i];
-                            //     pcout<<"Print EigenValue: "<<i <<"
-                            //     "<<eigenValuesBlock[i]<<std::endl;
-                            //   }
-                            // MPI_Barrier(d_mpiCommParent);
+        const unsigned int BVec = vectorsBlockSize;
+
         // handle edge case when total number of blocks in a given band
         // group is not even in case of overlapping computation and
         // communciation in chebyshev filtering
@@ -426,7 +417,6 @@ namespace dftfe
                 jvec + BVec,
                 eigenVectorsFlattenedDevice,
                 (*XBlock2).begin());
-
             //
             // call Chebyshev filtering function only for the current block
             // or two simulataneous blocks (in case of overlap computation
@@ -486,6 +476,10 @@ namespace dftfe
                   }
                 else
                   {
+                    for (unsigned int i = 0; i < BVec; i++)
+                      {
+                        eigenValuesBlock[i] = eigenValues[jvec + i];
+                      }
                     if (useMixedPrecOverall &&
                         d_dftParams.useSinglePrecCommunCheby)
                       {
@@ -569,13 +563,10 @@ namespace dftfe
                   {
                     pcout << "Using the new ChFSI method GPU: " << std::endl;
                     // MPI_Barrier(d_mpiCommParent);
-                    // for (unsigned int i = 0; i < BVec; i++)
-                    //   {
-                    //     eigenValuesBlock[i] = eigenValues[jvec + i];
-                    //     pcout<<"Print EigenValue: "<<i <<"
-                    //     "<<eigenValuesBlock[i]<<std::endl;
-                    //   }
-                    // MPI_Barrier(d_mpiCommParent);
+                    for (unsigned int i = 0; i < BVec; i++)
+                      {
+                        eigenValuesBlock[i] = eigenValues[jvec + i];
+                      }
                     linearAlgebraOperations::chebyshevFilterNew(
                       BLASWrapperPtr,
                       operatorMatrix,

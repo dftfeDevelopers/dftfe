@@ -327,7 +327,7 @@ namespace dftfe
 
       operatorMatrix.overlapInverseMatrixTimesX(ResidualNew, 1.0, 0.0, 0.0, Y);
       ResidualNew = Y;
-      if (useCorrectionEquation)
+      if (false)
         {
           bool flag    = false;
           int  counter = 0;
@@ -336,7 +336,24 @@ namespace dftfe
               Residual = Y;
               Y        = ResidualNew;
               operatorMatrix.inverseOverlapOverlapMatrixTimesX(
-                Residual, -1.0, 1.0, 1.0, Y, approxOverlapMatrix);
+                Residual, -1.0, 1.0, 0.0, Y, approxOverlapMatrix);
+              std::vector<double> normX, normY;
+              normX.resize(Y.numVectors(), 0.0);
+              normY.resize(Y.numVectors(), 0.0);
+              Residual.l2Norm(&normX[0]);
+              Y.l2Norm(&normY[0]);
+              const unsigned int this_mpi_process =
+                dealii::Utilities::MPI::this_mpi_process(
+                  operatorMatrix.getMPICommunicatorDomain());
+              if (this_mpi_process == 0)
+                {
+                  for (int i = 0; i < Y.numVectors(); i++)
+                    std::cout << "Norm Value: " << i << " " << normX[i] << " "
+                              << normY[i] << " " << normY[i] / normX[i]
+                              << std::endl;
+                }
+              MPI_Barrier(operatorMatrix.getMPICommunicatorDomain());
+              Y.add(2.0, Residual);
               if (counter == 0)
                 flag = true;
               counter++;
