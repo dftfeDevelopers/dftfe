@@ -357,12 +357,10 @@ namespace dftfe
               }
             else
               {
-                if ((!d_dftParams.approxOverlapMatrix || true) &&
+                if (d_dftParams.useReformulatedChFSI &&
                     !isFirstFilteringCall) // set to true now to get this to run
                                            // always @Kartick
                   {
-                    pcout << "Using the new ChFSI method: " << std::endl;
-                    MPI_Barrier(d_mpiCommParent);
                     eigenValuesBlock.resize(BVec);
                     for (unsigned int i = 0; i < BVec; i++)
                       {
@@ -380,8 +378,7 @@ namespace dftfe
                       d_lowerBoundUnWantedSpectrum,
                       d_upperBoundUnWantedSpectrum,
                       d_lowerBoundWantedSpectrum,
-                      d_dftParams.approxOverlapMatrix,
-                      d_dftParams.useCorrectionEquation);
+                      d_dftParams.approxOverlapMatrix);
                   }
 
                 else

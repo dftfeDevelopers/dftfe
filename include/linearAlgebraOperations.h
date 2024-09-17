@@ -563,8 +563,7 @@ namespace dftfe
       const double                                       a,
       const double                                       b,
       const double                                       a0,
-      const bool                                         approxOverlapMatrix,
-      const bool                                         useCorrectionEquation);
+      const bool                                         approxOverlapMatrix);
 
 
   } // namespace linearAlgebraOperations

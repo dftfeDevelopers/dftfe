@@ -239,8 +239,7 @@ namespace dftfe
       const double                                       a,
       const double                                       b,
       const double                                       a0,
-      const bool                                         approxOverlapMatrix,
-      const bool                                         useCorrectionEquation)
+      const bool                                         approxOverlapMatrix)
     {
       double e, c, sigma, sigma1, sigma2, gamma;
       e      = (b - a) / 2.0;
@@ -326,39 +325,40 @@ namespace dftfe
         }
 
       operatorMatrix.overlapInverseMatrixTimesX(ResidualNew, 1.0, 0.0, 0.0, Y);
-      ResidualNew = Y;
-      if (false)
-        {
-          bool flag    = false;
-          int  counter = 0;
-          while (!flag)
-            {
-              Residual = Y;
-              Y        = ResidualNew;
-              operatorMatrix.inverseOverlapOverlapMatrixTimesX(
-                Residual, -1.0, 1.0, 0.0, Y, approxOverlapMatrix);
-              std::vector<double> normX, normY;
-              normX.resize(Y.numVectors(), 0.0);
-              normY.resize(Y.numVectors(), 0.0);
-              Residual.l2Norm(&normX[0]);
-              Y.l2Norm(&normY[0]);
-              const unsigned int this_mpi_process =
-                dealii::Utilities::MPI::this_mpi_process(
-                  operatorMatrix.getMPICommunicatorDomain());
-              if (this_mpi_process == 0)
-                {
-                  for (int i = 0; i < Y.numVectors(); i++)
-                    std::cout << "Norm Value: " << i << " " << normX[i] << " "
-                              << normY[i] << " " << normY[i] / normX[i]
-                              << std::endl;
-                }
-              MPI_Barrier(operatorMatrix.getMPICommunicatorDomain());
-              Y.add(2.0, Residual);
-              if (counter == 0)
-                flag = true;
-              counter++;
-            }
-        }
+      // ResidualNew = Y;
+      // if (false)
+      //   {
+      //     bool flag    = false;
+      //     int  counter = 0;
+      //     while (!flag)
+      //       {
+      //         Residual = Y;
+      //         Y        = ResidualNew;
+      //         operatorMatrix.inverseOverlapOverlapMatrixTimesX(
+      //           Residual, -1.0, 1.0, 0.0, Y, approxOverlapMatrix);
+      //         std::vector<double> normX, normY;
+      //         normX.resize(Y.numVectors(), 0.0);
+      //         normY.resize(Y.numVectors(), 0.0);
+      //         Residual.l2Norm(&normX[0]);
+      //         Y.l2Norm(&normY[0]);
+      //         const unsigned int this_mpi_process =
+      //           dealii::Utilities::MPI::this_mpi_process(
+      //             operatorMatrix.getMPICommunicatorDomain());
+      //         if (this_mpi_process == 0)
+      //           {
+      //             for (int i = 0; i < Y.numVectors(); i++)
+      //               std::cout << "Norm Value: " << i << " " << normX[i] << "
+      //               "
+      //                         << normY[i] << " " << normY[i] / normX[i]
+      //                         << std::endl;
+      //           }
+      //         MPI_Barrier(operatorMatrix.getMPICommunicatorDomain());
+      //         Y.add(2.0, Residual);
+      //         if (counter == 0)
+      //           flag = true;
+      //         counter++;
+      //       }
+      //   }
 
 
       BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
@@ -662,8 +662,7 @@ namespace dftfe
       const double        a,
       const double        b,
       const double        a0,
-      const bool          approxOverlapMatrix,
-      const bool          useCorrectionEquation);
+      const bool          approxOverlapMatrix);
 
 #ifdef DFTFE_WITH_DEVICE
     template void
@@ -720,8 +719,7 @@ namespace dftfe
       const double        a,
       const double        b,
       const double        a0,
-      const bool          approxOverlapMatrix,
-      const bool          useCorrectionEquation);
+      const bool          approxOverlapMatrix);
 
 
 

@@ -558,11 +558,8 @@ namespace dftfe
                       dftfe::utils::mpi::communicationPrecision::single);
                   }
 
-                if ((!d_dftParams.approxOverlapMatrix || true) &&
-                    !isFirstFilteringCall) //@Kartick
+                if (d_dftParams.useReformulatedChFSI && !isFirstFilteringCall)
                   {
-                    pcout << "Using the new ChFSI method GPU: " << std::endl;
-                    // MPI_Barrier(d_mpiCommParent);
                     for (unsigned int i = 0; i < BVec; i++)
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
@@ -579,8 +576,7 @@ namespace dftfe
                       d_lowerBoundUnWantedSpectrum,
                       d_upperBoundUnWantedSpectrum,
                       d_lowerBoundWantedSpectrum,
-                      d_dftParams.approxOverlapMatrix,
-                      d_dftParams.useCorrectionEquation);
+                      d_dftParams.approxOverlapMatrix);
                   }
 
                 else

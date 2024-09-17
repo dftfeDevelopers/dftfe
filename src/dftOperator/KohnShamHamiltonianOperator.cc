@@ -655,9 +655,9 @@ namespace dftfe
                                  false);
 
     d_numVectorsInternal = numWaveFunctions;
-    if (d_dftParamsPtr->useCorrectionEquation)
-      d_basisOperationsPtr->createMultiVector(numWaveFunctions,
-                                              d_tempBlockVectorOverlapInvX);
+    // if (d_dftParamsPtr->useCorrectionEquation)
+    //   d_basisOperationsPtr->createMultiVector(numWaveFunctions,
+    //                                           d_tempBlockVectorOverlapInvX);
   }
 
   template <dftfe::utils::MemorySpace memorySpace>

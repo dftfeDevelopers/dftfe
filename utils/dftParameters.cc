@@ -983,10 +983,10 @@ namespace dftfe
             "[Standard] Use approximate overlap matrix (diagonal for FE basis overlap).  Default setting is true.");
 
           prm.declare_entry(
-            "USE CORRECTION EQUATION IN CHFSI",
+            "USE RE-FORMULATED CHFSI",
             "false",
             dealii::Patterns::Bool(),
-            "[Standard] Use approximate overlap matrix (diagonal for FE basis overlap).  Default setting is true.");
+            "[Advanced] Builds the Chebyshev filtered subspace in full precision based on a residual equation. To be used when USE APPROXIMATE OVERLAP MATRIX is set to false.");
 
           prm.declare_entry(
             "SUBSPACE PROJ SHEP GPU",
@@ -1659,15 +1659,14 @@ namespace dftfe
         numCoreWfcXtHX = prm.get_integer("XTHX CORE EIGENSTATES");
         spectrumSplitStartingScfIter =
           prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
-        chebyshevOrder      = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-        useELPA             = prm.get_bool("USE ELPA");
-        approxOverlapMatrix = prm.get_bool("USE APPROXIMATE OVERLAP MATRIX");
-        useCorrectionEquation =
-          prm.get_bool("USE CORRECTION EQUATION IN CHFSI");
-        orthogType         = prm.get("ORTHOGONALIZATION TYPE");
-        chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-        wfcBlockSize       = prm.get_integer("WFC BLOCK SIZE");
-        chebyWfcBlockSize  = prm.get_integer("CHEBY WFC BLOCK SIZE");
+        chebyshevOrder       = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+        useELPA              = prm.get_bool("USE ELPA");
+        approxOverlapMatrix  = prm.get_bool("USE APPROXIMATE OVERLAP MATRIX");
+        useReformulatedChFSI = prm.get_bool("USE RE-FORMULATED CHFSI");
+        orthogType           = prm.get("ORTHOGONALIZATION TYPE");
+        chebyshevTolerance   = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+        wfcBlockSize         = prm.get_integer("WFC BLOCK SIZE");
+        chebyWfcBlockSize    = prm.get_integer("CHEBY WFC BLOCK SIZE");
         subspaceRotDofsBlockSize =
           prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
         scalapackParalProcs = prm.get_integer("SCALAPACKPROCS");
