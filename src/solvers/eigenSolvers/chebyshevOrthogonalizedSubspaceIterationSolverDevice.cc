@@ -512,7 +512,8 @@ namespace dftfe
                   }
               }
             else if (d_dftParams.overlapComputeCommunCheby &&
-                     numSimultaneousBlocksCurrent == 2)
+                     numSimultaneousBlocksCurrent == 2 &&
+                     !d_dftParams.useReformulatedChFSI)
               {
                 if (useMixedPrecOverall && d_dftParams.useSinglePrecCommunCheby)
                   {
