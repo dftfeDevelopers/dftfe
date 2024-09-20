@@ -68,6 +68,7 @@
 #include <mixingClass.h>
 #include <oncvClass.h>
 #include <AuxDensityMatrix.h>
+#include "expConfiningPotential.h"
 
 namespace dftfe
 {
@@ -732,6 +733,8 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &                                                  rhoQuadValues,
       const std::map<dealii::CellId, std::vector<double>> *bQuadValues);
+
+    const expConfiningPotential& getConfiningPotential() const;
 
   private:
     /**
@@ -1911,6 +1914,8 @@ namespace dftfe
       chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
       std::vector<double> &                           residualNormWaveFunctions,
       unsigned int                                    ipass);
+
+    expConfiningPotential d_expConfiningPot;
   };
 
 } // namespace dftfe

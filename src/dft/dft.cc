@@ -2355,6 +2355,14 @@ namespace dftfe
                 d_dftParamsPtr->adaptAndersonMixingParameter);
           }
       }
+
+    if (d_dftParamsPtr->confiningPotential)
+      {
+        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
+        d_expConfiningPot.init(d_basisOperationsPtrHost,
+                               *d_dftParamsPtr,
+                               atomLocations);
+      }
     //
     // Begin SCF iteration
     //
@@ -2770,6 +2778,11 @@ namespace dftfe
           d_phiTotRhoIn,
           d_phiInQuadValues,
           dummy);
+
+        if (d_dftParamsPtr->confiningPotential)
+          {
+            d_expConfiningPot.addConfiningPotential(d_phiInQuadValues);
+          }
 
         //
         // impose integral phi equals 0
@@ -5348,6 +5361,14 @@ namespace dftfe
     return interBandGroupComm;
   }
 
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  const expConfiningPotential&
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::getConfiningPotential() const
+  {
+    return d_expConfiningPot;
+  }
 
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
