@@ -55,7 +55,8 @@ namespace dftfe
           }
       }
 
-    double tol = 1e-6;
+    double tol = 1e-3;
+    double tol1 = 1e-8;
     double r1 = dftParams.confiningInnerPotRad;
     double r2 = dftParams.confiningOuterPotRad;
 
@@ -69,9 +70,9 @@ namespace dftfe
         quadDist += quadPoints[3*iQuad + 2]*quadPoints[3*iQuad + 2]*periodicFactorZ;
 
 
-        double dist1 = quadDist - (maxDist + r1) + tol;
-        double dist2 = (maxDist + r2) - quadDist  + tol;
-        double dist3 = r2 - r1 + tol;
+        double dist1 = quadDist - (maxDist + r1);
+        double dist2 = (maxDist + r2) - quadDist;
+        double dist3 = r2 - r1 ;
 
         if ( quadDist < maxDist + r1)
           {
@@ -79,8 +80,8 @@ namespace dftfe
           }
         else if ( quadDist <  maxDist + r2)
           {
-            double expFactor = std::exp(-dftParams.confiningWParam/(dist1));
-            d_confiningPotential.data()[iQuad] = dftParams.confiningCParam*expFactor/(dist2*dist2);
+            double expFactor = std::exp(-dftParams.confiningWParam/(dist1 + tol1));
+            d_confiningPotential.data()[iQuad] = dftParams.confiningCParam*expFactor/(dist2*dist2 + tol*tol);
           }
         else
           {
