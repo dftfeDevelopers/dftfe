@@ -382,6 +382,16 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     unsigned int
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      nVectors() const
+    {
+      return d_nVectors;
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    unsigned int
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       nDofsPerCell() const
     {
       return d_nDofsPerCell;

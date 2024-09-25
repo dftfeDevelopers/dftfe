@@ -1,0 +1,50 @@
+set VERBOSITY=0
+set REPRODUCIBLE OUTPUT= true
+subsection Geometry
+  set NATOMS=1
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/Pt_hubb_coordinates.inp 
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/Pt_hubb_domainVectors.inp
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+  set SELF POTENTIAL RADIUS=8.0
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM = 0.8
+    set ATOM BALL RADIUS=3.0
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE+U
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/Pt_hubb_pseudo.inp
+  set PSEUDO TESTS FLAG = true
+  subsection Hubbard Parameters
+    set HUBBARD PARAMETERS FILE = @SOURCE_DIR@/Pt_hubbard.inp
+    set MIXING OCCUPATION = 1.0
+  end
+end
+
+subsection SCF parameters
+  set MIXING PARAMETER =0.2
+  set COMPUTE ENERGY EACH ITER = true
+  set MIXING METHOD= ANDERSON
+  set STARTING WFC             = RANDOM
+  set TEMPERATURE              = 2000
+  set TOLERANCE                = 1e-3
+  subsection Eigen-solver parameters
+    set NUMBER OF KOHN-SHAM WAVEFUNCTIONS                    = 20
+    set ENABLE HAMILTONIAN TIMES VECTOR OPTIM                = false
+    set CHEBYSHEV FILTER TOLERANCE                           = 1e-05
+    set OVERLAP COMPUTE COMMUN CHEBY                         = false
+  end
+end
+

@@ -96,7 +96,7 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityLDAClass<memorySpace>::computeOutputXCData(
+  excDensityLDAClass<memorySpace>::computeRhoTauDependentXCData(
     AuxDensityMatrix<memorySpace> &auxDensityMatrix,
     const std::vector<double> &    quadPoints,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -229,7 +229,7 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityLDAClass<memorySpace>::applyWaveFunctionDependentFuncDer(
+  excDensityLDAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
     const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       &                                                                src,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
@@ -238,19 +238,46 @@ namespace dftfe
     const unsigned int kPointIndex,
     const unsigned int spinIndex)
   {}
+
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityLDAClass<memorySpace>::updateWaveFunctionDependentFuncDer(
-    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-    const std::vector<double> &    kPointWeights)
-  {}
-  template <dftfe::utils::MemorySpace memorySpace>
-  double
-  excDensityLDAClass<memorySpace>::computeWaveFunctionDependentExcEnergy(
-    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-    const std::vector<double> &    kPointWeights)
+  excDensityLDAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsiCheby(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+      &                                                                src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+    const unsigned int inputVecSize,
+    const double       factor,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
   {}
 
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityLDAClass<memorySpace>::updateWaveFunctionDependentFuncDerWrtPsi(
+    const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
+    const std::vector<double> &                           kPointWeights)
+  {}
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityLDAClass<memorySpace>::computeWaveFunctionDependentExcEnergy(
+    const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
+    const std::vector<double> &                           kPointWeights)
+  {}
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  double
+  excDensityLDAClass<memorySpace>::getWaveFunctionDependentExcEnergy()
+  {
+    return 0.0;
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  double
+  excDensityLDAClass<
+    memorySpace>::getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi()
+  {
+    return 0.0;
+  }
 
   template class excDensityLDAClass<dftfe::utils::MemorySpace::HOST>;
 #ifdef DFTFE_WITH_DEVICE

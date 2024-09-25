@@ -206,31 +206,23 @@ namespace dftfe
     distributedDeviceVec<dataTypes::number> *HXBlock =
       &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 1);
     distributedDeviceVec<dataTypes::number> *XBlock2 =
-      d_dftParams.overlapComputeCommunCheby &&
-          !d_dftParams.useReformulatedChFSI ?
+      d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
         NULL;
     distributedDeviceVec<dataTypes::number> *ResidualBlock =
       (d_dftParams.approxOverlapMatrix || true) ?
         &operatorMatrix.getScratchFEMultivector(
           vectorsBlockSize,
-          (d_dftParams.overlapComputeCommunCheby &&
-               !d_dftParams.useReformulatedChFSI ?
-             4 :
-             2)) :
+          (d_dftParams.overlapComputeCommunCheby ? 4 : 2)) :
         NULL; //@Kartick
     distributedDeviceVec<dataTypes::number> *ResidualBlockNew =
       (d_dftParams.approxOverlapMatrix || true) ?
         &operatorMatrix.getScratchFEMultivector(
           vectorsBlockSize,
-          (d_dftParams.overlapComputeCommunCheby &&
-               !d_dftParams.useReformulatedChFSI ?
-             5 :
-             3)) :
+          (d_dftParams.overlapComputeCommunCheby ? 5 : 3)) :
         NULL; //@Kartick
     distributedDeviceVec<dataTypes::number> *HXBlock2 =
-      d_dftParams.overlapComputeCommunCheby &&
-          !d_dftParams.useReformulatedChFSI ?
+      d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
         NULL;
     distributedDeviceVec<dataTypes::numberFP32> *XBlockFP32 =
@@ -243,13 +235,11 @@ namespace dftfe
         NULL;
 
     distributedDeviceVec<dataTypes::numberFP32> *XBlock2FP32 =
-      d_dftParams.overlapComputeCommunCheby &&
-          !d_dftParams.useReformulatedChFSI && d_dftParams.useSinglePrecCheby ?
+      d_dftParams.overlapComputeCommunCheby && d_dftParams.useSinglePrecCheby ?
         &operatorMatrix.getScratchFEMultivectorSinglePrec(vectorsBlockSize, 2) :
         NULL;
     distributedDeviceVec<dataTypes::numberFP32> *HXBlock2FP32 =
-      d_dftParams.overlapComputeCommunCheby &&
-          !d_dftParams.useReformulatedChFSI && d_dftParams.useSinglePrecCheby ?
+      d_dftParams.overlapComputeCommunCheby && d_dftParams.useSinglePrecCheby ?
         &operatorMatrix.getScratchFEMultivectorSinglePrec(vectorsBlockSize, 3) :
         NULL;
 
@@ -375,10 +365,7 @@ namespace dftfe
     // two blocks of wavefunctions are filtered simultaneously when overlap
     // compute communication in chebyshev filtering is toggled on
     const unsigned int numSimultaneousBlocks =
-      d_dftParams.overlapComputeCommunCheby &&
-          !d_dftParams.useReformulatedChFSI ?
-        2 :
-        1;
+      d_dftParams.overlapComputeCommunCheby ? 2 : 1;
     unsigned int       numSimultaneousBlocksCurrent = numSimultaneousBlocks;
     const unsigned int numWfcsInBandGroup =
       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] -
@@ -424,7 +411,6 @@ namespace dftfe
               (*XBlock).begin());
 
             if (d_dftParams.overlapComputeCommunCheby &&
-                !d_dftParams.useReformulatedChFSI &&
                 numSimultaneousBlocksCurrent == 2)
               BLASWrapperPtr->stridedCopyToBlockConstantStride(
                 BVec,
@@ -528,8 +514,7 @@ namespace dftfe
                   }
               }
             else if (d_dftParams.overlapComputeCommunCheby &&
-                     numSimultaneousBlocksCurrent == 2 &&
-                     !d_dftParams.useReformulatedChFSI)
+                     numSimultaneousBlocksCurrent == 2)
               {
                 if (useMixedPrecOverall && d_dftParams.useSinglePrecCommunCheby)
                   {
@@ -625,8 +610,7 @@ namespace dftfe
               eigenVectorsFlattenedDevice);
 
             if (d_dftParams.overlapComputeCommunCheby &&
-                numSimultaneousBlocksCurrent == 2 &&
-                !d_dftParams.useReformulatedChFSI)
+                numSimultaneousBlocksCurrent == 2)
               BLASWrapperPtr->stridedCopyFromBlockConstantStride(
                 totalNumberWaveFunctions,
                 BVec,
@@ -909,13 +893,11 @@ namespace dftfe
     distributedDeviceVec<dataTypes::number> *HXBlock =
       &operatorMatrix.getScratchFEMultivector(chebyBlockSize, 1);
     distributedDeviceVec<dataTypes::number> *XBlock2 =
-      d_dftParams.overlapComputeCommunCheby &&
-          !d_dftParams.useReformulatedChFSI ?
+      d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(chebyBlockSize, 2) :
         NULL;
     distributedDeviceVec<dataTypes::number> *HXBlock2 =
-      d_dftParams.overlapComputeCommunCheby &&
-          !d_dftParams.useReformulatedChFSI ?
+      d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(chebyBlockSize, 3) :
         NULL;
 
@@ -989,10 +971,7 @@ namespace dftfe
             // overlap compute communication in chebyshev filtering is toggled
             // on
             const unsigned int numSimultaneousBlocks =
-              d_dftParams.overlapComputeCommunCheby &&
-                  !d_dftParams.useReformulatedChFSI ?
-                2 :
-                1;
+              d_dftParams.overlapComputeCommunCheby ? 2 : 1;
             unsigned int numSimultaneousBlocksCurrent = numSimultaneousBlocks;
             const unsigned int numWfcsInBandGroup =
               bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] -
@@ -1034,7 +1013,6 @@ namespace dftfe
                       (*XBlock).begin());
 
                     if (d_dftParams.overlapComputeCommunCheby &&
-                        !d_dftParams.useReformulatedChFSI &&
                         numSimultaneousBlocksCurrent == 2)
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         BVec,
@@ -1050,7 +1028,6 @@ namespace dftfe
                     // computation and communication) to be filtered and does
                     // in-place filtering
                     if (d_dftParams.overlapComputeCommunCheby &&
-                        !d_dftParams.useReformulatedChFSI &&
                         numSimultaneousBlocksCurrent == 2)
                       {
                         if (useMixedPrecOverall &&
@@ -1136,7 +1113,6 @@ namespace dftfe
                       eigenVectorsFlattenedDevice);
 
                     if (d_dftParams.overlapComputeCommunCheby &&
-                        !d_dftParams.useReformulatedChFSI &&
                         numSimultaneousBlocksCurrent == 2)
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
                         totalNumberWaveFunctions,

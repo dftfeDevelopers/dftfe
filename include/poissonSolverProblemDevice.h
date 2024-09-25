@@ -26,7 +26,6 @@
 #    include <headers.h>
 #    include "FEBasisOperations.h"
 #    include "BLASWrapper.h"
-#    include <MatrixFree.h>
 
 namespace dftfe
 {
@@ -161,6 +160,13 @@ namespace dftfe
 
   private:
     /**
+     * @brief Sets up the matrixfree shapefunction, gradient, jacobian and map for matrixfree computeAX
+     *
+     */
+    void
+    setupMatrixFree();
+
+    /**
      * @brief Sets up the constraints matrix
      *
      */
@@ -222,9 +228,6 @@ namespace dftfe
     /// pointer to dealii MatrixFree object
     const dealii::MatrixFree<3, double> *d_matrixFreeDataPtr;
 
-    /// pointer to MatrixFree Base object
-    std::unique_ptr<dftfe::MatrixFreeBase> d_matrixFreeBasePtr;
-
     /// pointer to the x vector being solved for
     distributedCPUVec<double> *  d_xPtr;
     distributedDeviceVec<double> d_xDevice;
@@ -232,6 +235,18 @@ namespace dftfe
     // number of cells local to each mpi task, number of degrees of freedom
     // locally owned and total degrees of freedom including ghost
     int d_nLocalCells, d_xLocalDof, d_xLen;
+
+    // shape function value, gradient, jacobian and map for matrixfree
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+                                                                        d_shapeFunction, d_jacobianFactor;
+    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE> d_map;
+
+    // Pointers to shape function value, gradient, jacobian and map for
+    // matrixfree
+    double *d_shapeFunctionPtr;
+    double *d_jacobianFactorPtr;
+    int *   d_mapPtr;
+
 
     // constraints
     dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>

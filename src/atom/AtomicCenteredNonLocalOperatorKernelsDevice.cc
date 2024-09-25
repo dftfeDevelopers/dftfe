@@ -29,6 +29,34 @@ namespace dftfe
   {
     template <typename ValueType>
     __global__ void
+    sqrtAlphaScalingWaveFunctionEntriesKernel(
+      const unsigned int numWfcs,
+      const unsigned int totalAtomsInCurrentProcessor,
+      const unsigned int maxSingleAtomPseudoWfc,
+      const double *     scalingVector,
+      ValueType *        sphericalFnTimesWfcPadded)
+    {
+      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const unsigned int numberEntries =
+        totalAtomsInCurrentProcessor * maxSingleAtomPseudoWfc * numWfcs;
+
+      for (unsigned int index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const unsigned int iAtom = index / (maxSingleAtomPseudoWfc * numWfcs);
+          const unsigned int iOrb =
+            (index - iAtom * maxSingleAtomPseudoWfc * numWfcs) / numWfcs;
+          const unsigned int wfcIndex =
+            (index - iAtom * maxSingleAtomPseudoWfc * numWfcs) % numWfcs;
+          const double alpha = scalingVector[wfcIndex];
+          dftfe::utils::copyValue(
+            sphericalFnTimesWfcPadded + index,
+            dftfe::utils::mult(alpha, sphericalFnTimesWfcPadded[index]));
+        }
+    }
+
+    template <typename ValueType>
+    __global__ void
     copyFromParallelNonLocalVecToAllCellsVecKernel(
       const unsigned int numWfcs,
       const unsigned int numNonLocalCells,
@@ -53,6 +81,7 @@ namespace dftfe
                                              intraBlockIndex];
         }
     }
+
 
     template <typename ValueType>
     __global__ void
@@ -164,6 +193,46 @@ namespace dftfe
 
   namespace AtomicCenteredNonLocalOperatorKernelsDevice
   {
+    template <typename ValueType>
+    void
+    sqrtAlphaScalingWaveFunctionEntries(
+      const unsigned int maxSingleAtomContribution,
+      const unsigned int numWfcs,
+      const unsigned int totalAtomsInCurrentProcessor,
+      const double *     scalingVector,
+      ValueType *        sphericalFnTimesWfcPadded)
+
+    {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+      sqrtAlphaScalingWaveFunctionEntriesKernel<<<
+        (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * totalAtomsInCurrentProcessor *
+          maxSingleAtomContribution,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        numWfcs,
+        totalAtomsInCurrentProcessor,
+        maxSingleAtomContribution,
+        dftfe::utils::makeDataTypeDeviceCompatible(scalingVector),
+        dftfe::utils::makeDataTypeDeviceCompatible(sphericalFnTimesWfcPadded));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(
+        sqrtAlphaScalingWaveFunctionEntriesKernel,
+        (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * totalAtomsInCurrentProcessor *
+          maxSingleAtomContribution,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        0,
+        numWfcs,
+        totalAtomsInCurrentProcessor,
+        maxSingleAtomContribution,
+        dftfe::utils::makeDataTypeDeviceCompatible(scalingVector),
+        dftfe::utils::makeDataTypeDeviceCompatible(sphericalFnTimesWfcPadded));
+#endif
+    }
+
+
+
     template <typename ValueType>
     void
     copyFromParallelNonLocalVecToAllCellsVec(
@@ -437,6 +506,22 @@ namespace dftfe
       const dataTypes::numberFP32 *sphericalFnTimesWfcParallelVec,
       dataTypes::numberFP32 *      sphericalFnTimesWfcAllCellsVec,
       const int *                  indexMapPaddedToParallelVec);
+
+    template void
+    sqrtAlphaScalingWaveFunctionEntries(
+      const unsigned int maxSingleAtomContribution,
+      const unsigned int numWfcs,
+      const unsigned int totalAtomsInCurrentProcessor,
+      const double *     scalingVector,
+      dataTypes::number *sphericalFnTimesWfcPadded);
+
+    template void
+    sqrtAlphaScalingWaveFunctionEntries(
+      const unsigned int     maxSingleAtomContribution,
+      const unsigned int     numWfcs,
+      const unsigned int     totalAtomsInCurrentProcessor,
+      const double *         scalingVector,
+      dataTypes::numberFP32 *sphericalFnTimesWfcPadded);
 
 
     template void

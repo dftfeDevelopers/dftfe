@@ -65,7 +65,8 @@ namespace dftfe
         basisOperatorPtr,
       std::shared_ptr<AtomCenteredSphericalFunctionContainer>
                       atomCenteredSphericalFunctionContainer,
-      const MPI_Comm &mpi_comm_parent);
+      const MPI_Comm &mpi_comm_parent,
+      const bool      memOptMode = false);
 
     /**
      * @brief Resizes various internal data members and selects the kpoint of interest.
@@ -204,7 +205,19 @@ namespace dftfe
     const std::vector<unsigned int> &
     getSphericalFnTimesVectorFlattenedVectorLocalIds() const;
 
+    const std::vector<unsigned int> &
+    getOwnedAtomIdsInCurrentProcessor() const;
 
+    void
+    computeCconjtransCMatrix(
+      const unsigned int atomId,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperPtr,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &Dinverse,
+      dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>
+        PconjtransposePmatrix);
     // Calls for both device and host
     /**
      * @brief compute the action of coupling matrix on sphericalFunctionKetTimesVectorParFlattened.
@@ -226,8 +239,18 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
-      const bool flagCopyResultsToMatrix = true);
+        &                sphericalFunctionKetTimesVectorParFlattened,
+      const bool         flagCopyResultsToMatrix = true,
+      const unsigned int kPointIndex             = 0);
+
+    /**
+     * @brief After AllReduce function is called this will copy to the nonLocalOperatorClassDatastructure.
+     */
+    void
+    copyBackFromDistributedVectorToLocalDataStructure(
+      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+        &sphericalFunctionKetTimesVectorParFlattened,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &scalingVector);
     /**
      * @brief copies the results from internal member to sphericalFunctionKetTimesVectorParFlattened, on which ghost values are called.
      * crucial operation for completion of the full CconjtranX on all cells
@@ -253,6 +276,16 @@ namespace dftfe
     applyCconjtransOnX(const ValueType *                           X,
                        const std::pair<unsigned int, unsigned int> cellRange);
 
+
+    // Returns the pointer of CTX stored in HOST memory for the atom Index in
+    // the list of atoms with support in the processor.
+    /**
+     * @brief Returns the pointer of CTX stored in HOST memory
+     * @param[in] iAtom atomIndex in the list of atoms with support in the
+     * current processor. NOTE!! One must be careful here
+     */
+    const ValueType *
+    getCconjtansXLocalDataStructure(const unsigned int iAtom);
     /**
      * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and contraint nodes updated.
      * @param[in] src input nodal vector on which operator acts on.
@@ -308,6 +341,12 @@ namespace dftfe
     applyCOnVCconjtransX(ValueType *                                 Xout,
                          const std::pair<unsigned int, unsigned int> cellRange);
 
+    std::vector<ValueType>
+    getCmatrixEntries(int kPointIndex, unsigned int atomId, int iElem) const;
+
+    bool
+    atomPresentInCellRange(
+      const std::pair<unsigned int, unsigned int> cellRange) const;
     /**
      * @brief Called only for GPU runs where the coupling matrix has to be padded
      * @param[in] entries COupling matrix entries without padding in the atomId
@@ -379,9 +418,9 @@ namespace dftfe
     std::map<std::pair<unsigned int, unsigned int>, unsigned int>
       d_sphericalFunctionIdsNumberingMapCurrentProcess;
 
-
-    dealii::IndexSet d_locallyOwnedAtomCenteredFnIdsCurrentProcess;
-    dealii::IndexSet d_ghostAtomCenteredFnIdsCurrentProcess;
+    std::vector<unsigned int> d_OwnedAtomIdsInCurrentProcessor;
+    dealii::IndexSet          d_locallyOwnedAtomCenteredFnIdsCurrentProcess;
+    dealii::IndexSet          d_ghostAtomCenteredFnIdsCurrentProcess;
     std::map<std::pair<unsigned int, unsigned int>, unsigned int>
       d_AtomCenteredFnIdsNumberingMapCurrentProcess;
     std::vector<std::vector<
@@ -409,6 +448,7 @@ namespace dftfe
     unsigned int d_locallyOwnedCells;
     unsigned int d_numberWaveFunctions;
     unsigned int d_kPointIndex;
+    bool         d_memoryOptMode;
     bool         d_isMallocCalled = false;
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
@@ -447,8 +487,6 @@ namespace dftfe
         dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
       const unsigned int                  quadratureIndex);
 
-
-
     std::map<
       unsigned int,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
@@ -486,6 +524,8 @@ namespace dftfe
         &sphericalFunctionKetTimesVectorParFlattened);
 
 
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>
+      d_tempConjtansX;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
                 d_sphericalFnTimesWavefunctionMatrix;
     ValueType **hostPointerCDagger, **hostPointerCDaggeOutTemp,
@@ -514,6 +554,9 @@ namespace dftfe
     std::vector<ValueType> d_sphericalFnTimesVectorAllCellsReduction;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesVectorAllCellsReductionDevice;
+
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_couplingMatrixTimesVectorDevice;
 
     std::vector<unsigned int> d_sphericalFnIdsParallelNumberingMap;
     std::vector<int>          d_sphericalFnIdsPaddedParallelNumberingMap;

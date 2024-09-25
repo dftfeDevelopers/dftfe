@@ -1,5 +1,5 @@
 #!/ccs/home/dsambit/frontier/bin/rc
-#SBATCH -A mat239
+#SBATCH -A nti115
 #SBATCH -J gputests
 #SBATCH -t 1:00:00
 #SBATCH -p batch
@@ -8,12 +8,13 @@
 #SBATCH --ntasks-per-gpu 1
 #SBATCH --gpu-bind closest
 
-OMP_NUM_THREADS = 1
+OMP_NUM_THREADS=1
 MPICH_VERSION_DISPLAY=1
 MPICH_ENV_DISPLAY=1
-MPICH_OFI_NIC_POLICY = NUMA 
+MPICH_OFI_NIC_POLICY=NUMA 
 MPICH_GPU_SUPPORT_ENABLED=1
 MPICH_SMP_SINGLE_COPY_MODE=NONE
+FI_MR_CACHE_MONITOR=disabled
 
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INST/lib
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INST/lib/lib64
@@ -21,7 +22,6 @@ LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 
 
 BASE = $WD/src/dftfeDebug/build/release/real
-n=`{echo $SLURM_JOB_NUM_NODES '*' 8 | bc}
 
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileN2_1.prm > outputN2_1
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileN2_2.prm > outputN2_2

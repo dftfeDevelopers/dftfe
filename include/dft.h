@@ -43,6 +43,9 @@
 #  include <deviceDirectCCLWrapper.h>
 #endif
 
+//  ************* For debugging purposes only. Remove afterwards
+#include "hubbardClass.h"
+
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <dealiiLinearSolver.h>
 #include <dftParameters.h>
@@ -1844,6 +1847,7 @@ namespace dftfe
 
     bool d_isRestartGroundStateCalcFromChk;
 
+
     /**
      * @ nscf variables
      */
@@ -1911,6 +1915,9 @@ namespace dftfe
       chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
       std::vector<double> &                           residualNormWaveFunctions,
       unsigned int                                    ipass);
+
+    std::shared_ptr<hubbard<dataTypes::number, memorySpace>> hubbardPtr;
+    bool                                                     d_useHubbard;
   };
 
 } // namespace dftfe

@@ -69,7 +69,7 @@ namespace dftfe
                        natural_bound_type_R,
                        0.0,
                        d_radialSplineObject);
-    d_cutOff = xData[maxRowId + 10];
+    d_cutOff = xData[maxRowId + 10]; // TODO will lead to a seg fault
     d_rMin   = xData[0];
   }
 

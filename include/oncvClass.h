@@ -56,7 +56,8 @@ namespace dftfe
               const std::map<unsigned int, unsigned int> &atomAttributes,
               const bool                                  reproducibleOutput,
               const int                                   verbosity,
-              const bool                                  useDevice);
+              const bool                                  useDevice,
+              const bool                                  memOptMode);
     /**
      * @brief Initialises all the data members with addresses/values to/of dftClass.
      * @param[in] densityQuadratureId quadratureId for density.
@@ -275,6 +276,7 @@ namespace dftfe
     // conditional stream object
     dealii::ConditionalOStream               pcout;
     bool                                     d_useDevice;
+    bool                                     d_memoryOptMode;
     unsigned int                             d_densityQuadratureId;
     unsigned int                             d_localContributionQuadratureId;
     unsigned int                             d_nuclearChargeQuadratureIdElectro;

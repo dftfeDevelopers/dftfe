@@ -97,9 +97,8 @@ namespace dftfe
 
     AssertThrow(
       (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
-          d_numEigenValues <
-        INT_MAX /
-          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+          matrix_free_data.get_vector_partitioner()->locally_owned_size() <
+        INT_MAX / d_numEigenValues,
       dealii::ExcMessage(
         "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
 

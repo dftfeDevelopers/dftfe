@@ -94,16 +94,18 @@ namespace dftfe
 
 
     /*
-     * @brief The apply function that will be called in HX()
-     * param[in] src The input vector
-     * param[out] dst The output vector
-     * param[in] inputVecSize The size of the input vector
+     * @brief The apply function that will be called in HX().
+     * The distribute() and updateGhostValues() for src
+     * has to be called before this function.
+     * Similarly for dst, accumulateLocallyOwned() should be called in HX()
+     * after this function is called. param[in] src The input vector param[out]
+     * dst The output vector param[in] inputVecSize The size of the input vector
      * param[in] factor the factor with which the output is scaled in HX()
      * param[in] kPointIndex the k point for which the HX() is called
      * param[in] spinIndex the spin index for which the HX() is called
      */
     virtual void
-    applyWaveFunctionDependentFuncDer(
+    applyWaveFunctionDependentFuncDerWrtPsi(
       const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
         &                                                                src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
@@ -111,22 +113,72 @@ namespace dftfe
       const double       factor,
       const unsigned int kPointIndex,
       const unsigned int spinIndex) = 0;
+
+
+    /*
+     * @brief The apply function that will be called in HXCheby().
+     * The distribute() and updateGhostValues() for src
+     * has to be called before this function.
+     * Similarly, for dst, accumulateLocallyOwned() should be called in
+     * HXCheby() after this function is called. param[in] src The input vector
+     * param[out] dst The output vector
+     * param[in] inputVecSize The size of the input vector
+     * param[in] factor the factor with which the output is scaled in HX()
+     * param[in] kPointIndex the k point for which the HX() is called
+     * param[in] spinIndex the spin index for which the HX() is called
+     */
     virtual void
-    updateWaveFunctionDependentFuncDer(
-      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    kPointWeights) = 0;
-    virtual double
+    applyWaveFunctionDependentFuncDerWrtPsiCheby(
+      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+        &                                                                src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const unsigned int inputVecSize,
+      const double       factor,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex) = 0;
+
+    /*
+     * @brief The function that updates the Wave function dependent part
+     * of the Exc functional and its derivative wrt \psi
+     */
+    virtual void
+    updateWaveFunctionDependentFuncDerWrtPsi(
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
+      const std::vector<double> &                           kPointWeights) = 0;
+
+
+    /*
+     * @brief The function that computes the Wave function dependent part
+     * of the Exc functional energy
+     */
+    virtual void
     computeWaveFunctionDependentExcEnergy(
-      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    kPointWeights) = 0;
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
+      const std::vector<double> &                           kPointWeights) = 0;
+
+    /*
+     * @brief Returns the Wavefunction dependent part of the Exc energy.
+     */
+    virtual double
+    getWaveFunctionDependentExcEnergy() = 0;
+
+    /*
+     * @brief Returns the Expectation value of the WaveFunctionDependentExcFuncDerWrtPsi
+     * While using band energy approach to compute the total free energy
+     * the expectation of the WaveFunctionDependentExcFuncDerWrtPsi is included
+     * in the band energy. Hence it has to be subtracted and the correct energy
+     * has to be added to the free energy.
+     */
+    virtual double
+    getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi() = 0;
 
     /**
      * x and c denotes exchange and correlation respectively.
-     * This function computes the rho and tau dependent parts
-     * of the Exc and Vxc functionals
+     * This function computes the rho and tau dependent part of
+     * the Exc functional energy density and its partial derivatives
      */
     virtual void
-    computeOutputXCData(
+    computeRhoTauDependentXCData(
       AuxDensityMatrix<memorySpace> &auxDensityMatrix,
       const std::vector<double> &    quadPoints,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>

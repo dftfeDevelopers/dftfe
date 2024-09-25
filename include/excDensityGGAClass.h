@@ -38,7 +38,7 @@ namespace dftfe
     ~excDensityGGAClass();
 
     void
-    computeOutputXCData(
+    computeRhoTauDependentXCData(
       AuxDensityMatrix<memorySpace> &auxDensityMatrix,
       const std::vector<double> &    quadPoints,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -52,7 +52,7 @@ namespace dftfe
       const override;
 
     void
-    applyWaveFunctionDependentFuncDer(
+    applyWaveFunctionDependentFuncDerWrtPsi(
       const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
         &                                                                src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
@@ -60,14 +60,31 @@ namespace dftfe
       const double       factor,
       const unsigned int kPointIndex,
       const unsigned int spinIndex) override;
+
     void
-    updateWaveFunctionDependentFuncDer(
-      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    kPointWeights) override;
-    double
+    applyWaveFunctionDependentFuncDerWrtPsiCheby(
+      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+        &                                                                src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const unsigned int inputVecSize,
+      const double       factor,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex) override;
+
+    void
+    updateWaveFunctionDependentFuncDerWrtPsi(
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
+      const std::vector<double> &kPointWeights) override;
+    void
     computeWaveFunctionDependentExcEnergy(
-      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    kPointWeights) override;
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
+      const std::vector<double> &kPointWeights) override;
+
+    double
+    getWaveFunctionDependentExcEnergy() override;
+
+    double
+    getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi() override;
 
   private:
     NNGGA *                       d_NNGGAPtr;

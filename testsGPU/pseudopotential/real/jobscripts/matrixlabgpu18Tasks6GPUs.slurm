@@ -14,6 +14,7 @@ echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 . /shared/spack/share/spack/setup-env.sh    ###--- For bash Shell 
 spack load gcc@11.3.0 cuda@11.7.0 boost@1.76.0 intel-oneapi-mkl@2022 cmake%gcc@11.3.0 gmake%gcc@11.3.0 ninja openmpi%gcc@11.3.0 numactl@2.0.14%gcc@11.3.0 p4est ^openmpi
 
+###needs to change this DFTFE_PATH
 export DFTFE_PATH=/home/nikhilk/dftfe/publicGithubDevelop/build/release/real/
 export UCX_LOG_LEVEL=ERROR
 export OMP_NUM_THREADS=1
@@ -25,6 +26,7 @@ srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe Input_MD_1.prm > output_MD_1
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe Input_MD_2.prm > output_MD_2
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_1.prm > outputMg2x_1
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu
+srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_2_spingpu.prm > outputMg2x_2_spin_gpu
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_2.prm > outputMg2x_2
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_3.prm > outputMg2x_3
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_4.prm > outputMg2x_4
@@ -35,6 +37,7 @@ srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_12.prm > ou
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_13.prm > outputMg2x_13
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileBe.prm > outputBe
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFile_LLZO.prm > outputLLZO
+srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFile_ReS2.prm > outputReS2
 
 srun -n 6 --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileN2_1.prm > outputN2_1
 srun -n 6 --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileN2_2.prm > outputN2_2
@@ -48,3 +51,4 @@ srun -n 6 --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_11.prm > outputMg2x_11
 srun -n 6 --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_14.prm > outputMg2x_14
 srun -n 6 --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_15.prm > outputMg2x_15
 srun -n 6 --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_16.prm > outputMg2x_16
+srun -n 6 --mpi=pmi2 $DFTFE_PATH/dftfe PtAu_hubb.prm > output_PtAu_hubb

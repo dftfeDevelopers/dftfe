@@ -29,7 +29,8 @@ namespace dftfe
     const std::map<unsigned int, unsigned int> &atomAttributes,
     const bool                                  reproducibleOutput,
     const int                                   verbosity,
-    const bool                                  useDevice)
+    const bool                                  useDevice,
+    const bool                                  memOptMode)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
@@ -44,6 +45,7 @@ namespace dftfe
     d_verbosity              = verbosity;
     d_atomTypeAtributes      = atomAttributes;
     d_useDevice              = useDevice;
+    d_memoryOptMode          = memOptMode;
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -162,7 +164,8 @@ namespace dftfe
             d_BLASWrapperHostPtr,
             d_BasisOperatorHostPtr,
             d_atomicProjectorFnsContainer,
-            d_mpiCommParent);
+            d_mpiCommParent,
+            d_memoryOptMode);
         if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =
@@ -171,7 +174,8 @@ namespace dftfe
                 memorySpace>>(d_BLASWrapperHostPtr,
                               d_BasisOperatorHostPtr,
                               d_atomicProjectorFnsContainer,
-                              d_mpiCommParent);
+                              d_mpiCommParent,
+                              d_memoryOptMode);
       }
 #if defined(DFTFE_WITH_DEVICE)
     else
@@ -182,7 +186,8 @@ namespace dftfe
             d_BLASWrapperDevicePtr,
             d_BasisOperatorDevicePtr,
             d_atomicProjectorFnsContainer,
-            d_mpiCommParent);
+            d_mpiCommParent,
+            d_memoryOptMode);
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =
@@ -191,7 +196,8 @@ namespace dftfe
                 memorySpace>>(d_BLASWrapperDevicePtr,
                               d_BasisOperatorDevicePtr,
                               d_atomicProjectorFnsContainer,
-                              d_mpiCommParent);
+                              d_mpiCommParent,
+                              d_memoryOptMode);
       }
 #endif
 

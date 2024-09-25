@@ -238,11 +238,12 @@ namespace dftfe
                 quadWeightsAll[iCell * numberQuadraturePointsPerCell + iQuad]);
             }
 
-          d_excManagerPtr->getExcSSDFunctionalObj()->computeOutputXCData(
-            *auxDensityXCPerturbedRepresentationPtr,
-            quadPointsInCell,
-            xDataOut,
-            cDataOut);
+          d_excManagerPtr->getExcSSDFunctionalObj()
+            ->computeRhoTauDependentXCData(
+              *auxDensityXCPerturbedRepresentationPtr,
+              quadPointsInCell,
+              xDataOut,
+              cDataOut);
 
 
           const std::vector<double> &pdexDensitySpinIndex =

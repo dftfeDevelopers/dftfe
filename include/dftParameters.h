@@ -90,7 +90,7 @@ namespace dftfe
       restaFermiWavevector;
     std::string optimizationMode, mixingMethod, ionOptSolver, cellOptSolver;
 
-
+    std::string  hubbardFileName;
     bool         isIonForce, isCellStress, isBOMD;
     bool         nonSelfConsistentForce, meshAdaption;
     double       forceRelaxTol, stressRelaxTol, toleranceKinetic;

@@ -29,3 +29,4 @@ srun ./dftfe parameterFileMg2x_11.prm > outputMg2x_11
 srun ./dftfe parameterFileMg2x_14.prm > outputMg2x_14
 srun ./dftfe parameterFileMg2x_15.prm > outputMg2x_15
 srun ./dftfe parameterFileMg2x_16.prm > outputMg2x_16
+srun ./dftfe PtAu_hubb.prm            > output_PtAu_hubb

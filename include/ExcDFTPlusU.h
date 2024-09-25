@@ -21,9 +21,10 @@
 
 
 #include "ExcSSDFunctionalBaseClass.h"
+#include "hubbardClass.h"
 namespace dftfe
 {
-  template <dftfe::utils::MemorySpace memorySpace>
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   class ExcDFTPlusU : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
@@ -34,7 +35,17 @@ namespace dftfe
     ~ExcDFTPlusU();
 
     void
-    applyWaveFunctionDependentFuncDer(
+    applyWaveFunctionDependentFuncDerWrtPsi(
+      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+        &                                                                src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const unsigned int inputVecSize,
+      const double       factor,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex) override;
+
+    void
+    applyWaveFunctionDependentFuncDerWrtPsiCheby(
       const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
         &                                                                src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
@@ -43,19 +54,26 @@ namespace dftfe
       const unsigned int kPointIndex,
       const unsigned int spinIndex) override;
     void
-    updateWaveFunctionDependentFuncDer(
-      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    kPointWeights) override;
-    double
+    updateWaveFunctionDependentFuncDerWrtPsi(
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
+      const std::vector<double> &kPointWeights) override;
+
+    void
     computeWaveFunctionDependentExcEnergy(
-      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    kPointWeights) override;
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
+      const std::vector<double> &kPointWeights) override;
+
+    double
+    getWaveFunctionDependentExcEnergy() override;
+
+    double
+    getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi() override;
 
     /**
      * x and c denotes exchange and correlation respectively
      */
     void
-    computeOutputXCData(
+    computeRhoTauDependentXCData(
       AuxDensityMatrix<memorySpace> &auxDensityMatrix,
       const std::vector<double> &    quadPoints,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -68,8 +86,46 @@ namespace dftfe
       const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
       const override;
 
+    void
+    initialiseHubbardClass(
+      const MPI_Comm &mpi_comm_parent,
+      const MPI_Comm &mpi_comm_domain,
+      const MPI_Comm &mpi_comm_interPool,
+      std::shared_ptr<
+        dftfe::basis::FEBasisOperations<ValueType, double, memorySpace>>
+        basisOperationsMemPtr,
+      std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<ValueType, double, dftfe::utils::MemorySpace::HOST>>
+        basisOperationsHostPtr,
+      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+        BLASWrapperMemPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                                              BLASWrapperHostPtr,
+      const unsigned int                      matrixFreeVectorComponent,
+      const unsigned int                      densityQuadratureId,
+      const unsigned int                      sparsityPatternQuadratureId,
+      const unsigned int                      numberWaveFunctions,
+      const unsigned int                      numSpins,
+      const dftParameters &                   dftParam,
+      const std::string &                     scratchFolderName,
+      const bool                              singlePrecNonLocalOperator,
+      const bool                              updateNonlocalSparsity,
+      const std::vector<std::vector<double>> &atomLocations,
+      const std::vector<std::vector<double>> &atomLocationsFrac,
+      const std::vector<int> &                imageIds,
+      const std::vector<std::vector<double>> &imagePositions,
+      std::vector<double> &                   kPointCoordinates,
+      const std::vector<double> &             kPointWeights,
+      const std::vector<std::vector<double>> &domainBoundaries);
+
+    std::shared_ptr<hubbard<ValueType, memorySpace>> &
+    getHubbardClass();
+
   public:
     std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> d_excSSDObjPtr;
+    std::shared_ptr<hubbard<ValueType, memorySpace>>        d_hubbardClassPtr;
   };
 } // namespace dftfe
 #endif // DFTFE_EXE_EXCDFTPLUSU_H

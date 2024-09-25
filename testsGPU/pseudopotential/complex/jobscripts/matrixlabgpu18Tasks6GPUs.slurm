@@ -30,4 +30,6 @@ srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_5.prm > out
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_6.prm > outputMg2x_6
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_7.prm > outputMg2x_7
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_8.prm > outputMg2x_8
+srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_9.prm > outputMg2x_9
+srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_10.prm > outputMg2x_10
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileBe.prm     > outputBe

@@ -33,7 +33,8 @@ namespace dftfe
     rho,
     gradRho,
     magZ,
-    gradMagZ
+    gradMagZ,
+    hubbardOccupation
   };
 
   /**

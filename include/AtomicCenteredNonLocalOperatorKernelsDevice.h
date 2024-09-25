@@ -82,6 +82,15 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal);
 
+    template <typename ValueType>
+    void
+    sqrtAlphaScalingWaveFunctionEntries(
+      const unsigned int maxSingleAtomContribution,
+      const unsigned int numWfcs,
+      const unsigned int totalAtomsInCurrentProcessor,
+      const double *     scalingVector,
+      ValueType *        sphericalFnTimesWfcPadded);
+
 
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice
 
