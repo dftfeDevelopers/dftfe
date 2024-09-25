@@ -117,7 +117,8 @@ namespace dftfe
       const unsigned int                                     m,
       const double                                           a,
       const double                                           b,
-      const double                                           a0)
+      const double                                           a0,
+      const bool approxOverlapMatrix)
     {
       double e, c, sigma, sigma1, sigma2, gamma;
       e      = (b - a) / 2.0;
@@ -137,7 +138,14 @@ namespace dftfe
       // create YArray
       // initialize to zeros.
       // x
-      operatorMatrix.HXCheby(X, 1.0, 0.0, 0.0, Y);
+      operatorMatrix.overlapMatrixTimesX(
+        X, 1.0, 0.0, 0.0, Y, approxOverlapMatrix);
+      BLASWrapperPtr->rightDiagonalScale(Y.numVectors(),
+                                         Y.locallyOwnedSize(),
+                                         Y.data(),
+                                         eigenValuesFiltered.data());
+      operatorMatrix.HX(X, 1.0, -1.0, 0.0, Y);
+
       // Y=HX
       //
       // call HX
@@ -152,13 +160,6 @@ namespace dftfe
                             eigenValuesFiltered1.data(),
                             eigenValuesFiltered.data(),
                             eigenValuesFiltered2.data());
-      BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
-                            X.numVectors(),
-                            -1.0,
-                            Y.data(),
-                            X.data(),
-                            eigenValuesFiltered.data(),
-                            Y.data());
       X_SP.setValue(0.0);
       BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
         X.locallyOwnedSize() * X.numVectors(), Y.data(), Y_SP.data());
@@ -213,6 +214,8 @@ namespace dftfe
           //
           sigma = sigma2;
         }
+      operatorMatrix.inplaceOverlapInverseMatrixTimesX(Y_SP);
+
       BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
                             X.numVectors(),
                             1.0,
@@ -639,7 +642,8 @@ namespace dftfe
       const unsigned int  m,
       const double        a,
       const double        b,
-      const double        a0);
+      const double        a0,
+      const bool          approxOverlapMatrix);
 
     template void
     chebyshevFilterNew(
@@ -696,7 +700,8 @@ namespace dftfe
       const unsigned int  m,
       const double        a,
       const double        b,
-      const double        a0);
+      const double        a0,
+      const bool          approxOverlapMatrix);
 
     template void
     chebyshevFilterNew(

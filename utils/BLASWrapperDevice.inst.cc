@@ -16,6 +16,25 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleCopy(
   const std::complex<double> *   copyFromVec,
   std::complex<double> *         copyToVecBlock,
   const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleCopy(
+  const dftfe::size_type         contiguousBlockSize,
+  const dftfe::size_type         numContiguousBlocks,
+  const double                   a,
+  const double *                 s,
+  const float *                  copyFromVec,
+  float *                        copyToVecBlock,
+  const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleCopy(
+  const dftfe::size_type         contiguousBlockSize,
+  const dftfe::size_type         numContiguousBlocks,
+  const double                   a,
+  const double *                 s,
+  const std::complex<float> *    copyFromVec,
+  std::complex<float> *          copyToVecBlock,
+  const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
 // for stridedBlockScale
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
@@ -1021,3 +1040,17 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const double *              scalingVector,
   const double                a,
   std::complex<double> *      addToVec) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
+  const dftfe::size_type numberofVectors,
+  const dftfe::size_type sizeOfVector,
+  double *               X,
+  double *               D);
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
+  const dftfe::size_type numberofVectors,
+  const dftfe::size_type sizeOfVector,
+  std::complex<double> * X,
+  double *               D);

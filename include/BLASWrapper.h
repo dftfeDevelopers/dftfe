@@ -671,6 +671,13 @@ namespace dftfe
         const ValueType *      beta,
         ValueType *            z);
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      rightDiagonalScale(const dftfe::size_type numberofVectors,
+                         const dftfe::size_type sizeOfVector,
+                         ValueType1 *           X,
+                         ValueType2 *           D);
+
     private:
     };
 #if defined(DFTFE_WITH_DEVICE)
@@ -1310,6 +1317,13 @@ namespace dftfe
         const ValueType *      y,
         const ValueType *      beta,
         ValueType *            z);
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      rightDiagonalScale(const dftfe::size_type numberofVectors,
+                         const dftfe::size_type sizeOfVector,
+                         ValueType1 *           X,
+                         ValueType2 *           D);
 
       dftfe::utils::deviceBlasHandle_t &
       getDeviceBlasHandle();

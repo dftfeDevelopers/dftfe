@@ -108,6 +108,11 @@ namespace dftfe
       const bool useApproximateMatrixEntries = true) = 0;
 
     virtual void
+    inplaceOverlapInverseMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &src) = 0;
+
+    virtual void
     applyOverlapMatrixCorrection(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>

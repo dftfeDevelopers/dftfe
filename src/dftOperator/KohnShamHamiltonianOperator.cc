@@ -1169,6 +1169,22 @@ namespace dftfe
       scalarOinvX,
       dst.data());
   }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  KohnShamHamiltonianOperator<memorySpace>::inplaceOverlapInverseMatrixTimesX(
+    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &src)
+  {
+    d_BLASWrapperPtr->stridedBlockScale(
+      src.numVectors(),
+      src.locallyOwnedSize(),
+      1.0,
+      d_basisOperationsPtr->inverseMassVectorBasisData().data(),
+      src.data());
+  }
+
+
+
   template <dftfe::utils::MemorySpace memorySpace>
   void
   KohnShamHamiltonianOperator<memorySpace>::applyOverlapMatrixCorrection(
@@ -1695,9 +1711,7 @@ namespace dftfe
       src.updateGhostValues();
     if (!skip1)
       {
-        d_basisOperationsPtr
-          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-          .distribute(src);
+        inverseMassVectorScaledConstraintsNoneDataInfoPtr->distribute(src);
         if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
           if (d_dftParamsPtr->isPseudopotential)
             d_ONCVnonLocalOperatorSinglePrec->initialiseOperatorActionOnX(
@@ -1708,15 +1722,19 @@ namespace dftfe
           {
             std::pair<unsigned int, unsigned int> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-            d_BLASWrapperPtr->stridedCopyToBlock(
+            d_BLASWrapperPtr->stridedBlockScaleCopy(
               numberWavefunctions,
               numDoFsPerCell * (cellRange.second - cellRange.first),
+              1.0,
+              d_basisOperationsPtr->cellInverseMassVectorBasisData().data() +
+                cellRange.first * numDoFsPerCell,
               src.data(),
               d_cellWaveFunctionMatrixSrcSinglePrec.data() +
                 cellRange.first * numDoFsPerCell * numberWavefunctions,
               d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
                   .data() +
                 cellRange.first * numDoFsPerCell);
+
 #pragma omp critical(hxc_Cconj)
             if (hasNonlocalComponents)
               d_ONCVnonLocalOperatorSinglePrec->applyCconjtransOnX(
@@ -1805,8 +1823,6 @@ namespace dftfe
               numberWavefunctions,
               numDoFsPerCell * (cellRange.second - cellRange.first),
               scalarHX,
-              d_basisOperationsPtr->cellInverseMassVectorBasisData().data() +
-                cellRange.first * numDoFsPerCell,
               d_cellWaveFunctionMatrixDstSinglePrec.data() +
                 omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
                   numberWavefunctions,
@@ -1816,8 +1832,9 @@ namespace dftfe
                 cellRange.first * numDoFsPerCell);
           }
 
-        inverseMassVectorScaledConstraintsNoneDataInfoPtr
-          ->distribute_slave_to_master(dst);
+        d_basisOperationsPtr
+          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+          .distribute_slave_to_master(dst);
       }
     if (!skip1 && !skip2 && !skip3)
       {

@@ -1752,6 +1752,26 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(beta),
         dftfe::utils::makeDataTypeDeviceCompatible(z));
     }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
+      const dftfe::size_type numberofVectors,
+      const dftfe::size_type sizeOfVector,
+      ValueType1 *           X,
+      ValueType2 *           D)
+    {
+      computeRightDiagonalScaleKernel<<<
+        (numberofVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * sizeOfVector,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        dftfe::utils::makeDataTypeDeviceCompatible(D),
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
+        numberofVectors,
+        sizeOfVector);
+    }
+
+
 #include "./BLASWrapperDevice.inst.cc"
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

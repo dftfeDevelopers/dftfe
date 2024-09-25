@@ -1879,6 +1879,27 @@ namespace dftfe
                     mpi_communicator);
     }
 
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
+      const dftfe::size_type numberofVectors,
+      const dftfe::size_type sizeOfVector,
+      ValueType1 *           X,
+      ValueType2 *           D)
+    {
+      hipLaunchKernelGGL(computeRightDiagonalScaleKernel,
+                         (numberofVectors +
+                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                           dftfe::utils::DEVICE_BLOCK_SIZE * sizeOfVector,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         dftfe::utils::makeDataTypeDeviceCompatible(D),
+                         dftfe::utils::makeDataTypeDeviceCompatible(X),
+                         chebyBlockSize,
+                         sizeOfVector);
+    }
+
 #include "./BLASWrapperDevice.inst.cc"
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

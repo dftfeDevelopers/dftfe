@@ -1151,5 +1151,61 @@ namespace dftfe
         }
     }
 
+    __global__ void
+    computeRightDiagonalScaleKernel(const double *     diagValues,
+                                    double *           X,
+                                    const unsigned int N,
+                                    const unsigned int M)
+    {
+      const unsigned int numEntries = N * M;
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+           i += blockDim.x * gridDim.x)
+        {
+          const unsigned int idof = i / N;
+          const unsigned int ivec = i % N;
+
+          *(X + N * idof + ivec) = *(X + N * idof + ivec) * diagValues[ivec];
+        }
+    }
+
+    __global__ void
+    computeRightDiagonalScaleKernel(const double *diagValues,
+                                    dftfe::utils::deviceDoubleComplex *X,
+                                    const unsigned int                 N,
+                                    const unsigned int                 M)
+    {
+      const unsigned int numEntries = N * M;
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+           i += blockDim.x * gridDim.x)
+        {
+          const unsigned int idof = i / N;
+          const unsigned int ivec = i % N;
+
+          *(X + N * idof + ivec) =
+            dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
+        }
+    }
+
+    __global__ void
+    computeRightDiagonalScaleKernel(
+      const dftfe::utils::deviceDoubleComplex *diagValues,
+      dftfe::utils::deviceDoubleComplex *      X,
+      const unsigned int                       N,
+      const unsigned int                       M)
+    {
+      const unsigned int numEntries = N * M;
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+           i += blockDim.x * gridDim.x)
+        {
+          const unsigned int idof = i / N;
+          const unsigned int ivec = i % N;
+
+          *(X + N * idof + ivec) =
+            dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
+        }
+    }
+
+
+
   } // namespace
 } // namespace dftfe
