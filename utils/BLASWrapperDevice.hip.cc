@@ -1896,7 +1896,7 @@ namespace dftfe
                          0,
                          dftfe::utils::makeDataTypeDeviceCompatible(D),
                          dftfe::utils::makeDataTypeDeviceCompatible(X),
-                         chebyBlockSize,
+                         numberofVectors,
                          sizeOfVector);
     }
 
