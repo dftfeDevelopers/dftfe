@@ -56,17 +56,6 @@ namespace dftfe
         &                                                                src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
       const unsigned int inputVecSize,
-      const double       factor,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex) override;
-
-    void
-    applyWaveFunctionDependentFuncDerWrtPsiCheby(
-      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-        &                                                                src,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const unsigned int inputVecSize,
-      const double       factor,
       const unsigned int kPointIndex,
       const unsigned int spinIndex) override;
 
@@ -84,6 +73,9 @@ namespace dftfe
 
     double
     getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi() override;
+
+    void
+    reinitKPointDependentVariables(unsigned int kPointIndex) override;
 
   private:
     NNLDA *                       d_NNLDAPtr;

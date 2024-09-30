@@ -1035,10 +1035,10 @@ namespace dftfe
     const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &      dst,
     const unsigned int inputVecSize,
-    const double       factor,
     const unsigned int kPointIndex,
     const unsigned int spinIndex)
   {
+    dst.setValue(0.0);
     if (d_nonLocalOperator->getTotalNonLocalElementsInCurrentProcessor() > 0)
       {
         const unsigned int nCells       = d_BasisOperatorMemPtr->nCells();
@@ -1077,113 +1077,7 @@ namespace dftfe
           {
             std::pair<unsigned int, unsigned int> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeApply, nCells));
-            d_BLASWrapperMemPtr->stridedBlockScaleCopy(
-              inputVecSize,
-              nDofsPerCell * (cellRange.second - cellRange.first),
-              1.0,
-              d_BasisOperatorMemPtr->cellInverseSqrtMassVectorBasisData()
-                  .data() +
-                cellRange.first * nDofsPerCell,
-              src.data(),
-              d_cellWaveFunctionMatrixSrc.data() +
-                cellRange.first * nDofsPerCell * inputVecSize,
-              d_BasisOperatorMemPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-                  .data() +
-                cellRange.first * nDofsPerCell);
 
-            d_nonLocalOperator->applyCconjtransOnX(
-              d_cellWaveFunctionMatrixSrc.data() +
-                cellRange.first * nDofsPerCell * inputVecSize,
-              cellRange);
-          }
-
-        d_hubbNonLocalProjectorTimesVectorBlock.setValue(0);
-        d_nonLocalOperator->applyAllReduceOnCconjtransX(
-          d_hubbNonLocalProjectorTimesVectorBlock);
-        d_nonLocalOperator->applyVOnCconjtransX(
-          CouplingStructure::dense,
-          d_couplingMatrixEntries[spinIndex],
-          d_hubbNonLocalProjectorTimesVectorBlock,
-          true);
-
-        for (unsigned int iCell = 0; iCell < nCells;
-             iCell += d_cellsBlockSizeApply)
-          {
-            std::pair<unsigned int, unsigned int> cellRange(
-              iCell, std::min(iCell + d_cellsBlockSizeApply, nCells));
-
-            // d_cellWaveFunctionMatrixDst has to be reinitialised to zero
-            // before applyCOnVCconjtransX() is called
-            d_cellWaveFunctionMatrixDst.setValue(0.0);
-
-            d_nonLocalOperator->applyCOnVCconjtransX(
-              d_cellWaveFunctionMatrixDst.data(), cellRange);
-
-
-            d_BLASWrapperMemPtr->axpyStridedBlockAtomicAdd(
-              inputVecSize,
-              nDofsPerCell * (cellRange.second - cellRange.first),
-              factor,
-              d_BasisOperatorMemPtr->cellInverseSqrtMassVectorBasisData()
-                  .data() +
-                cellRange.first * nDofsPerCell,
-              d_cellWaveFunctionMatrixDst.data(),
-              dst.data(),
-              d_BasisOperatorMemPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-                  .data() +
-                cellRange.first * nDofsPerCell);
-          }
-      }
-  }
-
-  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-  void
-  hubbard<ValueType, memorySpace>::applyPotentialDueToHubbardCorrectionCheby(
-    const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &      dst,
-    const unsigned int inputVecSize,
-    const double       factor,
-    const unsigned int kPointIndex,
-    const unsigned int spinIndex)
-  {
-    if (d_nonLocalOperator->getTotalNonLocalElementsInCurrentProcessor() > 0)
-      {
-        const unsigned int nCells       = d_BasisOperatorMemPtr->nCells();
-        const unsigned int nDofsPerCell = d_BasisOperatorMemPtr->nDofsPerCell();
-
-        const ValueType scalarCoeffAlpha = ValueType(1.0),
-                        scalarCoeffBeta  = ValueType(0.0);
-
-        // TODO check if this will lead to performance degradation
-        d_cellWaveFunctionMatrixDst.setValue(0.0);
-        d_cellWaveFunctionMatrixSrc.setValue(0.0);
-        Assert(
-          d_cellWaveFunctionMatrixSrc.size() <
-            nCells * nDofsPerCell * inputVecSize,
-          dealii::ExcMessage(
-            "DFT-FE Error: d_cellWaveFunctionMatrixSrc in Hubbard is not set properly. Call initialiseCellWaveFunctionPointers()."));
-
-        Assert(
-          d_cellWaveFunctionMatrixDst.size() <
-            d_cellsBlockSizeApply * nDofsPerCell * inputVecSize,
-          dealii::ExcMessage(
-            "DFT-FE Error: d_cellWaveFunctionMatrixSrc in Hubbard is not set properly. Call initialiseCellWaveFunctionPointers()."));
-
-        Assert(
-          d_BasisOperatorMemPtr->nVectors() == inputVecSize,
-          dealii::ExcMessage(
-            "DFT-FE Error: d_BasisOperatorMemPtr in Hubbard is not set with correct input size."));
-
-        unsigned int hamiltonianIndex =
-          d_dftParamsPtr->memOptMode ?
-            0 :
-            kPointIndex * (d_dftParamsPtr->spinPolarized + 1) + spinIndex;
-
-        for (unsigned int iCell = 0; iCell < nCells;
-             iCell += d_cellsBlockSizeApply)
-          {
-            std::pair<unsigned int, unsigned int> cellRange(
-              iCell, std::min(iCell + d_cellsBlockSizeApply, nCells));
             d_BLASWrapperMemPtr->stridedCopyToBlock(
               inputVecSize,
               nDofsPerCell * (cellRange.second - cellRange.first),
@@ -1222,12 +1116,10 @@ namespace dftfe
             d_nonLocalOperator->applyCOnVCconjtransX(
               d_cellWaveFunctionMatrixDst.data(), cellRange);
 
+
             d_BLASWrapperMemPtr->axpyStridedBlockAtomicAdd(
               inputVecSize,
               nDofsPerCell * (cellRange.second - cellRange.first),
-              factor,
-              d_BasisOperatorMemPtr->cellInverseMassVectorBasisData().data() +
-                cellRange.first * nDofsPerCell,
               d_cellWaveFunctionMatrixDst.data(),
               dst.data(),
               d_BasisOperatorMemPtr->d_flattenedCellDofIndexToProcessDofIndexMap

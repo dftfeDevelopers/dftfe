@@ -606,22 +606,8 @@ namespace dftfe
       &                                                                src,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
     const unsigned int inputVecSize,
-    const double       factor,
     const unsigned int kPointIndex,
     const unsigned int spinIndex)
-  {}
-
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  excDensityLLMGGAClass<memorySpace>::
-    applyWaveFunctionDependentFuncDerWrtPsiCheby(
-      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-        &                                                                src,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const unsigned int inputVecSize,
-      const double       factor,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -651,6 +637,12 @@ namespace dftfe
   {
     return 0.0;
   }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityLLMGGAClass<memorySpace>::reinitKPointDependentVariables(
+    unsigned int kPointIndex)
+  {}
 
   template class excDensityLLMGGAClass<dftfe::utils::MemorySpace::HOST>;
 #ifdef DFTFE_WITH_DEVICE

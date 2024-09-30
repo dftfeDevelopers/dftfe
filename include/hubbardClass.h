@@ -166,24 +166,6 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &      dst,
       const unsigned int inputVecSize,
-      const double       factor,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex);
-
-    /*
-     * @brief This function is similar to above
-     * but used in HXCheby(). A different function is required from above as the
-     * src requires a different initialisation
-     *  V_h \psi^{\sigma}_i = \sum_{I} | \phi^{I}_m>  A^{I \sigma}_{m m'} < \phi^{I}_m' | \psi^{\sigma}_i >
-     *  Where A is the coupling matrix. In the case of hubbard, it is a dense
-     * matrix for each atom I.
-     */
-    void
-    applyPotentialDueToHubbardCorrectionCheby(
-      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &      dst,
-      const unsigned int inputVecSize,
-      const double       factor,
       const unsigned int kPointIndex,
       const unsigned int spinIndex);
 

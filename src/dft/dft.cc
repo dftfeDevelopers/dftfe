@@ -1974,6 +1974,9 @@ namespace dftfe
                     dealii::ExcMessage(
                       "open mp is not compatible with hubbard "));
 
+        AssertThrow(d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND",
+                    dealii::ExcMessage(
+                      "open mp is not compatible with hubbard "));
 
         AssertThrow(
           d_dftParamsPtr->overlapComputeCommunCheby == false,

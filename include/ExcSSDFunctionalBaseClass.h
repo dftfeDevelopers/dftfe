@@ -100,7 +100,6 @@ namespace dftfe
      * Similarly for dst, accumulateLocallyOwned() should be called in HX()
      * after this function is called. param[in] src The input vector param[out]
      * dst The output vector param[in] inputVecSize The size of the input vector
-     * param[in] factor the factor with which the output is scaled in HX()
      * param[in] kPointIndex the k point for which the HX() is called
      * param[in] spinIndex the spin index for which the HX() is called
      */
@@ -110,30 +109,6 @@ namespace dftfe
         &                                                                src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
       const unsigned int inputVecSize,
-      const double       factor,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex) = 0;
-
-
-    /*
-     * @brief The apply function that will be called in HXCheby().
-     * The distribute() and updateGhostValues() for src
-     * has to be called before this function.
-     * Similarly, for dst, accumulateLocallyOwned() should be called in
-     * HXCheby() after this function is called. param[in] src The input vector
-     * param[out] dst The output vector
-     * param[in] inputVecSize The size of the input vector
-     * param[in] factor the factor with which the output is scaled in HX()
-     * param[in] kPointIndex the k point for which the HX() is called
-     * param[in] spinIndex the spin index for which the HX() is called
-     */
-    virtual void
-    applyWaveFunctionDependentFuncDerWrtPsiCheby(
-      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-        &                                                                src,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const unsigned int inputVecSize,
-      const double       factor,
       const unsigned int kPointIndex,
       const unsigned int spinIndex) = 0;
 
@@ -193,6 +168,9 @@ namespace dftfe
     checkInputOutputDataAttributesConsistency(
       const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
       const = 0;
+
+    virtual void
+    reinitKPointDependentVariables(unsigned int kPointIndex) = 0;
 
   protected:
     const std::vector<DensityDescriptorDataAttributes>
