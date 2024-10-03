@@ -34,56 +34,8 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.75828455
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -128.94878186
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -128.97090345
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.08888010
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.09580311
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.13153262
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.11225054
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.10226951
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.11312613
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.11686032
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.11838731
-
-Energy computations (Hartree) 
--------------------
-             Total energy:        -129.11877216
 SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -129.11874679
+             Total energy:        -129.11876140

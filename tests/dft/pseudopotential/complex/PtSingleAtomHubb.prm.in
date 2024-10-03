@@ -52,7 +52,7 @@ end
 
 subsection SCF parameters
   set MIXING PARAMETER =0.1
-  set COMPUTE ENERGY EACH ITER = true
+  set COMPUTE ENERGY EACH ITER = false
   set MIXING METHOD= ANDERSON
   set STARTING WFC             = ATOMIC
   set TEMPERATURE              = 500
