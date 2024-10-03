@@ -210,17 +210,15 @@ namespace dftfe
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
         NULL;
     distributedDeviceVec<dataTypes::number> *ResidualBlock =
-      (d_dftParams.approxOverlapMatrix || true) ?
+      (d_dftParams.useReformulatedChFSI) ?
         &operatorMatrix.getScratchFEMultivector(
-          vectorsBlockSize,
-          (d_dftParams.overlapComputeCommunCheby ? 4 : 2)) :
-        NULL; //@Kartick
+          vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 4 : 2)) :
+        NULL;
     distributedDeviceVec<dataTypes::number> *ResidualBlockNew =
-      (d_dftParams.approxOverlapMatrix || true) ?
+      (d_dftParams.useReformulatedChFSI) ?
         &operatorMatrix.getScratchFEMultivector(
-          vectorsBlockSize,
-          (d_dftParams.overlapComputeCommunCheby ? 5 : 3)) :
-        NULL; //@Kartick
+          vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 5 : 3)) :
+        NULL;
     distributedDeviceVec<dataTypes::number> *HXBlock2 =
       d_dftParams.overlapComputeCommunCheby ?
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :

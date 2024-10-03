@@ -247,14 +247,14 @@ namespace dftfe
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 1);
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock3 =
-        (d_dftParams.approxOverlapMatrix || true) ?
+        (d_dftParams.useReformulatedChFSI) ?
           &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
-          NULL; //@Kartick
+          NULL;
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock4 =
-        (d_dftParams.approxOverlapMatrix || true) ?
+        (d_dftParams.useReformulatedChFSI) ?
           &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
-          NULL; //@Kartick
+          NULL;
     distributedCPUMultiVec<dataTypes::numberFP32>
       *eigenVectorsFlattenedArrayBlockFP32 =
         d_dftParams.useSinglePrecCheby ?
@@ -297,7 +297,7 @@ namespace dftfe
                 eigenVectorsFlattenedArrayBlock2 =
                   &operatorMatrix.getScratchFEMultivector(BVec, 1);
 
-                if (d_dftParams.approxOverlapMatrix || true) //@Kartick
+                if (d_dftParams.useReformulatedChFSI)
                   {
                     eigenVectorsFlattenedArrayBlock3 =
                       &operatorMatrix.getScratchFEMultivector(BVec, 2);
@@ -358,9 +358,7 @@ namespace dftfe
               }
             else
               {
-                if (d_dftParams.useReformulatedChFSI &&
-                    !isFirstFilteringCall) // set to true now to get this to run
-                                           // always @Kartick
+                if (d_dftParams.useReformulatedChFSI && !isFirstFilteringCall)
                   {
                     eigenValuesBlock.resize(BVec);
                     for (unsigned int i = 0; i < BVec; i++)
