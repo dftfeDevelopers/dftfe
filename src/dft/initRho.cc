@@ -130,6 +130,7 @@ namespace dftfe
     const unsigned int n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
     const unsigned int nCells     = d_basisOperationsPtrHost->nCells();
     d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized ==1 ? 2 : 1);
     for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
       d_densityInQuadValues[iComp].resize(n_q_points * nCells);
 

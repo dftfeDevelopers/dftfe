@@ -447,6 +447,16 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
+  AuxDensityMatrixAtomicBasis<memorySpace>::applyLocalOperations(
+    const std::vector<double> &quadpts,
+    std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+      &wfcData)
+      {
+        
+      }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
   AuxDensityMatrixAtomicBasis<memorySpace>::projectDensityStart(
     const std::unordered_map<std::string, std::vector<double>>
       &projectionInputs)

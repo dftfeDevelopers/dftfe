@@ -261,6 +261,8 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, memorySpace>
       d_invJacderExcWithSigmaTimesGradRhoJxW;
+    dftfe::utils::MemoryStorage<double, memorySpace>
+      d_invJacinvJacderExcWithTauJxW;
     std::vector<dftfe::utils::MemoryStorage<double, memorySpace>>
       d_invJacKPointTimesJxW;
     // Constraints scaled with inverse sqrt diagonal Mass Matrix

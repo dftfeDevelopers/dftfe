@@ -34,6 +34,12 @@ namespace dftfe
       const std::vector<double> &quadpts,
       std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
         &densityData) override;
+    
+    void
+    applyLocalOperations(
+      const std::vector<double> &quadpts,
+      std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+        &wfcData) override;
 
     void
     evalOverlapMatrixStart(const std::vector<double> &quadpts,

@@ -274,6 +274,9 @@ namespace dftfe
     bool isIntegrationByPartsGradDensityDependenceVxc =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
     const bool isGGA = isIntegrationByPartsGradDensityDependenceVxc;
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID);
     const unsigned int totalLocallyOwnedCells =
@@ -285,10 +288,13 @@ namespace dftfe
       d_VeffJxWHost;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_invJacderExcWithSigmaTimesGradRhoJxWHost;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      d_invJacinvJacderExcWithTauJxWHost;
 #else
     auto &d_VeffJxWHost = d_VeffJxW;
     auto &d_invJacderExcWithSigmaTimesGradRhoJxWHost =
       d_invJacderExcWithSigmaTimesGradRhoJxW;
+    auto &d_invJacinvJacderExcWithTauJxWHost = d_invJacinvJacderExcWithTauJxW;
 #endif
     d_VeffJxWHost.resize(totalLocallyOwnedCells * numberQuadraturePointsPerCell,
                          0.0);
@@ -297,6 +303,10 @@ namespace dftfe
       isGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell * 3 : 0,
       0.0);
 
+    d_invJacinvJacderExcWithTauJxWHost.resize(
+      isTauMGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell * 9 :
+                  0,
+      0.0);
 
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       xDataOut;
@@ -319,6 +329,17 @@ namespace dftfe
           std::vector<double>();
         cDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
           std::vector<double>();
+        if (isTauMGGA)
+          {
+            xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] =
+              std::vector<double>();
+            xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown] =
+              std::vector<double>();
+            cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] =
+              std::vector<double>();
+            cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown] =
+              std::vector<double>();
+          }
       }
 
     auto quadPointsAll = d_basisOperationsPtrHost->quadPoints();

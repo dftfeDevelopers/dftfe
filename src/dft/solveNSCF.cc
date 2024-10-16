@@ -372,6 +372,7 @@ namespace dftfe
 
         updateAuxDensityXCMatrix(d_densityInQuadValues,
                                  d_gradDensityInQuadValues,
+                                 d_tauInQuadValues,
                                  d_rhoCore,
                                  d_gradRhoCore,
                                  getEigenVectors(),
@@ -659,6 +660,7 @@ namespace dftfe
 
         updateAuxDensityXCMatrix(d_densityInQuadValues,
                                  d_gradDensityInQuadValues,
+                                 d_tauInQuadValues,
                                  d_rhoCore,
                                  d_gradRhoCore,
                                  getEigenVectors(),
@@ -884,6 +886,7 @@ namespace dftfe
 
     updateAuxDensityXCMatrix(d_densityOutQuadValues,
                              d_gradDensityOutQuadValues,
+                             d_tauOutQuadValues,
                              d_rhoCore,
                              d_gradRhoCore,
                              getEigenVectors(),

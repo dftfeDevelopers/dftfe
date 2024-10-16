@@ -2923,6 +2923,7 @@ namespace dftfe
 
             updateAuxDensityXCMatrix(d_densityInQuadValues,
                                      d_gradDensityInQuadValues,
+                                     d_tauInQuadValues,
                                      d_rhoCore,
                                      d_gradRhoCore,
                                      getEigenVectors(),
@@ -3213,6 +3214,7 @@ namespace dftfe
 
             updateAuxDensityXCMatrix(d_densityInQuadValues,
                                      d_gradDensityInQuadValues,
+                                     d_tauInQuadValues,
                                      d_rhoCore,
                                      d_gradRhoCore,
                                      getEigenVectors(),
@@ -3597,6 +3599,7 @@ namespace dftfe
 
         updateAuxDensityXCMatrix(d_densityOutQuadValues,
                                  d_gradDensityOutQuadValues,
+                                 d_tauOutQuadValues,
                                  d_rhoCore,
                                  d_gradRhoCore,
                                  getEigenVectors(),
@@ -3766,6 +3769,7 @@ namespace dftfe
 
     updateAuxDensityXCMatrix(d_densityOutQuadValues,
                              d_gradDensityOutQuadValues,
+                             d_tauOutQuadValues,
                              d_rhoCore,
                              d_gradRhoCore,
                              getEigenVectors(),
@@ -5539,9 +5543,13 @@ namespace dftfe
       &densityQuadValues,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                                                  gradDensityQuadValues,
+      &gradDensityQuadValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                                                  tauQuadValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCore,
-    const std::map<dealii::CellId, std::vector<double>> &gradRhoCore,
+    const std::map<dealii::CellId, std::vector<double>>
+      &gradRhoCore, // is tauCore needed?
     const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       &                                     eigenVectorsFlattenedMemSpace,
     const std::vector<std::vector<double>> &eigenValues_,
@@ -5555,6 +5563,13 @@ namespace dftfe
        densityFamilyType::GGA);
 
     const bool isGGA = isGradDensityDataDependent;
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
+    // why reinit required here? whe do we do reinit
+
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       d_basisOperationsPtrHost->nCells();
@@ -5575,6 +5590,8 @@ namespace dftfe
             for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
                  ++iCell)
               {
+                // in this case rho_up = rho_down
+                // densityQuadValues has length = 1 but it's vec<vec> type
                 const double *cellRhoValues =
                   densityQuadValues[0].data() + iCell * nQuadsPerCell;
 
@@ -5717,6 +5734,58 @@ namespace dftfe
                                              iCell * nQuadsPerCell * 3 +
                                              iQuad * 3 + idim] +=
                           tempGradRhoCore[3 * iQuad + idim] / 2.0;
+                  }
+              }
+            if (isTauMGGA)
+              {
+                std::vector<double> &tauValsForXC =
+                  densityProjectionInputs["tauFunc"];
+                tauValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell,
+                                    0);
+                if (spinPolarizedFactor == 1)
+                  {
+                    for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
+                         ++iCell)
+                      {
+                        const double *cellTauValues =
+                          tauQuadValues[0].data() + iCell * nQuadsPerCell;
+
+                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                             ++iQuad)
+                          tauValsForXC[iCell * nQuadsPerCell + iQuad] =
+                            cellTauValues[iQuad] / 2.0;
+
+                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                             ++iQuad)
+                          tauValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
+                                       iCell * nQuadsPerCell + iQuad] =
+                            cellTauValues[iQuad] / 2.0;
+                      }
+                  }
+                else if (spinPolarizedFactor == 2)
+                  {
+                    for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
+                         ++iCell)
+                      {
+                        const double *cellTauValues =
+                          tauQuadValues[0].data() + iCell * nQuadsPerCell;
+                        const double *cellTauMagValues =
+                          tauQuadValues[1].data() + iCell * nQuadsPerCell;
+
+                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                          tauValsForXC[iCell * nQuadsPerCell + iQuad] =
+                            cellTauValues[iQuad] / 2.0 + cellTauMagValues[iQuad] / 2.0;
+                        
+                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                          tauValsForXC[iCell * nQuadsPerCell + iQuad] =
+                            cellTauValues[iQuad] / 2.0 - cellTauMagValues[iQuad] / 2.0;
+                        
+                      }
+                  }
+                if (d_dftParamsPtr->nonLinearCoreCorrection)
+                  {
+                     std::string errMsg = "NLCC is not implemented yet for SCAN.";
+                     dftfe::utils::throwException(false, errMsg);
                   }
               }
           }

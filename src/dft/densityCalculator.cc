@@ -57,8 +57,12 @@ namespace dftfe
       &densityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  gradDensityValues,
-    const bool           isEvaluateGradRho,
+      &        gradDensityValues,
+    const bool isEvaluateGradRho,
+    // std::vector<
+    //   dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+    //   &                  tauValues,
+    // const bool           isEvaluateTau,
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
@@ -112,18 +116,24 @@ namespace dftfe
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
     dftfe::utils::MemoryStorage<NumberType, memorySpace> gradWfcQuadPointData;
     dftfe::utils::MemoryStorage<double, memorySpace>     rhoWfcContributions;
+    // dftfe::utils::MemoryStorage<double, memorySpace>     tauWfcContributions;
     dftfe::utils::MemoryStorage<double, memorySpace> gradRhoWfcContributions;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       rhoHost;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       gradRhoHost;
+
+    // dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+    //   tauHost;
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, memorySpace> rho;
     dftfe::utils::MemoryStorage<double, memorySpace> gradRho;
+    // dftfe::utils::MemoryStorage<double, memorySpace> tau;
 #else
     auto &rho             = rhoHost;
     auto &gradRho         = gradRhoHost;
+    // auto &tau             = tauHost;
 #endif
 
     rho.resize(totalLocallyOwnedCells * numQuadPoints * numSpinComponents, 0.0);
@@ -142,9 +152,16 @@ namespace dftfe
           gradRhoWfcContributions.resize(cellsBlockSize * numQuadPoints * BVec *
                                            3,
                                          0.0);
+        // if (isEvaluateTau)
+        //   {
+        //     tau.resize(totalLocallyOwnedCells * numQuadPoints *
+        //                  numSpinComponents,
+        //                0.0);
+        //     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+        //       tauWfcContributions.resize(cellsBlockSize * numQuadPoints * BVec,
+        //                                  0.0);
+        //   }
       }
-
-
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       partialOccupVecHost(BVec, 0.0);

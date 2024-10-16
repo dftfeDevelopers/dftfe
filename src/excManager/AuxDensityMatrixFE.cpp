@@ -112,6 +112,51 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
+  AuxDensityMatrixFE<memorySpace>::applyLocalOperations(
+    const std::vector<double> &points,
+    std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+      &wfcData)
+  {
+    std::pair<unsigned int, unsigned int> indexRangeVal;
+    unsigned int                          minIndex = 0;
+    for (unsigned int i = 0; i < d_quadWeightsAll.size(); i++)
+      {
+        if ((std::abs(points[0] - d_quadPointsAll[3 * i + 0]) +
+             std::abs(points[1] - d_quadPointsAll[3 * i + 1]) +
+             std::abs(points[2] - d_quadPointsAll[3 * i + 2])) < 1e-6)
+          {
+            minIndex = i;
+            break;
+          }
+      }
+
+    indexRangeVal.first  = minIndex;
+    indexRangeVal.second = minIndex + points.size() / 3;
+
+    if (wfcData.find(WfcDescriptorDataAttributes::tauTotal) != wfcData.end())
+      {
+        fillDensityAttributeData(wfcData[WfcDescriptorDataAttributes::tauTotal],
+                                 d_tauValsTotalAllQuads,
+                                 indexRangeVal);
+      }
+    if (wfcData.find(WfcDescriptorDataAttributes::tauSpinUp) != wfcData.end())
+      {
+        fillDensityAttributeData(
+          wfcData[WfcDescriptorDataAttributes::tauSpinUp],
+          d_tauValsSpinUpAllQuads,
+          indexRangeVal);
+      }
+    if (wfcData.find(WfcDescriptorDataAttributes::tauSpinDown) != wfcData.end())
+      {
+        fillDensityAttributeData(
+          wfcData[WfcDescriptorDataAttributes::tauSpinDown],
+          d_tauValsSpinDownAllQuads,
+          indexRangeVal);
+      }
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
   AuxDensityMatrixFE<memorySpace>::setDensityMatrixComponents(
     const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       &                                     eigenVectorsFlattenedMemSpace,
@@ -172,7 +217,8 @@ namespace dftfe
     d_quadPointsAll  = projectionInputs.find("quadpts")->second;
     d_quadWeightsAll = projectionInputs.find("quadWt")->second;
     const std::vector<double> &densityVals =
-      projectionInputs.find("densityFunc")->second;
+      projectionInputs.find("densityFunc")
+        ->second; // this vector contains all spin up and spin down values
     const unsigned int nQ = d_quadWeightsAll.size();
     d_densityValsTotalAllQuads.resize(nQ, 0);
     d_densityValsSpinUpAllQuads.resize(nQ, 0);
@@ -203,6 +249,22 @@ namespace dftfe
           for (unsigned idim = 0; idim < 3; idim++)
             d_gradDensityValsSpinDownAllQuads[3 * iquad + idim] =
               gradDensityVals[3 * nQ + 3 * iquad + idim];
+
+        if (projectionInputs.find("tauFunc") != projectionInputs.end())
+          {
+            const std::vector<double> &tauVals =
+              projectionInputs.find("tauFunc")
+                ->second;
+            d_tauValsTotalAllQuads.resize(nQ, 0);
+            d_tauValsSpinUpAllQuads.resize(nQ, 0);
+            d_tauValsSpinDownAllQuads.resize(nQ, 0);
+            for (unsigned int iquad = 0; iquad < nQ; iquad++)
+            {
+              d_tauValsSpinUpAllQuads[iquad] = tauVals[iquad];
+              d_tauValsSpinDownAllQuads[iquad] = tauVals[nQ + iquad];
+              d_tauValsTotalAllQuads[iquad] = tauVals[iquad] + tauVals[nQ + iquad];
+            }
+          }
       }
   }
 
