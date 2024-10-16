@@ -1974,6 +1974,17 @@ namespace dftfe
                     dealii::ExcMessage(
                       "open mp is not compatible with hubbard "));
 
+        AssertThrow(d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND",
+                    dealii::ExcMessage(
+                      "LRDM preconditioner is not compatible with hubbard "));
+
+        // band group parallelization data structures
+        const unsigned int numberBandGroups =
+          dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+        AssertThrow(numberBandGroups == 1,
+                    dealii::ExcMessage(
+                      "Band parallelisation is not compatible with hubbard "));
 
         AssertThrow(
           d_dftParamsPtr->overlapComputeCommunCheby == false,

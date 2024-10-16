@@ -2095,6 +2095,17 @@ namespace dftfe
 
     if (numCoreWfcRR != 0)
       useSinglePrecCheby = false;
+
+    // checking if the XC type is compatible with
+    // overlap compute communication cheby
+
+    bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
+    bool isLocalXC =
+      (XCType.substr(0, 3) == "LDA") || (XCType.substr(0, 3) == "GGA");
+    if (isHubbard || !isLocalXC)
+      {
+        overlapComputeCommunCheby = false;
+      }
   }
 
 
