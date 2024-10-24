@@ -19,7 +19,6 @@
 
 // source file for force related computations
 #if defined(DFTFE_WITH_DEVICE)
-#  include "deviceKernelsGeneric.h"
 #  include "dftfeDataTypes.h"
 #  include <DeviceDataTypeOverloads.h>
 #  include <DeviceAPICalls.h>

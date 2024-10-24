@@ -19,40 +19,68 @@
 #define DFTFE_EXCDENSIYLDACLASS_H
 
 #include <xc.h>
-#include <excDensityBaseClass.h>
+#include <ExcSSDFunctionalBaseClass.h>
 namespace dftfe
 {
   class NNLDA;
-  class excDensityLDAClass : public excDensityBaseClass
+  template <dftfe::utils::MemorySpace memorySpace>
+  class excDensityLDAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityLDAClass(xc_func_type *funcXPtr, xc_func_type *funcCPtr);
+    excDensityLDAClass(std::shared_ptr<xc_func_type> funcXPtr,
+                       std::shared_ptr<xc_func_type> funcCPtr);
 
-    excDensityLDAClass(xc_func_type *funcXPtr,
-                       xc_func_type *funcCPtr,
-                       std::string   modelXCInputFile);
+    excDensityLDAClass(std::shared_ptr<xc_func_type> funcXPtr,
+                       std::shared_ptr<xc_func_type> funcCPtr,
+                       std::string                   modelXCInputFile);
 
     ~excDensityLDAClass();
 
     void
-    computeExcVxcFxc(
-      AuxDensityMatrix &         auxDensityMatrix,
-      const std::vector<double> &quadPoints,
-      const std::vector<double> &quadWeights,
-      std::unordered_map<xcOutputDataAttributes, std::vector<double>> &xDataOut,
-      std::unordered_map<xcOutputDataAttributes, std::vector<double>> &cDataout)
-      const override;
+    computeRhoTauDependentXCData(
+      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+      const std::vector<double> &    quadPoints,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &xDataOut,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &cDataout) const override;
 
     void
     checkInputOutputDataAttributesConsistency(
-      const std::vector<xcOutputDataAttributes> &outputDataAttributes)
+      const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
       const override;
 
+    void
+    applyWaveFunctionDependentFuncDerWrtPsi(
+      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+        &                                                                src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const unsigned int inputVecSize,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex) override;
+
+    void
+    updateWaveFunctionDependentFuncDerWrtPsi(
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
+      const std::vector<double> &kPointWeights) override;
+    void
+    computeWaveFunctionDependentExcEnergy(
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
+      const std::vector<double> &kPointWeights) override;
+
+    double
+    getWaveFunctionDependentExcEnergy() override;
+
+    double
+    getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi() override;
+
+    void
+    reinitKPointDependentVariables(unsigned int kPointIndex) override;
 
   private:
-    NNLDA *       d_NNLDAPtr;
-    xc_func_type *d_funcXPtr;
-    xc_func_type *d_funcCPtr;
+    NNLDA *                       d_NNLDAPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
   };
 } // namespace dftfe
 

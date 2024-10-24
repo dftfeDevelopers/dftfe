@@ -77,6 +77,8 @@ namespace dftfe
 
     const bool isPseudopotential = d_dftParams.isPseudopotential;
 
+    const bool useHubbard = dftPtr->isHubbardCorrectionsUsed();
+
     dealii::FEEvaluation<
       3,
       1,
@@ -221,9 +223,14 @@ namespace dftfe
         std::vector<dataTypes::number>
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened;
 
+        std::vector<dataTypes::number>
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard;
+
 #ifdef USE_COMPLEX
         std::vector<dataTypes::number>
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened;
+        std::vector<dataTypes::number>
+          projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard;
 #endif
 
         if (isPseudopotential)
@@ -245,6 +252,25 @@ namespace dftfe
 #endif
           }
 
+        if (useHubbard)
+          {
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+              .resize(numKPoints *
+                        dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+                          ->getTotalNonTrivialSphericalFnsOverAllCells() *
+                        numQuadPointsNLP * 3,
+                      dataTypes::number(0.0));
+
+#ifdef USE_COMPLEX
+            projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
+              .resize(numKPoints *
+                        dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+                          ->getTotalNonTrivialSphericalFnsOverAllCells() *
+                        numQuadPointsNLP,
+                      dataTypes::number(0.0));
+#endif
+          }
+
 #if defined(DFTFE_WITH_DEVICE)
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           {
@@ -257,6 +283,8 @@ namespace dftfe
               dftPtr->d_nlpspQuadratureId,
               dftPtr->d_BLASWrapperPtr,
               dftPtr->d_oncvClassPtr,
+              dftPtr->getHubbardClassPtr(),
+              dftPtr->isHubbardCorrectionsUsed(),
               dftPtr->d_eigenVectorsFlattenedDevice.begin(),
               d_dftParams.spinPolarized,
               spinIndex,
@@ -271,8 +299,12 @@ namespace dftfe
               elocWfcEshelbyTensorQuadValuesH.data(),
               projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                 .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+                .data(),
 #  ifdef USE_COMPLEX
               projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
                 .data(),
 #  endif
               d_mpiCommParent,
@@ -299,6 +331,8 @@ namespace dftfe
               dftPtr->d_nlpspQuadratureId,
               dftPtr->d_BLASWrapperPtrHost,
               dftPtr->d_oncvClassPtr,
+              dftPtr->getHubbardClassPtr(),
+              dftPtr->isHubbardCorrectionsUsed(),
               dftPtr->d_eigenVectorsFlattenedHost.begin(),
               d_dftParams.spinPolarized,
               spinIndex,
@@ -313,8 +347,12 @@ namespace dftfe
               elocWfcEshelbyTensorQuadValuesH.data(),
               projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                 .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+                .data(),
 #ifdef USE_COMPLEX
               projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
                 .data(),
 #endif
               d_mpiCommParent,
@@ -386,7 +424,7 @@ namespace dftfe
           }             // cell loop
 
 
-        if (isPseudopotential)
+        if (isPseudopotential || useHubbard)
           {
             for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
                  ++cell)
@@ -410,20 +448,104 @@ namespace dftfe
                         jxwQuadsVect[iSubCell];
                   }
 
-                stressEnlElementalContribution(
-                  d_stressKPoints,
-                  matrixFreeData,
-                  numQuadPointsNLP,
-                  jxwQuadsSubCells,
-                  cell,
-                  cellIdToCellNumberMap,
-                  dftPtr->d_oncvClassPtr->getNonLocalOperator()
-                    ->getAtomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues(),
+                if (isPseudopotential)
+                  {
+                    const unsigned int numNonLocalAtomsCurrentProcessPsP =
+                      (dftPtr->d_oncvClassPtr
+                         ->getTotalNumberOfAtomsInCurrentProcessor());
+
+                    std::vector<int> nonLocalAtomIdPsP;
+                    nonLocalAtomIdPsP.resize(numNonLocalAtomsCurrentProcessPsP);
+
+                    std::vector<unsigned int>
+                      numberPseudoWaveFunctionsPerAtomPsP;
+                    numberPseudoWaveFunctionsPerAtomPsP.resize(
+                      numNonLocalAtomsCurrentProcessPsP);
+
+                    for (unsigned int iAtom = 0;
+                         iAtom < numNonLocalAtomsCurrentProcessPsP;
+                         iAtom++)
+                      {
+                        nonLocalAtomIdPsP[iAtom] =
+                          dftPtr->d_oncvClassPtr->getAtomIdInCurrentProcessor(
+                            iAtom);
+
+                        numberPseudoWaveFunctionsPerAtomPsP[iAtom] =
+                          dftPtr->d_oncvClassPtr
+                            ->getTotalNumberOfSphericalFunctionsForAtomId(
+                              nonLocalAtomIdPsP[iAtom]);
+                      }
+
+                    const std::shared_ptr<
+                      AtomicCenteredNonLocalOperator<dataTypes::number,
+                                                     memorySpace>>
+                      oncvNonLocalOp =
+                        dftPtr->d_oncvClassPtr->getNonLocalOperator();
+
+                    stressEnlElementalContribution(
+                      d_stressKPoints,
+                      matrixFreeData,
+                      numQuadPointsNLP,
+                      jxwQuadsSubCells,
+                      cell,
+                      numNonLocalAtomsCurrentProcessPsP,
+                      oncvNonLocalOp,
+                      numberPseudoWaveFunctionsPerAtomPsP,
+                      cellIdToCellNumberMap,
+                      dftPtr->d_oncvClassPtr->getNonLocalOperator()
+                        ->getAtomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues(),
 #ifdef USE_COMPLEX
-                  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+                      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
 #endif
-                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
-                  d_dftParams.spinPolarized == 1);
+                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
+                      d_dftParams.spinPolarized == 1);
+                  }
+
+                if (useHubbard)
+                  {
+                    const unsigned int numNonLocalAtomsCurrentProcessHubbard =
+                      (dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+                         ->getTotalAtomInCurrentProcessor());
+
+                    std::vector<unsigned int>
+                      numberPseudoWaveFunctionsPerAtomHubbard;
+                    numberPseudoWaveFunctionsPerAtomHubbard.resize(
+                      numNonLocalAtomsCurrentProcessHubbard);
+                    for (unsigned int iAtom = 0;
+                         iAtom < numNonLocalAtomsCurrentProcessHubbard;
+                         iAtom++)
+                      {
+                        numberPseudoWaveFunctionsPerAtomHubbard[iAtom] =
+                          dftPtr->getHubbardClassPtr()
+                            ->getTotalNumberOfSphericalFunctionsForAtomId(
+                              iAtom);
+                      }
+
+                    const std::shared_ptr<
+                      AtomicCenteredNonLocalOperator<dataTypes::number,
+                                                     memorySpace>>
+                      hubbardNonLocalOp =
+                        dftPtr->getHubbardClassPtr()->getNonLocalOperator();
+
+                    stressEnlElementalContribution(
+                      d_stressKPoints,
+                      matrixFreeData,
+                      numQuadPointsNLP,
+                      jxwQuadsSubCells,
+                      cell,
+                      numNonLocalAtomsCurrentProcessHubbard,
+                      hubbardNonLocalOp,
+                      numberPseudoWaveFunctionsPerAtomHubbard,
+                      cellIdToCellNumberMap,
+                      dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+                        ->getAtomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues(),
+#ifdef USE_COMPLEX
+                      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard,
+#endif
+                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard,
+                      d_dftParams.spinPolarized == 1);
+                  }
+
 
               } // macro cell loop
           }     // pseudopotential check
@@ -431,6 +553,10 @@ namespace dftfe
 
     MPI_Barrier(d_mpiCommParent);
     double enowfc_time = MPI_Wtime();
+
+    bool isGradDensityDataRequired =
+      (dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
+         ->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
     /////////// Compute contribution independent of wavefunctions
     ////////////////////
@@ -457,8 +583,7 @@ namespace dftfe
           dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
           gradDensityOutValuesSpinPolarized;
 
-        if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isGradDensityDataRequired)
           {
             gradDensityOutValuesSpinPolarized = gradRhoOutValues;
 
@@ -497,31 +622,30 @@ namespace dftfe
           dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
           hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
 
-        std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+        std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
           xDensityOutDataOut;
-        std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+        std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
           cDensityOutDataOut;
 
         std::vector<double> &xEnergyDensityOut =
-          xDensityOutDataOut[xcOutputDataAttributes::e];
+          xDensityOutDataOut[xcRemainderOutputDataAttributes::e];
         std::vector<double> &cEnergyDensityOut =
-          cDensityOutDataOut[xcOutputDataAttributes::e];
+          cDensityOutDataOut[xcRemainderOutputDataAttributes::e];
 
         std::vector<double> &pdexDensityOutSpinUp =
-          xDensityOutDataOut[xcOutputDataAttributes::pdeDensitySpinUp];
-        std::vector<double> &pdexDensityOutSpinDown =
-          xDensityOutDataOut[xcOutputDataAttributes::pdeDensitySpinDown];
+          xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+        std::vector<double> &pdexDensityOutSpinDown = xDensityOutDataOut
+          [xcRemainderOutputDataAttributes::pdeDensitySpinDown];
         std::vector<double> &pdecDensityOutSpinUp =
-          cDensityOutDataOut[xcOutputDataAttributes::pdeDensitySpinUp];
-        std::vector<double> &pdecDensityOutSpinDown =
-          cDensityOutDataOut[xcOutputDataAttributes::pdeDensitySpinDown];
+          cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+        std::vector<double> &pdecDensityOutSpinDown = cDensityOutDataOut
+          [xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
-        if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isGradDensityDataRequired)
           {
-            xDensityOutDataOut[xcOutputDataAttributes::pdeSigma] =
+            xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
               std::vector<double>();
-            cDensityOutDataOut[xcOutputDataAttributes::pdeSigma] =
+            cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
               std::vector<double>();
           }
 
@@ -594,23 +718,21 @@ namespace dftfe
                           quadWeightsAll[subCellIndex * numQuadPoints + iQuad]);
                       }
 
-
-                    dftPtr->d_excManagerPtr->getExcDensityObj()
-                      ->computeExcVxcFxc(*(dftPtr->d_auxDensityMatrixXCOutPtr),
-                                         quadPointsInCell,
-                                         quadWeightsInCell,
-                                         xDensityOutDataOut,
-                                         cDensityOutDataOut);
+                    dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
+                      ->computeRhoTauDependentXCData(
+                        *(dftPtr->d_auxDensityMatrixXCOutPtr),
+                        quadPointsInCell,
+                        xDensityOutDataOut,
+                        cDensityOutDataOut);
 
                     std::vector<double> pdexDensityOutSigma;
                     std::vector<double> pdecDensityOutSigma;
-                    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataRequired)
                       {
-                        pdexDensityOutSigma =
-                          xDensityOutDataOut[xcOutputDataAttributes::pdeSigma];
-                        pdecDensityOutSigma =
-                          cDensityOutDataOut[xcOutputDataAttributes::pdeSigma];
+                        pdexDensityOutSigma = xDensityOutDataOut
+                          [xcRemainderOutputDataAttributes::pdeSigma];
+                        pdecDensityOutSigma = cDensityOutDataOut
+                          [xcRemainderOutputDataAttributes::pdeSigma];
                       }
 
 
@@ -620,8 +742,7 @@ namespace dftfe
                     std::vector<double> gradDensityXCOutSpinUp;
                     std::vector<double> gradDensityXCOutSpinDown;
 
-                    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataRequired)
                       {
                         densityXCOutData
                           [DensityDescriptorDataAttributes::gradValuesSpinUp] =
@@ -634,8 +755,7 @@ namespace dftfe
                     dftPtr->d_auxDensityMatrixXCOutPtr->applyLocalOperations(
                       quadPointsInCell, densityXCOutData);
 
-                    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataRequired)
                       {
                         gradDensityXCOutSpinUp = densityXCOutData
                           [DensityDescriptorDataAttributes::gradValuesSpinUp];
@@ -644,8 +764,7 @@ namespace dftfe
                       }
 
 
-                    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataRequired)
                       {
                         // const std::vector<double> &temp3 =
                         //  (*dftPtr->gradRhoOutValuesSpinPolarized)
@@ -690,8 +809,7 @@ namespace dftfe
                           pdexDensityOutSpinDown[q] + pdecDensityOutSpinDown[q];
                       }
 
-                    if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataRequired)
                       {
                         for (unsigned int q = 0; q < numQuadPoints; ++q)
                           {
@@ -733,9 +851,7 @@ namespace dftfe
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim] / 2.0;
 
-                          if (dftPtr->d_excManagerPtr
-                                ->getDensityBasedFamilyType() ==
-                              densityFamilyType::GGA)
+                          if (isGradDensityDataRequired)
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
@@ -778,8 +894,7 @@ namespace dftfe
                         derExchCorrEnergyWithGradRhoOutSpin1Quads,
                         gradRhoCoreAtoms,
                         hessianRhoCoreAtoms,
-                        dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                          densityFamilyType::GGA);
+                        isGradDensityDataRequired);
                   }
 
                 for (unsigned int iSubCell = 0; iSubCell < numSubCells;
@@ -998,7 +1113,8 @@ namespace dftfe
 
             phiTotEvalElectro.reinit(cell);
             phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
-            phiTotEvalElectro.evaluate(true, true);
+            phiTotEvalElectro.evaluate(dealii::EvaluationFlags::values |
+                                       dealii::EvaluationFlags::gradients);
 
             if (d_dftParams.smearedNuclearCharges &&
                 nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
@@ -1007,7 +1123,8 @@ namespace dftfe
                 phiTotEvalSmearedCharge.reinit(cell);
                 phiTotEvalSmearedCharge.read_dof_values_plain(
                   phiTotRhoOutElectro);
-                phiTotEvalSmearedCharge.evaluate(false, true);
+                phiTotEvalSmearedCharge.evaluate(
+                  dealii::EvaluationFlags::gradients);
               }
 
             std::fill(rhoQuadsElectro.begin(),

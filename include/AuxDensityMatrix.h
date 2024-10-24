@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 #include <mpi.h>
+#include <dftUtils.h>
 
 namespace dftfe
 {
@@ -27,6 +28,7 @@ namespace dftfe
     laplacianSpinDown
   };
 
+  template <dftfe::utils::MemorySpace memorySpace>
   class AuxDensityMatrix
   {
   public:
@@ -54,13 +56,17 @@ namespace dftfe
     virtual void
     evalOverlapMatrixEnd(const MPI_Comm &mpiComm) = 0;
 
+    // FIXME: to be extended to memoryspace
     /**
      * @brief Projects the KS density matrix to aux basis (L2 projection) batch wise
      */
     virtual void
     projectDensityMatrixStart(
-      std::unordered_map<std::string, std::vector<double>> &projectionInputs,
-      int                                                   iSpin) = 0;
+      const std::unordered_map<std::string, std::vector<dataTypes::number>>
+        &projectionInputsDataType,
+      const std::unordered_map<std::string, std::vector<double>>
+        &       projectionInputsReal,
+      const int iSpin) = 0;
 
     /**
      * @brief for MPI accumulation
@@ -73,8 +79,9 @@ namespace dftfe
      * @brief Projects the quadrature density to aux basis (L2 projection) batch wise
      */
     virtual void
-    projectDensityStart(std::unordered_map<std::string, std::vector<double>>
-                          &projectionInputs) = 0;
+    projectDensityStart(
+      const std::unordered_map<std::string, std::vector<double>>
+        &projectionInputs) = 0;
 
     /**
      * @brief for MPI accumulation

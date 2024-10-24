@@ -68,6 +68,11 @@ namespace dftfe
       xMinusAtomLoc(numQuadPoints, zeroTensor1);
 
 
+    bool isGradDensityDataDependent =
+      (dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
+         ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+
+
     for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
         dealii::AlignedVector<
@@ -128,9 +133,7 @@ namespace dftfe
                   }
               }
 
-            if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                  densityFamilyType::GGA &&
-                !isCellOutsideCoreRhoTail)
+            if (isGradDensityDataDependent && !isCellOutsideCoreRhoTail)
               {
                 std::map<dealii::CellId, std::vector<double>>::const_iterator
                   it2 = hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);
@@ -243,6 +246,9 @@ namespace dftfe
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       xMinusAtomLoc(numQuadPoints, zeroTensor1);
 
+    bool isGradDensityDataDependent =
+      (dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
+         ->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
     for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
@@ -306,9 +312,7 @@ namespace dftfe
                   }
               }
 
-            if (dftPtr->d_excManagerPtr->getDensityBasedFamilyType() ==
-                  densityFamilyType::GGA &&
-                !isCellOutsideCoreRhoTail)
+            if (isGradDensityDataDependent && !isCellOutsideCoreRhoTail)
               {
                 std::map<dealii::CellId, std::vector<double>>::const_iterator
                   it2 = hessianRhoCoreAtoms.find(iAtom)->second.find(subCellId);

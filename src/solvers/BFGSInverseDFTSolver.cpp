@@ -41,7 +41,7 @@ namespace dftfe
            const double                     a,
            const double                     b)
     {
-      const unsigned int N = x.local_size();
+      const unsigned int N = x.locally_owned_size();
       for (unsigned int i = 0; i < N; ++i)
         y.local_element(i) = a * x.local_element(i) + b * y.local_element(i);
     }
@@ -49,7 +49,7 @@ namespace dftfe
     void
     vecScale(distributedCPUVec<double> &x, const double a)
     {
-      const unsigned int N = x.local_size();
+      const unsigned int N = x.locally_owned_size();
       for (unsigned int i = 0; i < N; ++i)
         x.local_element(i) *= a;
     }

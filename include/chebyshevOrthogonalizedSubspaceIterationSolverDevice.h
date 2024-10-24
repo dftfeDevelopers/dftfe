@@ -60,7 +60,7 @@ namespace dftfe
      */
     double
     solve(operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-          const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
+          std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
             dftfe::utils::MemorySpace::DEVICE>> &              BLASWrapperPtr,
           elpaScalaManager &                                   elpaScala,
           dataTypes::number *      eigenVectorsFlattenedDevice,
@@ -83,7 +83,7 @@ namespace dftfe
     void
     solveNoRR(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const std::shared_ptr<
+      std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                      BLASWrapperPtr,
       elpaScalaManager &       elpaScala,
@@ -103,7 +103,7 @@ namespace dftfe
     void
     densityMatrixEigenBasisFirstOrderResponse(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const std::shared_ptr<
+      std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                        BLASWrapperPtr,
       dataTypes::number *        eigenVectorsFlattenedDevice,

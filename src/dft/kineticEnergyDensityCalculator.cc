@@ -24,13 +24,12 @@
 #include <vectorUtilities.h>
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
-#include <deviceKernelsGeneric.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
-#include <DeviceBlasWrapper.h>
+
 
 namespace dftfe
 {
@@ -242,15 +241,14 @@ namespace dftfe
                                   currentBlockSize * sizeof(NumberType));
 #if defined(DFTFE_WITH_DEVICE)
                   else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-                    dftfe::utils::deviceKernelsGeneric::
-                      stridedCopyToBlockConstantStride(
-                        currentBlockSize,
-                        totalNumWaveFunctions,
-                        numLocalDofs,
-                        jvec,
-                        X->data() + numLocalDofs * totalNumWaveFunctions *
-                                      (numSpinComponents * kPoint + spinIndex),
-                        flattenedArrayBlock[spinIndex]->data());
+                    BLASWrapperPtr.stridedCopyToBlockConstantStride(
+                      currentBlockSize,
+                      totalNumWaveFunctions,
+                      numLocalDofs,
+                      jvec,
+                      X->data() + numLocalDofs * totalNumWaveFunctions *
+                                    (numSpinComponents * kPoint + spinIndex),
+                      flattenedArrayBlock[spinIndex]->data());
 #endif
 
 

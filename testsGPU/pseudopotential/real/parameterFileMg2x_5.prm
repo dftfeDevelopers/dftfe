@@ -69,3 +69,9 @@ subsection SCF parameters
        set OVERLAP COMPUTE COMMUN CHEBY=false
   end
 end
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end
+

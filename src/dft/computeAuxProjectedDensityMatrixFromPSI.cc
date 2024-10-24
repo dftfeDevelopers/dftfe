@@ -23,13 +23,12 @@
 #include <vectorUtilities.h>
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
-#include <deviceKernelsGeneric.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
-#include <DeviceBlasWrapper.h>
+
 
 namespace dftfe
 {
@@ -46,16 +45,16 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      &                        BLASWrapperPtr,
-    const unsigned int         matrixFreeDofhandlerIndex,
-    const unsigned int         quadratureIndex,
-    const std::vector<double> &kPointWeights,
-    AuxDensityMatrix &         auxDensityMatrixRepresentation,
-    const MPI_Comm &           mpiCommParent,
-    const MPI_Comm &           domainComm,
-    const MPI_Comm &           interpoolcomm,
-    const MPI_Comm &           interBandGroupComm,
-    const dftParameters &      dftParams)
+      &                            BLASWrapperPtr,
+    const unsigned int             matrixFreeDofhandlerIndex,
+    const unsigned int             quadratureIndex,
+    const std::vector<double> &    kPointWeights,
+    AuxDensityMatrix<memorySpace> &auxDensityMatrixRepresentation,
+    const MPI_Comm &               mpiCommParent,
+    const MPI_Comm &               domainComm,
+    const MPI_Comm &               interpoolcomm,
+    const MPI_Comm &               interBandGroupComm,
+    const dftParameters &          dftParams)
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
@@ -152,8 +151,8 @@ namespace dftfe
                   quadPointsBatch[3 * iQuad + idim] =
                     allQuadPointsHost[startingCellId * numQuadPoints * 3 +
                                       3 * iQuad + idim];
-                quadWeightsBatch[iQuad] =
-                  allQuadWeightsHost[startingCellId * numQuadPoints + iQuad];
+                quadWeightsBatch[iQuad] = std::real(
+                  allQuadWeightsHost[startingCellId * numQuadPoints + iQuad]);
               }
 
             auxDensityMatrixRepresentation.evalOverlapMatrixStart(
@@ -163,16 +162,18 @@ namespace dftfe
 
     auxDensityMatrixRepresentation.evalOverlapMatrixEnd(domainComm);
 
+    std::unordered_map<std::string, std::vector<NumberType>>
+      densityMatrixProjectionInputsDataType;
     std::unordered_map<std::string, std::vector<double>>
-                         densityMatrixProjectionInputs;
-    std::vector<double> &wfcQuadPointDataBatchHost =
-      densityMatrixProjectionInputs["psiFunc"];
+                             densityMatrixProjectionInputsRealType;
+    std::vector<NumberType> &wfcQuadPointDataBatchHost =
+      densityMatrixProjectionInputsDataType["psiFunc"];
     std::vector<double> &quadPointsBatch =
-      densityMatrixProjectionInputs["quadpts"];
+      densityMatrixProjectionInputsRealType["quadpts"];
     std::vector<double> &quadWeightsBatch =
-      densityMatrixProjectionInputs["quadWt"];
+      densityMatrixProjectionInputsRealType["quadWt"];
     std::vector<double> &fValuesBatch =
-      densityMatrixProjectionInputs["fValues"];
+      densityMatrixProjectionInputsRealType["fValues"];
 
     for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
@@ -242,15 +243,14 @@ namespace dftfe
                                   currentBlockSize * sizeof(NumberType));
 #if defined(DFTFE_WITH_DEVICE)
                   else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-                    dftfe::utils::deviceKernelsGeneric::
-                      stridedCopyToBlockConstantStride(
-                        currentBlockSize,
-                        totalNumWaveFunctions,
-                        numLocalDofs,
-                        jvec,
-                        X.data() + numLocalDofs * totalNumWaveFunctions *
-                                     (numSpinComponents * kPoint + spinIndex),
-                        flattenedArrayBlock->data());
+                    BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                      currentBlockSize,
+                      totalNumWaveFunctions,
+                      numLocalDofs,
+                      jvec,
+                      X.data() + numLocalDofs * totalNumWaveFunctions *
+                                   (numSpinComponents * kPoint + spinIndex),
+                      flattenedArrayBlock->data());
 #endif
 
 
@@ -288,9 +288,9 @@ namespace dftfe
                                                       numQuadPoints * 3 +
                                                     3 * iQuad + idim];
                               quadWeightsBatch[iQuad] =
-                                allQuadWeightsHost[startingCellId *
-                                                     numQuadPoints +
-                                                   iQuad];
+                                std::real(allQuadWeightsHost[startingCellId *
+                                                               numQuadPoints +
+                                                             iQuad]);
                             }
 
                           basisOperationsPtr->interpolateKernel(
@@ -302,12 +302,16 @@ namespace dftfe
                               startingCellId + currentCellsBlockSize));
 
 
-
+                          wfcQuadPointDataBatchHost.resize(
+                            currentCellsBlockSize * numQuadPoints *
+                            currentBlockSize);
                           wfcQuadPointData.copyTo(wfcQuadPointDataBatchHost);
 
                           auxDensityMatrixRepresentation
                             .projectDensityMatrixStart(
-                              densityMatrixProjectionInputs, spinIndex);
+                              densityMatrixProjectionInputsDataType,
+                              densityMatrixProjectionInputsRealType,
+                              spinIndex);
 
                         } // non-trivial cell block check
                     }     // cells block loop
@@ -347,8 +351,7 @@ namespace dftfe
   }
 
 
-#ifndef USE_COMPLEX
-#  if defined(DFTFE_WITH_DEVICE)
+#if defined(DFTFE_WITH_DEVICE)
   template void
   computeAuxProjectedDensityMatrixFromPSI(
     const dftfe::utils::MemoryStorage<dataTypes::number,
@@ -369,13 +372,14 @@ namespace dftfe
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
-    AuxDensityMatrix &         auxDensityMatrixRepresentation,
-    const MPI_Comm &           mpiCommParent,
-    const MPI_Comm &           domainComm,
-    const MPI_Comm &           interpoolcomm,
-    const MPI_Comm &           interBandGroupComm,
-    const dftParameters &      dftParams);
-#  endif
+    AuxDensityMatrix<dftfe::utils::MemorySpace::DEVICE>
+      &                  auxDensityMatrixRepresentation,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     domainComm,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
+#endif
   template void
   computeAuxProjectedDensityMatrixFromPSI(
     const dftfe::utils::MemoryStorage<dataTypes::number,
@@ -396,11 +400,11 @@ namespace dftfe
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
-    AuxDensityMatrix &         auxDensityMatrixRepresentation,
-    const MPI_Comm &           mpiCommParent,
-    const MPI_Comm &           domainComm,
-    const MPI_Comm &           interpoolcomm,
-    const MPI_Comm &           interBandGroupComm,
-    const dftParameters &      dftParams);
-#endif
+    AuxDensityMatrix<dftfe::utils::MemorySpace::HOST>
+      &                  auxDensityMatrixRepresentation,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     domainComm,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams);
 } // namespace dftfe

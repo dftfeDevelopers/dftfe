@@ -529,7 +529,7 @@ namespace dftfe
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
                                        const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec);
+                                       ValueType2 *           copyToVec) const;
 
 
       template <typename ValueType1, typename ValueType2>
@@ -661,6 +661,14 @@ namespace dftfe
     {
     public:
       BLASWrapper();
+
+      template <typename ValueType1, typename ValueType2>
+      static void
+      copyValueType1ArrToValueType2ArrDeviceCall(
+        const dftfe::size_type             size,
+        const ValueType1 *                 valueType1Arr,
+        ValueType2 *                       valueType2Arr,
+        const dftfe::utils::deviceStream_t streamId = 0);
 
       template <typename ValueType>
       void
@@ -1143,7 +1151,7 @@ namespace dftfe
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
                                        const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec);
+                                       ValueType2 *           copyToVec) const;
 
 
       template <typename ValueType1, typename ValueType2>
@@ -1275,6 +1283,8 @@ namespace dftfe
       setMathMode(dftfe::utils::deviceBlasMath_t mathMode);
 #  endif
 
+      dftfe::utils::deviceBlasStatus_t
+      setStream(dftfe::utils::deviceStream_t streamId);
 
     private:
 #  ifdef DFTFE_WITH_DEVICE_AMD
@@ -1291,9 +1301,6 @@ namespace dftfe
 
       dftfe::utils::deviceBlasStatus_t
       destroy();
-
-      dftfe::utils::deviceBlasStatus_t
-      setStream(dftfe::utils::deviceStream_t streamId);
     };
 #endif
 

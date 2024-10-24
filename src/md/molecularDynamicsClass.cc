@@ -1956,7 +1956,7 @@ namespace dftfe
         // for loop
         pcout << "Using Extrapolated Density for init" << std::endl;
         d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
-        for (int i = 0; i < d_extrapDensity_t0.local_size(); i++)
+        for (int i = 0; i < d_extrapDensity_t0.locally_owned_size(); i++)
           {
             C = d_extrapDensity_t0.local_element(i);
             B = 0.5 * (3 * d_extrapDensity_t0.local_element(i) +
@@ -2007,7 +2007,7 @@ namespace dftfe
         pcout << "Using Split Extrapolated Density for initialization"
               << std::endl;
         d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
-        for (int i = 0; i < d_extrapDensity_t0.local_size(); i++)
+        for (int i = 0; i < d_extrapDensity_t0.locally_owned_size(); i++)
           {
             C = d_extrapDensity_t0.local_element(i);
             B = 0.5 * (3 * d_extrapDensity_t0.local_element(i) +

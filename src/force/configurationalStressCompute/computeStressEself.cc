@@ -327,7 +327,8 @@ namespace dftfe
                     vselfEvalSmearedCharge.reinit(cell);
                     vselfEvalSmearedCharge.read_dof_values_plain(
                       vselfBinsManagerElectro.getVselfFieldBins()[iBin]);
-                    vselfEvalSmearedCharge.evaluate(false, true);
+                    vselfEvalSmearedCharge.evaluate(
+                      dealii::EvaluationFlags::gradients);
 
                     for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
                       {

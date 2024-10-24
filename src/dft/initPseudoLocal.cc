@@ -116,7 +116,7 @@ namespace dftfe
 
     const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
       &                partitioner = phiExt.get_partitioner();
-    const unsigned int localSize   = partitioner->local_size();
+    const unsigned int localSize   = partitioner->locally_owned_size();
     const unsigned int n_ghosts    = partitioner->n_ghost_indices();
     const unsigned int totalSize   = localSize + n_ghosts;
 
@@ -185,7 +185,7 @@ namespace dftfe
         pseudoVLoc.resize(n_q_points, 0.0);
       }
 
-    const int numberDofs = phiExt.local_size();
+    const int numberDofs = phiExt.locally_owned_size();
     // kpoint group parallelization data structures
     const unsigned int numberKptGroups =
       dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
@@ -199,7 +199,7 @@ namespace dftfe
         interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndicesStep1);
 
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int localDofId = 0; localDofId < phiExt.local_size();
+    for (unsigned int localDofId = 0; localDofId < phiExt.locally_owned_size();
          ++localDofId)
       {
         if (localDofId <
@@ -453,7 +453,7 @@ namespace dftfe
           {
             feEvalObj.reinit(macrocell);
             feEvalObj.read_dof_values(phiExt);
-            feEvalObj.evaluate(true, false);
+            feEvalObj.evaluate(dealii::EvaluationFlags::values);
             for (unsigned int iSubCell = 0;
                  iSubCell <
                  _matrix_free_data.n_active_entries_per_cell_batch(macrocell);

@@ -29,3 +29,4 @@ srun ./dftfe parameterFileMg2x_11.prm > outputMg2x_11
 srun ./dftfe parameterFileMg2x_14.prm > outputMg2x_14
 srun ./dftfe parameterFileMg2x_15.prm > outputMg2x_15
 srun ./dftfe parameterFileMg2x_16.prm > outputMg2x_16
+srun ./dftfe Pt3Ni_hubbard_spin.prm            > outputPt3Ni_hubbard_spin

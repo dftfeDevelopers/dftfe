@@ -171,7 +171,7 @@ namespace dftfe
      *
      */
     void
-    setupconstraints();
+    setupConstraints();
 
     /**
      * @brief Compute the diagonal of A.

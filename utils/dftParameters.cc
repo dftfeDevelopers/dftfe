@@ -677,8 +677,8 @@ namespace dftfe
           "EXCHANGE CORRELATION TYPE",
           "GGA-PBE",
           dealii::Patterns::Selection(
-            "LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA"),
-          R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen & Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental.)");
+            "LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U"),
+          R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen & Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
 
         prm.declare_entry(
           "MODEL XC INPUT FILE",
@@ -765,6 +765,26 @@ namespace dftfe
             "40.0",
             dealii::Patterns::Double(0.0),
             "[Advanced] Cutoff in a.u. for computing coordination number in D3 correction");
+        }
+        prm.leave_subsection();
+
+        prm.enter_subsection("Hubbard Parameters");
+        {
+          prm.declare_entry(
+            "HUBBARD PARAMETERS FILE",
+            "",
+            dealii::Patterns::Anything(),
+            "[Standard] Name of the file containing hubbard parameters. "
+            "This file describes the orbitals and the hubbard U parameter for each hubbard species."
+            " A sample file for Pt-Au dimer is as follows:  "
+            "3 (row1 - number of hubbard species, The ID 0 is reserved for atoms with no hubbard correction ),"
+            "0 0 (row2 - Hubbard species Id and the corresponding number of orbitals"
+            "1 78 0.110248 1 9.0 (row3 - hubbard species Id corresponding to Pt, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)"
+            "5 2 (row4 - the Quantum number n and Quantum number l of the orbital)"
+            "2 79 0.1469976 1 10.0 (row3 - hubbard species Id corresponding to Au, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)"
+            "5 2 (row4 - the Quantum number n and Quantum number l of the orbital)"
+            "78 1 (row5 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file"
+            "79 2 (row6 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file");
         }
         prm.leave_subsection();
       }
@@ -1378,6 +1398,7 @@ namespace dftfe
     tempControllerTypeBOMD     = "";
     MDTrack                    = 0;
 
+    hubbardFileName = "";
 
     // New paramter for selecting mode and NEB parameters
     TotalImages = 1;
@@ -1646,6 +1667,12 @@ namespace dftfe
       start_magnetization   = prm.get_double("START MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       netCharge             = prm.get_double("NET CHARGE");
+
+      prm.enter_subsection("Hubbard Parameters");
+      {
+        hubbardFileName = prm.get("HUBBARD PARAMETERS FILE");
+      }
+      prm.leave_subsection();
     }
     prm.leave_subsection();
 
@@ -2113,6 +2140,17 @@ namespace dftfe
 
     if (numCoreWfcRR != 0)
       useSinglePrecCheby = false;
+
+    // checking if the XC type is compatible with
+    // overlap compute communication cheby
+
+    bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
+    bool isLocalXC =
+      (XCType.substr(0, 3) == "LDA") || (XCType.substr(0, 3) == "GGA");
+    if (isHubbard || !isLocalXC)
+      {
+        overlapComputeCommunCheby = false;
+      }
   }
 
 

@@ -19,10 +19,10 @@
 #define DFTFE_EXCMANAGER_H
 
 #include <xc.h>
-#include <excDensityBaseClass.h>
-#include <excWavefunctionBaseClass.h>
+#include <ExcSSDFunctionalBaseClass.h>
 namespace dftfe
 {
+  template <dftfe::utils::MemorySpace memorySpace>
   class excManager
   {
   public:
@@ -46,34 +46,26 @@ namespace dftfe
          bool        isSpinPolarized,
          std::string modelXCInputFile);
 
-    densityFamilyType
-    getDensityBasedFamilyType() const;
-
-    wavefunctionFamilyType
-    getWavefunctionBasedFamilyType() const;
+    ExcSSDFunctionalBaseClass<memorySpace> *
+    getExcSSDFunctionalObj();
 
 
-    excDensityBaseClass *
-    getExcDensityObj();
+    const ExcSSDFunctionalBaseClass<memorySpace> *
+    getExcSSDFunctionalObj() const;
 
-    excWavefunctionBaseClass *
-    getExcWavefunctionObj();
+    const std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> &
+    getSSDSharedObj() const;
 
-
-    const excDensityBaseClass *
-    getExcDensityObj() const;
-
-    const excWavefunctionBaseClass *
-    getExcWavefunctionObj() const;
+    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> &
+    getSSDSharedObj();
 
 
   private:
     /// objects for various exchange-correlations (from libxc package)
-    xc_func_type *d_funcXPtr;
-    xc_func_type *d_funcCPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
 
-    excDensityBaseClass *     d_excDensityObjPtr;
-    excWavefunctionBaseClass *d_excWavefunctionObjPtr;
+    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> d_excObj;
   };
 } // namespace dftfe
 

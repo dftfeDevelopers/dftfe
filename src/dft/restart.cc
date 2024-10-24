@@ -139,7 +139,9 @@ namespace dftfe
 
         d_magInNodalValuesRead = 0;
 
-        for (unsigned int i = 0; i < d_rhoInNodalValuesRead.local_size(); i++)
+        for (unsigned int i = 0;
+             i < d_rhoInNodalValuesRead.locally_owned_size();
+             i++)
           {
             d_magInNodalValuesRead.local_element(i) =
               -2.0 * (d_dftParamsPtr->start_magnetization) *

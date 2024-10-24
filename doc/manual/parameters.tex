@@ -518,10 +518,10 @@
 {\it Default:} GGA-PBE
 
 
-{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental.
+{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental. Add +U at the end for Hubbard corrections.
 
 
-{\it Possible values:} Any one of LDA-PZ, LDA-PW, LDA-VWN, GGA-PBE, GGA-RPBE, GGA-LBxPBEc, MLXC-NNLDA, MLXC-NNGGA, and MLXC-NNLLMGGA
+{\it Possible values:} Any one of LDA-PZ, LDA-PW, LDA-VWN, GGA-PBE, GGA-RPBE, GGA-LBxPBEc, MLXC-NNLDA, MLXC-NNGGA, and MLXC-NNLLMGGA, LDA-PZ+U, LDA-PW+U, LDA-VWN+U, GGA-PBE+U, GGA-RPBE+U, GGA-LBxPBEc+U, MLXC-NNLDA+U, MLXC-NNGGA+U, and MLXC-NNLLMGGA+U.
 \item {\it Parameter name:} {\tt MODEL XC INPUT FILE}
 \phantomsection\label{parameters:DFT functional parameters/MODEL XC INPUT FILE}
 \label{parameters:DFT_20functional_20parameters/MODEL_20XC_20INPUT_20FILE}
@@ -835,6 +835,30 @@
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
 \end{itemize}
+
+
+\subsection{Parameters in section \tt Hubbard Parameters}
+\label{parameters:Hubbard}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt HUBBARD PARAMETERS FILE}
+\phantomsection\label{parameters:Hubbard Parameters/HUBBARD PARAMETERS FILE}
+\label{parameters:Hubbard/HUBBARD_PARAMETERS_FILE}
+\index[prmindex]{HUBBARD PARAMETERS FILE}
+\index[prmindexfull]{Hubbard Parameters!HUBBARD PARAMETERS FILE} \\
+{\it Value:} \\
+{\it Default:}\\
+{\it Description:} [Standard] Name of the file containing hubbard parameters. This file describes the orbitals and the hubbard U parameter for each hubbard species.  A sample file for Pt-Au dimer is as follows: \\ 3 (row1 - number of hubbard species, The ID 0 is reserved for atoms with no hubbard correction )\\
+0 0 (row2 - Hubbard species Id and the corresponding number of orbitals)\\ 1 78 0.110248 1 9.0 (row3 - hubbard species Id corresponding to Pt, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)\\
+5 2 (row4 - the Quantum number n and Quantum number l of the orbital)\\
+2 79 0.1469976 1 10.0 (row3 - hubbard species Id corresponding to Au, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)\\
+5 2 (row4 - the Quantum number n and Quantum number l of the orbital)\\
+78 1 (row5 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file.)\\
+79 2 (row6 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file)\\
+
+{\it Possible values:} Any string
+\end{itemize}
+
 
 \subsection{Parameters in section \tt Finite element mesh parameters}
 \label{parameters:Finite_20element_20mesh_20parameters}

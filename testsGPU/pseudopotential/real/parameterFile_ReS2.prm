@@ -1,0 +1,65 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT=true
+set USE GPU   = true
+subsection Geometry
+  set NATOMS=55
+  set NATOM TYPES=3
+  set ATOMIC COORDINATES FILE      = coordinates_ReS2.inp           
+  set DOMAIN VECTORS FILE = domainVectors_ReS2.inp 
+  subsection Optimization
+    set ION FORCE  = true
+  end
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = false
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 4
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 1.5
+    set ATOM BALL RADIUS = 5.0
+    set AUTO ADAPT BASE MESH SIZE = false
+    set BASE MESH SIZE = 6.0
+  end
+end
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true  
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo_ReS2.inp
+end
+
+subsection Brillouin zone k point sampling options
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 1
+    set SAMPLING POINTS 2 = 1
+    set SAMPLING POINTS 3 = 1
+    set SAMPLING SHIFT 1  = 0
+    set SAMPLING SHIFT 2  = 0
+    set SAMPLING SHIFT 3  = 0
+  end
+end
+
+subsection SCF parameters
+  set MIXING PARAMETER                 = 0.2
+  set MIXING METHOD                    = ANDERSON
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 1e-6
+  set MAXIMUM ITERATIONS               = 100
+  subsection Eigen-solver parameters
+     set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 326
+  end
+end
+
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+  set VSELF GPU MODE     = true
+end
+
