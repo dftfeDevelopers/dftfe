@@ -98,6 +98,12 @@ namespace dftfe
     d_matrixFreeQuadratureComponentAX  = matrixFreeQuadratureComponentAX;
 
 
+    d_basisOperationsPtr->reinit(1,
+                                 d_cellBlockSize,
+                                 d_matrixFreeQuadratureComponentRhs,
+                                 false,  // TODO should this be set to true
+                                 false); // TODO should this be set to true
+
     d_locallyOwnedSize     = d_basisOperationsPtr->nOwnedDofs();
     d_numberDofsPerElement = d_basisOperationsPtr->nDofsPerCell();
     d_numCells             = d_basisOperationsPtr->nCells();

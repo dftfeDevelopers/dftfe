@@ -56,28 +56,28 @@ SET(TARGET_SRC
   ./src/dft/densityFirstOrderResponseCalculator.cc
   ./src/dft/applyMultipoleDirichletBC.cc
   ./src/dft/expConfiningPotential.cpp
-  ./src/excManager/excDensityBaseClass.cpp
   ./src/excManager/excDensityLDAClass.cpp
-  ./src/excManager/excWavefunctionBaseClass.cpp
   ./src/excManager/excDensityGGAClass.cpp
   ./src/excManager/excDensityLLMGGAClass.cpp
   ./src/excManager/excManager.cpp
-  ./src/excManager/excWavefunctionNoneClass.cpp
-  ./src/excManager/AuxDensityFE.cpp
-  ./src/excManager/AuxDensityMatrixSlater.cpp
+  ./src/excManager/AuxDensityMatrixAtomicBasis.cpp
+  ./src/excManager/AuxDensityMatrixFE.cpp
+  ./src/excManager/ExcDFTPlusU.cpp
+  ./src/excManager/AtomicBasisData.cpp
   ./src/excManager/NNGGA.cc
   ./src/excManager/NNLDA.cc
   ./src/excManager/NNLLMGGA.cpp
-  ./src/excManager/SlaterBasisData.cpp
-  ./src/excManager/SlaterBasisSet.cpp
-  ./src/excManager/SphericalHarmonicFunc.cpp
+  ./src/excManager/AtomicBasisData.cpp
+  ./src/excManager/SlaterBasis.cpp
+  ./src/excManager/GaussianBasis.cpp
+  ./src/excManager/hubbardClass.cpp
   ./src/poisson/poissonSolverProblem.cc
   ./src/poisson/MultiVectorPoissonLinearSolverProblem.cpp
   ./src/helmholtz/kerkerSolverProblem.cc
   ./src/dftOperator/KohnShamHamiltonianOperator.cc
   ./src/dftOperator/veffPrimeForLRDM.cc
   ./src/force/force.cc
-  ./src/force/forceWfcContractions.cc  
+  ./src/force/forceWfcContractions.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
   ./src/triangulation/meshMovement/meshMovement.cc
@@ -96,6 +96,7 @@ SET(TARGET_SRC
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc
   ./src/solvers/eigenSolver.cc
   ./src/linAlg/linearAlgebraOperationsOpt.cc
+  ./src/linAlg/linearAlgebraOperationsCPU.cc
   ./src/linAlg/linearAlgebraOperationsInternal.cc
   ./src/linAlg/elpaScalaManager.cc
   ./src/linAlg/scalapackWrapper.cc
@@ -125,6 +126,8 @@ SET(TARGET_SRC
   ./utils/QuadDataCompositeWrite.cpp
   ./utils/PeriodicTable.cc
   ./utils/FiniteDifference.cc
+  ./utils/StringOperations.cpp
+  ./utils/SphericalFunctionUtil.cpp
   ./src/dft/dftd.cc
   ./src/mdi/MDIEngine.cpp
   ./src/mdi/libraryMDI.cpp
@@ -172,7 +175,7 @@ SET(TARGET_SRC
   ./src/force/configurationalStressCompute/computeStressEself.cc
   ./src/force/configurationalStressCompute/stress.cc
   ./src/force/createBinObjectsForce.cc
-  ./src/force/locateAtomCoreNodesForce.cc  
+  ./src/force/locateAtomCoreNodesForce.cc
   ./utils/FEBasisOperationsKernelsInternalHost.cc
   ./utils/FEBasisOperations.cc
   ./utils/FEBasisOperationsKernels.cc
@@ -189,6 +192,7 @@ SET(TARGET_SRC
   ./src/atom/AtomCenteredSphericalFunctionCoreDensitySpline.cc
   ./src/atom/AtomCenteredSphericalFunctionLocalPotentialSpline.cc
   ./src/atom/AtomCenteredSphericalFunctionProjectorSpline.cc
+        ./src/atom/AtomCenteredPseudoWavefunctionSpline.cpp
   ./src/TransferBetweenMeshes/InterpolateFromCellToLocalPoints.cpp
   ./src/TransferBetweenMeshes/TransferBetweenMeshesIncompatiblePartitioning.cpp
   ./src/TransferBetweenMeshes/InterpolateCellWiseDataToPoints.cpp
@@ -214,7 +218,6 @@ SET(DEVICE_SRC
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.cu.cc
-  ./utils/DeviceBlasWrapper.cu.cc
   ./utils/BLASWrapperDevice.cu.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverDevice.cc
@@ -243,7 +246,6 @@ SET(DEVICE_SRC
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDevice.cc
   ./utils/DeviceAPICalls.hip.cc
-  ./utils/DeviceBlasWrapper.hip.cc
   ./utils/BLASWrapperDevice.hip.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverDevice.cc
@@ -341,7 +343,7 @@ ENDIF()
 #
 IF (WITH_GPU)
   ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE)
-  
+
   IF ("${GPU_VENDOR}" STREQUAL "nvidia")
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_NVIDIA)
   ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
@@ -477,8 +479,8 @@ IF (WITH_TORCH)
 #
 # TORCH. Set with -DTORCH_DIR=/path/to/prefix
 #
-FIND_PACKAGE(Torch PATHS ${TORCH_DIR} Required) 
-target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES}) 
+FIND_PACKAGE(Torch PATHS ${TORCH_DIR} Required)
+target_link_libraries(${TARGETLIB} PUBLIC ${TORCH_LIBRARIES})
 ADD_DEFINITIONS(-DDFTFE_WITH_TORCH)
 ENDIF()
 

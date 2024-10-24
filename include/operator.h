@@ -28,7 +28,6 @@
 
 #include <vector>
 #if defined(DFTFE_WITH_DEVICE)
-#  include <DeviceBlasWrapper.h> //FIX ME
 #  include "deviceDirectCCLWrapper.h"
 #endif
 

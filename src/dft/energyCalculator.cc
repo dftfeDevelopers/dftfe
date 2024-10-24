@@ -537,11 +537,13 @@ namespace dftfe
 
   } // namespace internalEnergy
 
-  energyCalculator::energyCalculator(const MPI_Comm &     mpi_comm_parent,
-                                     const MPI_Comm &     mpi_comm_domain,
-                                     const MPI_Comm &     interpool_comm,
-                                     const MPI_Comm &     interbandgroup_comm,
-                                     const dftParameters &dftParams)
+  template <dftfe::utils::MemorySpace memorySpace>
+  energyCalculator<memorySpace>::energyCalculator(
+    const MPI_Comm &     mpi_comm_parent,
+    const MPI_Comm &     mpi_comm_domain,
+    const MPI_Comm &     interpool_comm,
+    const MPI_Comm &     interbandgroup_comm,
+    const dftParameters &dftParams)
     : d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(interpool_comm)
@@ -551,9 +553,10 @@ namespace dftfe
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
+  template <dftfe::utils::MemorySpace memorySpace>
   // compute energies
   double
-  energyCalculator::computeEnergy(
+  energyCalculator<memorySpace>::computeEnergy(
     const std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
@@ -572,8 +575,8 @@ namespace dftfe
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
     const double                            fermiEnergyDown,
-    const std::shared_ptr<excManager>       excManagerPtr,
-    const dispersionCorrection &            dispersionCorr,
+    const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
+    const dispersionCorrection &                   dispersionCorr,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &phiTotRhoInValues,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -589,9 +592,11 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &gradDensityOutValues,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                               rhoOutValuesLpsp,
-    std::shared_ptr<AuxDensityMatrix> auxDensityXCInRepresentationPtr,
-    std::shared_ptr<AuxDensityMatrix> auxDensityXCOutRepresentationPtr,
+      &rhoOutValuesLpsp,
+    std::shared_ptr<AuxDensityMatrix<memorySpace>>
+      auxDensityXCInRepresentationPtr,
+    std::shared_ptr<AuxDensityMatrix<memorySpace>>
+                                                         auxDensityXCOutRepresentationPtr,
     const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
     const std::map<dealii::CellId, std::vector<unsigned int>>
       &                                     smearedbNonTrivialAtomIds,
@@ -662,7 +667,11 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
           densityOutValues[0].size(), 0.0));
 
-    if (excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    bool isIntegrationByPartsGradDensityDependenceVxc =
+      (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
+    if (isIntegrationByPartsGradDensityDependenceVxc)
       {
         gradDensityOutQuadValuesSpinPolarized = gradDensityOutValues;
 
@@ -732,6 +741,15 @@ namespace dftfe
 
     totalEnergy += totalNuclearElectrostaticEnergy;
 
+    // subtracting the expectation of the wavefunction dependent potential from
+    // the total energy and
+    // adding the part of Exc energy dependent on wavefunction
+    totalEnergy -= excManagerPtr->getExcSSDFunctionalObj()
+                     ->getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi();
+
+    totalEnergy += excManagerPtr->getExcSSDFunctionalObj()
+                     ->getWaveFunctionDependentExcEnergy();
+
     const double allElectronElectrostaticEnergy =
       (totalelectrostaticEnergyPot + totalNuclearElectrostaticEnergy);
 
@@ -760,8 +778,9 @@ namespace dftfe
 
   // compute energie residual,
   // E_KS-E_HWF=\int(V_{in}(\rho_{out}-\rho_{in}))+E_{pot}[\rho_{out}]-E_{pot}[\rho_{in}]
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  energyCalculator::computeEnergyResidual(
+  energyCalculator<memorySpace>::computeEnergyResidual(
     const std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
@@ -770,12 +789,12 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                               basisOperationsPtrElectro,
-    const unsigned int                densityQuadratureID,
-    const unsigned int                densityQuadratureIDElectro,
-    const unsigned int                smearedChargeQuadratureIDElectro,
-    const unsigned int                lpspQuadratureIDElectro,
-    const std::shared_ptr<excManager> excManagerPtr,
+      &                basisOperationsPtrElectro,
+    const unsigned int densityQuadratureID,
+    const unsigned int densityQuadratureIDElectro,
+    const unsigned int smearedChargeQuadratureIDElectro,
+    const unsigned int lpspQuadratureIDElectro,
+    const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &phiTotRhoInValues,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -793,9 +812,11 @@ namespace dftfe
       &gradDensityInValues,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                               gradDensityOutValues,
-    std::shared_ptr<AuxDensityMatrix> auxDensityXCInRepresentationPtr,
-    std::shared_ptr<AuxDensityMatrix> auxDensityXCOutRepresentationPtr,
+      &gradDensityOutValues,
+    std::shared_ptr<AuxDensityMatrix<memorySpace>>
+      auxDensityXCInRepresentationPtr,
+    std::shared_ptr<AuxDensityMatrix<memorySpace>>
+                                                         auxDensityXCOutRepresentationPtr,
     const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
     const std::map<dealii::CellId, std::vector<unsigned int>>
       &                                     smearedbNonTrivialAtomIds,
@@ -842,7 +863,11 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       gradDensityOutQuadValuesSpinPolarized;
 
-    if (excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    bool isIntegrationByPartsGradDensityDependenceVxc =
+      (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
+    if (isIntegrationByPartsGradDensityDependenceVxc)
       {
         gradDensityInQuadValuesSpinPolarized  = gradDensityInValues;
         gradDensityOutQuadValuesSpinPolarized = gradDensityOutValues;
@@ -857,8 +882,7 @@ namespace dftfe
           dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
             densityOutValues[0].size(), 0.0));
 
-        if (excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isIntegrationByPartsGradDensityDependenceVxc)
           {
             gradDensityInQuadValuesSpinPolarized.push_back(
               dftfe::utils::MemoryStorage<double,
@@ -920,61 +944,68 @@ namespace dftfe
     return std::abs(totalEnergy);
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  energyCalculator::computeXCEnergyTermsSpinPolarized(
+  energyCalculator<memorySpace>::computeXCEnergyTermsSpinPolarized(
     const std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
-      &                               basisOperationsPtr,
-    const unsigned int                quadratureId,
-    const std::shared_ptr<excManager> excManagerPtr,
+      &                                            basisOperationsPtr,
+    const unsigned int                             quadratureId,
+    const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &densityOutValues,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                               gradDensityOutValues,
-    std::shared_ptr<AuxDensityMatrix> auxDensityXCInRepresentationPtr,
-    std::shared_ptr<AuxDensityMatrix> auxDensityXCOutRepresentationPtr,
-    double &                          exchangeEnergy,
-    double &                          correlationEnergy,
-    double &                          excCorrPotentialTimesRho)
+      &gradDensityOutValues,
+    std::shared_ptr<AuxDensityMatrix<memorySpace>>
+      auxDensityXCInRepresentationPtr,
+    std::shared_ptr<AuxDensityMatrix<memorySpace>>
+            auxDensityXCOutRepresentationPtr,
+    double &exchangeEnergy,
+    double &correlationEnergy,
+    double &excCorrPotentialTimesRho)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
     const unsigned int nCells        = basisOperationsPtr->nCells();
     const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
 
 
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       xDensityInDataOut;
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       cDensityInDataOut;
 
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       xDensityOutDataOut;
-    std::unordered_map<xcOutputDataAttributes, std::vector<double>>
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       cDensityOutDataOut;
 
     std::vector<double> &xEnergyDensityOut =
-      xDensityOutDataOut[xcOutputDataAttributes::e];
+      xDensityOutDataOut[xcRemainderOutputDataAttributes::e];
     std::vector<double> &cEnergyDensityOut =
-      cDensityOutDataOut[xcOutputDataAttributes::e];
+      cDensityOutDataOut[xcRemainderOutputDataAttributes::e];
 
     std::vector<double> &pdexDensityInSpinUp =
-      xDensityInDataOut[xcOutputDataAttributes::pdeDensitySpinUp];
+      xDensityInDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
     std::vector<double> &pdexDensityInSpinDown =
-      xDensityInDataOut[xcOutputDataAttributes::pdeDensitySpinDown];
+      xDensityInDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
     std::vector<double> &pdecDensityInSpinUp =
-      cDensityInDataOut[xcOutputDataAttributes::pdeDensitySpinUp];
+      cDensityInDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
     std::vector<double> &pdecDensityInSpinDown =
-      cDensityInDataOut[xcOutputDataAttributes::pdeDensitySpinDown];
+      cDensityInDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
-    if (excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    bool isIntegrationByPartsGradDensityDependenceVxc =
+      (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
+    if (isIntegrationByPartsGradDensityDependenceVxc)
       {
-        xDensityInDataOut[xcOutputDataAttributes::pdeSigma] =
+        xDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
           std::vector<double>();
-        cDensityInDataOut[xcOutputDataAttributes::pdeSigma] =
+        cDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
           std::vector<double>();
       }
 
@@ -1007,29 +1038,26 @@ namespace dftfe
               std::real(quadWeightsAll[iCell * nQuadsPerCell + iQuad]);
           }
 
-        excManagerPtr->getExcDensityObj()->computeExcVxcFxc(
+        excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
           *auxDensityXCInRepresentationPtr,
           quadPointsInCell,
-          quadWeightsInCell,
           xDensityInDataOut,
           cDensityInDataOut);
 
-        excManagerPtr->getExcDensityObj()->computeExcVxcFxc(
+        excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
           *auxDensityXCOutRepresentationPtr,
           quadPointsInCell,
-          quadWeightsInCell,
           xDensityOutDataOut,
           cDensityOutDataOut);
 
         std::vector<double> pdexDensityInSigma;
         std::vector<double> pdecDensityInSigma;
-        if (excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isIntegrationByPartsGradDensityDependenceVxc)
           {
             pdexDensityInSigma =
-              xDensityInDataOut[xcOutputDataAttributes::pdeSigma];
+              xDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma];
             pdecDensityInSigma =
-              cDensityInDataOut[xcOutputDataAttributes::pdeSigma];
+              cDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma];
           }
 
         std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
@@ -1039,14 +1067,12 @@ namespace dftfe
         std::vector<double> &gradDensityXCInSpinDown =
           densityXCInData[DensityDescriptorDataAttributes::gradValuesSpinDown];
 
-        if (excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isIntegrationByPartsGradDensityDependenceVxc)
           auxDensityXCInRepresentationPtr->applyLocalOperations(
             quadPointsInCell, densityXCInData);
 
         std::vector<double> gradXCRhoInDotgradRhoOut;
-        if (excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isIntegrationByPartsGradDensityDependenceVxc)
           {
             gradXCRhoInDotgradRhoOut.resize(nQuadsPerCell * 3);
 
@@ -1111,8 +1137,7 @@ namespace dftfe
             correlationEnergy +=
               (cEnergyDensityOut[iQuad]) *
               basisOperationsPtr->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
-            if (excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA)
+            if (isIntegrationByPartsGradDensityDependenceVxc)
               {
                 double VxcGrad = 0.0;
                 for (unsigned int isigma = 0; isigma < 3; ++isigma)
@@ -1129,8 +1154,9 @@ namespace dftfe
   }
 
 
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  energyCalculator::computeEntropicEnergy(
+  energyCalculator<memorySpace>::computeEntropicEnergy(
     const std::vector<std::vector<double>> &eigenValues,
     const std::vector<double> &             kPointWeights,
     const double                            fermiEnergy,
@@ -1230,4 +1256,10 @@ namespace dftfe
 
     return temperature * entropy;
   }
+
+  template class energyCalculator<dftfe::utils::MemorySpace::HOST>;
+#ifdef DFTFE_WITH_DEVICE
+  template class energyCalculator<dftfe::utils::MemorySpace::DEVICE>;
+#endif
+
 } // namespace dftfe

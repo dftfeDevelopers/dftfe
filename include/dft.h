@@ -43,6 +43,9 @@
 #  include <deviceDirectCCLWrapper.h>
 #endif
 
+//  ************* For debugging purposes only. Remove afterwards
+#include "hubbardClass.h"
+
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <dealiiLinearSolver.h>
 #include <dftParameters.h>
@@ -736,6 +739,20 @@ namespace dftfe
 
     const expConfiningPotential& getConfiningPotential() const;
 
+    void
+    computeFractionalOccupancies();
+
+    /**
+     *@brief Returns the shared ptr to hubbard class
+     */
+    std::shared_ptr<hubbard<dataTypes::number, memorySpace>>
+          getHubbardClassPtr();
+
+    /**
+     *@brief Function to check if hubbard corrections is being used
+     */
+    bool  isHubbardCorrectionsUsed();
+
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based
@@ -743,6 +760,13 @@ namespace dftfe
      */
     void
     initImageChargesUpdateKPoints(bool flag = true);
+
+    /**
+     * @brief Checks if the Exc functional requires Hubbard correction
+     * and sets up the Hubbard class if required.
+     */
+    void
+    initHubbardOperator();
 
     void
     determineAtomsOfInterstPseudopotential(
@@ -1254,22 +1278,16 @@ namespace dftfe
         &gradDensityQuadValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoCore,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCore,
-      const dftfe::utils::MemoryStorage<dataTypes::number,
-                                        dftfe::utils::MemorySpace::HOST>
-        &eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-      const dftfe::utils::MemoryStorage<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE>
-        &eigenVectorsFlattenedDevice,
-#endif
+      const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+        &                                     eigenVectorsFlattenedMemSpace,
       const std::vector<std::vector<double>> &eigenValues,
       const double                            fermiEnergy_,
       const double                            fermiEnergyUp_,
       const double                            fermiEnergyDown_,
-      std::shared_ptr<AuxDensityMatrix>       auxDensityMatrixXCPtr);
+      std::shared_ptr<AuxDensityMatrix<memorySpace>> auxDensityMatrixXCPtr);
 
-    std::shared_ptr<excManager> d_excManagerPtr;
-    dispersionCorrection        d_dispersionCorr;
+    std::shared_ptr<excManager<memorySpace>> d_excManagerPtr;
+    dispersionCorrection                     d_dispersionCorr;
 
     /**
      * stores required data for Kohn-Sham problem
@@ -1624,6 +1642,11 @@ namespace dftfe
      */
     std::vector<std::vector<double>> eigenValues;
 
+    /**
+     * data storage for the occupancy of Kohn-Sham wavefunctions
+     */
+    std::vector<std::vector<double>> d_fracOccupancy;
+
     std::vector<std::vector<double>> d_densityMatDerFermiEnergy;
 
     /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
@@ -1698,8 +1721,8 @@ namespace dftfe
       d_densityTotalOutValuesLpspQuad, d_densityTotalInValuesLpspQuad,
       d_gradDensityTotalOutValuesLpspQuad, d_gradDensityTotalInValuesLpspQuad;
 
-    std::shared_ptr<AuxDensityMatrix> d_auxDensityMatrixXCInPtr;
-    std::shared_ptr<AuxDensityMatrix> d_auxDensityMatrixXCOutPtr;
+    std::shared_ptr<AuxDensityMatrix<memorySpace>> d_auxDensityMatrixXCInPtr;
+    std::shared_ptr<AuxDensityMatrix<memorySpace>> d_auxDensityMatrixXCOutPtr;
 
     // For multipole boundary conditions
     double              d_monopole;
@@ -1847,6 +1870,7 @@ namespace dftfe
 
     bool d_isRestartGroundStateCalcFromChk;
 
+
     /**
      * @ nscf variables
      */
@@ -1916,6 +1940,8 @@ namespace dftfe
       unsigned int                                    ipass);
 
     expConfiningPotential d_expConfiningPot;
+    std::shared_ptr<hubbard<dataTypes::number, memorySpace>> d_hubbardClassPtr;
+    bool                                                     d_useHubbard;
   };
 
 } // namespace dftfe

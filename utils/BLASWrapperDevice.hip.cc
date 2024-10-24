@@ -129,6 +129,25 @@ namespace dftfe
       return d_deviceBlasHandle;
     }
 
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2ArrDeviceCall(
+        const dftfe::size_type             size,
+        const ValueType1 *                 valueType1Arr,
+        ValueType2 *                       valueType2Arr,
+        const dftfe::utils::deviceStream_t streamId)
+    {
+      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        streamId>>>(size,
+                    dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+                    dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
+    }
+
+
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(
       const unsigned int          n,
@@ -1520,7 +1539,7 @@ namespace dftfe
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
                                        const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec)
+                                       ValueType2 *           copyToVec) const
     {
       hipLaunchKernelGGL(
         stridedCopyToBlockConstantStrideDeviceKernel,

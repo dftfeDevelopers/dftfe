@@ -34,8 +34,7 @@
 #  include <Exceptions.h>
 #  include <complex>
 #  include <algorithm>
-#  include <deviceKernelsGeneric.h>
-
+#  include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -470,8 +469,11 @@ namespace dftfe
         ValueType2 *                 type2Array,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-      dftfe::utils::deviceKernelsGeneric::copyValueType1ArrToValueType2Arr(
-        blockSize, type1Array, type2Array, deviceCommStream);
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+        copyValueType1ArrToValueType2ArrDeviceCall(blockSize,
+                                                   type1Array,
+                                                   type2Array,
+                                                   deviceCommStream);
     }
 
     template class MPICommunicatorP2PKernels<double,

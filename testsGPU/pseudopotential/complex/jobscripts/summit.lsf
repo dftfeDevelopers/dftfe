@@ -28,3 +28,5 @@ jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe p
 jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
 
 jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileBe.prm > outputBe
+
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard

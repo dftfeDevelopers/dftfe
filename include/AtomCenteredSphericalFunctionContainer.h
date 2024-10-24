@@ -196,6 +196,9 @@ namespace dftfe
       const std::vector<unsigned int> &atomIdsInCurrentProcess,
       unsigned int                     numberElements);
 
+    const unsigned int
+    getOffsetLocation(const unsigned int iAtom);
+
   private:
     // A flattened vector that stores the coordinates of the atoms of interest
     // in the unit cell
@@ -234,6 +237,7 @@ namespace dftfe
     std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
                                   d_elementOneFieldIteratorsInAtomCompactSupport;
     std::vector<unsigned int>     d_AtomIdsInCurrentProcess;
+    std::vector<unsigned int>     d_offsetLocation;
     std::vector<std::vector<int>> d_AtomIdsInElement;
     std::map<unsigned int, std::vector<unsigned int>>
       d_totalSphericalFunctionIndexStart;

@@ -145,7 +145,7 @@ namespace functionalTest
         singleBoundaryCond = 0.0;
         singleBoundaryCond.update_ghost_values();
         for (unsigned int iNodeId = 0;
-             iNodeId < singleBoundaryCond.local_size();
+             iNodeId < singleBoundaryCond.locally_owned_size();
              iNodeId++)
           {
             boundaryValues.data()[iNodeId * blockSizeInput + iBlockId] =
@@ -209,7 +209,7 @@ namespace functionalTest
         dealiiCGSolver.solve(phiTotalSolverProblem, 1e-10, 10000, verbosity);
 
         dealii::types::global_dof_index indexVec;
-        for (unsigned int i = 0; i < expectedOutput.local_size(); i++)
+        for (unsigned int i = 0; i < expectedOutput.locally_owned_size(); i++)
           {
             indexVec = i * blockSizeInput + k;
             multiExpectedOutput.data()[indexVec] =

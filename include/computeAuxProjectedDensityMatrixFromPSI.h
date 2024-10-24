@@ -38,15 +38,15 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      &                        BLASWrapperPtr,
-    const unsigned int         matrixFreeDofhandlerIndex,
-    const unsigned int         quadratureIndex,
-    const std::vector<double> &kPointWeights,
-    AuxDensityMatrix &         auxDensityMatrixRepresentation,
-    const MPI_Comm &           mpiCommParent,
-    const MPI_Comm &           domainComm,
-    const MPI_Comm &           interpoolcomm,
-    const MPI_Comm &           interBandGroupComm,
-    const dftParameters &      dftParams);
+      &                            BLASWrapperPtr,
+    const unsigned int             matrixFreeDofhandlerIndex,
+    const unsigned int             quadratureIndex,
+    const std::vector<double> &    kPointWeights,
+    AuxDensityMatrix<memorySpace> &auxDensityMatrixRepresentation,
+    const MPI_Comm &               mpiCommParent,
+    const MPI_Comm &               domainComm,
+    const MPI_Comm &               interpoolcomm,
+    const MPI_Comm &               interBandGroupComm,
+    const dftParameters &          dftParams);
 } // namespace dftfe
 #endif

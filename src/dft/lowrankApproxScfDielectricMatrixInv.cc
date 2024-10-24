@@ -41,7 +41,8 @@ namespace dftfe
       distributedCPUVec<double> k0ResidualVec, approximationErrorVec;
       k0ResidualVec.reinit(residualVec);
       approximationErrorVec.reinit(residualVec);
-      for (unsigned int idof = 0; idof < residualVec.local_size(); idof++)
+      for (unsigned int idof = 0; idof < residualVec.locally_owned_size();
+           idof++)
         {
           k0ResidualVec.local_element(idof) =
             residualVec.local_element(idof) * k0;
@@ -60,7 +61,8 @@ namespace dftfe
           for (unsigned int j = 0; j < rank; j++)
             temp += mMat[j * rank + i] * innerProducts[j];
 
-          for (unsigned int idof = 0; idof < residualVec.local_size(); idof++)
+          for (unsigned int idof = 0; idof < residualVec.locally_owned_size();
+               idof++)
             approximationErrorVec.local_element(idof) -=
               fvcontainer[i].local_element(idof) * temp;
         }
@@ -87,7 +89,8 @@ namespace dftfe
 
       distributedCPUVec<double> k0ResidualVec;
       k0ResidualVec.reinit(residualVec);
-      for (unsigned int idof = 0; idof < residualVec.local_size(); idof++)
+      for (unsigned int idof = 0; idof < residualVec.locally_owned_size();
+           idof++)
         {
           k0ResidualVec.local_element(idof) =
             residualVec.local_element(idof) * k0;
@@ -106,7 +109,8 @@ namespace dftfe
           for (unsigned int j = 0; j < rank; j++)
             temp += mMat[j * rank + i] * innerProducts[j];
 
-          for (unsigned int idof = 0; idof < residualVec.local_size(); idof++)
+          for (unsigned int idof = 0; idof < residualVec.locally_owned_size();
+               idof++)
             predictedResidualVec.local_element(idof) -=
               alpha * fvcontainer[i].local_element(idof) * temp;
         }
@@ -129,7 +133,7 @@ namespace dftfe
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
-      for (unsigned int idof = 0; idof < x.local_size(); idof++)
+      for (unsigned int idof = 0; idof < x.locally_owned_size(); idof++)
         y.local_element(idof) = x.local_element(idof) * k0;
 
       std::vector<double> innerProducts(rank, 0.0);
@@ -145,7 +149,7 @@ namespace dftfe
           for (unsigned int j = 0; j < rank; j++)
             temp += mMat[j * rank + i] * innerProducts[j];
 
-          for (unsigned int idof = 0; idof < y.local_size(); idof++)
+          for (unsigned int idof = 0; idof < y.locally_owned_size(); idof++)
             y.local_element(idof) += vcontainer[i].local_element(idof) * temp;
         }
     }
@@ -178,7 +182,7 @@ namespace dftfe
           for (unsigned int j = 0; j < rank; j++)
             temp += mMat[j * rank + i] * innerProducts[j];
 
-          for (unsigned int idof = 0; idof < y.local_size(); idof++)
+          for (unsigned int idof = 0; idof < y.locally_owned_size(); idof++)
             y.local_element(idof) += vcontainer[i].local_element(idof) * temp;
         }
     }
@@ -199,7 +203,7 @@ namespace dftfe
 
       y = 0;
       for (unsigned int i = 0; i < rank; i++)
-        for (unsigned int idof = 0; idof < y.local_size(); idof++)
+        for (unsigned int idof = 0; idof < y.locally_owned_size(); idof++)
           y.local_element(idof) +=
             fvcontainer[i].local_element(idof) * innerProducts[i];
     }
@@ -227,7 +231,7 @@ namespace dftfe
 
       vVector = 0.0, fVector = 0.0;
       // std::srand(this_mpi_process);
-      const unsigned int local_size = vVector.local_size();
+      const unsigned int local_size = vVector.locally_owned_size();
 
       // for (unsigned int i = 0; i < local_size; i++)
       //  vVector.local_element(i) = x.local_element(i);
@@ -285,7 +289,7 @@ namespace dftfe
 
       vVector = 0.0, fVector = 0.0;
       // std::srand(this_mpi_process);
-      const unsigned int local_size = vVector.local_size();
+      const unsigned int local_size = vVector.locally_owned_size();
 
       // for (unsigned int i = 0; i < local_size; i++)
       //   vVector.local_element(i) = x.local_element(i);
@@ -380,7 +384,7 @@ namespace dftfe
     d_residualPredicted = 0;
 
     double             charge;
-    const unsigned int local_size = residualRho.local_size();
+    const unsigned int local_size = residualRho.locally_owned_size();
 
 
     double relativeApproxError = 1.0e+6;
@@ -676,6 +680,10 @@ namespace dftfe
 
     d_densityInNodalValues[0].add(const2, kernelAction);
 
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
     // interpolate nodal data to quadrature data
     interpolateDensityNodalDataToQuadratureDataGeneral(
       d_basisOperationsPtrElectroHost,
@@ -685,7 +693,7 @@ namespace dftfe
       d_densityInQuadValues[0],
       d_gradDensityInQuadValues[0],
       d_gradDensityInQuadValues[0],
-      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+      isGradDensityDataDependent);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

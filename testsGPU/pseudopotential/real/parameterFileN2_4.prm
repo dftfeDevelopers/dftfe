@@ -70,3 +70,10 @@ subsection SCF parameters
       set CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF = 1.0
   end
 end
+
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end
+

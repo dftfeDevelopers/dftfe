@@ -25,7 +25,6 @@
 #    include <linearSolverProblemDevice.h>
 #    include <triangulationManager.h>
 #    include <constraintMatrixInfo.h>
-#    include <deviceKernelsGeneric.h>
 #    include <MemoryStorage.h>
 #    include <dftUtils.h>
 #    include <FEBasisOperations.h>
@@ -175,7 +174,7 @@ namespace dftfe
      *
      */
     void
-    setupconstraints();
+    setupConstraints();
 
     /**
      * @brief Compute the diagonal of A.

@@ -1055,7 +1055,7 @@ namespace dftfe
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
                                        const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec)
+                                       ValueType2 *           copyToVec) const
     {
       for (dftfe::size_type iIndex = 0; iIndex < numBlocks; iIndex++)
         {
@@ -1074,7 +1074,68 @@ namespace dftfe
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
                                        const double *         copyFromVec,
-                                       double *               copyToVec);
+                                       double *               copyToVec) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::
+      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                       const dftfe::size_type blockSizeFrom,
+                                       const dftfe::size_type numBlocks,
+                                       const dftfe::size_type startingId,
+                                       const std::complex<double> *copyFromVec,
+                                       std::complex<double> *copyToVec) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::
+      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                       const dftfe::size_type blockSizeFrom,
+                                       const dftfe::size_type numBlocks,
+                                       const dftfe::size_type startingId,
+                                       const float *          copyFromVec,
+                                       float *                copyToVec) const;
+
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::
+      stridedCopyToBlockConstantStride(const dftfe::size_type     blockSizeTo,
+                                       const dftfe::size_type     blockSizeFrom,
+                                       const dftfe::size_type     numBlocks,
+                                       const dftfe::size_type     startingId,
+                                       const std::complex<float> *copyFromVec,
+                                       std::complex<float> *copyToVec) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::
+      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                       const dftfe::size_type blockSizeFrom,
+                                       const dftfe::size_type numBlocks,
+                                       const dftfe::size_type startingId,
+                                       const double *         copyFromVec,
+                                       float *                copyToVec) const;
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::
+      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                       const dftfe::size_type blockSizeFrom,
+                                       const dftfe::size_type numBlocks,
+                                       const dftfe::size_type startingId,
+                                       const float *          copyFromVec,
+                                       double *               copyToVec) const;
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::
+      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
+                                       const dftfe::size_type blockSizeFrom,
+                                       const dftfe::size_type numBlocks,
+                                       const dftfe::size_type startingId,
+                                       const std::complex<double> *copyFromVec,
+                                       std::complex<float> *copyToVec) const;
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::
+      stridedCopyToBlockConstantStride(const dftfe::size_type     blockSizeTo,
+                                       const dftfe::size_type     blockSizeFrom,
+                                       const dftfe::size_type     numBlocks,
+                                       const dftfe::size_type     startingId,
+                                       const std::complex<float> *copyFromVec,
+                                       std::complex<double> *copyToVec) const;
 
     template <typename ValueType1, typename ValueType2>
     void

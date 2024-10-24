@@ -22,6 +22,7 @@
 
 #include "createBinsSanityCheck.cc"
 #include "solveVselfInBins.cc"
+#include <dftUtils.h>
 namespace dftfe
 {
   namespace internal
@@ -730,7 +731,6 @@ namespace dftfe
           }
       }
 
-
     const int numberBins = binCount + 1;
     if (d_dftParams.verbosity >= 2)
       pcout << "number bins: " << numberBins << std::endl;
@@ -1026,7 +1026,6 @@ namespace dftfe
                   } // locally relevant dofs
 
               } // nodal loop
-
             // First Apply correct dirichlet boundary conditions on elements
             // with atleast one solved node
             dealii::DoFHandler<3>::active_cell_iterator cell =
@@ -1261,7 +1260,6 @@ namespace dftfe
                     }
                 } // cell locally owned
 
-
             int temp = 0;
             if (!checkPassed)
               temp = 1;
@@ -1342,7 +1340,8 @@ namespace dftfe
           }
 
         /*
-           for (unsigned int i = 0; i < inhomogBoundaryVec.local_size(); ++i)
+           for (unsigned int i = 0; i < inhomogBoundaryVec.locally_owned_size();
+        ++i)
            {
            const dealii::types::global_dof_index
         globalNodeId=inhomogBoundaryVec.get_partitioner()->local_to_global(i);

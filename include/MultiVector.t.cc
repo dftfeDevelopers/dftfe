@@ -809,6 +809,12 @@ namespace dftfe
       d_mpiCommunicatorP2P->setCommunicationPrecision(commPrecision);
     }
 
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    const dftfe::utils::MemoryStorage<ValueType, memorySpace> &
+    MultiVector<ValueType, memorySpace>::getData() const
+    {
+      return *(d_storage.get());
+    }
 
     template <typename ValueType, utils::MemorySpace memorySpace>
     void

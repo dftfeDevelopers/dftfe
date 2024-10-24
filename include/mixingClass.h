@@ -33,7 +33,8 @@ namespace dftfe
     rho,
     gradRho,
     magZ,
-    gradMagZ
+    gradMagZ,
+    hubbardOccupation
   };
 
   /**
@@ -125,6 +126,19 @@ namespace dftfe
     mixVariable(const mixingVariable mixingVariableName,
                 double *             outputVariable,
                 const unsigned int   lenVar);
+
+
+    void
+    getOptimizedResidual(const mixingVariable mixingVariableName,
+                         double *             outputVariable,
+                         const unsigned int   lenVar);
+
+
+    void
+    mixPreconditionedResidual(const mixingVariable mixingVariableName,
+                              double *             inputVariable,
+                              double *             outputVariable,
+                              const unsigned int   lenVar);
 
 
   private:

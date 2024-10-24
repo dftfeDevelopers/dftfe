@@ -41,11 +41,11 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_subsection("Total scf solve");
-    energyCalculator energyCalc(d_mpiCommParent,
-                                mpi_communicator,
-                                interpoolcomm,
-                                interBandGroupComm,
-                                *d_dftParamsPtr);
+    energyCalculator<memorySpace> energyCalc(d_mpiCommParent,
+                                             mpi_communicator,
+                                             interpoolcomm,
+                                             interBandGroupComm,
+                                             *d_dftParamsPtr);
 
 
     // set up linear solver
@@ -374,10 +374,7 @@ namespace dftfe
                                  d_gradDensityInQuadValues,
                                  d_rhoCore,
                                  d_gradRhoCore,
-                                 d_eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-                                 d_eigenVectorsFlattenedDevice,
-#endif
+                                 getEigenVectors(),
                                  eigenValues,
                                  fermiEnergy,
                                  fermiEnergyUp,
@@ -664,10 +661,7 @@ namespace dftfe
                                  d_gradDensityInQuadValues,
                                  d_rhoCore,
                                  d_gradRhoCore,
-                                 d_eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-                                 d_eigenVectorsFlattenedDevice,
-#endif
+                                 getEigenVectors(),
                                  eigenValues,
                                  fermiEnergy,
                                  fermiEnergyUp,
@@ -892,10 +886,7 @@ namespace dftfe
                              d_gradDensityOutQuadValues,
                              d_rhoCore,
                              d_gradRhoCore,
-                             d_eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-                             d_eigenVectorsFlattenedDevice,
-#endif
+                             getEigenVectors(),
                              eigenValues,
                              fermiEnergy,
                              fermiEnergyUp,
@@ -1038,6 +1029,18 @@ namespace dftfe
     // matrix_free_data.get_quadrature(d_densityQuadratureId);
     d_dispersionCorr.computeDispresionCorrection(atomLocations,
                                                  d_domainBoundingVectors);
+
+
+    computeFractionalOccupancies();
+
+    d_excManagerPtr->getExcSSDFunctionalObj()
+      ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
+                                                 d_kPointWeights);
+
+    d_excManagerPtr->getExcSSDFunctionalObj()
+      ->computeWaveFunctionDependentExcEnergy(d_auxDensityMatrixXCOutPtr,
+                                              d_kPointWeights);
+
     const double totalEnergy = energyCalc.computeEnergy(
       d_basisOperationsPtrHost,
       d_basisOperationsPtrElectroHost,

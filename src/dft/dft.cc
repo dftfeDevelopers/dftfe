@@ -69,8 +69,11 @@
 #endif
 
 #include <elpa/elpa.h>
+#include "AuxDensityMatrixFE.h"
 
 
+#include "hubbardClass.h"
+#include "ExcDFTPlusU.h"
 namespace dftfe
 {
   //
@@ -162,6 +165,7 @@ namespace dftfe
     , d_mixingScheme(mpi_comm_parent, mpi_comm_domain, dftParams.verbosity)
   {
     d_nOMPThreads = 1;
+    d_useHubbard  = false;
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
         try
@@ -188,6 +192,7 @@ namespace dftfe
       }
     if (d_dftParamsPtr->verbosity > 0)
       pcout << "Threads per MPI task: " << d_nOMPThreads << std::endl;
+
     d_elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
 
     forcePtr = new forceClass<FEOrder, FEOrderElectro, memorySpace>(
@@ -195,7 +200,7 @@ namespace dftfe
     symmetryPtr = new symmetryClass<FEOrder, FEOrderElectro, memorySpace>(
       this, mpi_comm_parent, mpi_comm_domain, _interpoolcomm);
 
-    d_excManagerPtr                   = std::make_shared<excManager>();
+    d_excManagerPtr = std::make_shared<excManager<memorySpace>>();
     d_isRestartGroundStateCalcFromChk = false;
 
 #if defined(DFTFE_WITH_DEVICE)
@@ -361,9 +366,6 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::set()
   {
     computingTimerStandard.enter_subsection("Atomic system initialization");
-    if (d_dftParamsPtr->verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-                                        "Entered call to set");
 
     d_numEigenValues = d_dftParamsPtr->numberEigenValues;
 
@@ -521,7 +523,6 @@ namespace dftfe
 
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
-
     //
     // determine number of electrons
     //
@@ -606,7 +607,6 @@ namespace dftfe
                   << d_dftParamsPtr->numCoreWfcRR << std::endl;
           }
       }
-
 
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice && d_dftParamsPtr->autoDeviceBlockSizes)
@@ -766,7 +766,6 @@ namespace dftfe
           }
       }
 #endif
-
     if (d_dftParamsPtr->constraintMagnetization)
       {
         numElectronsUp   = std::ceil(static_cast<double>(numElectrons) / 2.0);
@@ -823,7 +822,6 @@ namespace dftfe
         "DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES should be less than the total number of wavefunctions."));
     d_numEigenValuesRR = d_numEigenValues - d_dftParamsPtr->numCoreWfcRR;
 
-
 #ifdef USE_COMPLEX
     if (d_dftParamsPtr->solverMode == "NSCF")
       {
@@ -873,6 +871,7 @@ namespace dftfe
       }
 
 
+
     if (d_dftParamsPtr->isPseudopotential == true)
       {
         // pcout<<"dft.cc 827 ONCV Number of cells DEBUG:
@@ -887,9 +886,9 @@ namespace dftfe
             d_atomTypeAtributes,
             d_dftParamsPtr->reproducible_output,
             d_dftParamsPtr->verbosity,
-            d_dftParamsPtr->useDevice);
+            d_dftParamsPtr->useDevice,
+            d_dftParamsPtr->memOptMode);
       }
-
     if (d_dftParamsPtr->verbosity >= 1)
       if (d_dftParamsPtr->nonLinearCoreCorrection == true)
         pcout
@@ -899,7 +898,6 @@ namespace dftfe
     d_elpaScala->processGridELPASetup(d_numEigenValues,
                                       d_numEigenValuesRR,
                                       *d_dftParamsPtr);
-
     MPI_Barrier(d_mpiCommParent);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
@@ -1095,9 +1093,6 @@ namespace dftfe
   {
     computingTimerStandard.enter_subsection("KSDFT problem initialization");
 
-    if (d_dftParamsPtr->verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator, "Entering init");
-
     d_BLASWrapperPtrHost = std::make_shared<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
     d_basisOperationsPtrHost = std::make_shared<
@@ -1278,10 +1273,15 @@ namespace dftfe
 
         // Note: d_rhoInNodalValuesRead is not compatible with
         // d_matrixFreeDataPRefined
-        for (unsigned int i = 0; i < d_densityInNodalValues[0].local_size();
+        for (unsigned int i = 0;
+             i < d_densityInNodalValues[0].locally_owned_size();
              i++)
           d_densityInNodalValues[0].local_element(i) =
             d_rhoInNodalValuesRead.local_element(i);
+
+        bool isGradDensityDataDependent =
+          (d_excManagerPtr->getExcSSDFunctionalObj()
+             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
         interpolateDensityNodalDataToQuadratureDataGeneral(
           d_basisOperationsPtrElectroHost,
@@ -1291,13 +1291,13 @@ namespace dftfe
           d_densityInQuadValues[0],
           d_gradDensityInQuadValues[0],
           d_gradDensityInQuadValues[0],
-          d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA);
+          isGradDensityDataDependent);
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
             d_densityInNodalValues[1] = 0;
-            for (unsigned int i = 0; i < d_densityInNodalValues[1].local_size();
+            for (unsigned int i = 0;
+                 i < d_densityInNodalValues[1].locally_owned_size();
                  i++)
               {
                 d_densityInNodalValues[1].local_element(i) =
@@ -1312,8 +1312,7 @@ namespace dftfe
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA);
+              isGradDensityDataDependent);
           }
         if ((d_dftParamsPtr->solverMode == "GEOOPT"))
           {
@@ -1324,8 +1323,7 @@ namespace dftfe
 
             d_densityOutQuadValues = d_densityInQuadValues;
 
-            if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA)
+            if (isGradDensityDataDependent)
               d_gradDensityOutQuadValues = d_gradDensityInQuadValues;
           }
 
@@ -1337,6 +1335,12 @@ namespace dftfe
                                     d_kPointWeights.size(),
                                   true);
 
+
+    initHubbardOperator();
+    if (d_useHubbard && d_dftParamsPtr->loadRhoData)
+      {
+        d_hubbardClassPtr->readHubbOccFromFile();
+      }
     initializeKohnShamDFTOperator();
 
     d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.clear();
@@ -1344,6 +1348,76 @@ namespace dftfe
       atomLocations.size() * 3, 0.0);
 
     computingTimerStandard.leave_subsection("KSDFT problem initialization");
+  }
+
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::initHubbardOperator()
+  {
+    if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+        ExcFamilyType::DFTPlusU)
+      {
+        double init_hubbOp;
+        MPI_Barrier(d_mpiCommParent);
+        init_hubbOp = MPI_Wtime();
+
+        std::shared_ptr<ExcDFTPlusU<dataTypes::number, memorySpace>>
+          excHubbPtr = std::dynamic_pointer_cast<
+            ExcDFTPlusU<dataTypes::number, memorySpace>>(
+            d_excManagerPtr->getSSDSharedObj());
+
+        excHubbPtr->initialiseHubbardClass(
+          d_mpiCommParent,
+          mpi_communicator,
+          interpoolcomm,
+          interBandGroupComm,
+          getBasisOperationsMemSpace(),
+          getBasisOperationsHost(),
+          getBLASWrapperMemSpace(),
+          getBLASWrapperHost(),
+          d_densityDofHandlerIndex,
+          d_nlpspQuadratureId,
+          d_sparsityPatternQuadratureId,
+          d_numEigenValues, // The total number of waveFunctions that are passed
+                            // to the operator
+          d_dftParamsPtr->spinPolarized == 1 ? 2 : 1,
+          *d_dftParamsPtr,
+          d_dftfeScratchFolderName,
+          false, // singlePrecNonLocalOperator
+          true,  // updateNonlocalSparsity
+          atomLocations,
+          atomLocationsFractional,
+          d_imageIds,
+          d_imagePositions,
+          d_kPointCoordinates,
+          d_kPointWeights,
+          d_domainBoundingVectors);
+
+        d_hubbardClassPtr = excHubbPtr->getHubbardClass();
+
+        d_useHubbard = true;
+
+        AssertThrow(d_nOMPThreads == 1,
+                    dealii::ExcMessage(
+                      "open mp is not compatible with hubbard "));
+
+        AssertThrow(d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND",
+                    dealii::ExcMessage(
+                      "LRDM preconditioner is not compatible with hubbard "));
+
+        AssertThrow(d_dftParamsPtr->useSinglePrecCheby == false,
+                    dealii::ExcMessage(
+                      "single prec in cheby is not compatible with hubbard "));
+
+        init_hubbOp = MPI_Wtime() - init_hubbOp;
+
+        if (d_dftParamsPtr->verbosity >= 2)
+          pcout << "Time taken for hubbard class initialization: "
+                << init_hubbOp << std::endl;
+      }
   }
 
   template <unsigned int              FEOrder,
@@ -1382,6 +1456,10 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     init_bc = MPI_Wtime();
 
+
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
 
     // false option reinitializes vself bins from scratch wheras true option
     // only updates the boundary conditions
@@ -1439,14 +1517,11 @@ namespace dftfe
                   d_densityInQuadValues[0],
                   d_gradDensityInQuadValues[0],
                   d_gradDensityInQuadValues[0],
-                  d_excManagerPtr->getDensityBasedFamilyType() ==
-                    densityFamilyType::GGA);
+                  isGradDensityDataDependent);
 
-                addAtomicRhoQuadValuesGradients(
-                  d_densityInQuadValues[0],
-                  d_gradDensityInQuadValues[0],
-                  d_excManagerPtr->getDensityBasedFamilyType() ==
-                    densityFamilyType::GGA);
+                addAtomicRhoQuadValuesGradients(d_densityInQuadValues[0],
+                                                d_gradDensityInQuadValues[0],
+                                                isGradDensityDataDependent);
 
                 normalizeRhoInQuadValues();
 
@@ -1471,8 +1546,7 @@ namespace dftfe
               d_densityInQuadValues[0],
               d_gradDensityInQuadValues[0],
               d_gradDensityInQuadValues[0],
-              d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA);
+              isGradDensityDataDependent);
 
             normalizeRhoInQuadValues();
 
@@ -1496,14 +1570,11 @@ namespace dftfe
               d_densityInQuadValues[0],
               d_gradDensityInQuadValues[0],
               d_gradDensityInQuadValues[0],
-              d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA);
+              isGradDensityDataDependent);
 
-            addAtomicRhoQuadValuesGradients(
-              d_densityInQuadValues[0],
-              d_gradDensityInQuadValues[0],
-              d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA);
+            addAtomicRhoQuadValuesGradients(d_densityInQuadValues[0],
+                                            d_gradDensityInQuadValues[0],
+                                            isGradDensityDataDependent);
 
             normalizeRhoInQuadValues();
 
@@ -1545,6 +1616,16 @@ namespace dftfe
     d_isFirstFilteringCall.resize((d_dftParamsPtr->spinPolarized + 1) *
                                     d_kPointWeights.size(),
                                   true);
+
+    if (d_useHubbard)
+      {
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &hubbOccIn = d_hubbardClassPtr->getOccMatIn();
+
+        initHubbardOperator();
+
+        d_hubbardClassPtr->setInOccMatrix(hubbOccIn);
+      }
 
     double init_ksoperator;
     MPI_Barrier(d_mpiCommParent);
@@ -1941,6 +2022,7 @@ namespace dftfe
     if (d_kohnShamDFTOperatorsInitialized)
       finalizeKohnShamDFTOperator();
 
+
 #ifdef DFTFE_WITH_DEVICE
     if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
       d_kohnShamDFTOperatorPtr = new KohnShamHamiltonianOperator<memorySpace>(
@@ -2059,7 +2141,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     reInitializeKohnShamDFTOperator()
   {
-    d_kohnShamDFTOperatorPtr->resetExtPotHamFlag();
+    d_kohnShamDFTOperatorPtr->resetKohnShamOp();
   }
 
   //
@@ -2093,15 +2175,13 @@ namespace dftfe
     KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
       *d_kohnShamDFTOperatorPtr;
 
-    const dealii::Quadrature<3> &quadrature =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_subsection("Total scf solve");
-    energyCalculator energyCalc(d_mpiCommParent,
-                                mpi_communicator,
-                                interpoolcomm,
-                                interBandGroupComm,
-                                *d_dftParamsPtr);
+    energyCalculator<memorySpace> energyCalc(d_mpiCommParent,
+                                             mpi_communicator,
+                                             interpoolcomm,
+                                             interBandGroupComm,
+                                             *d_dftParamsPtr);
 
 
     // set up linear solver
@@ -2288,6 +2368,10 @@ namespace dftfe
                            1e-3 :
                            d_dftParamsPtr->chebyshevTolerance;
 
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
     // call the mixing scheme with the mixing variables
     // Have to be called once for each variable
     // initialise the variables in the mixing scheme
@@ -2332,8 +2416,7 @@ namespace dftfe
             d_dftParamsPtr->mixingParameter *
               d_dftParamsPtr->spinMixingEnhancementFactor,
             d_dftParamsPtr->adaptAndersonMixingParameter);
-        if (d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isGradDensityDataDependent)
           {
             dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
               gradRhoJxW;
@@ -2353,6 +2436,20 @@ namespace dftfe
                 d_dftParamsPtr->mixingParameter *
                   d_dftParamsPtr->spinMixingEnhancementFactor,
                 d_dftParamsPtr->adaptAndersonMixingParameter);
+          }
+
+
+        if (d_useHubbard)
+          {
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              hubbOccJxW;
+            hubbOccJxW.resize(0);
+            d_mixingScheme.addMixingVariable(
+              mixingVariable::hubbardOccupation,
+              hubbOccJxW,
+              false,
+              d_dftParamsPtr->mixingParameter,
+              d_dftParamsPtr->adaptAndersonMixingParameter);
           }
       }
 
@@ -2422,33 +2519,18 @@ namespace dftfe
                       d_densityInNodalValues[iComp],
                       d_densityResidualNodalValues[iComp]);
                   }
-                applyKerkerPreconditionerToTotalDensityResidual(
-#ifdef DFTFE_WITH_DEVICE
-                  kerkerPreconditionedResidualSolverProblemDevice,
-                  CGSolverDevice,
-#endif
-                  kerkerPreconditionedResidualSolverProblem,
-                  CGSolver,
-                  d_densityResidualNodalValues[0],
-                  d_preCondTotalDensityResidualVector);
-                d_mixingScheme.addVariableToInHist(
-                  mixingVariable::rho,
-                  d_densityInNodalValues[0].begin(),
-                  d_densityInNodalValues[0].locally_owned_size());
-                d_mixingScheme.addVariableToResidualHist(
-                  mixingVariable::rho,
-                  d_preCondTotalDensityResidualVector.begin(),
-                  d_preCondTotalDensityResidualVector.locally_owned_size());
-                if (d_dftParamsPtr->spinPolarized == 1)
+                for (unsigned int iComp = 0;
+                     iComp < d_densityOutNodalValues.size();
+                     ++iComp)
                   {
                     d_mixingScheme.addVariableToInHist(
-                      mixingVariable::magZ,
-                      d_densityInNodalValues[1].begin(),
-                      d_densityInNodalValues[1].locally_owned_size());
+                      iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
+                      d_densityInNodalValues[iComp].begin(),
+                      d_densityInNodalValues[iComp].locally_owned_size());
                     d_mixingScheme.addVariableToResidualHist(
-                      mixingVariable::magZ,
-                      d_densityResidualNodalValues[1].begin(),
-                      d_densityResidualNodalValues[1].locally_owned_size());
+                      iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
+                      d_densityResidualNodalValues[iComp].begin(),
+                      d_densityResidualNodalValues[iComp].locally_owned_size());
                   }
                 // Delete old history if it exceeds a pre-described
                 // length
@@ -2460,7 +2542,25 @@ namespace dftfe
                     std::vector<mixingVariable>{mixingVariable::rho,
                                                 mixingVariable::magZ} :
                     std::vector<mixingVariable>{mixingVariable::rho});
-                for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
+                d_mixingScheme.getOptimizedResidual(
+                  mixingVariable::rho,
+                  d_densityResidualNodalValues[0].begin(),
+                  d_densityResidualNodalValues[0].locally_owned_size());
+                applyKerkerPreconditionerToTotalDensityResidual(
+#ifdef DFTFE_WITH_DEVICE
+                  kerkerPreconditionedResidualSolverProblemDevice,
+                  CGSolverDevice,
+#endif
+                  kerkerPreconditionedResidualSolverProblem,
+                  CGSolver,
+                  d_densityResidualNodalValues[0],
+                  d_preCondTotalDensityResidualVector);
+                d_mixingScheme.mixPreconditionedResidual(
+                  mixingVariable::rho,
+                  d_preCondTotalDensityResidualVector.begin(),
+                  d_densityInNodalValues[0].begin(),
+                  d_densityInNodalValues[0].locally_owned_size());
+                for (unsigned int iComp = 1; iComp < norms.size(); ++iComp)
                   d_mixingScheme.mixVariable(
                     iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
                     d_densityInNodalValues[iComp].begin(),
@@ -2489,8 +2589,7 @@ namespace dftfe
                       d_densityInQuadValues[iComp],
                       d_gradDensityInQuadValues[iComp],
                       d_gradDensityInQuadValues[iComp],
-                      d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA);
+                      isGradDensityDataDependent);
                   }
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
@@ -2525,8 +2624,7 @@ namespace dftfe
                       d_densityResidualQuadValues[iComp].data(),
                       d_densityResidualQuadValues[iComp].size());
                   }
-                if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                    densityFamilyType::GGA)
+                if (isGradDensityDataDependent)
                   {
                     if (scfIter == 1)
                       d_gradDensityResidualQuadValues.resize(
@@ -2557,6 +2655,28 @@ namespace dftfe
                       }
                   }
 
+                if (d_useHubbard == true)
+                  {
+                    dftfe::utils::MemoryStorage<double,
+                                                dftfe::utils::MemorySpace::HOST>
+                      &hubbOccIn = d_hubbardClassPtr->getOccMatIn();
+
+                    dftfe::utils::MemoryStorage<double,
+                                                dftfe::utils::MemorySpace::HOST>
+                      &hubbOccRes = d_hubbardClassPtr->getOccMatRes();
+                    d_mixingScheme.addVariableToInHist(
+                      mixingVariable::hubbardOccupation,
+                      hubbOccIn.data(),
+                      hubbOccIn.size());
+
+                    d_mixingScheme.addVariableToResidualHist(
+                      mixingVariable::hubbardOccupation,
+                      hubbOccRes.data(),
+                      hubbOccRes.size());
+                  }
+
+
+
                 // Delete old history if it exceeds a pre-described
                 // length
                 d_mixingScheme.popOldHistory(d_dftParamsPtr->mixingHistory);
@@ -2578,8 +2698,7 @@ namespace dftfe
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                   norm += norms[iComp] * norms[iComp];
                 norm = std::sqrt(norm / ((double)norms.size()));
-                if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                    densityFamilyType::GGA)
+                if (isGradDensityDataDependent)
                   {
                     for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                       d_mixingScheme.mixVariable(
@@ -2588,6 +2707,29 @@ namespace dftfe
                         d_gradDensityInQuadValues[iComp].data(),
                         d_gradDensityInQuadValues[iComp].size());
                   }
+
+
+
+                if (d_useHubbard == true)
+                  {
+                    dftfe::utils::MemoryStorage<double,
+                                                dftfe::utils::MemorySpace::HOST>
+                      &hubbOccMatAfterMixing =
+                        d_hubbardClassPtr->getHubbMatrixForMixing();
+
+                    std::fill(hubbOccMatAfterMixing.begin(),
+                              hubbOccMatAfterMixing.end(),
+                              0.0);
+
+                    d_mixingScheme.mixVariable(
+                      mixingVariable::hubbardOccupation,
+                      hubbOccMatAfterMixing.data(),
+                      hubbOccMatAfterMixing.size());
+
+                    d_hubbardClassPtr->setInOccMatrix(hubbOccMatAfterMixing);
+                  }
+
+
                 if (d_dftParamsPtr->verbosity >= 1)
                   for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                     pcout << d_dftParamsPtr->mixingMethod
@@ -2830,10 +2972,7 @@ namespace dftfe
                                      d_gradDensityInQuadValues,
                                      d_rhoCore,
                                      d_gradRhoCore,
-                                     d_eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-                                     d_eigenVectorsFlattenedDevice,
-#endif
+                                     getEigenVectors(),
                                      eigenValues,
                                      fermiEnergy,
                                      fermiEnergyUp,
@@ -3123,10 +3262,7 @@ namespace dftfe
                                      d_gradDensityInQuadValues,
                                      d_rhoCore,
                                      d_gradRhoCore,
-                                     d_eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-                                     d_eigenVectorsFlattenedDevice,
-#endif
+                                     getEigenVectors(),
                                      eigenValues,
                                      fermiEnergy,
                                      fermiEnergyUp,
@@ -3504,21 +3640,19 @@ namespace dftfe
               d_phiOutQuadValues,
               dummy);
             computing_timer.leave_subsection("phiTot solve");
-
-            updateAuxDensityXCMatrix(d_densityOutQuadValues,
-                                     d_gradDensityOutQuadValues,
-                                     d_rhoCore,
-                                     d_gradRhoCore,
-                                     d_eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-                                     d_eigenVectorsFlattenedDevice,
-#endif
-                                     eigenValues,
-                                     fermiEnergy,
-                                     fermiEnergyUp,
-                                     fermiEnergyDown,
-                                     d_auxDensityMatrixXCOutPtr);
           }
+
+        updateAuxDensityXCMatrix(d_densityOutQuadValues,
+                                 d_gradDensityOutQuadValues,
+                                 d_rhoCore,
+                                 d_gradRhoCore,
+                                 getEigenVectors(),
+                                 eigenValues,
+                                 fermiEnergy,
+                                 fermiEnergyUp,
+                                 fermiEnergyDown,
+                                 d_auxDensityMatrixXCOutPtr);
+
         if (d_dftParamsPtr->useEnergyResidualTolerance)
           {
             computing_timer.enter_subsection("Energy residual computation");
@@ -3605,6 +3739,17 @@ namespace dftfe
                 << std::endl;
           }
 
+        computeFractionalOccupancies();
+
+        d_excManagerPtr->getExcSSDFunctionalObj()
+          ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
+                                                     d_kPointWeights);
+
+
+        d_excManagerPtr->getExcSSDFunctionalObj()
+          ->computeWaveFunctionDependentExcEnergy(d_auxDensityMatrixXCOutPtr,
+                                                  d_kPointWeights);
+
         if (d_dftParamsPtr->verbosity >= 1)
           pcout << "***********************Self-Consistent-Field Iteration: "
                 << std::setw(2) << scfIter + 1
@@ -3622,12 +3767,25 @@ namespace dftfe
 
         if (d_dftParamsPtr->saveRhoData && scfIter % 10 == 0 &&
             d_dftParamsPtr->solverMode == "GS")
-          saveTriaInfoAndRhoNodalData();
+          {
+            saveTriaInfoAndRhoNodalData();
+            if (d_useHubbard)
+              {
+                d_hubbardClassPtr->writeHubbOccToFile();
+              }
+          }
       }
 
     if (d_dftParamsPtr->saveRhoData &&
         !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
-      saveTriaInfoAndRhoNodalData();
+      {
+        saveTriaInfoAndRhoNodalData();
+        if (d_useHubbard)
+          {
+            d_hubbardClassPtr->writeHubbOccToFile();
+          }
+      }
+
 
 
     if (scfIter == d_dftParamsPtr->numSCFIterations)
@@ -3670,10 +3828,7 @@ namespace dftfe
                              d_gradDensityOutQuadValues,
                              d_rhoCore,
                              d_gradRhoCore,
-                             d_eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-                             d_eigenVectorsFlattenedDevice,
-#endif
+                             getEigenVectors(),
                              eigenValues,
                              fermiEnergy,
                              fermiEnergyUp,
@@ -3883,6 +4038,21 @@ namespace dftfe
 
     d_freeEnergy = d_groundStateEnergy - d_entropicEnergy;
 
+    if (d_dftParamsPtr->verbosity >= 1)
+      {
+        if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+             ExcFamilyType::DFTPlusU) ||
+            (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+             ExcFamilyType::HYBRID) ||
+            (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+             ExcFamilyType::MGGA))
+          {
+            pcout << " Non local part of Exc energy = "
+                  << d_excManagerPtr->getExcSSDFunctionalObj()
+                       ->getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi()
+                  << "\n";
+          }
+      }
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total free energy: " << d_freeEnergy << std::endl;
 
@@ -5029,6 +5199,59 @@ namespace dftfe
     return numElectrons;
   }
 
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeFractionalOccupancies()
+  {
+    /*
+    double FE = d_dftParamsPtr->spinPolarized ?
+                  std::max(fermiEnergyDown, fermiEnergyUp) :
+                  fermiEnergy;
+*/
+    double FE = fermiEnergy;
+    // pcout<<" Fermi energy = "<<FE<<"\n";
+    int numkPoints = d_kPointWeights.size();
+    d_fracOccupancy.resize(numkPoints,
+                           std::vector<double>((1 +
+                                                d_dftParamsPtr->spinPolarized) *
+                                                 d_numEigenValues,
+                                               0.0));
+
+    for (unsigned int kPoint = 0; kPoint < numkPoints; ++kPoint)
+      if (d_dftParamsPtr->constraintMagnetization)
+        {
+          for (unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
+            {
+              if (eigenValues[kPoint][iWave] > fermiEnergyUp)
+                d_fracOccupancy[kPoint][iWave] = 0.0;
+              else
+                d_fracOccupancy[kPoint][iWave] = 1.0;
+
+              if (eigenValues[kPoint][iWave + d_numEigenValues] >
+                  fermiEnergyDown)
+                d_fracOccupancy[kPoint][iWave + d_numEigenValues] = 0.0;
+              else
+                d_fracOccupancy[kPoint][iWave + d_numEigenValues] = 1.0;
+            }
+        }
+      else
+        {
+          for (unsigned int iWave = 0;
+               iWave < d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized);
+               ++iWave)
+            {
+              d_fracOccupancy[kPoint][iWave] = dftUtils::getPartialOccupancy(
+                eigenValues[kPoint][iWave], FE, C_kb, d_dftParamsPtr->TVal);
+              // pcout<<" iWave = "<<iWave<<" fracOcc =
+              // "<<d_fracOccupancy[kPoint][iWave]<<"\n";
+            }
+        }
+  }
+
+
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
@@ -5401,6 +5624,24 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
+  std::shared_ptr<hubbard<dataTypes::number, memorySpace>>
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::getHubbardClassPtr()
+  {
+    return d_hubbardClassPtr;
+  }
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  bool  dftClass<FEOrder, FEOrderElectro, memorySpace>::isHubbardCorrectionsUsed()
+  {
+    return d_useHubbard;
+  }
+
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::updateAuxDensityXCMatrix(
     const std::vector<
@@ -5411,22 +5652,19 @@ namespace dftfe
       &                                                  gradDensityQuadValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCore,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCore,
-    const dftfe::utils::MemoryStorage<dataTypes::number,
-                                      dftfe::utils::MemorySpace::HOST>
-      &eigenVectorsFlattenedHost,
-#ifdef DFTFE_WITH_DEVICE
-    const dftfe::utils::MemoryStorage<dataTypes::number,
-                                      dftfe::utils::MemorySpace::DEVICE>
-      &eigenVectorsFlattenedDevice,
-#endif
+    const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+      &                                     eigenVectorsFlattenedMemSpace,
     const std::vector<std::vector<double>> &eigenValues_,
     const double                            fermiEnergy_,
     const double                            fermiEnergyUp_,
     const double                            fermiEnergyDown_,
-    std::shared_ptr<AuxDensityMatrix>       auxDensityMatrixXCPtr)
+    std::shared_ptr<AuxDensityMatrix<memorySpace>> auxDensityMatrixXCPtr)
   {
-    const bool isGGA =
-      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA;
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
+    const bool isGGA = isGradDensityDataDependent;
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
       d_basisOperationsPtrHost->nCells();
@@ -5613,48 +5851,44 @@ namespace dftfe
         auxDensityMatrixXCPtr->projectDensityStart(densityProjectionInputs);
 
         auxDensityMatrixXCPtr->projectDensityEnd(mpi_communicator);
+
+        computeFractionalOccupancies();
+
+        std::shared_ptr<AuxDensityMatrixFE<memorySpace>>
+          auxDensityMatrixXCFEPtr =
+            std::dynamic_pointer_cast<AuxDensityMatrixFE<memorySpace>>(
+              auxDensityMatrixXCPtr);
+
+        Assert(
+          auxDensityMatrixXCFEPtr != nullptr,
+          dealii::ExcMessage(
+            "DFT-FE Error: unable to type cast the auxiliary matrix to FE."));
+
+        auxDensityMatrixXCFEPtr->setDensityMatrixComponents(
+          eigenVectorsFlattenedMemSpace, d_fracOccupancy);
       }
-    else if (d_dftParamsPtr->auxBasisTypeXC == "SlaterAE")
+    else if (d_dftParamsPtr->auxBasisTypeXC == "SLATER")
       {
 #ifndef USE_COMPLEX
-#  ifdef DFTFE_WITH_DEVICE
-        if (d_dftParamsPtr->useDevice)
-          computeAuxProjectedDensityMatrixFromPSI(eigenVectorsFlattenedDevice,
-                                                  d_numEigenValues,
-                                                  eigenValues_,
-                                                  fermiEnergy_,
-                                                  fermiEnergyUp_,
-                                                  fermiEnergyDown_,
-                                                  d_basisOperationsPtrDevice,
-                                                  d_BLASWrapperPtr,
-                                                  d_densityDofHandlerIndex,
-                                                  d_gllQuadratureId,
-                                                  d_kPointWeights,
-                                                  *auxDensityMatrixXCPtr,
-                                                  d_mpiCommParent,
-                                                  mpi_communicator,
-                                                  interpoolcomm,
-                                                  interBandGroupComm,
-                                                  *d_dftParamsPtr);
-#  endif
-        if (!d_dftParamsPtr->useDevice)
-          computeAuxProjectedDensityMatrixFromPSI(eigenVectorsFlattenedHost,
-                                                  d_numEigenValues,
-                                                  eigenValues_,
-                                                  fermiEnergy_,
-                                                  fermiEnergyUp_,
-                                                  fermiEnergyDown_,
-                                                  d_basisOperationsPtrHost,
-                                                  d_BLASWrapperPtrHost,
-                                                  d_densityDofHandlerIndex,
-                                                  d_gllQuadratureId,
-                                                  d_kPointWeights,
-                                                  *auxDensityMatrixXCPtr,
-                                                  d_mpiCommParent,
-                                                  mpi_communicator,
-                                                  interpoolcomm,
-                                                  interBandGroupComm,
-                                                  *d_dftParamsPtr);
+        auto basisOpMemSpace     = getBasisOperationsMemSpace();
+        auto blasWrapperMemSpace = getBLASWrapperMemSpace();
+        computeAuxProjectedDensityMatrixFromPSI(eigenVectorsFlattenedMemSpace,
+                                                d_numEigenValues,
+                                                eigenValues_,
+                                                fermiEnergy_,
+                                                fermiEnergyUp_,
+                                                fermiEnergyDown_,
+                                                basisOpMemSpace,
+                                                blasWrapperMemSpace,
+                                                d_densityDofHandlerIndex,
+                                                d_gllQuadratureId,
+                                                d_kPointWeights,
+                                                *auxDensityMatrixXCPtr,
+                                                d_mpiCommParent,
+                                                mpi_communicator,
+                                                interpoolcomm,
+                                                interBandGroupComm,
+                                                *d_dftParamsPtr);
 #endif
       }
   }

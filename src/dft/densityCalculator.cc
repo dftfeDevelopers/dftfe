@@ -24,13 +24,12 @@
 #include <vectorUtilities.h>
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
-#include <deviceKernelsGeneric.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
-#include <DeviceBlasWrapper.h>
+
 
 namespace dftfe
 {
@@ -237,15 +236,14 @@ namespace dftfe
                                   currentBlockSize * sizeof(NumberType));
 #if defined(DFTFE_WITH_DEVICE)
                   else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-                    dftfe::utils::deviceKernelsGeneric::
-                      stridedCopyToBlockConstantStride(
-                        currentBlockSize,
-                        totalNumWaveFunctions,
-                        numLocalDofs,
-                        jvec,
-                        X->data() + numLocalDofs * totalNumWaveFunctions *
-                                      (numSpinComponents * kPoint + spinIndex),
-                        flattenedArrayBlock->data());
+                    BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                      currentBlockSize,
+                      totalNumWaveFunctions,
+                      numLocalDofs,
+                      jvec,
+                      X->data() + numLocalDofs * totalNumWaveFunctions *
+                                    (numSpinComponents * kPoint + spinIndex),
+                      flattenedArrayBlock->data());
 #endif
 
 
@@ -369,16 +367,15 @@ namespace dftfe
                                     currentBlockSize * sizeof(NumberType));
 #if defined(DFTFE_WITH_DEVICE)
                     else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-                      dftfe::utils::deviceKernelsGeneric::
-                        stridedCopyToBlockConstantStride(
-                          currentBlockSize,
-                          Nfr,
-                          numLocalDofs,
-                          jvec,
-                          XFrac->data() +
-                            numLocalDofs * Nfr *
-                              (numSpinComponents * kPoint + spinIndex),
-                          flattenedArrayBlock->data());
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        currentBlockSize,
+                        Nfr,
+                        numLocalDofs,
+                        jvec,
+                        XFrac->data() +
+                          numLocalDofs * Nfr *
+                            (numSpinComponents * kPoint + spinIndex),
+                        flattenedArrayBlock->data());
 #endif
                     basisOperationsPtr->reinit(currentBlockSize,
                                                cellsBlockSize,
