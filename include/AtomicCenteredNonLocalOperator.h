@@ -66,7 +66,8 @@ namespace dftfe
       std::shared_ptr<AtomCenteredSphericalFunctionContainer>
                       atomCenteredSphericalFunctionContainer,
       const MPI_Comm &mpi_comm_parent,
-      const bool      memOptMode = false);
+      const bool      memOptMode               = false,
+      const bool      computeSphericalFnTimesX = true);
 
     /**
      * @brief Resizes various internal data members and selects the kpoint of interest.
@@ -108,6 +109,22 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::HOST>>
                          basisOperationsPtr,
       const unsigned int quadratureIndex);
+
+    template <typename ValueTypeSrc>
+    void
+    copyPartitionerKPointsAndComputeCMatrixEntries(
+      const bool                 updateSparsity,
+      const std::vector<double> &kPointWeights,
+      const std::vector<double> &kPointCoordinates,
+      std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+                         basisOperationsPtr,
+      const unsigned int quadratureIndex,
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
+        nonLocalOperatorSrc);
 #if defined(DFTFE_WITH_DEVICE)
     // for device specific initialise
     /**
@@ -360,6 +377,16 @@ namespace dftfe
                           std::vector<ValueType> &      entriesPadded,
                           const CouplingStructure       couplingtype);
 
+
+
+    const std::vector<ValueType> &
+    getCmatrixEntriesConjugate(const unsigned int chargeId,
+                               const unsigned int iElemComp) const;
+
+    const std::vector<ValueType> &
+    getCmatrixEntriesTranspose(const unsigned int chargeId,
+                               const unsigned int iElemComp) const;
+
   protected:
     bool                d_AllReduceCompleted;
     std::vector<double> d_kPointWeights;
@@ -454,6 +481,8 @@ namespace dftfe
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
       d_CMatrixEntriesTranspose;
 
+
+
   private:
     /**
      * @brief stores the d_kpointWeights, d_kpointCoordinates. Other data members regarding are computed from container data object
@@ -487,6 +516,19 @@ namespace dftfe
         dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
       const unsigned int                  quadratureIndex);
 
+    template <typename ValueTypeSrc>
+    void
+    copyCMatrixEntries(
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
+        nonLocalOperatorSrc,
+      std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+                         basisOperationsPtr,
+      const unsigned int quadratureIndex);
+
     std::map<
       unsigned int,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
@@ -496,6 +538,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
                               d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
     std::vector<unsigned int> d_nonlocalElemIdToCellIdVector;
+    bool                      d_computeSphericalFnTimesX;
 #if defined(DFTFE_WITH_DEVICE)
     /**
      * @brief Copies the data from distributed Vector to Padded Memory storage object.

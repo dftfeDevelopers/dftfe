@@ -103,7 +103,8 @@ namespace dftfe
       std::shared_ptr<excManager<memorySpace>> excFunctionalPtr,
       const std::vector<std::vector<double>> & atomLocations,
       unsigned int                             numEigenValues,
-      const bool                               singlePrecNonLocalOperator);
+      const bool                               singlePrecNonLocalOperator,
+      const bool computeSphericalFnTimesXNonLocalOperator = true);
 
     /**
      * @brief Initialises all the data members with addresses/values to/of dftClass.
