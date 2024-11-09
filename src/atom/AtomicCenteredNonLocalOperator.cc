@@ -3093,11 +3093,11 @@ namespace dftfe
                 for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
                      ++iNode)
                   {
-                    // dftfe::global_size_type localNodeId =
-                    //   basisOperationsPtr->d_cellDofIndexToProcessDofIndexMap
-                    //     [elementId * d_numberNodesPerElement + iNode];
-                    // d_cellNodeIdMapNonLocalToLocal[countElemNode] =
-                    //   elementId * d_numberNodesPerElement + iNode;
+                    dftfe::global_size_type localNodeId =
+                      basisOperationsPtr->d_cellDofIndexToProcessDofIndexMap
+                        [elementId * d_numberNodesPerElement + iNode];
+                    d_cellNodeIdMapNonLocalToLocal[countElemNode] =
+                      elementId * d_numberNodesPerElement + iNode;
                     countElemNode++;
                   }
               }
@@ -3226,11 +3226,11 @@ namespace dftfe
             d_nonlocalElemIdToCellIdVector.push_back(iCell);
             for (int iNode = 0; iNode < d_numberNodesPerElement; iNode++)
               {
-                // dftfe::global_size_type localNodeId =
-                //   basisOperationsPtr->d_cellDofIndexToProcessDofIndexMap
-                //     [iCell * d_numberNodesPerElement + iNode];
-                // d_flattenedNonLocalCellDofIndexToProcessDofIndexVector
-                //   .push_back(localNodeId);
+                dftfe::global_size_type localNodeId =
+                  basisOperationsPtr->d_cellDofIndexToProcessDofIndexMap
+                    [iCell * d_numberNodesPerElement + iNode];
+                d_flattenedNonLocalCellDofIndexToProcessDofIndexVector
+                  .push_back(localNodeId);
               }
           }
         freeDeviceVectors();
