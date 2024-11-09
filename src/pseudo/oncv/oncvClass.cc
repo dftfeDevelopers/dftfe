@@ -260,13 +260,12 @@ namespace dftfe
       d_nlpspQuadratureId);
     if (d_singlePrecNonLocalOperator)
       d_nonLocalOperatorSinglePrec
-        ->copyPartitionerKPointsAndComputeCMatrixEntries(
-          updateNonlocalSparsity,
-          kPointWeights,
-          kPointCoordinates,
-          d_BasisOperatorHostPtr,
-          d_nlpspQuadratureId,
-          d_nonLocalOperator);
+        ->copyPartitionerKPointsAndComputeCMatrixEntries(updateNonlocalSparsity,
+                                                         kPointWeights,
+                                                         kPointCoordinates,
+                                                         d_BasisOperatorHostPtr,
+                                                         d_nlpspQuadratureId,
+                                                         d_nonLocalOperator);
 
 
     MPI_Barrier(d_mpiCommParent);

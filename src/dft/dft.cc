@@ -1219,8 +1219,7 @@ namespace dftfe
                                  atomLocations,
                                  d_numEigenValues,
                                  d_dftParamsPtr->useSinglePrecCheby,
-                                 (d_dftParamsPtr->isIonForce &&
-                                  !d_dftParamsPtr->floatingNuclearCharges) ||
+                                 (d_dftParamsPtr->isIonForce) ||
                                    d_dftParamsPtr->isCellStress);
 
 

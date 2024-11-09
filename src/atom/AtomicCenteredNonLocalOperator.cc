@@ -1256,22 +1256,63 @@ namespace dftfe
       }
     atomIdsAllProcessFlattened.clear();
 
-    dealii::IndexSet ownedAtomIdsInCurrentProcess;
-    ownedAtomIdsInCurrentProcess.set_size(numberAtoms); // Check this
-    ownedAtomIdsInCurrentProcess.add_indices(atomIdsInCurrentProcess.begin(),
-                                             atomIdsInCurrentProcess.end());
-    dealii::IndexSet ghostAtomIdsInCurrentProcess(ownedAtomIdsInCurrentProcess);
+    std::vector<std::vector<unsigned int>> atomIdsAndProcsList(numberAtoms);
     for (unsigned int iProc = 0; iProc < d_n_mpi_processes; iProc++)
       {
-        if (iProc < d_this_mpi_process)
+        for (unsigned int iAtom = 0; iAtom < atomIdsInAllProcess[iProc].size();
+             iAtom++)
           {
-            dealii::IndexSet temp;
-            temp.set_size(numberAtoms);
-            temp.add_indices(atomIdsInAllProcess[iProc].begin(),
-                             atomIdsInAllProcess[iProc].end());
-            ownedAtomIdsInCurrentProcess.subtract_set(temp);
+            unsigned int atomId = atomIdsInAllProcess[iProc][iAtom];
+            atomIdsAndProcsList[atomId].push_back(iProc);
           }
       }
+
+
+    dealii::IndexSet ownedAtomIdsInCurrentProcess;
+    ownedAtomIdsInCurrentProcess.set_size(numberAtoms); // Check this
+    dealii::IndexSet ghostAtomIdsInCurrentProcess;
+    ghostAtomIdsInCurrentProcess.set_size(numberAtoms);
+    ghostAtomIdsInCurrentProcess.add_indices(atomIdsInCurrentProcess.begin(),
+                                             atomIdsInCurrentProcess.end());
+
+
+    std::vector<unsigned int> ownedAtomSize(d_n_mpi_processes, 0);
+    for (unsigned int atomId = 0; atomId < numberAtoms; atomId++)
+      {
+        const std::vector<unsigned int> procsList = atomIdsAndProcsList[atomId];
+        unsigned int                    lowestOwnedAtoms = 100000;
+        unsigned int                    lowestProcId     = 0;
+        for (int iProc = 0; iProc < procsList.size(); iProc++)
+          {
+            unsigned int procId = procsList[iProc];
+            if (ownedAtomSize[procId] < lowestOwnedAtoms)
+              {
+                lowestOwnedAtoms = ownedAtomSize[procId];
+                lowestProcId     = procId;
+              }
+          }
+
+        ownedAtomSize[lowestProcId] += 1;
+
+        if (lowestProcId == d_this_mpi_process)
+          {
+            ownedAtomIdsInCurrentProcess.add_index(atomId);
+          }
+
+      } // atomId
+
+
+    // for (unsigned int iProc = 0; iProc < d_n_mpi_processes; iProc++)
+    //   {
+    //     if (iProc < d_this_mpi_process)
+    //       {
+    //         dealii::IndexSet temp;
+    //         temp.set_size(numberAtoms);
+    //         temp.add_indices(atomIdsInAllProcess[iProc].begin(),
+    //                          atomIdsInAllProcess[iProc].end());
+    //         ownedAtomIdsInCurrentProcess.subtract_set(temp);
+    //       }
+    //   }
 
     ghostAtomIdsInCurrentProcess.subtract_set(ownedAtomIdsInCurrentProcess);
 
