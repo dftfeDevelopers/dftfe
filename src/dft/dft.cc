@@ -215,9 +215,10 @@ namespace dftfe
         30.0 :
         (std::max(d_dftParamsPtr->pspCutoffImageCharges, d_pspCutOffTrunc));
 
-            d_smearedChargeMoments.resize(13, 0.0);
-            std::fill(d_smearedChargeMoments.begin(),d_smearedChargeMoments.end(),0.0);
-
+    d_smearedChargeMoments.resize(13, 0.0);
+    std::fill(d_smearedChargeMoments.begin(),
+              d_smearedChargeMoments.end(),
+              0.0);
   }
 
   template <unsigned int              FEOrder,
@@ -5256,7 +5257,8 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::setNumElectrons(unsigned int inputNumElectrons)
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::setNumElectrons(
+    unsigned int inputNumElectrons)
   {
     this->numElectrons = inputNumElectrons;
   }
@@ -5587,7 +5589,7 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  const expConfiningPotential&
+  const expConfiningPotential &
   dftClass<FEOrder, FEOrderElectro, memorySpace>::getConfiningPotential() const
   {
     return d_expConfiningPot;
@@ -5633,7 +5635,8 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  bool  dftClass<FEOrder, FEOrderElectro, memorySpace>::isHubbardCorrectionsUsed()
+  bool
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::isHubbardCorrectionsUsed()
   {
     return d_useHubbard;
   }

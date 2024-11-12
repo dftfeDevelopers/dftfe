@@ -251,7 +251,8 @@ namespace dftfe
           {
             projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
               .resize(numKPoints *
-                        dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+                        dftPtr->getHubbardClassPtr()
+                          ->getNonLocalOperator()
                           ->getTotalNonTrivialSphericalFnsOverAllCells() *
                         numQuadPointsNLP * 3,
                       dataTypes::number(0.0));
@@ -259,7 +260,8 @@ namespace dftfe
 #ifdef USE_COMPLEX
             projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
               .resize(numKPoints *
-                        dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+                        dftPtr->getHubbardClassPtr()
+                          ->getNonLocalOperator()
                           ->getTotalNonTrivialSphericalFnsOverAllCells() *
                         numQuadPointsNLP,
                       dataTypes::number(0.0));
@@ -572,7 +574,8 @@ namespace dftfe
               FVectHubbardQuads(numQuadPointsNLP, zeroTensor3);
 
             const unsigned int numNonLocalAtomsCurrentProcessHubbard =
-              (dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+              (dftPtr->getHubbardClassPtr()
+                 ->getNonLocalOperator()
                  ->getTotalAtomInCurrentProcessor());
 
             std::vector<int> nonLocalAtomIdHubbard,
@@ -619,7 +622,8 @@ namespace dftfe
 #ifdef USE_COMPLEX
                   projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard,
 #endif
-                  dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+                  dftPtr->getHubbardClassPtr()
+                    ->getNonLocalOperator()
                     ->getAtomCenteredKpointIndexedSphericalFnQuadValues(),
                   projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard);
 
@@ -636,7 +640,8 @@ namespace dftfe
                       numberPseudoWaveFunctionsPerAtomHubbard,
                       cell,
                       cellIdToCellNumberMap,
-                      dftPtr->getHubbardClassPtr()->getNonLocalOperator()
+                      dftPtr->getHubbardClassPtr()
+                        ->getNonLocalOperator()
                         ->getAtomCenteredKpointIndexedSphericalFnQuadValues(),
                       projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard);
 

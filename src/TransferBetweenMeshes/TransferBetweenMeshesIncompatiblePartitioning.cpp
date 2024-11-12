@@ -35,7 +35,8 @@ namespace dftfe
       const unsigned int                   matrixFreeMesh2VectorComponent,
       const unsigned int                   matrixFreeMesh2QuadratureComponent,
       const unsigned int                   verbosity,
-      const MPI_Comm &                     mpiComm)
+      const MPI_Comm &                     mpiComm,
+      const bool                           useMemOptForCellWiseInterpolation)
     : d_mpiComm(mpiComm)
   {
     d_matrixFreeMesh1Ptr                 = &matrixFreeMesh1;
@@ -114,7 +115,7 @@ namespace dftfe
 
             interpolateLocalMesh1.push_back(
               std::make_shared<InterpolateFromCellToLocalPoints<memorySpace>>(
-                srcCellPtr, numberDofsPerCell1[iElemIndex]));
+                srcCellPtr, numberDofsPerCell1[iElemIndex], useMemOptForCellWiseInterpolation));
             fe_valuesMesh1.reinit(cellMesh1);
             for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsMesh1;
                  iQuad++)
@@ -154,7 +155,7 @@ namespace dftfe
 
             interpolateLocalMesh2.push_back(
               std::make_shared<InterpolateFromCellToLocalPoints<memorySpace>>(
-                srcCellPtr, numberDofsPerCell2[iElemIndex]));
+                srcCellPtr, numberDofsPerCell2[iElemIndex],useMemOptForCellWiseInterpolation));
             fe_valuesMesh2.reinit(cellMesh2);
             for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsMesh2;
                  iQuad++)

@@ -25,31 +25,32 @@
 
 namespace dftfe
 {
-
   class expConfiningPotential
   {
   public:
-
     expConfiningPotential();
-    void init(const std::shared_ptr<
-                          dftfe::basis::FEBasisOperations<dataTypes::number,
-                                                          double,
-                                                          dftfe::utils::MemorySpace::HOST>>& feBasisOp,
-                          const dftParameters &dftParams,
-                          const std::vector<std::vector<double>>& atomLocations);
+    void
+    init(const std::shared_ptr<
+           dftfe::basis::FEBasisOperations<dataTypes::number,
+                                           double,
+                                           dftfe::utils::MemorySpace::HOST>>
+           &                                     feBasisOp,
+         const dftParameters &                   dftParams,
+         const std::vector<std::vector<double>> &atomLocations);
 
 
-    void addConfiningPotential(dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>& externalPotential) const;
+    void
+    addConfiningPotential(
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &externalPotential) const;
 
 
   private:
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> d_confiningPotential;
-
-
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      d_confiningPotential;
   };
 
-}
+} // namespace dftfe
 
 
 #endif // DFTFE_EXPCONFININGPOTENTIAL_H

@@ -45,7 +45,8 @@ namespace dftfe
       const unsigned int                   matrixFreeMesh2VectorComponent,
       const unsigned int                   matrixFreeMesh2QuadratureComponent,
       const unsigned int                   verbosity,
-      const MPI_Comm &                     mpiComm);
+      const MPI_Comm &                     mpiComm,
+      const bool useMemOptForCellWiseInterpolation = false);
 
     void
     interpolateMesh1DataToMesh2QuadPoints(

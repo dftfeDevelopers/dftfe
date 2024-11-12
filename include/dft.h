@@ -501,10 +501,10 @@ namespace dftfe
     double
     getNumElectrons() const;
 
-     void
+    void
     setNumElectrons(unsigned int inputNumElectrons);
-    
-     elpaScalaManager *
+
+    elpaScalaManager *
     getElpaScalaManager() const;
 #ifdef DFTFE_WITH_DEVICE
 
@@ -737,7 +737,8 @@ namespace dftfe
         &                                                  rhoQuadValues,
       const std::map<dealii::CellId, std::vector<double>> *bQuadValues);
 
-    const expConfiningPotential& getConfiningPotential() const;
+    const expConfiningPotential &
+    getConfiningPotential() const;
 
     void
     computeFractionalOccupancies();
@@ -746,12 +747,13 @@ namespace dftfe
      *@brief Returns the shared ptr to hubbard class
      */
     std::shared_ptr<hubbard<dataTypes::number, memorySpace>>
-          getHubbardClassPtr();
+    getHubbardClassPtr();
 
     /**
      *@brief Function to check if hubbard corrections is being used
      */
-    bool  isHubbardCorrectionsUsed();
+    bool
+    isHubbardCorrectionsUsed();
 
   private:
     /**
@@ -1939,7 +1941,7 @@ namespace dftfe
       std::vector<double> &                           residualNormWaveFunctions,
       unsigned int                                    ipass);
 
-    expConfiningPotential d_expConfiningPot;
+    expConfiningPotential                                    d_expConfiningPot;
     std::shared_ptr<hubbard<dataTypes::number, memorySpace>> d_hubbardClassPtr;
     bool                                                     d_useHubbard;
   };

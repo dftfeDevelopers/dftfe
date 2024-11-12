@@ -1431,11 +1431,11 @@ namespace dftfe
     maxCellUpdateStep  = 0.1;
 
     // Parameters for confining potential
-    confiningPotential = false;
+    confiningPotential   = false;
     confiningInnerPotRad = 17.0;
     confiningOuterPotRad = 20.0;
-    confiningWParam = 1.0;
-    confiningCParam = 1.0;
+    confiningWParam      = 1.0;
+    confiningCParam      = 1.0;
 
 
     writeStructreEnergyForcesFileForPostProcess = false;
@@ -1580,11 +1580,12 @@ namespace dftfe
         prm.get_bool("MULTIPOLE BOUNDARY CONDITIONS");
 
       // Parameters for confining potential
-      confiningPotential = prm.get_bool("APPLY CONFINING POTENTIAL");;
+      confiningPotential = prm.get_bool("APPLY CONFINING POTENTIAL");
+      ;
       confiningInnerPotRad = prm.get_double("CONFINING POTENTIAL INNER RADIUS");
       confiningOuterPotRad = prm.get_double("CONFINING POTENTIAL OUTER RADIUS");
-      confiningWParam = prm.get_double("CONFINING POTENTIAL W PARAM");
-      confiningCParam = prm.get_double("CONFINING POTENTIAL C PARAM");
+      confiningWParam      = prm.get_double("CONFINING POTENTIAL W PARAM");
+      confiningCParam      = prm.get_double("CONFINING POTENTIAL C PARAM");
     }
     prm.leave_subsection();
 

@@ -26,24 +26,33 @@ namespace dftfe
   InterpolateFromCellToLocalPoints<memorySpace>::
     InterpolateFromCellToLocalPoints(
       const std::shared_ptr<const dftfe::utils::FECell<3>> &srcCell,
-      unsigned int                                          numNodes)
+      unsigned int                                          numNodes,
+      bool                                                  memOpt)
   {
     d_srcCell  = srcCell;
     d_numNodes = numNodes;
+    d_memOpt   = memOpt;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
   InterpolateFromCellToLocalPoints<memorySpace>::
-    setRealCoordinatesOfLocalPoints(unsigned int        numPoints,
-                                    std::vector<double> coordinates)
+    setRealCoordinatesOfLocalPoints(unsigned int         numPoints,
+                                    std::vector<double> &coordinates)
   {
     d_numPoints = numPoints;
-    d_shapeValuesHost.resize(numPoints * d_numNodes);
-    d_srcCell->getShapeFuncValues(
-      numPoints, coordinates, d_shapeValuesHost, 0, d_numNodes);
-    d_shapeValuesMemSpace.resize(numPoints * d_numNodes);
-    d_shapeValuesMemSpace.copyFrom(d_shapeValuesHost);
+    if (d_memOpt)
+      {
+        d_paramCoordinates = d_srcCell->getParametricPointForAllPoints(numPoints, coordinates);
+      }
+    else
+      {
+        d_shapeValuesHost.resize(numPoints * d_numNodes);
+        d_srcCell->getShapeFuncValues(
+          numPoints, coordinates, d_shapeValuesHost, 0, d_numNodes);
+        d_shapeValuesMemSpace.resize(numPoints * d_numNodes);
+        d_shapeValuesMemSpace.copyFrom(d_shapeValuesHost);
+      }
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -60,6 +69,16 @@ namespace dftfe
     const char              transA = 'N', transB = 'N';
     const unsigned int      inc = 1;
 
+    if (d_memOpt)
+      {
+        d_shapeValuesHost.resize(d_numPoints * d_numNodes);
+        d_srcCell->getShapeFuncValuesFromParametricPoints(
+          d_numPoints, d_paramCoordinates, d_shapeValuesHost, 0, d_numNodes);
+        d_shapeValuesMemSpace.resize(d_numPoints * d_numNodes);
+        d_shapeValuesMemSpace.copyFrom(d_shapeValuesHost);
+      }
+
+
     BLASWrapperPtr->xgemm(transA,
                           transB,
                           numberOfVectors,
@@ -73,6 +92,12 @@ namespace dftfe
                           &scalarCoeffBeta,
                           outputMemSpacePtr,
                           numberOfVectors);
+
+    if (d_memOpt)
+      {
+        d_shapeValuesHost.resize(0);
+        d_shapeValuesMemSpace.resize(0);
+      }
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -90,6 +115,14 @@ namespace dftfe
     const char              transA = 'N', transB = 'N';
     const unsigned int      inc = 1;
 
+
+    if (d_memOpt)
+      {
+        d_shapeValuesHost.resize(d_numPoints * d_numNodes);
+        d_srcCell->getShapeFuncValuesFromParametricPoints(
+          d_numPoints, d_paramCoordinates, d_shapeValuesHost, 0, d_numNodes);
+      }
+
     BLASWrapperPtr->xgemm(transA,
                           transB,
                           numberOfVectors,
@@ -103,6 +136,11 @@ namespace dftfe
                           &scalarCoeffBeta,
                           &outputHost[0],
                           numberOfVectors);
+
+    if (d_memOpt)
+      {
+        d_shapeValuesHost.resize(0);
+      }
   }
 
   template class InterpolateFromCellToLocalPoints<

@@ -160,6 +160,19 @@ namespace dftfe
 
     d_numPointsLocal = targetPts.size() + d_ghostGlobalIds.size();
 
+     unsigned int maxPointsLocalTemp = d_numPointsLocal ;
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &maxPointsLocalTemp,
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&maxPointsLocalTemp),
+                  MPI_MAX,
+                  d_mpiComm);
+
+    if ((dealii::Utilities::MPI::this_mpi_process(d_mpiComm) == 0))
+      {
+        std::cout<<  " Max number of points found locally  = "
+                  << maxPointsLocalTemp << "\n";
+      }
 
     size_type numFinalTargetPoints = targetPts.size();
 
@@ -235,6 +248,14 @@ namespace dftfe
     MPI_Barrier(d_mpiComm);
     double endMPIPattern = MPI_Wtime();
 
+    unsigned int maxPointsLocal = d_numPointsLocal ;
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &maxPointsLocal,
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&maxPointsLocal),
+                  MPI_MAX,
+                  d_mpiComm);
+
     double nonLocalFrac =
       ((double)((double)(numLocalPlusGhost - numTargetPointsInput)) /
        numTargetPointsInput);
@@ -246,6 +267,10 @@ namespace dftfe
                   << numTargetPointsFound << "\n";
         std::cout << " Total number of points in all procs = "
                   << numLocalPlusGhost << "\n";
+        std::cout<<  " Max number of points found locally  = "
+		  << maxPointsLocal << "\n";
+	 
+
         dftfe::utils::throwException(
           numTargetPointsFound >= numTargetPointsInput,
           " Number of points found is less than the input points \n");

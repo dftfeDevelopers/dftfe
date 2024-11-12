@@ -37,11 +37,12 @@ namespace dftfe
   public:
     InterpolateFromCellToLocalPoints(
       const std::shared_ptr<const dftfe::utils::FECell<3>> &srcCell,
-      unsigned int                                          numNodes);
+      unsigned int                                          numNodes,
+      bool memOpt);
 
     void
     setRealCoordinatesOfLocalPoints(unsigned int        numPoints,
-                                    std::vector<double> coordinates);
+                                    std::vector<double> &coordinates);
 
     void
     interpolate(
@@ -67,6 +68,9 @@ namespace dftfe
 
     const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
       d_BLASWrapperPtr;
+
+    std::vector<double> d_paramCoordinates;
+    bool d_memOpt;
   };
 
 } // namespace dftfe
