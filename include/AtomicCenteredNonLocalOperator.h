@@ -302,7 +302,7 @@ namespace dftfe
      * current processor. NOTE!! One must be careful here
      */
     const ValueType *
-    getCconjtansXLocalDataStructure(const unsigned int iAtom);
+    getCconjtansXLocalDataStructure(const unsigned int iAtom) const;
     /**
      * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and contraint nodes updated.
      * @param[in] src input nodal vector on which operator acts on.

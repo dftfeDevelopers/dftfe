@@ -1826,6 +1826,29 @@ namespace dftfe
               d_sphericalFnTimesVectorDevice.size());
             sphericalFnTimesVectorHostTemp.copyFrom(
               d_sphericalFnTimesVectorDevice);
+
+            const std::vector<unsigned int> &atomicNumber =
+              d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
+            const std::vector<unsigned int> atomIdsInProc =
+              d_atomCenteredSphericalFunctionContainer
+                ->getAtomIdsInCurrentProcess();
+            for (unsigned int iAtom = 0; iAtom < atomIdsInProc.size(); iAtom++)
+              {
+                const unsigned int atomId = atomIdsInProc[iAtom];
+                const unsigned int Znum   = atomicNumber[atomId];
+                const unsigned int numberOfSphericalFunctions =
+                  d_atomCenteredSphericalFunctionContainer
+                    ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+                d_sphericalFnTimesWavefunMatrix[atomId].clear();
+                d_sphericalFnTimesWavefunMatrix[atomId].resize(
+                  numberOfSphericalFunctions * d_numberWaveFunctions, 0.0);
+                const unsigned int offset = iAtom * d_maxSingleAtomContribution;
+                d_sphericalFnTimesWavefunMatrix[atomId].copyFrom(
+                  sphericalFnTimesVectorHostTemp,
+                  numberOfSphericalFunctions * d_numberWaveFunctions,
+                  offset * d_numberWaveFunctions,
+                  0);
+              }
           }
 #endif
       }
@@ -1834,36 +1857,11 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   const ValueType *
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
-    getCconjtansXLocalDataStructure(const unsigned int iAtom)
+    getCconjtansXLocalDataStructure(const unsigned int iAtom) const
   {
-    if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
-      {
-        const unsigned int atomId = d_atomCenteredSphericalFunctionContainer
-                                      ->getAtomIdsInCurrentProcess()[iAtom];
-        return d_sphericalFnTimesWavefunMatrix[atomId].begin();
-      }
-#if defined(DFTFE_WITH_DEVICE)
-    else
-      {
-        // extract from d_sphericalFnTimesWavefunctionMatrix
-        const std::vector<unsigned int> &atomicNumber =
-          d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
-        const unsigned int Znum = atomicNumber[iAtom];
-        const unsigned int numberOfSphericalFunctions =
-          d_atomCenteredSphericalFunctionContainer
-            ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
-        d_tempConjtansX.clear();
-        d_tempConjtansX.resize(numberOfSphericalFunctions *
-                               d_numberWaveFunctions);
-        const unsigned int offset = iAtom * d_maxSingleAtomContribution;
-        d_tempConjtansX.copyFrom(d_sphericalFnTimesVectorDevice,
-                                 numberOfSphericalFunctions *
-                                   d_numberWaveFunctions,
-                                 offset * d_numberWaveFunctions,
-                                 0);
-        return d_tempConjtansX.data();
-      }
-#endif
+    const unsigned int atomId = d_atomCenteredSphericalFunctionContainer
+                                  ->getAtomIdsInCurrentProcess()[iAtom];
+    return (d_sphericalFnTimesWavefunMatrix.find(atomId)->second).begin();
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
