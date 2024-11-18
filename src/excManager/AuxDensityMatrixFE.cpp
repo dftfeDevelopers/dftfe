@@ -250,20 +250,21 @@ namespace dftfe
             d_gradDensityValsSpinDownAllQuads[3 * iquad + idim] =
               gradDensityVals[3 * nQ + 3 * iquad + idim];
 
+        // Here it should be out of the gga loop
         if (projectionInputs.find("tauFunc") != projectionInputs.end())
           {
             const std::vector<double> &tauVals =
-              projectionInputs.find("tauFunc")
-                ->second;
+              projectionInputs.find("tauFunc")->second;
             d_tauValsTotalAllQuads.resize(nQ, 0);
             d_tauValsSpinUpAllQuads.resize(nQ, 0);
             d_tauValsSpinDownAllQuads.resize(nQ, 0);
             for (unsigned int iquad = 0; iquad < nQ; iquad++)
-            {
-              d_tauValsSpinUpAllQuads[iquad] = tauVals[iquad];
-              d_tauValsSpinDownAllQuads[iquad] = tauVals[nQ + iquad];
-              d_tauValsTotalAllQuads[iquad] = tauVals[iquad] + tauVals[nQ + iquad];
-            }
+              {
+                d_tauValsSpinUpAllQuads[iquad]   = tauVals[iquad];
+                d_tauValsSpinDownAllQuads[iquad] = tauVals[nQ + iquad];
+                d_tauValsTotalAllQuads[iquad] =
+                  tauVals[iquad] + tauVals[nQ + iquad];
+              }
           }
       }
   }

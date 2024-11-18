@@ -247,6 +247,12 @@ namespace dftfe
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradDensityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoOutValuesLpsp,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
@@ -300,6 +306,12 @@ namespace dftfe
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradDensityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauOutValues,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         AuxDensityXCInRepresentationPtr,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
@@ -313,7 +325,7 @@ namespace dftfe
       const bool smearedNuclearCharges);
 
 
-
+    // is it density in vaues or out values in the below declaration
     void
     computeXCEnergyTermsSpinPolarized(
       const std::shared_ptr<
@@ -329,6 +341,9 @@ namespace dftfe
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradDensityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauInValues,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         AuxDensityXCInRepresentationPtr,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>

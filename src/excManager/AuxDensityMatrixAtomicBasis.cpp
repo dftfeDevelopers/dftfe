@@ -451,9 +451,7 @@ namespace dftfe
     const std::vector<double> &quadpts,
     std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
       &wfcData)
-      {
-        
-      }
+  {}
 
   template <dftfe::utils::MemorySpace memorySpace>
   void

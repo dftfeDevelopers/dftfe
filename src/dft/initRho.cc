@@ -130,7 +130,8 @@ namespace dftfe
     const unsigned int n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
     const unsigned int nCells     = d_basisOperationsPtrHost->nCells();
     d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized ==1 ? 2 : 1);
+    // below resize is unnecessary as the same is
+    // done in "interpolateDensityNodalDataToQuadratureDataGeneral" function
     for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
       d_densityInQuadValues[iComp].resize(n_q_points * nCells);
 
@@ -138,6 +139,10 @@ namespace dftfe
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
 
     if (isGradDensityDataDependent)
       {
@@ -147,6 +152,16 @@ namespace dftfe
              ++iComp)
           d_gradDensityInQuadValues[iComp].resize(3 * n_q_points * nCells);
       }
+
+    // This below commented case is handled in computeInitTauFromPSI.cc
+
+    // if (isTauMGGA)
+    //   {
+    //     d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    //     for (unsigned int iComp = 0; iComp < d_tauInQuadValues.size();
+    //     ++iComp)
+    //         d_tauInQuadValues[iComp].resize(n_q_points * nCells);
+    //   }
 
     // Initialize electron density table storage for rhoOut only for Anderson
     // with Kerker for other mixing schemes it is done in density.cc as we need
@@ -350,8 +365,10 @@ namespace dftfe
           d_densityInNodalValues[0],
           d_densityInQuadValues[0],
           d_gradDensityInQuadValues[0],
+          d_tauInQuadValues[0],
           d_gradDensityInQuadValues[0],
-          isGradDensityDataDependent);
+          isGradDensityDataDependent,
+          isTauMGGA);
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
@@ -377,8 +394,10 @@ namespace dftfe
               d_densityInNodalValues[1],
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
+              d_tauInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent);
+              isGradDensityDataDependent,
+              isTauMGGA);
           }
 
         normalizeRhoInQuadValues();
@@ -665,6 +684,9 @@ namespace dftfe
               }
           }
 
+        // Should I not do sth similar for isTauMGGA? (Not done in the previous
+        // implementation)
+
         normalizeRhoInQuadValues();
       }
     //
@@ -705,6 +727,10 @@ namespace dftfe
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
 
     if (isGradDensityDataDependent)
       {
@@ -1198,6 +1224,10 @@ namespace dftfe
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   d_gradDensityInQuadValues[iComp][3 * iCell * n_q_points +
                                                    3 * q + idim] *= scaling;
+
+            // why don't we scale here for isTauMGGA case?
+            // In many cases of initrho we have not used d_tauinqaudValues at
+            // respective places of d_densityinquadvalues
           }
       }
     double chargeAfterScaling =

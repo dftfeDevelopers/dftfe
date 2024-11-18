@@ -1277,6 +1277,9 @@ namespace dftfe
         bool isGradDensityDataDependent =
           (d_excManagerPtr->getExcSSDFunctionalObj()
              ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+        const bool isTauMGGA =
+          (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+           ExcFamilyType::TauMGGA);
 
         interpolateDensityNodalDataToQuadratureDataGeneral(
           d_basisOperationsPtrElectroHost,
@@ -1285,8 +1288,10 @@ namespace dftfe
           d_densityInNodalValues[0],
           d_densityInQuadValues[0],
           d_gradDensityInQuadValues[0],
+          d_tauInQuadValues[0],
           d_gradDensityInQuadValues[0],
-          isGradDensityDataDependent);
+          isGradDensityDataDependent,
+          isTauMGGA);
 
         if (d_dftParamsPtr->spinPolarized == 1)
           {
@@ -1306,8 +1311,10 @@ namespace dftfe
               d_densityInNodalValues[1],
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
+              d_tauInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent);
+              isGradDensityDataDependent,
+              isTauMGGA);
           }
         if ((d_dftParamsPtr->solverMode == "GEOOPT"))
           {
@@ -1320,6 +1327,9 @@ namespace dftfe
 
             if (isGradDensityDataDependent)
               d_gradDensityOutQuadValues = d_gradDensityInQuadValues;
+            // unsure of the edit here for scan
+            if (isTauMGGA)
+              d_tauOutQuadValues = d_tauInQuadValues;
           }
 
         d_isRestartGroundStateCalcFromChk = true;
@@ -1380,6 +1390,10 @@ namespace dftfe
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
 
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
     // false option reinitializes vself bins from scratch wheras true option
     // only updates the boundary conditions
     const bool updateOnlyBinsBc = !updateImagesAndKPointsAndVselfBins;
@@ -1435,9 +1449,12 @@ namespace dftfe
                   d_rhoOutNodalValuesSplit,
                   d_densityInQuadValues[0],
                   d_gradDensityInQuadValues[0],
+                  d_tauInQuadValues[0],
                   d_gradDensityInQuadValues[0],
-                  isGradDensityDataDependent);
+                  isGradDensityDataDependent,
+                  isTauMGGA);
 
+                // why don't we put the corresponding d_tauinquadValues here?
                 addAtomicRhoQuadValuesGradients(d_densityInQuadValues[0],
                                                 d_gradDensityInQuadValues[0],
                                                 isGradDensityDataDependent);
@@ -1464,8 +1481,10 @@ namespace dftfe
               d_densityOutNodalValues[0],
               d_densityInQuadValues[0],
               d_gradDensityInQuadValues[0],
+              d_tauInQuadValues[0],
               d_gradDensityInQuadValues[0],
-              isGradDensityDataDependent);
+              isGradDensityDataDependent,
+              isTauMGGA);
 
             normalizeRhoInQuadValues();
 
@@ -1488,8 +1507,10 @@ namespace dftfe
               d_rhoOutNodalValuesSplit,
               d_densityInQuadValues[0],
               d_gradDensityInQuadValues[0],
+              d_tauInQuadValues[0],
               d_gradDensityInQuadValues[0],
-              isGradDensityDataDependent);
+              isGradDensityDataDependent,
+              isTauMGGA);
 
             addAtomicRhoQuadValuesGradients(d_densityInQuadValues[0],
                                             d_gradDensityInQuadValues[0],
@@ -2349,6 +2370,9 @@ namespace dftfe
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
 
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
     // call the mixing scheme with the mixing variables
     // Have to be called once for each variable
     // initialise the variables in the mixing scheme
@@ -2415,6 +2439,17 @@ namespace dftfe
                 d_dftParamsPtr->adaptAndersonMixingParameter);
           }
 
+        if (isTauMGGA)
+          {
+            d_mixingScheme.addMixingVariable(
+              mixingVariable::tau,
+              d_basisOperationsPtrElectroHost->JxWBasisData(),
+              true,
+              d_dftParamsPtr->mixingParameter *
+                d_dftParamsPtr->spinMixingEnhancementFactor,
+              d_dftParamsPtr->adaptAndersonMixingParameter);
+          }
+
 
         if (d_useHubbard)
           {
@@ -2469,10 +2504,21 @@ namespace dftfe
                   pcout << d_dftParamsPtr->mixingMethod
                         << " mixing, L2 norm of electron-density difference: "
                         << norm << std::endl;
+                if (isTauMGGA)
+                  {
+                    std::string errMsg = "LRDM in SCAN in not implemented.";
+                    dftfe::utils::throwException(false, errMsg);
+                  }
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
                      d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
               {
+                if (isTauMGGA)
+                  {
+                    std::string errMsg =
+                      "RESTA/KERKER in SCAN in not implemented.";
+                    dftfe::utils::throwException(false, errMsg);
+                  }
                 // Fill in New Kerker framework here
                 std::vector<double> norms(
                   d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
@@ -2557,8 +2603,10 @@ namespace dftfe
                       d_densityInNodalValues[iComp],
                       d_densityInQuadValues[iComp],
                       d_gradDensityInQuadValues[iComp],
+                      d_tauInQuadValues[iComp],
                       d_gradDensityInQuadValues[iComp],
-                      isGradDensityDataDependent);
+                      isGradDensityDataDependent,
+                      isTauMGGA);
                   }
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
@@ -2624,6 +2672,45 @@ namespace dftfe
                       }
                   }
 
+                if (isTauMGGA)
+                  {
+                    if (scfIter == 1)
+                      {
+                        d_tauResidualQuadValues.resize(
+                          d_tauOutQuadValues.size());
+                      }
+
+                    for (unsigned int iComp = 0;
+                         iComp < d_tauOutQuadValues.size();
+                         iComp++)
+                      {
+                        if (scfIter == 1)
+                            d_tauResidualQuadValues[iComp].resize(
+                              d_tauOutQuadValues[iComp].size());
+                            // why this reinit is required now?
+                        d_basisOperationsPtrElectroHost->reinit(
+                          0, 0, d_densityQuadratureIdElectro, false);
+                        double normTau;
+                        normTau = computeResidualQuadData(
+                          d_tauOutQuadValues[iComp],
+                          d_tauInQuadValues[iComp],
+                          d_tauResidualQuadValues[iComp],
+                          d_basisOperationsPtrElectroHost->JxWBasisData(),
+                          true);
+
+                        d_mixingScheme.addVariableToInHist(
+                          iComp == 0 ? mixingVariable::tau :
+                                        mixingVariable::magZ,
+                          d_tauInQuadValues[iComp].data(),
+                          d_tauInQuadValues[iComp].size());
+                        d_mixingScheme.addVariableToResidualHist(
+                          iComp == 0 ? mixingVariable::tau :
+                                        mixingVariable::magZ,
+                          d_tauResidualQuadValues[iComp].data(),
+                          d_tauResidualQuadValues[iComp].size());
+                      }
+                  }
+
                 if (d_useHubbard == true)
                   {
                     dftfe::utils::MemoryStorage<double,
@@ -2655,7 +2742,11 @@ namespace dftfe
                   d_dftParamsPtr->spinPolarized == 1 ?
                     std::vector<mixingVariable>{mixingVariable::rho,
                                                 mixingVariable::magZ} :
-                    std::vector<mixingVariable>{mixingVariable::rho});
+                    isTauMGGA ?
+                    std::vector<mixingVariable>{mixingVariable::rho,
+                                                mixingVariable::tau} 
+                    :std::vector<mixingVariable>{mixingVariable::rho}
+                    );
 
                 // update the mixing variables
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
@@ -2677,6 +2768,16 @@ namespace dftfe
                         d_gradDensityInQuadValues[iComp].size());
                   }
 
+                if (isTauMGGA)
+                  {
+                    for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
+                      {
+                        d_mixingScheme.mixVariable(
+                          mixingVariable::tau,
+                          d_tauInQuadValues[iComp].data(),
+                          d_tauInQuadValues[iComp].size());
+                      }
+                  }
 
 
                 if (d_useHubbard == true)
@@ -3639,6 +3740,8 @@ namespace dftfe
               d_densityOutQuadValues,
               d_gradDensityInQuadValues,
               d_gradDensityOutQuadValues,
+              d_tauInQuadValues,
+              d_tauOutQuadValues,
               d_auxDensityMatrixXCInPtr,
               d_auxDensityMatrixXCOutPtr,
               d_bQuadValuesAllAtoms,
@@ -3679,6 +3782,8 @@ namespace dftfe
               d_densityInQuadValues,
               d_densityOutQuadValues,
               d_gradDensityOutQuadValues,
+              d_tauInQuadValues,
+              d_tauOutQuadValues,
               d_densityTotalOutValuesLpspQuad,
               d_auxDensityMatrixXCInPtr,
               d_auxDensityMatrixXCOutPtr,
@@ -3959,6 +4064,8 @@ namespace dftfe
       d_densityInQuadValues,
       d_densityOutQuadValues,
       d_gradDensityOutQuadValues,
+      d_tauInQuadValues,
+      d_tauOutQuadValues,
       d_densityTotalOutValuesLpspQuad,
       d_auxDensityMatrixXCInPtr,
       d_auxDensityMatrixXCOutPtr,
@@ -5783,20 +5890,24 @@ namespace dftfe
                         const double *cellTauMagValues =
                           tauQuadValues[1].data() + iCell * nQuadsPerCell;
 
-                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                             ++iQuad)
                           tauValsForXC[iCell * nQuadsPerCell + iQuad] =
-                            cellTauValues[iQuad] / 2.0 + cellTauMagValues[iQuad] / 2.0;
-                        
-                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                            cellTauValues[iQuad] / 2.0 +
+                            cellTauMagValues[iQuad] / 2.0;
+
+                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                             ++iQuad)
                           tauValsForXC[iCell * nQuadsPerCell + iQuad] =
-                            cellTauValues[iQuad] / 2.0 - cellTauMagValues[iQuad] / 2.0;
-                        
+                            cellTauValues[iQuad] / 2.0 -
+                            cellTauMagValues[iQuad] / 2.0;
                       }
                   }
                 if (d_dftParamsPtr->nonLinearCoreCorrection)
                   {
-                     std::string errMsg = "NLCC is not implemented yet for SCAN.";
-                     dftfe::utils::throwException(false, errMsg);
+                    std::string errMsg =
+                      "NLCC is not implemented yet for SCAN.";
+                    dftfe::utils::throwException(false, errMsg);
                   }
               }
           }

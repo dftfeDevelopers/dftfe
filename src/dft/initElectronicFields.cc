@@ -18,6 +18,7 @@
 //
 #include <dft.h>
 #include <dftUtils.h>
+#include <densityCalculator.h>
 
 namespace dftfe
 {
@@ -138,6 +139,45 @@ namespace dftfe
 
     if (d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator, "initRho called");
+
+    if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+        ExcFamilyType::TauMGGA)
+      {
+        if (!d_dftParamsPtr->useDevice)
+          {
+            if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
+              {
+                computeInitTauFromPSI(
+                  &d_eigenVectorsFlattenedHost,
+                  &d_eigenVectorsRotFracDensityFlattenedHost,
+                  numElectrons,
+                  d_numEigenValues,
+                  d_numEigenValuesRR,
+                  eigenValues,
+                  fermiEnergy,
+                  fermiEnergyUp,
+                  fermiEnergyDown,
+                  d_basisOperationsPtrHost,
+                  d_BLASWrapperPtrHost,
+                  d_densityDofHandlerIndex,
+                  d_densityQuadratureId,
+                  d_kPointWeights,
+                  d_tauInQuadValues,
+                  d_mpiCommParent,
+                  interpoolcomm,
+                  interBandGroupComm,
+                  *d_dftParamsPtr,
+                  false);
+              }
+          }
+#ifdef DFTFE_WITH_DEVICE
+        if (d_dftParamsPtr->useDevice)
+          {
+            std::string errMsg = "GPU is not implemented yet in SCAN.";
+            dftfe::utils::throwException(false, errMsg);
+          }
+#endif
+      }
 
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)

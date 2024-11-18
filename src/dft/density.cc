@@ -32,9 +32,13 @@ namespace dftfe
     const bool isConsiderSpectrumSplitting,
     const bool isGroundState)
   {
-    bool isGradDensityDataDependent =
+    const bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
@@ -64,8 +68,10 @@ namespace dftfe
             d_densityOutNodalValues[iComp],
             d_densityOutQuadValues[iComp],
             d_gradDensityOutQuadValues[iComp],
+            d_tauOutQuadValues[iComp],
             d_gradDensityOutQuadValues[iComp],
-            isGradDensityDataDependent);
+            isGradDensityDataDependent,
+            isTauMGGA);
 
         if (d_dftParamsPtr->verbosity >= 3)
           {
@@ -89,6 +95,11 @@ namespace dftfe
             d_gradDensityOutQuadValues.resize(
               d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
           }
+        if (isTauMGGA)
+          {
+            d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                           1);
+          }
         for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
              ++iComp)
           d_densityOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
@@ -97,6 +108,8 @@ namespace dftfe
              ++iComp)
           d_gradDensityOutQuadValues[iComp].resize(3 * nQuadsPerCell * nCells);
 
+        for (unsigned int iComp = 0; iComp < d_tauOutQuadValues.size(); ++iComp)
+          d_tauOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
 
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
@@ -139,7 +152,9 @@ namespace dftfe
                             d_kPointWeights,
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
+                            d_tauOutQuadValues,
                             isGradDensityDataDependent,
+                            isTauMGGA,
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
@@ -223,6 +238,10 @@ namespace dftfe
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
 
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
     // cleanup of existing rho Out and rho In data
     clearRhoData();
     d_densityInQuadValues = d_densityOutQuadValues;
@@ -230,12 +249,17 @@ namespace dftfe
       {
         d_gradDensityInQuadValues = d_gradDensityOutQuadValues;
       }
+    if (isTauMGGA)
+      {
+        d_tauInQuadValues = d_tauOutQuadValues;
+      }
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
         d_densityInNodalValues = d_densityOutNodalValues;
+        d_tauInNodalValues     = d_tauOutNodalValues;
 
         // normalize rho
         const double charge =
@@ -244,6 +268,7 @@ namespace dftfe
         const double scalingFactor = ((double)numElectrons) / charge;
 
         // scale nodal vector with scalingFactor
+        // why this scaling is neeed?
         for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           d_densityInNodalValues[iComp] *= scalingFactor;
@@ -257,8 +282,10 @@ namespace dftfe
             d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
+            d_tauInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            isGradDensityDataDependent);
+            isGradDensityDataDependent,
+            isTauMGGA);
 
         d_densityOutQuadValues.resize(d_densityInNodalValues.size());
         for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
@@ -272,6 +299,14 @@ namespace dftfe
                  ++iComp)
               d_gradDensityOutQuadValues[iComp].resize(
                 d_gradDensityInQuadValues[iComp].size());
+          }
+
+        if (isTauMGGA)
+          {
+            d_tauOutQuadValues.resize(d_tauInNodalValues.size());
+            for (unsigned int iComp = 0; iComp < d_tauOutQuadValues.size();
+                 ++iComp)
+              d_tauOutQuadValues[iComp].resize(d_tauInQuadValues[iComp].size());
           }
       }
 
@@ -293,6 +328,9 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       gradDensityPRefinedNodalData;
 
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      tauPRefinedNodalData;
     // initialize variables to be used later
     const unsigned int dofs_per_cell =
       d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
@@ -332,6 +370,7 @@ namespace dftfe
 
     // allocate the storage to compute 2p nodal values from wavefunctions
     densityPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    tauPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
 
     // compute rho from wavefunctions at nodal locations of 2p DoFHandler
     // nodes in each cell
@@ -376,6 +415,8 @@ namespace dftfe
                         d_kPointWeights,
                         densityPRefinedNodalData,
                         gradDensityPRefinedNodalData,
+                        tauPRefinedNodalData,
+                        false,
                         false,
                         d_mpiCommParent,
                         interpoolcomm,

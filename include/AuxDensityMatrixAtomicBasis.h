@@ -34,7 +34,7 @@ namespace dftfe
       const std::vector<double> &quadpts,
       std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
         &densityData) override;
-    
+
     void
     applyLocalOperations(
       const std::vector<double> &quadpts,

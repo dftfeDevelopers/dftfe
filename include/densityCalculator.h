@@ -48,8 +48,41 @@ namespace dftfe
       &densityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  gradDensityValues,
+      &gradDensityValues,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  tauValues,
     const bool           isEvaluateGradRho,
+    const bool           isEvaluateTau,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams,
+    const bool           spectrumSplit);
+
+  template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
+  void
+  computeInitTauFromPSI(
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
+    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *XFrac,
+    const unsigned int                                          numElectrons,
+    const unsigned int                      totalNumWaveFunctions,
+    const unsigned int                      Nfr,
+    const std::vector<std::vector<double>> &eigenValues,
+    const double                            fermiEnergy,
+    const double                            fermiEnergyUp,
+    const double                            fermiEnergyDown,
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
+      &basisOperationsPtr,
+    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+      &                        BLASWrapperPtr,
+    const unsigned int         matrixFreeDofhandlerIndex,
+    const unsigned int         quadratureIndex,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  tauValues,
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
@@ -76,6 +109,24 @@ namespace dftfe
     double *                                    rho,
     double *                                    gradRho,
     const bool                                  isEvaluateGradRho);
+
+  template <typename NumberType>
+  void
+  computeTauFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+      &                                         BLASWrapperPtr,
+    const std::pair<unsigned int, unsigned int> cellRange,
+    const std::pair<unsigned int, unsigned int> vecRange,
+    double *                                    partialOccupVec,
+    NumberType *                                wfcQuadPointData,
+    NumberType *                                gradWfcQuadPointData,
+    double *kineticEnergyDensityCellsWfcContributions,
+    double *tau);
 
 #if defined(DFTFE_WITH_DEVICE)
   template <typename NumberType>

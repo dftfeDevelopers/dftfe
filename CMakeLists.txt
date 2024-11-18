@@ -58,7 +58,7 @@ SET(TARGET_SRC
   ./src/excManager/excDensityLDAClass.cpp
   ./src/excManager/excDensityGGAClass.cpp
   ./src/excManager/excDensityLLMGGAClass.cpp
-  ./src/excManager/excDensityTauMGGAClass.cpp
+  ./src/excManager/excTauMGGAClass.cpp
   ./src/excManager/excManager.cpp
   ./src/excManager/AuxDensityMatrixAtomicBasis.cpp
   ./src/excManager/AuxDensityMatrixFE.cpp

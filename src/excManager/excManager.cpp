@@ -21,6 +21,7 @@
 #include <excDensityGGAClass.h>
 #include <excDensityLDAClass.h>
 #include <excDensityLLMGGAClass.h>
+#include <excTauMGGAClass.h>
 #include "ExcDFTPlusU.h"
 
 namespace dftfe
@@ -127,6 +128,15 @@ namespace dftfe
             xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
           excObj = std::make_shared<excDensityLLMGGAClass<memorySpace>>(
             funcXPtr, funcCPtr, modelXCInputFile);
+        }
+      else if (XCType == "R2SCAN")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_MGGA_X_R2SCAN, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_MGGA_C_R2SCAN, XC_POLARIZED);
+          excObj =
+            std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr, funcCPtr);
         }
       else
         {

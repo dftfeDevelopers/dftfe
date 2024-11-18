@@ -1052,6 +1052,8 @@ namespace dftfe
       d_densityInQuadValues,
       d_densityOutQuadValues,
       d_gradDensityOutQuadValues,
+      d_tauInQuadValues,
+      d_tauOutQuadValues,
       d_densityTotalOutValuesLpspQuad,
       d_auxDensityMatrixXCInPtr,
       d_auxDensityMatrixXCOutPtr,
