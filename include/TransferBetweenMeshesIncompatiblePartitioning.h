@@ -59,6 +59,9 @@ namespace dftfe
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
         &  outputQuadData,
+	 const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
       bool resizeOutputVec); // override;
 
     void
@@ -72,6 +75,9 @@ namespace dftfe
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
         &  outputQuadData,
+	 const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
       bool resizeOutputVec); // override;
 
 
@@ -88,6 +94,9 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
         &  outputQuadData,
+	 const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
       bool resizeOutputVec); // override;
 
     void
@@ -103,6 +112,9 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
         &  outputQuadData,
+	 const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
       bool resizeOutputVec); // override;
 
   private:

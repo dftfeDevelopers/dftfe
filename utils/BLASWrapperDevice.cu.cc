@@ -1506,6 +1506,30 @@ namespace dftfe
         copyFromVecStartingContiguousBlockIds);
     }
 
+        template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const dftfe::size_type         startingVecId,
+      const ValueType1 *             copyFromVec,
+      ValueType2 *                   copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+    {
+      stridedCopyToBlockDeviceKernel<<<(contiguousBlockSize *
+                                        numContiguousBlocks) /
+                                           dftfe::utils::DEVICE_BLOCK_SIZE +
+                                         1,
+                                       dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+	startingVecId,
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
+        copyFromVecStartingContiguousBlockIds);
+    }
+
+
 
     template <typename ValueType1, typename ValueType2>
     void

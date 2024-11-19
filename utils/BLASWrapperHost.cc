@@ -1032,6 +1032,26 @@ namespace dftfe
                 1);
         }
     }
+    template <typename ValueType1, typename ValueType2>
+      void
+      BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const dftfe::size_type         startingVecId,
+        const ValueType1 *             copyFromVec,
+        ValueType2 *                   copyToVecBlock,
+        const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      {
+	       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
+        {
+          xcopy(contiguousBlockSize,
+                copyFromVec + copyFromVecStartingContiguousBlockIds[iBlock] + startingVecId,
+                1,
+                copyToVecBlock + iBlock * contiguousBlockSize,
+                1);
+        }
+
+      }
 
 
     template <typename ValueType1, typename ValueType2>
@@ -1527,6 +1547,43 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
+      const std::complex<float> *    copyFromVec,
+      std::complex<float> *          copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+
+        template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const dftfe::size_type         startingVecId,
+      const double *                 copyFromVec,
+      double *                       copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const dftfe::size_type         startingVecId,
+      const float *                  copyFromVec,
+      float *                        copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+        template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const dftfe::size_type         startingVecId,
+      const std::complex<double> *   copyFromVec,
+      std::complex<double> *         copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const dftfe::size_type         startingVecId,
       const std::complex<float> *    copyFromVec,
       std::complex<float> *          copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);

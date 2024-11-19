@@ -465,6 +465,9 @@ namespace functionalTest
       blockSize,
       fullFlattenedArrayCellLocalProcIndexIdMapParentMemStorage,
       quadValuesChildComputed,
+      blockSize,
+      blockSize,
+      0,
       true);
 
 
@@ -632,6 +635,9 @@ namespace functionalTest
       blockSize,
       fullFlattenedArrayCellLocalProcIndexIdMapChildMemStorage,
       quadValuesParentComputed,
+      blockSize,
+      blockSize,
+      0,
       true);
 
     std::cout << std::flush;

@@ -387,6 +387,9 @@ namespace dftfe
       dftfe::utils::MemoryStorage<T,
                                   dftfe::utils::MemorySpace::HOST>
         &  outputData, // this is not std::vector
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
       bool resizeData)
   {
     if (resizeData)
@@ -426,7 +429,7 @@ namespace dftfe
             BLASWrapperPtr->xcopy(
               numberOfVectors,
               inputVec.begin() +
-                mapVecToCells[d_cumulativeDofs[iElemSrc] + iNode],
+                mapVecToCells[d_cumulativeDofs[iElemSrc] + iNode] + startIndexOfInputData,
               inc,
               &cellLevelInputVec[numberOfVectors * iNode],
               inc);
@@ -445,7 +448,7 @@ namespace dftfe
               &cellLevelOutputPoints[iPoint * numberOfVectors],
               inc,
               &outputData[d_mapCellLocalToProcLocal[iElemSrc][iPoint] *
-                          numberOfVectors],
+                          blockSizeOfOutputData],
               inc);
           }
       }
@@ -466,7 +469,10 @@ namespace dftfe
       dftfe::utils::MemoryStorage<T,
                                   memorySpace>
         &  outputData, // this is not std::vector
-      bool resizeData)
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+	bool resizeData)
   {
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
@@ -494,7 +500,7 @@ namespace dftfe
                  iPoint++)
               {
                 cellLocalToProcLocal[pointIndex] =
-                  d_mapCellLocalToProcLocal[iCell][iPoint] * numberOfVectors;
+                  d_mapCellLocalToProcLocal[iCell][iPoint] * blockSizeOfOutputData;
                 pointIndex++;
               }
           }
@@ -517,6 +523,7 @@ namespace dftfe
 
     BLASWrapperPtr->stridedCopyToBlock(numberOfVectors,
                                        totalDofsInCells,
+				       startIndexOfInputData,
                                        inputVec.data(),
                                        d_cellLevelParentNodalMemSpace.begin(),
                                        mapVecToCells.data());
