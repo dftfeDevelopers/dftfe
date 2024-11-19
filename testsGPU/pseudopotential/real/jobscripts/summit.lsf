@@ -24,6 +24,7 @@ jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe p
 jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_14.prm > outputMg2x_14
 jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_15.prm > outputMg2x_15
 jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileMg2x_16.prm > outputMg2x_16
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe Pt3Ni_hubbard_spin.prm   > outputPt3Ni_hubbard_spin
 
 jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
 jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d packed -b packed:2 ./dftfe parameterFileMg2x_1_spingpu.prm > outputMg2x_1_spin_gpu

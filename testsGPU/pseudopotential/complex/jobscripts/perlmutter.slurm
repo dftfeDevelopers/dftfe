@@ -36,3 +36,5 @@ srun ./dftfe parameterFileMg2x_7.prm > outputMg2x_7
 srun ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
 
 srun ./dftfe parameterFileBe.prm > outputBe
+
+srun ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard

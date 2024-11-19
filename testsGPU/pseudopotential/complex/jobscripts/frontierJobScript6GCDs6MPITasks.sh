@@ -32,3 +32,4 @@ srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_8.prm > outputMg
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_9.prm > outputMg2x_9
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_10.prm > outputMg2x_10
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBe.prm > outputBe
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileTiAl.prm > outputTiAl_hubbard

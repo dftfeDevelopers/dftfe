@@ -218,7 +218,7 @@ namespace dftfe
           "RESTART SP FROM NO SP",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..");
+          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false.");
       }
       prm.leave_subsection();
 
@@ -228,8 +228,7 @@ namespace dftfe
           "ATOMIC COORDINATES FILE",
           "",
           dealii::Patterns::Anything(),
-          "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
-
+          "[Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.");
         prm.declare_entry(
           "ATOMIC DISP COORDINATES FILE",
           "",
@@ -551,11 +550,10 @@ namespace dftfe
             dealii::Patterns::Bool(),
             "[Developer] Use a composite generator flat top and Gaussian generator for mesh movement and configurational force computation.");
 
-          prm.declare_entry(
-            "USE MESH SIZES FROM ATOM LOCATIONS FILE",
-            "false",
-            dealii::Patterns::Bool(),
-            "[Developer] Use mesh sizes from atom locations file.");
+          prm.declare_entry("MESH SIZES FILE",
+                            "",
+                            dealii::Patterns::Anything(),
+                            "[Developer] Use mesh sizes from this file.");
         }
         prm.leave_subsection();
       }
@@ -683,10 +681,10 @@ namespace dftfe
 
 
         prm.declare_entry(
-          "START MAGNETIZATION",
+          "TOTAL MAGNETIZATION",
           "0.0",
-          dealii::Patterns::Double(-0.5, 0.5),
-          "[Standard] Starting magnetization to be used for spin-polarized DFT calculations (must be between -0.5 and +0.5). Corresponding magnetization per simulation domain will be (2 x START MAGNETIZATION x Number of electrons) a.u. ");
+          dealii::Patterns::Double(-1.0, 1.0),
+          "[Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x Number of electrons) a.u. ");
 
         prm.declare_entry(
           "PSP CUTOFF IMAGE CHARGES",
@@ -801,7 +799,7 @@ namespace dftfe
 
         prm.declare_entry(
           "SPIN MIXING ENHANCEMENT FACTOR",
-          "4.0",
+          "1.0",
           dealii::Patterns::Double(-1e-12, 100.0),
           "[Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.");
 
@@ -1238,7 +1236,7 @@ namespace dftfe
     absLinearSolverTolerance          = 1e-10;
     selfConsistentSolverTolerance     = 1e-10;
     TVal                              = 500;
-    start_magnetization               = 0.0;
+    tot_magnetization                 = 0.0;
     absLinearSolverToleranceHelmholtz = 1e-10;
     chebyshevTolerance                = 1e-02;
     mixingMethod                      = "";
@@ -1266,6 +1264,7 @@ namespace dftfe
     orthogType                  = "";
     algoType                    = "";
     pseudoPotentialFile         = "";
+    meshSizesFile               = "";
 
     std::string coordinatesGaussianDispFile = "";
 
@@ -1346,7 +1345,6 @@ namespace dftfe
     gaussianOrderMoveMeshToAtoms                   = 4.0;
     useFlatTopGenerator                            = false;
     diracDeltaKernelScalingConstant                = 0.1;
-    useMeshSizesFromAtomsFile                      = false;
     chebyshevFilterPolyDegreeFirstScfScalingFactor = 1.34;
     useDensityMatrixPerturbationRankUpdates        = false;
     smearedNuclearCharges                          = false;
@@ -1570,8 +1568,7 @@ namespace dftfe
         gaussianOrderMoveMeshToAtoms =
           prm.get_double("GAUSSIAN ORDER MOVE MESH TO ATOMS");
         useFlatTopGenerator = prm.get_bool("USE FLAT TOP GENERATOR");
-        useMeshSizesFromAtomsFile =
-          prm.get_bool("USE MESH SIZES FROM ATOM LOCATIONS FILE");
+        meshSizesFile       = prm.get("MESH SIZES FILE");
       }
       prm.leave_subsection();
     }
@@ -1619,7 +1616,7 @@ namespace dftfe
       modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
       auxBasisTypeXC        = prm.get("AUX BASIS TYPE");
       auxBasisDataXC        = prm.get("AUX BASIS DATA");
-      start_magnetization   = prm.get_double("START MAGNETIZATION");
+      tot_magnetization     = prm.get_double("TOTAL MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       netCharge             = prm.get_double("NET CHARGE");
 
@@ -1848,12 +1845,6 @@ namespace dftfe
         !constraintMagnetization,
         dealii::ExcMessage(
           "DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
-
-    if (spinPolarized == 1 && !constraintMagnetization)
-      AssertThrow(
-        std::abs(std::abs(start_magnetization) - 0.5) > 1e-6,
-        dealii::ExcMessage(
-          "DFT-FE Error: START MAGNETIZATION =+-0.5 only applicable in case of CONSTRAINT MAGNETIZATION set to ON."));
 
     if (verbosity >= 1 &&
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)

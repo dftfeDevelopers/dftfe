@@ -23,6 +23,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <cublas_v2.h>
 #include "BLASWrapperDeviceKernels.cc"
+
 namespace dftfe
 {
   namespace linearAlgebra
@@ -280,6 +281,8 @@ namespace dftfe
                                                             beta,
                                                             C,
                                                             int(ldc));
+
+
       DEVICEBLAS_API_CHECK(status);
     }
 

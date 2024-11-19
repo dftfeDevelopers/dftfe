@@ -75,35 +75,37 @@ Energy residual  : 1.8279e-04
 Energy residual  : 4.5154e-05
 Energy residual  : 1.4353e-04
 Energy residual  : 3.6060e-05
-Energy residual  : 1.8361e-06
+Energy residual  : 1.8359e-06
 Energy residual  : 6.1940e-05
 Energy residual  : 1.4449e-05
 Energy residual  : 7.4752e-07
 Energy residual  : 6.2573e-06
-Energy residual  : 1.3611e-07
-Energy residual  : 2.4380e-08
-Energy residual  : 1.9366e-08
-Energy residual  : 6.0081e-08
-Energy residual  : 9.4978e-08
-Energy residual  : 7.0313e-08
-Energy residual  : 6.3226e-11
-Energy residual  : 2.9872e-09
-Energy residual  : 1.3124e-09
-Energy residual  : 2.0623e-09
-Energy residual  : 7.2825e-11
-Energy residual  : 9.5127e-10
-Energy residual  : 8.9943e-10
-Energy residual  : 5.0335e-10
-Energy residual  : 2.8920e-11
-Energy residual  : 2.6438e-10
-Energy residual  : 1.4812e-10
-Energy residual  : 5.6850e-10
-Energy residual  : 2.9292e-10
+Energy residual  : 1.3591e-07
+Energy residual  : 2.4631e-08
+Energy residual  : 1.9361e-08
+Energy residual  : 6.0322e-08
+Energy residual  : 9.4943e-08
+Energy residual  : 7.0102e-08
+Energy residual  : 6.1400e-11
+Energy residual  : 2.9491e-09
+Energy residual  : 1.5102e-09
+Energy residual  : 2.0668e-09
+Energy residual  : 7.4225e-11
+Energy residual  : 9.7089e-10
+Energy residual  : 9.6370e-10
+Energy residual  : 5.7421e-10
+Energy residual  : 3.1751e-11
+Energy residual  : 2.6730e-10
+Energy residual  : 1.5174e-10
+Energy residual  : 5.6761e-10
+Energy residual  : 2.8713e-10
 SCF iterations converged to the specified tolerance after: 37 iterations.
 
 Energy computations (Hartree) 
 -------------------
              Total energy:       -1673.56610063
+Absolute magnetization: 5.344
+Net magnetization     : -5.342
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------

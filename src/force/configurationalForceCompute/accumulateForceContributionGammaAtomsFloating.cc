@@ -38,8 +38,17 @@ namespace dftfe
 
         if (forceContributionLocalGammaAtoms.find(iAtom) !=
             forceContributionLocalGammaAtoms.end())
-          forceContributionLocalGammaiAtomLocal =
-            forceContributionLocalGammaAtoms.find(iAtom)->second;
+          {
+            forceContributionLocalGammaiAtomLocal =
+              forceContributionLocalGammaAtoms.find(iAtom)->second;
+          }
+        else
+          {
+            std::fill(forceContributionLocalGammaiAtomLocal.begin(),
+                      forceContributionLocalGammaiAtomLocal.end(),
+                      0.0);
+          }
+
         // accumulate value
         MPI_Allreduce(&(forceContributionLocalGammaiAtomLocal[0]),
                       &(forceContributionLocalGammaiAtomGlobal[0]),

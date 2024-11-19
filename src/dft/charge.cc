@@ -209,12 +209,13 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  double
+  void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalMagnetization(
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &magQuadValues)
   {
-    double                       normValue = 0.0;
+    double                       normValue    = 0.0;
+    double                       absNormValue = 0.0;
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     dealii::FEValues<3> fe_values(FE,
@@ -236,11 +237,22 @@ namespace dftfe
               {
                 normValue += (magQuadValues[iCell * n_q_points + q_point]) *
                              fe_values.JxW(q_point);
+                absNormValue +=
+                  std::abs(magQuadValues[iCell * n_q_points + q_point]) *
+                  fe_values.JxW(q_point);
               }
             ++iCell;
           }
       }
-    return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
+    absNormValue = dealii::Utilities::MPI::sum(absNormValue, mpi_communicator);
+    normValue    = dealii::Utilities::MPI::sum(normValue, mpi_communicator);
+    const auto default_precision{std::cout.precision()};
+    if (d_dftParamsPtr->reproducible_output)
+      pcout << std::setprecision(3);
+    pcout << "Absolute magnetization: " << absNormValue << std::endl;
+    pcout << "Net magnetization     : " << normValue << std::endl;
+    if (d_dftParamsPtr->reproducible_output)
+      pcout << std::setprecision(default_precision);
   }
 
   //

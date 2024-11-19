@@ -673,23 +673,23 @@
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
-\item {\it Parameter name:} {\tt START MAGNETIZATION}
-\phantomsection\label{parameters:DFT functional parameters/START MAGNETIZATION}
-\label{parameters:DFT_20functional_20parameters/START_20MAGNETIZATION}
+\item {\it Parameter name:} {\tt TOTAL MAGNETIZATION}
+\phantomsection\label{parameters:DFT functional parameters/TOTAL MAGNETIZATION}
+\label{parameters:DFT_20functional_20parameters/TOTAL_20MAGNETIZATION}
 
 
-\index[prmindex]{START MAGNETIZATION}
-\index[prmindexfull]{DFT functional parameters!START MAGNETIZATION}
+\index[prmindex]{TOTAL MAGNETIZATION}
+\index[prmindexfull]{DFT functional parameters!TOTAL MAGNETIZATION}
 {\it Value:} 0.0
 
 
 {\it Default:} 0.0
 
 
-{\it Description:} [Standard] Starting magnetization to be used for spin-polarized DFT calculations (must be between -0.5 and +0.5). Corresponding magnetization per simulation domain will be (2 x START MAGNETIZATION x Number of electrons) a.u. 
+{\it Description:} [Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x Number of electrons) a.u. 
 
 
-{\it Possible values:} A floating point number $v$ such that $-0.5 \leq v \leq 0.5$
+{\it Possible values:} A floating point number $v$ such that $-1.0 \leq v \leq 1.0$
 \end{itemize}
 
 
@@ -1161,23 +1161,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE MESH SIZES FROM ATOM LOCATIONS FILE}
-\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/USE MESH SIZES FROM ATOM LOCATIONS FILE}
-\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/USE_20MESH_20SIZES_20FROM_20ATOM_20LOCATIONS_20FILE}
+\item {\it Parameter name:} {\tt MESH SIZES FILE}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/MESH SIZES FILE}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/MESH_20SIZES_20FILE}
 
 
-\index[prmindex]{USE MESH SIZES FROM ATOM LOCATIONS FILE}
-\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!USE MESH SIZES FROM ATOM LOCATIONS FILE}
-{\it Value:} false
+\index[prmindex]{MESH SIZES FILE}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZES FILE}
+{\it Value:}
 
 
-{\it Default:} false
+{\it Default:}
 
 
-{\it Description:} [Developer] Use mesh sizes from atom locations file.
+{\it Description:} [Developer] Use mesh sizes from this file.
 
 
-{\it Possible values:} A boolean value (true or false)
+{\it Possible values:} Any string
 \end{itemize}
 
 \subsection{Parameters in section \tt GPU}
@@ -1305,7 +1305,7 @@
 {\it Default:} 
 
 
-{\it Description:} [Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
+{\it Description:} [Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.
 
 
 {\it Possible values:} Any string
@@ -2300,7 +2300,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..
+{\it Description:} [Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2487,16 +2487,16 @@
 
 \index[prmindex]{SPIN MIXING ENHANCEMENT FACTOR}
 \index[prmindexfull]{SCF parameters!SPIN MIXING ENHANCEMENT FACTOR}
-{\it Value:} 4.0
+{\it Value:} 1.0
 
 
-{\it Default:} 4.0
+{\it Default:} 1.0
 
 
 {\it Description:} [Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.
 
 
-{\it Possible values:} A floating point number $v$ such that $-1e-12 \leq v \leq 10$
+{\it Possible values:} A floating point number $v$ such that $-1e-12 \leq v \leq 100$
 \item {\it Parameter name:} {\tt RESTA FERMI WAVEVECTOR}
 \phantomsection\label{parameters:SCF parameters/RESTA FERMI WAVEVECTOR}
 \label{parameters:SCF_20parameters/RESTA_20FERMI_20WAVEVECTOR}

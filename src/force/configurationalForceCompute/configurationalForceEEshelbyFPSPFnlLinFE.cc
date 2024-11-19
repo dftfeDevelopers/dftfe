@@ -76,6 +76,8 @@ namespace dftfe
 
     const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
     std::map<unsigned int, std::vector<double>> forceContributionFnlGammaAtoms;
+    std::map<unsigned int, std::vector<double>>
+      forceContributionFnlGammaAtomsHubbard;
 
     const bool isPseudopotential = d_dftParams.isPseudopotential;
 
@@ -215,9 +217,15 @@ namespace dftfe
         std::vector<dataTypes::number>
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened;
 
+        std::vector<dataTypes::number>
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard;
+
 #ifdef USE_COMPLEX
         std::vector<dataTypes::number>
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened;
+
+        std::vector<dataTypes::number>
+          projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard;
 #endif
 
         if (isPseudopotential)
@@ -239,6 +247,27 @@ namespace dftfe
 #endif
           }
 
+        if (dftPtr->isHubbardCorrectionsUsed())
+          {
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+              .resize(numKPoints *
+                        dftPtr->getHubbardClassPtr()
+                          ->getNonLocalOperator()
+                          ->getTotalNonTrivialSphericalFnsOverAllCells() *
+                        numQuadPointsNLP * 3,
+                      dataTypes::number(0.0));
+
+#ifdef USE_COMPLEX
+            projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
+              .resize(numKPoints *
+                        dftPtr->getHubbardClassPtr()
+                          ->getNonLocalOperator()
+                          ->getTotalNonTrivialSphericalFnsOverAllCells() *
+                        numQuadPointsNLP,
+                      dataTypes::number(0.0));
+#endif
+          }
+
 
 
 #if defined(DFTFE_WITH_DEVICE)
@@ -252,6 +281,8 @@ namespace dftfe
               dftPtr->d_nlpspQuadratureId,
               dftPtr->d_BLASWrapperPtr,
               dftPtr->d_oncvClassPtr,
+              dftPtr->getHubbardClassPtr(),
+              dftPtr->isHubbardCorrectionsUsed(),
               dftPtr->d_eigenVectorsFlattenedDevice.begin(),
               d_dftParams.spinPolarized,
               spinIndex,
@@ -266,8 +297,12 @@ namespace dftfe
               elocWfcEshelbyTensorQuadValuesH.data(),
               projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                 .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+                .data(),
 #  ifdef USE_COMPLEX
               projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
                 .data(),
 #  endif
               d_mpiCommParent,
@@ -289,12 +324,15 @@ namespace dftfe
           {
             MPI_Barrier(d_mpiCommParent);
             double host_time = MPI_Wtime();
+
             force::wfcContractionsForceKernelsAllH(
               dftPtr->d_basisOperationsPtrHost,
               dftPtr->d_densityQuadratureId,
               dftPtr->d_nlpspQuadratureId,
               dftPtr->d_BLASWrapperPtrHost,
               dftPtr->d_oncvClassPtr,
+              dftPtr->getHubbardClassPtr(),
+              dftPtr->isHubbardCorrectionsUsed(),
               dftPtr->d_eigenVectorsFlattenedHost.begin(),
               d_dftParams.spinPolarized,
               spinIndex,
@@ -309,8 +347,12 @@ namespace dftfe
               elocWfcEshelbyTensorQuadValuesH.data(),
               projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                 .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+                .data(),
 #ifdef USE_COMPLEX
               projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
                 .data(),
 #endif
               d_mpiCommParent,
@@ -320,6 +362,32 @@ namespace dftfe
               false,
               d_dftParams);
 
+            /*
+            double
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbardNorm
+            = 0.0; for ( unsigned int i= 0 ; i <
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard.size();
+            i++)
+              {
+                projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbardNorm
+            +=
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard[i]*
+                                                                                                     projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard[i];
+              }
+
+            MPI_Allreduce(MPI_IN_PLACE,
+                          &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbardNorm,
+                          1,
+                          MPI_DOUBLE,
+                          MPI_SUM,
+                          dftPtr->mpi_communicator);
+
+            std::cout<<" Norm of
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbardNorm
+            =
+            "<<projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbardNorm<<"\n";
+
+      */
             MPI_Barrier(d_mpiCommParent);
             host_time = MPI_Wtime() - host_time;
 
@@ -409,6 +477,38 @@ namespace dftfe
             dealii::AlignedVector<
               dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
               FVectQuads(numQuadPointsNLP, zeroTensor3);
+
+            const unsigned int numNonLocalAtomsCurrentProcessPsP =
+              (dftPtr->d_oncvClassPtr->getNonLocalOperator()
+                 ->getTotalAtomInCurrentProcessor());
+
+            std::vector<int> nonLocalAtomIdPsP, globalChargeIdNonLocalAtomPsP;
+            nonLocalAtomIdPsP.resize(numNonLocalAtomsCurrentProcessPsP);
+            globalChargeIdNonLocalAtomPsP.resize(
+              numNonLocalAtomsCurrentProcessPsP);
+
+            std::vector<unsigned int> numberPseudoWaveFunctionsPerAtomPsP;
+            numberPseudoWaveFunctionsPerAtomPsP.resize(
+              numNonLocalAtomsCurrentProcessPsP);
+            for (unsigned int iAtom = 0;
+                 iAtom < numNonLocalAtomsCurrentProcessPsP;
+                 iAtom++)
+              {
+                nonLocalAtomIdPsP[iAtom] =
+                  dftPtr->d_oncvClassPtr->getAtomIdInCurrentProcessor(iAtom);
+                globalChargeIdNonLocalAtomPsP[iAtom] =
+                  dftPtr->d_atomIdPseudopotentialInterestToGlobalId
+                    .find(nonLocalAtomIdPsP[iAtom])
+                    ->second;
+                numberPseudoWaveFunctionsPerAtomPsP[iAtom] =
+                  dftPtr->d_oncvClassPtr
+                    ->getTotalNumberOfSphericalFunctionsForAtomId(
+                      nonLocalAtomIdPsP[iAtom]);
+              }
+
+            const std::shared_ptr<
+              AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+              oncvNonLocalOp = dftPtr->d_oncvClassPtr->getNonLocalOperator();
             for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
                  ++cell)
               {
@@ -419,6 +519,10 @@ namespace dftfe
                   forceContributionFnlGammaAtoms,
                   matrixFreeData,
                   forceEvalNLP,
+                  oncvNonLocalOp,
+                  numNonLocalAtomsCurrentProcessPsP,
+                  globalChargeIdNonLocalAtomPsP,
+                  numberPseudoWaveFunctionsPerAtomPsP,
                   cell,
                   cellIdToCellNumberMap,
 #ifdef USE_COMPLEX
@@ -435,6 +539,10 @@ namespace dftfe
                       FVectQuads,
                       matrixFreeData,
                       numQuadPointsNLP,
+                      oncvNonLocalOp,
+                      numNonLocalAtomsCurrentProcessPsP,
+                      globalChargeIdNonLocalAtomPsP,
+                      numberPseudoWaveFunctionsPerAtomPsP,
                       cell,
                       cellIdToCellNumberMap,
                       dftPtr->d_oncvClassPtr->getNonLocalOperator()
@@ -458,6 +566,104 @@ namespace dftfe
                   } // no floating charges check
               }     // macro cell loop
           }         // pseudopotential check
+
+        if (dftPtr->isHubbardCorrectionsUsed())
+          {
+            dealii::AlignedVector<
+              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+              FVectHubbardQuads(numQuadPointsNLP, zeroTensor3);
+
+            const unsigned int numNonLocalAtomsCurrentProcessHubbard =
+              (dftPtr->getHubbardClassPtr()
+                 ->getNonLocalOperator()
+                 ->getTotalAtomInCurrentProcessor());
+
+            std::vector<int> nonLocalAtomIdHubbard,
+              globalChargeIdNonLocalAtomHubbard;
+            nonLocalAtomIdHubbard.resize(numNonLocalAtomsCurrentProcessHubbard);
+            globalChargeIdNonLocalAtomHubbard.resize(
+              numNonLocalAtomsCurrentProcessHubbard);
+
+            std::vector<unsigned int> numberPseudoWaveFunctionsPerAtomHubbard;
+            numberPseudoWaveFunctionsPerAtomHubbard.resize(
+              numNonLocalAtomsCurrentProcessHubbard);
+            for (unsigned int iAtom = 0;
+                 iAtom < numNonLocalAtomsCurrentProcessHubbard;
+                 iAtom++)
+              {
+                globalChargeIdNonLocalAtomHubbard[iAtom] =
+                  dftPtr->getHubbardClassPtr()->getGlobalAtomId(iAtom);
+                numberPseudoWaveFunctionsPerAtomHubbard[iAtom] =
+                  dftPtr->getHubbardClassPtr()
+                    ->getTotalNumberOfSphericalFunctionsForAtomId(iAtom);
+              }
+
+            const std::shared_ptr<
+              AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+              hubbardNonLocalOp =
+                dftPtr->getHubbardClassPtr()->getNonLocalOperator();
+
+            for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
+                 ++cell)
+              {
+                forceEvalNLP.reinit(cell);
+
+                // compute FnlGammaAtoms  (contibution due to Gamma(Rj))
+                FnlGammaAtomsElementalContribution(
+                  forceContributionFnlGammaAtomsHubbard,
+                  matrixFreeData,
+                  forceEvalNLP,
+                  hubbardNonLocalOp,
+                  numNonLocalAtomsCurrentProcessHubbard,
+                  globalChargeIdNonLocalAtomHubbard,
+                  numberPseudoWaveFunctionsPerAtomHubbard,
+                  cell,
+                  cellIdToCellNumberMap,
+#ifdef USE_COMPLEX
+                  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard,
+#endif
+                  dftPtr->getHubbardClassPtr()
+                    ->getNonLocalOperator()
+                    ->getAtomCenteredKpointIndexedSphericalFnQuadValues(),
+                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard);
+
+
+                if (!d_dftParams.floatingNuclearCharges)
+                  {
+                    FnlGammaxElementalContribution(
+                      FVectHubbardQuads,
+                      matrixFreeData,
+                      numQuadPointsNLP,
+                      hubbardNonLocalOp,
+                      numNonLocalAtomsCurrentProcessHubbard,
+                      globalChargeIdNonLocalAtomHubbard,
+                      numberPseudoWaveFunctionsPerAtomHubbard,
+                      cell,
+                      cellIdToCellNumberMap,
+                      dftPtr->getHubbardClassPtr()
+                        ->getNonLocalOperator()
+                        ->getAtomCenteredKpointIndexedSphericalFnQuadValues(),
+                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard);
+
+                    for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
+                      forceEvalNLP.submit_value(spinPolarizedFactorVect *
+                                                  FVectHubbardQuads[q],
+                                                q);
+
+                    forceEvalNLP.integrate(dealii::EvaluationFlags::values);
+
+#ifdef USE_COMPLEX
+                    // TODO check if this can be re used
+                    forceEvalNLP.distribute_local_to_global(
+                      d_configForceVectorLinFEKPoints);
+#else
+                    // TODO check if this can be re used
+                    forceEvalNLP.distribute_local_to_global(
+                      d_configForceVectorLinFE);
+#endif
+                  } // no floating charges check
+              }     // macro cell loop
+          }         // isHubbardCorrectionsUsed() check
       }             // spin index
 
     // add global Fnl contribution due to Gamma(Rj) to the configurational force
@@ -485,6 +691,32 @@ namespace dftfe
         else
           distributeForceContributionFnlGammaAtoms(
             forceContributionFnlGammaAtoms);
+      }
+
+    if (dftPtr->isHubbardCorrectionsUsed())
+      {
+        if (d_dftParams.spinPolarized == 1)
+          for (auto &iter : forceContributionFnlGammaAtomsHubbard)
+            {
+              std::vector<double> &fnlvec = iter.second;
+              for (unsigned int i = 0; i < fnlvec.size(); i++)
+                fnlvec[i] *= spinPolarizedFactor;
+            }
+
+        if (d_dftParams.floatingNuclearCharges)
+          {
+#ifdef USE_COMPLEX
+            accumulateForceContributionGammaAtomsFloating(
+              forceContributionFnlGammaAtomsHubbard,
+              d_forceAtomsFloatingKPoints);
+#else
+            accumulateForceContributionGammaAtomsFloating(
+              forceContributionFnlGammaAtomsHubbard, d_forceAtomsFloating);
+#endif
+          }
+        else
+          distributeForceContributionFnlGammaAtoms(
+            forceContributionFnlGammaAtomsHubbard);
       }
 
 

@@ -302,6 +302,7 @@ namespace dftfe
 
     std::vector<std::vector<double>> d_atomPositions;
     std::vector<std::vector<double>> d_imageAtomPositions;
+    std::vector<std::vector<double>> d_meshSizes;
     std::vector<int>                 d_imageIds;
     std::vector<double>              d_nearestAtomDistances;
     std::vector<std::vector<double>> d_domainBoundingVectors;

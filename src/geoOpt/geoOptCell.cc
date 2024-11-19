@@ -520,7 +520,7 @@ namespace dftfe
   {
     // AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
-    functionValue.push_back(d_dftPtr->getInternalEnergy());
+    functionValue.push_back(d_dftPtr->getFreeEnergy());
   }
 
 

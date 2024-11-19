@@ -26,6 +26,11 @@
 #include "AtomCenteredPseudoWavefunctionSpline.h"
 #include "AuxDensityMatrixFE.h"
 
+#include "CompositeData.h"
+#include "MPIWriteOnFile.h"
+#include "NodalData.h"
+
+
 #if defined(DFTFE_WITH_DEVICE)
 #  include "deviceKernelsGeneric.h"
 #endif
@@ -33,17 +38,21 @@
 namespace dftfe
 {
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-  hubbard<ValueType, memorySpace>::hubbard(const MPI_Comm &mpi_comm_parent,
-                                           const MPI_Comm &mpi_comm_domain,
-                                           const MPI_Comm &mpi_comm_interPool)
+  hubbard<ValueType, memorySpace>::hubbard(
+    const MPI_Comm &mpi_comm_parent,
+    const MPI_Comm &mpi_comm_domain,
+    const MPI_Comm &mpi_comm_interPool,
+    const MPI_Comm &mpi_comm_interBandGroup)
     : d_mpi_comm_parent(mpi_comm_parent)
     , d_mpi_comm_domain(mpi_comm_domain)
     , d_mpi_comm_interPool(mpi_comm_interPool)
+    , d_mpi_comm_interBand(mpi_comm_interBandGroup)
     , pcout(std::cout,
             (dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent) == 0))
   {
     d_hubbardEnergy                 = 0.0;
     d_expectationOfHubbardPotential = 0.0;
+    d_maxOccMatSizePerAtom          = 0;
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -180,6 +189,11 @@ namespace dftfe
 
     MPI_Barrier(d_mpi_comm_domain);
     double endRead = MPI_Wtime();
+
+    dftUtils::createBandParallelizationIndices(
+      d_mpi_comm_interBand,
+      d_numberWaveFunctions,
+      d_bandGroupLowHighPlusOneIndices);
 
 
     d_spinPolarizedFactor = (d_dftParamsPtr->spinPolarized == 1) ? 1.0 : 2.0;
@@ -353,8 +367,6 @@ namespace dftfe
               }
           }
       }
-
-
     computeCouplingMatrix();
   }
 
@@ -457,7 +469,7 @@ namespace dftfe
 
     d_expectationOfHubbardPotential += d_hubbardEnergy;
 
-    if (d_verbosity >= 2)
+    if ((d_verbosity >= 2) || (d_dftParamsPtr->computeEnergyEverySCF))
       {
         pcout << " Hubbard energy = " << d_hubbardEnergy << "\n";
         pcout << " Hubbard energy correction = "
@@ -517,6 +529,9 @@ namespace dftfe
     auto &partialOccupVec = partialOccupVecHost;
 #endif
 
+    const unsigned int bandGroupTaskId =
+      dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_interBand);
+
     unsigned int numLocalDofs       = d_BasisOperatorHostPtr->nOwnedDofs();
     unsigned int numNodesPerElement = d_BasisOperatorHostPtr->nDofsPerCell();
     dftfe::utils::MemoryStorage<ValueType, memorySpace> tempCellNodalData;
@@ -546,13 +561,11 @@ namespace dftfe
                       tempCellNodalData);
                   }
 
-                //                if ((jvec + currentBlockSize) <=
-                //                      bandGroupLowHighPlusOneIndices[2 *
-                //                      bandGroupTaskId + 1] &&
-                //                    (jvec + currentBlockSize) >
-                //                      bandGroupLowHighPlusOneIndices[2 *
-                //                      bandGroupTaskId])
-                if (true) /// TODO extend to band parallelisation
+                if (((jvec + currentBlockSize) <=
+                     d_bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId +
+                                                      1]) &&
+                    ((jvec + currentBlockSize) >
+                     d_bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                   {
                     for (unsigned int iEigenVec = 0;
                          iEigenVec < currentBlockSize;
@@ -620,11 +633,17 @@ namespace dftfe
                                 startingCellId,
                                 startingCellId + currentCellsBlockSize));
 
-                            d_nonLocalOperator->applyCconjtransOnX(
-                              tempCellNodalData.data(),
-                              std::pair<unsigned int, unsigned int>(
-                                startingCellId,
-                                startingCellId + currentCellsBlockSize));
+                            if (
+                              d_nonLocalOperator
+                                ->getTotalNonLocalElementsInCurrentProcessor() >
+                              0)
+                              {
+                                d_nonLocalOperator->applyCconjtransOnX(
+                                  tempCellNodalData.data(),
+                                  std::pair<unsigned int, unsigned int>(
+                                    startingCellId,
+                                    startingCellId + currentCellsBlockSize));
+                              }
                           }
                       }
                   }
@@ -643,6 +662,16 @@ namespace dftfe
           }
       }
 
+
+    if (dealii::Utilities::MPI::n_mpi_processes(d_mpi_comm_interBand) > 1)
+      {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      d_occupationMatrix[HubbardOccFieldType::Out].data(),
+                      d_numSpins * d_numTotalOccMatrixEntriesPerSpin,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      d_mpi_comm_interBand);
+      }
     if (dealii::Utilities::MPI::n_mpi_processes(d_mpi_comm_interPool) > 1)
       {
         MPI_Allreduce(MPI_IN_PLACE,
@@ -818,6 +847,155 @@ namespace dftfe
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  hubbard<ValueType, memorySpace>::writeHubbOccToFile()
+  {
+    unsigned int bandGroupTaskId =
+      dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_interBand);
+
+    unsigned int interPoolId =
+      dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_interPool);
+
+    const std::vector<unsigned int> atomIdsInProc =
+      d_atomicProjectorFnsContainer->getAtomIdsInCurrentProcess();
+
+    std::vector<unsigned int> atomicNumber =
+      d_atomicProjectorFnsContainer->getAtomicNumbers();
+
+    if ((bandGroupTaskId == 0) && (interPoolId == 0))
+      {
+        std::vector<std::shared_ptr<dftfe::dftUtils::CompositeData>> data(0);
+
+        unsigned int numOwnedAtomsInProc = d_procLocalAtomId.size();
+        for (unsigned int iAtom = 0; iAtom < numOwnedAtomsInProc; iAtom++)
+          {
+            const unsigned int atomId = atomIdsInProc[d_procLocalAtomId[iAtom]];
+            const unsigned int Znum   = atomicNumber[atomId];
+            const unsigned int hubbardIds = d_mapAtomToHubbardIds[atomId];
+
+            const unsigned int numSphericalFunc =
+              d_hubbardSpeciesData[hubbardIds].numberSphericalFunc;
+
+            std::vector<double> nodeVals(0);
+
+            nodeVals.push_back((double)getGlobalAtomId(atomId));
+            for (unsigned int spinIndex = 0; spinIndex < d_numSpins;
+                 spinIndex++)
+              {
+                for (unsigned int iOrb = 0;
+                     iOrb < numSphericalFunc * numSphericalFunc;
+                     iOrb++)
+                  {
+                    double occVal = d_occupationMatrix
+                      [HubbardOccFieldType::In]
+                      [spinIndex * d_numTotalOccMatrixEntriesPerSpin +
+                       d_OccMatrixEntryStartForAtom[d_procLocalAtomId[iAtom]] +
+                       iOrb];
+                    nodeVals.push_back(occVal);
+                  }
+              }
+
+            for (unsigned int iOrb =
+                   numSphericalFunc * numSphericalFunc * d_numSpins;
+                 iOrb < d_maxOccMatSizePerAtom * d_numSpins;
+                 iOrb++)
+              {
+                nodeVals.push_back(0.0);
+              }
+
+            data.push_back(
+              std::make_shared<dftfe::dftUtils::NodalData>(nodeVals));
+          }
+
+        std::vector<dftfe::dftUtils::CompositeData *> dataRawPtrs(data.size());
+        for (unsigned int i = 0; i < data.size(); ++i)
+          dataRawPtrs[i] = data[i].get();
+
+
+        const std::string filename = "HubbardOccData.chk";
+
+        dftUtils::MPIWriteOnFile().writeData(dataRawPtrs,
+                                             filename,
+                                             d_mpi_comm_domain);
+      }
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  hubbard<ValueType, memorySpace>::readHubbOccFromFile()
+  {
+    pcout << " Reading hubbard occupation number \n";
+    const std::string filename = "HubbardOccData.chk";
+    std::ifstream     hubbOccInputFile(filename);
+
+    const std::vector<unsigned int> atomIdsInProc =
+      d_atomicProjectorFnsContainer->getAtomIdsInCurrentProcess();
+
+    std::map<unsigned int, unsigned int> mapGlobalIdToProcLocalId;
+
+    mapGlobalIdToProcLocalId.clear();
+    for (unsigned int iAtom = 0; iAtom < atomIdsInProc.size(); iAtom++)
+      {
+        const unsigned int atomId = atomIdsInProc[iAtom];
+        unsigned int       globalId =
+          d_mapHubbardAtomToGlobalAtomId.find(atomId)->second;
+
+        mapGlobalIdToProcLocalId[globalId] = iAtom;
+      }
+
+
+    const std::vector<unsigned int> atomIdsInProcessor =
+      d_atomicProjectorFnsContainer->getAtomIdsInCurrentProcess();
+
+    std::vector<double> hubbOccTemp;
+    hubbOccTemp.resize(d_maxOccMatSizePerAtom * d_numSpins);
+    for (unsigned int iGlobalAtomInd = 0; iGlobalAtomInd < d_totalNumHubbAtoms;
+         iGlobalAtomInd++)
+      {
+        double globalAtomIndexFromFile;
+        hubbOccInputFile >> globalAtomIndexFromFile;
+
+        for (unsigned int iOrb = 0; iOrb < d_numSpins * d_maxOccMatSizePerAtom;
+             iOrb++)
+          {
+            hubbOccInputFile >> hubbOccTemp[iOrb];
+          }
+
+        if (mapGlobalIdToProcLocalId.find(globalAtomIndexFromFile) !=
+            mapGlobalIdToProcLocalId.end())
+          {
+            unsigned int iAtom =
+              mapGlobalIdToProcLocalId.find(globalAtomIndexFromFile)->second;
+            const unsigned int atomId     = atomIdsInProcessor[iAtom];
+            const unsigned int hubbardIds = d_mapAtomToHubbardIds[atomId];
+
+            const unsigned int numSphericalFunc =
+              d_hubbardSpeciesData[hubbardIds].numberSphericalFunc;
+
+            for (unsigned int spinIndex = 0; spinIndex < d_numSpins;
+                 spinIndex++)
+              {
+                for (unsigned int iOrb = 0;
+                     iOrb < numSphericalFunc * numSphericalFunc;
+                     iOrb++)
+                  {
+                    d_occupationMatrix
+                      [HubbardOccFieldType::In]
+                      [spinIndex * d_numTotalOccMatrixEntriesPerSpin +
+                       d_OccMatrixEntryStartForAtom[iAtom] + iOrb] =
+                        hubbOccTemp[spinIndex * numSphericalFunc *
+                                      numSphericalFunc +
+                                    iOrb];
+                  }
+              }
+          }
+      }
+    hubbOccInputFile.close();
+
+    computeCouplingMatrix();
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   const dftfe::utils::MemoryStorage<ValueType, memorySpace> &
   hubbard<ValueType, memorySpace>::getCouplingMatrix(unsigned int spinIndex)
   {
@@ -957,6 +1135,11 @@ namespace dftfe
           hubbardSpeciesObj.numberSphericalFunc *
           hubbardSpeciesObj.numberSphericalFunc;
         d_hubbardSpeciesData[id - 1] = hubbardSpeciesObj;
+
+        if (d_maxOccMatSizePerAtom < hubbardSpeciesObj.numberSphericalFuncSq)
+          {
+            d_maxOccMatSizePerAtom = hubbardSpeciesObj.numberSphericalFuncSq;
+          }
       }
 
     std::vector<std::vector<unsigned int>> mapAtomToImageAtom;
@@ -982,6 +1165,7 @@ namespace dftfe
     d_mapAtomToAtomicNumber.resize(0);
     unsigned int hubbardAtomId = 0;
     unsigned int atomicNum;
+    d_totalNumHubbAtoms = 0;
     for (unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
       {
         hubbardInputFile >> atomicNum >> id;
@@ -1006,10 +1190,37 @@ namespace dftfe
                 d_periodicImagesCoords.push_back(atomCoord);
                 d_imageIds.push_back(hubbardAtomId);
               }
+
+            d_mapHubbardAtomToGlobalAtomId[hubbardAtomId] = iAtom;
             hubbardAtomId++;
+            d_totalNumHubbAtoms++;
           }
       }
     hubbardInputFile.close();
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  unsigned int
+  hubbard<ValueType, memorySpace>::getTotalNumberOfSphericalFunctionsForAtomId(
+    unsigned int iAtom)
+  {
+    const std::vector<unsigned int> atomIdsInProc =
+      d_atomicProjectorFnsContainer->getAtomIdsInCurrentProcess();
+
+    const unsigned int atomId     = atomIdsInProc[iAtom];
+    const unsigned int hubbardIds = d_mapAtomToHubbardIds[atomId];
+    return d_hubbardSpeciesData[hubbardIds].numberSphericalFunc;
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  unsigned int
+  hubbard<ValueType, memorySpace>::getGlobalAtomId(unsigned int iAtom)
+  {
+    const std::vector<unsigned int> atomIdsInProc =
+      d_atomicProjectorFnsContainer->getAtomIdsInCurrentProcess();
+
+    const unsigned int atomId = atomIdsInProc[iAtom];
+    return d_mapHubbardAtomToGlobalAtomId.find(atomId)->second;
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -1051,16 +1262,16 @@ namespace dftfe
         d_cellWaveFunctionMatrixDst.setValue(0.0);
         d_cellWaveFunctionMatrixSrc.setValue(0.0);
         Assert(
-          d_cellWaveFunctionMatrixSrc.size() <
+          d_cellWaveFunctionMatrixSrc.size() >=
             nCells * nDofsPerCell * inputVecSize,
           dealii::ExcMessage(
             "DFT-FE Error: d_cellWaveFunctionMatrixSrc in Hubbard is not set properly. Call initialiseCellWaveFunctionPointers()."));
 
         Assert(
-          d_cellWaveFunctionMatrixDst.size() <
+          d_cellWaveFunctionMatrixDst.size() >=
             d_cellsBlockSizeApply * nDofsPerCell * inputVecSize,
           dealii::ExcMessage(
-            "DFT-FE Error: d_cellWaveFunctionMatrixSrc in Hubbard is not set properly. Call initialiseCellWaveFunctionPointers()."));
+            "DFT-FE Error: d_cellWaveFunctionMatrixDst in Hubbard is not set properly. Call initialiseCellWaveFunctionPointers()."));
 
         Assert(
           d_BasisOperatorMemPtr->nVectors() == inputVecSize,

@@ -63,8 +63,6 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlONCV.inp 
   set PSEUDO TESTS FLAG = true
   set EXCHANGE CORRELATION TYPE = GGA-PBE
-  set SPIN POLARIZATION=0
-  set START MAGNETIZATION=0.0
 end
 
 

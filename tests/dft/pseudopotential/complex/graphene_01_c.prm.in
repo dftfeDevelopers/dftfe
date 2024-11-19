@@ -62,8 +62,6 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoCarbon.inp
   set EXCHANGE CORRELATION TYPE = GGA-PBE
   set PSEUDO TESTS FLAG = true
-  set SPIN POLARIZATION=1
-  set START MAGNETIZATION=0.1
 end
 
 

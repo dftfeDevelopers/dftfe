@@ -1,0 +1,64 @@
+set VERBOSITY=0
+set MEM OPT MODE=true
+set REPRODUCIBLE OUTPUT=true
+set SOLVER MODE=GS
+
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/bccFe_afm_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/bccFe_domainVectors.inp
+  subsection Optimization
+    set CELL STRESS = true
+    set ION FORCE = true
+  end
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=4
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM = 1.0
+    set ATOM BALL RADIUS=10.0
+  end
+end
+subsection Brillouin zone k point sampling options
+  set USE TIME REVERSAL SYMMETRY = true
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 1
+    set SAMPLING SHIFT 2  = 1
+    set SAMPLING SHIFT 3  = 1
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/bccFe_pseudo.inp
+  set SPIN POLARIZATION               = 1
+  set PSEUDO TESTS FLAG = true
+end
+
+subsection SCF parameters
+  set MIXING PARAMETER =0.5
+  set KERKER MIXING PARAMETER =0.5
+  set MIXING METHOD= ANDERSON_WITH_KERKER
+  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
+  set TEMPERATURE              = 500
+  set TOLERANCE                = 1e-7
+  set STARTING WFC=ATOMIC
+  subsection Eigen-solver parameters
+     set CHEBYSHEV FILTER TOLERANCE=1e-5
+  end
+end
+subsection Parallelization
+  set NPKPT                    = 4
+end

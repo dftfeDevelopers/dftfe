@@ -60,8 +60,15 @@ namespace dftfe
     init(const std::vector<double> &kPointCoordinates,
          const std::vector<double> &kPointWeights);
 
+    /*
+     * Sets the d_isExternalPotCorrHamiltonianComputed to false
+     */
     void
     resetExtPotHamFlag();
+
+    void
+    resetKohnShamOp();
+
 
     const MPI_Comm &
     getMPICommunicatorDomain();

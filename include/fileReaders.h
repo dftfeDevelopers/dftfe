@@ -41,6 +41,16 @@ namespace dftfe
     readFile(const unsigned int                numColumns,
              std::vector<std::vector<double>> &data,
              const std::string &               fileName);
+
+    /**
+     * @brief Read from file containing only double data in columns.
+     *
+     * @param[out] data output double data in [rows][columns] format
+     * @param[in] fileName
+     */
+    void
+    readFile(std::vector<std::vector<double>> &data,
+             const std::string &               fileName);
     /**
      * @brief Read from file containing only double data in columns.
      */

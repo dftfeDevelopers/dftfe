@@ -84,6 +84,7 @@ namespace dftfe
       const MPI_Comm &mpi_comm_parent,
       const MPI_Comm &mpi_comm_domain,
       const MPI_Comm &mpi_comm_interPool,
+      const MPI_Comm &mpi_comm_interBandGroup,
       std::shared_ptr<
         dftfe::basis::FEBasisOperations<ValueType, double, memorySpace>>
         basisOperationsMemPtr,

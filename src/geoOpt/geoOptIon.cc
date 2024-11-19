@@ -462,7 +462,7 @@ namespace dftfe
 
     // Relative to initial free energy supressed in case of CGPRP
     // as that would not work in case of restarted CGPRP
-    functionValue.push_back(d_dftPtr->getInternalEnergy());
+    functionValue.push_back(d_dftPtr->getFreeEnergy());
   }
 
 

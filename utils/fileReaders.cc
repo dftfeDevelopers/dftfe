@@ -71,6 +71,60 @@ namespace dftfe
       readFile.close();
     }
 
+    void
+    readFile(std::vector<std::vector<double>> &data,
+             const std::string &               fileName)
+    {
+      std::ifstream readFileForColumnCount(fileName.c_str());
+      std::string   line;
+      std::getline(readFileForColumnCount, line);
+      std::stringstream s;
+      s << line;
+
+      int    numColumns = 0;
+      double value;
+
+      while (s >> value)
+        numColumns++; // while there's something in the line, increase the
+                      // number of columns
+      readFileForColumnCount.close();
+
+      std::vector<double> rowData(numColumns, 0.0);
+      std::ifstream       readFile(fileName.c_str());
+      if (readFile.fail())
+        {
+          std::cerr << "Error opening file: " << fileName.c_str() << std::endl;
+          exit(-1);
+        }
+
+      //
+      // String to store line and word
+      //
+      std::string readLine;
+      std::string word;
+
+      //
+      // column index
+      //
+      int columnCount;
+
+      if (readFile.is_open())
+        {
+          while (std::getline(readFile, readLine))
+            {
+              std::istringstream iss(readLine);
+
+              columnCount = 0;
+
+              while (iss >> word && columnCount < numColumns)
+                rowData[columnCount++] = atof(word.c_str());
+
+              data.push_back(rowData);
+            }
+        }
+      readFile.close();
+    }
+
     int
     readPsiFile(const unsigned int                numColumns,
                 std::vector<std::vector<double>> &data,
