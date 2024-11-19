@@ -2448,6 +2448,17 @@ namespace dftfe
               d_dftParamsPtr->mixingParameter *
                 d_dftParamsPtr->spinMixingEnhancementFactor,
               d_dftParamsPtr->adaptAndersonMixingParameter);
+            if (d_dftParamsPtr->spinPolarized == 1)
+              {
+                d_mixingScheme.addMixingVariable(
+                  mixingVariable::tauMagZ,
+                  d_basisOperationsPtrElectroHost->JxWBasisData(),
+                  true,
+                  d_dftParamsPtr->mixingParameter *
+                    d_dftParamsPtr->spinMixingEnhancementFactor,
+                  d_dftParamsPtr->adaptAndersonMixingParameter
+                );
+              }
           }
 
 
@@ -2700,12 +2711,12 @@ namespace dftfe
 
                         d_mixingScheme.addVariableToInHist(
                           iComp == 0 ? mixingVariable::tau :
-                                        mixingVariable::magZ,
+                                        mixingVariable::tauMagZ,
                           d_tauInQuadValues[iComp].data(),
                           d_tauInQuadValues[iComp].size());
                         d_mixingScheme.addVariableToResidualHist(
                           iComp == 0 ? mixingVariable::tau :
-                                        mixingVariable::magZ,
+                                        mixingVariable::tauMagZ,
                           d_tauResidualQuadValues[iComp].data(),
                           d_tauResidualQuadValues[iComp].size());
                       }
@@ -2740,12 +2751,17 @@ namespace dftfe
                 // Compute the mixing coefficients
                 d_mixingScheme.computeAndersonMixingCoeff(
                   d_dftParamsPtr->spinPolarized == 1 ?
+                    (isTauMGGA ?
                     std::vector<mixingVariable>{mixingVariable::rho,
-                                                mixingVariable::magZ} :
-                    isTauMGGA ?
+                                                mixingVariable::tau,
+                                                mixingVariable::magZ,
+                                                mixingVariable::tauMagZ}:
                     std::vector<mixingVariable>{mixingVariable::rho,
-                                                mixingVariable::tau} 
-                    :std::vector<mixingVariable>{mixingVariable::rho}
+                                                mixingVariable::magZ}):
+                    (isTauMGGA ?
+                    std::vector<mixingVariable>{mixingVariable::rho,
+                                                mixingVariable::tau}:
+                    std::vector<mixingVariable>{mixingVariable::rho})                 
                     );
 
                 // update the mixing variables
@@ -2773,7 +2789,8 @@ namespace dftfe
                     for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                       {
                         d_mixingScheme.mixVariable(
-                          mixingVariable::tau,
+                          iComp == 0 ? mixingVariable::tau : 
+                          mixingVariable::tauMagZ,
                           d_tauInQuadValues[iComp].data(),
                           d_tauInQuadValues[iComp].size());
                       }

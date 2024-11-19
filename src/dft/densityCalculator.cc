@@ -624,23 +624,6 @@ namespace dftfe
           }
       }
 
-    {
-      double sumVal = 0.0;
-
-      for (double elem : tauHost)
-        {
-          sumVal += elem * elem;
-        }
-
-      MPI_Allreduce(MPI_IN_PLACE, &sumVal, 1, MPI_DOUBLE, MPI_SUM, mpiCommParent);
-
-      // if (this_process == 0)
-      //   {
-      //     std::cout << "L2 Norm of tau is: " << sumVal << std::endl;
-      //   }
-
-    }
-    
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       dftfe::utils::deviceSynchronize();
@@ -1068,64 +1051,29 @@ namespace dftfe
                       interpoolcomm);
       }
 
-    if (dftParams.spinPolarized == 1) // not edited yet for spin case
+    if (dftParams.spinPolarized == 1)
       {
-        std::string errMsg =
-          "Init tau computation for spin polarized case is not implemented yet in SCAN.";
-        dftfe::utils::throwException(false, errMsg);
-        // densityValues[0].resize(totalLocallyOwnedCells * numQuadPoints);
-        // densityValues[1].resize(totalLocallyOwnedCells * numQuadPoints);
-        // std::transform(rhoHost.begin(),
-        //                rhoHost.begin() + totalLocallyOwnedCells *
-        //                numQuadPoints, rhoHost.begin() +
-        //                totalLocallyOwnedCells * numQuadPoints,
-        //                densityValues[0].begin(),
-        //                std::plus<>{});
-        // std::transform(rhoHost.begin(),
-        //                rhoHost.begin() + totalLocallyOwnedCells *
-        //                numQuadPoints, rhoHost.begin() +
-        //                totalLocallyOwnedCells * numQuadPoints,
-        //                densityValues[1].begin(),
-        //                std::minus<>{});
-        // if (isEvaluateGradRho)
-        //   {
-        //     gradDensityValues[0].resize(3 * totalLocallyOwnedCells *
-        //                                 numQuadPoints);
-        //     gradDensityValues[1].resize(3 * totalLocallyOwnedCells *
-        //                                 numQuadPoints);
-        //     std::transform(gradRhoHost.begin(),
-        //                    gradRhoHost.begin() +
-        //                      3 * totalLocallyOwnedCells * numQuadPoints,
-        //                    gradRhoHost.begin() +
-        //                      3 * totalLocallyOwnedCells * numQuadPoints,
-        //                    gradDensityValues[0].begin(),
-        //                    std::plus<>{});
-        //     std::transform(gradRhoHost.begin(),
-        //                    gradRhoHost.begin() +
-        //                      3 * totalLocallyOwnedCells * numQuadPoints,
-        //                    gradRhoHost.begin() +
-        //                      3 * totalLocallyOwnedCells * numQuadPoints,
-        //                    gradDensityValues[1].begin(),
-        //                    std::minus<>{});
-        //   }
+        tauValues[0].resize(totalLocallyOwnedCells * numQuadPoints);
+        tauValues[1].resize(totalLocallyOwnedCells * numQuadPoints);
+        std::transform(tauHost.begin(),
+                        tauHost.begin() +
+                          totalLocallyOwnedCells * numQuadPoints,
+                        tauHost.begin() +
+                          totalLocallyOwnedCells * numQuadPoints,
+                        tauValues[0].begin(),
+                        std::plus<>{});
+        std::transform(tauHost.begin(),
+                        tauHost.begin() +
+                          totalLocallyOwnedCells * numQuadPoints,
+                        tauHost.begin() +
+                          totalLocallyOwnedCells * numQuadPoints,
+                        tauValues[1].begin(),
+                        std::minus<>{});
       }
     else
       {
         tauValues[0] = tauHost;
       }
-    double sumVal = 0.0;
-
-    for (double elem : tauHost)
-      {
-        sumVal += elem * elem;
-      }
-
-    MPI_Allreduce(MPI_IN_PLACE, &sumVal, 1, MPI_DOUBLE, MPI_SUM, mpiCommParent);
-
-    // if (this_process == 0)
-    //   {
-    //     std::cout << "L2 Norm of tau is: " << sumVal << std::endl;
-    //   }
 
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
