@@ -54,7 +54,7 @@ namespace dftfe
     bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
       selfConsistentSolverEnergyTolerance, tot_magnetization,
-      absLinearSolverToleranceHelmholtz;
+      absLinearSolverToleranceHelmholtz, smearTval, intervalSize;
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
@@ -79,7 +79,7 @@ namespace dftfe
 
     std::string coordinatesFile, domainBoundingVectorsFile, kPointDataFile,
       ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile,
-      restartFolder, meshSizesFile;
+      tensorOpType, restartFolder, meshSizesFile;
 
     std::string coordinatesGaussianDispFile;
 

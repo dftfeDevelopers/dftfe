@@ -1,0 +1,83 @@
+set SOLVER MODE = GS
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+set RESTART FOLDER = feCuPt2
+set RESTART        = false
+set USE GPU   = true
+subsection Geometry
+  set NATOMS=4
+  set NATOM TYPES=3
+  set ATOMIC COORDINATES FILE      =fcc_feCuPt2_coordinates.inp          
+  set DOMAIN VECTORS FILE = fcc_feCuPt2_domainVectors.inp 
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Brillouin zone k point sampling options
+  set USE GROUP SYMMETRY         = false
+  set USE TIME REVERSAL SYMMETRY = true
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 3
+    set SAMPLING SHIFT 1  = 1
+    set SAMPLING SHIFT 2  = 1
+    set SAMPLING SHIFT 3  = 1
+  end
+end
+
+subsection DFT functional parameters
+  set SPIN POLARIZATION               = 1
+  set START MAGNETIZATION             = -0.2
+end
+
+subsection Parallelization
+  set NPKPT                    = 2
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 2
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 0.8
+    set ATOM BALL RADIUS = 3.0
+  end
+end
+
+subsection SCF Checkpointing and Restart
+    set SAVE RHO DATA = true
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true  
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo_feCuPt2.inp
+end
+
+subsection SCF parameters
+  set TOLERANCE                        = 1e-7
+  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
+  set MIXING PARAMETER                = 0.5
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS  = 45 
+      set CHEBYSHEV FILTER TOLERANCE = 1e-5
+      set USE SINGLE PREC CHEBY       = true
+      set USE SINGLE PREC COMMUN CHEBY = false
+  end
+end
+
+subsection GPU
+  set AUTO GPU BLOCK SIZES         = true
+  set FINE GRAINED GPU TIMINGS     = true
+  set USE ELPA GPU KERNEL          = true
+  set USE GPUDIRECT MPI ALL REDUCE = true
+end
+
+subsection Poisson problem parameters
+  set GPU MODE           = false
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end

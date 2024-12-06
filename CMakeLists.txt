@@ -7,7 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Set the name of the project and target:
 SET(TARGET "dftfe_exe")
-SET(TARGETLIB "dftfe")
+IF (WITH_COMPLEX)
+  SET(TARGETLIB "dftfeComplex")
+ELSE()
+  SET(TARGETLIB "dftfeReal")
+ENDIF()
+
 SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
 add_definitions(-w)
@@ -199,7 +204,8 @@ SET(TARGET_SRC
   ./utils/NodalData.cpp
   ./utils/functionalTests/testMultiVectorCGForPoisson.cpp
   ./utils/functionalTests/testDataTransfer.cpp
-  ./src/pseudo/oncv/oncvClass.cc)
+  ./src/pseudo/oncv/oncvClass.cc
+  ./src/pseudo/oncv/atomCenteredPostProcessing.cc)
 
 IF ("${GPU_LANG}" STREQUAL "cuda")
 

@@ -1,0 +1,49 @@
+number of atoms: 4
+number of atoms types: 3
+Total number of k-points 12
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 7.488597237999999656e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 7.488597237999999656e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 6.777627467800000360e+00
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  5.000000000000000000e-01 5.000000000000000000e-01 0.000000000000000000e+00
+AtomId 1:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 2:  0.000000000000000000e+00 5.000000000000000000e-01 5.000000000000000000e-01
+AtomId 3:  5.000000000000000000e-01 0.000000000000000000e+00 5.000000000000000000e-01
+-----------------------------------------------------------------------------------------
+Number Image Charges  1914
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
+FE interpolating polynomial order for electrostatics solve: 2
+FE interpolating polynomial order for nodal electron density computation: 4
+number of elements: 800
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 7497
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+=============================================================================================================================
+number of electrons: 71
+number of eigen values: 45
+=============================================================================================================================
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+Checkpointing tria info and rho data in progress...
+...checkpointing done.
+Checkpointing tria info and rho data in progress...
+...checkpointing done.
+SCF iterations converged to the specified tolerance after: 18 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:        -572.22938282
+Absolute magnetization: 0.000
+Net magnetization     : -0.000

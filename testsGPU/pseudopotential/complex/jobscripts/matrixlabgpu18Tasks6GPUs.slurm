@@ -34,3 +34,5 @@ srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_9.prm > out
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileMg2x_10.prm > outputMg2x_10
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileBe.prm     > outputBe
 srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileTiAl.prm > outputTiAl_hubbard
+srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
+srun -n $SLURM_NTASKS --mpi=pmi2 $DFTFE_PATH/dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos

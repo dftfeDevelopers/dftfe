@@ -1839,6 +1839,7 @@ namespace dftfe
       }
 #endif
   }
+
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyVOnCconjtransX(
@@ -2678,6 +2679,8 @@ namespace dftfe
   {
     return (d_flattenedNonLocalCellDofIndexToProcessDofIndexMap);
   }
+
+
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void

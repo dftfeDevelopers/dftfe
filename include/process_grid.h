@@ -95,6 +95,13 @@ namespace dftfe
     ~ProcessGrid();
 
     /**
+     * Return the blacs_context.
+     */
+    int
+    get_blacs_context() const;
+
+
+    /**
      * Return the number of rows in the processes grid.
      */
     unsigned int
@@ -205,6 +212,12 @@ namespace dftfe
   /*--------------------- Inline functions --------------------------------*/
 
 #ifndef DOXYGEN
+
+  inline int
+  ProcessGrid::get_blacs_context() const
+  {
+    return blacs_context;
+  }
 
   inline unsigned int
   ProcessGrid::get_process_grid_rows() const

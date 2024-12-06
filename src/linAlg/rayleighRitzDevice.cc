@@ -491,126 +491,6 @@ namespace dftfe
             computing_timer.leave_subsection("SConj=X^{T}XConj, RR GEP step");
         }
 
-      //
-      // SConj=LConj*L^{T}
-      //
-      if (dftParams.deviceFineGrainedTimings)
-        computing_timer.enter_subsection(
-          "Cholesky and triangular matrix invert, RR GEP step");
-
-
-      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
-      if (dftParams.useELPA)
-        {
-          // For ELPA cholesky only the upper triangular part of the hermitian
-          // matrix is required
-          dftfe::ScaLAPACKMatrix<dataTypes::number> overlapMatParConjTrans(
-            N, processGrid, rowsBlockSize);
-
-          if (processGrid->is_process_active())
-            std::fill(&overlapMatParConjTrans.local_el(0, 0),
-                      &overlapMatParConjTrans.local_el(0, 0) +
-                        overlapMatParConjTrans.local_m() *
-                          overlapMatParConjTrans.local_n(),
-                      dataTypes::number(0.0));
-
-          overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
-
-          if (processGrid->is_process_active())
-            {
-              int error;
-
-              if (dftParams.useELPADeviceKernel)
-                {
-#ifdef DFTFE_WITH_DEVICE_NVIDIA
-                  elpa_set_integer(elpaScala.getElpaHandle(),
-                                   "nvidia-gpu",
-                                   0,
-                                   &error);
-                  AssertThrow(error == ELPA_OK,
-                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#elif DFTFE_WITH_DEVICE_AMD
-                  elpa_set_integer(elpaScala.getElpaHandle(),
-                                   "amd-gpu",
-                                   0,
-                                   &error);
-                  AssertThrow(error == ELPA_OK,
-                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#endif
-                }
-
-              elpa_cholesky(elpaScala.getElpaHandle(),
-                            &overlapMatParConjTrans.local_el(0, 0),
-                            &error);
-              AssertThrow(error == ELPA_OK,
-                          dealii::ExcMessage(
-                            "DFT-FE Error: elpa_cholesky error."));
-
-              if (dftParams.useELPADeviceKernel)
-                {
-#ifdef DFTFE_WITH_DEVICE_NVIDIA
-                  elpa_set_integer(elpaScala.getElpaHandle(),
-                                   "nvidia-gpu",
-                                   1,
-                                   &error);
-                  AssertThrow(error == ELPA_OK,
-                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#elif DFTFE_WITH_DEVICE_AMD
-                  elpa_set_integer(elpaScala.getElpaHandle(),
-                                   "amd-gpu",
-                                   1,
-                                   &error);
-                  AssertThrow(error == ELPA_OK,
-                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#endif
-                }
-            }
-          overlapMatPar.copy_conjugate_transposed(overlapMatParConjTrans);
-          overlapMatPropertyPostCholesky =
-            dftfe::LAPACKSupport::Property::lower_triangular;
-        }
-      else
-        {
-          overlapMatPar.compute_cholesky_factorization();
-
-          overlapMatPropertyPostCholesky = overlapMatPar.get_property();
-        }
-
-      AssertThrow(
-        overlapMatPropertyPostCholesky ==
-          dftfe::LAPACKSupport::Property::lower_triangular,
-        dealii::ExcMessage(
-          "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
-
-
-      // extract LConj
-      dftfe::ScaLAPACKMatrix<dataTypes::number> LMatPar(
-        N,
-        processGrid,
-        rowsBlockSize,
-        dftfe::LAPACKSupport::Property::lower_triangular);
-
-      if (processGrid->is_process_active())
-        for (unsigned int i = 0; i < LMatPar.local_n(); ++i)
-          {
-            const unsigned int glob_i = LMatPar.global_column(i);
-            for (unsigned int j = 0; j < LMatPar.local_m(); ++j)
-              {
-                const unsigned int glob_j = LMatPar.global_row(j);
-                if (glob_j < glob_i)
-                  LMatPar.local_el(j, i) = dataTypes::number(0);
-                else
-                  LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
-              }
-          }
-
-      // compute LConj^{-1}
-      LMatPar.invert();
-
-      if (dftParams.deviceFineGrainedTimings)
-        computing_timer.leave_subsection(
-          "Cholesky and triangular matrix invert, RR GEP step");
-
 
       if (dftParams.deviceFineGrainedTimings)
         {
@@ -661,17 +541,6 @@ namespace dftfe
              interBandGroupComm,
              dftParams);
 
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          computing_timer.leave_subsection(
-            "HConjProj= X^{T}*HConj*XConj, RR GEP step");
-        }
-
-      if (dftParams.deviceFineGrainedTimings)
-        computing_timer.enter_subsection(
-          "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
-
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
         N, processGrid, rowsBlockSize);
@@ -700,19 +569,13 @@ namespace dftfe
                   projHamPar.local_el(j, i) *= dataTypes::number(0.5);
               }
           }
-
-      dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParCopy(N,
-                                                               processGrid,
-                                                               rowsBlockSize);
-
-      // compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C  (C denotes
-      // conjugate transpose LAPACK notation)
-      LMatPar.mmult(projHamParCopy, projHamPar);
-      projHamParCopy.zmCmult(projHamPar, LMatPar);
-
       if (dftParams.deviceFineGrainedTimings)
-        computing_timer.leave_subsection(
-          "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+        {
+          dftfe::utils::deviceSynchronize();
+          computing_timer.leave_subsection(
+            "HConjProj= X^{T}*HConj*XConj, RR GEP step");
+        }
+
       //
       // compute standard eigendecomposition HSConjProj: {QConjPrime,D}
       // HSConjProj=QConjPrime*D*QConjPrime^{C} QConj={Lc^{-1}}^{C}*QConjPrime
@@ -731,15 +594,31 @@ namespace dftfe
                       &eigenVectors.local_el(0, 0) +
                         eigenVectors.local_m() * eigenVectors.local_n(),
                       dataTypes::number(0.0));
+          // For ELPA cholesky only the upper triangular part of the
+          // hermitian matrix is required
+          dftfe::ScaLAPACKMatrix<dataTypes::number> overlapMatParConjTrans(
+            N, processGrid, rowsBlockSize);
+
+          if (processGrid->is_process_active())
+            std::fill(&overlapMatParConjTrans.local_el(0, 0),
+                      &overlapMatParConjTrans.local_el(0, 0) +
+                        overlapMatParConjTrans.local_m() *
+                          overlapMatParConjTrans.local_n(),
+                      dataTypes::number(0.0));
+
+          overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
 
           if (processGrid->is_process_active())
             {
               int error;
-              elpa_eigenvectors(elpaScala.getElpaHandle(),
-                                &projHamPar.local_el(0, 0),
-                                &eigenValues[0],
-                                &eigenVectors.local_el(0, 0),
-                                &error);
+              elpa_generalized_eigenvectors(elpaScala.getElpaHandle(),
+                                            &projHamPar.local_el(0, 0),
+                                            &overlapMatParConjTrans.local_el(0,
+                                                                             0),
+                                            &eigenValues[0],
+                                            &eigenVectors.local_el(0, 0),
+                                            0,
+                                            &error);
               AssertThrow(error == ELPA_OK,
                           dealii::ExcMessage(
                             "DFT-FE Error: elpa_eigenvectors error."));
@@ -750,18 +629,85 @@ namespace dftfe
             &eigenValues[0], eigenValues.size(), MPI_DOUBLE, 0, mpiCommDomain);
 
 
-          eigenVectors.copy_to(projHamPar);
+          projHamPar.copy_conjugate_transposed(eigenVectors);
 
           if (dftParams.deviceFineGrainedTimings)
             computing_timer.leave_subsection("ELPA eigen decomp, RR GEP step");
         }
       else
         {
+          //
+          // SConj=LConj*L^{T}
+          //
+          if (dftParams.deviceFineGrainedTimings)
+            computing_timer.enter_subsection(
+              "Cholesky and triangular matrix invert, RR GEP step");
+
+
+          dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+          overlapMatPar.compute_cholesky_factorization();
+
+          overlapMatPropertyPostCholesky = overlapMatPar.get_property();
+
+          AssertThrow(
+            overlapMatPropertyPostCholesky ==
+              dftfe::LAPACKSupport::Property::lower_triangular,
+            dealii::ExcMessage(
+              "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
+
+
+          // extract LConj
+          dftfe::ScaLAPACKMatrix<dataTypes::number> LMatPar(
+            N,
+            processGrid,
+            rowsBlockSize,
+            dftfe::LAPACKSupport::Property::lower_triangular);
+
+          if (processGrid->is_process_active())
+            for (unsigned int i = 0; i < LMatPar.local_n(); ++i)
+              {
+                const unsigned int glob_i = LMatPar.global_column(i);
+                for (unsigned int j = 0; j < LMatPar.local_m(); ++j)
+                  {
+                    const unsigned int glob_j = LMatPar.global_row(j);
+                    if (glob_j < glob_i)
+                      LMatPar.local_el(j, i) = dataTypes::number(0);
+                    else
+                      LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
+                  }
+              }
+
+          // compute LConj^{-1}
+          LMatPar.invert();
+
+          if (dftParams.deviceFineGrainedTimings)
+            computing_timer.leave_subsection(
+              "Cholesky and triangular matrix invert, RR GEP step");
+          if (dftParams.deviceFineGrainedTimings)
+            computing_timer.enter_subsection(
+              "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+
+
+          dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParCopy(
+            N, processGrid, rowsBlockSize);
+
+          // compute HSConjProj= Lconj^{-1}*HConjProj*(Lconj^{-1})^C  (C denotes
+          // conjugate transpose LAPACK notation)
+          LMatPar.mmult(projHamParCopy, projHamPar);
+          projHamParCopy.zmCmult(projHamPar, LMatPar);
+
+          if (dftParams.deviceFineGrainedTimings)
+            computing_timer.leave_subsection(
+              "Compute Lconj^{-1}*HConjProj*(Lconj^{-1})^C, RR GEP step");
+
           if (dftParams.deviceFineGrainedTimings)
             computing_timer.enter_subsection(
               "ScaLAPACK eigen decomp, RR GEP step");
           eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
             std::make_pair(0, N - 1), true);
+          projHamParCopy.copy_conjugate_transposed(projHamPar);
+          projHamParCopy.mmult(projHamPar, LMatPar);
+
           if (dftParams.deviceFineGrainedTimings)
             computing_timer.leave_subsection(
               "ScaLAPACK eigen decomp, RR GEP step");
@@ -792,9 +738,6 @@ namespace dftfe
             computing_timer.enter_subsection(
               "X^{T}={QConjPrime}^{C}*LConj^{-1}*X^{T} mixed prec, RR GEP step");
         }
-
-      projHamParCopy.copy_conjugate_transposed(projHamPar);
-      projHamParCopy.mmult(projHamPar, LMatPar);
 
       if (useMixedPrecOverall && dftParams.useMixedPrecSubspaceRotRR)
         subspaceRotationRRMixedPrecScalapack(X,

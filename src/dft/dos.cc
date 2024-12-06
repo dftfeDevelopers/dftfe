@@ -152,36 +152,20 @@ namespace dftfe
   {
     computing_timer.enter_subsection("DOS computation");
 
-    // from 0th kpoint and 0th spin index
-    int indexFermiEnergy = -1.0;
-    for (int i = 0; i < d_numEigenValues; ++i)
-      if (eigenValuesInput[0][i] >= fermiEnergy)
-        {
-          if (i > indexFermiEnergy)
-            {
-              indexFermiEnergy = i;
-              break;
-            }
-        }
-
-    const unsigned int highestStateOfInterestUsed =
-      (highestStateOfInterest == 0) ? indexFermiEnergy : highestStateOfInterest;
-
     // from 0th spin as this is only to get a printing range
     std::vector<double> eigenValuesAllkPoints;
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      for (int statesIter = 0; statesIter < highestStateOfInterestUsed;
+      for (int statesIter = 0; statesIter <= d_highestStateForNscfCalculation;
            ++statesIter)
         eigenValuesAllkPoints.push_back(eigenValuesInput[kPoint][statesIter]);
 
     std::sort(eigenValuesAllkPoints.begin(), eigenValuesAllkPoints.end());
 
     const double totalEigenValues  = eigenValuesAllkPoints.size();
-    const double intervalSize      = 0.001;
+    const double intervalSize      = d_dftParamsPtr->intervalSize / C_haToeV;
     const double sigma             = C_kb * d_dftParamsPtr->TVal;
-    double       lowerBoundEpsilon = 1.5 * eigenValuesAllkPoints[0];
-    double       upperBoundEpsilon =
-      eigenValuesAllkPoints[totalEigenValues - 1] * 1.5;
+    double       lowerBoundEpsilon = eigenValuesAllkPoints[0];
+    double upperBoundEpsilon = eigenValuesAllkPoints[totalEigenValues - 1];
 
     MPI_Allreduce(MPI_IN_PLACE,
                   &lowerBoundEpsilon,
@@ -196,6 +180,11 @@ namespace dftfe
                   dataTypes::mpi_type_id(&upperBoundEpsilon),
                   MPI_MAX,
                   interpoolcomm);
+
+    lowerBoundEpsilon =
+      lowerBoundEpsilon - 0.1 * (upperBoundEpsilon - lowerBoundEpsilon);
+    upperBoundEpsilon =
+      upperBoundEpsilon + 0.1 * (upperBoundEpsilon - lowerBoundEpsilon);
 
     const unsigned int numberIntervals =
       std::ceil((upperBoundEpsilon - lowerBoundEpsilon) / intervalSize);
@@ -217,7 +206,7 @@ namespace dftfe
                      ++spinType)
                   {
                     for (unsigned int statesIter = 0;
-                         statesIter < highestStateOfInterestUsed;
+                         statesIter <= d_highestStateForNscfCalculation;
                          ++statesIter)
                       {
                         double term1 =
@@ -225,15 +214,16 @@ namespace dftfe
                            eigenValuesInput[kPoint]
                                            [spinType * d_numEigenValues +
                                             statesIter]);
-                        double denom = term1 * term1 + sigma * sigma;
                         if (spinType == 0)
                           densityOfStatesUp[epsInt] +=
-                            d_kPointWeights[kPoint] * (sigma / M_PI) *
-                            (1.0 / denom) / d_domainVolume;
+                            d_kPointWeights[kPoint] *
+                            d_atomCenteredOrbitalsPostProcessingPtr
+                              ->smearFunction(term1, d_dftParamsPtr);
                         else
                           densityOfStatesDown[epsInt] +=
-                            d_kPointWeights[kPoint] * (sigma / M_PI) *
-                            (1.0 / denom) / d_domainVolume;
+                            d_kPointWeights[kPoint] *
+                            d_atomCenteredOrbitalsPostProcessingPtr
+                              ->smearFunction(term1, d_dftParamsPtr);
                       }
                   }
               }
@@ -262,15 +252,15 @@ namespace dftfe
             for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
               {
                 for (unsigned int statesIter = 0;
-                     statesIter < highestStateOfInterestUsed;
+                     statesIter <= d_highestStateForNscfCalculation;
                      ++statesIter)
                   {
                     double term1 =
                       (epsValue - eigenValuesInput[kPoint][statesIter]);
-                    double denom = term1 * term1 + sigma * sigma;
-                    densityOfStates[epsInt] += 2.0 * d_kPointWeights[kPoint] *
-                                               (sigma / M_PI) * (1.0 / denom) /
-                                               d_domainVolume;
+                    densityOfStates[epsInt] +=
+                      2.0 * d_kPointWeights[kPoint] *
+                      d_atomCenteredOrbitalsPostProcessingPtr->smearFunction(
+                        term1, d_dftParamsPtr);
                   }
               }
           }
@@ -283,14 +273,13 @@ namespace dftfe
                       interpoolcomm);
       }
 
-
     if (d_dftParamsPtr->reproducible_output && d_dftParamsPtr->verbosity == 0)
       {
         pcout << "Writing tdos File..." << std::endl;
         if (d_dftParamsPtr->spinPolarized)
-          pcout << "epsValue          SpinUpDos SpinDownDos" << std::endl;
+          pcout << "E(eV)          SpinUpDos SpinDownDos" << std::endl;
         else
-          pcout << "epsValue          Dos" << std::endl;
+          pcout << "E(eV)          Dos" << std::endl;
       }
 
     if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
@@ -300,24 +289,27 @@ namespace dftfe
 
         if (outFile.is_open())
           {
+            if (d_dftParamsPtr->spinPolarized)
+              outFile << "# E(eV)          SpinUpDos SpinDownDos" << std::endl;
+            else
+              outFile << "# E(eV)          Dos" << std::endl;
             if (d_dftParamsPtr->spinPolarized == 1)
               {
                 for (unsigned int epsInt = 0; epsInt < numberIntervals;
                      ++epsInt)
                   {
-                    double epsValue =
-                      lowerBoundEpsilon + epsInt * intervalSize - fermiEnergy;
-                    outFile << std::setprecision(18) << epsValue * 27.21138602
+                    double epsValue = lowerBoundEpsilon + epsInt * intervalSize;
+                    outFile << std::setprecision(18) << epsValue * C_haToeV
                             << "  " << densityOfStatesUp[epsInt] << " "
                             << densityOfStatesDown[epsInt] << std::endl;
                     if (d_dftParamsPtr->reproducible_output &&
                         d_dftParamsPtr->verbosity == 0)
                       {
                         double epsValueTrunc =
-                          std::floor(1000000000 *
-                                     (lowerBoundEpsilon +
-                                      epsInt * intervalSize - fermiEnergy) *
-                                     27.21138602) /
+                          std::floor(
+                            1000000000 *
+                            (lowerBoundEpsilon + epsInt * intervalSize) *
+                            C_haToeV) /
                           1000000000.0;
                         double dosSpinUpTrunc =
                           std::floor(1000000000 * densityOfStatesUp[epsInt]) /
@@ -339,19 +331,18 @@ namespace dftfe
                 for (unsigned int epsInt = 0; epsInt < numberIntervals;
                      ++epsInt)
                   {
-                    double epsValue =
-                      lowerBoundEpsilon + epsInt * intervalSize - fermiEnergy;
-                    outFile << std::setprecision(18) << epsValue * 27.21138602
+                    double epsValue = lowerBoundEpsilon + epsInt * intervalSize;
+                    outFile << std::setprecision(18) << epsValue * C_haToeV
                             << "  " << densityOfStates[epsInt] << std::endl;
 
                     if (d_dftParamsPtr->reproducible_output &&
                         d_dftParamsPtr->verbosity == 0)
                       {
                         double epsValueTrunc =
-                          std::floor(1000000000 *
-                                     (lowerBoundEpsilon +
-                                      epsInt * intervalSize - fermiEnergy) *
-                                     27.21138602) /
+                          std::floor(
+                            1000000000 *
+                            (lowerBoundEpsilon + epsInt * intervalSize) *
+                            C_haToeV) /
                           1000000000.0;
                         double dosTrunc =
                           std::floor(1000000000 * densityOfStates[epsInt]) /
@@ -731,7 +722,7 @@ namespace dftfe
                      ++epsInt)
                   {
                     double epsValue = lowerBoundEpsilon + epsInt * intervalSize;
-                    outFile << std::setprecision(18) << epsValue * 27.21138602
+                    outFile << std::setprecision(18) << epsValue * C_haToeV
                             << " ";
                     for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms;
                          ++iAtom)
@@ -762,7 +753,7 @@ namespace dftfe
                      ++epsInt)
                   {
                     double epsValue = lowerBoundEpsilon + epsInt * intervalSize;
-                    outFile << std::setprecision(18) << epsValue * 27.21138602
+                    outFile << std::setprecision(18) << epsValue * C_haToeV
                             << " ";
                     for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms;
                          ++iAtom)
@@ -787,578 +778,8 @@ namespace dftfe
     computing_timer.leave_subsection("LDOS computation");
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_pdos(
-    const std::vector<std::vector<double>> &eigenValuesInput,
-    const std::string &                     pdosFileName)
-  {
-    computing_timer.enter_subsection("PDOS computation");
-
-    //
-    // create a stencil following orbital filling order
-    //
-    std::vector<unsigned int>              level;
-    std::vector<std::vector<unsigned int>> stencil;
-
-    //
-    // create stencil in the order of single-atom orbital filling order
-    //
-    // 1s
-    level.clear();
-    level.push_back(1);
-    level.push_back(0);
-    stencil.push_back(level);
-    // 2s
-    level.clear();
-    level.push_back(2);
-    level.push_back(0);
-    stencil.push_back(level);
-    // 2p
-    level.clear();
-    level.push_back(2);
-    level.push_back(1);
-    stencil.push_back(level);
-    // 3s
-    level.clear();
-    level.push_back(3);
-    level.push_back(0);
-    stencil.push_back(level);
-    // 3p
-    level.clear();
-    level.push_back(3);
-    level.push_back(1);
-    stencil.push_back(level);
-    // 4s
-    level.clear();
-    level.push_back(4);
-    level.push_back(0);
-    stencil.push_back(level);
-    // 3d
-    level.clear();
-    level.push_back(3);
-    level.push_back(2);
-    stencil.push_back(level);
-    // 4p
-    level.clear();
-    level.push_back(4);
-    level.push_back(1);
-    stencil.push_back(level);
-    // 5s
-    level.clear();
-    level.push_back(5);
-    level.push_back(0);
-    stencil.push_back(level);
-    // 4d
-    level.clear();
-    level.push_back(4);
-    level.push_back(2);
-    stencil.push_back(level);
-    // 5p
-    level.clear();
-    level.push_back(5);
-    level.push_back(1);
-    stencil.push_back(level);
-    // 6s
-    level.clear();
-    level.push_back(6);
-    level.push_back(0);
-    stencil.push_back(level);
-    // 4f
-    level.clear();
-    level.push_back(4);
-    level.push_back(3);
-    stencil.push_back(level);
-    // 5d
-    level.clear();
-    level.push_back(5);
-    level.push_back(2);
-    stencil.push_back(level);
-    // 6p
-    level.clear();
-    level.push_back(6);
-    level.push_back(1);
-    stencil.push_back(level);
-    // 7s
-    level.clear();
-    level.push_back(7);
-    level.push_back(0);
-    stencil.push_back(level);
-    // 5f
-    level.clear();
-    level.push_back(5);
-    level.push_back(3);
-    stencil.push_back(level);
-    // 6d
-    level.clear();
-    level.push_back(6);
-    level.push_back(2);
-    stencil.push_back(level);
-    // 7p
-    level.clear();
-    level.push_back(7);
-    level.push_back(1);
-    stencil.push_back(level);
-    // 8s
-    level.clear();
-    level.push_back(8);
-    level.push_back(0);
-    stencil.push_back(level);
-
-    const unsigned int numberGlobalAtoms = atomLocations.size();
-
-    unsigned int errorReadFile = 0;
-    unsigned int fileReadFlag  = 0;
-
-    std::map<unsigned int,
-             std::map<unsigned int,
-                      std::map<unsigned int, alglib::spline1dinterpolant>>>
-                                      radValues;
-    std::vector<std::vector<orbital>> singleAtomInfo;
-    singleAtomInfo.resize(numberGlobalAtoms);
-    double wfcInitTruncation;
-
-    for (std::vector<std::vector<unsigned int>>::iterator it = stencil.begin();
-         it < stencil.end();
-         ++it)
-      {
-        unsigned int n = (*it)[0], l = (*it)[1];
-        // Think of having "m" quantum number loop as well and push it into
-        // atoms
-        for (int m = -l; m <= (int)l; m++)
-          {
-            for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
-              {
-                unsigned int Z = atomLocations[iAtom][0];
-
-                //
-                // load PSI files
-                //
-                loadSingleAtomPSIFiles(Z,
-                                       n,
-                                       l,
-                                       fileReadFlag,
-                                       wfcInitTruncation,
-                                       radValues,
-                                       d_mpiCommParent,
-                                       *d_dftParamsPtr);
-
-                if (fileReadFlag > 0)
-                  {
-                    orbital temp;
-                    temp.atomID = iAtom;
-                    temp.Z      = Z;
-                    temp.n      = n;
-                    temp.l      = l;
-                    temp.m      = m;
-                    temp.psi    = radValues[Z][n][l];
-                    singleAtomInfo[iAtom].push_back(temp);
-                    // pcout << "Atom Id: "<<iAtom<<" Z: "<<Z<<" n: "<<n<<" l:
-                    // "<<l<<" m: "<<m<<std::endl;
-                  }
-              }
-          }
-
-        if (fileReadFlag == 0)
-          errorReadFile += 1;
-      } // end stencil
-
-    unsigned int totalAtomicData = 0;
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
-      {
-        for (unsigned int iSingAtomData = 0;
-             iSingAtomData < singleAtomInfo[iAtom].size();
-             ++iSingAtomData)
-          {
-            totalAtomicData += 1;
-          }
-      }
-
-    // loop over elements
-    std::vector<double> eigenValuesAllkPoints;
-    for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      {
-        for (int statesIter = 0; statesIter < eigenValuesInput[0].size();
-             ++statesIter)
-          {
-            eigenValuesAllkPoints.push_back(
-              eigenValuesInput[kPoint][statesIter]);
-          }
-      }
-
-    std::sort(eigenValuesAllkPoints.begin(), eigenValuesAllkPoints.end());
-
-    double totalEigenValues  = eigenValuesAllkPoints.size();
-    double intervalSize      = 0.001;
-    double sigma             = C_kb * d_dftParamsPtr->TVal;
-    double lowerBoundEpsilon = 1.5 * eigenValuesAllkPoints[0];
-    double upperBoundEpsilon =
-      eigenValuesAllkPoints[totalEigenValues - 1] * 1.5;
-
-    MPI_Allreduce(MPI_IN_PLACE,
-                  &lowerBoundEpsilon,
-                  1,
-                  dataTypes::mpi_type_id(&lowerBoundEpsilon),
-                  MPI_MIN,
-                  interpoolcomm);
-
-    MPI_Allreduce(MPI_IN_PLACE,
-                  &upperBoundEpsilon,
-                  1,
-                  dataTypes::mpi_type_id(&upperBoundEpsilon),
-                  MPI_MAX,
-                  interpoolcomm);
-
-    unsigned int numberIntervals =
-      std::ceil((upperBoundEpsilon - lowerBoundEpsilon) / intervalSize);
-    std::vector<double> partialDensityOfStates;
-    partialDensityOfStates.resize(totalAtomicData * numberIntervals, 0.0);
-
-    // access finite-element data
-    dealii::QGauss<3>   quadrature_formula(C_num1DQuad<FEOrder>());
-    dealii::FEValues<3> fe_values(dofHandler.get_fe(),
-                                  quadrature_formula,
-                                  dealii::update_values |
-                                    dealii::update_JxW_values |
-                                    dealii::update_quadrature_points);
-    const unsigned int  dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
-    const unsigned int  n_q_points    = quadrature_formula.size();
-
-
-    const unsigned int blockSize =
-      std::min(d_dftParamsPtr->wfcBlockSize, d_numEigenValues);
-
-    std::vector<std::vector<double>> tempQuadPointValuesForWaveFunctions(
-      blockSize);
-    std::vector<double> tempQuadPointValues(n_q_points);
-
-    const unsigned int localVectorSize =
-      matrix_free_data.get_vector_partitioner()->locally_owned_size();
-    std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
-      (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size());
-    std::vector<distributedCPUVec<dataTypes::number>>
-      eigenVectorsFlattenedBlock((1 + d_dftParamsPtr->spinPolarized) *
-                                 d_kPointWeights.size());
-    // std::vector<double>
-    // innerProductWaveFunctionSingAtom(d_numEigenValues*5,0.0);
-    // std::vector<double> tempContribution(blockSize*,0.0);
-
-    for (unsigned int ivec = 0; ivec < d_numEigenValues; ivec += blockSize)
-      {
-        const unsigned int currentBlockSize =
-          std::min(blockSize, d_numEigenValues - ivec);
-        std::vector<double> tempContribution(currentBlockSize * totalAtomicData,
-                                             0.0);
-
-        if (currentBlockSize != blockSize || ivec == 0)
-          {
-            for (unsigned int kPoint = 0;
-                 kPoint <
-                 (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-                 ++kPoint)
-              {
-                eigenVectors[kPoint].resize(currentBlockSize);
-                for (unsigned int i = 0; i < currentBlockSize; ++i)
-                  eigenVectors[kPoint][i].reinit(d_tempEigenVec);
-
-
-                vectorTools::createDealiiVector<dataTypes::number>(
-                  matrix_free_data.get_vector_partitioner(),
-                  currentBlockSize,
-                  eigenVectorsFlattenedBlock[kPoint]);
-                eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
-              }
-          }
-
-
-        std::vector<std::vector<double>> blockedEigenValues(
-          d_kPointWeights.size(),
-          std::vector<double>((1 + d_dftParamsPtr->spinPolarized) *
-                                currentBlockSize,
-                              0.0));
-
-        for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-          for (unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
-            {
-              blockedEigenValues[kPoint][iWave] =
-                eigenValues[kPoint][ivec + iWave];
-              if (d_dftParamsPtr->spinPolarized == 1)
-                blockedEigenValues[kPoint][currentBlockSize + iWave] =
-                  eigenValues[kPoint][d_numEigenValues + ivec + iWave];
-            }
-
-
-        for (unsigned int kPoint = 0;
-             kPoint <
-             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-             ++kPoint)
-          {
-            for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-              for (unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
-                eigenVectorsFlattenedBlock[kPoint].local_element(
-                  iNode * currentBlockSize + iWave) =
-                  d_eigenVectorsFlattenedHost[kPoint * localVectorSize *
-                                                d_numEigenValues +
-                                              iNode * d_numEigenValues + ivec +
-                                              iWave];
-
-            eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
-            constraintsNoneDataInfo.distribute(
-              eigenVectorsFlattenedBlock[kPoint], currentBlockSize);
-            eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
-
-#ifdef USE_COMPLEX
-            vectorTools::copyFlattenedDealiiVecToSingleCompVec(
-              eigenVectorsFlattenedBlock[kPoint],
-              currentBlockSize,
-              std::make_pair(0, currentBlockSize),
-              localProc_dof_indicesReal,
-              localProc_dof_indicesImag,
-              eigenVectors[kPoint],
-              false);
-
-            // FIXME: The underlying call to update_ghost_values
-            // is required because currently localProc_dof_indicesReal
-            // and localProc_dof_indicesImag are only available for
-            // locally owned nodes. Once they are also made available
-            // for ghost nodes- use true for the last argument in
-            // copyFlattenedDealiiVecToSingleCompVec(..) above and supress
-            // underlying call.
-            for (unsigned int i = 0; i < currentBlockSize; ++i)
-              eigenVectors[kPoint][i].update_ghost_values();
-#else
-            vectorTools::copyFlattenedDealiiVecToSingleCompVec(
-              eigenVectorsFlattenedBlock[kPoint],
-              currentBlockSize,
-              std::make_pair(0, currentBlockSize),
-              eigenVectors[kPoint],
-              true);
-#endif
-          }
-
-        if (d_dftParamsPtr->spinPolarized == 1)
-          {
-            AssertThrow(
-              false,
-              dealii::ExcMessage(
-                "PDOS is not implemented for spin-polarized problems"));
-          }
-        else
-          {
-            typename dealii::DoFHandler<3>::active_cell_iterator
-              cellN = dofHandler.begin_active(),
-              endcN = dofHandler.end();
-            for (; cellN != endcN; ++cellN)
-              {
-                if (cellN->is_locally_owned())
-                  {
-                    fe_values.reinit(cellN);
-
-                    for (unsigned int iEigenVec = 0;
-                         iEigenVec < currentBlockSize;
-                         ++iEigenVec)
-                      {
-                        tempQuadPointValuesForWaveFunctions[iEigenVec].resize(
-                          n_q_points);
-                        fe_values.get_function_values(
-                          eigenVectors[0][iEigenVec], tempQuadPointValues);
-                        tempQuadPointValuesForWaveFunctions[iEigenVec] =
-                          tempQuadPointValues;
-                      }
-
-
-
-                    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms;
-                         ++iAtom)
-                      {
-                        for (unsigned int iSingAtomData = 0;
-                             iSingAtomData < singleAtomInfo[iAtom].size();
-                             ++iSingAtomData)
-                          {
-                            for (unsigned int q = 0; q < n_q_points; ++q)
-                              {
-                                const dealii::Point<3> &quadPoint =
-                                  fe_values.quadrature_point(q);
-                                double x =
-                                  quadPoint[0] - atomLocations[iAtom][2];
-                                double y =
-                                  quadPoint[1] - atomLocations[iAtom][3];
-                                double z =
-                                  quadPoint[2] - atomLocations[iAtom][4];
-
-                                double r     = sqrt(x * x + y * y + z * z);
-                                double theta = acos(z / r);
-                                double phi   = atan2(y, x);
-
-                                if (r == 0)
-                                  {
-                                    theta = 0;
-                                    phi   = 0;
-                                  }
-
-                                orbital dataOrb =
-                                  singleAtomInfo[iAtom][iSingAtomData];
-
-                                double R = 0.0;
-                                double singleAtomWaveFunctionQuadValue;
-
-                                if (r <= wfcInitTruncation)
-                                  {
-                                    R = alglib::spline1dcalc(dataOrb.psi, r);
-                                    if (dataOrb.m > 0)
-                                      singleAtomWaveFunctionQuadValue =
-                                        R * std::sqrt(2) *
-                                        boost::math::spherical_harmonic_r(
-                                          dataOrb.l, dataOrb.m, theta, phi);
-                                    else if (dataOrb.m == 0)
-                                      singleAtomWaveFunctionQuadValue =
-                                        R * boost::math::spherical_harmonic_r(
-                                              dataOrb.l, dataOrb.m, theta, phi);
-                                    else
-                                      singleAtomWaveFunctionQuadValue =
-                                        R * std::sqrt(2) *
-                                        boost::math::spherical_harmonic_i(
-                                          dataOrb.l, -dataOrb.m, theta, phi);
-                                  }
-                                else
-                                  singleAtomWaveFunctionQuadValue = 0.0;
-
-                                for (unsigned int iEigenVec = 0;
-                                     iEigenVec < currentBlockSize;
-                                     ++iEigenVec)
-                                  {
-                                    tempContribution
-                                      [currentBlockSize *
-                                         singleAtomInfo[iAtom].size() * iAtom +
-                                       currentBlockSize * iSingAtomData +
-                                       iEigenVec] +=
-                                      tempQuadPointValuesForWaveFunctions
-                                        [iEigenVec][q] *
-                                      singleAtomWaveFunctionQuadValue *
-                                      fe_values.JxW(q);
-                                  }
-                              } // quad loop
-
-                          } // single atom wavefunction data
-
-                      } // iAtom data
-
-                  } // if cell
-
-              } // cell loop
-
-            dealii::Utilities::MPI::sum(tempContribution,
-                                        mpi_communicator,
-                                        tempContribution);
-          } // if-else loop
-
-
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
-          {
-            for (unsigned int iSingAtomData = 0;
-                 iSingAtomData < singleAtomInfo[iAtom].size();
-                 ++iSingAtomData)
-              {
-                for (unsigned int iEigenVec = 0; iEigenVec < currentBlockSize;
-                     ++iEigenVec)
-                  {
-                    for (unsigned int epsInt = 0; epsInt < numberIntervals;
-                         ++epsInt)
-                      {
-                        double epsValue =
-                          lowerBoundEpsilon + epsInt * intervalSize;
-                        double term1 =
-                          (epsValue - blockedEigenValues[0][iEigenVec]);
-                        double smearedEnergyLevel =
-                          (sigma / M_PI) *
-                          (1.0 / (term1 * term1 + sigma * sigma));
-                        double tempValue =
-                          tempContribution[currentBlockSize *
-                                             singleAtomInfo[iAtom].size() *
-                                             iAtom +
-                                           currentBlockSize * iSingAtomData +
-                                           iEigenVec];
-                        partialDensityOfStates[numberIntervals *
-                                                 singleAtomInfo[iAtom].size() *
-                                                 iAtom +
-                                               numberIntervals * iSingAtomData +
-                                               epsInt] +=
-                          2.0 * tempValue * tempValue * smearedEnergyLevel;
-                      }
-                  }
-              }
-          }
-
-      } // ivec block loop
-
-    pcout << "Following is the Single atom data used for PDOS computation: "
-          << std::endl;
-
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
-      {
-        for (unsigned int iSingAtomData = 0;
-             iSingAtomData < singleAtomInfo[iAtom].size();
-             ++iSingAtomData)
-          {
-            orbital temp = singleAtomInfo[iAtom][iSingAtomData];
-            pcout << "Atom Id: " << iAtom << " Z: " << temp.Z
-                  << " n: " << temp.n << " l: " << temp.l << " m: " << temp.m
-                  << std::endl;
-          }
-      }
-
-
-    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-      {
-        std::string tempFolder = "pdosOutputFolder";
-        mkdir(tempFolder.c_str(), ACCESSPERMS);
-
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
-          {
-            std::string outFileName = tempFolder + "/" + pdosFileName + "_" +
-                                      dealii::Utilities::to_string(iAtom);
-            std::ofstream outputFile(outFileName);
-            outputFile.setf(std::ios_base::fixed);
-            if (outputFile.is_open())
-              {
-                if (d_dftParamsPtr->spinPolarized == 1)
-                  {
-                    AssertThrow(
-                      false,
-                      dealii::ExcMessage(
-                        "PDOS is not implemented for spin-polarized problems"));
-                  }
-                else
-                  {
-                    for (unsigned int epsInt = 0; epsInt < numberIntervals;
-                         ++epsInt)
-                      {
-                        double epsValue =
-                          lowerBoundEpsilon + epsInt * intervalSize;
-                        outputFile << std::setprecision(18)
-                                   << epsValue * 27.21138602 << " ";
-                        for (unsigned int iSingAtomData = 0;
-                             iSingAtomData < singleAtomInfo[iAtom].size();
-                             ++iSingAtomData)
-                          {
-                            outputFile
-                              << std::setprecision(18)
-                              << partialDensityOfStates
-                                   [numberIntervals *
-                                      singleAtomInfo[iAtom].size() * iAtom +
-                                    numberIntervals * iSingAtomData + epsInt]
-                              << " ";
-                          }
-                        outputFile << std::endl;
-                      }
-                  }
-              }
-          }
-      }
-    computing_timer.leave_subsection("PDOS computation");
-  }
 #include "dft.inst.cc"
+
+
 
 } // namespace dftfe
