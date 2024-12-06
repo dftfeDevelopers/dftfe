@@ -5928,61 +5928,61 @@ namespace dftfe
                           tempGradRhoCore[3 * iQuad + idim] / 2.0;
                   }
               }
-            if (isTauMGGA)
+          }
+        if (isTauMGGA)
+          {
+            std::vector<double> &tauValsForXC =
+              densityProjectionInputs["tauFunc"];
+            tauValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell,
+                                0);
+            if (spinPolarizedFactor == 1)
               {
-                std::vector<double> &tauValsForXC =
-                  densityProjectionInputs["tauFunc"];
-                tauValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell,
-                                    0);
-                if (spinPolarizedFactor == 1)
+                for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
+                      ++iCell)
                   {
-                    for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                         ++iCell)
-                      {
-                        const double *cellTauValues =
-                          tauQuadValues[0].data() + iCell * nQuadsPerCell;
+                    const double *cellTauValues =
+                      tauQuadValues[0].data() + iCell * nQuadsPerCell;
 
-                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
-                             ++iQuad)
-                          tauValsForXC[iCell * nQuadsPerCell + iQuad] =
-                            cellTauValues[iQuad] / 2.0;
+                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                          ++iQuad)
+                      tauValsForXC[iCell * nQuadsPerCell + iQuad] =
+                        cellTauValues[iQuad] / 2.0;
 
-                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
-                             ++iQuad)
-                          tauValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
-                                       iCell * nQuadsPerCell + iQuad] =
-                            cellTauValues[iQuad] / 2.0;
-                      }
+                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                          ++iQuad)
+                      tauValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
+                                    iCell * nQuadsPerCell + iQuad] =
+                        cellTauValues[iQuad] / 2.0;
                   }
-                else if (spinPolarizedFactor == 2)
+              }
+            else if (spinPolarizedFactor == 2)
+              {
+                for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
+                      ++iCell)
                   {
-                    for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                         ++iCell)
-                      {
-                        const double *cellTauValues =
-                          tauQuadValues[0].data() + iCell * nQuadsPerCell;
-                        const double *cellTauMagValues =
-                          tauQuadValues[1].data() + iCell * nQuadsPerCell;
+                    const double *cellTauValues =
+                      tauQuadValues[0].data() + iCell * nQuadsPerCell;
+                    const double *cellTauMagValues =
+                      tauQuadValues[1].data() + iCell * nQuadsPerCell;
 
-                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
-                             ++iQuad)
-                          tauValsForXC[iCell * nQuadsPerCell + iQuad] =
-                            cellTauValues[iQuad] / 2.0 +
-                            cellTauMagValues[iQuad] / 2.0;
+                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                          ++iQuad)
+                      tauValsForXC[iCell * nQuadsPerCell + iQuad] =
+                        cellTauValues[iQuad] / 2.0 +
+                        cellTauMagValues[iQuad] / 2.0;
 
-                        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
-                             ++iQuad)
-                          tauValsForXC[iCell * nQuadsPerCell + iQuad] =
-                            cellTauValues[iQuad] / 2.0 -
-                            cellTauMagValues[iQuad] / 2.0;
-                      }
+                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                          ++iQuad)
+                      tauValsForXC[totalLocallyOwnedCells * nQuadsPerCell + iCell * nQuadsPerCell + iQuad] =
+                        cellTauValues[iQuad] / 2.0 -
+                        cellTauMagValues[iQuad] / 2.0;
                   }
-                if (d_dftParamsPtr->nonLinearCoreCorrection)
-                  {
-                    std::string errMsg =
-                      "NLCC is not implemented yet for SCAN.";
-                    dftfe::utils::throwException(false, errMsg);
-                  }
+              }
+            if (d_dftParamsPtr->nonLinearCoreCorrection)
+              {
+                std::string errMsg =
+                  "NLCC is not implemented yet for SCAN.";
+                dftfe::utils::throwException(false, errMsg);
               }
           }
 

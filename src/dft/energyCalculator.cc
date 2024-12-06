@@ -697,9 +697,12 @@ namespace dftfe
 
     if (isTauMGGA)
       {
-        tauOutQuadValuesSpinPolarized.push_back(
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
-            tauOutValues[0].size(), 0.0));
+        if (d_dftParams.spinPolarized == 0)
+          {
+            tauOutQuadValuesSpinPolarized.push_back(
+              dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+                tauOutValues[0].size(), 0.0));
+          }
       }
 
     computeXCEnergyTermsSpinPolarized(basisOperationsPtr,

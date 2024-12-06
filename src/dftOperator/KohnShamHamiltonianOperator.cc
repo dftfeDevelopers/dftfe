@@ -383,25 +383,8 @@ namespace dftfe
               quadWeightsAll[iCell * numberQuadraturePointsPerCell + iQuad]);
           }
 
-        // {
-        //   int rank;
-        //   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        //   {
-        //     std::cout << "before XC call"
-        //               << "Cell: " << iCell << ", rank:  " << rank <<
-        //               std::endl;
-        //   }
-        // }
-
         d_excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
           *auxDensityXCRepresentation, quadPointsInCell, xDataOut, cDataOut);
-        // {
-        //   int rank;
-        //   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        //   {
-        //     std::cout << "After XC call" << std::endl;
-        //   }
-        // }
 
         const std::vector<double> &pdexDensitySpinIndex =
           spinIndex == 0 ? pdexDensitySpinUp : pdexDensitySpinDown;
