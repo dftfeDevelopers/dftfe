@@ -70,6 +70,7 @@
 
 #include <mixingClass.h>
 #include <oncvClass.h>
+#include <atomCenteredPostProcessing.h>
 
 namespace dftfe
 {
@@ -288,7 +289,7 @@ namespace dftfe
      * @brief Number of Kohn-Sham eigen values to be computed
      */
     unsigned int d_numEigenValues;
-
+    unsigned int d_highestStateForNscfCalculation;
     /**
      * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
      * after spectrum splitting.
@@ -1195,11 +1196,6 @@ namespace dftfe
     compute_ldos(const std::vector<std::vector<double>> &eigenValuesInput,
                  const std::string &                     fileName);
 
-    void
-    compute_pdos(const std::vector<std::vector<double>> &eigenValuesInput,
-                 const std::string &                     fileName);
-
-
     /**
      *@brief compute localization length
      */
@@ -1515,6 +1511,9 @@ namespace dftfe
     std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
       d_oncvClassPtr;
 
+    std::shared_ptr<
+      dftfe::atomCenteredOrbitalsPostProcessing<dataTypes::number, memorySpace>>
+      d_atomCenteredOrbitalsPostProcessingPtr;
 
     std::shared_ptr<
 #if defined(DFTFE_WITH_DEVICE)

@@ -317,6 +317,7 @@ namespace dftfe
     //
     // eigen solve
     //
+    // if writeBandsFile == true, get the fermi energy from the fermiEnergy.out
     if (d_dftParamsPtr->writeBandsFile)
       {
         std::ifstream file("fermiEnergy.out");
@@ -871,7 +872,13 @@ namespace dftfe
 
         numberChebyshevSolvePasses = count;
 
-        if (d_dftParamsPtr->verbosity >= 0)
+        if (d_dftParamsPtr->verbosity == 0 &&
+            d_dftParamsPtr->reproducible_output)
+          {
+            pcout << "Fermi Energy computed: " << std::fixed
+                  << std::setprecision(8) << fermiEnergy << std::endl;
+          }
+        else
           {
             pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
           }

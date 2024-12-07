@@ -1863,6 +1863,7 @@ namespace dftfe
                                   ->getAtomIdsInCurrentProcess()[iAtom];
     return (d_sphericalFnTimesWavefunMatrix.find(atomId)->second).begin();
   }
+
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyVOnCconjtransX(
@@ -3289,6 +3290,8 @@ namespace dftfe
   {
     return (d_flattenedNonLocalCellDofIndexToProcessDofIndexMap);
   }
+
+
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void

@@ -155,21 +155,33 @@ namespace dftfe
         {
           // Assert Statement
         }
-
-      dftfe::utils::deviceBlasStatus_t status = cublasSgemm(d_deviceBlasHandle,
-                                                            transa,
-                                                            transb,
-                                                            int(m),
-                                                            int(n),
-                                                            int(k),
-                                                            alpha,
-                                                            A,
-                                                            int(lda),
-                                                            B,
-                                                            int(ldb),
-                                                            beta,
-                                                            C,
-                                                            int(ldc));
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
+      dftfe::utils::deviceBlasStatus_t status =
+        cublasGemmEx(d_deviceBlasHandle,
+                     transa,
+                     transb,
+                     int(m),
+                     int(n),
+                     int(k),
+                     (const void *)alpha,
+                     (const void *)A,
+                     CUDA_R_32F,
+                     int(lda),
+                     (const void *)B,
+                     CUDA_R_32F,
+                     int(ldb),
+                     (const void *)beta,
+                     (void *)C,
+                     CUDA_R_32F,
+                     int(ldc),
+                     computeType,
+                     CUBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -211,22 +223,34 @@ namespace dftfe
         {
           // Assert Statement
         }
-
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
       dftfe::utils::deviceBlasStatus_t status =
-        cublasCgemm(d_deviceBlasHandle,
-                    transa,
-                    transb,
-                    int(m),
-                    int(n),
-                    int(k),
-                    dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                    dftfe::utils::makeDataTypeDeviceCompatible(A),
-                    int(lda),
-                    dftfe::utils::makeDataTypeDeviceCompatible(B),
-                    int(ldb),
-                    dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                    dftfe::utils::makeDataTypeDeviceCompatible(C),
-                    int(ldc));
+        cublasGemmEx(d_deviceBlasHandle,
+                     transa,
+                     transb,
+                     int(m),
+                     int(n),
+                     int(k),
+                     (const void *)alpha,
+                     (const void *)A,
+                     CUDA_C_32F,
+                     int(lda),
+                     (const void *)B,
+                     CUDA_C_32F,
+                     int(ldb),
+                     (const void *)beta,
+                     (void *)C,
+                     CUDA_C_32F,
+                     int(ldc),
+                     computeType,
+                     CUBLAS_GEMM_DEFAULT);
+
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -1026,26 +1050,38 @@ namespace dftfe
         {
           // Assert Statement
         }
-
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
       dftfe::utils::deviceBlasStatus_t status =
-        cublasSgemmStridedBatched(d_deviceBlasHandle,
-                                  transa,
-                                  transb,
-                                  int(m),
-                                  int(n),
-                                  int(k),
-                                  alpha,
-                                  A,
-                                  int(lda),
-                                  strideA,
-                                  B,
-                                  int(ldb),
-                                  strideB,
-                                  beta,
-                                  C,
-                                  int(ldc),
-                                  strideC,
-                                  int(batchCount));
+        cublasGemmStridedBatchedEx(d_deviceBlasHandle,
+                                   transa,
+                                   transb,
+                                   int(m),
+                                   int(n),
+                                   int(k),
+                                   (const void *)alpha,
+                                   (const void *)A,
+                                   CUDA_R_32F,
+                                   int(lda),
+                                   strideA,
+                                   (const void *)B,
+                                   CUDA_R_32F,
+                                   int(ldb),
+                                   strideB,
+                                   (const void *)beta,
+                                   (void *)C,
+                                   CUDA_R_32F,
+                                   int(ldc),
+                                   strideC,
+                                   int(batchCount),
+                                   computeType,
+                                   CUBLAS_GEMM_DEFAULT);
+
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -1092,25 +1128,37 @@ namespace dftfe
           // Assert Statement
         }
 
-      dftfe::utils::deviceBlasStatus_t status = cublasCgemmStridedBatched(
-        d_deviceBlasHandle,
-        transa,
-        transb,
-        int(m),
-        int(n),
-        int(k),
-        dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-        dftfe::utils::makeDataTypeDeviceCompatible(A),
-        int(lda),
-        strideA,
-        dftfe::utils::makeDataTypeDeviceCompatible(B),
-        int(ldb),
-        strideB,
-        dftfe::utils::makeDataTypeDeviceCompatible(beta),
-        dftfe::utils::makeDataTypeDeviceCompatible(C),
-        int(ldc),
-        strideC,
-        int(batchCount));
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
+      dftfe::utils::deviceBlasStatus_t status =
+        cublasGemmStridedBatchedEx(d_deviceBlasHandle,
+                                   transa,
+                                   transb,
+                                   int(m),
+                                   int(n),
+                                   int(k),
+                                   (const void *)alpha,
+                                   (const void *)A,
+                                   CUDA_C_32F,
+                                   int(lda),
+                                   strideA,
+                                   (const void *)B,
+                                   CUDA_C_32F,
+                                   int(ldb),
+                                   strideB,
+                                   (const void *)beta,
+                                   (void *)C,
+                                   CUDA_C_32F,
+                                   int(ldc),
+                                   strideC,
+                                   int(batchCount),
+                                   computeType,
+                                   CUBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
     }
     void
@@ -1268,22 +1316,34 @@ namespace dftfe
           // Assert Statement
         }
 
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
       dftfe::utils::deviceBlasStatus_t status =
-        cublasSgemmBatched(d_deviceBlasHandle,
-                           transa,
-                           transb,
-                           int(m),
-                           int(n),
-                           int(k),
-                           alpha,
-                           A,
-                           int(lda),
-                           B,
-                           int(ldb),
-                           beta,
-                           C,
-                           int(ldc),
-                           int(batchCount));
+        cublasGemmBatchedEx(d_deviceBlasHandle,
+                            transa,
+                            transb,
+                            int(m),
+                            int(n),
+                            int(k),
+                            (const void *)alpha,
+                            (const void **)A,
+                            CUDA_R_32F,
+                            int(lda),
+                            (const void **)B,
+                            CUDA_R_32F,
+                            int(ldb),
+                            (const void *)beta,
+                            (void **)C,
+                            CUDA_R_32F,
+                            int(ldc),
+                            int(batchCount),
+                            computeType,
+                            CUBLAS_GEMM_DEFAULT);
 
       DEVICEBLAS_API_CHECK(status);
     }
@@ -1326,23 +1386,35 @@ namespace dftfe
         {
           // Assert Statement
         }
-
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
       dftfe::utils::deviceBlasStatus_t status =
-        cublasCgemmBatched(d_deviceBlasHandle,
-                           transa,
-                           transb,
-                           int(m),
-                           int(n),
-                           int(k),
-                           dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                           (const dftfe::utils::deviceFloatComplex **)A,
-                           int(lda),
-                           (const dftfe::utils::deviceFloatComplex **)B,
-                           int(ldb),
-                           dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                           (dftfe::utils::deviceFloatComplex **)C,
-                           int(ldc),
-                           int(batchCount));
+        cublasGemmBatchedEx(d_deviceBlasHandle,
+                            transa,
+                            transb,
+                            int(m),
+                            int(n),
+                            int(k),
+                            (const void *)alpha,
+                            (const void **)A,
+                            CUDA_C_32F,
+                            int(lda),
+                            (const void **)B,
+                            CUDA_C_32F,
+                            int(ldb),
+                            (const void *)beta,
+                            (void **)C,
+                            CUDA_C_32F,
+                            int(ldc),
+                            int(batchCount),
+                            computeType,
+                            CUBLAS_GEMM_DEFAULT);
+
 
       DEVICEBLAS_API_CHECK(status);
     }
