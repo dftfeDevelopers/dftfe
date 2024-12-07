@@ -81,6 +81,19 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<unsigned int,
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal);
+    template <typename ValueType>
+    void
+    addNonLocalContribution(
+      const unsigned int totalNonLocalElements,
+      const unsigned int numberWfc,
+      const unsigned int numberNodesPerElement,
+      const dftfe::utils::MemoryStorage<unsigned int,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &iElemNonLocalToElemIndexMap,
+      const dftfe::utils::MemoryStorage<ValueType,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &        nonLocalContribution,
+      ValueType *TotalContribution);
 
     template <typename ValueType>
     void

@@ -124,7 +124,8 @@ namespace dftfe
       unsigned int &             totalAtomsInCurrentProcessor,
       unsigned int &             totalNonLocalElements,
       std::vector<unsigned int> &numberCellsForEachAtom,
-      std::vector<unsigned int> &numberCellsAccumNonLocalAtoms);
+      std::vector<unsigned int> &numberCellsAccumNonLocalAtoms,
+      std::vector<unsigned int> &iElemNonLocalToElemIndexMap);
 
     /**
      * @brief Returns the total number of total radial-spherical functions indexed by {i} present in atomicNumbers list.

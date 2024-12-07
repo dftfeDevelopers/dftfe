@@ -68,12 +68,16 @@ namespace dftfe
     d_totalNonLocalEntries =
       d_atomCenteredSphericalFunctionContainer
         ->getTotalNumberOfSphericalFunctionsInCurrentProcessor();
+    std::vector<unsigned int> iElemNonLocalToElemIndexMap;
     d_atomCenteredSphericalFunctionContainer
       ->getTotalAtomsAndNonLocalElementsInCurrentProcessor(
         d_totalAtomsInCurrentProc,
         d_totalNonlocalElems,
         d_numberCellsForEachAtom,
-        d_numberCellsAccumNonLocalAtoms);
+        d_numberCellsAccumNonLocalAtoms,
+        iElemNonLocalToElemIndexMap);
+    d_iElemNonLocalToElemIndexMap.resize(d_totalNonlocalElems);
+    d_iElemNonLocalToElemIndexMap.copyFrom(iElemNonLocalToElemIndexMap);
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -2565,21 +2569,31 @@ namespace dftfe
           strideC,
           d_totalNonlocalElems);
 
-        for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
-          {
-            const unsigned int accum  = d_numberCellsAccumNonLocalAtoms[iAtom];
-            const unsigned int Ncells = d_numberCellsForEachAtom[iAtom];
+        dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
+          addNonLocalContribution(d_totalNonlocalElems,
+                                  d_numberWaveFunctions,
+                                  d_numberNodesPerElement,
+                                  d_iElemNonLocalToElemIndexMap,
+                                  d_cellHamMatrixTimesWaveMatrixNonLocalDevice,
+                                  Xout);
 
-            dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
-              addNonLocalContribution(
-                Ncells,
-                d_numberNodesPerElement,
-                d_numberWaveFunctions,
-                accum,
-                d_cellHamMatrixTimesWaveMatrixNonLocalDevice,
-                Xout,
-                d_cellNodeIdMapNonLocalToLocalDevice);
-          }
+        // for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc;
+        // ++iAtom)
+        //   {
+        //     const unsigned int accum  =
+        //     d_numberCellsAccumNonLocalAtoms[iAtom]; const unsigned int Ncells
+        //     = d_numberCellsForEachAtom[iAtom];
+
+        //     dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
+        //       addNonLocalContribution(
+        //         Ncells,
+        //         d_numberNodesPerElement,
+        //         d_numberWaveFunctions,
+        //         accum,
+        //         d_cellHamMatrixTimesWaveMatrixNonLocalDevice,
+        //         Xout,
+        //         d_cellNodeIdMapNonLocalToLocalDevice);
+        //   }
       }
 #endif
   }

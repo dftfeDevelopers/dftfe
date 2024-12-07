@@ -159,6 +159,134 @@ namespace dftfe
         }
     }
 
+    __global__ void
+    addNonLocalContributionDeviceKernel(
+      const unsigned int  totalNonLocalElements,
+      const unsigned int  numberWfc,
+      const unsigned int  numberNodesPerElement,
+      const unsigned int *iElemNonLocalToElemIndexMap,
+      const double *      xVec,
+      double *            yVec)
+    {
+      const dealii::types::global_dof_index globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dealii::types::global_dof_index totalEntries =
+        totalNonLocalElements * numberWfc * numberNodesPerElement;
+      for (unsigned int index = globalThreadId; index < totalEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const unsigned int iElem =
+            index / (numberWfc * numberNodesPerElement);
+          const unsigned int elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const unsigned int index2 =
+            index % (numberWfc * numberNodesPerElement);
+          const unsigned int iDof     = index2 / numberWfc;
+          const unsigned int wfcIndex = index2 % numberWfc;
+          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                          iDof * numberWfc + wfcIndex],
+                    xVec[index]);
+        }
+    }
+
+    __global__ void
+    addNonLocalContributionDeviceKernel(
+      const unsigned int  totalNonLocalElements,
+      const unsigned int  numberWfc,
+      const unsigned int  numberNodesPerElement,
+      const unsigned int *iElemNonLocalToElemIndexMap,
+      const float *       xVec,
+      float *             yVec)
+    {
+      const dealii::types::global_dof_index globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dealii::types::global_dof_index totalEntries =
+        totalNonLocalElements * numberWfc * numberNodesPerElement;
+      for (unsigned int index = globalThreadId; index < totalEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const unsigned int iElem =
+            index / (numberWfc * numberNodesPerElement);
+          const unsigned int elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const unsigned int index2 =
+            index % (numberWfc * numberNodesPerElement);
+          const unsigned int iDof     = index2 / numberWfc;
+          const unsigned int wfcIndex = index2 % numberWfc;
+          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                          iDof * numberWfc + wfcIndex],
+                    xVec[index]);
+        }
+    }
+
+
+    __global__ void
+    addNonLocalContributionDeviceKernel(
+      const unsigned int                       totalNonLocalElements,
+      const unsigned int                       numberWfc,
+      const unsigned int                       numberNodesPerElement,
+      const unsigned int *                     iElemNonLocalToElemIndexMap,
+      const dftfe::utils::deviceDoubleComplex *xVec,
+      dftfe::utils::deviceDoubleComplex *      yVec)
+    {
+      const dealii::types::global_dof_index globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dealii::types::global_dof_index totalEntries =
+        totalNonLocalElements * numberWfc * numberNodesPerElement;
+      for (unsigned int index = globalThreadId; index < totalEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const unsigned int iElem =
+            index / (numberWfc * numberNodesPerElement);
+          const unsigned int elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const unsigned int index2 =
+            index % (numberWfc * numberNodesPerElement);
+          const unsigned int iDof     = index2 / numberWfc;
+          const unsigned int wfcIndex = index2 % numberWfc;
+          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                          iDof * numberWfc + wfcIndex]
+                       .x,
+                    xVec[index].x);
+          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                          iDof * numberWfc + wfcIndex]
+                       .y,
+                    xVec[index].y);
+        }
+    }
+
+
+    __global__ void
+    addNonLocalContributionDeviceKernel(
+      const unsigned int                      totalNonLocalElements,
+      const unsigned int                      numberWfc,
+      const unsigned int                      numberNodesPerElement,
+      const unsigned int *                    iElemNonLocalToElemIndexMap,
+      const dftfe::utils::deviceFloatComplex *xVec,
+      dftfe::utils::deviceFloatComplex *      yVec)
+    {
+      const dealii::types::global_dof_index globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dealii::types::global_dof_index totalEntries =
+        totalNonLocalElements * numberWfc * numberNodesPerElement;
+      for (unsigned int index = globalThreadId; index < totalEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const unsigned int iElem =
+            index / (numberWfc * numberNodesPerElement);
+          const unsigned int elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const unsigned int index2 =
+            index % (numberWfc * numberNodesPerElement);
+          const unsigned int iDof     = index2 / numberWfc;
+          const unsigned int wfcIndex = index2 % numberWfc;
+          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                          iDof * numberWfc + wfcIndex]
+                       .x,
+                    xVec[index].x);
+          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                          iDof * numberWfc + wfcIndex]
+                       .y,
+                    xVec[index].y);
+        }
+    }
+
     template <typename ValueType>
     __global__ void
     addNonLocalContributionDeviceKernel(
@@ -388,6 +516,52 @@ namespace dftfe
 #endif
     }
 
+    template <typename ValueType>
+    void
+    addNonLocalContribution(
+      const unsigned int totalNonLocalElements,
+      const unsigned int numberWfc,
+      const unsigned int numberNodesPerElement,
+      const dftfe::utils::MemoryStorage<unsigned int,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &iElemNonLocalToElemIndexMap,
+      const dftfe::utils::MemoryStorage<ValueType,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &        nonLocalContribution,
+      ValueType *TotalContribution)
+    {
+      const unsigned int totalEntries =
+        totalNonLocalElements * numberWfc * numberNodesPerElement;
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+      addNonLocalContributionDeviceKernel<<<(dftfe::utils::DEVICE_BLOCK_SIZE +
+                                             totalEntries) /
+                                              dftfe::utils::DEVICE_BLOCK_SIZE,
+                                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        totalNonLocalElements,
+        numberWfc,
+        numberNodesPerElement,
+        iElemNonLocalToElemIndexMap.begin(),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          nonLocalContribution.begin()),
+        dftfe::utils::makeDataTypeDeviceCompatible(TotalContribution));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(addNonLocalContributionDeviceKernel,
+                         (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
+                           dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         totalNonLocalElements,
+                         numberWfc,
+                         numberNodesPerElement,
+                         iElemNonLocalToElemIndexMap.begin(),
+                         dftfe::utils::makeDataTypeDeviceCompatible(
+                           nonLocalContribution.begin()),
+                         dftfe::utils::makeDataTypeDeviceCompatible(
+                           TotalContribution));
+#endif
+    }
+
+
 
     template <typename ValueType>
     void
@@ -552,6 +726,31 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal);
 
+    template void
+    addNonLocalContribution(
+      const unsigned int totalNonLocalElements,
+      const unsigned int numberWfc,
+      const unsigned int numberNodesPerElement,
+      const dftfe::utils::MemoryStorage<unsigned int,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &iElemNonLocalToElemIndexMap,
+      const dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &                    nonLocalContribution,
+      dataTypes::numberFP32 *TotalContribution);
+
+    template void
+    addNonLocalContribution(
+      const unsigned int totalNonLocalElements,
+      const unsigned int numberWfc,
+      const unsigned int numberNodesPerElement,
+      const dftfe::utils::MemoryStorage<unsigned int,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &iElemNonLocalToElemIndexMap,
+      const dftfe::utils::MemoryStorage<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &                nonLocalContribution,
+      dataTypes::number *TotalContribution);
 
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice
 

@@ -470,6 +470,8 @@ namespace dftfe
       d_maxSingleAtomContribution; // maximum number of nonlocal indexes across
                                    // all atoms of interset
     std::vector<unsigned int> d_numberCellsAccumNonLocalAtoms;
+    dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+                 d_iElemNonLocalToElemIndexMap;
     unsigned int d_numberNodesPerElement; // Access from BasisOperator WHile
                                           // filling CMatrixEntries
     unsigned int d_locallyOwnedCells;
