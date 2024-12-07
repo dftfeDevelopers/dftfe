@@ -548,6 +548,7 @@ namespace dftfe
       hipLaunchKernelGGL(addNonLocalContributionDeviceKernel,
                          (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE, 
                          0,
                          0,
                          totalNonLocalElements,
