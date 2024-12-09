@@ -755,6 +755,12 @@ namespace dftfe
     bool
     isHubbardCorrectionsUsed();
 
+    /**
+     *@brief write wavefunction solution fields
+     */
+    void
+    outputWfc(const std::string outputFileName = "wfcOutput");
+
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based
@@ -1211,12 +1217,6 @@ namespace dftfe
      */
     void
     compute_localizationLength(const std::string &locLengthFileName);
-
-    /**
-     *@brief write wavefunction solution fields
-     */
-    void
-    outputWfc();
 
     /**
      *@brief write electron density solution fields
