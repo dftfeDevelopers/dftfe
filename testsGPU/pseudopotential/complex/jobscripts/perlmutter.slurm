@@ -38,3 +38,7 @@ srun ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
 srun ./dftfe parameterFileBe.prm > outputBe
 
 srun ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard
+
+srun ./dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
+
+srun ./dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
