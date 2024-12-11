@@ -147,7 +147,6 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_tdos(
     const std::vector<std::vector<double>> &eigenValuesInput,
-    const unsigned int                      highestStateOfInterest,
     const std::string &                     dosFileName)
   {
     computing_timer.enter_subsection("DOS computation");
@@ -155,7 +154,8 @@ namespace dftfe
     // from 0th spin as this is only to get a printing range
     std::vector<double> eigenValuesAllkPoints;
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      for (int statesIter = 0; statesIter <= d_highestStateForNscfCalculation;
+      for (int statesIter = 0;
+           statesIter <= d_highestStateForResidualComputation;
            ++statesIter)
         eigenValuesAllkPoints.push_back(eigenValuesInput[kPoint][statesIter]);
 
@@ -206,7 +206,7 @@ namespace dftfe
                      ++spinType)
                   {
                     for (unsigned int statesIter = 0;
-                         statesIter <= d_highestStateForNscfCalculation;
+                         statesIter <= d_highestStateForResidualComputation;
                          ++statesIter)
                       {
                         double term1 =
@@ -252,7 +252,7 @@ namespace dftfe
             for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
               {
                 for (unsigned int statesIter = 0;
-                     statesIter <= d_highestStateForNscfCalculation;
+                     statesIter <= d_highestStateForResidualComputation;
                      ++statesIter)
                   {
                     double term1 =

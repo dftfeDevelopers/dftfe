@@ -289,7 +289,7 @@ namespace dftfe
      * @brief Number of Kohn-Sham eigen values to be computed
      */
     unsigned int d_numEigenValues;
-    unsigned int d_highestStateForNscfCalculation;
+    unsigned int d_highestStateForResidualComputation;
     /**
      * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
      * after spectrum splitting.
@@ -1189,7 +1189,6 @@ namespace dftfe
      */
     void
     compute_tdos(const std::vector<std::vector<double>> &eigenValuesInput,
-                 const unsigned int                      highestStateOfInterest,
                  const std::string &                     fileName);
 
     void

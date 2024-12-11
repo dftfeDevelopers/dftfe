@@ -1002,7 +1002,7 @@ namespace dftfe
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
-    d_highestStateForNscfCalculation = highestState;
+    d_highestStateForResidualComputation = highestState;
     return maxHighestOccupiedStateResNorm;
   }
   // compute the maximum of the residual norm of the highest occupied state
@@ -1043,7 +1043,7 @@ namespace dftfe
                   residualNormWaveFunctionsAllkPoints[kPoint]
                                                      [highestOccupiedState];
               }
-            d_highestStateForNscfCalculation = highestOccupiedState;
+            d_highestStateForResidualComputation = highestOccupiedState;
           }
       }
     else
@@ -1075,14 +1075,10 @@ namespace dftfe
                   highestOccupiedState = i;
               }
 
-            d_highestStateForNscfCalculation = std::min(
-              d_numEigenValues - 1,
-              std::max(static_cast<unsigned int>(highestOccupiedState * 1.2),
-                       highestOccupiedState +
-                         5)); // 5 buffer states for dos and pdos plot
-            //(We need to take a call on this because the residual norm
-            // converges slowly if we go far from fermi energy)
-            for (unsigned int i = 0; i <= d_highestStateForNscfCalculation; i++)
+            d_highestStateForResidualComputation = highestOccupiedState;
+
+            for (unsigned int i = 0; i <= d_highestStateForResidualComputation;
+                 i++)
               {
                 if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
                     maxHighestOccupiedStateResNorm)
