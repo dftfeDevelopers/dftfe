@@ -1,0 +1,72 @@
+set VERBOSITY=0
+set REPRODUCIBLE OUTPUT                             = true
+
+set USE GPU=true
+subsection GPU
+  set AUTO GPU BLOCK SIZES=false
+  set USE GPUDIRECT MPI ALL REDUCE = true
+end
+
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=2
+  set ATOMIC COORDINATES FILE      = TiAl_coordinates.inp 
+  set DOMAIN VECTORS FILE = TiAl_domainVectors.inp
+  subsection Optimization
+    set ION FORCE                  = true
+    set CELL STRESS                = true
+   end
+end
+
+subsection Brillouin zone k point sampling options
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1 = 0
+    set SAMPLING SHIFT 2 = 0
+    set SAMPLING SHIFT 3 = 0
+  end
+  set USE GROUP SYMMETRY = false
+  set USE TIME REVERSAL SYMMETRY = false
+end
+
+subsection Parallelization
+   set NPKPT = 2
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM = 2.0
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE+U
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = TiAl_pseudo.inp
+  subsection Hubbard Parameters
+    set HUBBARD PARAMETERS FILE = TiAl_hubbard.inp
+  end
+end
+
+subsection SCF parameters
+  set MIXING PARAMETER =0.2
+  set MIXING METHOD= ANDERSON
+  set STARTING WFC             = RANDOM
+  set TEMPERATURE              = 2000
+  set TOLERANCE                = 1e-6
+  subsection Eigen-solver parameters
+    set NUMBER OF KOHN-SHAM WAVEFUNCTIONS                    = 15
+    set CHEBYSHEV FILTER TOLERANCE                           = 1e-5
+    set CHEBY WFC BLOCK SIZE=15
+    set WFC BLOCK SIZE=15
+  end
+end

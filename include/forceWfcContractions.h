@@ -24,6 +24,7 @@
 #include "oncvClass.h"
 #include <memory>
 #include <BLASWrapper.h>
+#include "hubbardClass.h"
 
 namespace dftfe
 {
@@ -40,8 +41,10 @@ namespace dftfe
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         &BLASWrapperPtr,
       std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
-                                              oncvClassPtr,
-      const dataTypes::number *               X,
+                                                               oncvClassPtr,
+      std::shared_ptr<hubbard<dataTypes::number, memorySpace>> hubbardClassPtr,
+      const bool                                               useHubbard,
+      const dataTypes::number *                                X,
       const unsigned int                      spinPolarizedFlag,
       const unsigned int                      spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
@@ -55,9 +58,13 @@ namespace dftfe
       double *                                eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
+      dataTypes::number *
+        projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHHubbard,
 #ifdef USE_COMPLEX
       dataTypes::number
         *projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH,
+      dataTypes::number *
+        projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHHubbard,
 #endif
       const MPI_Comm &     mpiCommParent,
       const MPI_Comm &     interBandGroupComm,

@@ -165,6 +165,7 @@ namespace dftfe
     , d_mixingScheme(mpi_comm_parent, mpi_comm_domain, dftParams.verbosity)
   {
     d_nOMPThreads = 1;
+    d_useHubbard  = false;
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
         try
@@ -367,18 +368,13 @@ namespace dftfe
     //
     // read coordinates
     //
-    unsigned int numberColumnsCoordinatesFile =
-      d_dftParamsPtr->useMeshSizesFromAtomsFile ? 7 : 5;
-
     if (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
         d_dftParamsPtr->periodicZ)
       {
         //
         // read fractionalCoordinates of atoms in periodic case
         //
-        dftUtils::readFile(numberColumnsCoordinatesFile,
-                           atomLocations,
-                           d_dftParamsPtr->coordinatesFile);
+        dftUtils::readFile(atomLocations, d_dftParamsPtr->coordinatesFile);
         AssertThrow(
           d_dftParamsPtr->natoms == atomLocations.size(),
           dealii::ExcMessage(
@@ -422,9 +418,7 @@ namespace dftfe
       }
     else
       {
-        dftUtils::readFile(numberColumnsCoordinatesFile,
-                           atomLocations,
-                           d_dftParamsPtr->coordinatesFile);
+        dftUtils::readFile(atomLocations, d_dftParamsPtr->coordinatesFile);
 
         AssertThrow(
           d_dftParamsPtr->natoms == atomLocations.size(),
@@ -538,14 +532,13 @@ namespace dftfe
       pcout << "Setting netcharge " << d_dftParamsPtr->netCharge << std::endl;
 
     if (d_dftParamsPtr->solverMode == "NSCF" &&
-        d_dftParamsPtr->numberEigenValues == 0 &&
         d_dftParamsPtr->highestStateOfInterestForChebFiltering != 0)
       {
-        d_numEigenValues =
+        d_numEigenValues = std::max(
+          static_cast<double>(d_dftParamsPtr->numberEigenValues),
           std::max(d_dftParamsPtr->highestStateOfInterestForChebFiltering * 1.1,
                    d_dftParamsPtr->highestStateOfInterestForChebFiltering +
-                     10.0);
-
+                     10.0));
         if (d_dftParamsPtr->verbosity >= 1)
           {
             pcout
@@ -766,9 +759,8 @@ namespace dftfe
         numElectronsUp   = std::ceil(static_cast<double>(numElectrons) / 2.0);
         numElectronsDown = numElectrons - numElectronsUp;
         //
-        int netMagnetization =
-          std::round(2.0 * static_cast<double>(numElectrons) *
-                     d_dftParamsPtr->start_magnetization);
+        int netMagnetization = std::round(static_cast<double>(numElectrons) *
+                                          d_dftParamsPtr->tot_magnetization);
         //
         while ((numElectronsUp - numElectronsDown) < std::abs(netMagnetization))
           {
@@ -884,6 +876,24 @@ namespace dftfe
             d_dftParamsPtr->useDevice,
             d_dftParamsPtr->memOptMode);
       }
+    if (d_dftParamsPtr->solverMode == "NSCF")
+      {
+        if (d_dftParamsPtr->writePdosFile)
+          {
+            d_atomCenteredOrbitalsPostProcessingPtr = std::make_shared<
+              dftfe::atomCenteredOrbitalsPostProcessing<dataTypes::number,
+                                                        memorySpace>>(
+              d_mpiCommParent,
+              mpi_communicator,
+              d_dftfeScratchFolderName,
+              atomTypes,
+              d_dftParamsPtr->reproducible_output,
+              d_dftParamsPtr->verbosity,
+              d_dftParamsPtr->useDevice,
+              d_dftParamsPtr);
+          }
+      }
+
     if (d_dftParamsPtr->verbosity >= 1)
       if (d_dftParamsPtr->nonLinearCoreCorrection == true)
         pcout
@@ -934,6 +944,20 @@ namespace dftfe
               d_kPointWeights,     // accounts for interpool
               d_kPointCoordinates, // accounts for interpool
               updateNonlocalSparsity);
+          }
+        if (d_dftParamsPtr->solverMode == "NSCF")
+          {
+            if (d_dftParamsPtr->writePdosFile)
+              {
+                d_atomCenteredOrbitalsPostProcessingPtr
+                  ->initialiseNonLocalContribution(
+                    d_atomLocationsInterestPseudopotential,
+                    d_imageIdsTrunc,
+                    d_imagePositionsTrunc,
+                    d_kPointWeights,
+                    d_kPointCoordinates,
+                    updateNonlocalSparsity);
+              }
           }
       }
   }
@@ -1227,7 +1251,25 @@ namespace dftfe
                                  d_numEigenValues,
                                  d_dftParamsPtr->useSinglePrecCheby);
 
-
+    if (d_dftParamsPtr->solverMode == "NSCF")
+      {
+        if (d_dftParamsPtr->writePdosFile)
+          {
+            d_atomCenteredOrbitalsPostProcessingPtr->initialise(
+              d_basisOperationsPtrHost,
+#if defined(DFTFE_WITH_DEVICE)
+              d_basisOperationsPtrDevice,
+#endif
+              d_BLASWrapperPtrHost,
+#if defined(DFTFE_WITH_DEVICE)
+              d_BLASWrapperPtr,
+#endif
+              d_sparsityPatternQuadratureId,
+              d_nlpspQuadratureId,
+              atomLocations,
+              d_numEigenValues);
+          }
+      }
     //
     // initialize guesses for electron-density and wavefunctions
     //
@@ -1330,6 +1372,12 @@ namespace dftfe
                                     d_kPointWeights.size(),
                                   true);
 
+
+    initHubbardOperator();
+    if (d_useHubbard && d_dftParamsPtr->loadRhoData)
+      {
+        d_hubbardClassPtr->readHubbOccFromFile();
+      }
     initializeKohnShamDFTOperator();
 
     d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.clear();
@@ -1337,6 +1385,76 @@ namespace dftfe
       atomLocations.size() * 3, 0.0);
 
     computingTimerStandard.leave_subsection("KSDFT problem initialization");
+  }
+
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::initHubbardOperator()
+  {
+    if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+        ExcFamilyType::DFTPlusU)
+      {
+        double init_hubbOp;
+        MPI_Barrier(d_mpiCommParent);
+        init_hubbOp = MPI_Wtime();
+
+        std::shared_ptr<ExcDFTPlusU<dataTypes::number, memorySpace>>
+          excHubbPtr = std::dynamic_pointer_cast<
+            ExcDFTPlusU<dataTypes::number, memorySpace>>(
+            d_excManagerPtr->getSSDSharedObj());
+
+        excHubbPtr->initialiseHubbardClass(
+          d_mpiCommParent,
+          mpi_communicator,
+          interpoolcomm,
+          interBandGroupComm,
+          getBasisOperationsMemSpace(),
+          getBasisOperationsHost(),
+          getBLASWrapperMemSpace(),
+          getBLASWrapperHost(),
+          d_densityDofHandlerIndex,
+          d_nlpspQuadratureId,
+          d_sparsityPatternQuadratureId,
+          d_numEigenValues, // The total number of waveFunctions that are passed
+                            // to the operator
+          d_dftParamsPtr->spinPolarized == 1 ? 2 : 1,
+          *d_dftParamsPtr,
+          d_dftfeScratchFolderName,
+          false, // singlePrecNonLocalOperator
+          true,  // updateNonlocalSparsity
+          atomLocations,
+          atomLocationsFractional,
+          d_imageIds,
+          d_imagePositions,
+          d_kPointCoordinates,
+          d_kPointWeights,
+          d_domainBoundingVectors);
+
+        d_hubbardClassPtr = excHubbPtr->getHubbardClass();
+
+        d_useHubbard = true;
+
+        AssertThrow(d_nOMPThreads == 1,
+                    dealii::ExcMessage(
+                      "open mp is not compatible with hubbard "));
+
+        AssertThrow(d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND",
+                    dealii::ExcMessage(
+                      "LRDM preconditioner is not compatible with hubbard "));
+
+        AssertThrow(d_dftParamsPtr->useSinglePrecCheby == false,
+                    dealii::ExcMessage(
+                      "single prec in cheby is not compatible with hubbard "));
+
+        init_hubbOp = MPI_Wtime() - init_hubbOp;
+
+        if (d_dftParamsPtr->verbosity >= 2)
+          pcout << "Time taken for hubbard class initialization: "
+                << init_hubbOp << std::endl;
+      }
   }
 
   template <unsigned int              FEOrder,
@@ -1535,6 +1653,16 @@ namespace dftfe
     d_isFirstFilteringCall.resize((d_dftParamsPtr->spinPolarized + 1) *
                                     d_kPointWeights.size(),
                                   true);
+
+    if (d_useHubbard)
+      {
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &hubbOccIn = d_hubbardClassPtr->getOccMatIn();
+
+        initHubbardOperator();
+
+        d_hubbardClassPtr->setInOccMatrix(hubbOccIn);
+      }
 
     double init_ksoperator;
     MPI_Barrier(d_mpiCommParent);
@@ -1854,6 +1982,50 @@ namespace dftfe
     else if (d_dftParamsPtr->solverMode == "NSCF")
       {
         solveNoSCF();
+        if (d_dftParamsPtr->writePdosFile)
+          {
+            if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
+              {
+                d_atomCenteredOrbitalsPostProcessingPtr
+                  ->computeAtomCenteredEntries(
+                    &d_eigenVectorsFlattenedHost,
+                    d_numEigenValues,
+                    eigenValues,
+                    d_basisOperationsPtrHost,
+#if defined(DFTFE_WITH_DEVICE)
+                    d_BLASWrapperPtr,
+#endif
+                    d_BLASWrapperPtrHost,
+                    d_lpspQuadratureId,
+                    d_kPointWeights,
+                    interBandGroupComm,
+                    interpoolcomm,
+                    d_dftParamsPtr,
+                    fermiEnergy,
+                    d_highestStateForResidualComputation);
+              }
+#ifdef DFTFE_WITH_DEVICE
+            else if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+              {
+                d_atomCenteredOrbitalsPostProcessingPtr
+                  ->computeAtomCenteredEntries(
+                    &d_eigenVectorsFlattenedDevice,
+                    d_numEigenValues,
+                    eigenValues,
+                    d_basisOperationsPtrDevice,
+                    d_BLASWrapperPtr,
+                    d_BLASWrapperPtrHost,
+                    d_lpspQuadratureId,
+                    d_kPointWeights,
+                    interBandGroupComm,
+                    interpoolcomm,
+                    d_dftParamsPtr,
+                    fermiEnergy,
+                    d_highestStateForResidualComputation);
+              }
+
+#endif
+          }
         if (d_dftParamsPtr->writeBandsFile)
           writeBands();
       }
@@ -1880,15 +2052,10 @@ namespace dftfe
       writeGSElectronDensity("densityQuadData.txt");
 
     if (d_dftParamsPtr->writeDosFile)
-      compute_tdos(eigenValues,
-                   d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                   "dosData.out");
+      compute_tdos(eigenValues, "dosData.out");
 
     if (d_dftParamsPtr->writeLdosFile)
       compute_ldos(eigenValues, "ldosData.out");
-
-    if (d_dftParamsPtr->writePdosFile)
-      compute_pdos(eigenValues, "pdosData");
 
     if (d_dftParamsPtr->writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
@@ -1930,74 +2097,6 @@ namespace dftfe
 
     if (d_kohnShamDFTOperatorsInitialized)
       finalizeKohnShamDFTOperator();
-
-    d_useHubbard = false;
-    if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-        ExcFamilyType::DFTPlusU)
-      {
-        std::shared_ptr<ExcDFTPlusU<dataTypes::number, memorySpace>>
-          excHubbPtr = std::dynamic_pointer_cast<
-            ExcDFTPlusU<dataTypes::number, memorySpace>>(
-            d_excManagerPtr->getSSDSharedObj());
-
-        excHubbPtr->initialiseHubbardClass(
-          d_mpiCommParent,
-          mpi_communicator,
-          interpoolcomm,
-          getBasisOperationsMemSpace(),
-          getBasisOperationsHost(),
-          getBLASWrapperMemSpace(),
-          getBLASWrapperHost(),
-          d_densityDofHandlerIndex,
-          d_nlpspQuadratureId,
-          d_sparsityPatternQuadratureId,
-          d_numEigenValues, // The total number of waveFunctions that are passed
-                            // to the operator
-          d_dftParamsPtr->spinPolarized == 1 ? 2 : 1,
-          *d_dftParamsPtr,
-          d_dftfeScratchFolderName,
-          false, // singlePrecNonLocalOperator
-          true,  // updateNonlocalSparsity
-          atomLocations,
-          atomLocationsFractional,
-          d_imageIds,
-          d_imagePositions,
-          d_kPointCoordinates,
-          d_kPointWeights,
-          d_domainBoundingVectors);
-
-        hubbardPtr = excHubbPtr->getHubbardClass();
-
-        d_useHubbard = true;
-
-        AssertThrow(d_nOMPThreads == 1,
-                    dealii::ExcMessage(
-                      "open mp is not compatible with hubbard "));
-
-        AssertThrow(d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND",
-                    dealii::ExcMessage(
-                      "LRDM preconditioner is not compatible with hubbard "));
-
-        // band group parallelization data structures
-        const unsigned int numberBandGroups =
-          dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-
-        AssertThrow(numberBandGroups == 1,
-                    dealii::ExcMessage(
-                      "Band parallelisation is not compatible with hubbard "));
-
-        AssertThrow(
-          d_dftParamsPtr->overlapComputeCommunCheby == false,
-          dealii::ExcMessage(
-            "overlap compute communication in cheby is not compatible with hubbard "));
-        AssertThrow(d_dftParamsPtr->useSinglePrecCheby == false,
-                    dealii::ExcMessage(
-                      "single prec in cheby is not compatible with hubbard "));
-
-        AssertThrow(d_dftParamsPtr->solverMode != "NSCF",
-                    dealii::ExcMessage(
-                      "Hubbard correction is not implemented for NSCF mode"));
-      }
 
 
 #ifdef DFTFE_WITH_DEVICE
@@ -2118,7 +2217,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     reInitializeKohnShamDFTOperator()
   {
-    d_kohnShamDFTOperatorPtr->resetExtPotHamFlag();
+    d_kohnShamDFTOperatorPtr->resetKohnShamOp();
   }
 
   //
@@ -2628,11 +2727,11 @@ namespace dftfe
                   {
                     dftfe::utils::MemoryStorage<double,
                                                 dftfe::utils::MemorySpace::HOST>
-                      &hubbOccIn = hubbardPtr->getOccMatIn();
+                      &hubbOccIn = d_hubbardClassPtr->getOccMatIn();
 
                     dftfe::utils::MemoryStorage<double,
                                                 dftfe::utils::MemorySpace::HOST>
-                      &hubbOccRes = hubbardPtr->getOccMatRes();
+                      &hubbOccRes = d_hubbardClassPtr->getOccMatRes();
                     d_mixingScheme.addVariableToInHist(
                       mixingVariable::hubbardOccupation,
                       hubbOccIn.data(),
@@ -2684,7 +2783,7 @@ namespace dftfe
                     dftfe::utils::MemoryStorage<double,
                                                 dftfe::utils::MemorySpace::HOST>
                       &hubbOccMatAfterMixing =
-                        hubbardPtr->getHubbMatrixForMixing();
+                        d_hubbardClassPtr->getHubbMatrixForMixing();
 
                     std::fill(hubbOccMatAfterMixing.begin(),
                               hubbOccMatAfterMixing.end(),
@@ -2695,7 +2794,7 @@ namespace dftfe
                       hubbOccMatAfterMixing.data(),
                       hubbOccMatAfterMixing.size());
 
-                    hubbardPtr->setInOccMatrix(hubbOccMatAfterMixing);
+                    d_hubbardClassPtr->setInOccMatrix(hubbOccMatAfterMixing);
                   }
 
 
@@ -3489,12 +3588,8 @@ namespace dftfe
             pcout << std::endl
                   << "number of electrons: " << integralRhoValue << std::endl;
           }
-
-        if (d_dftParamsPtr->verbosity >= 1 &&
-            d_dftParamsPtr->spinPolarized == 1)
-          pcout << std::endl
-                << "net magnetization: "
-                << totalMagnetization(d_densityOutQuadValues[1]) << std::endl;
+        if (d_dftParamsPtr->verbosity > 0 && d_dftParamsPtr->spinPolarized == 1)
+          totalMagnetization(d_densityOutQuadValues[1]);
 
         //
         // phiTot with rhoOut
@@ -3731,12 +3826,25 @@ namespace dftfe
 
         if (d_dftParamsPtr->saveRhoData && scfIter % 10 == 0 &&
             d_dftParamsPtr->solverMode == "GS")
-          saveTriaInfoAndRhoNodalData();
+          {
+            saveTriaInfoAndRhoNodalData();
+            if (d_useHubbard)
+              {
+                d_hubbardClassPtr->writeHubbOccToFile();
+              }
+          }
       }
 
     if (d_dftParamsPtr->saveRhoData &&
         !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
-      saveTriaInfoAndRhoNodalData();
+      {
+        saveTriaInfoAndRhoNodalData();
+        if (d_useHubbard)
+          {
+            d_hubbardClassPtr->writeHubbOccToFile();
+          }
+      }
+
 
 
     if (scfIter == d_dftParamsPtr->numSCFIterations)
@@ -3758,7 +3866,7 @@ namespace dftfe
               {
                 FILE *fermiFile;
                 fermiFile = fopen("fermiEnergy.out", "w");
-                if (d_dftParamsPtr->constraintMagnetization)
+                if (d_dftParamsPtr->spinPolarized)
                   {
                     fprintf(fermiFile,
                             "%.14g\n%.14g\n%.14g\n ",
@@ -3990,7 +4098,25 @@ namespace dftfe
     d_freeEnergy = d_groundStateEnergy - d_entropicEnergy;
 
     if (d_dftParamsPtr->verbosity >= 1)
+      {
+        if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+             ExcFamilyType::DFTPlusU) ||
+            (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+             ExcFamilyType::HYBRID) ||
+            (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+             ExcFamilyType::MGGA))
+          {
+            pcout << " Non local part of Exc energy = "
+                  << d_excManagerPtr->getExcSSDFunctionalObj()
+                       ->getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi()
+                  << "\n";
+          }
+      }
+    if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total free energy: " << d_freeEnergy << std::endl;
+
+    if (d_dftParamsPtr->verbosity >= 0 && d_dftParamsPtr->spinPolarized == 1)
+      totalMagnetization(d_densityOutQuadValues[1]);
 
     // This step is required for interpolating rho from current mesh to the
     // new mesh in case of atomic relaxation
@@ -4482,12 +4608,13 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::writeBands()
   {
-    int numkPoints =
-      (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
+    int                 numkPoints = d_kPointWeights.size();
     std::vector<double> eigenValuesFlattened;
     //
     for (unsigned int kPoint = 0; kPoint < numkPoints; ++kPoint)
-      for (unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
+      for (unsigned int iWave = 0;
+           iWave < d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized);
+           ++iWave)
         eigenValuesFlattened.push_back(eigenValues[kPoint][iWave]);
     //
     //
@@ -4495,9 +4622,8 @@ namespace dftfe
     int totkPoints = dealii::Utilities::MPI::sum(numkPoints, interpoolcomm);
     std::vector<int> numkPointsArray(d_dftParamsPtr->npool),
       mpi_offsets(d_dftParamsPtr->npool, 0);
-    std::vector<double> eigenValuesFlattenedGlobal(totkPoints *
-                                                     d_numEigenValues,
-                                                   0.0);
+    std::vector<double> eigenValuesFlattenedGlobal(
+      totkPoints * d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized), 0.0);
     //
     MPI_Gather(&numkPoints,
                1,
@@ -4508,16 +4634,21 @@ namespace dftfe
                0,
                interpoolcomm);
     //
-    numkPointsArray[0] = d_numEigenValues * numkPointsArray[0];
+    numkPointsArray[0] = d_numEigenValues *
+                         (1 + d_dftParamsPtr->spinPolarized) *
+                         numkPointsArray[0];
     for (unsigned int ipool = 1; ipool < d_dftParamsPtr->npool; ++ipool)
       {
-        numkPointsArray[ipool] = d_numEigenValues * numkPointsArray[ipool];
+        numkPointsArray[ipool] = d_numEigenValues *
+                                 (1 + d_dftParamsPtr->spinPolarized) *
+                                 numkPointsArray[ipool];
         mpi_offsets[ipool] =
           mpi_offsets[ipool - 1] + numkPointsArray[ipool - 1];
       }
     //
     MPI_Gatherv(&(eigenValuesFlattened[0]),
-                numkPoints * d_numEigenValues,
+                numkPoints * d_numEigenValues *
+                  (1 + d_dftParamsPtr->spinPolarized),
                 MPI_DOUBLE,
                 &(eigenValuesFlattenedGlobal[0]),
                 &(numkPointsArray[0]),
@@ -4536,19 +4667,52 @@ namespace dftfe
           pcout << "EigenValue" << std::endl;
       }
 
-    double FE = d_dftParamsPtr->spinPolarized ?
-                  std::max(fermiEnergyDown, fermiEnergyUp) :
-                  fermiEnergy;
+    std::ifstream file("fermiEnergy.out");
+    std::string   line;
+
+    if (file.is_open())
+      {
+        if (d_dftParamsPtr->constraintMagnetization)
+          {
+            std::vector<double> temp;
+            while (getline(file, line))
+              {
+                if (!line.empty())
+                  {
+                    std::istringstream iss(line);
+                    double             temp1;
+                    while (iss >> temp1)
+                      {
+                        temp.push_back(temp1);
+                      }
+                  }
+              }
+            fermiEnergy     = temp[0];
+            fermiEnergyUp   = temp[1];
+            fermiEnergyDown = temp[2];
+          }
+        else
+          {
+            getline(file, line);
+            std::istringstream iss(line);
+            iss >> fermiEnergy;
+          }
+      }
+    else
+      {
+        pcout << "Unable to open file fermiEnergy.out. Check if it is present.";
+      }
+    double FE = fermiEnergy;
     pcout << "Fermi Energy: " << FE << std::endl;
     unsigned int        maxeigenIndex = d_numEigenValues;
-    std::vector<double> occupationVector(totkPoints, 0.0);
+    std::vector<double> occupationVector(totkPoints *
+                                           (1 + d_dftParamsPtr->spinPolarized),
+                                         0.0);
 
     for (int iWave = 1; iWave < d_numEigenValues; iWave++)
       {
         double maxOcc = -1.0;
-        for (unsigned int kPoint = 0;
-             kPoint < totkPoints / (1 + d_dftParamsPtr->spinPolarized);
-             ++kPoint)
+        for (unsigned int kPoint = 0; kPoint < totkPoints; ++kPoint)
           {
             if (d_dftParamsPtr->spinPolarized)
               {
@@ -4597,9 +4761,7 @@ namespace dftfe
         FILE *pFile;
         pFile = fopen("bands.out", "w");
         fprintf(pFile, "%d %d \n", totkPoints, numberEigenValues);
-        for (unsigned int kPoint = 0;
-             kPoint < totkPoints / (1 + d_dftParamsPtr->spinPolarized);
-             ++kPoint)
+        for (unsigned int kPoint = 0; kPoint < totkPoints; ++kPoint)
           {
             for (unsigned int iWave = 0; iWave < numberEigenValues; ++iWave)
               {
@@ -5539,6 +5701,25 @@ namespace dftfe
   {
     return d_bCellNonTrivialAtomIds;
   }
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  std::shared_ptr<hubbard<dataTypes::number, memorySpace>>
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::getHubbardClassPtr()
+  {
+    return d_hubbardClassPtr;
+  }
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  bool
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::isHubbardCorrectionsUsed()
+  {
+    return d_useHubbard;
+  }
+
 
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,

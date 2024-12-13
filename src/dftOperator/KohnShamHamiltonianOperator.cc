@@ -24,6 +24,10 @@
 #else
 #  define omp_get_thread_num() 0
 #endif
+#if defined(DFTFE_WITH_DEVICE)
+#  include <DeviceAPICalls.h>
+#endif
+
 namespace dftfe
 {
   //
@@ -260,6 +264,28 @@ namespace dftfe
   KohnShamHamiltonianOperator<memorySpace>::resetExtPotHamFlag()
   {
     d_isExternalPotCorrHamiltonianComputed = false;
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  KohnShamHamiltonianOperator<memorySpace>::resetKohnShamOp()
+  {
+    resetExtPotHamFlag();
+    if (d_useHubbard)
+      {
+        std::shared_ptr<ExcDFTPlusU<dataTypes::number, memorySpace>>
+          excHubbPtr = std::dynamic_pointer_cast<
+            ExcDFTPlusU<dataTypes::number, memorySpace>>(
+            d_excManagerPtr->getSSDSharedObj());
+
+        d_hubbardClassPtr = excHubbPtr->getHubbardClass();
+
+        d_hubbardClassPtr->initialiseFlattenedDataStructure(
+          d_numVectorsInternal);
+
+        d_hubbardClassPtr->initialiseCellWaveFunctionPointers(
+          d_numVectorsInternal);
+      }
   }
 
 
@@ -793,6 +819,10 @@ namespace dftfe
   KohnShamHamiltonianOperator<memorySpace>::computeCellHamiltonianMatrix(
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
+#if defined(DFTFE_WITH_DEVICE)
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      dftfe::utils::deviceSynchronize();
+#endif
     if ((d_dftParamsPtr->isPseudopotential ||
          d_dftParamsPtr->smearedNuclearCharges) &&
         !onlyHPrimePartForFirstOrderDensityMatResponse)
@@ -908,6 +938,10 @@ namespace dftfe
           d_cellHamiltonianMatrixExtPot.clear();
           d_isExternalPotCorrHamiltonianComputed = false;
         }
+#if defined(DFTFE_WITH_DEVICE)
+    if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      dftfe::utils::deviceSynchronize();
+#endif
   }
   template <dftfe::utils::MemorySpace memorySpace>
   void
@@ -1796,6 +1830,14 @@ namespace dftfe
     const unsigned int numCells       = d_basisOperationsPtr->nCells();
     const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
     const unsigned int numberWavefunctions = src.numVectors();
+#if defined(DFTFE_WITH_DEVICE)
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      {
+        if (d_dftParamsPtr->tensorOpType == "TF32")
+          d_BLASWrapperPtr->setTensorOpDataType(
+            dftfe::linearAlgebra::tensorOpDataType::tf32);
+      }
+#endif
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
 
@@ -1946,6 +1988,11 @@ namespace dftfe
         dst.accumulateAddLocallyOwned();
         dst.zeroOutGhosts();
       }
+#if defined(DFTFE_WITH_DEVICE)
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      d_BLASWrapperPtr->setTensorOpDataType(
+        dftfe::linearAlgebra::tensorOpDataType::fp32);
+#endif
   }
 
 

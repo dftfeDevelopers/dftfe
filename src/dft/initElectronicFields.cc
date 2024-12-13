@@ -166,9 +166,7 @@ namespace dftfe
       }
 
     if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
-      pcout << std::endl
-            << "net magnetization: "
-            << totalMagnetization(d_densityInQuadValues[1]) << std::endl;
+      totalMagnetization(d_densityInQuadValues[1]);
   }
 #include "dft.inst.cc"
 } // namespace dftfe

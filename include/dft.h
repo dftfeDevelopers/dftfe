@@ -70,6 +70,7 @@
 
 #include <mixingClass.h>
 #include <oncvClass.h>
+#include <atomCenteredPostProcessing.h>
 
 namespace dftfe
 {
@@ -288,7 +289,7 @@ namespace dftfe
      * @brief Number of Kohn-Sham eigen values to be computed
      */
     unsigned int d_numEigenValues;
-
+    unsigned int d_highestStateForResidualComputation;
     /**
      * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
      * after spectrum splitting.
@@ -722,6 +723,18 @@ namespace dftfe
     void
     computeFractionalOccupancies();
 
+    /**
+     *@brief Returns the shared ptr to hubbard class
+     */
+    std::shared_ptr<hubbard<dataTypes::number, memorySpace>>
+    getHubbardClassPtr();
+
+    /**
+     *@brief Function to check if hubbard corrections is being used
+     */
+    bool
+    isHubbardCorrectionsUsed();
+
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based
@@ -729,6 +742,13 @@ namespace dftfe
      */
     void
     initImageChargesUpdateKPoints(bool flag = true);
+
+    /**
+     * @brief Checks if the Exc functional requires Hubbard correction
+     * and sets up the Hubbard class if required.
+     */
+    void
+    initHubbardOperator();
 
     void
     determineAtomsOfInterstPseudopotential(
@@ -1104,7 +1124,7 @@ namespace dftfe
     /**
      *@brief Computes net magnetization from the difference of local spin densities
      */
-    double
+    void
     totalMagnetization(
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &magQuadValues);
@@ -1169,17 +1189,11 @@ namespace dftfe
      */
     void
     compute_tdos(const std::vector<std::vector<double>> &eigenValuesInput,
-                 const unsigned int                      highestStateOfInterest,
                  const std::string &                     fileName);
 
     void
     compute_ldos(const std::vector<std::vector<double>> &eigenValuesInput,
                  const std::string &                     fileName);
-
-    void
-    compute_pdos(const std::vector<std::vector<double>> &eigenValuesInput,
-                 const std::string &                     fileName);
-
 
     /**
      *@brief compute localization length
@@ -1278,7 +1292,7 @@ namespace dftfe
 
     /// FIXME: remove atom type atributes from atomLocations
     std::vector<std::vector<double>> atomLocations, atomLocationsFractional,
-      d_reciprocalLatticeVectors, d_domainBoundingVectors;
+      d_reciprocalLatticeVectors, d_domainBoundingVectors, d_meshSizes;
     std::vector<std::vector<double>> d_atomLocationsInterestPseudopotential;
     std::map<unsigned int, unsigned int>
                                      d_atomIdPseudopotentialInterestToGlobalId;
@@ -1496,6 +1510,9 @@ namespace dftfe
     std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
       d_oncvClassPtr;
 
+    std::shared_ptr<
+      dftfe::atomCenteredOrbitalsPostProcessing<dataTypes::number, memorySpace>>
+      d_atomCenteredOrbitalsPostProcessingPtr;
 
     std::shared_ptr<
 #if defined(DFTFE_WITH_DEVICE)
@@ -1916,7 +1933,7 @@ namespace dftfe
       std::vector<double> &                           residualNormWaveFunctions,
       unsigned int                                    ipass);
 
-    std::shared_ptr<hubbard<dataTypes::number, memorySpace>> hubbardPtr;
+    std::shared_ptr<hubbard<dataTypes::number, memorySpace>> d_hubbardClassPtr;
     bool                                                     d_useHubbard;
   };
 

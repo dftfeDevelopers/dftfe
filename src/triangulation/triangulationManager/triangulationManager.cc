@@ -90,6 +90,8 @@ namespace dftfe
     d_nearestAtomDistances  = nearestAtomDistances;
     d_domainBoundingVectors = domainBoundingVectors;
 
+    if (d_dftParams.meshSizesFile != "")
+      dftUtils::readFile(d_meshSizes, d_dftParams.meshSizesFile);
     // clear existing triangulation data
     d_serialTriangulationUnmoved.clear();
     d_parallelTriangulationUnmoved.clear();
@@ -177,6 +179,8 @@ namespace dftfe
     d_nearestAtomDistances  = nearestAtomDistances;
     d_domainBoundingVectors = domainBoundingVectors;
 
+    if (d_dftParams.meshSizesFile != "")
+      dftUtils::readFile(d_meshSizes, d_dftParams.meshSizesFile);
     // clear existing triangulation data
     d_serialTriangulationUnmoved.clear();
     d_parallelTriangulationUnmoved.clear();

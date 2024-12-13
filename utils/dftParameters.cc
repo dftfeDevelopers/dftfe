@@ -129,7 +129,7 @@ namespace dftfe
           "WRITE DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV relative to the Fermi energy and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
+          "[Standard] Computes density of states using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true' in 'GS' calculation) and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
 
         prm.declare_entry(
           "WRITE LOCAL DENSITY OF STATES",
@@ -141,7 +141,20 @@ namespace dftfe
           "WRITE PROJECTED DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          R"([Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.)");
+          R"([Standard] Computes projected density of states on each atomic orbital using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as the broadening parameter. Outputs files with name format 'pdosData_atom#{atom number}_wfc#{wfc number}({wfc name}).out'. For colinear, spin-unpolarized case, each of these file contain columns with format 'E sumPDOS  PDOS_0 .... PDOS_(2l)', where E: the energy is eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true'in 'GS' calculation),l: azimuthal quantum number, sumPDOS: PDOS_0 + .. +PDOS_(2l).
+          For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_down PDOS_0_up PDOS_0_down .... PDOS_(2l)_up PDOS_(2l)_down', where 'up' and 'down' refer to the spin up and spin down case with all other terms having the same meaning as of the spin-unpolarized case.)");
+
+        prm.declare_entry(
+          "DOS SMEAR TEMPERATURE",
+          "500",
+          dealii::Patterns::Double(),
+          "[standard] Gaussian smearing temperature (in K) for DOS, PDOS and LDOS calculation");
+
+        prm.declare_entry(
+          "DELTA ENERGY",
+          "0.01",
+          dealii::Patterns::Double(),
+          "[standard] Interval size of energy spectrum (in eV), for DOS, PDOS and LDOS calculation");
 
         prm.declare_entry(
           "READ ATOMIC WFC PDOS FROM PSP FILE",
@@ -218,7 +231,7 @@ namespace dftfe
           "RESTART SP FROM NO SP",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..");
+          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false.");
       }
       prm.leave_subsection();
 
@@ -228,8 +241,7 @@ namespace dftfe
           "ATOMIC COORDINATES FILE",
           "",
           dealii::Patterns::Anything(),
-          "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
-
+          "[Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.");
         prm.declare_entry(
           "ATOMIC DISP COORDINATES FILE",
           "",
@@ -551,11 +563,10 @@ namespace dftfe
             dealii::Patterns::Bool(),
             "[Developer] Use a composite generator flat top and Gaussian generator for mesh movement and configurational force computation.");
 
-          prm.declare_entry(
-            "USE MESH SIZES FROM ATOM LOCATIONS FILE",
-            "false",
-            dealii::Patterns::Bool(),
-            "[Developer] Use mesh sizes from atom locations file.");
+          prm.declare_entry("MESH SIZES FILE",
+                            "",
+                            dealii::Patterns::Anything(),
+                            "[Developer] Use mesh sizes from this file.");
         }
         prm.leave_subsection();
       }
@@ -683,10 +694,10 @@ namespace dftfe
 
 
         prm.declare_entry(
-          "START MAGNETIZATION",
+          "TOTAL MAGNETIZATION",
           "0.0",
-          dealii::Patterns::Double(-0.5, 0.5),
-          "[Standard] Starting magnetization to be used for spin-polarized DFT calculations (must be between -0.5 and +0.5). Corresponding magnetization per simulation domain will be (2 x START MAGNETIZATION x Number of electrons) a.u. ");
+          dealii::Patterns::Double(-1.0, 1.0),
+          "[Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x Number of electrons) a.u. ");
 
         prm.declare_entry(
           "PSP CUTOFF IMAGE CHARGES",
@@ -801,7 +812,7 @@ namespace dftfe
 
         prm.declare_entry(
           "SPIN MIXING ENHANCEMENT FACTOR",
-          "4.0",
+          "1.0",
           dealii::Patterns::Double(-1e-12, 100.0),
           "[Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.");
 
@@ -1057,6 +1068,11 @@ namespace dftfe
             "false",
             dealii::Patterns::Bool(),
             "[Advanced] Use a modified single precision algorithm for Chebyshev filtering. This cannot be used in conjunction with spectrum splitting. Default setting is false.");
+          prm.declare_entry(
+            "TENSOR OP TYPE SINGLE PREC CHEBY",
+            "FP32",
+            dealii::Patterns::Selection("FP32|TF32"),
+            "[Advanced] Tensor operation datatype for the modified single precision algorithm for Chebyshev filtering, this only used on Nvidia GPUs with compute capability greater than 80. Default setting is FP32.");
 
           prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
@@ -1093,7 +1109,7 @@ namespace dftfe
             "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
             "0",
             dealii::Patterns::Integer(0),
-            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation ");
+            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation. For DOS/PDOS calculations, the value of this parameter should be large enough to ensure sufficient number of buffer states beyond the 'Fermi level'.");
 
           prm.declare_entry(
             "RESTRICT TO SINGLE FILTER PASS",
@@ -1250,7 +1266,7 @@ namespace dftfe
     absLinearSolverTolerance          = 1e-10;
     selfConsistentSolverTolerance     = 1e-10;
     TVal                              = 500;
-    start_magnetization               = 0.0;
+    tot_magnetization                 = 0.0;
     absLinearSolverToleranceHelmholtz = 1e-10;
     chebyshevTolerance                = 1e-02;
     mixingMethod                      = "";
@@ -1269,6 +1285,8 @@ namespace dftfe
     writeDosFile                = false;
     writeLdosFile               = false;
     writePdosFile               = false;
+    smearTval                   = 500;
+    intervalSize                = 0.01;
     writeLocalizationLengths    = false;
     writeBandsFile              = false;
     std::string coordinatesFile = "";
@@ -1278,6 +1296,7 @@ namespace dftfe
     orthogType                  = "";
     algoType                    = "";
     pseudoPotentialFile         = "";
+    meshSizesFile               = "";
 
     std::string coordinatesGaussianDispFile = "";
 
@@ -1358,7 +1377,6 @@ namespace dftfe
     gaussianOrderMoveMeshToAtoms                   = 4.0;
     useFlatTopGenerator                            = false;
     diracDeltaKernelScalingConstant                = 0.1;
-    useMeshSizesFromAtomsFile                      = false;
     chebyshevFilterPolyDegreeFirstScfScalingFactor = 1.34;
     useDensityMatrixPerturbationRankUpdates        = false;
     smearedNuclearCharges                          = false;
@@ -1464,7 +1482,10 @@ namespace dftfe
       writeDensitySolutionFields = prm.get_bool("WRITE DENSITY FE MESH");
       writeDensityQuadData       = prm.get_bool("WRITE DENSITY QUAD DATA");
       writeDosFile               = prm.get_bool("WRITE DENSITY OF STATES");
-      writeLdosFile            = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+      writeLdosFile = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+      writePdosFile = prm.get_bool("WRITE PROJECTED DENSITY OF STATES");
+      smearTval     = prm.get_double("DOS SMEAR TEMPERATURE");
+      intervalSize  = prm.get_double("DELTA ENERGY");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
@@ -1582,8 +1603,7 @@ namespace dftfe
         gaussianOrderMoveMeshToAtoms =
           prm.get_double("GAUSSIAN ORDER MOVE MESH TO ATOMS");
         useFlatTopGenerator = prm.get_bool("USE FLAT TOP GENERATOR");
-        useMeshSizesFromAtomsFile =
-          prm.get_bool("USE MESH SIZES FROM ATOM LOCATIONS FILE");
+        meshSizesFile       = prm.get("MESH SIZES FILE");
       }
       prm.leave_subsection();
     }
@@ -1631,7 +1651,7 @@ namespace dftfe
       modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
       auxBasisTypeXC        = prm.get("AUX BASIS TYPE");
       auxBasisDataXC        = prm.get("AUX BASIS DATA");
-      start_magnetization   = prm.get_double("START MAGNETIZATION");
+      tot_magnetization     = prm.get_double("TOTAL MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       netCharge             = prm.get_double("NET CHARGE");
 
@@ -1707,6 +1727,7 @@ namespace dftfe
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
         useSinglePrecCommunCheby = prm.get_bool("USE SINGLE PREC COMMUN CHEBY");
         useSinglePrecCheby       = prm.get_bool("USE SINGLE PREC CHEBY");
+        tensorOpType             = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -1793,10 +1814,9 @@ namespace dftfe
   dftParameters::check_parameters(const MPI_Comm &mpi_comm_parent) const
   {
     AssertThrow(
-      !((periodicX || periodicY || periodicZ) &&
-        (writeLdosFile || writePdosFile)),
+      !((periodicX || periodicY || periodicZ) && writeLdosFile),
       dealii::ExcMessage(
-        "DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
+        "DFT-FE Error: LOCAL DENSITY OF STATES is currently not implemented in the case of periodic and semi-periodic boundary conditions."));
 
 
     if (floatingNuclearCharges)
@@ -1862,12 +1882,6 @@ namespace dftfe
         !constraintMagnetization,
         dealii::ExcMessage(
           "DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
-
-    if (spinPolarized == 1 && !constraintMagnetization)
-      AssertThrow(
-        std::abs(std::abs(start_magnetization) - 0.5) > 1e-6,
-        dealii::ExcMessage(
-          "DFT-FE Error: START MAGNETIZATION =+-0.5 only applicable in case of CONSTRAINT MAGNETIZATION set to ON."));
 
     if (verbosity >= 1 &&
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)

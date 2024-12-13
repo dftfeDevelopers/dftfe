@@ -213,13 +213,13 @@ namespace dftfe
 
     double largestMeshSizeAroundAtom = d_dftParams.meshSizeOuterBall;
 
-    if (d_dftParams.useMeshSizesFromAtomsFile)
+    if (d_dftParams.meshSizesFile != "")
       {
         largestMeshSizeAroundAtom = 1e-6;
         for (unsigned int n = 0; n < d_atomPositions.size(); n++)
           {
-            if (d_atomPositions[n][5] > largestMeshSizeAroundAtom)
-              largestMeshSizeAroundAtom = d_atomPositions[n][5];
+            if (d_meshSizes[n][0] > largestMeshSizeAroundAtom)
+              largestMeshSizeAroundAtom = d_meshSizes[n][0];
           }
       }
 
@@ -382,13 +382,13 @@ namespace dftfe
     bool   isAnyCellRefined           = false;
     double smallestMeshSizeAroundAtom = d_dftParams.meshSizeOuterBall;
 
-    if (d_dftParams.useMeshSizesFromAtomsFile)
+    if (d_dftParams.meshSizesFile != "")
       {
         smallestMeshSizeAroundAtom = 1e+6;
-        for (unsigned int n = 0; n < d_atomPositions.size(); n++)
+        for (unsigned int n = 0; n < d_meshSizes.size(); n++)
           {
-            if (d_atomPositions[n][5] < smallestMeshSizeAroundAtom)
-              smallestMeshSizeAroundAtom = d_atomPositions[n][5];
+            if (d_meshSizes[n][0] < smallestMeshSizeAroundAtom)
+              smallestMeshSizeAroundAtom = d_meshSizes[n][0];
           }
       }
 
@@ -408,12 +408,11 @@ namespace dftfe
             atomIdsLocal.push_back(iAtom);
 
             meshSizeAroundAtomLocalAtoms.push_back(
-              d_dftParams.useMeshSizesFromAtomsFile ?
-                d_atomPositions[iAtom][5] :
-                d_dftParams.meshSizeOuterBall);
+              d_dftParams.meshSizesFile != "" ? d_meshSizes[iAtom][0] :
+                                                d_dftParams.meshSizeOuterBall);
             outerAtomBallRadiusLocalAtoms.push_back(
-              d_dftParams.useMeshSizesFromAtomsFile ?
-                d_atomPositions[iAtom][6] :
+              d_dftParams.meshSizesFile != "" ?
+                d_meshSizes[iAtom][1] :
                 d_dftParams.outerAtomBallRadius);
           }
         else
@@ -426,12 +425,11 @@ namespace dftfe
             atomIdsLocal.push_back(imageChargeId);
 
             meshSizeAroundAtomLocalAtoms.push_back(
-              d_dftParams.useMeshSizesFromAtomsFile ?
-                d_atomPositions[imageChargeId][5] :
-                d_dftParams.meshSizeOuterBall);
+              d_dftParams.meshSizesFile != "" ? d_meshSizes[imageChargeId][0] :
+                                                d_dftParams.meshSizeOuterBall);
             outerAtomBallRadiusLocalAtoms.push_back(
-              d_dftParams.useMeshSizesFromAtomsFile ?
-                d_atomPositions[imageChargeId][6] :
+              d_dftParams.meshSizesFile != "" ?
+                d_meshSizes[imageChargeId][1] :
                 d_dftParams.outerAtomBallRadius);
           }
       }

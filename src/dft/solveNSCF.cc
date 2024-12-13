@@ -317,6 +317,7 @@ namespace dftfe
     //
     // eigen solve
     //
+    // if writeBandsFile == true, get the fermi energy from the fermiEnergy.out
     if (d_dftParamsPtr->writeBandsFile)
       {
         std::ifstream file("fermiEnergy.out");
@@ -871,7 +872,13 @@ namespace dftfe
 
         numberChebyshevSolvePasses = count;
 
-        if (d_dftParamsPtr->verbosity >= 0)
+        if (d_dftParamsPtr->verbosity == 0 &&
+            d_dftParamsPtr->reproducible_output)
+          {
+            pcout << "Fermi Energy computed: " << std::fixed
+                  << std::setprecision(8) << fermiEnergy << std::endl;
+          }
+        else
           {
             pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
           }
@@ -906,9 +913,7 @@ namespace dftfe
       }
 
     if (d_dftParamsPtr->verbosity >= 1 && d_dftParamsPtr->spinPolarized == 1)
-      pcout << std::endl
-            << "net magnetization: "
-            << totalMagnetization(d_densityOutQuadValues[1]) << std::endl;
+      totalMagnetization(d_densityOutQuadValues[1]);
 
 
     local_timer.stop();
@@ -1029,6 +1034,18 @@ namespace dftfe
     // matrix_free_data.get_quadrature(d_densityQuadratureId);
     d_dispersionCorr.computeDispresionCorrection(atomLocations,
                                                  d_domainBoundingVectors);
+
+
+    computeFractionalOccupancies();
+
+    d_excManagerPtr->getExcSSDFunctionalObj()
+      ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
+                                                 d_kPointWeights);
+
+    d_excManagerPtr->getExcSSDFunctionalObj()
+      ->computeWaveFunctionDependentExcEnergy(d_auxDensityMatrixXCOutPtr,
+                                              d_kPointWeights);
+
     const double totalEnergy = energyCalc.computeEnergy(
       d_basisOperationsPtrHost,
       d_basisOperationsPtrElectroHost,

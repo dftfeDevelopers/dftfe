@@ -53,8 +53,8 @@ namespace dftfe
     double radiusAtomBall, mixingParameter, spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
-      selfConsistentSolverEnergyTolerance, start_magnetization,
-      absLinearSolverToleranceHelmholtz;
+      selfConsistentSolverEnergyTolerance, tot_magnetization,
+      absLinearSolverToleranceHelmholtz, smearTval, intervalSize;
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
@@ -79,7 +79,7 @@ namespace dftfe
 
     std::string coordinatesFile, domainBoundingVectorsFile, kPointDataFile,
       ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile,
-      restartFolder;
+      tensorOpType, restartFolder, meshSizesFile;
 
     std::string coordinatesGaussianDispFile;
 
@@ -160,7 +160,6 @@ namespace dftfe
     double       gaussianOrderMoveMeshToAtoms;
     bool         useFlatTopGenerator;
     double       diracDeltaKernelScalingConstant;
-    bool         useMeshSizesFromAtomsFile;
     double       xlbomdRestartChebyTol;
     bool         useDensityMatrixPerturbationRankUpdates;
     double       xlbomdKernelRankUpdateFDParameter;
