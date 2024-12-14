@@ -417,9 +417,9 @@ namespace dftfe
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
             d_tauInQuadValues[iComp],
-          d_gradDensityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
             isGradDensityDataDependent,
-          isTauMGGA);
+            isTauMGGA);
 
         if (d_dftParamsPtr->spinPolarized == 1 &&
             d_dftParamsPtr->constraintMagnetization)
@@ -877,7 +877,6 @@ namespace dftfe
                               gradMagZYValueAtQuadPt;
                             gradMagInValuesPtr[3 * q + 2] =
                               gradMagZZValueAtQuadPt;
-                              
                           }
                       }
                   }

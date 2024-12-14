@@ -743,7 +743,8 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       partialOccupVecHost(BVec, 0.0);
 
-    std::vector<double> initTauOccvec(numSpinComponents * totalNumWaveFunctions, 0.0);
+    std::vector<double> initTauOccvec(numSpinComponents * totalNumWaveFunctions,
+                                      0.0);
 
     for (int i = 0; i < numElectrons / 2; ++i)
       {
@@ -757,13 +758,16 @@ namespace dftfe
 
     if (numSpinComponents == 2)
       {
-        for (int i = totalNumWaveFunctions  ; i < totalNumWaveFunctions + numElectrons / 2; ++i)
+        for (int i = totalNumWaveFunctions;
+             i < totalNumWaveFunctions + numElectrons / 2;
+             ++i)
           {
             initTauOccvec[i] = double(1.0);
           }
         if (numElectrons % 2 != 0)
           {
-            initTauOccvec[totalNumWaveFunctions + int(numElectrons / 2)] = double(0.5);
+            initTauOccvec[totalNumWaveFunctions + int(numElectrons / 2)] =
+              double(0.5);
           }
       }
 
@@ -829,7 +833,7 @@ namespace dftfe
                                ++iEigenVec)
                             {
                               *(partialOccupVecHost.begin() + iEigenVec) =
-                                initTauOccvec[ jvec + iEigenVec] *
+                                initTauOccvec[jvec + iEigenVec] *
                                 kPointWeights[kPoint] * spinPolarizedFactor;
                             }
                         }
@@ -1068,19 +1072,15 @@ namespace dftfe
         tauValues[0].resize(totalLocallyOwnedCells * numQuadPoints);
         tauValues[1].resize(totalLocallyOwnedCells * numQuadPoints);
         std::transform(tauHost.begin(),
-                        tauHost.begin() +
-                          totalLocallyOwnedCells * numQuadPoints,
-                        tauHost.begin() +
-                          totalLocallyOwnedCells * numQuadPoints,
-                        tauValues[0].begin(),
-                        std::plus<>{});
+                       tauHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       tauHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       tauValues[0].begin(),
+                       std::plus<>{});
         std::transform(tauHost.begin(),
-                        tauHost.begin() +
-                          totalLocallyOwnedCells * numQuadPoints,
-                        tauHost.begin() +
-                          totalLocallyOwnedCells * numQuadPoints,
-                        tauValues[1].begin(),
-                        std::minus<>{});
+                       tauHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       tauHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       tauValues[1].begin(),
+                       std::minus<>{});
       }
     else
       {

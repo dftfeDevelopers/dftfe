@@ -700,7 +700,8 @@ namespace dftfe
         if (d_dftParams.spinPolarized == 0)
           {
             tauOutQuadValuesSpinPolarized.push_back(
-              dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>(
                 tauOutValues[0].size(), 0.0));
           }
       }

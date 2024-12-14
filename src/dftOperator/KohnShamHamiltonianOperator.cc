@@ -160,6 +160,8 @@ namespace dftfe
     d_kPointCoordinates = kPointCoordinates;
     d_kPointWeights     = kPointWeights;
     d_invJacKPointTimesJxW.resize(d_kPointWeights.size());
+    d_halfKSquareTimesderExcwithTauJxW.resize(d_kPointWeights.size());
+    d_derExcwithTauTimesinvJacKpointTimesJxW.resize(d_kPointWeights.size());
     d_cellHamiltonianMatrix.resize(
       d_dftParamsPtr->memOptMode ?
         1 :
@@ -329,6 +331,8 @@ namespace dftfe
       isGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell * 3 : 0,
       0.0);
 
+    // why do we need to clear if we are resizing?
+    d_invJacinvJacderExcWithTauJxWHost.clear();
     d_invJacinvJacderExcWithTauJxWHost.resize(
       isTauMGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell * 9 :
                   0,
@@ -446,7 +450,6 @@ namespace dftfe
                                                              wfcData);
           }
 
-
         const std::vector<double> &gradDensityXCSpinIndex =
           spinIndex == 0 ? gradDensitySpinUp : gradDensitySpinDown;
         const std::vector<double> &gradDensityXCOtherSpinIndex =
@@ -554,9 +557,9 @@ namespace dftfe
                       (pdexTauSpinIndex[iQuad] + pdecTauSpinIndex[iQuad]) *
                       cellJxWPtr[iQuad];
 
-                    for (unsigned jDim = 0; jDim < 3; ++jDim)
+                    for (unsigned int jDim = 0; jDim < 3; ++jDim)
                       {
-                        for (unsigned iDim = 0; iDim < 3; ++iDim)
+                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
                           {
                             for (unsigned int kDim = 0; kDim < 3; ++kDim)
                               {
@@ -588,26 +591,119 @@ namespace dftfe
                       (pdexTauSpinIndex[iQuad] + pdecTauSpinIndex[iQuad]) *
                       cellJxWPtr[iQuad];
 
-                    for (unsigned jDim = 0; jDim < 3; ++jDim)
+                    for (unsigned int iDim = 0; iDim < 3; ++iDim)
                       {
-                        for (unsigned iDim = 0; iDim < 3; ++iDim)
-                          {
-                            if (iDim != jDim)
-                              {
-                                jacobianFactorForTauPtr[3 * jDim + iDim] += 0;
-                              }
-                            else
-                              {
-                                jacobianFactorForTauPtr[3 * jDim + iDim] +=
-                                  inverseJacobiansQuadPtr[iDim] *
-                                  inverseJacobiansQuadPtr[iDim] * termTau;
-                              }
-                          }
+                        jacobianFactorForTauPtr[3 * iDim + iDim] +=
+                          inverseJacobiansQuadPtr[iDim] *
+                          inverseJacobiansQuadPtr[iDim] * termTau;
                       }
                   }
               }
-          } // TauMGGA
-      }     // cell loop
+
+            if (std::is_same<dataTypes::number, std::complex<double>>::value)
+              {
+                for (unsigned int kPointIndex = 0;
+                     kPointIndex < d_kPointWeights.size();
+                     ++kPointIndex)
+                  {
+                    const double *kPointCoords =
+                      d_kPointCoordinates.data() + 3 * kPointIndex;
+
+                    dftfe::utils::MemoryStorage<double,
+                                                dftfe::utils::MemorySpace::HOST>
+                      &d_halfKSquareTimesderExcwithTauJxWHost =
+                        d_halfKSquareTimesderExcwithTauJxW[kPointIndex];
+                    d_halfKSquareTimesderExcwithTauJxWHost.resize(
+                      totalLocallyOwnedCells * numberQuadraturePointsPerCell,
+                      0.0);
+
+                    for (unsigned int iQuad = 0;
+                         iQuad < numberQuadraturePointsPerCell;
+                         ++iQuad)
+                      {
+                        const double kSquareTimesHalf =
+                          0.5 * (kPointCoords[0] * kPointCoords[0] +
+                                 kPointCoords[1] * kPointCoords[1] +
+                                 kPointCoords[2] * kPointCoords[2]);
+                        d_halfKSquareTimesderExcwithTauJxWHost
+                          [iCell * numberQuadraturePointsPerCell + iQuad] =
+                            kSquareTimesHalf *
+                            (pdexTauSpinIndex[iQuad] +
+                             pdecTauSpinIndex[iQuad]) *
+                            cellJxWPtr[iQuad];
+                      }
+
+                    dftfe::utils::MemoryStorage<double,
+                                                dftfe::utils::MemorySpace::HOST>
+                      &d_derExcwithTauTimesinvJacKpointTimesJxWHost =
+                        d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex];
+
+                    d_derExcwithTauTimesinvJacKpointTimesJxWHost.resize(
+                      isTauMGGA ? totalLocallyOwnedCells *
+                                    numberQuadraturePointsPerCell * 3 :
+                                  0,
+                      0.0);
+
+                    if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
+                      {
+                        for (unsigned int iQuad = 0;
+                             iQuad < numberQuadraturePointsPerCell;
+                             ++iQuad)
+                          {
+                            const double *inverseJacobiansQuadPtr =
+                              d_basisOperationsPtrHost
+                                ->inverseJacobiansBasisData()
+                                .data() +
+                              (d_basisOperationsPtrHost->cellsTypeFlag() == 0 ?
+                                 iCell * numberQuadraturePointsPerCell * 9 +
+                                   iQuad * 9 :
+                                 iCell * 9);
+                            for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                              {
+                                for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                                  {
+                                    d_derExcwithTauTimesinvJacKpointTimesJxWHost
+                                      [iCell * numberQuadraturePointsPerCell *
+                                         3 +
+                                       iQuad * 3 + iDim] +=
+                                      -0.5 *
+                                      inverseJacobiansQuadPtr[3 * jDim + iDim] *
+                                      kPointCoords[jDim] * cellJxWPtr[iQuad] *
+                                      (pdexTauSpinIndex[iQuad] +
+                                       pdecTauSpinIndex[iQuad]);
+                                  }
+                              }
+                          }
+                      }
+
+                    else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
+                      {
+                        for (unsigned int iQuad = 0;
+                             iQuad < numberQuadraturePointsPerCell;
+                             ++iQuad)
+                          {
+                            const double *inverseJacobiansQuadPtr =
+                              d_basisOperationsPtrHost
+                                ->inverseJacobiansBasisData()
+                                .data() +
+                              iCell * 3;
+
+                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                              {
+                                d_derExcwithTauTimesinvJacKpointTimesJxWHost
+                                  [iCell * numberQuadraturePointsPerCell * 3 +
+                                   3 * iQuad + iDim] =
+                                    -inverseJacobiansQuadPtr[iDim] *
+                                    kPointCoords[iDim] * cellJxWPtr[iQuad] *
+                                    (pdexTauSpinIndex[iQuad] +
+                                     pdecTauSpinIndex[iQuad]);
+                              }
+                          }
+                      }
+                  } // kpoint loop
+              }     // complex check
+          }         // TauMGGA
+      }             // cell loop
 #if defined(DFTFE_WITH_DEVICE)
     d_VeffJxW.resize(d_VeffJxWHost.size());
     d_VeffJxW.copyFrom(d_VeffJxWHost);
@@ -1021,12 +1117,12 @@ namespace dftfe
             tempHamMatrixImagBlock.setValue(0.0);
             if (!onlyHPrimePartForFirstOrderDensityMatResponse)
               {
-                const double *kPointCoors =
+                const double *kPointCoords =
                   d_kPointCoordinates.data() + 3 * d_kPointIndex;
                 const double kSquareTimesHalf =
-                  0.5 * (kPointCoors[0] * kPointCoors[0] +
-                         kPointCoors[1] * kPointCoors[1] +
-                         kPointCoors[2] * kPointCoors[2]);
+                  0.5 * (kPointCoords[0] * kPointCoords[0] +
+                         kPointCoords[1] * kPointCoords[1] +
+                         kPointCoords[2] * kPointCoords[2]);
                 d_BLASWrapperPtr->xaxpy(
                   nDofsPerCell * nDofsPerCell *
                     (cellRange.second - cellRange.first),
@@ -1040,6 +1136,58 @@ namespace dftfe
                   cellRange,
                   d_invJacKPointTimesJxW[d_kPointIndex],
                   tempHamMatrixImagBlock);
+
+                if (isTauMGGA)
+                  {
+                    d_basisOperationsPtr->computeWeightedCellMassMatrix(
+                      cellRange,
+                      d_halfKSquareTimesderExcwithTauJxW[d_kPointIndex],
+                      tempHamMatrixRealBlock);
+
+                    d_basisOperationsPtr
+                      ->computeWeightedCellNjGradNiMinusNiGradNjMatrix(
+                        cellRange,
+                        d_derExcwithTauTimesinvJacKpointTimesJxW[d_kPointIndex],
+                        tempHamMatrixImagBlock);
+
+                    // auto tempImagBlock = tempHamMatrixImagBlock;
+
+                    // tempImagBlock.resize(tempHamMatrixImagBlock.size(), 0.0);
+
+                    // d_basisOperationsPtr->computeWeightedCellNjGradNiMatrix(
+                    //   cellRange,
+                    //   d_derExcwithTauTimesinvJacKpointTimesJxW[d_kPointIndex],
+                    //   tempImagBlock);
+
+                    // pcout << "Debug1 " << std::endl;
+                    // for (unsigned int cellNum = cellRange.first;
+                    //      cellNum < cellRange.second;
+                    //      cellNum++)
+                    //   {
+                    //     for (unsigned int iDim = 0; iDim < nDofsPerCell;
+                    //     ++iDim)
+                    //       {
+                    //         for (unsigned int jDim = 0; jDim < nDofsPerCell;
+                    //              ++jDim)
+                    //           {
+                    //             // if (cellNum == 0)
+                    //             //   {
+                    //             //     std::cout << "debug 2: " << iDim <<
+                    //             ","
+                    //             //               << jDim << std::endl;
+                    //             //   }
+                    //             tempHamMatrixImagBlock[cellNum * nDofsPerCell
+                    //             *
+                    //                                      nDofsPerCell +
+                    //                                    iDim * nDofsPerCell +
+                    //                                    jDim] -=
+                    //               tempImagBlock[cellNum * nDofsPerCell *
+                    //                               nDofsPerCell +
+                    //                             jDim * nDofsPerCell + iDim];
+                    //           }
+                    //       }
+                    //   }
+                  }
               }
             d_BLASWrapperPtr->copyRealArrsToComplexArr(
               nDofsPerCell * nDofsPerCell *

@@ -253,6 +253,13 @@ namespace dftfe
           &weightedCellNjGradNiPlusNiGradNjMatrix) const;
 
       void
+      computeWeightedCellNjGradNiMinusNiGradNjMatrix(
+        const std::pair<unsigned int, unsigned int> cellRangeTotal,
+        dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &weights,
+        dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+          &weightedCellNjGradNiPlusNiGradNjMatrix) const;
+
+      void
       computeWeightedCellStiffnessMatrix(
         const std::pair<unsigned int, unsigned int> cellRangeTotal,
         dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &weights,

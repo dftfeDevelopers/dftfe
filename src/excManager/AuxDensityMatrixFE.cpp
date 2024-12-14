@@ -249,7 +249,6 @@ namespace dftfe
           for (unsigned idim = 0; idim < 3; idim++)
             d_gradDensityValsSpinDownAllQuads[3 * iquad + idim] =
               gradDensityVals[3 * nQ + 3 * iquad + idim];
-
       }
 
     if (projectionInputs.find("tauFunc") != projectionInputs.end())

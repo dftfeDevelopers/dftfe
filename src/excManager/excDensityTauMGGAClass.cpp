@@ -65,7 +65,7 @@ namespace dftfe
     d_funcCPtr = funcCPtr;
     // d_NNGGAPtr = nullptr;
 #ifdef DFTFE_WITH_TORCH
-    std::string errMsg ="NNMGGA is not implemented yet.";
+    std::string errMsg = "NNMGGA is not implemented yet.";
     dftfe::utils::throwException(false, errMsg);
 #endif
   }
@@ -266,7 +266,7 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_TORCH
     std::string errMsg = "NNMGGA is not implemented yet.";
-    dftfe::utils::throwException(false,errMsg);
+    dftfe::utils::throwException(false, errMsg);
 #endif
 
     for (size_t i = 0; i < outputDataAttributes.size(); i++)

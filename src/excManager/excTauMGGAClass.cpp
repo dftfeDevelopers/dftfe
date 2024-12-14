@@ -113,8 +113,8 @@ namespace dftfe
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &cDataOut) const
   {
-    double tauThresholdMgga     = 1e-9;
-    double rhoThresholdMgga     = 1e-9;
+    double tauThresholdMgga = 1e-9;
+    double rhoThresholdMgga = 1e-9;
     // double sigmaThresholdMgga   = 1e-24;
 
     const unsigned int                           nquad = quadPoints.size() / 3;
@@ -207,7 +207,7 @@ namespace dftfe
 
     for (size_t i = 0; i < nquad; i++)
       {
-        densityValues[2 * i + 0] = std::abs(densityValuesSpinUp[i]); 
+        densityValues[2 * i + 0] = std::abs(densityValuesSpinUp[i]);
         densityValues[2 * i + 1] = std::abs(densityValuesSpinDown[i]);
         for (size_t j = 0; j < 3; j++)
           {
@@ -223,10 +223,8 @@ namespace dftfe
         // sigmaValues[3 * i + 2] =
         //   std::max(sigmaValues[3 * i + 2], sigmaThresholdMgga);
 
-        tauValues[2 * i + 0] =
-          std::max(tauValuesSpinUp[i], tauThresholdMgga);
-        tauValues[2 * i + 1] =
-          std::max(tauValuesSpinDown[i], tauThresholdMgga);
+        tauValues[2 * i + 0] = std::max(tauValuesSpinUp[i], tauThresholdMgga);
+        tauValues[2 * i + 1] = std::max(tauValuesSpinDown[i], tauThresholdMgga);
       }
 
     std::vector<double> laplacianValues(2 * nquad, 0.0);
@@ -283,26 +281,27 @@ namespace dftfe
 
     // for (size_t i = 0; i < tauValues.size(); i++)
     //   {
-      //   if ((std::abs(densityValues[i]) <= tauThreshold)
-      //     || std::abs(tauValues[i] <= tauThreshold))
-      //     {
-      //       pdexDensityValuesNonNN[i] = 0;
-      //       pdexSigmaValues[i] = 0;
-      //       pdexTauValuesNonNN[i] = 0;
-      //       pdecDensityValuesNonNN[i] = 0;
-      //       pdecSigmaValues[i] = 0;
-      //       pdecTauValuesNonNN[i] = 0;
-      //     }
-      //       ecValues[i] = 0;
-      //       exValues[i] = 0;
-      // }
+    //   if ((std::abs(densityValues[i]) <= tauThreshold)
+    //     || std::abs(tauValues[i] <= tauThreshold))
+    //     {
+    //       pdexDensityValuesNonNN[i] = 0;
+    //       pdexSigmaValues[i] = 0;
+    //       pdexTauValuesNonNN[i] = 0;
+    //       pdecDensityValuesNonNN[i] = 0;
+    //       pdecSigmaValues[i] = 0;
+    //       pdecTauValuesNonNN[i] = 0;
+    //     }
+    //       ecValues[i] = 0;
+    //       exValues[i] = 0;
+    // }
 
-//##################################################################################################
+    //##################################################################################################
     for (size_t i = 0; i < nquad; i++)
       {
         if (std::abs(densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=
-            rhoThresholdMgga || std::abs(tauValues[2 * i + 0] + tauValues[2 * i + 1]) <=
-            tauThresholdMgga)
+              rhoThresholdMgga ||
+            std::abs(tauValues[2 * i + 0] + tauValues[2 * i + 1]) <=
+              tauThresholdMgga)
           {
             exValues[i]                       = 0.0;
             pdexDensityValuesNonNN[2 * i + 0] = 0.0;
@@ -375,7 +374,7 @@ namespace dftfe
         //   }
       }
 
-//##################################################################################################
+    //##################################################################################################
     for (size_t i = 0; i < nquad; i++)
       {
         // Evaluation of total exValue and ecValue per unit volume

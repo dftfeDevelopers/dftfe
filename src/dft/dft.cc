@@ -2555,8 +2555,7 @@ namespace dftfe
                   true,
                   d_dftParamsPtr->mixingParameter *
                     d_dftParamsPtr->spinMixingEnhancementFactor,
-                  d_dftParamsPtr->adaptAndersonMixingParameter
-                );
+                  d_dftParamsPtr->adaptAndersonMixingParameter);
               }
           }
 
@@ -2795,9 +2794,9 @@ namespace dftfe
                          iComp++)
                       {
                         if (scfIter == 1)
-                            d_tauResidualQuadValues[iComp].resize(
-                              d_tauOutQuadValues[iComp].size());
-                            // why this reinit is required now?
+                          d_tauResidualQuadValues[iComp].resize(
+                            d_tauOutQuadValues[iComp].size());
+                        // why this reinit is required now?
                         d_basisOperationsPtrElectroHost->reinit(
                           0, 0, d_densityQuadratureIdElectro, false);
                         double normTau;
@@ -2810,12 +2809,12 @@ namespace dftfe
 
                         d_mixingScheme.addVariableToInHist(
                           iComp == 0 ? mixingVariable::tau :
-                                        mixingVariable::tauMagZ,
+                                       mixingVariable::tauMagZ,
                           d_tauInQuadValues[iComp].data(),
                           d_tauInQuadValues[iComp].size());
                         d_mixingScheme.addVariableToResidualHist(
                           iComp == 0 ? mixingVariable::tau :
-                                        mixingVariable::tauMagZ,
+                                       mixingVariable::tauMagZ,
                           d_tauResidualQuadValues[iComp].data(),
                           d_tauResidualQuadValues[iComp].size());
                       }
@@ -2851,17 +2850,16 @@ namespace dftfe
                 d_mixingScheme.computeAndersonMixingCoeff(
                   d_dftParamsPtr->spinPolarized == 1 ?
                     (isTauMGGA ?
-                    std::vector<mixingVariable>{mixingVariable::rho,
-                                                mixingVariable::tau,
-                                                mixingVariable::magZ,
-                                                mixingVariable::tauMagZ}:
-                    std::vector<mixingVariable>{mixingVariable::rho,
-                                                mixingVariable::magZ}):
+                       std::vector<mixingVariable>{mixingVariable::rho,
+                                                   mixingVariable::tau,
+                                                   mixingVariable::magZ,
+                                                   mixingVariable::tauMagZ} :
+                       std::vector<mixingVariable>{mixingVariable::rho,
+                                                   mixingVariable::magZ}) :
                     (isTauMGGA ?
-                    std::vector<mixingVariable>{mixingVariable::rho,
-                                                mixingVariable::tau}:
-                    std::vector<mixingVariable>{mixingVariable::rho})                 
-                    );
+                       std::vector<mixingVariable>{mixingVariable::rho,
+                                                   mixingVariable::tau} :
+                       std::vector<mixingVariable>{mixingVariable::rho}));
 
                 // update the mixing variables
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
@@ -2888,8 +2886,8 @@ namespace dftfe
                     for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
                       {
                         d_mixingScheme.mixVariable(
-                          iComp == 0 ? mixingVariable::tau : 
-                          mixingVariable::tauMagZ,
+                          iComp == 0 ? mixingVariable::tau :
+                                       mixingVariable::tauMagZ,
                           d_tauInQuadValues[iComp].data(),
                           d_tauInQuadValues[iComp].size());
                       }
@@ -6057,55 +6055,50 @@ namespace dftfe
           {
             std::vector<double> &tauValsForXC =
               densityProjectionInputs["tauFunc"];
-            tauValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell,
-                                0);
+            tauValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell, 0);
             if (spinPolarizedFactor == 1)
               {
                 for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                      ++iCell)
+                     ++iCell)
                   {
                     const double *cellTauValues =
                       tauQuadValues[0].data() + iCell * nQuadsPerCell;
 
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
-                          ++iQuad)
+                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
                       tauValsForXC[iCell * nQuadsPerCell + iQuad] =
                         cellTauValues[iQuad] / 2.0;
 
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
-                          ++iQuad)
+                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
                       tauValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
-                                    iCell * nQuadsPerCell + iQuad] =
+                                   iCell * nQuadsPerCell + iQuad] =
                         cellTauValues[iQuad] / 2.0;
                   }
               }
             else if (spinPolarizedFactor == 2)
               {
                 for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                      ++iCell)
+                     ++iCell)
                   {
                     const double *cellTauValues =
                       tauQuadValues[0].data() + iCell * nQuadsPerCell;
                     const double *cellTauMagValues =
                       tauQuadValues[1].data() + iCell * nQuadsPerCell;
 
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
-                          ++iQuad)
+                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
                       tauValsForXC[iCell * nQuadsPerCell + iQuad] =
                         cellTauValues[iQuad] / 2.0 +
                         cellTauMagValues[iQuad] / 2.0;
 
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
-                          ++iQuad)
-                      tauValsForXC[totalLocallyOwnedCells * nQuadsPerCell + iCell * nQuadsPerCell + iQuad] =
+                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                      tauValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
+                                   iCell * nQuadsPerCell + iQuad] =
                         cellTauValues[iQuad] / 2.0 -
                         cellTauMagValues[iQuad] / 2.0;
                   }
               }
             if (d_dftParamsPtr->nonLinearCoreCorrection)
               {
-                std::string errMsg =
-                  "NLCC is not implemented yet for SCAN.";
+                std::string errMsg = "NLCC is not implemented yet for SCAN.";
                 dftfe::utils::throwException(false, errMsg);
               }
           }
