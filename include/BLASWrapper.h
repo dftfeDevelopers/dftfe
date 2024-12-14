@@ -562,6 +562,16 @@ namespace dftfe
                        const ValueType2       a,
                        ValueType1 *           addToVec) const;
 
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockAxpBy(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const ValueType1 *     addFromVec,
+                        const ValueType2 *     scalingVector,
+                        const ValueType2       a,
+                        const ValueType2       b,
+                        ValueType1 *           addToVec) const;
       template <typename ValueType1, typename ValueType2>
       void
       axpby(const unsigned int n,
@@ -1223,6 +1233,15 @@ namespace dftfe
                        const ValueType2 *     scalingVector,
                        const ValueType2       a,
                        ValueType1 *           addToVec) const;
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockAxpBy(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const ValueType1 *     addFromVec,
+                        const ValueType2 *     scalingVector,
+                        const ValueType2       a,
+                        const ValueType2       b,
+                        ValueType1 *           addToVec) const;
 
       template <typename ValueType0,
                 typename ValueType1,

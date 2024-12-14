@@ -488,7 +488,7 @@ namespace dftfe
                         (*HXBlock).setCommunicationPrecision(
                           dftfe::utils::mpi::communicationPrecision::single);
                       }
-                    linearAlgebraOperations::chebyshevFilterSinglePrec(
+                    linearAlgebraOperations::chebyshevFilterNew(
                       BLASWrapperPtr,
                       operatorMatrix,
                       (*XBlock),

@@ -472,6 +472,24 @@ namespace dftfe
             double *WORK,
             int *   lwork,
             int *   INFO);
+    // LU decomoposition of a general matrix
+    void
+    zgetrf_(int *                 M,
+            int *                 N,
+            std::complex<double> *A,
+            int *                 lda,
+            int *                 IPIV,
+            int *                 INFO);
+
+    // generate inverse of a matrix given its LU decomposition
+    void
+    zgetri_(int *                 N,
+            std::complex<double> *A,
+            int *                 lda,
+            int *                 IPIV,
+            std::complex<double> *WORK,
+            int *                 lwork,
+            int *                 INFO);
   }
 #endif
 
@@ -487,6 +505,10 @@ namespace dftfe
     void
     inverse(double *A, int N);
 
+    /** @brief Compute inverse of serial matrix using LAPACK LU factorization
+     */
+    void
+    inverse(std::complex<double> *A, int N);
 
 
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
@@ -531,40 +553,24 @@ namespace dftfe
                     const double                                       b,
                     const double                                       a0);
 
-    template <typename T, typename TFP32, dftfe::utils::MemorySpace memorySpace>
-    void
-    chebyshevFilterSinglePrec(
-      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                    BLASWrapperPtr,
-      operatorDFTClass<memorySpace> &                        operatorMatrix,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &    X,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &    Y,
-      dftfe::linearAlgebra::MultiVector<TFP32, memorySpace> &X_SP,
-      dftfe::linearAlgebra::MultiVector<TFP32, memorySpace> &Y_SP,
-      std::vector<double>                                    eigenvalues,
-      const unsigned int                                     m,
-      const double                                           a,
-      const double                                           b,
-      const double                                           a0,
-      const bool approxOverlapMatrix);
 
 
-    template <typename T, dftfe::utils::MemorySpace memorySpace>
+    template <typename T1, typename T2, dftfe::utils::MemorySpace memorySpace>
     void
     chebyshevFilterNew(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                BLASWrapperPtr,
-      operatorDFTClass<memorySpace> &                    operatorMatrix,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &Residual,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &ResidualNew,
-      std::vector<double>                                eigenvalues,
-      const unsigned int                                 m,
-      const double                                       a,
-      const double                                       b,
-      const double                                       a0,
-      const bool                                         approxOverlapMatrix);
+        &                                                 BLASWrapperPtr,
+      operatorDFTClass<memorySpace> &                     operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<T1, memorySpace> &X,
+      dftfe::linearAlgebra::MultiVector<T1, memorySpace> &Y,
+      dftfe::linearAlgebra::MultiVector<T2, memorySpace> &Residual,
+      dftfe::linearAlgebra::MultiVector<T2, memorySpace> &ResidualNew,
+      std::vector<double>                                 eigenvalues,
+      const unsigned int                                  m,
+      const double                                        a,
+      const double                                        b,
+      const double                                        a0,
+      const bool                                          approxOverlapMatrix);
 
 
   } // namespace linearAlgebraOperations

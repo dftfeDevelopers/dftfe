@@ -207,6 +207,16 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst);
 
     void
+    overlapInverseMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &          src,
+      const double scalarOinvX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &dst);
+
+    void
     HXCheby(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       const double scalarHX,
@@ -219,17 +229,17 @@ namespace dftfe
       const bool skip3                                         = false);
 
     void
-    HXCheby(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                              memorySpace> &src,
-            const double                                    scalarHX,
-            const double                                    scalarY,
-            const double                                    scalarX,
-            dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                              memorySpace> &dst,
-            const bool onlyHPrimePartForFirstOrderDensityMatResponse,
-            const bool skip1,
-            const bool skip2,
-            const bool skip3);
+    HXChebyNew(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                                 memorySpace> &src,
+               const double                                    scalarHX,
+               const double                                    scalarY,
+               const double                                    scalarX,
+               dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                                 memorySpace> &dst,
+               const bool onlyHPrimePartForFirstOrderDensityMatResponse,
+               const bool skip1,
+               const bool skip2,
+               const bool skip3);
 
     void
     HXChebyNew(

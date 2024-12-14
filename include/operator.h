@@ -99,6 +99,16 @@ namespace dftfe
         &dst) = 0;
 
     virtual void
+    overlapInverseMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &          src,
+      const double scalarOinvX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &dst) = 0;
+
+    virtual void
     inverseOverlapOverlapMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       const double scalarOinvX,
@@ -143,17 +153,17 @@ namespace dftfe
       const bool skip3                                         = false) = 0;
 
     virtual void
-    HXCheby(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                              memorySpace> &src,
-            const double                                    scalarHX,
-            const double                                    scalarY,
-            const double                                    scalarX,
-            dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                              memorySpace> &dst,
-            const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
-            const bool skip1                                         = false,
-            const bool skip2                                         = false,
-            const bool skip3 = false) = 0;
+    HXChebyNew(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                                 memorySpace> &src,
+               const double                                    scalarHX,
+               const double                                    scalarY,
+               const double                                    scalarX,
+               dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                                 memorySpace> &dst,
+               const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
+               const bool skip1                                         = false,
+               const bool skip2                                         = false,
+               const bool skip3 = false) = 0;
 
     virtual dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST> *
     getOverloadedConstraintMatrixHost() const = 0;

@@ -1802,6 +1802,31 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(addToVec));
     }
 
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType1 *     addFromVec,
+      const ValueType2 *     scalingVector,
+      const ValueType2       a,
+      const ValueType2       b,
+      ValueType1 *           addToVec) const
+    {
+      stridedBlockAxpByDeviceKernel<<<(contiguousBlockSize *
+                                       numContiguousBlocks) /
+                                          dftfe::utils::DEVICE_BLOCK_SIZE +
+                                        1,
+                                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(a),
+        dftfe::utils::makeDataTypeDeviceCompatible(b),
+        dftfe::utils::makeDataTypeDeviceCompatible(scalingVector),
+        dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(addToVec));
+    }
+
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::

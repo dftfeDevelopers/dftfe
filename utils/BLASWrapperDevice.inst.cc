@@ -268,6 +268,11 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
+                                   const std::complex<double> *valueType1Arr,
+                                   std::complex<double> *      valueType2Arr);
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
   copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                    const double *         valueType1Arr,
                                    std::complex<float> *  valueType2Arr);
@@ -282,6 +287,11 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
   copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
                                    const double *         valueType1Arr,
                                    float *                valueType2Arr);
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
+                                   const float *          valueType1Arr,
+                                   double *               valueType2Arr);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
   copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
@@ -1025,6 +1035,16 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
+  const dftfe::size_type contiguousBlockSize,
+  const dftfe::size_type numContiguousBlocks,
+  const float *          addFromVec,
+  const double *         scalingVector,
+  const double           a,
+  float *                addToVec) const;
+
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const dftfe::size_type      contiguousBlockSize,
   const dftfe::size_type      numContiguousBlocks,
   const std::complex<double> *addFromVec,
@@ -1042,6 +1062,14 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   std::complex<double> *      addToVec) const;
 
 template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
+  const dftfe::size_type     contiguousBlockSize,
+  const dftfe::size_type     numContiguousBlocks,
+  const std::complex<float> *addFromVec,
+  const double *             scalingVector,
+  const double               a,
+  std::complex<float> *      addToVec) const;
+template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
   const dftfe::size_type numberofVectors,
   const dftfe::size_type sizeOfVector,
@@ -1054,3 +1082,55 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
   const dftfe::size_type sizeOfVector,
   std::complex<double> * X,
   double *               D);
+
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
+  const dftfe::size_type contiguousBlockSize,
+  const dftfe::size_type numContiguousBlocks,
+  const double *         addFromVec,
+  const double *         scalingVector,
+  const double           a,
+  const double           b,
+  double *               addToVec) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
+  const dftfe::size_type contiguousBlockSize,
+  const dftfe::size_type numContiguousBlocks,
+  const float *          addFromVec,
+  const double *         scalingVector,
+  const double           a,
+  const double           b,
+  float *                addToVec) const;
+
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
+  const dftfe::size_type      contiguousBlockSize,
+  const dftfe::size_type      numContiguousBlocks,
+  const std::complex<double> *addFromVec,
+  const std::complex<double> *scalingVector,
+  const std::complex<double>  a,
+  const std::complex<double>  b,
+  std::complex<double> *      addToVec) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
+  const dftfe::size_type      contiguousBlockSize,
+  const dftfe::size_type      numContiguousBlocks,
+  const std::complex<double> *addFromVec,
+  const double *              scalingVector,
+  const double                a,
+  const double                b,
+  std::complex<double> *      addToVec) const;
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
+  const dftfe::size_type     contiguousBlockSize,
+  const dftfe::size_type     numContiguousBlocks,
+  const std::complex<float> *addFromVec,
+  const double *             scalingVector,
+  const double               a,
+  const double               b,
+  std::complex<float> *      addToVec) const;
