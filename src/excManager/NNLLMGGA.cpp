@@ -349,7 +349,7 @@ namespace dftfe
 
 
     d_model  = new torch::jit::script::Module;
-    *d_model = torch::jit::load(d_modelFilename);
+    *d_model = torch::jit::load(d_ptcFilename);
     // Explicitly load model onto CPU, you can use kGPU if you are on Linux
     // and have libtorch version with CUDA support (and a GPU)
     d_model->to(torch::kCPU);
