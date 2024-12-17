@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -72,6 +72,7 @@
 #include <oncvClass.h>
 #include <AuxDensityMatrix.h>
 #include "expConfiningPotential.h"
+#include <atomCenteredPostProcessing.h>
 
 namespace dftfe
 {
@@ -290,7 +291,7 @@ namespace dftfe
      * @brief Number of Kohn-Sham eigen values to be computed
      */
     unsigned int d_numEigenValues;
-
+    unsigned int d_highestStateForResidualComputation;
     /**
      * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
      * after spectrum splitting.
@@ -760,7 +761,7 @@ namespace dftfe
      */
     void
     outputWfc(const std::string outputFileName = "wfcOutput");
-
+  
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based
@@ -1135,7 +1136,7 @@ namespace dftfe
     /**
      *@brief Computes net magnetization from the difference of local spin densities
      */
-    double
+    void
     totalMagnetization(
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &magQuadValues);
@@ -1200,17 +1201,11 @@ namespace dftfe
      */
     void
     compute_tdos(const std::vector<std::vector<double>> &eigenValuesInput,
-                 const unsigned int                      highestStateOfInterest,
                  const std::string &                     fileName);
 
     void
     compute_ldos(const std::vector<std::vector<double>> &eigenValuesInput,
                  const std::string &                     fileName);
-
-    void
-    compute_pdos(const std::vector<std::vector<double>> &eigenValuesInput,
-                 const std::string &                     fileName);
-
 
     /**
      *@brief compute localization length
@@ -1303,7 +1298,7 @@ namespace dftfe
 
     /// FIXME: remove atom type atributes from atomLocations
     std::vector<std::vector<double>> atomLocations, atomLocationsFractional,
-      d_reciprocalLatticeVectors, d_domainBoundingVectors;
+      d_reciprocalLatticeVectors, d_domainBoundingVectors, d_meshSizes;
     std::vector<std::vector<double>> d_atomLocationsInterestPseudopotential;
     std::map<unsigned int, unsigned int>
                                      d_atomIdPseudopotentialInterestToGlobalId;
@@ -1521,6 +1516,9 @@ namespace dftfe
     std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
       d_oncvClassPtr;
 
+    std::shared_ptr<
+      dftfe::atomCenteredOrbitalsPostProcessing<dataTypes::number, memorySpace>>
+      d_atomCenteredOrbitalsPostProcessingPtr;
 
     std::shared_ptr<
 #if defined(DFTFE_WITH_DEVICE)

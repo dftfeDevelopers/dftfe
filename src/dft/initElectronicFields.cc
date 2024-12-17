@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -166,9 +166,7 @@ namespace dftfe
       }
 
     if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
-      pcout << std::endl
-            << "net magnetization: "
-            << totalMagnetization(d_densityInQuadValues[1]) << std::endl;
+      totalMagnetization(d_densityInQuadValues[1]);
   }
 #include "dft.inst.cc"
 } // namespace dftfe

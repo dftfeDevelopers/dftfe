@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -302,6 +302,7 @@ namespace dftfe
 
     std::vector<std::vector<double>> d_atomPositions;
     std::vector<std::vector<double>> d_imageAtomPositions;
+    std::vector<std::vector<double>> d_meshSizes;
     std::vector<int>                 d_imageIds;
     std::vector<double>              d_nearestAtomDistances;
     std::vector<std::vector<double>> d_domainBoundingVectors;

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -1002,6 +1002,7 @@ namespace dftfe
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
+    d_highestStateForResidualComputation = highestState;
     return maxHighestOccupiedStateResNorm;
   }
   // compute the maximum of the residual norm of the highest occupied state
@@ -1042,6 +1043,7 @@ namespace dftfe
                   residualNormWaveFunctionsAllkPoints[kPoint]
                                                      [highestOccupiedState];
               }
+            d_highestStateForResidualComputation = highestOccupiedState;
           }
       }
     else
@@ -1072,7 +1074,11 @@ namespace dftfe
                 if (functionValue > 1e-3)
                   highestOccupiedState = i;
               }
-            for (unsigned int i = 0; i < highestOccupiedState + 1; i++)
+
+            d_highestStateForResidualComputation = highestOccupiedState;
+
+            for (unsigned int i = 0; i <= d_highestStateForResidualComputation;
+                 i++)
               {
                 if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
                     maxHighestOccupiedStateResNorm)

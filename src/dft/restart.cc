@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -144,7 +144,7 @@ namespace dftfe
              i++)
           {
             d_magInNodalValuesRead.local_element(i) =
-              -2.0 * (d_dftParamsPtr->start_magnetization) *
+              (d_dftParamsPtr->tot_magnetization) *
               d_rhoInNodalValuesRead.local_element(i);
           }
       }

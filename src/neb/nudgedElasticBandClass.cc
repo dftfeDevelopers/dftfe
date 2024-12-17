@@ -1,7 +1,7 @@
 
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -97,7 +97,7 @@ namespace dftfe
 
         std::vector<std::vector<double>> initialatomLocations;
         std::vector<std::vector<double>> LatticeVectors;
-        dftUtils::readFile(5, initialatomLocations, coordinatesFileNEB);
+        dftUtils::readFile(initialatomLocations, coordinatesFileNEB);
         dftUtils::readFile(3, LatticeVectors, domainVectorsFileNEB);
         d_numberGlobalCharges = initialatomLocations.size() / d_numberOfImages;
         for (int Image = 0; Image < d_numberOfImages; Image++)

@@ -29,7 +29,6 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = Pt3Ni_pseudo.inp
   set SPIN POLARIZATION               = 1
-  set START MAGNETIZATION             = 0.1
   subsection Hubbard Parameters
     set HUBBARD PARAMETERS FILE = Pt3Ni_hubbard.inp
   end

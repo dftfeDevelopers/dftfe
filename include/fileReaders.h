@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -40,6 +40,16 @@ namespace dftfe
     void
     readFile(const unsigned int                numColumns,
              std::vector<std::vector<double>> &data,
+             const std::string &               fileName);
+
+    /**
+     * @brief Read from file containing only double data in columns.
+     *
+     * @param[out] data output double data in [rows][columns] format
+     * @param[in] fileName
+     */
+    void
+    readFile(std::vector<std::vector<double>> &data,
              const std::string &               fileName);
     /**
      * @brief Read from file containing only double data in columns.

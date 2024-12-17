@@ -80,30 +80,32 @@ Energy residual  : 6.1940e-05
 Energy residual  : 1.4449e-05
 Energy residual  : 7.4752e-07
 Energy residual  : 6.2573e-06
-Energy residual  : 1.3611e-07
-Energy residual  : 2.4380e-08
-Energy residual  : 1.9366e-08
-Energy residual  : 6.0081e-08
-Energy residual  : 9.4978e-08
-Energy residual  : 7.0313e-08
-Energy residual  : 6.3226e-11
-Energy residual  : 2.9872e-09
-Energy residual  : 1.3124e-09
-Energy residual  : 2.0623e-09
-Energy residual  : 7.2825e-11
-Energy residual  : 9.5127e-10
-Energy residual  : 8.9943e-10
-Energy residual  : 5.0335e-10
-Energy residual  : 2.8920e-11
-Energy residual  : 2.6438e-10
-Energy residual  : 1.4812e-10
-Energy residual  : 5.6850e-10
-Energy residual  : 2.9292e-10
+Energy residual  : 1.3612e-07
+Energy residual  : 2.4630e-08
+Energy residual  : 1.9362e-08
+Energy residual  : 6.0083e-08
+Energy residual  : 9.4670e-08
+Energy residual  : 7.0080e-08
+Energy residual  : 1.5960e-10
+Energy residual  : 2.9499e-09
+Energy residual  : 1.5188e-09
+Energy residual  : 1.9963e-09
+Energy residual  : 7.7261e-11
+Energy residual  : 9.5484e-10
+Energy residual  : 9.0281e-10
+Energy residual  : 5.0216e-10
+Energy residual  : 2.4141e-10
+Energy residual  : 1.5980e-11
+Energy residual  : 1.5114e-10
+Energy residual  : 5.8535e-10
+Energy residual  : 2.8904e-10
 SCF iterations converged to the specified tolerance after: 37 iterations.
 
 Energy computations (Hartree) 
 -------------------
              Total energy:       -1673.56610063
+Absolute magnetization: 5.344
+Net magnetization     : -5.342
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------

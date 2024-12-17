@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -665,6 +665,14 @@ namespace dftfe
     private:
     };
 #if defined(DFTFE_WITH_DEVICE)
+    enum class tensorOpDataType
+    {
+      fp32,
+      tf32,
+      bf16,
+      fp16
+    };
+
     template <>
     class BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
     {
@@ -1300,6 +1308,11 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t
       setMathMode(dftfe::utils::deviceBlasMath_t mathMode);
 #  endif
+      void
+      setTensorOpDataType(tensorOpDataType opType)
+      {
+        d_opType = opType;
+      }
 
       dftfe::utils::deviceBlasStatus_t
       setStream(dftfe::utils::deviceStream_t streamId);
@@ -1313,6 +1326,7 @@ namespace dftfe
       /// storage for deviceblas handle
       dftfe::utils::deviceBlasHandle_t d_deviceBlasHandle;
       dftfe::utils::deviceStream_t     d_streamId;
+      tensorOpDataType                 d_opType;
 
       dftfe::utils::deviceBlasStatus_t
       create();

@@ -1,0 +1,71 @@
+set SOLVER MODE = NSCF
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+set RESTART FOLDER = ../../fcc_feCuPt2_01_a.release/mpirun=8/feCuPt2_01
+subsection Geometry
+  set NATOMS=4
+  set NATOM TYPES=3
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/fcc_feCuPt2_coordinates.inp          
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/fcc_feCuPt2_domainVectors.inp 
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Brillouin zone k point sampling options
+  set USE GROUP SYMMETRY         = false
+  set USE TIME REVERSAL SYMMETRY = true
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 3
+    set SAMPLING SHIFT 1  = 1
+    set SAMPLING SHIFT 2  = 1
+    set SAMPLING SHIFT 3  = 1
+  end
+end
+
+subsection DFT functional parameters
+  set SPIN POLARIZATION               = 1
+  set START MAGNETIZATION             = -0.2
+end
+subsection Parallelization
+  set NPKPT                    = 2
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 2
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 0.8
+    set ATOM BALL RADIUS = 3.0
+  end
+end
+
+subsection SCF Checkpointing and Restart
+    set LOAD RHO DATA = true
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true  
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudo_feCuPt2.inp
+  set PSEUDO TESTS FLAG        = true
+end
+
+subsection Post-processing Options
+  set WRITE PROJECTED DENSITY OF STATES = true
+  set DELTA ENERGY                       = 0.3
+end
+subsection SCF parameters
+  set TEMPERATURE                      = 500
+  subsection Eigen-solver parameters
+      set USE SINGLE PREC CHEBY = true
+      set USE SINGLE PREC COMMUN CHEBY = false
+      set HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING    = 35
+      set OVERLAP COMPUTE COMMUN CHEBY                         = true
+      set OVERLAP COMPUTE COMMUN ORTHO RR                      = true
+  end
+end

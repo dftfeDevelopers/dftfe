@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -1839,6 +1839,7 @@ namespace dftfe
       }
 #endif
   }
+
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyVOnCconjtransX(
@@ -2678,6 +2679,8 @@ namespace dftfe
   {
     return (d_flattenedNonLocalCellDofIndexToProcessDofIndexMap);
   }
+
+
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void

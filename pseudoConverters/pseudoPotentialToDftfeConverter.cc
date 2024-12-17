@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -306,8 +306,16 @@ namespace dftfe
               for (auto &w : orbital_string)
                 {
                   w = tolower(w);
+                  if (w == 's')
+                    w = '0';
+                  else if (w == 'p')
+                    w = '1';
+                  else if (w == 'd')
+                    w = '2';
+                  else if (w == 'f')
+                    w = '3';
                 }
-              file << orbital_string + ".dat" << std::endl;
+              file << "psi" + orbital_string + ".inp" << std::endl;
             }
         }
       file.close();
