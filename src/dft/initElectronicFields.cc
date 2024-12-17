@@ -161,6 +161,7 @@ namespace dftfe
                   d_BLASWrapperPtrHost,
                   d_densityDofHandlerIndex,
                   d_densityQuadratureId,
+                  d_kPointCoordinates,
                   d_kPointWeights,
                   d_tauInQuadValues,
                   d_mpiCommParent,
