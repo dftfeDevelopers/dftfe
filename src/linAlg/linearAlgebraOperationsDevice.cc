@@ -2427,7 +2427,7 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       std::shared_ptr<
@@ -2472,7 +2472,7 @@ namespace dftfe
                   vectorsBlockSize * N * sizeof(dataTypes::number));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-                                   HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+                                   OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
       dftfe::utils::deviceStream_t streamDeviceCCL = 0;
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
@@ -2516,7 +2516,7 @@ namespace dftfe
                     1.0,
                     0.0,
                     0.0,
-                    HXBlock,
+                    OXBlock,
                     dftParams.approxOverlapMatrix);
 
                   BLASWrapperPtr->stridedCopyFromBlockConstantStride(
@@ -2524,8 +2524,8 @@ namespace dftfe
                     chebyBlockSize,
                     M,
                     k - ivec,
-                    HXBlock.begin(),
-                    HXBlockFull.begin());
+                    OXBlock.begin(),
+                    OXBlockFull.begin());
                 }
 
 
@@ -2541,7 +2541,7 @@ namespace dftfe
                 &scalarCoeffAlpha,
                 X + ivec,
                 N,
-                HXBlockFull.begin(),
+                OXBlockFull.begin(),
                 B,
                 &scalarCoeffBeta,
                 overlapMatrixBlock.begin(),
@@ -2649,7 +2649,7 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       std::shared_ptr<
@@ -2715,7 +2715,7 @@ namespace dftfe
       // allocate device vectors to be used later
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlock(N * vectorsBlockSize, dataTypes::number(0));
@@ -2766,7 +2766,7 @@ namespace dftfe
                         1.0,
                         0.0,
                         0.0,
-                        HXBlock,
+                        OXBlock,
                         dftParams.approxOverlapMatrix);
 
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
@@ -2774,8 +2774,8 @@ namespace dftfe
                         chebyBlockSize,
                         M,
                         k - ivec,
-                        HXBlock.begin(),
-                        HXBlockFull.begin());
+                        OXBlock.begin(),
+                        OXBlockFull.begin());
                     }
 
                   BLASWrapperPtr->xgemm(
@@ -2790,7 +2790,7 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivec,
                     N,
-                    HXBlockFull.begin(),
+                    OXBlockFull.begin(),
                     B,
                     &scalarCoeffBeta,
                     overlapMatrixBlock.begin(),
@@ -2837,7 +2837,7 @@ namespace dftfe
                         1.0,
                         0.0,
                         0.0,
-                        HXBlock,
+                        OXBlock,
                         dftParams.approxOverlapMatrix);
 
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
@@ -2845,8 +2845,8 @@ namespace dftfe
                         chebyBlockSize,
                         M,
                         k - ivecNew,
-                        HXBlock.begin(),
-                        HXBlockFull.begin());
+                        OXBlock.begin(),
+                        OXBlockFull.begin());
                     }
 
                   // evaluate X^{T} times XBlock
@@ -2862,7 +2862,7 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivecNew,
                     N,
-                    HXBlockFull.begin(),
+                    OXBlockFull.begin(),
                     BNew,
                     &scalarCoeffBeta,
                     overlapMatrixBlockNext.begin(),
@@ -2978,9 +2978,10 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -3037,10 +3038,10 @@ namespace dftfe
                     sizeof(dataTypes::number));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
+        OXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
@@ -3104,7 +3105,7 @@ namespace dftfe
                     1.0,
                     0.0,
                     0.0,
-                    HXBlock,
+                    OXBlock,
                     dftParams.approxOverlapMatrix);
 
                   BLASWrapperPtr->stridedCopyFromBlockConstantStride(
@@ -3112,52 +3113,80 @@ namespace dftfe
                     chebyBlockSize,
                     M,
                     k - ivec,
-                    HXBlock.begin(),
-                    HXBlockFull.begin());
+                    OXBlock.begin(),
+                    OXBlockFull.begin());
                 }
-
-
-              BLASWrapperPtr->xgemm(
-                'N',
-                std::is_same<dataTypes::number, std::complex<double>>::value ?
-                  'C' :
-                  'T',
-                B,
-                B,
-                M,
-                &scalarCoeffAlpha,
-                X + ivec,
-                N,
-                HXBlockFull.data(),
-                B,
-                &scalarCoeffBeta,
-                overlapMatrixBlockDP.begin(),
-                B);
-
               const unsigned int DRem = D - B;
-
-              if (DRem != 0)
+              if (ivec + B > Noc)
                 {
-                  BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                    B, B, M, 0, HXBlockFull.begin(), HXBlockFullFP32.begin());
-
                   BLASWrapperPtr->xgemm(
                     'N',
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
                       'C' :
                       'T',
-                    DRem,
+                    D,
                     B,
                     M,
-                    &scalarCoeffAlphaSP,
-                    XSP.begin() + ivec + B,
+                    &scalarCoeffAlpha,
+                    X + ivec,
                     N,
-                    HXBlockFullFP32.data(),
+                    OXBlockFull.data(),
                     B,
-                    &scalarCoeffBetaSP,
-                    overlapMatrixBlockSP.begin(),
-                    DRem);
+                    &scalarCoeffBeta,
+                    overlapMatrixBlockDP.begin(),
+                    D);
+                }
+              else
+                {
+                  BLASWrapperPtr->xgemm(
+                    'N',
+                    std::is_same<dataTypes::number,
+                                 std::complex<double>>::value ?
+                      'C' :
+                      'T',
+                    B,
+                    B,
+                    M,
+                    &scalarCoeffAlpha,
+                    X + ivec,
+                    N,
+                    OXBlockFull.data(),
+                    B,
+                    &scalarCoeffBeta,
+                    overlapMatrixBlockDP.begin(),
+                    B);
+
+
+
+                  if (DRem != 0)
+                    {
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        B,
+                        M,
+                        0,
+                        OXBlockFull.begin(),
+                        OXBlockFullFP32.begin());
+
+                      BLASWrapperPtr->xgemm(
+                        'N',
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          'C' :
+                          'T',
+                        DRem,
+                        B,
+                        M,
+                        &scalarCoeffAlphaSP,
+                        XSP.begin() + ivec + B,
+                        N,
+                        OXBlockFullFP32.data(),
+                        B,
+                        &scalarCoeffBetaSP,
+                        overlapMatrixBlockSP.begin(),
+                        DRem);
+                    }
                 }
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -3299,9 +3328,10 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -3424,10 +3454,10 @@ namespace dftfe
 
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
+        OXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
 
       unsigned int blockCount = 0;
       for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
@@ -3454,65 +3484,86 @@ namespace dftfe
                         1.0,
                         0.0,
                         0.0,
-                        HXBlock,
+                        OXBlock,
                         dftParams.approxOverlapMatrix);
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
                         B,
                         chebyBlockSize,
                         M,
                         k - ivec,
-                        HXBlock.begin(),
-                        HXBlockFull.begin());
+                        OXBlock.begin(),
+                        OXBlockFull.begin());
                     }
-
-
-                  BLASWrapperPtr->xgemm(
-                    'N',
-                    std::is_same<dataTypes::number,
-                                 std::complex<double>>::value ?
-                      'C' :
-                      'T',
-                    B,
-                    B,
-                    M,
-                    &scalarCoeffAlpha,
-                    X + ivec,
-                    N,
-                    HXBlockFull.begin(),
-                    B,
-                    &scalarCoeffBeta,
-                    overlapMatrixBlockDP.begin(),
-                    B);
-
-                  const unsigned int DRem = D - B;
-
-                  if (DRem != 0)
+                  if (ivec + B > Noc)
                     {
-                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                        B,
-                        B,
-                        M,
-                        0,
-                        HXBlockFull.begin(),
-                        HXBlockFullFP32.begin());
-
                       BLASWrapperPtr->xgemm(
                         'N',
                         std::is_same<dataTypes::number,
                                      std::complex<double>>::value ?
                           'C' :
                           'T',
-                        DRem,
+                        D,
                         B,
                         M,
-                        &scalarCoeffAlphaSP,
-                        XSP.begin() + ivec + B,
+                        &scalarCoeffAlpha,
+                        X + ivec,
                         N,
-                        HXBlockFullFP32.begin(),
+                        OXBlockFull.begin(),
                         B,
-                        &scalarCoeffBetaSP,
-                        overlapMatrixBlockSP.begin(),
-                        DRem);
+                        &scalarCoeffBeta,
+                        overlapMatrixBlockDP.begin(),
+                        D);
+                    }
+                  else
+                    {
+                      BLASWrapperPtr->xgemm(
+                        'N',
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          'C' :
+                          'T',
+                        B,
+                        B,
+                        M,
+                        &scalarCoeffAlpha,
+                        X + ivec,
+                        N,
+                        OXBlockFull.begin(),
+                        B,
+                        &scalarCoeffBeta,
+                        overlapMatrixBlockDP.begin(),
+                        B);
+
+                      const unsigned int DRem = D - B;
+
+                      if (DRem != 0)
+                        {
+                          BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                            B,
+                            B,
+                            M,
+                            0,
+                            OXBlockFull.begin(),
+                            OXBlockFullFP32.begin());
+
+                          BLASWrapperPtr->xgemm(
+                            'N',
+                            std::is_same<dataTypes::number,
+                                         std::complex<double>>::value ?
+                              'C' :
+                              'T',
+                            DRem,
+                            B,
+                            M,
+                            &scalarCoeffAlphaSP,
+                            XSP.begin() + ivec + B,
+                            N,
+                            OXBlockFullFP32.begin(),
+                            B,
+                            &scalarCoeffBetaSP,
+                            overlapMatrixBlockSP.begin(),
+                            DRem);
+                        }
                     }
 
                   // record completion of compute for first block
@@ -3555,65 +3606,88 @@ namespace dftfe
                         1.0,
                         0.0,
                         0.0,
-                        HXBlock,
+                        OXBlock,
                         dftParams.approxOverlapMatrix);
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
                         BNew,
                         chebyBlockSize,
                         M,
                         k - ivecNew,
-                        HXBlock.begin(),
-                        HXBlockFull.begin());
+                        OXBlock.begin(),
+                        OXBlockFull.begin());
                     }
 
                   // evaluate X^{T} times XBlock
-                  BLASWrapperPtr->xgemm(
-                    dftfe::utils::DEVICEBLAS_OP_N,
-                    std::is_same<dataTypes::number,
-                                 std::complex<double>>::value ?
-                      'C' :
-                      'T',
-                    BNew,
-                    BNew,
-                    M,
-                    &scalarCoeffAlpha,
-                    X + ivecNew,
-                    N,
-                    HXBlockFull.begin(),
-                    BNew,
-                    &scalarCoeffBeta,
-                    overlapMatrixBlockDPNext.begin(),
-                    BNew);
-
-                  const unsigned int DRemNew = DNew - BNew;
-
-                  if (DRemNew != 0)
+                  if (ivecNew + BNew > Noc)
                     {
-                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                        BNew,
-                        BNew,
-                        M,
-                        0,
-                        HXBlockFull.begin(),
-                        HXBlockFullFP32.begin());
-
                       BLASWrapperPtr->xgemm(
-                        'N',
+                        dftfe::utils::DEVICEBLAS_OP_N,
                         std::is_same<dataTypes::number,
                                      std::complex<double>>::value ?
                           'C' :
                           'T',
-                        DRemNew,
+                        DNew,
                         BNew,
                         M,
-                        &scalarCoeffAlphaSP,
-                        XSP.begin() + ivecNew + BNew,
+                        &scalarCoeffAlpha,
+                        X + ivecNew,
                         N,
-                        HXBlockFullFP32.begin(),
+                        OXBlockFull.begin(),
                         BNew,
-                        &scalarCoeffBetaSP,
-                        overlapMatrixBlockSPNext.begin(),
-                        DRemNew);
+                        &scalarCoeffBeta,
+                        overlapMatrixBlockDPNext.begin(),
+                        DNew);
+                    }
+                  else
+                    {
+                      BLASWrapperPtr->xgemm(
+                        dftfe::utils::DEVICEBLAS_OP_N,
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          'C' :
+                          'T',
+                        BNew,
+                        BNew,
+                        M,
+                        &scalarCoeffAlpha,
+                        X + ivecNew,
+                        N,
+                        OXBlockFull.begin(),
+                        BNew,
+                        &scalarCoeffBeta,
+                        overlapMatrixBlockDPNext.begin(),
+                        BNew);
+
+                      const unsigned int DRemNew = DNew - BNew;
+
+                      if (DRemNew != 0)
+                        {
+                          BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                            BNew,
+                            BNew,
+                            M,
+                            0,
+                            OXBlockFull.begin(),
+                            OXBlockFullFP32.begin());
+
+                          BLASWrapperPtr->xgemm(
+                            'N',
+                            std::is_same<dataTypes::number,
+                                         std::complex<double>>::value ?
+                              'C' :
+                              'T',
+                            DRemNew,
+                            BNew,
+                            M,
+                            &scalarCoeffAlphaSP,
+                            XSP.begin() + ivecNew + BNew,
+                            N,
+                            OXBlockFullFP32.begin(),
+                            BNew,
+                            &scalarCoeffBetaSP,
+                            overlapMatrixBlockSPNext.begin(),
+                            DRemNew);
+                        }
                     }
 
                   // record completion of compute for next block
@@ -3768,9 +3842,10 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -3844,7 +3919,7 @@ namespace dftfe
       // allocate device vectors to be used later
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        HXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
 
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -3917,7 +3992,7 @@ namespace dftfe
                         1.0,
                         0.0,
                         0.0,
-                        HXBlock,
+                        OXBlock,
                         dftParams.approxOverlapMatrix);
 
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
@@ -3925,8 +4000,8 @@ namespace dftfe
                         chebyBlockSize,
                         M,
                         k - ivec,
-                        HXBlock.begin(),
-                        HXBlockFull.begin());
+                        OXBlock.begin(),
+                        OXBlockFull.begin());
                     }
 
 
@@ -3943,7 +4018,7 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivec,
                     N,
-                    HXBlockFull.data(),
+                    OXBlockFull.data(),
                     B,
                     &scalarCoeffBeta,
                     overlapMatrixBlock.begin(),
@@ -3991,7 +4066,7 @@ namespace dftfe
                         1.0,
                         0.0,
                         0.0,
-                        HXBlock,
+                        OXBlock,
                         dftParams.approxOverlapMatrix);
 
                       BLASWrapperPtr->stridedCopyFromBlockConstantStride(
@@ -3999,8 +4074,8 @@ namespace dftfe
                         chebyBlockSize,
                         M,
                         k - ivecNew,
-                        HXBlock.begin(),
-                        HXBlockFull.begin());
+                        OXBlock.begin(),
+                        OXBlockFull.begin());
                     }
 
                   BLASWrapperPtr->xgemm(
@@ -4015,7 +4090,7 @@ namespace dftfe
                     &scalarCoeffAlpha,
                     X + ivecNew,
                     N,
-                    HXBlockFull.begin(),
+                    OXBlockFull.begin(),
                     B,
                     &scalarCoeffBeta,
                     overlapMatrixBlockNext.begin(),
@@ -5111,13 +5186,6 @@ namespace dftfe
                       HXBlock.setValue(0);
                       const bool   scaleFlag = false;
                       const double scalar    = 1.0;
-                      if (!(jvec + B > Noc))
-                        {
-                          XBlock.setCommunicationPrecision(
-                            dftfe::utils::mpi::communicationPrecision::single);
-                          HXBlock.setCommunicationPrecision(
-                            dftfe::utils::mpi::communicationPrecision::single);
-                        }
                       operatorMatrix.HX(
                         XBlock,
                         1.0,
@@ -5125,70 +5193,86 @@ namespace dftfe
                         0.0,
                         HXBlock,
                         onlyHPrimePartForFirstOrderDensityMatResponse);
-                      if (!(jvec + B > Noc))
-                        {
-                          XBlock.setCommunicationPrecision(
-                            dftfe::utils::mpi::communicationPrecision::full);
-                          HXBlock.setCommunicationPrecision(
-                            dftfe::utils::mpi::communicationPrecision::full);
-                        }
-
-                      if (jvec + B > Noc)
-                        BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                          B,
-                          chebyBlockSize,
-                          M,
-                          k - jvec,
-                          HXBlock.begin(),
-                          HXBlockFull.begin());
-                      else
-                        BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                          B,
-                          chebyBlockSize,
-                          M,
-                          k - jvec,
-                          HXBlock.begin(),
-                          HXBlockFullFP32.begin());
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        chebyBlockSize,
+                        M,
+                        k - jvec,
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
                     }
 
                   // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
                   // HXBlockFullFP32Conj
+                  const unsigned int DRem = D - B;
                   if (jvec + B > Noc)
-                    BLASWrapperPtr->xgemm(
-                      'N',
-                      std::is_same<dataTypes::number,
-                                   std::complex<double>>::value ?
-                        'C' :
-                        'T',
-                      D,
-                      B,
-                      M,
-                      &alpha,
-                      X + jvec,
-                      N,
-                      HXBlockFull.begin(),
-                      B,
-                      &beta,
-                      projHamBlock.begin(),
-                      D);
+                    {
+                      BLASWrapperPtr->xgemm(
+                        'N',
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          'C' :
+                          'T',
+                        D,
+                        B,
+                        M,
+                        &alpha,
+                        X + jvec,
+                        N,
+                        HXBlockFull.begin(),
+                        B,
+                        &beta,
+                        projHamBlock.begin(),
+                        D);
+                    }
                   else
-                    BLASWrapperPtr->xgemm(
-                      'N',
-                      std::is_same<dataTypes::numberFP32,
-                                   std::complex<float>>::value ?
-                        'C' :
-                        'T',
-                      D,
-                      B,
-                      M,
-                      &alphaFP32,
-                      XFP32.begin() + jvec,
-                      N,
-                      HXBlockFullFP32.begin(),
-                      B,
-                      &betaFP32,
-                      projHamBlockFP32.begin(),
-                      D);
+                    {
+                      BLASWrapperPtr->xgemm(
+                        'N',
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          'C' :
+                          'T',
+                        B,
+                        B,
+                        M,
+                        &alpha,
+                        X + jvec,
+                        N,
+                        HXBlockFull.begin(),
+                        B,
+                        &beta,
+                        projHamBlock.begin(),
+                        B);
+                      if (DRem != 0)
+                        {
+                          BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                            B,
+                            B,
+                            M,
+                            0,
+                            HXBlockFull.begin(),
+                            HXBlockFullFP32.begin());
+
+                          BLASWrapperPtr->xgemm(
+                            'N',
+                            std::is_same<dataTypes::numberFP32,
+                                         std::complex<float>>::value ?
+                              'C' :
+                              'T',
+                            DRem,
+                            B,
+                            M,
+                            &alphaFP32,
+                            XFP32.begin() + jvec + B,
+                            N,
+                            HXBlockFullFP32.begin(),
+                            B,
+                            &betaFP32,
+                            projHamBlockFP32.begin(),
+                            DRem);
+                        }
+                    }
 
                   // record completion of compute for next block
                   dftfe::utils::deviceEventRecord(computeEvents[blockCount],
@@ -5214,13 +5298,13 @@ namespace dftfe
 
               const unsigned int jvecNew = jvec + vectorsBlockSize;
               const unsigned int DNew    = N - jvecNew;
-
+              const unsigned int BNew    = min(vectorsBlockSize, N - jvecNew);
               if (jvecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
                   // compute HXBlockFull or HXBlockFullFP32 in an inner loop
                   // over blocks of B wavefunction vectors
-                  for (unsigned int k = jvecNew; k < jvecNew + B;
+                  for (unsigned int k = jvecNew; k < jvecNew + BNew;
                        k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
@@ -5230,13 +5314,6 @@ namespace dftfe
                       HXBlock.setValue(0);
                       const bool   scaleFlag = false;
                       const double scalar    = 1.0;
-                      if (!(jvecNew + B > Noc))
-                        {
-                          XBlock.setCommunicationPrecision(
-                            dftfe::utils::mpi::communicationPrecision::single);
-                          HXBlock.setCommunicationPrecision(
-                            dftfe::utils::mpi::communicationPrecision::single);
-                        }
                       operatorMatrix.HX(
                         XBlock,
                         1.0,
@@ -5244,71 +5321,87 @@ namespace dftfe
                         0.0,
                         HXBlock,
                         onlyHPrimePartForFirstOrderDensityMatResponse);
-                      if (!(jvecNew + B > Noc))
-                        {
-                          XBlock.setCommunicationPrecision(
-                            dftfe::utils::mpi::communicationPrecision::full);
-                          HXBlock.setCommunicationPrecision(
-                            dftfe::utils::mpi::communicationPrecision::full);
-                        }
-
-                      if (jvecNew + B > Noc)
-                        BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                          B,
-                          chebyBlockSize,
-                          M,
-                          k - jvecNew,
-                          HXBlock.begin(),
-                          HXBlockFull.begin());
-                      else
-                        BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                          B,
-                          chebyBlockSize,
-                          M,
-                          k - jvecNew,
-                          HXBlock.begin(),
-                          HXBlockFullFP32.begin());
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        BNew,
+                        chebyBlockSize,
+                        M,
+                        k - jvecNew,
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
                     }
 
                   // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
                   // HXBlockFullFP32Conj
-                  if (jvecNew + B > Noc)
-                    BLASWrapperPtr->xgemm(
-                      'N',
-                      std::is_same<dataTypes::number,
-                                   std::complex<double>>::value ?
-                        'C' :
-                        'T',
-                      DNew,
-                      B,
-                      M,
-                      &alpha,
-                      X + jvecNew,
-                      N,
-                      HXBlockFull.begin(),
-                      B,
-                      &beta,
-                      projHamBlockNext.begin(),
-                      DNew);
+                  const unsigned int DRemNew = DNew - BNew;
+                  if (jvecNew + BNew > Noc)
+                    {
+                      BLASWrapperPtr->xgemm(
+                        'N',
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          'C' :
+                          'T',
+                        DNew,
+                        BNew,
+                        M,
+                        &alpha,
+                        X + jvecNew,
+                        N,
+                        HXBlockFull.begin(),
+                        BNew,
+                        &beta,
+                        projHamBlockNext.begin(),
+                        DNew);
+                    }
                   else
-                    BLASWrapperPtr->xgemm(
-                      'N',
-                      std::is_same<dataTypes::numberFP32,
-                                   std::complex<float>>::value ?
-                        'C' :
-                        'T',
-                      DNew,
-                      B,
-                      M,
-                      &alphaFP32,
-                      XFP32.begin() + jvecNew,
-                      N,
-                      HXBlockFullFP32.begin(),
-                      B,
-                      &betaFP32,
-                      projHamBlockFP32Next.begin(),
-                      DNew);
+                    {
+                      BLASWrapperPtr->xgemm(
+                        'N',
+                        std::is_same<dataTypes::number,
+                                     std::complex<double>>::value ?
+                          'C' :
+                          'T',
+                        BNew,
+                        BNew,
+                        M,
+                        &alpha,
+                        X + jvecNew,
+                        N,
+                        HXBlockFull.begin(),
+                        BNew,
+                        &beta,
+                        projHamBlockNext.begin(),
+                        BNew);
 
+                      if (DRemNew != 0)
+                        {
+                          BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                            BNew,
+                            BNew,
+                            M,
+                            0,
+                            HXBlockFull.begin(),
+                            HXBlockFullFP32.begin());
+
+                          BLASWrapperPtr->xgemm(
+                            'N',
+                            std::is_same<dataTypes::numberFP32,
+                                         std::complex<float>>::value ?
+                              'C' :
+                              'T',
+                            DRemNew,
+                            BNew,
+                            M,
+                            &alphaFP32,
+                            XFP32.begin() + jvecNew + BNew,
+                            N,
+                            HXBlockFullFP32.begin(),
+                            BNew,
+                            &betaFP32,
+                            projHamBlockFP32Next.begin(),
+                            DRemNew);
+                        }
+                    }
                   // record completion of compute for next block
                   dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
                                                   streamCompute);

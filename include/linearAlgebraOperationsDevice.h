@@ -136,7 +136,7 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       std::shared_ptr<
@@ -160,7 +160,7 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       std::shared_ptr<
@@ -184,9 +184,10 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -206,9 +207,10 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -228,9 +230,10 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       const dataTypes::number *                            X,
       distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,

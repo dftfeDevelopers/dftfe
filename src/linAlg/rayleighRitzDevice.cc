@@ -138,38 +138,44 @@ namespace dftfe
         }
 
 
-      if (useMixedPrecOverall && dftParams.useMixedPrecXTHXSpectrumSplit)
+      if (useMixedPrecOverall)
         {
           if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
-            XtHXMixedPrecCommunOverlapComputeCommun(operatorMatrix,
-                                                    X,
-                                                    Xb,
-                                                    HXb,
-                                                    M,
-                                                    N,
-                                                    dftParams.numCoreWfcXtHX,
-                                                    BLASWrapperPtr,
-                                                    processGrid,
-                                                    projHamPar,
-                                                    devicecclMpiCommDomain,
-                                                    mpiCommDomain,
-                                                    interBandGroupComm,
-                                                    dftParams);
+            XtHXMixedPrecCommunOverlapComputeCommun(
+              operatorMatrix,
+              X,
+              Xb,
+              HXb,
+              M,
+              N,
+              dftParams.useMixedPrecXTHXSpectrumSplit ?
+                dftParams.numCoreWfcRR :
+                dftParams.numCoreWfcXtHX,
+              BLASWrapperPtr,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain,
+              mpiCommDomain,
+              interBandGroupComm,
+              dftParams);
           else
-            XtHXMixedPrecOverlapComputeCommun(operatorMatrix,
-                                              X,
-                                              Xb,
-                                              HXb,
-                                              M,
-                                              N,
-                                              dftParams.numCoreWfcXtHX,
-                                              BLASWrapperPtr,
-                                              processGrid,
-                                              projHamPar,
-                                              devicecclMpiCommDomain,
-                                              mpiCommDomain,
-                                              interBandGroupComm,
-                                              dftParams);
+            XtHXMixedPrecOverlapComputeCommun(
+              operatorMatrix,
+              X,
+              Xb,
+              HXb,
+              M,
+              N,
+              dftParams.useMixedPrecXTHXSpectrumSplit ?
+                dftParams.numCoreWfcRR :
+                dftParams.numCoreWfcXtHX,
+              BLASWrapperPtr,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain,
+              mpiCommDomain,
+              interBandGroupComm,
+              dftParams);
         }
       else
         {
@@ -435,6 +441,7 @@ namespace dftfe
                 HXb,
                 M,
                 N,
+                dftParams.numCoreWfcXtHX,
                 BLASWrapperPtr,
                 mpiCommDomain,
                 devicecclMpiCommDomain,
@@ -450,6 +457,7 @@ namespace dftfe
                                                        HXb,
                                                        M,
                                                        N,
+                                                       dftParams.numCoreWfcXtHX,
                                                        BLASWrapperPtr,
                                                        mpiCommDomain,
                                                        devicecclMpiCommDomain,
@@ -524,35 +532,76 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParams.overlapComputeCommunOrthoRR)
-        XtHXOverlapComputeCommun(operatorMatrix,
-                                 X,
-                                 Xb,
-                                 HXb,
-                                 M,
-                                 N,
-                                 BLASWrapperPtr,
-                                 processGrid,
-                                 projHamPar,
-                                 devicecclMpiCommDomain,
-                                 mpiCommDomain,
-                                 interBandGroupComm,
-                                 dftParams);
+      if (useMixedPrecOverall)
+        {
+          if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
+            XtHXMixedPrecCommunOverlapComputeCommun(
+              operatorMatrix,
+              X,
+              Xb,
+              HXb,
+              M,
+              N,
+              dftParams.useMixedPrecXTHXSpectrumSplit ?
+                dftParams.numCoreWfcRR :
+                dftParams.numCoreWfcXtHX,
+              BLASWrapperPtr,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain,
+              mpiCommDomain,
+              interBandGroupComm,
+              dftParams);
+          else
+            XtHXMixedPrecOverlapComputeCommun(
+              operatorMatrix,
+              X,
+              Xb,
+              HXb,
+              M,
+              N,
+              dftParams.useMixedPrecXTHXSpectrumSplit ?
+                dftParams.numCoreWfcRR :
+                dftParams.numCoreWfcXtHX,
+              BLASWrapperPtr,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain,
+              mpiCommDomain,
+              interBandGroupComm,
+              dftParams);
+        }
       else
-        XtHX(operatorMatrix,
-             X,
-             Xb,
-             HXb,
-             M,
-             N,
-             BLASWrapperPtr,
-             processGrid,
-             projHamPar,
-             devicecclMpiCommDomain,
-             mpiCommDomain,
-             interBandGroupComm,
-             dftParams);
-
+        {
+          if (dftParams.overlapComputeCommunOrthoRR)
+            XtHXOverlapComputeCommun(operatorMatrix,
+                                     X,
+                                     Xb,
+                                     HXb,
+                                     M,
+                                     N,
+                                     BLASWrapperPtr,
+                                     processGrid,
+                                     projHamPar,
+                                     devicecclMpiCommDomain,
+                                     mpiCommDomain,
+                                     interBandGroupComm,
+                                     dftParams);
+          else
+            XtHX(operatorMatrix,
+                 X,
+                 Xb,
+                 HXb,
+                 M,
+                 N,
+                 BLASWrapperPtr,
+                 processGrid,
+                 projHamPar,
+                 devicecclMpiCommDomain,
+                 mpiCommDomain,
+                 interBandGroupComm,
+                 dftParams);
+        }
       // Construct the full HConjProj matrix
       dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
         N, processGrid, rowsBlockSize);
@@ -864,6 +913,7 @@ namespace dftfe
                 HXb,
                 M,
                 N,
+                dftParams.numCoreWfcXtHX,
                 BLASWrapperPtr,
                 mpiCommDomain,
                 devicecclMpiCommDomain,
@@ -879,6 +929,7 @@ namespace dftfe
                                                        HXb,
                                                        M,
                                                        N,
+                                                       dftParams.numCoreWfcXtHX,
                                                        BLASWrapperPtr,
                                                        mpiCommDomain,
                                                        devicecclMpiCommDomain,
