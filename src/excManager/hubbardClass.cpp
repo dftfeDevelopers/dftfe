@@ -188,6 +188,7 @@ namespace dftfe
       kPointWeights,
       kPointCoordinates,
       d_BasisOperatorHostPtr,
+      d_BLASWrapperHostPtr,
       densityQuadratureId);
 
     MPI_Barrier(d_mpi_comm_domain);

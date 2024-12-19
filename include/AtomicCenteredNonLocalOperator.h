@@ -108,7 +108,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex);
 
     template <typename ValueTypeSrc>
@@ -121,7 +124,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
@@ -568,11 +574,18 @@ namespace dftfe
     std::vector<unsigned int> d_atomStartIndexGlobal;
     unsigned int              d_totalNumSphericalFunctionsGlobal;
 
-    std::vector<dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>>
+    std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>
       d_CMatrixGlobal;
 
     void
-    computeGlobalCMatrixVector();
+    computeGlobalCMatrixVector(
+      std::shared_ptr<dftfe::basis::FEBasisOperations<
+        dataTypes::number,
+        double,
+        dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperHostPtr);
 
 #if defined(DFTFE_WITH_DEVICE)
     /**

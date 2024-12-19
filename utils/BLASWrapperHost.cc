@@ -650,6 +650,19 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
+      const unsigned int n,
+      const float *      alpha,
+      const float *      x,
+      const unsigned int incx,
+      float *            y,
+      const unsigned int incy) const
+    {
+      saxpy_(&n, alpha, x, &incx, y, &incy);
+    }
+
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
       const unsigned int          n,
       const std::complex<double> *alpha,
       const std::complex<double> *x,
@@ -660,6 +673,18 @@ namespace dftfe
       zaxpy_(&n, alpha, x, &incx, y, &incy);
     }
 
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
+      const unsigned int         n,
+      const std::complex<float> *alpha,
+      const std::complex<float> *x,
+      const unsigned int         incx,
+      std::complex<float> *      y,
+      const unsigned int         incy) const
+    {
+      caxpy_(&n, alpha, x, &incx, y, &incy);
+    }
 
     template <typename ValueType>
     void

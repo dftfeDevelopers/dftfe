@@ -2615,7 +2615,7 @@ namespace dftfe
   {
     //@Vishal add here..
     //@Vishal caution to reshape the output of VconjTransX which has only
-    //contributions if atom is present in processsor to full matrix
+    // contributions if atom is present in processsor to full matrix
   }
 
 #if defined(DFTFE_WITH_DEVICE)
@@ -2715,13 +2715,18 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex)
   {
     if (updateSparsity)
       initialisePartitioner();
     initKpoints(kPointWeights, kPointCoordinates);
     computeCMatrixEntries(basisOperationsPtr, quadratureIndex);
+    if (d_useGlobalCMatrix)
+      computeGlobalCMatrixVector(basisOperationsPtr, BLASWrapperHostPtr);
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -2737,7 +2742,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
@@ -2749,6 +2757,8 @@ namespace dftfe
     copyCMatrixEntries(nonLocalOperatorSrc,
                        basisOperationsPtr,
                        quadratureIndex);
+    if (d_useGlobalCMatrix)
+      computeGlobalCMatrixVector(basisOperationsPtr, BLASWrapperHostPtr);
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -3425,9 +3435,107 @@ namespace dftfe
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
-  AtomicCenteredNonLocalOperator<ValueType,
-                                 memorySpace>::computeGlobalCMatrixVector()
-  {}
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
+    computeGlobalCMatrixVector(
+      std::shared_ptr<dftfe::basis::FEBasisOperations<
+        dataTypes::number,
+        double,
+        dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperHostPtr)
+  {
+    const unsigned int totalLocallyOwnedNodes =
+      basisOperationsPtr->nOwnedDofs();
+    const unsigned int numberNodesPerElement =
+      basisOperationsPtr->nDofsPerCell();
+    const ValueType           alpha1 = 1.0;
+    std::vector<unsigned int> atomicNumbers =
+      d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
+    const std::vector<unsigned int> atomIdsInCurrentProcess =
+      d_atomCenteredSphericalFunctionContainer->getAtomIdsInCurrentProcess();
+    d_atomStartIndexGlobal.clear();
+    d_atomStartIndexGlobal.resize(atomicNumbers.size(), 0);
+    unsigned int counter = 0;
+    for (unsigned int atomId = 0; atomId < atomicNumbers.size(); atomId++)
+      {
+        const unsigned int Znum        = atomicNumbers[atomId];
+        d_atomStartIndexGlobal[atomId] = counter;
+        counter += d_atomCenteredSphericalFunctionContainer
+                     ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+      }
+    d_totalNumSphericalFunctionsGlobal = counter;
+
+    dftfe::linearAlgebra::MultiVector<ValueType,
+                                      dftfe::utils::MemorySpace::HOST>
+      Pmatrix;
+    Pmatrix.reinit(basisOperationsPtr->mpiPatternP2P,
+                   d_totalNumSphericalFunctionsGlobal);
+    for (int kPoint = 0; kPoint < d_kPointWeights.size(); kPoint++)
+      {
+        Pmatrix.setValue(0);
+        for (int iAtom = 0; iAtom < atomIdsInCurrentProcess.size(); iAtom++)
+          {
+            unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
+            unsigned int startIndex = d_atomStartIndexGlobal[atomId];
+            unsigned int Znum       = atomicNumbers[atomId];
+            unsigned int numberOfSphericalFunctions =
+              d_atomCenteredSphericalFunctionContainer
+                ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+            std::vector<unsigned int> elementIndexesInAtomCompactSupport =
+              d_atomCenteredSphericalFunctionContainer
+                ->d_elementIndexesInAtomCompactSupport[atomId];
+            int numberElementsInAtomCompactSupport =
+              elementIndexesInAtomCompactSupport.size();
+            for (int iElem = 0; iElem < numberElementsInAtomCompactSupport;
+                 iElem++)
+              {
+                unsigned int elementIndex =
+                  elementIndexesInAtomCompactSupport[iElem];
+                std::vector<ValueType> CMatrixEntries =
+                  getCmatrixEntries(kPoint, atomId, elementIndex);
+                AssertThrow(
+                  CMatrixEntries.size() ==
+                    numberOfSphericalFunctions * numberNodesPerElement,
+                  dealii::ExcMessage(
+                    "NonLocal Opertor::Initialization No. of  projectors mismatch in CmatrixEntries. Check input data "));
+                for (int iDof = 0; iDof < numberNodesPerElement; iDof++)
+                  {
+                    long int dofIndex =
+                      basisOperationsPtr->d_cellDofIndexToProcessDofIndexMap
+                        [elementIndex * numberNodesPerElement + iDof];
+                    BLASWrapperHostPtr->xaxpy(
+                      numberOfSphericalFunctions,
+                      &alpha1,
+                      &CMatrixEntries[iDof * numberOfSphericalFunctions],
+                      1,
+                      Pmatrix.data() +
+                        (dofIndex * d_totalNumSphericalFunctionsGlobal +
+                         startIndex),
+                      1);
+                  } // iDof
+
+
+              } // iElem
+          }     // iAtom
+        basisOperationsPtr->d_constraintInfo[basisOperationsPtr->d_dofHandlerID]
+          .distribute_slave_to_master(Pmatrix);
+        Pmatrix.accumulateAddLocallyOwned();
+        Pmatrix.zeroOutGhosts();
+        std::vector<ValueType> CmatrixGlobalTemp(
+          totalLocallyOwnedNodes * d_totalNumSphericalFunctionsGlobal);
+        BLASWrapperHostPtr->xcopy(totalLocallyOwnedNodes *
+                                    d_totalNumSphericalFunctionsGlobal,
+                                  Pmatrix.data(),
+                                  1,
+                                  CmatrixGlobalTemp.data(),
+                                  1);
+        dftfe::utils::MemoryStorage<ValueType, memorySpace> CMatrixGlobal(
+          CmatrixGlobalTemp.size());
+        CMatrixGlobal.copyFrom(CmatrixGlobalTemp);
+        d_CMatrixGlobal.push_back(CMatrixGlobal);
+      }
+  }
 
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -3548,7 +3656,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::numberFP32,
@@ -3565,7 +3676,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number,
@@ -3616,7 +3730,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::numberFP32,
@@ -3633,7 +3750,10 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number,

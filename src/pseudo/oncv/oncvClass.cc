@@ -257,6 +257,7 @@ namespace dftfe
       kPointWeights,
       kPointCoordinates,
       d_BasisOperatorHostPtr,
+      d_BLASWrapperHostPtr,
       d_nlpspQuadratureId);
     if (d_singlePrecNonLocalOperator)
       d_nonLocalOperatorSinglePrec
@@ -264,6 +265,7 @@ namespace dftfe
                                                          kPointWeights,
                                                          kPointCoordinates,
                                                          d_BasisOperatorHostPtr,
+                                                         d_BLASWrapperHostPtr,
                                                          d_nlpspQuadratureId,
                                                          d_nonLocalOperator);
 
@@ -336,6 +338,7 @@ namespace dftfe
       kPointWeights,
       kPointCoordinates,
       d_BasisOperatorHostPtr,
+      d_BLASWrapperHostPtr,
       d_nlpspQuadratureId);
     if (d_singlePrecNonLocalOperator)
       d_nonLocalOperatorSinglePrec
@@ -344,6 +347,7 @@ namespace dftfe
           kPointWeights,
           kPointCoordinates,
           d_BasisOperatorHostPtr,
+          d_BLASWrapperHostPtr,
           d_nlpspQuadratureId);
 
     MPI_Barrier(d_mpiCommParent);

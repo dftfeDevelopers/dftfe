@@ -163,6 +163,7 @@ namespace dftfe
       kPointWeights,
       kPointCoordinates,
       d_BasisOperatorHostPtr,
+      d_BLASWrapperHostPtr,
       d_nlpspQuadratureId);
   }
 
