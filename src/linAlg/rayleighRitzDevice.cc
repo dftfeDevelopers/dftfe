@@ -402,7 +402,7 @@ namespace dftfe
       const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
       std::shared_ptr<const dftfe::ProcessGrid> processGrid =
         elpaScala.getProcessGridDftfeScalaWrapper();
-
+      std::cout << "DEBUG Line 405 " << std::endl;
       //
       // SConj=X^{T}*XConj.
       //
@@ -432,6 +432,7 @@ namespace dftfe
 
       if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
         {
+          std::cout << "DEBUG Line 435 " << std::endl;
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
@@ -468,6 +469,7 @@ namespace dftfe
         }
       else
         {
+          std::cout << "DEBUG Line 472 " << std::endl;
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatScalapackAsyncComputeCommun(

@@ -5052,7 +5052,6 @@ namespace dftfe
         projHamPar,
         globalToLocalRowIdMap,
         globalToLocalColumnIdMap);
-
       // band group parallelization data structures
       const unsigned int numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
@@ -5293,9 +5292,12 @@ namespace dftfe
                   if (jvec + B > Noc)
                     projHamBlock.swap(projHamBlockNext);
                   else
-                    projHamBlockFP32.swap(projHamBlockFP32Next);
+                    {
+                      projHamBlock.swap(projHamBlockNext);
+                      projHamBlockFP32.swap(projHamBlockFP32Next);
+                    }
                 }
-
+              const unsigned int DRem    = D - B;
               const unsigned int jvecNew = jvec + vectorsBlockSize;
               const unsigned int DNew    = N - jvecNew;
               const unsigned int BNew    = min(vectorsBlockSize, N - jvecNew);
@@ -5429,21 +5431,52 @@ namespace dftfe
                     }
                   else
                     {
-                      if (std::is_same<dataTypes::number,
-                                       std::complex<double>>::value)
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projHamBlockFP32.begin(),
-                          projHamBlockFP32.begin(),
-                          D * B,
-                          tempRealFP32.begin(),
-                          tempImagFP32.begin(),
-                          streamDataMove);
-                      else
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projHamBlockFP32.begin(),
-                          projHamBlockFP32.begin(),
-                          D * B,
-                          streamDataMove);
+                      if (DRem == 0)
+                        {
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                              projHamBlock.begin(),
+                              projHamBlock.begin(),
+                              B * B,
+                              tempReal.begin(),
+                              tempImag.begin(),
+                              streamDataMove);
+                          else
+                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                              projHamBlock.begin(),
+                              projHamBlock.begin(),
+                              B * B,
+                              streamDataMove);
+                        }
+                      if (DRem != 0)
+                        {
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            devicecclMpiCommDomain
+                              .deviceDirectAllReduceMixedPrecGroupWrapper(
+                                projHamBlock.begin(),
+                                projHamBlockFP32.begin(),
+                                projHamBlock.begin(),
+                                projHamBlockFP32.begin(),
+                                B * B,
+                                DRem * B,
+                                tempReal.begin(),
+                                tempRealFP32.begin(),
+                                tempImag.begin(),
+                                tempImagFP32.begin(),
+                                streamDataMove);
+                          else
+                            devicecclMpiCommDomain
+                              .deviceDirectAllReduceMixedPrecGroupWrapper(
+                                projHamBlock.begin(),
+                                projHamBlockFP32.begin(),
+                                projHamBlock.begin(),
+                                projHamBlockFP32.begin(),
+                                B * B,
+                                DRem * B,
+                                streamDataMove);
+                        }
                     }
                 }
 
@@ -5455,12 +5488,20 @@ namespace dftfe
                   D * B * sizeof(dataTypes::number),
                   streamDataMove);
               else
-                dftfe::utils::deviceMemcpyAsyncD2H(
-                  projHamBlockHostFP32.begin(),
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    projHamBlockFP32.begin()),
-                  D * B * sizeof(dataTypes::numberFP32),
-                  streamDataMove);
+                {
+                  dftfe::utils::deviceMemcpyAsyncD2H(
+                    projHamBlockHost.begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      projHamBlock.begin()),
+                    B * B * sizeof(dataTypes::number),
+                    streamDataMove);
+                  dftfe::utils::deviceMemcpyAsyncD2H(
+                    projHamBlockHostFP32.begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      projHamBlockFP32.begin()),
+                    DRem * B * sizeof(dataTypes::numberFP32),
+                    streamDataMove);
+                }
 
               // record completion of Device->CPU copy for current block
               dftfe::utils::deviceEventRecord(copyEvents[blockCount],
@@ -5511,13 +5552,23 @@ namespace dftfe
                       // Sum local projHamBlock across domain decomposition
                       // processors
                       if (!dftParams.useDeviceDirectAllReduce)
-                        MPI_Allreduce(MPI_IN_PLACE,
-                                      projHamBlockHostFP32.begin(),
-                                      D * B,
-                                      dataTypes::mpi_type_id(
-                                        projHamBlockHostFP32.begin()),
-                                      MPI_SUM,
-                                      mpiCommDomain);
+                        {
+                          MPI_Allreduce(MPI_IN_PLACE,
+                                        projHamBlockHost.begin(),
+                                        B * B,
+                                        dataTypes::mpi_type_id(
+                                          projHamBlockHost.begin()),
+                                        MPI_SUM,
+                                        mpiCommDomain);
+                          if (DRem != 0)
+                            MPI_Allreduce(MPI_IN_PLACE,
+                                          projHamBlockHostFP32.begin(),
+                                          DRem * B,
+                                          dataTypes::mpi_type_id(
+                                            projHamBlockHostFP32.begin()),
+                                          MPI_SUM,
+                                          mpiCommDomain);
+                        }
 
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
@@ -5536,11 +5587,22 @@ namespace dftfe
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
-                                      projHamBlockHostFP32[j * D + i - jvec];
+                                      projHamBlockHostFP32[j * B + i - jvec];
+                                }
+                              for (unsigned int i = j + jvec + B; i < N; ++i)
+                                {
+                                  std::unordered_map<unsigned int,
+                                                     unsigned int>::iterator
+                                    it = globalToLocalRowIdMap.find(i);
+                                  if (it != globalToLocalRowIdMap.end())
+                                    projHamPar.local_el(it->second,
+                                                        localColumnId) =
+                                      projHamBlockHostFP32[j * DRem + i - jvec];
                                 }
                             }
                     }
                 }
+
             } // band parallelization
           blockCount += 1;
         }

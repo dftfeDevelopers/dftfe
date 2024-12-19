@@ -3802,7 +3802,9 @@ namespace dftfe
       std::vector<dataTypes::numberFP32> projHamBlockSinglePrec(
         N * vectorsBlockSize, 0.0);
       std::vector<dataTypes::number> projHamBlock(N * vectorsBlockSize, 0.0);
-
+      std::vector<dataTypes::number> projHamBlockDoublePrec(vectorsBlockSize *
+                                                              vectorsBlockSize,
+                                                            0.0);
       std::vector<dataTypes::numberFP32> HXBlockSinglePrec;
 
       std::vector<dataTypes::numberFP32> XSinglePrec(X, X + numberDofs * N);
@@ -3914,35 +3916,71 @@ namespace dftfe
                                               betaSinglePrec =
                                                 dataTypes::numberFP32(0.0);
 
-                  for (unsigned int i = 0; i < numberDofs * B; ++i)
-                    HXBlockSinglePrec[i] = HXBlock->data()[i];
+
 
                   const unsigned int D = N - jvec;
-
-                  // single prec gemm
+                  // full prec gemm
                   BLASWrapperPtr->xgemm(transA,
                                         transB,
-                                        D,
+                                        B,
                                         B,
                                         numberDofs,
-                                        &alphaSinglePrec,
-                                        &XSinglePrec[0] + jvec,
+                                        &alpha,
+                                        &X[0] + jvec,
                                         N,
-                                        &HXBlockSinglePrec[0],
+                                        HXBlock->data(),
                                         B,
-                                        &betaSinglePrec,
-                                        &projHamBlockSinglePrec[0],
-                                        D);
+                                        &beta,
+                                        &projHamBlockDoublePrec[0],
+                                        B);
+                  const unsigned int DRem = D - B;
+                  // single prec gemm
+                  if (DRem != 0)
+                    {
+                      for (unsigned int i = 0; i < numberDofs * B; ++i)
+                        HXBlockSinglePrec[i] = HXBlock->data()[i];
+                      BLASWrapperPtr->xgemm(transA,
+                                            transB,
+                                            DRem,
+                                            B,
+                                            numberDofs,
+                                            &alphaSinglePrec,
+                                            &XSinglePrec[0] + jvec B,
+                                            N,
+                                            &HXBlockSinglePrec[0],
+                                            B,
+                                            &betaSinglePrec,
+                                            &projHamBlockSinglePrec[0],
+                                            DRem);
+                    }
 
                   MPI_Barrier(mpiCommDomain);
                   MPI_Allreduce(MPI_IN_PLACE,
+                                &projHamBlockDoublePrec[0],
+                                B * B,
+                                dataTypes::mpi_type_id(
+                                  &projHamBlockDoublePrec[0]),
+                                MPI_SUM,
+                                mpiCommDomain);
+                  MPI_Allreduce(MPI_IN_PLACE,
                                 &projHamBlockSinglePrec[0],
-                                D * B,
+                                DRem * B,
                                 dataTypes::mpi_type_id(
                                   &projHamBlockSinglePrec[0]),
                                 MPI_SUM,
                                 mpiCommDomain);
 
+
+                  for (unsigned int i = 0; i < B; ++i)
+                    {
+                      for (unsigned int j = 0; j < B; ++j)
+                        projHamBlock[i * D + j] =
+                          projHamBlockDoublePrec[i * B + j];
+
+                      for (unsigned int j = 0; j < DRem; ++j)
+                        projHamBlock[i * D + j + B] =
+                          projHamBlockSinglePrec[i * DRem + j];
+                    }
 
                   if (processGrid->is_process_active())
                     for (unsigned int j = 0; j < B; ++j)
@@ -3958,7 +3996,7 @@ namespace dftfe
                                 globalToLocalRowIdMap.find(i);
                               if (it != globalToLocalRowIdMap.end())
                                 projHamPar.local_el(it->second, localColumnId) =
-                                  projHamBlockSinglePrec[j * D + i - jvec];
+                                  projHamBlock[j * D + i - jvec];
                             }
                         }
                 }
