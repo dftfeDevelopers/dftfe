@@ -517,7 +517,7 @@ namespace dftfe
       stridedCopyToBlock(
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
-	const dftfe::size_type         startingVecId,
+        const dftfe::size_type         startingVecId,
         const ValueType1 *             copyFromVec,
         ValueType2 *                   copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
@@ -1155,7 +1155,7 @@ namespace dftfe
       stridedCopyToBlock(
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
-	const dftfe::size_type         startingVecId,
+        const dftfe::size_type         startingVecId,
         const ValueType1 *             copyFromVec,
         ValueType2 *                   copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);

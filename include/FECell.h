@@ -73,19 +73,19 @@ namespace dftfe
 
       std::vector<double>
       getParametricPointForAllPoints(
-      unsigned int               numPoints,
-      const std::vector<double> &realPoint) const;
+        unsigned int               numPoints,
+        const std::vector<double> &realPoint) const;
 
       DealiiFECellIterator &
       getDealiiFECellIter();
 
       void
       getShapeFuncValuesFromParametricPoints(
-      unsigned int                    numPointsInCell,
-      const std::vector<double> &     parametricPoints,
-      std::vector<dataTypes::number> &shapeFuncValues,
-      unsigned int                    cellShapeFuncStartIndex,
-      unsigned int                    numDofsPerElement) const;
+        unsigned int                    numPointsInCell,
+        const std::vector<double> &     parametricPoints,
+        std::vector<dataTypes::number> &shapeFuncValues,
+        unsigned int                    cellShapeFuncStartIndex,
+        unsigned int                    numDofsPerElement) const;
 
       void
       getShapeFuncValues(unsigned int               numPointsInCell,

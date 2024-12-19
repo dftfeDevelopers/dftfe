@@ -1578,7 +1578,7 @@ namespace dftfe
         copyFromVecStartingContiguousBlockIds);
     }
 
-        template <typename ValueType1, typename ValueType2>
+    template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
@@ -1595,7 +1595,7 @@ namespace dftfe
                                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
         contiguousBlockSize,
         numContiguousBlocks,
-	startingVecId,
+        startingVecId,
         dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
         dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
         copyFromVecStartingContiguousBlockIds);

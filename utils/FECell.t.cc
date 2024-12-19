@@ -165,7 +165,6 @@ namespace dftfe
                               iPoint * numDofsPerElement] =
                 d_feCell.shape_value(iNode, pointParamDealii);
             }
-
         }
     }
 

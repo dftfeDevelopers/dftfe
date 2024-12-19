@@ -160,7 +160,7 @@ namespace dftfe
 
     d_numPointsLocal = targetPts.size() + d_ghostGlobalIds.size();
 
-     unsigned int maxPointsLocalTemp = d_numPointsLocal ;
+    unsigned int maxPointsLocalTemp = d_numPointsLocal;
     MPI_Allreduce(MPI_IN_PLACE,
                   &maxPointsLocalTemp,
                   1,
@@ -170,7 +170,7 @@ namespace dftfe
 
     if ((dealii::Utilities::MPI::this_mpi_process(d_mpiComm) == 0))
       {
-        std::cout<<  " Max number of points found locally  = "
+        std::cout << " Max number of points found locally  = "
                   << maxPointsLocalTemp << "\n";
       }
 
@@ -248,7 +248,7 @@ namespace dftfe
     MPI_Barrier(d_mpiComm);
     double endMPIPattern = MPI_Wtime();
 
-    unsigned int maxPointsLocal = d_numPointsLocal ;
+    unsigned int maxPointsLocal = d_numPointsLocal;
     MPI_Allreduce(MPI_IN_PLACE,
                   &maxPointsLocal,
                   1,
@@ -267,9 +267,9 @@ namespace dftfe
                   << numTargetPointsFound << "\n";
         std::cout << " Total number of points in all procs = "
                   << numLocalPlusGhost << "\n";
-        std::cout<<  " Max number of points found locally  = "
-		  << maxPointsLocal << "\n";
-	 
+        std::cout << " Max number of points found locally  = " << maxPointsLocal
+                  << "\n";
+
 
         dftfe::utils::throwException(
           numTargetPointsFound >= numTargetPointsInput,
@@ -386,11 +386,11 @@ namespace dftfe
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T,
                                   dftfe::utils::MemorySpace::HOST>
-        &  outputData, // this is not std::vector
+        &                outputData, // this is not std::vector
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,
-      bool resizeData)
+      bool               resizeData)
   {
     if (resizeData)
       {
@@ -429,7 +429,8 @@ namespace dftfe
             BLASWrapperPtr->xcopy(
               numberOfVectors,
               inputVec.begin() +
-                mapVecToCells[d_cumulativeDofs[iElemSrc] + iNode] + startIndexOfInputData,
+                mapVecToCells[d_cumulativeDofs[iElemSrc] + iNode] +
+                startIndexOfInputData,
               inc,
               &cellLevelInputVec[numberOfVectors * iNode],
               inc);
@@ -468,11 +469,11 @@ namespace dftfe
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T,
                                   memorySpace>
-        &  outputData, // this is not std::vector
+        &                outputData, // this is not std::vector
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,
-	bool resizeData)
+      bool               resizeData)
   {
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
@@ -500,7 +501,8 @@ namespace dftfe
                  iPoint++)
               {
                 cellLocalToProcLocal[pointIndex] =
-                  d_mapCellLocalToProcLocal[iCell][iPoint] * blockSizeOfOutputData;
+                  d_mapCellLocalToProcLocal[iCell][iPoint] *
+                  blockSizeOfOutputData;
                 pointIndex++;
               }
           }
@@ -523,7 +525,7 @@ namespace dftfe
 
     BLASWrapperPtr->stridedCopyToBlock(numberOfVectors,
                                        totalDofsInCells,
-				       startIndexOfInputData,
+                                       startIndexOfInputData,
                                        inputVec.data(),
                                        d_cellLevelParentNodalMemSpace.begin(),
                                        mapVecToCells.data());

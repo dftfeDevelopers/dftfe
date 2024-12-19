@@ -761,7 +761,7 @@ namespace dftfe
      */
     void
     outputWfc(const std::string outputFileName = "wfcOutput");
-  
+
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based

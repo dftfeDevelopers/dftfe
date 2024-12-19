@@ -692,6 +692,111 @@
 {\it Possible values:} A floating point number $v$ such that $-1.0 \leq v \leq 1.0$
 \end{itemize}
 
+\subsection{Parameters in section \tt DFT functional parameters/CONFINING POTENTIAL parameters}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters}
+
+\begin{itemize}
+
+\item {\it Parameter name:} {\tt APPLY CONFINING POTENTIAL}
+\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/APPLY CONFINING POTENTIAL}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/APPLY_20CONFINING_20POTENTIAL}
+
+
+\index[prmindex]{APPLY CONFINING POTENTIAL}
+
+
+\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!APPLY CONFINING POTENTIAL}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced]  [Advanced] Boolean operator to apply confining potential. Usually required for anionic charges.
+            The confining potential is applied between maxDist + r1 and maxDist + r2. Where maxDist is the maximum distance of atoms from the center. r1 and r2 is the INNER and OUTER radii respectively. Between 0 and maxdist + r1: V(r) = 0; Between maxdist + r1 and maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(dist2*dist2 + 1E-6); Beyond maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(1E-6); where dist1 = r - (maxdist + r1) and dist2 = (maxdist + r2) - r
+
+
+{\it Possible values:} A boolean value (true or false)
+
+\item {\it Parameter name:} {\tt INNER RADIUS}
+\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/INNER RADIUS}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/INNER_20RADIUS}
+
+
+\index[prmindex]{INNER RADIUS}
+
+
+\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!INNER RADIUS}
+{\it Value:} 17.0
+
+
+{\it Default:} 17.0
+
+
+{\it Description:} [Advanced] The inner radius (r1) for the confining potential.
+
+
+{\it Possible values:} A floating point number between $0$ and $100.0$
+
+
+\item {\it Parameter name:} {\tt OUTER RADIUS}
+\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/OUTER RADIUS}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/OUTER_20RADIUS}
+
+
+\index[prmindex]{OUTER RADIUS}
+
+
+\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!OUTER RADIUS}
+{\it Value:} 20.0
+
+
+{\it Default:} 20.0
+
+
+{\it Description:} [Advanced] The outer radius (r1) for the confining potential.
+
+
+{\it Possible values:} A floating point number between $0$ and $100.0$
+
+\item {\it Parameter name:} {\tt W PARAM}
+\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/W PARAM}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/W_20PARAM}
+
+
+\index[prmindex]{W PARAM}
+
+
+\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!W PARAM}
+{\it Value:} 1.0
+
+
+{\it Default:} 1.0
+
+
+{\it Description:} [Advanced] The W parameter for the confining potential.
+
+\item {\it Parameter name:} {\tt C PARAM}
+\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/C PARAM}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/C_20PARAM}
+
+
+\index[prmindex]{C PARAM}
+
+
+\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!C PARAM}
+{\it Value:} 1.0
+
+
+{\it Default:} 1.0
+
+
+{\it Description:} [Advanced] The C parameter for the confining potential.
+
+
+{\it Possible values:} A floating point number between $0$ and $100.0$
+
+\end{itemize}
 
 
 \subsection{Parameters in section \tt DFT functional parameters/Dispersion Correction}

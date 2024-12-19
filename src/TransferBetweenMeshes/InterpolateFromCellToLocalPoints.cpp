@@ -43,7 +43,8 @@ namespace dftfe
     d_numPoints = numPoints;
     if (d_memOpt)
       {
-        d_paramCoordinates = d_srcCell->getParametricPointForAllPoints(numPoints, coordinates);
+        d_paramCoordinates =
+          d_srcCell->getParametricPointForAllPoints(numPoints, coordinates);
       }
     else
       {

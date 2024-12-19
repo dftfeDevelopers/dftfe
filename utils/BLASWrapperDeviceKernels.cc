@@ -113,7 +113,7 @@ namespace dftfe
         }
     }
 
-        template <typename ValueType1, typename ValueType2>
+    template <typename ValueType1, typename ValueType2>
     __global__ void
     stridedCopyToBlockDeviceKernel(
       const dftfe::size_type         contiguousBlockSize,

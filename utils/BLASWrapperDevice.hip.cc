@@ -1487,7 +1487,7 @@ namespace dftfe
         0,
         contiguousBlockSize,
         numContiguousBlocks,
-	startingVecId,
+        startingVecId,
         dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
         dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
         copyFromVecStartingContiguousBlockIds);

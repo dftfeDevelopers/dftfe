@@ -452,7 +452,6 @@ namespace dftfe
           "true",
           dealii::Patterns::Bool(),
           "[Developer] Nuclear charges are allowed to float independent of the FEM mesh nodal positions. Only allowed for pseudopotential calculations. Internally set to false for all-electron calculations.");
-
       }
       prm.leave_subsection();
 
@@ -637,42 +636,45 @@ namespace dftfe
 
       prm.enter_subsection("DFT functional parameters");
       {
+        prm.enter_subsection("CONFINING POTENTIAL parameters");
+        {
+          prm.declare_entry(
+            "APPLY CONFINING POTENTIAL",
+            "false",
+            dealii::Patterns::Bool(),
+            "[Advanced] Apply confining potential. Usually required for anionic charges."
+            "The confining potential is applied between maxDist + r1 and maxDist + r2. Where maxDist "
+            "is the maximum distance of atoms from the center. r1 and r2 is the INNER and OUTER radii respectively."
+            "Between 0 and maxdist + r1: V(r) = 0;"
+            "Between maxdist + r1 and maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(dist2*dist2 + 1E-6);"
+            "Beyond maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(1E-6);"
+            "where dist1 = r - (maxdist + r1) and dist2 = (maxdist + r2) - r");
 
-	      prm.enter_subsection("CONFINING POTENTIAL parameters");
-	      {
+          prm.declare_entry(
+            "INNER RADIUS",
+            "17.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The inner radius (r1) for the confining potential.");
 
-	              prm.declare_entry(
-          "APPLY CONFINING POTENTIAL",
-          "false",
-          dealii::Patterns::Bool(),
-          "[Developer] Apply confining potential. Usually required for anionic charges.");
+          prm.declare_entry(
+            "OUTER RADIUS",
+            "20.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The outer radius (r2) for the confining potential.");
 
-        prm.declare_entry(
-          "CONFINING POTENTIAL INNER RADIUS",
-          "17.0",
-          dealii::Patterns::Double(0, 100),
-          "[Advanced] The inner radius (r1) for the confining potential.");
+          prm.declare_entry(
+            "W PARAM",
+            "1.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The W parameter for the confining potential.");
 
-        prm.declare_entry(
-          "CONFINING POTENTIAL OUTER RADIUS",
-          "20.0",
-          dealii::Patterns::Double(0, 100),
-          "[Advanced] The outer radius (r2) for the confining potential.");
-
-        prm.declare_entry(
-          "CONFINING POTENTIAL W PARAM",
-          "1.0",
-          dealii::Patterns::Double(0, 100),
-          "[Advanced] The W parameter for the confining potential.");
-
-        prm.declare_entry(
-          "CONFINING POTENTIAL C PARAM",
-          "1.0",
-          dealii::Patterns::Double(0, 100),
-          "[Advanced] The C parameter for the confining potential.");
-
-	      }
-	      prm.leave_subsection();
+          prm.declare_entry(
+            "C PARAM",
+            "1.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The C parameter for the confining potential.");
+        }
+        prm.leave_subsection();
         prm.declare_entry(
           "PSEUDOPOTENTIAL CALCULATION",
           "true",
@@ -1606,7 +1608,7 @@ namespace dftfe
       floatingNuclearCharges = prm.get_bool("FLOATING NUCLEAR CHARGES");
       multipoleBoundaryConditions =
         prm.get_bool("MULTIPOLE BOUNDARY CONDITIONS");
-      }
+    }
     prm.leave_subsection();
 
     prm.enter_subsection("Finite element mesh parameters");
@@ -1663,15 +1665,15 @@ namespace dftfe
 
     prm.enter_subsection("DFT functional parameters");
     {
-	    // Parameters for confining potential
+      // Parameters for confining potential
       prm.enter_subsection("CONFINING POTENTIAL parameters");
       {
-              confiningPotential = prm.get_bool("APPLY CONFINING POTENTIAL");
-      confiningInnerPotRad = prm.get_double("CONFINING POTENTIAL INNER RADIUS");
-      confiningOuterPotRad = prm.get_double("CONFINING POTENTIAL OUTER RADIUS");
-      confiningWParam      = prm.get_double("CONFINING POTENTIAL W PARAM");
-      confiningCParam      = prm.get_double("CONFINING POTENTIAL C PARAM");
-     }
+        confiningPotential   = prm.get_bool("APPLY CONFINING POTENTIAL");
+        confiningInnerPotRad = prm.get_double("INNER RADIUS");
+        confiningOuterPotRad = prm.get_double("OUTER RADIUS");
+        confiningWParam      = prm.get_double("W PARAM");
+        confiningCParam      = prm.get_double("C PARAM");
+      }
       prm.leave_subsection();
 
       prm.enter_subsection("Dispersion Correction");

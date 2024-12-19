@@ -518,25 +518,27 @@ namespace dftfe
         //                                                                                         coeffForXTmpMemSpace.begin(),
         //                                                                                         coeffForXTmpHost.begin());
 
-/*
-        std::vector<double> l2NormVec1(blockSize, 0.0);
+        /*
+                std::vector<double> l2NormVec1(blockSize, 0.0);
 
-        xMemSpace.l2Norm(&l2NormVec1[0]);
+                xMemSpace.l2Norm(&l2NormVec1[0]);
 
-        pcout << " xMemSpace before dist = \n";
-        for (unsigned int iB = 0; iB < blockSize; iB++)
-          {
-            pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] << "\n";
-          }
+                pcout << " xMemSpace before dist = \n";
+                for (unsigned int iB = 0; iB < blockSize; iB++)
+                  {
+                    pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] <<
+           "\n";
+                  }
 
-        xTmpMemSpace.l2Norm(&l2NormVec1[0]);
+                xTmpMemSpace.l2Norm(&l2NormVec1[0]);
 
-        pcout << " xTmpMemSpace before dist = \n";
-        for (unsigned int iB = 0; iB < blockSize; iB++)
-          {
-            pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] << "\n";
-          }
-*/
+                pcout << " xTmpMemSpace before dist = \n";
+                for (unsigned int iB = 0; iB < blockSize; iB++)
+                  {
+                    pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] <<
+           "\n";
+                  }
+        */
         BLASWrapperPtr->stridedBlockScaleAndAddTwoVecColumnWise(
           blockSize,
           locallyOwned,
@@ -545,29 +547,30 @@ namespace dftfe
           xTmpMemSpace.data(),
           coeffForXTmpMemSpace.data(),
           xMemSpace.data());
-/*
-        xMemSpace.l2Norm(&l2NormVec1[0]);
+        /*
+                xMemSpace.l2Norm(&l2NormVec1[0]);
+
+                pcout << " xMemSpace before dist = \n";
+                for (unsigned int iB = 0; iB < blockSize; iB++)
+                  {
+                    pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] <<
+           "\n";
+                  }
+
+            */
+      }
+
+    /*
+        std::vector<double> l2NormVec(blockSize, 0.0);
+
+        xMemSpace.l2Norm(&l2NormVec[0]);
 
         pcout << " xMemSpace before dist = \n";
         for (unsigned int iB = 0; iB < blockSize; iB++)
           {
-            pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] << "\n";
+            pcout << " iB = " << iB << " norm = " << l2NormVec[iB] << "\n";
           }
-
-	  */
-      }
-
-/*
-    std::vector<double> l2NormVec(blockSize, 0.0);
-
-    xMemSpace.l2Norm(&l2NormVec[0]);
-
-    pcout << " xMemSpace before dist = \n";
-    for (unsigned int iB = 0; iB < blockSize; iB++)
-      {
-        pcout << " iB = " << iB << " norm = " << l2NormVec[iB] << "\n";
-      }
-*/
+    */
     problem.distributeX();
 /*
     xMemSpace.l2Norm(&l2NormVec[0]);
