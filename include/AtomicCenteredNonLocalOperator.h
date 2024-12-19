@@ -67,7 +67,8 @@ namespace dftfe
                       atomCenteredSphericalFunctionContainer,
       const MPI_Comm &mpi_comm_parent,
       const bool      memOptMode               = false,
-      const bool      computeSphericalFnTimesX = true);
+      const bool      computeSphericalFnTimesX = true,
+      const bool      useGlobalCMatrix         = false);
 
     /**
      * @brief Resizes various internal data members and selects the kpoint of interest.
@@ -285,13 +286,23 @@ namespace dftfe
 
     /**
      * @brief computes the results of CconjtransX on the cells of interst specied by cellRange
-     * @param[in] X inpute cell level vector
+     * @param[in] X input cell level vector
      * @param[in] cellRange start and end element id in list of nonlocal
      * elements
      */
     void
     applyCconjtransOnX(const ValueType *                           X,
                        const std::pair<unsigned int, unsigned int> cellRange);
+
+
+    /**
+     * @brief computes the results of CconjtransX on nodal X vector
+     * @param[in] X input X nodal vector
+     * elements
+     */
+    void
+    applyCconjtransOnX(
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &X);
 
 
     // Returns the pointer of CTX stored in HOST memory for the atom Index in
@@ -357,6 +368,18 @@ namespace dftfe
     void
     applyCOnVCconjtransX(ValueType *                                 Xout,
                          const std::pair<unsigned int, unsigned int> cellRange);
+
+
+    /**
+     * @brief adds the result of CVCtX onto Xout for both CPU and GPU calls
+     * @param[out] Xout memoryStorage object of size
+     * cells*numberOfNodex*BlockSize. Typical case holds the results of H_{loc}X
+     * @param[in] cellRange start and end element id in list of nonlocal
+     * elements
+     */
+    void
+    applyCOnVCconjtransX(
+      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &Xout);
 
     std::vector<ValueType>
     getCmatrixEntries(int kPointIndex, unsigned int atomId, int iElem) const;
@@ -541,6 +564,16 @@ namespace dftfe
                               d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
     std::vector<unsigned int> d_nonlocalElemIdToCellIdVector;
     bool                      d_computeSphericalFnTimesX;
+    bool                      d_useGlobalCMatrix;
+    std::vector<unsigned int> d_atomStartIndexGlobal;
+    unsigned int              d_totalNumSphericalFunctionsGlobal;
+
+    std::vector<dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>>
+      d_CMatrixGlobal;
+
+    void
+    computeGlobalCMatrixVector();
+
 #if defined(DFTFE_WITH_DEVICE)
     /**
      * @brief Copies the data from distributed Vector to Padded Memory storage object.

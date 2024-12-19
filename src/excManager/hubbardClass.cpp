@@ -169,7 +169,10 @@ namespace dftfe
         d_BLASWrapperMemPtr,
         d_BasisOperatorMemPtr,
         d_atomicProjectorFnsContainer,
-        d_mpi_comm_domain);
+        d_mpi_comm_domain,
+        false,
+        true,
+        true);
 
 
     d_atomicProjectorFnsContainer->initaliseCoordinates(d_atomicCoords,

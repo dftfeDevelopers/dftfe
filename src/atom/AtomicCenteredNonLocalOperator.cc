@@ -38,7 +38,8 @@ namespace dftfe
                       atomCenteredSphericalFunctionContainer,
       const MPI_Comm &mpi_comm_parent,
       const bool      memOptMode,
-      const bool      computeSphericalFnTimesX)
+      const bool      computeSphericalFnTimesX,
+      const bool      useGlobalCMatrix)
     : d_mpi_communicator(mpi_comm_parent)
     , d_this_mpi_process(
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
@@ -56,6 +57,7 @@ namespace dftfe
                                     ->getMaximumNumberOfSphericalFunctions();
     d_memoryOptMode            = memOptMode;
     d_computeSphericalFnTimesX = computeSphericalFnTimesX;
+    d_useGlobalCMatrix         = useGlobalCMatrix;
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -2298,6 +2300,15 @@ namespace dftfe
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCconjtransOnX(
+    const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &X)
+  {
+    //@Vishal make changes here
+    //@Vishal save the output only for atoms present in this processor
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCVCconjtransOnX(
     const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
     const unsigned int                                         kPointIndex,
@@ -2597,6 +2608,16 @@ namespace dftfe
       }
 #endif
   }
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCOnVCconjtransX(
+    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &Xout)
+  {
+    //@Vishal add here..
+    //@Vishal caution to reshape the output of VconjTransX which has only
+    //contributions if atom is present in processsor to full matrix
+  }
+
 #if defined(DFTFE_WITH_DEVICE)
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -3401,6 +3422,13 @@ namespace dftfe
           }
       }
   }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  AtomicCenteredNonLocalOperator<ValueType,
+                                 memorySpace>::computeGlobalCMatrixVector()
+  {}
+
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   std::vector<ValueType>
