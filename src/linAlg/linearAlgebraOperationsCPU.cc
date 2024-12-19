@@ -3945,7 +3945,7 @@ namespace dftfe
                                             B,
                                             numberDofs,
                                             &alphaSinglePrec,
-                                            &XSinglePrec[0] + jvec B,
+                                            &XSinglePrec[0] + jvec + B,
                                             N,
                                             &HXBlockSinglePrec[0],
                                             B,
