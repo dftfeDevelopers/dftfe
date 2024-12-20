@@ -297,6 +297,25 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
   copyValueType1ArrToValueType2Arr(const dftfe::size_type      size,
                                    const std::complex<double> *valueType1Arr,
                                    std::complex<float> *       valueType2Arr);
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
+    const dftfe::size_type B,
+    const dftfe::size_type DRem,
+    const dftfe::size_type D,
+    const double *         valueType1SrcArray,
+    double *               valueType1DstArray,
+    float *                valueType2DstArray);
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
+    const dftfe::size_type      B,
+    const dftfe::size_type      DRem,
+    const dftfe::size_type      D,
+    const std::complex<double> *valueType1SrcArray,
+    std::complex<double> *      valueType1DstArray,
+    std::complex<float> *       valueType2DstArray);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::

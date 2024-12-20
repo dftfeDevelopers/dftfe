@@ -339,6 +339,7 @@ namespace dftfe
     } // namespace
 
 
+
     void
     chebyshevFilterOverlapComputeCommunication(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
@@ -3191,99 +3192,185 @@ namespace dftfe
 
               if (dftParams.useDeviceDirectAllReduce)
                 {
-                  if (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-                    devicecclMpiCommDomain
-                      .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        overlapMatrixBlockDP.begin(),
-                        overlapMatrixBlockSP.begin(),
-                        overlapMatrixBlockDP.begin(),
-                        overlapMatrixBlockSP.begin(),
-                        B * B,
-                        DRem * B,
-                        tempReal.begin(),
-                        tempRealFP32.begin(),
-                        tempImag.begin(),
-                        tempImagFP32.begin(),
-                        streamDeviceCCL);
-                  else
-                    devicecclMpiCommDomain
-                      .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        overlapMatrixBlockDP.begin(),
-                        overlapMatrixBlockSP.begin(),
-                        overlapMatrixBlockDP.begin(),
-                        overlapMatrixBlockSP.begin(),
-                        B * B,
-                        DRem * B,
-                        streamDeviceCCL);
-                }
-
-              dftfe::utils::deviceMemcpyD2H(
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockHostDP.begin()),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockDP.begin()),
-                B * B * sizeof(dataTypes::number));
-
-              dftfe::utils::deviceMemcpyD2H(
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockHostSP.begin()),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockSP.begin()),
-                DRem * B * sizeof(dataTypes::numberFP32));
-
-              if (!dftParams.useDeviceDirectAllReduce)
-                {
-                  // Sum local XTrunc^{T}*XcBlock for double precision across
-                  // domain decomposition processors
-                  MPI_Allreduce(MPI_IN_PLACE,
-                                overlapMatrixBlockHostDP.begin(),
-                                B * B,
-                                dataTypes::mpi_type_id(
-                                  overlapMatrixBlockHostDP.begin()),
-                                MPI_SUM,
-                                mpiCommDomain);
-
-                  // Sum local XTrunc^{T}*XcBlock for single precision across
-                  // domain decomposition processors
-                  MPI_Allreduce(MPI_IN_PLACE,
-                                overlapMatrixBlockHostSP.begin(),
-                                DRem * B,
-                                dataTypes::mpi_type_id(
-                                  overlapMatrixBlockHostSP.begin()),
-                                MPI_SUM,
-                                mpiCommDomain);
-                }
-
-              // Copying only the lower triangular part to the ScaLAPACK overlap
-              // matrix
-              if (processGrid->is_process_active())
-                for (unsigned int i = 0; i < B; ++i)
-                  if (globalToLocalColumnIdMap.find(i + ivec) !=
-                      globalToLocalColumnIdMap.end())
+                  if (ivec + B > Noc)
                     {
-                      const unsigned int localColumnId =
-                        globalToLocalColumnIdMap[i + ivec];
-                      for (unsigned int j = ivec + i; j < ivec + B; ++j)
+                      if (std::is_same<dataTypes::number,
+                                       std::complex<double>>::value)
+                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockDP.begin(),
+                          D * B,
+                          tempReal.begin(),
+                          tempImag.begin(),
+                          streamDeviceCCL);
+                      else
+                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockDP.begin(),
+                          D * B,
+                          streamDeviceCCL);
+                    }
+                  else
+                    {
+                      if (DRem == 0)
                         {
-                          std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                            globalToLocalRowIdMap.find(j);
-                          if (it != globalToLocalRowIdMap.end())
-                            overlapMatPar.local_el(it->second, localColumnId) =
-                              overlapMatrixBlockHostDP[i * B + j - ivec];
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                              overlapMatrixBlockDP.begin(),
+                              overlapMatrixBlockDP.begin(),
+                              B * B,
+                              tempReal.begin(),
+                              tempImag.begin(),
+                              streamDeviceCCL);
+                          else
+                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                              overlapMatrixBlockDP.begin(),
+                              overlapMatrixBlockDP.begin(),
+                              B * B,
+                              streamDeviceCCL);
                         }
-
-                      for (unsigned int j = ivec + B; j < N; ++j)
+                      if (DRem != 0)
                         {
-                          std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                            globalToLocalRowIdMap.find(j);
-                          if (it != globalToLocalRowIdMap.end())
-                            overlapMatPar.local_el(it->second, localColumnId) =
-                              overlapMatrixBlockHostSP[i * DRem + j - ivec - B];
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            devicecclMpiCommDomain
+                              .deviceDirectAllReduceMixedPrecGroupWrapper(
+                                overlapMatrixBlockDP.begin(),
+                                overlapMatrixBlockSP.begin(),
+                                overlapMatrixBlockDP.begin(),
+                                overlapMatrixBlockSP.begin(),
+                                B * B,
+                                DRem * B,
+                                tempReal.begin(),
+                                tempRealFP32.begin(),
+                                tempImag.begin(),
+                                tempImagFP32.begin(),
+                                streamDeviceCCL);
+                          else
+                            devicecclMpiCommDomain
+                              .deviceDirectAllReduceMixedPrecGroupWrapper(
+                                overlapMatrixBlockDP.begin(),
+                                overlapMatrixBlockSP.begin(),
+                                overlapMatrixBlockDP.begin(),
+                                overlapMatrixBlockSP.begin(),
+                                B * B,
+                                DRem * B,
+                                streamDeviceCCL);
                         }
                     }
+                }
+              if (ivec + B > Noc)
+                dftfe::utils::deviceMemcpyD2H(
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    overlapMatrixBlockHostDP.begin()),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    overlapMatrixBlockDP.begin()),
+                  D * B * sizeof(dataTypes::number));
+              else
+                {
+                  dftfe::utils::deviceMemcpyAsyncD2H(
+                    overlapMatrixBlockHostDP.begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      overlapMatrixBlockDP.begin()),
+                    B * B * sizeof(dataTypes::number));
+                  if (DRem != 0)
+                    dftfe::utils::deviceMemcpyAsyncD2H(
+                      overlapMatrixBlockHostSP.begin(),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlockSP.begin()),
+                      DRem * B * sizeof(dataTypes::numberFP32));
+                }
+              if (ivec + B > Noc)
+                {
+                  // Sum local projHamBlock across domain decomposition
+                  // processors
+                  if (!dftParams.useDeviceDirectAllReduce)
+                    MPI_Allreduce(MPI_IN_PLACE,
+                                  overlapMatrixBlockHostDP.begin(),
+                                  D * B,
+                                  dataTypes::mpi_type_id(
+                                    overlapMatrixBlockHostDP.begin()),
+                                  MPI_SUM,
+                                  mpiCommDomain);
+
+                  // Copying only the lower triangular part to the ScaLAPACK
+                  // projected Hamiltonian matrix
+                  if (processGrid->is_process_active())
+                    for (unsigned int j = 0; j < B; ++j)
+                      if (globalToLocalColumnIdMap.find(j + ivec) !=
+                          globalToLocalColumnIdMap.end())
+                        {
+                          const unsigned int localColumnId =
+                            globalToLocalColumnIdMap[j + ivec];
+                          for (unsigned int i = j + ivec; i < N; ++i)
+                            {
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(i);
+                              if (it != globalToLocalRowIdMap.end())
+                                overlapMatPar.local_el(it->second,
+                                                       localColumnId) =
+                                  overlapMatrixBlockHostDP[j * D + i - ivec];
+                            }
+                        }
+                }
+              else
+                {
+                  // Sum local projHamBlock across domain decomposition
+                  // processors
+                  if (!dftParams.useDeviceDirectAllReduce)
+                    {
+                      MPI_Allreduce(MPI_IN_PLACE,
+                                    overlapMatrixBlockHostDP.begin(),
+                                    B * B,
+                                    dataTypes::mpi_type_id(
+                                      overlapMatrixBlockHostDP.begin()),
+                                    MPI_SUM,
+                                    mpiCommDomain);
+                      if (DRem != 0)
+                        MPI_Allreduce(MPI_IN_PLACE,
+                                      overlapMatrixBlockHostSP.begin(),
+                                      DRem * B,
+                                      dataTypes::mpi_type_id(
+                                        overlapMatrixBlockHostSP.begin()),
+                                      MPI_SUM,
+                                      mpiCommDomain);
+                    }
+
+                  // Copying only the lower triangular part to the ScaLAPACK
+                  // projected Hamiltonian matrix
+                  if (processGrid->is_process_active())
+                    for (unsigned int j = 0; j < B; ++j)
+                      if (globalToLocalColumnIdMap.find(j + ivec) !=
+                          globalToLocalColumnIdMap.end())
+                        {
+                          const unsigned int localColumnId =
+                            globalToLocalColumnIdMap[j + ivec];
+                          for (unsigned int i = j + ivec; i < ivec + B; ++i)
+                            {
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(i);
+                              if (it != globalToLocalRowIdMap.end())
+                                overlapMatPar.local_el(it->second,
+                                                       localColumnId) =
+                                  overlapMatrixBlockHostDP[j * B + i - ivec];
+                            }
+                          for (unsigned int i = ivec + B; i < N; ++i)
+                            {
+                              std::unordered_map<unsigned int,
+                                                 unsigned int>::iterator it =
+                                globalToLocalRowIdMap.find(i);
+                              if (it != globalToLocalRowIdMap.end())
+                                overlapMatPar.local_el(it->second,
+                                                       localColumnId) =
+                                  overlapMatrixBlockHostSP[j * DRem + i - ivec -
+                                                           B];
+                            }
+                        }
+                }
+
             } // band parallelization
         }     // end block loop
 
@@ -3697,48 +3784,100 @@ namespace dftfe
 
               if (dftParams.useDeviceDirectAllReduce)
                 {
-                  if (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-                    devicecclMpiCommDomain
-                      .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        overlapMatrixBlockDP.begin(),
-                        overlapMatrixBlockSP.begin(),
-                        overlapMatrixBlockDP.begin(),
-                        overlapMatrixBlockSP.begin(),
-                        B * B,
-                        DRem * B,
-                        tempReal.begin(),
-                        tempRealFP32.begin(),
-                        tempImag.begin(),
-                        tempImagFP32.begin(),
-                        streamDataMove);
+                  if (ivec + B > Noc)
+                    {
+                      if (std::is_same<dataTypes::number,
+                                       std::complex<double>>::value)
+                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockDP.begin(),
+                          D * B,
+                          tempReal.begin(),
+                          tempImag.begin(),
+                          streamDataMove);
+                      else
+                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                          overlapMatrixBlockDP.begin(),
+                          overlapMatrixBlockDP.begin(),
+                          D * B,
+                          streamDataMove);
+                    }
                   else
-                    devicecclMpiCommDomain
-                      .deviceDirectAllReduceMixedPrecGroupWrapper(
-                        overlapMatrixBlockDP.begin(),
-                        overlapMatrixBlockSP.begin(),
-                        overlapMatrixBlockDP.begin(),
-                        overlapMatrixBlockSP.begin(),
-                        B * B,
-                        DRem * B,
-                        streamDataMove);
+                    {
+                      if (DRem == 0)
+                        {
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                              overlapMatrixBlockDP.begin(),
+                              overlapMatrixBlockDP.begin(),
+                              B * B,
+                              tempReal.begin(),
+                              tempImag.begin(),
+                              streamDataMove);
+                          else
+                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                              overlapMatrixBlockDP.begin(),
+                              overlapMatrixBlockDP.begin(),
+                              B * B,
+                              streamDataMove);
+                        }
+                      if (DRem != 0)
+                        {
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            devicecclMpiCommDomain
+                              .deviceDirectAllReduceMixedPrecGroupWrapper(
+                                overlapMatrixBlockDP.begin(),
+                                overlapMatrixBlockSP.begin(),
+                                overlapMatrixBlockDP.begin(),
+                                overlapMatrixBlockSP.begin(),
+                                B * B,
+                                DRem * B,
+                                tempReal.begin(),
+                                tempRealFP32.begin(),
+                                tempImag.begin(),
+                                tempImagFP32.begin(),
+                                streamDataMove);
+                          else
+                            devicecclMpiCommDomain
+                              .deviceDirectAllReduceMixedPrecGroupWrapper(
+                                overlapMatrixBlockDP.begin(),
+                                overlapMatrixBlockSP.begin(),
+                                overlapMatrixBlockDP.begin(),
+                                overlapMatrixBlockSP.begin(),
+                                B * B,
+                                DRem * B,
+                                streamDataMove);
+                        }
+                    }
                 }
 
-              dftfe::utils::deviceMemcpyAsyncD2H(
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockHostDP.begin()),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockDP.begin()),
-                B * B * sizeof(dataTypes::number),
-                streamDataMove);
-
-              dftfe::utils::deviceMemcpyAsyncD2H(
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockHostSP.begin()),
-                dftfe::utils::makeDataTypeDeviceCompatible(
-                  overlapMatrixBlockSP.begin()),
-                DRem * B * sizeof(dataTypes::numberFP32),
-                streamDataMove);
+              if (ivec + B > Noc)
+                dftfe::utils::deviceMemcpyAsyncD2H(
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    overlapMatrixBlockHostDP.begin()),
+                  dftfe::utils::makeDataTypeDeviceCompatible(
+                    overlapMatrixBlockDP.begin()),
+                  D * B * sizeof(dataTypes::number),
+                  streamDataMove);
+              else
+                {
+                  dftfe::utils::deviceMemcpyAsyncD2H(
+                    overlapMatrixBlockHostDP.begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      overlapMatrixBlockDP.begin()),
+                    B * B * sizeof(dataTypes::number),
+                    streamDataMove);
+                  if (DRem != 0)
+                    dftfe::utils::deviceMemcpyAsyncD2H(
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlockHostSP.begin()),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        overlapMatrixBlockSP.begin()),
+                      DRem * B * sizeof(dataTypes::numberFP32),
+                      streamDataMove);
+                }
 
               // record completion of Device->CPU copy for current block
               dftfe::utils::deviceEventRecord(copyEvents[blockCount],
@@ -3750,63 +3889,97 @@ namespace dftfe
               if (dftfe::utils::deviceEventSynchronize(
                     copyEvents[blockCount]) == dftfe::utils::deviceSuccess)
                 {
-                  const unsigned int DRem = D - B;
-
-                  if (!dftParams.useDeviceDirectAllReduce)
+                  if (ivec + B > Noc)
                     {
-                      // Sum local XTrunc^{T}*XcBlock for double precision
-                      // across domain decomposition processors
-                      MPI_Allreduce(MPI_IN_PLACE,
-                                    overlapMatrixBlockHostDP.begin(),
-                                    B * B,
-                                    dataTypes::mpi_type_id(
-                                      overlapMatrixBlockHostDP.begin()),
-                                    MPI_SUM,
-                                    mpiCommDomain);
+                      // Sum local projHamBlock across domain decomposition
+                      // processors
+                      if (!dftParams.useDeviceDirectAllReduce)
+                        MPI_Allreduce(MPI_IN_PLACE,
+                                      overlapMatrixBlockHostDP.begin(),
+                                      D * B,
+                                      dataTypes::mpi_type_id(
+                                        overlapMatrixBlockHostDP.begin()),
+                                      MPI_SUM,
+                                      mpiCommDomain);
 
-                      // Sum local XTrunc^{T}*XcBlock for single precision
-                      // across domain decomposition processors
-                      MPI_Allreduce(MPI_IN_PLACE,
-                                    overlapMatrixBlockHostSP.begin(),
-                                    DRem * B,
-                                    dataTypes::mpi_type_id(
-                                      overlapMatrixBlockHostSP.begin()),
-                                    MPI_SUM,
-                                    mpiCommDomain);
+                      // Copying only the lower triangular part to the ScaLAPACK
+                      // projected Hamiltonian matrix
+                      if (processGrid->is_process_active())
+                        for (unsigned int j = 0; j < B; ++j)
+                          if (globalToLocalColumnIdMap.find(j + ivec) !=
+                              globalToLocalColumnIdMap.end())
+                            {
+                              const unsigned int localColumnId =
+                                globalToLocalColumnIdMap[j + ivec];
+                              for (unsigned int i = j + ivec; i < N; ++i)
+                                {
+                                  std::unordered_map<unsigned int,
+                                                     unsigned int>::iterator
+                                    it = globalToLocalRowIdMap.find(i);
+                                  if (it != globalToLocalRowIdMap.end())
+                                    overlapMatPar.local_el(it->second,
+                                                           localColumnId) =
+                                      overlapMatrixBlockHostDP[j * D + i -
+                                                               ivec];
+                                }
+                            }
                     }
-
-                  // Copying only the lower triangular part to the ScaLAPACK
-                  // overlap matrix
-                  if (processGrid->is_process_active())
-                    for (unsigned int i = 0; i < B; ++i)
-                      if (globalToLocalColumnIdMap.find(i + ivec) !=
-                          globalToLocalColumnIdMap.end())
+                  else
+                    {
+                      // Sum local overlap across domain decomposition
+                      // processors
+                      if (!dftParams.useDeviceDirectAllReduce)
                         {
-                          const unsigned int localColumnId =
-                            globalToLocalColumnIdMap[i + ivec];
-                          for (unsigned int j = ivec + i; j < ivec + B; ++j)
-                            {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
-                                globalToLocalRowIdMap.find(j);
-                              if (it != globalToLocalRowIdMap.end())
-                                overlapMatPar.local_el(it->second,
-                                                       localColumnId) =
-                                  overlapMatrixBlockHostDP[i * B + j - ivec];
-                            }
-
-                          for (unsigned int j = ivec + B; j < N; ++j)
-                            {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
-                                globalToLocalRowIdMap.find(j);
-                              if (it != globalToLocalRowIdMap.end())
-                                overlapMatPar.local_el(it->second,
-                                                       localColumnId) =
-                                  overlapMatrixBlockHostSP[i * DRem + j - ivec -
-                                                           B];
-                            }
+                          MPI_Allreduce(MPI_IN_PLACE,
+                                        overlapMatrixBlockHostDP.begin(),
+                                        B * B,
+                                        dataTypes::mpi_type_id(
+                                          overlapMatrixBlockHostDP.begin()),
+                                        MPI_SUM,
+                                        mpiCommDomain);
+                          if (DRem != 0)
+                            MPI_Allreduce(MPI_IN_PLACE,
+                                          overlapMatrixBlockHostSP.begin(),
+                                          DRem * B,
+                                          dataTypes::mpi_type_id(
+                                            overlapMatrixBlockHostSP.begin()),
+                                          MPI_SUM,
+                                          mpiCommDomain);
                         }
+
+                      // Copying only the lower triangular part to the ScaLAPACK
+                      // overlap matrix
+                      if (processGrid->is_process_active())
+                        for (unsigned int j = 0; j < B; ++j)
+                          if (globalToLocalColumnIdMap.find(j + ivec) !=
+                              globalToLocalColumnIdMap.end())
+                            {
+                              const unsigned int localColumnId =
+                                globalToLocalColumnIdMap[j + ivec];
+                              for (unsigned int i = j + ivec; i < ivec + B; ++i)
+                                {
+                                  std::unordered_map<unsigned int,
+                                                     unsigned int>::iterator
+                                    it = globalToLocalRowIdMap.find(i);
+                                  if (it != globalToLocalRowIdMap.end())
+                                    overlapMatPar.local_el(it->second,
+                                                           localColumnId) =
+                                      overlapMatrixBlockHostDP[j * B + i -
+                                                               ivec];
+                                }
+                              for (unsigned int i = ivec + B; i < N; ++i)
+                                {
+                                  std::unordered_map<unsigned int,
+                                                     unsigned int>::iterator
+                                    it = globalToLocalRowIdMap.find(i);
+                                  if (it != globalToLocalRowIdMap.end())
+                                    overlapMatPar.local_el(it->second,
+                                                           localColumnId) =
+                                      overlapMatrixBlockHostSP[j * DRem + i -
+                                                               ivec - B];
+                                }
+                            }
+                    }
                 }
             } // band parallelization
 
@@ -5495,12 +5668,13 @@ namespace dftfe
                       projHamBlock.begin()),
                     B * B * sizeof(dataTypes::number),
                     streamDataMove);
-                  dftfe::utils::deviceMemcpyAsyncD2H(
-                    projHamBlockHostFP32.begin(),
-                    dftfe::utils::makeDataTypeDeviceCompatible(
-                      projHamBlockFP32.begin()),
-                    DRem * B * sizeof(dataTypes::numberFP32),
-                    streamDataMove);
+                  if (DRem != 0)
+                    dftfe::utils::deviceMemcpyAsyncD2H(
+                      projHamBlockHostFP32.begin(),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        projHamBlockFP32.begin()),
+                      DRem * B * sizeof(dataTypes::numberFP32),
+                      streamDataMove);
                 }
 
               // record completion of Device->CPU copy for current block
@@ -5579,7 +5753,7 @@ namespace dftfe
                             {
                               const unsigned int localColumnId =
                                 globalToLocalColumnIdMap[j + jvec];
-                              for (unsigned int i = j + jvec; i < N; ++i)
+                              for (unsigned int i = j + jvec; i < jvec + B; ++i)
                                 {
                                   std::unordered_map<unsigned int,
                                                      unsigned int>::iterator
@@ -5587,9 +5761,9 @@ namespace dftfe
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
-                                      projHamBlockHostFP32[j * B + i - jvec];
+                                      projHamBlockHost[j * B + i - jvec];
                                 }
-                              for (unsigned int i = j + jvec + B; i < N; ++i)
+                              for (unsigned int i = jvec + B; i < N; ++i)
                                 {
                                   std::unordered_map<unsigned int,
                                                      unsigned int>::iterator
@@ -5597,7 +5771,8 @@ namespace dftfe
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
-                                      projHamBlockHostFP32[j * DRem + i - jvec];
+                                      projHamBlockHostFP32[j * DRem + i - jvec -
+                                                           B];
                                 }
                             }
                     }
@@ -5747,6 +5922,10 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlockNext(vectorsBlockSize * N, dataTypes::number(0.0));
 
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        projHamBlockMove(vectorsBlockSize * vectorsBlockSize,
+                         dataTypes::number(0.0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlockFP32(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
@@ -5909,12 +6088,21 @@ namespace dftfe
                   dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
                                                   streamCompute);
                 }
-
-              if (!(jvec + B > Noc))
+              const unsigned int DRem = D - B;
+              if (!(jvec + B > Noc) && DRem != 0)
                 {
                   BLASWrapperPtr->setStream(streamDataMove);
-                  BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
-                    D * B, projHamBlock.begin(), projHamBlockFP32.begin());
+                  // Add a kernel to copy the required Data
+                  // BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+                  //   D * B, projHamBlock.begin(), projHamBlockFP32.begin());
+                  BLASWrapperPtr
+                    ->copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
+                      B,
+                      DRem,
+                      D,
+                      projHamBlock.begin(),
+                      projHamBlockMove.begin(),
+                      projHamBlockFP32.begin());
                 }
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -5939,21 +6127,52 @@ namespace dftfe
                     }
                   else
                     {
-                      if (std::is_same<dataTypes::number,
-                                       std::complex<double>>::value)
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projHamBlockFP32.begin(),
-                          projHamBlockFP32.begin(),
-                          D * B,
-                          tempRealFP32.begin(),
-                          tempImagFP32.begin(),
-                          streamDataMove);
+                      if (DRem == 0)
+                        {
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                              projHamBlockMove.begin(),
+                              projHamBlockMove.begin(),
+                              B * B,
+                              tempReal.begin(),
+                              tempImag.begin(),
+                              streamDataMove);
+                          else
+                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                              projHamBlockMove.begin(),
+                              projHamBlockMove.begin(),
+                              B * B,
+                              streamDataMove);
+                        }
                       else
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projHamBlockFP32.begin(),
-                          projHamBlockFP32.begin(),
-                          D * B,
-                          streamDataMove);
+                        {
+                          if (std::is_same<dataTypes::number,
+                                           std::complex<double>>::value)
+                            devicecclMpiCommDomain
+                              .deviceDirectAllReduceMixedPrecGroupWrapper(
+                                projHamBlockMove.begin(),
+                                projHamBlockFP32.begin(),
+                                projHamBlockMove.begin(),
+                                projHamBlockFP32.begin(),
+                                B * B,
+                                DRem * B,
+                                tempReal.begin(),
+                                tempRealFP32.begin(),
+                                tempImag.begin(),
+                                tempImagFP32.begin(),
+                                streamDataMove);
+                          else
+                            devicecclMpiCommDomain
+                              .deviceDirectAllReduceMixedPrecGroupWrapper(
+                                projHamBlockMove.begin(),
+                                projHamBlockFP32.begin(),
+                                projHamBlockMove.begin(),
+                                projHamBlockFP32.begin(),
+                                B * B,
+                                DRem * B,
+                                streamDataMove);
+                        }
                     }
                 }
 
@@ -5965,12 +6184,21 @@ namespace dftfe
                   D * B * sizeof(dataTypes::number),
                   streamDataMove);
               else
-                dftfe::utils::deviceMemcpyAsyncD2H(
-                  projHamBlockHostFP32.begin(),
-                  dftfe::utils::makeDataTypeDeviceCompatible(
-                    projHamBlockFP32.begin()),
-                  D * B * sizeof(dataTypes::numberFP32),
-                  streamDataMove);
+                {
+                  dftfe::utils::deviceMemcpyAsyncD2H(
+                    projHamBlockHost.begin(),
+                    dftfe::utils::makeDataTypeDeviceCompatible(
+                      projHamBlockMove.begin()),
+                    B * B * sizeof(dataTypes::number),
+                    streamDataMove);
+                  if (DRem != 0)
+                    dftfe::utils::deviceMemcpyAsyncD2H(
+                      projHamBlockHostFP32.begin(),
+                      dftfe::utils::makeDataTypeDeviceCompatible(
+                        projHamBlockFP32.begin()),
+                      DRem * B * sizeof(dataTypes::numberFP32),
+                      streamDataMove);
+                }
 
               // record completion of Device->CPU copy for current block
               dftfe::utils::deviceEventRecord(copyEvents[blockCount],
@@ -6021,13 +6249,23 @@ namespace dftfe
                       // Sum local projHamBlock across domain decomposition
                       // processors
                       if (!dftParams.useDeviceDirectAllReduce)
-                        MPI_Allreduce(MPI_IN_PLACE,
-                                      projHamBlockHostFP32.begin(),
-                                      D * B,
-                                      dataTypes::mpi_type_id(
-                                        projHamBlockHostFP32.begin()),
-                                      MPI_SUM,
-                                      mpiCommDomain);
+                        {
+                          MPI_Allreduce(MPI_IN_PLACE,
+                                        projHamBlockHost.begin(),
+                                        B * B,
+                                        dataTypes::mpi_type_id(
+                                          projHamBlockHost.begin()),
+                                        MPI_SUM,
+                                        mpiCommDomain);
+                          if (DRem != 0)
+                            MPI_Allreduce(MPI_IN_PLACE,
+                                          projHamBlockHostFP32.begin(),
+                                          DRem * B,
+                                          dataTypes::mpi_type_id(
+                                            projHamBlockHostFP32.begin()),
+                                          MPI_SUM,
+                                          mpiCommDomain);
+                        }
 
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
@@ -6038,7 +6276,7 @@ namespace dftfe
                             {
                               const unsigned int localColumnId =
                                 globalToLocalColumnIdMap[j + jvec];
-                              for (unsigned int i = j + jvec; i < N; ++i)
+                              for (unsigned int i = j + jvec; i < jvec + B; ++i)
                                 {
                                   std::unordered_map<unsigned int,
                                                      unsigned int>::iterator
@@ -6046,7 +6284,18 @@ namespace dftfe
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
-                                      projHamBlockHostFP32[j * D + i - jvec];
+                                      projHamBlockHost[j * B + i - jvec];
+                                }
+                              for (unsigned int i = jvec + B; i < N; ++i)
+                                {
+                                  std::unordered_map<unsigned int,
+                                                     unsigned int>::iterator
+                                    it = globalToLocalRowIdMap.find(i);
+                                  if (it != globalToLocalRowIdMap.end())
+                                    projHamPar.local_el(it->second,
+                                                        localColumnId) =
+                                      projHamBlockHostFP32[j * DRem + i - jvec -
+                                                           B];
                                 }
                             }
                     }
@@ -6074,7 +6323,7 @@ namespace dftfe
           linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
             processGrid, projHamPar, interBandGroupComm);
         }
-    }
+    } // namespace linearAlgebraOperationsDevice
 
 
   } // namespace linearAlgebraOperationsDevice

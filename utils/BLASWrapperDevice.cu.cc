@@ -1582,6 +1582,33 @@ namespace dftfe
 
     template <typename ValueType1, typename ValueType2>
     void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
+        const dftfe::size_type B,
+        const dftfe::size_type DRem,
+        const dftfe::size_type D,
+        const ValueType1 *     valueType1SrcArray,
+        ValueType1 *           valueType1DstArray,
+        ValueType2 *           valueType2DstArray)
+    {
+      const dftfe::size_type size = D * B;
+      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        d_streamId>>>(
+        B,
+        DRem,
+        D,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1SrcArray),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1DstArray),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2DstArray));
+    }
+
+
+
+    template <typename ValueType1, typename ValueType2>
+    void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,

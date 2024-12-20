@@ -1355,6 +1355,17 @@ namespace dftfe
       dftfe::utils::deviceBlasHandle_t &
       getDeviceBlasHandle();
 
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
+        const dftfe::size_type B,
+        const dftfe::size_type DRem,
+        const dftfe::size_type D,
+        const ValueType1 *     valueType1SrcArray,
+        ValueType1 *           valueType1DstArray,
+        ValueType2 *           valueType2DstArray);
+
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dftfe::utils::deviceBlasStatus_t
       setMathMode(dftfe::utils::deviceBlasMath_t mathMode);

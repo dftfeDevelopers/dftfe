@@ -84,7 +84,33 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         dftfe::utils::copyValue(valueType2Arr + index, valueType1Arr[index]);
     }
-
+    template <typename ValueType1, typename ValueType2>
+    __global__ void
+    copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel(
+      const dftfe::size_type B,
+      const dftfe::size_type DRem,
+      const dftfe::size_type D,
+      const ValueType1 *     valueType1SrcArray,
+      ValueType1 *           valueType1DstArray,
+      ValueType2 *           valueType2DstArray)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type size = B * D;
+      for (dftfe::size_type index = globalThreadId; index < size;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type rowId    = index / B;
+          dftfe::size_type columnId = index % B;
+          if (rowId < B && columnId < B)
+            dftfe::utils::copyValue(valueType1DstArray + rowId * B + columnId,
+                                    valueType1SrcArray[index]);
+          else
+            dftfe::utils::copyValue(valueType2DstArray + rowId * DRem +
+                                      columnId,
+                                    valueType1SrcArray[index]);
+        }
+    }
 
     template <typename ValueType1, typename ValueType2>
     __global__ void
