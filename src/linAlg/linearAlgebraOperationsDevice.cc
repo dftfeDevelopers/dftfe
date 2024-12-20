@@ -3019,8 +3019,7 @@ namespace dftfe
         overlapMatrixBlockSP(N * vectorsBlockSize, dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockDP(vectorsBlockSize * vectorsBlockSize,
-                             dataTypes::number(0));
+        overlapMatrixBlockDP(N * vectorsBlockSize, dataTypes::number(0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -3032,11 +3031,10 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
         overlapMatrixBlockHostDP;
-      overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize, 0);
+      overlapMatrixBlockHostDP.resize(N * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHostDP.begin(),
                   0,
-                  vectorsBlockSize * vectorsBlockSize *
-                    sizeof(dataTypes::number));
+                  N * vectorsBlockSize * sizeof(dataTypes::number));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
         OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
@@ -3476,16 +3474,14 @@ namespace dftfe
         overlapMatrixBlockSP(N * vectorsBlockSize, dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockDP(vectorsBlockSize * vectorsBlockSize,
-                             dataTypes::number(0));
+        overlapMatrixBlockDP(N * vectorsBlockSize, dataTypes::number(0));
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockSPNext(N * vectorsBlockSize,
                                  dataTypes::numberFP32(0));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        overlapMatrixBlockDPNext(vectorsBlockSize * vectorsBlockSize,
-                                 dataTypes::number(0));
+        overlapMatrixBlockDPNext(N * vectorsBlockSize, dataTypes::number(0));
 
       const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -3498,11 +3494,10 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
         overlapMatrixBlockHostDP;
-      overlapMatrixBlockHostDP.resize(vectorsBlockSize * vectorsBlockSize, 0);
+      overlapMatrixBlockHostDP.resize(N * vectorsBlockSize, 0);
       std::memset(overlapMatrixBlockHostDP.begin(),
                   0,
-                  vectorsBlockSize * vectorsBlockSize *
-                    sizeof(dataTypes::number));
+                  N * vectorsBlockSize * sizeof(dataTypes::number));
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
