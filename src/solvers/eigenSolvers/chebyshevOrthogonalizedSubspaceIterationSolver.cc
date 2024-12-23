@@ -489,68 +489,37 @@ namespace dftfe
     if (d_dftParams.orthogType.compare("CGS") == 0)
       {
         computing_timer.enter_subsection("Rayleigh-Ritz GEP");
-        if (eigenValues.size() != totalNumberWaveFunctions)
-          {
-            linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(
-              operatorMatrix,
-              elpaScala,
-              eigenVectorsFlattened,
-              eigenVectorsRotFracDensityFlattened,
-              totalNumberWaveFunctions,
-              localVectorSize,
-              totalNumberWaveFunctions - eigenValues.size(),
-              d_mpiCommParent,
-              interBandGroupComm,
-              mpiCommDomain,
-              useMixedPrec,
-              eigenValues,
-              d_dftParams);
-          }
-        else
-          {
-            linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
-                                                     elpaScala,
-                                                     eigenVectorsFlattened,
-                                                     totalNumberWaveFunctions,
-                                                     localVectorSize,
-                                                     d_mpiCommParent,
-                                                     interBandGroupComm,
-                                                     mpiCommDomain,
-                                                     eigenValues,
-                                                     useMixedPrec,
-                                                     d_dftParams);
-          }
+
+        {
+          linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
+                                                   elpaScala,
+                                                   eigenVectorsFlattened,
+                                                   totalNumberWaveFunctions,
+                                                   localVectorSize,
+                                                   d_mpiCommParent,
+                                                   interBandGroupComm,
+                                                   mpiCommDomain,
+                                                   eigenValues,
+                                                   useMixedPrec,
+                                                   d_dftParams);
+        }
         computing_timer.leave_subsection("Rayleigh-Ritz GEP");
 
         computing_timer.enter_subsection("eigen vectors residuals opt");
-        if (eigenValues.size() != totalNumberWaveFunctions)
-          {
-            linearAlgebraOperations::computeEigenResidualNorm(
-              operatorMatrix,
-              eigenVectorsRotFracDensityFlattened,
-              eigenValues,
-              eigenValues.size(),
-              localVectorSize,
-              d_mpiCommParent,
-              mpiCommDomain,
-              interBandGroupComm,
-              residualNorms,
-              d_dftParams);
-          }
-        else
-          {
-            linearAlgebraOperations::computeEigenResidualNorm(
-              operatorMatrix,
-              eigenVectorsFlattened,
-              eigenValues,
-              totalNumberWaveFunctions,
-              localVectorSize,
-              d_mpiCommParent,
-              mpiCommDomain,
-              interBandGroupComm,
-              residualNorms,
-              d_dftParams);
-          }
+
+        {
+          linearAlgebraOperations::computeEigenResidualNorm(
+            operatorMatrix,
+            eigenVectorsFlattened,
+            eigenValues,
+            totalNumberWaveFunctions,
+            localVectorSize,
+            d_mpiCommParent,
+            mpiCommDomain,
+            interBandGroupComm,
+            residualNorms,
+            d_dftParams);
+        }
         computing_timer.leave_subsection("eigen vectors residuals opt");
       }
     else if (d_dftParams.orthogType.compare("GS") == 0)

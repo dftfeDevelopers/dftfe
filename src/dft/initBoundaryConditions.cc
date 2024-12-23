@@ -95,8 +95,7 @@ namespace dftfe
 #else
         const double totalMem =
           (d_dftParamsPtr->useMixedPrecCGS_O == true ||
-           d_dftParamsPtr->useMixedPrecCGS_SR == true ||
-           d_dftParamsPtr->useMixedPrecXTHXSpectrumSplit == true) ?
+           d_dftParamsPtr->useMixedPrecCGS_SR == true) ?
             dofHandler.n_dofs() * (d_dftParamsPtr->spinPolarized + 1) *
                 d_numEigenValues *
                 (1.5 +

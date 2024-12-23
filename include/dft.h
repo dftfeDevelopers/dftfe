@@ -529,9 +529,8 @@ namespace dftfe
       chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
       std::vector<double> &                           residualNormWaveFunctions,
       const bool                                      computeResidual,
-      const bool                                      isSpectrumSplit = false,
-      const bool                                      useMixedPrec    = false,
-      const bool                                      isFirstScf      = false);
+      const bool                                      useMixedPrec = false,
+      const bool                                      isFirstScf   = false);
 
 
 #ifdef DFTFE_WITH_DEVICE
@@ -550,7 +549,6 @@ namespace dftfe
       std::vector<double> &residualNormWaveFunctions,
       const bool           computeResidual,
       const unsigned int   numberRayleighRitzAvoidancePasses = 0,
-      const bool           isSpectrumSplit                   = false,
       const bool           useMixedPrec                      = false,
       const bool           isFirstScf                        = false);
 #endif
@@ -1006,7 +1004,7 @@ namespace dftfe
      *@brief computes density nodal data from wavefunctions
      */
     void
-    computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting);
+    computeRhoNodalFromPSI();
 
 
     void
@@ -1151,8 +1149,7 @@ namespace dftfe
      *@brief Computes output electron-density from wavefunctions
      */
     void
-    compute_rhoOut(const bool isConsiderSpectrumSplitting,
-                   const bool isGroundState = false);
+    compute_rhoOut(const bool isGroundState = false);
 
     /**
      *@brief Mixing schemes for mixing electron-density

@@ -171,39 +171,6 @@ namespace dftfe
      */
     template <typename T>
     void
-    rayleighRitzGEPSpectrumSplitDirect(
-      operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-      elpaScalaManager &                                 elpaScala,
-      T *                                                X,
-      T *                                                Y,
-      const unsigned int                                 numberComponents,
-      const unsigned int                                 numberDofs,
-      const unsigned int                                 numberCoreStates,
-      const MPI_Comm &                                   mpiCommParent,
-      const MPI_Comm &                                   interBandGroupComm,
-      const MPI_Comm &                                   mpiCommDomain,
-      const bool                                         useMixedPrec,
-      std::vector<double> &                              eigenValues,
-      const dftParameters &                              dftParams);
-
-
-    /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
-     *  (serial version using LAPACK, parallel version using ScaLAPACK)
-     *
-     *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in]  X Given subspace as flattened array of multi-vectors.
-     *  @param[out] Y rotated subspace of top states
-     *  @param[in] numberComponents Number of vectors
-     *  @param[in] numberCoreStates Number of core states to be used for
-     * spectrum splitting
-     *  @param[in] mpiCommParent parent mpi communicator
-     *  @param[in] interBandGroupComm interpool communicator for parallelization
-     * over band groups
-     *  @param[in] mpiCommDomain domain decomposition communicator
-     *  @param[out] eigenValues of the Projected Hamiltonian
-     */
-    template <typename T>
-    void
     rayleighRitzSpectrumSplitDirect(
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       elpaScalaManager &                                 elpaScala,

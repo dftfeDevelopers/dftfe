@@ -114,7 +114,6 @@ namespace dftfe
 
     std::string  startingWFCType;
     bool         restrictToOnePass;
-    unsigned int numCoreWfcRR;
     unsigned int numCoreWfcXtHX;
     unsigned int wfcBlockSize;
     unsigned int chebyWfcBlockSize;
@@ -132,10 +131,8 @@ namespace dftfe
     bool         useSubspaceProjectedSHEPGPU;
     bool         useMixedPrecCGS_SR;
     bool         useMixedPrecCGS_O;
-    bool         useMixedPrecXTHXSpectrumSplit;
     bool         useMixedPrecSubspaceRotRR;
     bool         useMixedPrecCommunOnlyXTHXCGSO;
-    unsigned int spectrumSplitStartingScfIter;
     bool         useELPA;
     bool         constraintsParallelCheck;
     bool         createConstraintsFromSerialDofhandler;
