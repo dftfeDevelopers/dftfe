@@ -100,14 +100,14 @@ namespace dftfe
       for (dftfe::size_type index = globalThreadId; index < size;
            index += blockDim.x * gridDim.x)
         {
-          dftfe::size_type rowId    = index / B;
-          dftfe::size_type columnId = index % B;
-          if (rowId < B && columnId < B)
-            dftfe::utils::copyValue(valueType1DstArray + rowId * B + columnId,
+          const unsigned int ibdof = index / D;
+          const unsigned int ivec  = index % D;
+          if (ivec < B)
+            dftfe::utils::copyValue(valueType1DstArray + ibdof * B + ivec,
                                     valueType1SrcArray[index]);
           else
-            dftfe::utils::copyValue(valueType2DstArray + rowId * DRem +
-                                      columnId,
+            dftfe::utils::copyValue(valueType2DstArray + (ibdof - B) +
+                                      (ivec - B) * B,
                                     valueType1SrcArray[index]);
         }
     }
