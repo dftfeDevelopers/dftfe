@@ -1708,6 +1708,12 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       d_tauInNodalValues, d_tauOutNodalValues, d_tauResidualNodalValues;
 
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      d_kSquareWeightedWfcSquareQuadValues;
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      d_conjUKGradUMinusUKConjGradUQuadValues;
 
     // std::map<dealii::CellId, std::vector<double>> d_phiInValues,
     // d_phiOutValues;

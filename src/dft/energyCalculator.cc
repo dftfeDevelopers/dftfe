@@ -1265,9 +1265,9 @@ namespace dftfe
                    2.0) *
                   basisOperationsPtr
                     ->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
-              }
-          }
-      } // cell loop
+              } // TauMGGA loop
+          }     // iQuad loop
+      }         // cell loop
   }
 
 

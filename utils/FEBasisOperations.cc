@@ -1868,7 +1868,7 @@ namespace dftfe
         const std::pair<unsigned int, unsigned int> cellRangeTotal,
         dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &weights,
         dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
-          &weightedCellNjGradNiPlusNiGradNjMatrix) const
+          &weightedCellNjGradNiMinusNiGradNjMatrix) const
     {
       const unsigned int nCells        = this->nCells();
       const unsigned int nQuadsPerCell = this->nQuadsPerCell();
@@ -1943,7 +1943,7 @@ namespace dftfe
             nDofsPerCell,
             0,
             &scalarCoeffAlpha,
-            weightedCellNjGradNiPlusNiGradNjMatrix.data() +
+            weightedCellNjGradNiMinusNiGradNjMatrix.data() +
               (cellRange.first - cellRangeTotal.first) * nDofsPerCell *
                 nDofsPerCell,
             nDofsPerCell,
@@ -1965,7 +1965,7 @@ namespace dftfe
             nDofsPerCell,
             nDofsPerCell * nQuadsPerCell,
             &scalarCoeffAlpha,
-            weightedCellNjGradNiPlusNiGradNjMatrix.data() +
+            weightedCellNjGradNiMinusNiGradNjMatrix.data() +
               (cellRange.first - cellRangeTotal.first) * nDofsPerCell *
                 nDofsPerCell,
             nDofsPerCell,

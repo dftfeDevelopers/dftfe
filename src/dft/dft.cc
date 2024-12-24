@@ -2722,6 +2722,8 @@ namespace dftfe
               {
                 std::vector<double> norms(
                   d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+                std::vector<double> normsTau(
+                  d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
                 // Update the history of mixing variables
                 if (scfIter == 1)
                   d_densityResidualQuadValues.resize(
@@ -2807,6 +2809,12 @@ namespace dftfe
                           d_basisOperationsPtrElectroHost->JxWBasisData(),
                           true);
 
+                        normsTau[iComp] = computeResidualQuadData(
+                          d_tauOutQuadValues[iComp],
+                          d_tauInQuadValues[iComp],
+                          d_tauResidualQuadValues[iComp],
+                          d_basisOperationsPtrElectroHost->JxWBasisData(),
+                          true);
                         d_mixingScheme.addVariableToInHist(
                           iComp == 0 ? mixingVariable::tau :
                                        mixingVariable::tauMagZ,
@@ -2849,17 +2857,21 @@ namespace dftfe
                 // Compute the mixing coefficients
                 d_mixingScheme.computeAndersonMixingCoeff(
                   d_dftParamsPtr->spinPolarized == 1 ?
-                    (isTauMGGA ?
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::tau,
-                                                   mixingVariable::magZ,
-                                                   mixingVariable::tauMagZ} :
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::magZ}) :
-                    (isTauMGGA ?
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::tau} :
-                       std::vector<mixingVariable>{mixingVariable::rho}));
+                    // (isTauMGGA ?
+                    //    std::vector<mixingVariable>{mixingVariable::rho,
+                    //                                mixingVariable::tau,
+                    //                                mixingVariable::magZ,
+                    //                                mixingVariable::tauMagZ} :
+                    //    std::vector<mixingVariable>{mixingVariable::rho,
+                    //                                mixingVariable::magZ}) :
+                    // (isTauMGGA ?
+                    //    std::vector<mixingVariable>{mixingVariable::rho,
+                    //                                mixingVariable::tau} :
+                    //    std::vector<mixingVariable>{mixingVariable::rho}));
+
+                    std::vector<mixingVariable>{mixingVariable::rho,
+                                                mixingVariable::magZ} :
+                    std::vector<mixingVariable>{mixingVariable::rho});
 
                 // update the mixing variables
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
@@ -2916,11 +2928,22 @@ namespace dftfe
 
                 if (d_dftParamsPtr->verbosity >= 1)
                   for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
-                    pcout << d_dftParamsPtr->mixingMethod
-                          << " mixing, L2 norm of "
-                          << (iComp == 0 ? "electron" : "magnetization")
-                          << "-density difference: " << norms[iComp]
-                          << std::endl;
+                    {
+                      pcout << d_dftParamsPtr->mixingMethod
+                            << " mixing, L2 norm of "
+                            << (iComp == 0 ? "electron" : "magnetization")
+                            << "-density difference: " << norms[iComp]
+                            << std::endl;
+
+                      if (isTauMGGA)
+                        {
+                          pcout << d_dftParamsPtr->mixingMethod
+                                << " mixing, L2 norm of "
+                                << (iComp == 0 ? "Tau" : "magnetization")
+                                << " difference: " << normsTau[iComp]
+                                << std::endl;
+                        }
+                    }
               }
 
             if (d_dftParamsPtr->verbosity >= 1 &&

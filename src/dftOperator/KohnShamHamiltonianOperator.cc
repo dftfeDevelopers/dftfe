@@ -190,6 +190,11 @@ namespace dftfe
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID, false);
     const unsigned int numberQuadraturePoints =
       d_basisOperationsPtrHost->nQuadsPerCell();
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
            ++kPointIndex)
@@ -257,6 +262,15 @@ namespace dftfe
           d_invJacKPointTimesJxW[kPointIndex].copyFrom(
             d_invJacKPointTimesJxWHost);
 #endif
+          auto &d_halfKSquareTimesderExcwithTauJxWHost =
+            d_halfKSquareTimesderExcwithTauJxW[kPointIndex];
+          d_halfKSquareTimesderExcwithTauJxWHost.resize(
+            isTauMGGA ? nCells * numberQuadraturePoints : 0, 0.0);
+
+          auto &d_derExcwithTauTimesinvJacKpointTimesJxWHost =
+            d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex];
+          d_derExcwithTauTimesinvJacKpointTimesJxWHost.resize(
+            isTauMGGA ? nCells * numberQuadraturePoints * 3 : 0, 0.0);
         }
     computing_timer.leave_subsection("KohnShamHamiltonianOperator setup");
   }
@@ -613,9 +627,6 @@ namespace dftfe
                                                 dftfe::utils::MemorySpace::HOST>
                       &d_halfKSquareTimesderExcwithTauJxWHost =
                         d_halfKSquareTimesderExcwithTauJxW[kPointIndex];
-                    d_halfKSquareTimesderExcwithTauJxWHost.resize(
-                      totalLocallyOwnedCells * numberQuadraturePointsPerCell,
-                      0.0);
 
                     for (unsigned int iQuad = 0;
                          iQuad < numberQuadraturePointsPerCell;
@@ -633,16 +644,8 @@ namespace dftfe
                             cellJxWPtr[iQuad];
                       }
 
-                    dftfe::utils::MemoryStorage<double,
-                                                dftfe::utils::MemorySpace::HOST>
-                      &d_derExcwithTauTimesinvJacKpointTimesJxWHost =
-                        d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex];
-
-                    d_derExcwithTauTimesinvJacKpointTimesJxWHost.resize(
-                      isTauMGGA ? totalLocallyOwnedCells *
-                                    numberQuadraturePointsPerCell * 3 :
-                                  0,
-                      0.0);
+                    auto &d_derExcwithTauTimesinvJacKpointTimesJxWHost =
+                      d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex];
 
                     if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
                       {
@@ -692,8 +695,8 @@ namespace dftfe
                               {
                                 d_derExcwithTauTimesinvJacKpointTimesJxWHost
                                   [iCell * numberQuadraturePointsPerCell * 3 +
-                                   3 * iQuad + iDim] =
-                                    -inverseJacobiansQuadPtr[iDim] *
+                                   iQuad * 3 + iDim] =
+                                    -0.5 * inverseJacobiansQuadPtr[iDim] *
                                     kPointCoords[iDim] * cellJxWPtr[iQuad] *
                                     (pdexTauSpinIndex[iQuad] +
                                      pdecTauSpinIndex[iQuad]);
@@ -1149,44 +1152,6 @@ namespace dftfe
                         cellRange,
                         d_derExcwithTauTimesinvJacKpointTimesJxW[d_kPointIndex],
                         tempHamMatrixImagBlock);
-
-                    // auto tempImagBlock = tempHamMatrixImagBlock;
-
-                    // tempImagBlock.resize(tempHamMatrixImagBlock.size(), 0.0);
-
-                    // d_basisOperationsPtr->computeWeightedCellNjGradNiMatrix(
-                    //   cellRange,
-                    //   d_derExcwithTauTimesinvJacKpointTimesJxW[d_kPointIndex],
-                    //   tempImagBlock);
-
-                    // pcout << "Debug1 " << std::endl;
-                    // for (unsigned int cellNum = cellRange.first;
-                    //      cellNum < cellRange.second;
-                    //      cellNum++)
-                    //   {
-                    //     for (unsigned int iDim = 0; iDim < nDofsPerCell;
-                    //     ++iDim)
-                    //       {
-                    //         for (unsigned int jDim = 0; jDim < nDofsPerCell;
-                    //              ++jDim)
-                    //           {
-                    //             // if (cellNum == 0)
-                    //             //   {
-                    //             //     std::cout << "debug 2: " << iDim <<
-                    //             ","
-                    //             //               << jDim << std::endl;
-                    //             //   }
-                    //             tempHamMatrixImagBlock[cellNum * nDofsPerCell
-                    //             *
-                    //                                      nDofsPerCell +
-                    //                                    iDim * nDofsPerCell +
-                    //                                    jDim] -=
-                    //               tempImagBlock[cellNum * nDofsPerCell *
-                    //                               nDofsPerCell +
-                    //                             jDim * nDofsPerCell + iDim];
-                    //           }
-                    //       }
-                    //   }
                   }
               }
             d_BLASWrapperPtr->copyRealArrsToComplexArr(

@@ -99,6 +99,10 @@ namespace dftfe
           {
             d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
+            // d_kSquareWeightedWfcSquareQuadValues.resize(
+            //   d_dftParamsPtr->spinPolarized = 1 ? 2 : 1);
+            // d_conjUKGradUMinusUKConjGradUQuadValues.resize(
+            //   d_dftParamsPtr->spinPolarized = 1 ? 2 : 1);
           }
         for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
              ++iComp)
@@ -109,7 +113,13 @@ namespace dftfe
           d_gradDensityOutQuadValues[iComp].resize(3 * nQuadsPerCell * nCells);
 
         for (unsigned int iComp = 0; iComp < d_tauOutQuadValues.size(); ++iComp)
-          d_tauOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
+          {
+            d_tauOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
+            // d_kSquareWeightedWfcSquareQuadValues[iComp].resize(nQuadsPerCell *
+            //                                                    nCells);
+            // d_conjUKGradUMinusUKConjGradUQuadValues[iComp].resize(
+            //   nQuadsPerCell * nCells);
+          }
 
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
@@ -137,31 +147,83 @@ namespace dftfe
                               d_numEigenValues != d_numEigenValuesRR);
 #endif
         if (!d_dftParamsPtr->useDevice)
-          computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
-                            &d_eigenVectorsRotFracDensityFlattenedHost,
-                            d_numEigenValues,
-                            d_numEigenValuesRR,
-                            eigenValues,
-                            fermiEnergy,
-                            fermiEnergyUp,
-                            fermiEnergyDown,
-                            d_basisOperationsPtrHost,
-                            d_BLASWrapperPtrHost,
-                            d_densityDofHandlerIndex,
-                            d_densityQuadratureId,
-                            d_kPointCoordinates,
-                            d_kPointWeights,
-                            d_densityOutQuadValues,
-                            d_gradDensityOutQuadValues,
-                            d_tauOutQuadValues,
-                            isGradDensityDataDependent,
-                            isTauMGGA,
-                            d_mpiCommParent,
-                            interpoolcomm,
-                            interBandGroupComm,
-                            *d_dftParamsPtr,
-                            isConsiderSpectrumSplitting &&
-                              d_numEigenValues != d_numEigenValuesRR);
+          {
+            computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
+                              &d_eigenVectorsRotFracDensityFlattenedHost,
+                              d_numEigenValues,
+                              d_numEigenValuesRR,
+                              eigenValues,
+                              fermiEnergy,
+                              fermiEnergyUp,
+                              fermiEnergyDown,
+                              d_basisOperationsPtrHost,
+                              d_BLASWrapperPtrHost,
+                              d_densityDofHandlerIndex,
+                              d_densityQuadratureId,
+                              d_kPointCoordinates,
+                              d_kPointWeights,
+                              d_densityOutQuadValues,
+                              d_gradDensityOutQuadValues,
+                              d_tauOutQuadValues,
+                              isGradDensityDataDependent,
+                              isTauMGGA,
+                              d_mpiCommParent,
+                              interpoolcomm,
+                              interBandGroupComm,
+                              *d_dftParamsPtr,
+                              isConsiderSpectrumSplitting &&
+                                d_numEigenValues != d_numEigenValuesRR);
+
+            // if (isTauMGGA)
+            //   {
+            //     if (std::is_same<dataTypes::number,
+            //                      std::complex<double>>::value)
+            //       {
+            //         computeExtraTermsForEnergyCalcTauMgga(
+            //           &d_eigenVectorsFlattenedHost,
+            //           d_numEigenValues,
+            //           eigenValues,
+            //           fermiEnergy,
+            //           fermiEnergyUp,
+            //           fermiEnergyDown,
+            //           d_basisOperationsPtrHost,
+            //           d_BLASWrapperPtrHost,
+            //           d_densityQuadratureId,
+            //           d_kPointCoordinates,
+            //           d_kPointWeights,
+            //           d_kSquareWeightedWfcSquareQuadValues,
+            //           d_conjUKGradUMinusUKConjGradUQuadValues,
+            //           d_mpiCommParent,
+            //           interpoolcomm,
+            //           interBandGroupComm,
+            //           *d_dftParamsPtr,
+            //           isConsiderSpectrumSplitting &&
+            //             d_numEigenValues != d_numEigenValuesRR);
+            //         {
+            //           double sumVal = 0.0;
+            //           for (double elem :
+            //                d_kSquareWeightedWfcSquareQuadValues[0])
+            //             {
+            //               sumVal += elem * elem;
+            //             }
+
+
+            //           MPI_Allreduce(MPI_IN_PLACE,
+            //                         &sumVal,
+            //                         1,
+            //                         MPI_DOUBLE,
+            //                         MPI_SUM,
+            //                         d_mpiCommParent);
+
+            //           if (this_mpi_process == 0)
+            //             {
+            //               std::cout << "L2 Norm square of extraTerm: " << sumVal
+            //                         << std::endl;
+            //             }
+            //         }
+            //       }
+            //   }
+          }
         // normalizeRhoOutQuadValues();
 
         if (d_dftParamsPtr->computeEnergyEverySCF || isGroundState)
