@@ -574,8 +574,12 @@ namespace dftfe
     std::vector<unsigned int> d_atomStartIndexGlobal;
     unsigned int              d_totalNumSphericalFunctionsGlobal;
 
-    std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>
+    std::vector<std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>>
       d_CMatrixGlobal;
+
+    std::set<unsigned int> d_setOfAtomicNumber;
+    std::vector<unsigned int>d_mapAtomIdToDenseVMatrixStart;
+    std::vector<unsigned int> d_mapAtomIdToSpeciesIndex;
 
     void
     computeGlobalCMatrixVector(
