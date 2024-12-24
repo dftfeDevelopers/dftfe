@@ -56,8 +56,6 @@ subsection SCF parameters
     set REUSE LANCZOS UPPER BOUND                            = false
     set SCALAPACKPROCS                                       = 0
     set SCALAPACK BLOCK SIZE                                 = 0
-    set SPECTRUM SPLIT CORE EIGENSTATES                      = 0
-    set SPECTRUM SPLIT STARTING SCF ITER                     = 0
     set SUBSPACE PROJ SHEP GPU                               = true
     set SUBSPACE ROT DOFS BLOCK SIZE                         = 10000
     set USE ELPA                                             = true
@@ -66,7 +64,6 @@ subsection SCF parameters
     set USE MIXED PREC CHEBY                                 = false
     set USE MIXED PREC COMMUN ONLY XTX XTHX                  = false
     set USE MIXED PREC RR_SR                                 = false
-    set USE MIXED PREC XTHX SPECTRUM SPLIT                   = false
     set WFC BLOCK SIZE                                       = 400
     set XTHX CORE EIGENSTATES                                = 0
   end  

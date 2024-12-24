@@ -66,8 +66,5 @@ subsection SCF parameters
       set SUBSPACE ROT DOFS BLOCK SIZE=500
       set SCALAPACKPROCS=2
       set USE ELPA=true
-      set SPECTRUM SPLIT CORE EIGENSTATES=3
-      set SPECTRUM SPLIT STARTING SCF ITER=2
-      set USE MIXED PREC XTHX SPECTRUM SPLIT=true
   end
 end

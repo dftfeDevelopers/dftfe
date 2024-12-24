@@ -129,7 +129,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
+          if (dftParams.numCoreWfcXtHX > 0 && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR step");
           else
@@ -138,44 +138,38 @@ namespace dftfe
         }
 
 
-      if (useMixedPrecOverall)
+      if (useMixedPrecOverall && dftParams.numCoreWfcXtHX > 0)
         {
           if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
-            XtHXMixedPrecCommunOverlapComputeCommun(
-              operatorMatrix,
-              X,
-              Xb,
-              HXb,
-              M,
-              N,
-              dftParams.useMixedPrecXTHXSpectrumSplit ?
-                dftParams.numCoreWfcRR :
-                dftParams.numCoreWfcXtHX,
-              BLASWrapperPtr,
-              processGrid,
-              projHamPar,
-              devicecclMpiCommDomain,
-              mpiCommDomain,
-              interBandGroupComm,
-              dftParams);
+            XtHXMixedPrecCommunOverlapComputeCommun(operatorMatrix,
+                                                    X,
+                                                    Xb,
+                                                    HXb,
+                                                    M,
+                                                    N,
+                                                    dftParams.numCoreWfcXtHX,
+                                                    BLASWrapperPtr,
+                                                    processGrid,
+                                                    projHamPar,
+                                                    devicecclMpiCommDomain,
+                                                    mpiCommDomain,
+                                                    interBandGroupComm,
+                                                    dftParams);
           else
-            XtHXMixedPrecOverlapComputeCommun(
-              operatorMatrix,
-              X,
-              Xb,
-              HXb,
-              M,
-              N,
-              dftParams.useMixedPrecXTHXSpectrumSplit ?
-                dftParams.numCoreWfcRR :
-                dftParams.numCoreWfcXtHX,
-              BLASWrapperPtr,
-              processGrid,
-              projHamPar,
-              devicecclMpiCommDomain,
-              mpiCommDomain,
-              interBandGroupComm,
-              dftParams);
+            XtHXMixedPrecOverlapComputeCommun(operatorMatrix,
+                                              X,
+                                              Xb,
+                                              HXb,
+                                              M,
+                                              N,
+                                              dftParams.numCoreWfcXtHX,
+                                              BLASWrapperPtr,
+                                              processGrid,
+                                              projHamPar,
+                                              devicecclMpiCommDomain,
+                                              mpiCommDomain,
+                                              interBandGroupComm,
+                                              dftParams);
         }
       else
         {
@@ -212,7 +206,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
+          if (dftParams.numCoreWfcXtHX > 0 && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR step");
           else
@@ -534,41 +528,35 @@ namespace dftfe
       if (useMixedPrecOverall)
         {
           if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
-            XtHXMixedPrecCommunOverlapComputeCommun(
-              operatorMatrix,
-              X,
-              Xb,
-              HXb,
-              M,
-              N,
-              dftParams.useMixedPrecXTHXSpectrumSplit ?
-                dftParams.numCoreWfcRR :
-                dftParams.numCoreWfcXtHX,
-              BLASWrapperPtr,
-              processGrid,
-              projHamPar,
-              devicecclMpiCommDomain,
-              mpiCommDomain,
-              interBandGroupComm,
-              dftParams);
+            XtHXMixedPrecCommunOverlapComputeCommun(operatorMatrix,
+                                                    X,
+                                                    Xb,
+                                                    HXb,
+                                                    M,
+                                                    N,
+                                                    dftParams.numCoreWfcXtHX,
+                                                    BLASWrapperPtr,
+                                                    processGrid,
+                                                    projHamPar,
+                                                    devicecclMpiCommDomain,
+                                                    mpiCommDomain,
+                                                    interBandGroupComm,
+                                                    dftParams);
           else
-            XtHXMixedPrecOverlapComputeCommun(
-              operatorMatrix,
-              X,
-              Xb,
-              HXb,
-              M,
-              N,
-              dftParams.useMixedPrecXTHXSpectrumSplit ?
-                dftParams.numCoreWfcRR :
-                dftParams.numCoreWfcXtHX,
-              BLASWrapperPtr,
-              processGrid,
-              projHamPar,
-              devicecclMpiCommDomain,
-              mpiCommDomain,
-              interBandGroupComm,
-              dftParams);
+            XtHXMixedPrecOverlapComputeCommun(operatorMatrix,
+                                              X,
+                                              Xb,
+                                              HXb,
+                                              M,
+                                              N,
+                                              dftParams.numCoreWfcXtHX,
+                                              BLASWrapperPtr,
+                                              processGrid,
+                                              projHamPar,
+                                              devicecclMpiCommDomain,
+                                              mpiCommDomain,
+                                              interBandGroupComm,
+                                              dftParams);
         }
       else
         {
@@ -836,660 +824,6 @@ namespace dftfe
         }
     }
 
-    void
-    rayleighRitzGEPSpectrumSplitDirect(
-      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      elpaScalaManager &                                   elpaScala,
-      dataTypes::number *                                  X,
-      dataTypes::number *                                  XFrac,
-      distributedDeviceVec<dataTypes::number> &            Xb,
-      distributedDeviceVec<dataTypes::number> &            HXb,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
-      const MPI_Comm &                                     mpiCommParent,
-      const MPI_Comm &                                     mpiCommDomain,
-      utils::DeviceCCLWrapper &devicecclMpiCommDomain,
-      const MPI_Comm &         interBandGroupComm,
-      std::vector<double> &    eigenValues,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                  BLASWrapperPtr,
-      const dftParameters &dftParams,
-      const bool           useMixedPrecOverall)
-    {
-      dealii::ConditionalOStream pcout(
-        std::cout,
-        (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0));
-
-      dealii::TimerOutput computing_timer(mpiCommDomain,
-                                          pcout,
-                                          dftParams.reproducible_output ||
-                                              dftParams.verbosity < 4 ?
-                                            dealii::TimerOutput::never :
-                                            dealii::TimerOutput::summary,
-                                          dealii::TimerOutput::wall_times);
-
-      const unsigned int rowsBlockSize = elpaScala.getScalapackBlockSize();
-      std::shared_ptr<const dftfe::ProcessGrid> processGrid =
-        elpaScala.getProcessGridDftfeScalaWrapper();
-
-      //
-      // SConj=X^{T}*XConj
-      //
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
-            computing_timer.enter_subsection(
-              "SConj=X^{T}XConj Mixed Prec, RR GEP step");
-          else
-            computing_timer.enter_subsection("SConj=X^{T}XConj, RR GEP step");
-        }
-
-
-      //
-      // compute overlap matrix
-      //
-      dftfe::ScaLAPACKMatrix<dataTypes::number> overlapMatPar(N,
-                                                              processGrid,
-                                                              rowsBlockSize);
-
-      if (processGrid->is_process_active())
-        std::fill(&overlapMatPar.local_el(0, 0),
-                  &overlapMatPar.local_el(0, 0) +
-                    overlapMatPar.local_m() * overlapMatPar.local_n(),
-                  dataTypes::number(0.0));
-
-      if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
-        {
-          if (dftParams.overlapComputeCommunOrthoRR)
-            linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-                operatorMatrix,
-                X,
-                Xb,
-                HXb,
-                M,
-                N,
-                dftParams.numCoreWfcXtHX,
-                BLASWrapperPtr,
-                mpiCommDomain,
-                devicecclMpiCommDomain,
-                interBandGroupComm,
-                processGrid,
-                overlapMatPar,
-                dftParams);
-          else
-            linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapack(operatorMatrix,
-                                                       X,
-                                                       Xb,
-                                                       HXb,
-                                                       M,
-                                                       N,
-                                                       dftParams.numCoreWfcXtHX,
-                                                       BLASWrapperPtr,
-                                                       mpiCommDomain,
-                                                       devicecclMpiCommDomain,
-                                                       interBandGroupComm,
-                                                       processGrid,
-                                                       overlapMatPar,
-                                                       dftParams);
-        }
-      else
-        {
-          if (dftParams.overlapComputeCommunOrthoRR)
-            linearAlgebraOperationsDevice::
-              fillParallelOverlapMatScalapackAsyncComputeCommun(
-                operatorMatrix,
-                X,
-                Xb,
-                HXb,
-                M,
-                N,
-                BLASWrapperPtr,
-                mpiCommDomain,
-                devicecclMpiCommDomain,
-                interBandGroupComm,
-                processGrid,
-                overlapMatPar,
-                dftParams);
-          else
-            linearAlgebraOperationsDevice::fillParallelOverlapMatScalapack(
-              operatorMatrix,
-              X,
-              Xb,
-              HXb,
-              M,
-              N,
-              BLASWrapperPtr,
-              mpiCommDomain,
-              devicecclMpiCommDomain,
-              interBandGroupComm,
-              processGrid,
-              overlapMatPar,
-              dftParams);
-        }
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
-            computing_timer.leave_subsection(
-              "SConj=X^{T}XConj Mixed Prec, RR GEP step");
-          else
-            computing_timer.leave_subsection("SConj=X^{T}XConj, RR GEP step");
-        }
-
-      // Sc=Lc*L^{T}
-      if (dftParams.deviceFineGrainedTimings)
-        computing_timer.enter_subsection(
-          "Cholesky and triangular matrix invert, RR GEP step");
-
-      dftfe::LAPACKSupport::Property overlapMatPropertyPostCholesky;
-      if (dftParams.useELPA)
-        {
-          // For ELPA cholesky only the upper triangular part of the hermitian
-          // matrix is required
-          dftfe::ScaLAPACKMatrix<dataTypes::number> overlapMatParConjTrans(
-            N, processGrid, rowsBlockSize);
-
-          if (processGrid->is_process_active())
-            std::fill(&overlapMatParConjTrans.local_el(0, 0),
-                      &overlapMatParConjTrans.local_el(0, 0) +
-                        overlapMatParConjTrans.local_m() *
-                          overlapMatParConjTrans.local_n(),
-                      dataTypes::number(0.0));
-
-          overlapMatParConjTrans.copy_conjugate_transposed(overlapMatPar);
-
-          if (processGrid->is_process_active())
-            {
-              int error;
-
-              if (dftParams.useELPADeviceKernel)
-                {
-#ifdef DFTFE_WITH_DEVICE_NVIDIA
-                  elpa_set_integer(elpaScala.getElpaHandle(),
-                                   "nvidia-gpu",
-                                   0,
-                                   &error);
-                  AssertThrow(error == ELPA_OK,
-                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#elif DFTFE_WITH_DEVICE_AMD
-                  elpa_set_integer(elpaScala.getElpaHandle(),
-                                   "amd-gpu",
-                                   0,
-                                   &error);
-                  AssertThrow(error == ELPA_OK,
-                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#endif
-                }
-
-
-              elpa_cholesky(elpaScala.getElpaHandle(),
-                            &overlapMatParConjTrans.local_el(0, 0),
-                            &error);
-              AssertThrow(error == ELPA_OK,
-                          dealii::ExcMessage(
-                            "DFT-FE Error: elpa_cholesky error."));
-
-              if (dftParams.useELPADeviceKernel)
-                {
-#ifdef DFTFE_WITH_DEVICE_NVIDIA
-                  elpa_set_integer(elpaScala.getElpaHandle(),
-                                   "nvidia-gpu",
-                                   1,
-                                   &error);
-                  AssertThrow(error == ELPA_OK,
-                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#elif DFTFE_WITH_DEVICE_AMD
-                  elpa_set_integer(elpaScala.getElpaHandle(),
-                                   "amd-gpu",
-                                   1,
-                                   &error);
-                  AssertThrow(error == ELPA_OK,
-                              dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#endif
-                }
-            }
-          overlapMatPar.copy_conjugate_transposed(overlapMatParConjTrans);
-          overlapMatPropertyPostCholesky =
-            dftfe::LAPACKSupport::Property::lower_triangular;
-        }
-      else
-        {
-          overlapMatPar.compute_cholesky_factorization();
-
-          overlapMatPropertyPostCholesky = overlapMatPar.get_property();
-        }
-
-      AssertThrow(
-        overlapMatPropertyPostCholesky ==
-          dftfe::LAPACKSupport::Property::lower_triangular,
-        dealii::ExcMessage(
-          "DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
-
-
-      // extract LConj
-      dftfe::ScaLAPACKMatrix<dataTypes::number> LMatPar(
-        N,
-        processGrid,
-        rowsBlockSize,
-        dftfe::LAPACKSupport::Property::lower_triangular);
-
-      if (processGrid->is_process_active())
-        for (unsigned int i = 0; i < LMatPar.local_n(); ++i)
-          {
-            const unsigned int glob_i = LMatPar.global_column(i);
-            for (unsigned int j = 0; j < LMatPar.local_m(); ++j)
-              {
-                const unsigned int glob_j = LMatPar.global_row(j);
-                if (glob_j < glob_i)
-                  LMatPar.local_el(j, i) = dataTypes::number(0);
-                else
-                  LMatPar.local_el(j, i) = overlapMatPar.local_el(j, i);
-              }
-          }
-
-      // compute LConj^{-1}
-      LMatPar.invert();
-      if (dftParams.deviceFineGrainedTimings)
-        computing_timer.leave_subsection(
-          "Cholesky and triangular matrix invert, RR GEP step");
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
-            computing_timer.enter_subsection(
-              "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
-          else
-            computing_timer.enter_subsection(
-              "X^{T}=Lconj^{-1}*X^{T}, RR GEP step");
-        }
-
-      //
-      // X^{T}=LConj^{-1}*X^{T}
-      //
-      if (useMixedPrecOverall && dftParams.useMixedPrecCGS_SR)
-        subspaceRotationCGSMixedPrecScalapack(X,
-                                              M,
-                                              N,
-                                              BLASWrapperPtr,
-                                              processGrid,
-                                              mpiCommDomain,
-                                              devicecclMpiCommDomain,
-                                              interBandGroupComm,
-                                              LMatPar,
-                                              dftParams,
-                                              false);
-      else
-        subspaceRotationScalapack(X,
-                                  M,
-                                  N,
-                                  BLASWrapperPtr,
-                                  processGrid,
-                                  mpiCommDomain,
-                                  devicecclMpiCommDomain,
-                                  interBandGroupComm,
-                                  LMatPar,
-                                  dftParams,
-                                  false,
-                                  true);
-
-      const unsigned int numberBandGroups =
-        dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-
-
-      if (numberBandGroups > 1)
-        {
-          // band group parallelization data structures
-          const unsigned int bandGroupTaskId =
-            dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-          std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
-          dftUtils::createBandParallelizationIndices(
-            interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
-
-          const unsigned int vectorsBlockSize =
-            std::min(dftParams.wfcBlockSize, N);
-          for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
-            {
-              // Correct block dimensions if block "goes off edge of" the matrix
-              const unsigned int BVec = std::min(vectorsBlockSize, N - jvec);
-
-              if (!((jvec + BVec) <=
-                      bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
-                    (jvec + BVec) >
-                      bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
-                {
-                  // set to zero wavefunctions which are not inside a given band
-                  // paral group
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-                  setZeroKernel<<<(BVec +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                    BVec,
-                    M,
-                    N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(X),
-                    jvec);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-                  hipLaunchKernelGGL(
-                    setZeroKernel,
-                    (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                    0,
-                    0,
-                    BVec,
-                    M,
-                    N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(X),
-                    jvec);
-#endif
-                }
-            }
-
-
-
-          std::vector<dataTypes::number> eigenVectorsFlattenedHost(
-            M * N, dataTypes::number(0.0));
-
-          dftfe::utils::deviceMemcpyD2H(
-            dftfe::utils::makeDataTypeDeviceCompatible(
-              &eigenVectorsFlattenedHost[0]),
-            X,
-            M * N * sizeof(dataTypes::number));
-
-          MPI_Barrier(interBandGroupComm);
-
-
-          MPI_Allreduce(MPI_IN_PLACE,
-                        &eigenVectorsFlattenedHost[0],
-                        M * N,
-                        dataTypes::mpi_type_id(&eigenVectorsFlattenedHost[0]),
-                        MPI_SUM,
-                        interBandGroupComm);
-
-          MPI_Barrier(interBandGroupComm);
-
-          dftfe::utils::deviceMemcpyH2D(
-            X,
-            dftfe::utils::makeDataTypeDeviceCompatible(
-              &eigenVectorsFlattenedHost[0]),
-            M * N * sizeof(dataTypes::number));
-        }
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_SR && useMixedPrecOverall)
-            computing_timer.leave_subsection(
-              "X^{T}=Lconj^{-1}*X^{T} Mixed Prec, RR GEP step");
-          else
-            computing_timer.leave_subsection(
-              "X^{T}=Lconj^{-1}*X^{T}, RR GEP step");
-        }
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
-            computing_timer.enter_subsection(
-              "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
-          else
-            computing_timer.enter_subsection(
-              "HConjProj=X^{T}*HConj*XConj, RR GEP step");
-        }
-
-      //
-      // compute projected Hamiltonian HConjProj=X^{T}*HConj*XConj
-      //
-      dftfe::ScaLAPACKMatrix<dataTypes::number> projHamPar(N,
-                                                           processGrid,
-                                                           rowsBlockSize);
-      if (processGrid->is_process_active())
-        std::fill(&projHamPar.local_el(0, 0),
-                  &projHamPar.local_el(0, 0) +
-                    projHamPar.local_m() * projHamPar.local_n(),
-                  dataTypes::number(0.0));
-
-      if (useMixedPrecOverall && dftParams.useMixedPrecXTHXSpectrumSplit)
-        {
-          XtHXMixedPrecOverlapComputeCommun(operatorMatrix,
-                                            X,
-                                            Xb,
-                                            HXb,
-                                            M,
-                                            N,
-                                            Noc,
-                                            BLASWrapperPtr,
-                                            processGrid,
-                                            projHamPar,
-                                            devicecclMpiCommDomain,
-                                            mpiCommDomain,
-                                            interBandGroupComm,
-                                            dftParams);
-        }
-      else
-        {
-          if (dftParams.overlapComputeCommunOrthoRR)
-            XtHXOverlapComputeCommun(operatorMatrix,
-                                     X,
-                                     Xb,
-                                     HXb,
-                                     M,
-                                     N,
-                                     BLASWrapperPtr,
-                                     processGrid,
-                                     projHamPar,
-                                     devicecclMpiCommDomain,
-                                     mpiCommDomain,
-                                     interBandGroupComm,
-                                     dftParams);
-          else
-            XtHX(operatorMatrix,
-                 X,
-                 Xb,
-                 HXb,
-                 M,
-                 N,
-                 BLASWrapperPtr,
-                 processGrid,
-                 projHamPar,
-                 devicecclMpiCommDomain,
-                 mpiCommDomain,
-                 interBandGroupComm,
-                 dftParams);
-        }
-
-      // Construct the full HConjProj matrix
-      dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParConjTrans(
-        N, processGrid, rowsBlockSize);
-
-      if (processGrid->is_process_active())
-        std::fill(&projHamParConjTrans.local_el(0, 0),
-                  &projHamParConjTrans.local_el(0, 0) +
-                    projHamParConjTrans.local_m() *
-                      projHamParConjTrans.local_n(),
-                  dataTypes::number(0.0));
-
-
-      projHamParConjTrans.copy_conjugate_transposed(projHamPar);
-      if (dftParams.useELPA)
-        projHamPar.add(projHamParConjTrans,
-                       dataTypes::number(-1.0),
-                       dataTypes::number(-1.0));
-      else
-        projHamPar.add(projHamParConjTrans,
-                       dataTypes::number(1.0),
-                       dataTypes::number(1.0));
-
-
-      if (processGrid->is_process_active())
-        for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
-          {
-            const unsigned int glob_i = projHamPar.global_column(i);
-            for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
-              {
-                const unsigned int glob_j = projHamPar.global_row(j);
-                if (glob_i == glob_j)
-                  projHamPar.local_el(j, i) *= dataTypes::number(0.5);
-              }
-          }
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecXTHXSpectrumSplit && useMixedPrecOverall)
-            computing_timer.leave_subsection(
-              "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR GEP step");
-          else
-            computing_timer.leave_subsection(
-              "HConjProj=X^{T}*HConj*XConj, RR GEP step");
-        }
-
-
-      dftfe::ScaLAPACKMatrix<dataTypes::number> projHamParCopy(N,
-                                                               processGrid,
-                                                               rowsBlockSize);
-
-      //
-      // compute standard eigendecomposition HConjProj: {QConj,D}
-      // HConjProj=QConj*D*QConj^{C}
-      //
-      const unsigned int Nfr = N - Noc;
-      eigenValues.resize(Nfr);
-      if (dftParams.useELPA)
-        {
-          if (dftParams.deviceFineGrainedTimings)
-            computing_timer.enter_subsection("ELPA eigen decomp, RR step");
-          std::vector<double>                       allEigenValues(N, 0.0);
-          dftfe::ScaLAPACKMatrix<dataTypes::number> eigenVectors(N,
-                                                                 processGrid,
-                                                                 rowsBlockSize);
-
-          if (processGrid->is_process_active())
-            std::fill(&eigenVectors.local_el(0, 0),
-                      &eigenVectors.local_el(0, 0) +
-                        eigenVectors.local_m() * eigenVectors.local_n(),
-                      dataTypes::number(0.0));
-
-          if (processGrid->is_process_active())
-            {
-              int error;
-              elpa_eigenvectors(elpaScala.getElpaHandlePartialEigenVec(),
-                                &projHamPar.local_el(0, 0),
-                                &allEigenValues[0],
-                                &eigenVectors.local_el(0, 0),
-                                &error);
-              AssertThrow(
-                error == ELPA_OK,
-                dealii::ExcMessage(
-                  "DFT-FE Error: elpa_eigenvectors error in case spectrum splitting."));
-            }
-
-          for (unsigned int i = 0; i < Nfr; ++i)
-            eigenValues[Nfr - i - 1] = -allEigenValues[i];
-
-          MPI_Bcast(
-            &eigenValues[0], eigenValues.size(), MPI_DOUBLE, 0, mpiCommDomain);
-
-
-          dftfe::ScaLAPACKMatrix<dataTypes::number> permutedIdentityMat(
-            N, processGrid, rowsBlockSize);
-          if (processGrid->is_process_active())
-            std::fill(&permutedIdentityMat.local_el(0, 0),
-                      &permutedIdentityMat.local_el(0, 0) +
-                        permutedIdentityMat.local_m() *
-                          permutedIdentityMat.local_n(),
-                      dataTypes::number(0.0));
-
-          if (processGrid->is_process_active())
-            for (unsigned int i = 0; i < permutedIdentityMat.local_m(); ++i)
-              {
-                const unsigned int glob_i = permutedIdentityMat.global_row(i);
-                if (glob_i < Nfr)
-                  {
-                    for (unsigned int j = 0; j < permutedIdentityMat.local_n();
-                         ++j)
-                      {
-                        const unsigned int glob_j =
-                          permutedIdentityMat.global_column(j);
-                        if (glob_j < Nfr)
-                          {
-                            const unsigned int rowIndexToSetOne =
-                              (Nfr - 1) - glob_j;
-                            if (glob_i == rowIndexToSetOne)
-                              permutedIdentityMat.local_el(i, j) =
-                                dataTypes::number(1.0);
-                          }
-                      }
-                  }
-              }
-
-          eigenVectors.mmult(projHamPar, permutedIdentityMat);
-
-          if (dftParams.deviceFineGrainedTimings)
-            computing_timer.leave_subsection("ELPA eigen decomp, RR step");
-        }
-      else
-        {
-          if (dftParams.deviceFineGrainedTimings)
-            computing_timer.enter_subsection("ScaLAPACK eigen decomp, RR step");
-          eigenValues = projHamPar.eigenpairs_hermitian_by_index_MRRR(
-            std::make_pair(Noc, N - 1), true);
-          if (dftParams.deviceFineGrainedTimings)
-            computing_timer.leave_subsection("ScaLAPACK eigen decomp, RR step");
-        }
-
-      linearAlgebraOperations::internal::broadcastAcrossInterCommScaLAPACKMat(
-        processGrid, projHamPar, interBandGroupComm, 0);
-
-      /*
-         MPI_Bcast(&eigenValues[0],
-         eigenValues.size(),
-         MPI_DOUBLE,
-         0,
-         interBandGroupComm);
-       */
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          computing_timer.enter_subsection(
-            "Xfr^{T}={QfrConj}^{C}*X^{T}, RR GEP step");
-        }
-
-      //
-      // rotate the basis in the subspace
-      // Xfr^{T}={QfrConj}^{C}*X^{T}
-      //
-      projHamParCopy.copy_conjugate_transposed(projHamPar);
-
-      subspaceRotationSpectrumSplitScalapack(X,
-                                             XFrac,
-                                             M,
-                                             N,
-                                             Nfr,
-                                             BLASWrapperPtr,
-                                             processGrid,
-                                             mpiCommDomain,
-                                             devicecclMpiCommDomain,
-                                             projHamParCopy,
-                                             dftParams,
-                                             false);
-
-      if (dftParams.deviceFineGrainedTimings)
-        {
-          dftfe::utils::deviceSynchronize();
-          computing_timer.leave_subsection(
-            "Xfr^{T}={QfrConj}^{C}*X^{T}, RR GEP step");
-        }
-    }
 
 
     void
