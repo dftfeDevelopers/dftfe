@@ -2357,7 +2357,7 @@ namespace dftfe
               {
                 unsigned int iAtom = d_listOfiAtomInSpecies[Znum][atomIndex];
                 unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
-                BLASWrapperHostPtr->xcopy(numSphFunc*d_numberWaveFunctions,
+                d_BLASWrapperPtr->xcopy(numSphFunc*d_numberWaveFunctions,
                                           &d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
                                                                               [atomIndex*numSphFunc*d_numberWaveFunctions],
                                           1,
@@ -2373,7 +2373,7 @@ namespace dftfe
               {
                 unsigned int iAtom = d_listOfiAtomInSpecies[Znum][atomIndex];
                 unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
-                BLASWrapperHostPtr->xcopy(numSphFunc*d_numberWaveFunctions,
+                d_BLASWrapperPtr->xcopy(numSphFunc*d_numberWaveFunctions,
                                           d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
                                                                              [atomIndex*numSphFunc*d_numberWaveFunctions],
                                           1,
@@ -2715,7 +2715,7 @@ namespace dftfe
               {
                 unsigned int iAtom = d_listOfiAtomInSpecies[Znum][atomIndex];
                 unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
-                BLASWrapperHostPtr->xcopy(numSphFunc*d_numberWaveFunctions,
+                d_BLASWrapperPtr->xcopy(numSphFunc*d_numberWaveFunctions,
                                           &d_sphericalFnTimesWavefunMatrix[atomId][0],
                                           1,
                                           d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
@@ -2731,7 +2731,7 @@ namespace dftfe
               {
                 unsigned int iAtom = d_listOfiAtomInSpecies[Znum][atomIndex];
                 unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
-                BLASWrapperHostPtr->xcopy(numSphFunc*d_numberWaveFunctions,
+                d_BLASWrapperPtr->xcopy(numSphFunc*d_numberWaveFunctions,
                                           d_couplingMatrixTimesVectorDevice.begin() + iAtom*d_maxSingleAtomContribution*d_numberWaveFunctions,
                                           1,
                                           d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
