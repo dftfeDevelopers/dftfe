@@ -590,9 +590,9 @@ namespace dftfe
       {
         if (d_dftParamsPtr->TVal < 1000)
           {
-            d_dftParamsPtr->numCoreWfcXtHX = 0.8 * numElectrons / 2.0;
+            d_dftParamsPtr->numCoreWfcForMixedPrecRR = 0.8 * numElectrons / 2.0;
             pcout << " Setting SPECTRUM SPLIT CORE EIGENSTATES to be "
-                  << d_dftParamsPtr->numCoreWfcXtHX
+                  << d_dftParamsPtr->numCoreWfcForMixedPrecRR
                   << std::endl; //@Kartick check if this is okay
           }
       }
@@ -734,10 +734,11 @@ namespace dftfe
           }
 
         if (d_dftParamsPtr->algoType == "FAST")
-          d_dftParamsPtr->numCoreWfcXtHX =
-            std::floor(d_dftParamsPtr->numCoreWfcXtHX /
+          d_dftParamsPtr->numCoreWfcForMixedPrecRR =
+            std::floor(d_dftParamsPtr->numCoreWfcForMixedPrecRR /
                        d_dftParamsPtr->wfcBlockSize) *
-            d_dftParamsPtr->numCoreWfcXtHX; //@Kartick check if this is okay
+            d_dftParamsPtr
+              ->numCoreWfcForMixedPrecRR; //@Kartick check if this is okay
 
         if (d_dftParamsPtr->verbosity >= 1)
           {
@@ -751,7 +752,7 @@ namespace dftfe
             if (d_dftParamsPtr->algoType == "FAST")
               pcout
                 << " Setting CORE EIGENSTATES for MIXED PRECISION STRATEGY on  Device run to be "
-                << d_dftParamsPtr->numCoreWfcXtHX << std::endl;
+                << d_dftParamsPtr->numCoreWfcForMixedPrecRR << std::endl;
           }
       }
 #endif
@@ -805,7 +806,7 @@ namespace dftfe
       determineOrbitalFilling();
 
     AssertThrow(
-      d_dftParamsPtr->numCoreWfcXtHX <= d_numEigenValues,
+      d_dftParamsPtr->numCoreWfcForMixedPrecRR <= d_numEigenValues,
       dealii::ExcMessage(
         "DFT-FE Error: Incorrect input value used- CORE EIGENSTATES should be less than the total number of wavefunctions."));
 

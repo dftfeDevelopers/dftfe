@@ -429,7 +429,7 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   T(0.0));
 
-      if (!(useMixedPrec) || dftParams.numCoreWfcXtHX == 0)
+      if (!(useMixedPrec) || dftParams.numCoreWfcForMixedPrecRR == 0)
         {
           XtHXXtOX(operatorMatrix,
                    BLASWrapperPtr,
@@ -449,7 +449,7 @@ namespace dftfe
                             BLASWrapperPtr,
                             X,
                             numberWaveFunctions,
-                            dftParams.numCoreWfcXtHX,
+                            dftParams.numCoreWfcForMixedPrecRR,
                             localVectorSize,
                             processGrid,
                             operatorMatrix.getMPICommunicatorDomain(),
@@ -1306,7 +1306,7 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   T(0.0));
 
-      if (useMixedPrec && dftParams.numCoreWfcXtHX > 0)
+      if (useMixedPrec && dftParams.numCoreWfcForMixedPrecRR > 0)
         {
           computing_timer.enter_subsection("Blocked XtHX Mixed Prec, RR step");
           XtHXMixedPrec(operatorMatrix,

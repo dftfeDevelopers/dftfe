@@ -114,7 +114,7 @@ namespace dftfe
 
     std::string  startingWFCType;
     bool         restrictToOnePass;
-    unsigned int numCoreWfcXtHX;
+    unsigned int numCoreWfcForMixedPrecRR;
     unsigned int wfcBlockSize;
     unsigned int chebyWfcBlockSize;
     unsigned int subspaceRotDofsBlockSize;

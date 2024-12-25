@@ -129,7 +129,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.numCoreWfcXtHX > 0 && useMixedPrecOverall)
+          if (dftParams.numCoreWfcForMixedPrecRR > 0 && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR step");
           else
@@ -138,38 +138,40 @@ namespace dftfe
         }
 
 
-      if (useMixedPrecOverall && dftParams.numCoreWfcXtHX > 0)
+      if (useMixedPrecOverall && dftParams.numCoreWfcForMixedPrecRR > 0)
         {
           if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
-            XtHXMixedPrecCommunOverlapComputeCommun(operatorMatrix,
-                                                    X,
-                                                    Xb,
-                                                    HXb,
-                                                    M,
-                                                    N,
-                                                    dftParams.numCoreWfcXtHX,
-                                                    BLASWrapperPtr,
-                                                    processGrid,
-                                                    projHamPar,
-                                                    devicecclMpiCommDomain,
-                                                    mpiCommDomain,
-                                                    interBandGroupComm,
-                                                    dftParams);
+            XtHXMixedPrecCommunOverlapComputeCommun(
+              operatorMatrix,
+              X,
+              Xb,
+              HXb,
+              M,
+              N,
+              dftParams.numCoreWfcForMixedPrecRR,
+              BLASWrapperPtr,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain,
+              mpiCommDomain,
+              interBandGroupComm,
+              dftParams);
           else
-            XtHXMixedPrecOverlapComputeCommun(operatorMatrix,
-                                              X,
-                                              Xb,
-                                              HXb,
-                                              M,
-                                              N,
-                                              dftParams.numCoreWfcXtHX,
-                                              BLASWrapperPtr,
-                                              processGrid,
-                                              projHamPar,
-                                              devicecclMpiCommDomain,
-                                              mpiCommDomain,
-                                              interBandGroupComm,
-                                              dftParams);
+            XtHXMixedPrecOverlapComputeCommun(
+              operatorMatrix,
+              X,
+              Xb,
+              HXb,
+              M,
+              N,
+              dftParams.numCoreWfcForMixedPrecRR,
+              BLASWrapperPtr,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain,
+              mpiCommDomain,
+              interBandGroupComm,
+              dftParams);
         }
       else
         {
@@ -206,7 +208,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.numCoreWfcXtHX > 0 && useMixedPrecOverall)
+          if (dftParams.numCoreWfcForMixedPrecRR > 0 && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "HConjProj=X^{T}*HConj*XConj Mixed Prec, RR step");
           else
@@ -434,7 +436,7 @@ namespace dftfe
                 HXb,
                 M,
                 N,
-                dftParams.numCoreWfcXtHX,
+                dftParams.numCoreWfcForMixedPrecRR,
                 BLASWrapperPtr,
                 mpiCommDomain,
                 devicecclMpiCommDomain,
@@ -444,20 +446,21 @@ namespace dftfe
                 dftParams);
           else
             linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapack(operatorMatrix,
-                                                       X,
-                                                       Xb,
-                                                       HXb,
-                                                       M,
-                                                       N,
-                                                       dftParams.numCoreWfcXtHX,
-                                                       BLASWrapperPtr,
-                                                       mpiCommDomain,
-                                                       devicecclMpiCommDomain,
-                                                       interBandGroupComm,
-                                                       processGrid,
-                                                       overlapMatPar,
-                                                       dftParams);
+              fillParallelOverlapMatMixedPrecScalapack(
+                operatorMatrix,
+                X,
+                Xb,
+                HXb,
+                M,
+                N,
+                dftParams.numCoreWfcForMixedPrecRR,
+                BLASWrapperPtr,
+                mpiCommDomain,
+                devicecclMpiCommDomain,
+                interBandGroupComm,
+                processGrid,
+                overlapMatPar,
+                dftParams);
         }
       else
         {
@@ -528,35 +531,37 @@ namespace dftfe
       if (useMixedPrecOverall)
         {
           if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
-            XtHXMixedPrecCommunOverlapComputeCommun(operatorMatrix,
-                                                    X,
-                                                    Xb,
-                                                    HXb,
-                                                    M,
-                                                    N,
-                                                    dftParams.numCoreWfcXtHX,
-                                                    BLASWrapperPtr,
-                                                    processGrid,
-                                                    projHamPar,
-                                                    devicecclMpiCommDomain,
-                                                    mpiCommDomain,
-                                                    interBandGroupComm,
-                                                    dftParams);
+            XtHXMixedPrecCommunOverlapComputeCommun(
+              operatorMatrix,
+              X,
+              Xb,
+              HXb,
+              M,
+              N,
+              dftParams.numCoreWfcForMixedPrecRR,
+              BLASWrapperPtr,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain,
+              mpiCommDomain,
+              interBandGroupComm,
+              dftParams);
           else
-            XtHXMixedPrecOverlapComputeCommun(operatorMatrix,
-                                              X,
-                                              Xb,
-                                              HXb,
-                                              M,
-                                              N,
-                                              dftParams.numCoreWfcXtHX,
-                                              BLASWrapperPtr,
-                                              processGrid,
-                                              projHamPar,
-                                              devicecclMpiCommDomain,
-                                              mpiCommDomain,
-                                              interBandGroupComm,
-                                              dftParams);
+            XtHXMixedPrecOverlapComputeCommun(
+              operatorMatrix,
+              X,
+              Xb,
+              HXb,
+              M,
+              N,
+              dftParams.numCoreWfcForMixedPrecRR,
+              BLASWrapperPtr,
+              processGrid,
+              projHamPar,
+              devicecclMpiCommDomain,
+              mpiCommDomain,
+              interBandGroupComm,
+              dftParams);
         }
       else
         {

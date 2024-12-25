@@ -1329,7 +1329,7 @@ namespace dftfe
     scalapackBlockSize                             = 50;
     natoms                                         = 0;
     natomTypes                                     = 0;
-    numCoreWfcXtHX                                 = 0;
+    numCoreWfcForMixedPrecRR                       = 0;
     reuseWfcGeoOpt                                 = false;
     reuseDensityGeoOpt                             = 0;
     mpiAllReduceMessageBlockSizeMB                 = 2.0;
@@ -1685,7 +1685,7 @@ namespace dftfe
       {
         numberEigenValues =
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-        numCoreWfcXtHX     = prm.get_integer("XTHX CORE EIGENSTATES");
+        numCoreWfcForMixedPrecRR = prm.get_integer("XTHX CORE EIGENSTATES");
         chebyshevOrder     = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
         useELPA            = prm.get_bool("USE ELPA");
         orthogType         = prm.get("ORTHOGONALIZATION TYPE");

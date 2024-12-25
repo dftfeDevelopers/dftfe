@@ -148,7 +148,7 @@ namespace dftfe
                     HXb,
                     M,
                     N,
-                    dftParams.numCoreWfcXtHX,
+                    dftParams.numCoreWfcForMixedPrecRR,
                     BLASWrapperPtr,
                     mpiCommDomain,
                     devicecclMpiCommDomain,
@@ -165,7 +165,7 @@ namespace dftfe
                     HXb,
                     M,
                     N,
-                    dftParams.numCoreWfcXtHX,
+                    dftParams.numCoreWfcForMixedPrecRR,
                     BLASWrapperPtr,
                     mpiCommDomain,
                     devicecclMpiCommDomain,
@@ -176,20 +176,21 @@ namespace dftfe
             }
           else
             linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapack(operatorMatrix,
-                                                       X,
-                                                       Xb,
-                                                       HXb,
-                                                       M,
-                                                       N,
-                                                       dftParams.numCoreWfcXtHX,
-                                                       BLASWrapperPtr,
-                                                       mpiCommDomain,
-                                                       devicecclMpiCommDomain,
-                                                       interBandGroupComm,
-                                                       processGrid,
-                                                       overlapMatPar,
-                                                       dftParams);
+              fillParallelOverlapMatMixedPrecScalapack(
+                operatorMatrix,
+                X,
+                Xb,
+                HXb,
+                M,
+                N,
+                dftParams.numCoreWfcForMixedPrecRR,
+                BLASWrapperPtr,
+                mpiCommDomain,
+                devicecclMpiCommDomain,
+                interBandGroupComm,
+                processGrid,
+                overlapMatPar,
+                dftParams);
         }
       else
         {
