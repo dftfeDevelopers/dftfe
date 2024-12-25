@@ -930,7 +930,7 @@ namespace dftfe
 
 
 
-          prm.declare_entry("XTHX CORE EIGENSTATES",
+          prm.declare_entry("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR",
                             "0",
                             dealii::Patterns::Integer(0),
                             "[Advanced] For mixed precision optimization.");
@@ -1685,7 +1685,7 @@ namespace dftfe
       {
         numberEigenValues =
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-        numCoreWfcForMixedPrecRR = prm.get_integer("XTHX CORE EIGENSTATES");
+        numCoreWfcForMixedPrecRR = prm.get_integer("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR");
         chebyshevOrder     = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
         useELPA            = prm.get_bool("USE ELPA");
         orthogType         = prm.get("ORTHOGONALIZATION TYPE");
