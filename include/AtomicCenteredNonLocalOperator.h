@@ -578,9 +578,15 @@ namespace dftfe
       d_CMatrixGlobal;
 
     std::set<unsigned int> d_setOfAtomicNumber;
-    std::vector<unsigned int>d_mapAtomIdToDenseVMatrixStart;
-    std::vector<unsigned int> d_mapAtomIdToSpeciesIndex;
+    std::vector<unsigned int> d_mapAtomIdToSpeciesIndex, d_mapiAtomToSpeciesIndex;
+    std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>> d_dotProductAtomicWaveInputWaveTemp;
+    std::vector<unsigned int> d_mapIAtomicNumToDotProd;
+    std::vector<unsigned int> d_mapiAtomToDotProd;
 
+    unsigned int d_totalLocallyOwnedNodes;
+
+    std::vector<unsigned int> d_mapiAtomTosphFuncWaveStart;
+    std::map<unsigned int, std::vector<unsigned int>> d_listOfiAtomInSpecies;
     void
     computeGlobalCMatrixVector(
       std::shared_ptr<dftfe::basis::FEBasisOperations<

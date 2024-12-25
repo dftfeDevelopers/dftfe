@@ -889,6 +889,7 @@ namespace dftfe
         unsigned int numShapeFnsAccum = 0;
 
         int totalElements = 0;
+        d_mapiAtomTosphFuncWaveStart.resize(d_totalAtomsInCurrentProc);
         for (int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; iAtom++)
           {
             const unsigned int        atomId = atomIdsInCurrentProcess[iAtom];
@@ -915,6 +916,10 @@ namespace dftfe
                                           .get_partitioner()
                                           ->global_to_local(globalId);
 
+                if(alpha == 0)
+                  {
+                    d_mapiAtomTosphFuncWaveStart[iAtom] = countAlpha;
+                  }
                 d_sphericalFnIdsParallelNumberingMap[countAlpha] = id;
                 d_sphericalFnIdsPaddedParallelNumberingMap
                   [iAtom * d_maxSingleAtomContribution + alpha] = id;
@@ -1142,6 +1147,19 @@ namespace dftfe
     d_flattenedNonLocalCellDofIndexToProcessDofIndexMap.copyFrom(
       tempNonLocalCellDofVector);
 
+    if (d_useGlobalCMatrix)
+      {
+        for( unsigned int iAtomicNum = 0 ;iAtomicNum < d_setOfAtomicNumber.size(); iAtomicNum++)
+          {
+            unsigned int Znum = *next(d_setOfAtomicNumber.begin() + iAtomicNum);
+            unsigned int numSphFunc = d_atomCenteredSphericalFunctionContainer
+                                        ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+            unsigned int numAtomsPerSpecies = d_listOfiAtomInSpecies[Znum].size();
+            d_dotProductAtomicWaveInputWaveTemp[iAtomicNum].resize(numAtomsPerSpecies*
+                                                                   numSphFunc*
+                                                                   waveFunctionBlockSize);
+          }
+      }
     if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
       {
         d_numberWaveFunctions = waveFunctionBlockSize;
@@ -1960,6 +1978,7 @@ namespace dftfe
                     const unsigned int numberSphericalFunctions =
                       d_atomCenteredSphericalFunctionContainer
                         ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+                    // TODO resize here is incorrect
                     d_sphericalFnTimesWavefunMatrix[atomId].resize(
                       numberSphericalFunctions * d_numberWaveFunctions, 0.0);
                     std::vector<ValueType> nonlocalConstantVmatrix(
@@ -2049,6 +2068,8 @@ namespace dftfe
                 const ValueType one  = 1.0;
                 const ValueType zero = 0.0;
 
+                //TODO will lead to seg fault when d_maxSingleAtomContribution is not
+                // same as num Proj in each atom
                 d_BLASWrapperPtr->xgemmStridedBatched(
                   'N',
                   'T',
@@ -2303,8 +2324,66 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCconjtransOnX(
     const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &X)
   {
-    //@Vishal make changes here
-    //@Vishal save the output only for atoms present in this processor
+    const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
+                            scalarCoeffBeta  = dataTypes::number(0.0);
+    const char transA = 'N', transB = 'N';
+    const char doTransMatrix = 'C';
+    const unsigned int inc = 1;
+    for( unsigned int iAtomicNum = 0 ;iAtomicNum < d_setOfAtomicNumber.size(); iAtomicNum++)
+      {
+        unsigned int Znum = *next(d_setOfAtomicNumber.begin() + iAtomicNum);
+        unsigned int numSphFunc = d_atomCenteredSphericalFunctionContainer
+                                    ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+        unsigned int numAtomsPerSpecies = d_listOfiAtomInSpecies[Znum].size();
+
+        unsigned int totalAtomicWaveFunctions = numSphFunc*numAtomsPerSpecies;
+        xgemm(&transA,
+              &doTransMatrix,
+              &d_numberWaveFunctions,
+              &totalAtomicWaveFunctions,
+              &d_totalLocallyOwnedNodes,
+              &scalarCoeffAlpha,
+              X.data(), // assumes the constraint.distribute() has been called
+              &d_numberWaveFunctions,
+              d_CMatrixGlobal[d_kPointIndex][iAtomicNum].data(),
+              &totalAtomicWaveFunctions,
+              &scalarCoeffBeta,
+              d_dotProductAtomicWaveInputWaveTemp[iAtomicNum].data(),
+              &d_numberWaveFunctions);
+
+        if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
+          {
+            for( unsigned int atomIndex = 0 ; atomIndex < numAtomsPerSpecies;atomIndex++)
+              {
+                unsigned int iAtom = d_listOfiAtomInSpecies[Znum][atomIndex];
+                unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
+                BLASWrapperHostPtr->xcopy(numSphFunc*d_numberWaveFunctions,
+                                          &d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
+                                                                              [atomIndex*numSphFunc*d_numberWaveFunctions],
+                                          1,
+                                          &d_sphericalFnTimesWavefunMatrix[atomId][0],
+                                          1);
+
+              }
+          }
+#if defined(DFTFE_WITH_DEVICE)
+        else
+          {
+            for( unsigned int atomIndex = 0 ; atomIndex < numAtomsPerSpecies;atomIndex++)
+              {
+                unsigned int iAtom = d_listOfiAtomInSpecies[Znum][atomIndex];
+                unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
+                BLASWrapperHostPtr->xcopy(numSphFunc*d_numberWaveFunctions,
+                                          d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
+                                                                             [atomIndex*numSphFunc*d_numberWaveFunctions],
+                                          1,
+                                          d_sphericalFnTimesWavefunctionMatrix.begin() + d_mapiAtomTosphFuncWaveStart[iAtom]*d_numberWaveFunctions,
+                                          1);
+
+              }
+          }
+#endif
+      }
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -2613,9 +2692,70 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCOnVCconjtransX(
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &Xout)
   {
-    //@Vishal add here..
-    //@Vishal caution to reshape the output of VconjTransX which has only
-    // contributions if atom is present in processsor to full matrix
+
+    const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
+                            scalarCoeffBeta  = dataTypes::number(1.0);
+    const char transA = 'N', transB = 'N';
+    const char doTransMatrix = 'C';
+    const unsigned int inc = 1;
+
+    for( unsigned int iAtomicNum = 0 ;iAtomicNum < d_setOfAtomicNumber.size(); iAtomicNum++)
+      {
+
+        unsigned int Znum = *next(d_setOfAtomicNumber.begin() + iAtomicNum);
+        unsigned int numSphFunc = d_atomCenteredSphericalFunctionContainer
+                                    ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+        unsigned int numAtomsPerSpecies = d_listOfiAtomInSpecies[Znum].size();;
+
+        unsigned int totalAtomicWaveFunctions = numSphFunc*numAtomsPerSpecies;
+
+        if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
+          {
+            for( unsigned int atomIndex = 0 ; atomIndex < numAtomsPerSpecies;atomIndex++)
+              {
+                unsigned int iAtom = d_listOfiAtomInSpecies[Znum][atomIndex];
+                unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
+                BLASWrapperHostPtr->xcopy(numSphFunc*d_numberWaveFunctions,
+                                          &d_sphericalFnTimesWavefunMatrix[atomId][0],
+                                          1,
+                                          d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
+                                                                             [atomIndex*numSphFunc*d_numberWaveFunctions],
+                                          1);
+
+              }
+          }
+#if defined(DFTFE_WITH_DEVICE)
+        else
+          {
+            for( unsigned int atomIndex = 0 ; atomIndex < numAtomsPerSpecies;atomIndex++)
+              {
+                unsigned int iAtom = d_listOfiAtomInSpecies[Znum][atomIndex];
+                unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
+                BLASWrapperHostPtr->xcopy(numSphFunc*d_numberWaveFunctions,
+                                          d_couplingMatrixTimesVectorDevice.begin() + iAtom*d_maxSingleAtomContribution*d_numberWaveFunctions,
+                                          1,
+                                          d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
+                                                                             [atomIndex*numSphFunc*d_numberWaveFunctions],
+                                          1);
+
+              }
+          }
+#endif
+        xgemm(&transA,
+              &transB,
+              &d_numberWaveFunctions,
+              &d_totalLocallyOwnedNodes,
+              &totalAtomicWaveFunctions,
+              &scalarCoeffAlpha,
+              d_dotProductAtomicWaveInputWaveTemp[iAtomicNum].data(),
+              &d_numberWaveFunctions,
+              d_CMatrixGlobal[d_kPointIndex][iAtomicNum].data(),
+              &totalAtomicWaveFunctions,
+              &scalarCoeffBeta,
+              Xout.data(), // directly add to the output
+              &d_numberWaveFunctions);
+
+      }
   }
 
 #if defined(DFTFE_WITH_DEVICE)
@@ -3445,7 +3585,7 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
         BLASWrapperHostPtr)
   {
-    const unsigned int totalLocallyOwnedNodes =
+    d_totalLocallyOwnedNodes =
       basisOperationsPtr->nOwnedDofs();
     const unsigned int numberNodesPerElement =
       basisOperationsPtr->nDofsPerCell();
@@ -3456,12 +3596,7 @@ namespace dftfe
       d_atomCenteredSphericalFunctionContainer->getAtomIdsInCurrentProcess();
     d_atomStartIndexGlobal.clear();
     d_atomStartIndexGlobal.resize(atomicNumbers.size(), 0);
-    std::fill(d_atomStartIndexGlobal.begin(),d_atomStartIndexGlobal.end(),0);
     unsigned int counter = 0;
-    d_mapAtomIdToDenseVMatrixStart.resize(atomicNumbers.size(),0);
-    std::fill(d_mapAtomIdToDenseVMatrixStart.begin(),d_mapAtomIdToDenseVMatrixStart.end(),0);
-
-
     std::map<unsigned int, std::vector<unsigned int>> listOfAtomIdsInSpecies;
     for (unsigned int atomId = 0; atomId < atomicNumbers.size(); atomId++)
       {
@@ -3471,11 +3606,6 @@ namespace dftfe
         unsigned int numSphFunc = d_atomCenteredSphericalFunctionContainer
                                     ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
         counter += numSphFunc;
-        if(atomId < atomicNumbers.size() - 1)
-          {
-            d_mapAtomIdToDenseVMatrixStart[atomId + 1] =
-              d_mapAtomIdToDenseVMatrixStart[atomId] + numSphFunc * numSphFunc;
-          }
       }
     std::map<unsigned int, unsigned int> mapSpeciesIdToAtomicNum;
     d_totalNumSphericalFunctionsGlobal = counter;
@@ -3484,23 +3614,34 @@ namespace dftfe
       {
         unsigned int Znum = *next(d_setOfAtomicNumber.begin() + iAtomicNum);
         listOfAtomIdsInSpecies[Znum].resize(0);
+        d_listOfiAtomInSpecies[Znum].resize(0);
         mapSpeciesIdToAtomicNum[Znum] = iAtomicNum;
       }
 
     d_mapAtomIdToSpeciesIndex.resize(atomicNumbers.size());
     std::fill(d_mapAtomIdToSpeciesIndex.begin(),d_mapAtomIdToSpeciesIndex.end(),0);
-    for (unsigned int atomId = 0; atomId < atomicNumbers.size(); atomId++)
+
+    d_mapiAtomToSpeciesIndex.resize(atomIdsInCurrentProcess);
+    std::fill(d_mapiAtomToSpeciesIndex.begin(),d_mapiAtomToSpeciesIndex.end(),0);
+
+    for (int iAtom = 0; iAtom < atomIdsInCurrentProcess.size(); iAtom++)
       {
-        const unsigned int Znum = atomicNumbers[atomId];
+        unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
+        unsigned int Znum       = atomicNumbers[atomId];
+        unsigned int iAtomicNum = mapSpeciesIdToAtomicNum[Znum];
         d_mapAtomIdToSpeciesIndex[atomId] = listOfAtomIdsInSpecies[Znum].size();
+        d_mapiAtomToSpeciesIndex[iAtom] = d_listOfiAtomInSpecies[Znum].size();
         listOfAtomIdsInSpecies[Znum].push_back(atomId);
+        d_listOfiAtomInSpecies[Znum].push_back(iAtom);
       }
 
     d_CMatrixGlobal.resize(d_kPointWeights.size());
-    std::vector<dftfe::linearAlgebra::MultiVector<ValueType,
-                                                  dftfe::utils::MemorySpace::HOST>>
+
+    dftfe::linearAlgebra::MultiVector<ValueType,
+                                      dftfe::utils::MemorySpace::HOST>
       Pmatrix;
-    Pmatrix.resize(d_setOfAtomicNumber.size());
+    Pmatrix.reinit(basisOperationsPtr->mpiPatternP2P,
+                   d_totalNumSphericalFunctionsGlobal);
 
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); kPoint++)
       {
@@ -3510,36 +3651,22 @@ namespace dftfe
             unsigned int Znum = *next(d_setOfAtomicNumber.begin() + iAtomicNum);
             unsigned int numSphFunc = d_atomCenteredSphericalFunctionContainer
                                         ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
-            unsigned int numAtomsPerSpecies = listOfAtomIdsInSpecies[Znum].size();
+            unsigned int numAtomsPerSpecies = d_listOfiAtomInSpecies[Znum].size();
             d_CMatrixGlobal[kPoint][iAtomicNum].resize(numAtomsPerSpecies*numSphFunc);
             d_CMatrixGlobal[kPoint][iAtomicNum].setValue(0.0);
           }
       }
 
-    for( unsigned int iAtomicNum = 0 ;iAtomicNum < d_setOfAtomicNumber.size(); iAtomicNum++)
-      {
-        unsigned int Znum = *next(d_setOfAtomicNumber.begin() + iAtomicNum);
-        unsigned int numSphFunc = d_atomCenteredSphericalFunctionContainer
-                                    ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
-        unsigned int numAtomsPerSpecies = listOfAtomIdsInSpecies[Znum].size();
-        Pmatrix[iAtomicNum].reinit(basisOperationsPtr->mpiPatternP2P,
-                       numAtomsPerSpecies*numSphFunc);
-      }
-
+    d_dotProductAtomicWaveInputWaveTemp.resize(d_setOfAtomicNumber.size());
 
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); kPoint++)
       {
-        for( unsigned int iAtomicNum = 0 ;iAtomicNum < d_setOfAtomicNumber.size(); iAtomicNum++)
-          {
-            Pmatrix[iAtomicNum].setValue(0);
-          }
-
+        Pmatrix.setValue(0);
         for (int iAtom = 0; iAtom < atomIdsInCurrentProcess.size(); iAtom++)
           {
             unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
             unsigned int startIndex = d_atomStartIndexGlobal[atomId];
             unsigned int Znum       = atomicNumbers[atomId];
-            unsigned int iAtomicNum = mapSpeciesIdToAtomicNum[Znum];
             unsigned int numberOfSphericalFunctions =
               d_atomCenteredSphericalFunctionContainer
                 ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
@@ -3570,27 +3697,52 @@ namespace dftfe
                       &alpha1,
                       &CMatrixEntries[iDof * numberOfSphericalFunctions],
                       1,
-                      Pmatrix[iAtomicNum].data() +
-                        (dofIndex * numberOfSphericalFunctions* listOfAtomIdsInSpecies[Znum].size() +
-                         d_mapAtomIdToSpeciesIndex[atomId]*numberOfSphericalFunctions),
+                      Pmatrix.data() +
+                        (dofIndex * d_totalNumSphericalFunctionsGlobal +
+                         startIndex),
                       1);
                   } // iDof
 
 
               } // iElem
           }     // iAtom
+        basisOperationsPtr->d_constraintInfo[basisOperationsPtr->d_dofHandlerID]
+          .distribute_slave_to_master(Pmatrix);
+        Pmatrix.accumulateAddLocallyOwned();
+        Pmatrix.zeroOutGhosts();
 
         for( unsigned int iAtomicNum = 0 ;iAtomicNum < d_setOfAtomicNumber.size(); iAtomicNum++)
           {
             unsigned int Znum = *next(d_setOfAtomicNumber.begin() + iAtomicNum);
-            basisOperationsPtr->d_constraintInfo[basisOperationsPtr->d_dofHandlerID]
-              .distribute_slave_to_master(Pmatrix[iAtomicNum]);
-            Pmatrix[iAtomicNum].accumulateAddLocallyOwned();
-            Pmatrix[iAtomicNum].zeroOutGhosts();
-            d_CMatrixGlobal[kPoint][iAtomicNum].copyFrom(Pmatrix[iAtomicNum].data(),
-                                                         numberOfSphericalFunctions*
-                                                           listOfAtomIdsInSpecies[Znum].size()*
-                                                           totalLocallyOwnedNodes,
+
+            unsigned int numSphFunc = d_atomCenteredSphericalFunctionContainer
+                                        ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+            unsigned int numAtomsPerSpecies = d_listOfiAtomInSpecies[Znum].size();
+
+            std::vector<ValueType> CmatrixGlobalTemp(
+              d_totalLocallyOwnedNodes * numAtomsPerSpecies*numSphFunc);
+
+            for( unsigned int iNode = 0 ; iNode<d_totalLocallyOwnedNodes; iNode++ )
+              {
+                for (unsigned int atomIndex = 0 ; atomIndex< d_listOfiAtomInSpecies[Znum].size();
+                     atomIndex ++)
+                  {
+                    unsigned int iAtom =d_listOfiAtomInSpecies[Znum][atomIndex];
+                    unsigned int atomId     = atomIdsInCurrentProcess[iAtom];
+                    unsigned int startIndex = d_atomStartIndexGlobal[atomId];
+
+                    BLASWrapperHostPtr->xcopy(numSphFunc,
+                                              Pmatrix.data() +
+                                                (dofIndex * d_totalNumSphericalFunctionsGlobal +
+                                                 startIndex),
+                                              1,
+                                              &CmatrixGlobalTemp[iNode * numAtomsPerSpecies*numSphFunc + atomIndex*numSphFunc],
+                                              1);
+                  }
+
+              }
+            d_CMatrixGlobal[kPoint][iAtomicNum].copyFrom(CmatrixGlobalTemp.data(),
+                                                         d_totalLocallyOwnedNodes * numAtomsPerSpecies*numSphFunc,
                                                          0,
                                                          0);
           }
