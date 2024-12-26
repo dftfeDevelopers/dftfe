@@ -696,7 +696,7 @@ namespace dftfe
             basisOperationsPtr->distribute(flattenedArrayBlock);
 
             if (numCells > 0)
-              hubbardClassPtr->getNonLocalOperator()->applyVCconjtransOnX(
+              hubbardClassPtr->getNonLocalOperator()->applyVCconjtransOnXUsingGlobalC(
                 flattenedArrayBlock,
                 kPointIndex,
                 CouplingStructure::dense,

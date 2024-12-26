@@ -2568,6 +2568,31 @@ namespace dftfe
       }
 #endif
   }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyVCconjtransOnXUsingGlobalC(
+    const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
+    const unsigned int                                         kPointIndex,
+    const CouplingStructure                                    couplingtype,
+    const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
+    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+              &        sphericalFunctionKetTimesVectorParFlattened,
+    const bool flagScaleInternalMatrix)
+  {
+        initialiseOperatorActionOnX(kPointIndex);
+        sphericalFunctionKetTimesVectorParFlattened.setValue(0.0);
+            applyCconjtransOnX(src);
+            applyAllReduceOnCconjtransX(
+              sphericalFunctionKetTimesVectorParFlattened);
+
+            applyVOnCconjtransX(couplingtype,
+                                couplingMatrix,
+                                sphericalFunctionKetTimesVectorParFlattened,
+                                false);
+
+  }
+
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCOnVCconjtransX(
