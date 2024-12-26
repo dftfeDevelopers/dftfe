@@ -1083,41 +1083,42 @@ namespace dftfe
         (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
          ExcFamilyType::MGGA))
       {
-//        unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
-//        d_BLASWrapperPtr->stridedBlockScaleCopy(
-//          numberWavefunctions,
-//          relaventDofs,
-//          1.0,
-//          getInverseSqrtMassVector().data(),
-//          src.data(),
-//          d_srcNonLocalTemp.data(),
-//          d_mapNodeIdToProcId.data());
-//
-//        d_srcNonLocalTemp.updateGhostValues();
-//        d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
+        unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+        d_BLASWrapperPtr->stridedBlockScaleCopy(
+          numberWavefunctions,
+          relaventDofs,
+          1.0,
+          getInverseSqrtMassVector().data(),
+          src.data(),
+          d_srcNonLocalTemp.data(),
+          d_mapNodeIdToProcId.data());
+
+        d_srcNonLocalTemp.updateGhostValues();
+        d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
 
 // TODO d_srcNonLocalTemp and d_dstNonLocalTemp can be removed
-        d_excManagerPtr->getExcSSDFunctionalObj()
-          ->applyWaveFunctionDependentFuncDerWrtPsi(src,
-                                                    dst,
+        d_dstNonLocalTemp.setValue(0.0);
+	d_excManagerPtr->getExcSSDFunctionalObj()
+          ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
+                                                    d_dstNonLocalTemp,
                                                     numberWavefunctions,
                                                     d_kPointIndex,
                                                     d_spinIndex);
 
 
-//        d_basisOperationsPtr
-//          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-//          .distribute_slave_to_master(d_dstNonLocalTemp);
-//
-//
-//        d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
-//          numberWavefunctions,
-//          relaventDofs,
-//          scalarHX,
-//          getInverseSqrtMassVector().data(),
-//          d_dstNonLocalTemp.data(),
-//          dst.data(),
-//          d_mapNodeIdToProcId.data());
+        d_basisOperationsPtr
+          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+          .distribute_slave_to_master(d_dstNonLocalTemp);
+
+
+        d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
+          numberWavefunctions,
+          relaventDofs,
+          scalarHX,
+          getInverseSqrtMassVector().data(),
+          d_dstNonLocalTemp.data(),
+          dst.data(),
+          d_mapNodeIdToProcId.data());
       }
 
     inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr
@@ -1304,38 +1305,39 @@ namespace dftfe
             (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
              ExcFamilyType::MGGA))
           {
-//            unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
-//
-//            d_BLASWrapperPtr->xcopy(relaventDofs * numberWavefunctions,
-//                                    src.data(),
-//                                    1,
-//                                    d_srcNonLocalTemp.data(),
-//                                    1);
-//
-//            d_srcNonLocalTemp.updateGhostValues();
-//            d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
-//
-//            d_excManagerPtr->getExcSSDFunctionalObj()
-//              ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
-//                                                        d_dstNonLocalTemp,
-//                                                        numberWavefunctions,
-//                                                        d_kPointIndex,
-//                                                        d_spinIndex);
-//
-//
-//            d_basisOperationsPtr
-//              ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-//              .distribute_slave_to_master(d_dstNonLocalTemp);
-//
-//            d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
-//              numberWavefunctions,
-//              relaventDofs,
-//              scalarHX,
-//              d_basisOperationsPtr->inverseMassVectorBasisData().data(),
-//              d_dstNonLocalTemp.data(),
-//              dst.data(),
-//              d_mapNodeIdToProcId.data());
+            unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
 
+            d_BLASWrapperPtr->xcopy(relaventDofs * numberWavefunctions,
+                                    src.data(),
+                                    1,
+                                    d_srcNonLocalTemp.data(),
+                                    1);
+
+            d_srcNonLocalTemp.updateGhostValues();
+            d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
+
+	    d_dstNonLocalTemp.setValue(0.0);
+            d_excManagerPtr->getExcSSDFunctionalObj()
+              ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
+                                                        d_dstNonLocalTemp,
+                                                        numberWavefunctions,
+                                                        d_kPointIndex,
+                                                        d_spinIndex);
+
+
+            d_basisOperationsPtr
+      		    ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+              .distribute_slave_to_master(d_dstNonLocalTemp);
+
+            d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
+              numberWavefunctions,
+              relaventDofs,
+              scalarHX,
+              d_basisOperationsPtr->inverseMassVectorBasisData().data(),
+	      d_dstNonLocalTemp.data(),
+              dst.data(),
+              d_mapNodeIdToProcId.data());
+/*
             src.updateGhostValues();
             d_basisOperationsPtr->distribute(src);
 
@@ -1348,6 +1350,7 @@ namespace dftfe
 
             src.zeroOutGhosts();
             inverseMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
+	    */
           }
 
         inverseMassVectorScaledConstraintsNoneDataInfoPtr
