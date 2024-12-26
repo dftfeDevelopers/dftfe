@@ -168,7 +168,8 @@ namespace dftfe
                   MPI_MAX,
                   d_mpiComm);
 
-    if ((dealii::Utilities::MPI::this_mpi_process(d_mpiComm) == 0) && (d_verbosity > 2))
+    if ((dealii::Utilities::MPI::this_mpi_process(d_mpiComm) == 0) &&
+        (d_verbosity > 2))
       {
         std::cout << " Max number of points found locally  = "
                   << maxPointsLocalTemp << "\n";
