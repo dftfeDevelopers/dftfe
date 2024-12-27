@@ -1978,7 +1978,6 @@ namespace dftfe
                     const unsigned int numberSphericalFunctions =
                       d_atomCenteredSphericalFunctionContainer
                         ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
-                    // TODO resize here is incorrect
                     d_sphericalFnTimesWavefunMatrix[atomId].resize(
                       numberSphericalFunctions * d_numberWaveFunctions, 0.0);
                     std::vector<ValueType> nonlocalConstantVmatrix(
@@ -2068,8 +2067,6 @@ namespace dftfe
                 const ValueType one  = 1.0;
                 const ValueType zero = 0.0;
 
-                //TODO will lead to seg fault when d_maxSingleAtomContribution is not
-                // same as num Proj in each atom
                 d_BLASWrapperPtr->xgemmStridedBatched(
                   'N',
                   'T',

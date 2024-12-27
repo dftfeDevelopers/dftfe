@@ -513,7 +513,7 @@ namespace dftfe
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
 
     const unsigned int BVec =
-      d_dftParamsPtr->chebyWfcBlockSize; // TODO extend to band parallelisation
+      d_dftParamsPtr->chebyWfcBlockSize;
 
     d_BasisOperatorMemPtr->reinit(BVec, cellsBlockSize, d_densityQuadratureId);
     const unsigned int numQuadPoints = d_BasisOperatorMemPtr->nQuadsPerCell();
@@ -538,7 +538,6 @@ namespace dftfe
 
     unsigned int numLocalDofs       = d_BasisOperatorHostPtr->nOwnedDofs();
     unsigned int numNodesPerElement = d_BasisOperatorHostPtr->nDofsPerCell();
-    dftfe::utils::MemoryStorage<ValueType, memorySpace> tempCellNodalData;
     unsigned int                                        previousSize = 0;
     for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
@@ -555,16 +554,8 @@ namespace dftfe
                 d_nonLocalOperator->initialiseFlattenedDataStructure(
                   currentBlockSize, projectorKetTimesVector);
 
-                tempCellNodalData.resize(cellsBlockSize * currentBlockSize *
-                                         numNodesPerElement);
 
                 previousSize = cellsBlockSize * currentBlockSize;
-                if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
-                  {
-                    d_nonLocalOperator->initialiseCellWaveFunctionPointers(
-                      tempCellNodalData);
-                  }
-
                 if (((jvec + currentBlockSize) <=
                      d_bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId +
                                                       1]) &&
@@ -612,44 +603,7 @@ namespace dftfe
                     d_BasisOperatorMemPtr->distribute(*(flattenedArrayBlock));
 
 
-                    for (int iblock = 0; iblock < (numCellBlocks + 1); iblock++)
-                      {
-                        const unsigned int currentCellsBlockSize =
-                          (iblock == numCellBlocks) ? remCellBlockSize :
-                                                      cellsBlockSize;
-                        if (currentCellsBlockSize > 0)
-                          {
-                            const unsigned int startingCellId =
-                              iblock * cellsBlockSize;
-                            if (currentCellsBlockSize * currentBlockSize !=
-                                previousSize)
-                              {
-                                tempCellNodalData.resize(currentCellsBlockSize *
-                                                         currentBlockSize *
-                                                         numNodesPerElement);
-                                previousSize =
-                                  currentCellsBlockSize * currentBlockSize;
-                              }
-                            d_BasisOperatorMemPtr->extractToCellNodalDataKernel(
-                              *(flattenedArrayBlock),
-                              tempCellNodalData.data(),
-                              std::pair<unsigned int, unsigned int>(
-                                startingCellId,
-                                startingCellId + currentCellsBlockSize));
-
-                            if (
-                              d_nonLocalOperator
-                                ->getTotalNonLocalElementsInCurrentProcessor() >
-                              0)
-                              {
-                                d_nonLocalOperator->applyCconjtransOnX(
-                                  tempCellNodalData.data(),
-                                  std::pair<unsigned int, unsigned int>(
-                                    startingCellId,
-                                    startingCellId + currentCellsBlockSize));
-                              }
-                          }
-                      }
+                    d_nonLocalOperator->applyCconjtransOnX(*(flattenedArrayBlock));
                   }
                 projectorKetTimesVector.setValue(0.0);
                 d_nonLocalOperator->applyAllReduceOnCconjtransX(
