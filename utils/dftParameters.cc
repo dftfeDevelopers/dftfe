@@ -122,8 +122,7 @@ namespace dftfe
           "WRITE DENSITY QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns (in case of collinear spin polarization) and 5 columns in case of spin-restricted calculation. The first three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the fifth column has the total density. Default: false.");
-
+          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be seven columns (in case of collinear spin polarization) and 6 columns in case of spin-restricted calculation. The first column is the quadrature point index. The next three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fifth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the sixth and seventh columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the sixth column has the total density. Default: false.");
 
         prm.declare_entry(
           "WRITE DENSITY OF STATES",
