@@ -2321,6 +2321,12 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCconjtransOnX(
     const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &X)
   {
+
+    Assert(
+      d_useGlobalCMatrix,
+      dealii::ExcMessage(
+        "DFT-FE Error: applyCconjtransOnX() is called for global C matrix route without it being initialised "));
+
     const ValueType scalarCoeffAlpha = ValueType(1.0),
                             scalarCoeffBeta  = ValueType(0.0);
     const char transA = 'N', transB = 'N';
@@ -2721,6 +2727,11 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCOnVCconjtransX(
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &Xout)
   {
+
+    Assert(
+      d_useGlobalCMatrix,
+      dealii::ExcMessage(
+        "DFT-FE Error: applyCOnVCconjtransX() is called for global C matrix route without it being initialised "));
 
     const ValueType scalarCoeffAlpha = ValueType(1.0),
                             scalarCoeffBeta  = ValueType(1.0);

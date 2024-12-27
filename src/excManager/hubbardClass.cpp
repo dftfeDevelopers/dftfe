@@ -325,7 +325,24 @@ namespace dftfe
               }
             else if (d_numSpins == 2)
               {
-                if (iSpin == 0)
+
+                initOccValue =
+                  d_hubbardSpeciesData[hubbardIds].initialOccupation /
+                  (2.0 * d_hubbardSpeciesData[hubbardIds].numberSphericalFunc);
+
+                unsigned int majorSpin = 1000, minorSpin = 1000;
+                if (d_initialAtomicSpin[atomId] > 1e-3)
+                  {
+                    majorSpin = 0 ;
+                    minorSpin = 1;
+                  }
+                else if (d_initialAtomicSpin[atomId] < -1e-3 )
+                  {
+                    majorSpin = 1;
+                    minorSpin = 0;
+                  }
+
+                if (iSpin == majorSpin)
                   {
                     if (d_hubbardSpeciesData[hubbardIds].numberSphericalFunc <
                         d_hubbardSpeciesData[hubbardIds].initialOccupation)
@@ -340,7 +357,7 @@ namespace dftfe
                              .numberSphericalFunc);
                       }
                   }
-                else if (iSpin == 1)
+                else if (iSpin == minorSpin)
                   {
                     if (d_hubbardSpeciesData[hubbardIds].numberSphericalFunc <
                         d_hubbardSpeciesData[hubbardIds].initialOccupation)
@@ -1117,6 +1134,7 @@ namespace dftfe
     atomCoord.resize(3, 0.0);
 
     d_atomicCoords.resize(0);
+    d_initialAtomicSpin.resize(0);
     d_periodicImagesCoords.resize(0);
     d_imageIds.resize(0);
     d_mapAtomToHubbardIds.resize(0);
@@ -1132,6 +1150,10 @@ namespace dftfe
             d_atomicCoords.push_back(atomLocations[iAtom][2]);
             d_atomicCoords.push_back(atomLocations[iAtom][3]);
             d_atomicCoords.push_back(atomLocations[iAtom][4]);
+            if (atomLocations[iAtom].size() > 5)
+              {
+                d_initialAtomicSpin.push_back(atomLocations[iAtom][5]);
+              }
             d_mapAtomToHubbardIds.push_back(id - 1);
             d_mapAtomToAtomicNumber.push_back(atomicNum);
             for (unsigned int jImageAtom = 0;

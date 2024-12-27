@@ -338,6 +338,7 @@ namespace dftfe
     dealii::ConditionalOStream pcout;
 
     std::vector<double>              d_atomicCoords;
+    std::vector<double>              d_initialAtomicSpin;
     std::vector<std::vector<double>> d_periodicImagesCoords;
     std::vector<int>                 d_imageIds;
     std::vector<unsigned int>        d_mapAtomToHubbardIds;
