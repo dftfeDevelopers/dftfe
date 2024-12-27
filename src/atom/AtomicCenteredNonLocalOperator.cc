@@ -2337,6 +2337,7 @@ namespace dftfe
         unsigned int numAtomsPerSpecies = d_listOfiAtomInSpecies[Znum].size();
 
         unsigned int totalAtomicWaveFunctions = numSphFunc*numAtomsPerSpecies;
+	d_dotProductAtomicWaveInputWaveTemp[iAtomicNum].setValue(0.0);
         if (totalAtomicWaveFunctions > 0)
 	{
 	d_BLASWrapperPtr->xgemm(transA,
@@ -3622,6 +3623,7 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
         BLASWrapperHostPtr)
   {
+	  pcout<<"entering c matrix global creation\n";
     d_totalLocallyOwnedNodes =
       basisOperationsPtr->nOwnedDofs();
     const unsigned int numberNodesPerElement =

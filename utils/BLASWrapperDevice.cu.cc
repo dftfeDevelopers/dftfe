@@ -141,19 +141,23 @@ namespace dftfe
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transA == 'T')
+      else if (transA == 'T' || transA == 'C')
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+            dealii::ExcMessage(
+              "Incorrect transA in gemm "));
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transB == 'T')
+      else if (transB == 'T' || transB == 'C')
         transb = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+            dealii::ExcMessage(
+              "Incorrect transB in gemm "));
         }
       cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
@@ -211,8 +215,11 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+            dealii::ExcMessage(
+              "Incorrect transA in gemv "));
         }
+
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
       else if (transB == 'T')
@@ -221,8 +228,11 @@ namespace dftfe
         transb = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+            dealii::ExcMessage(
+              "Incorrect transB in gemm "));
         }
+
       cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
         computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
@@ -273,21 +283,26 @@ namespace dftfe
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transA == 'T')
+      else if (transA == 'T' || transA == 'C')
         transa = dftfe::utils::DEVICEBLAS_OP_T;
 
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+                    dealii::ExcMessage(
+                      "Incorrect transA in gemm "));
+
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transB == 'T')
+      else if (transB == 'T' || transB == 'C' )
         transb = dftfe::utils::DEVICEBLAS_OP_T;
 
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+                    dealii::ExcMessage(
+                      "Incorrect transB in gemm "));
         }
 
 
@@ -335,7 +350,10 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+                    dealii::ExcMessage(
+                      "Incorrect transA in gemm "));
+
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
@@ -345,7 +363,9 @@ namespace dftfe
         transb = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+                    dealii::ExcMessage(
+                      "Incorrect transB in gemm "));
         }
 
 
@@ -384,11 +404,13 @@ namespace dftfe
       dftfe::utils::deviceBlasOperation_t transa;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transA == 'T')
+      else if (transA == 'T' || transA == 'C')
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+            dealii::ExcMessage(
+              "Incorrect transA in gemv "));
         }
       dftfe::utils::deviceBlasStatus_t status = cublasDgemv(d_deviceBlasHandle,
                                                             transa,
@@ -423,11 +445,13 @@ namespace dftfe
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transA == 'T')
+      else if (transA == 'T' || transA == 'C')
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+                    dealii::ExcMessage(
+                      "Incorrect transA in gemv "));
         }
 
       dftfe::utils::deviceBlasStatus_t status = cublasSgemv(d_deviceBlasHandle,
@@ -468,7 +492,9 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+                    dealii::ExcMessage(
+                      "Incorrect transA in gemv "));
         }
 
       dftfe::utils::deviceBlasStatus_t status =
@@ -510,7 +536,9 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+		AssertThrow(false,
+                    dealii::ExcMessage(
+                      "Incorrect transA in gemv "));
         }
 
       dftfe::utils::deviceBlasStatus_t status =
