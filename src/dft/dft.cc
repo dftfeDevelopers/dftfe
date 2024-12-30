@@ -831,7 +831,6 @@ namespace dftfe
 
     // set size of eigenvalues and eigenvectors data structures
     eigenValues.resize(d_kPointWeights.size());
-    eigenValuesRRSplit.resize(d_kPointWeights.size());
 
     if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       d_densityMatDerFermiEnergy.resize((d_dftParamsPtr->spinPolarized + 1) *
@@ -854,8 +853,6 @@ namespace dftfe
       {
         eigenValues[kPoint].resize((d_dftParamsPtr->spinPolarized + 1) *
                                    d_numEigenValues);
-        eigenValuesRRSplit[kPoint].resize((d_dftParamsPtr->spinPolarized + 1) *
-                                          d_numEigenValuesRR);
       }
 
 
@@ -901,9 +898,7 @@ namespace dftfe
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
 
-    d_elpaScala->processGridELPASetup(d_numEigenValues,
-                                      d_numEigenValuesRR,
-                                      *d_dftParamsPtr);
+    d_elpaScala->processGridELPASetup(d_numEigenValues, *d_dftParamsPtr);
     MPI_Barrier(d_mpiCommParent);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
@@ -2159,12 +2154,7 @@ namespace dftfe
           dealii::ExcMessage(
             "DFT-FE Error: wfc block size must be exactly divisible by cheby wfc block size and also larger for Device run."));
 
-        if (d_numEigenValuesRR != d_numEigenValues)
-          AssertThrow(
-            (d_numEigenValuesRR % d_dftParamsPtr->wfcBlockSize == 0 ||
-             d_numEigenValuesRR / d_dftParamsPtr->wfcBlockSize == 0),
-            dealii::ExcMessage(
-              "DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for Device run."));
+
 
         // band group parallelization data structures
         const unsigned int numberBandGroups =
@@ -2815,8 +2805,7 @@ namespace dftfe
                     << std::endl;
           }
 
-        if (d_dftParamsPtr->computeEnergyEverySCF &&
-            d_numEigenValuesRR == d_numEigenValues)
+        if (d_dftParamsPtr->computeEnergyEverySCF)
           d_phiTotRhoIn = d_phiTotRhoOut;
         computing_timer.leave_subsection("density mixing");
 
@@ -3523,8 +3512,7 @@ namespace dftfe
         //
         // phiTot with rhoOut
         //
-        if ((d_dftParamsPtr->computeEnergyEverySCF &&
-             d_numEigenValuesRR == d_numEigenValues) ||
+        if (d_dftParamsPtr->computeEnergyEverySCF ||
             d_dftParamsPtr->useEnergyResidualTolerance)
           {
             if (d_dftParamsPtr->verbosity >= 2)
@@ -3674,8 +3662,7 @@ namespace dftfe
                     << energyResidual << std::endl;
             computing_timer.leave_subsection("Energy residual computation");
           }
-        if (d_dftParamsPtr->computeEnergyEverySCF &&
-            d_numEigenValuesRR == d_numEigenValues)
+        if (d_dftParamsPtr->computeEnergyEverySCF)
           {
             d_dispersionCorr.computeDispresionCorrection(
               atomLocations, d_domainBoundingVectors);
@@ -3716,16 +3703,7 @@ namespace dftfe
             if (d_dftParamsPtr->verbosity == 1)
               pcout << "Total energy  : " << totalEnergy << std::endl;
           }
-        else
-          {
-            if (d_numEigenValuesRR != d_numEigenValues &&
-                d_dftParamsPtr->computeEnergyEverySCF &&
-                d_dftParamsPtr->verbosity >= 1)
-              pcout
-                << "DFT-FE Message: energy computation is not performed at the end of each scf iteration step\n"
-                << "if SPECTRUM SPLIT CORE EIGENSTATES is set to a non-zero value."
-                << std::endl;
-          }
+
 
         computeFractionalOccupancies();
 
@@ -3857,8 +3835,7 @@ namespace dftfe
             }
       }
 
-    if ((!d_dftParamsPtr->computeEnergyEverySCF ||
-         d_numEigenValuesRR != d_numEigenValues))
+    if ((!d_dftParamsPtr->computeEnergyEverySCF))
       {
         if (d_dftParamsPtr->verbosity >= 2)
           pcout

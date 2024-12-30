@@ -285,22 +285,6 @@ namespace dftfe
       const bool isRotationMatLowerTria = false);
 
 
-    void
-    subspaceRotationSpectrumSplitScalapack(
-      const dataTypes::number *X,
-      dataTypes::number *      XFrac,
-      const unsigned int       M,
-      const unsigned int       N,
-      const unsigned int       Nfr,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
-      const dftParameters &                            dftParams,
-      const bool rotationMatTranspose = false);
 
     void
     subspaceRotationCGSMixedPrecScalapack(

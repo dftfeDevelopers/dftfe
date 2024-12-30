@@ -37,9 +37,7 @@ namespace dftfe
   void
   computeRhoFromPSI(
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *XFrac,
     const unsigned int                      totalNumWaveFunctions,
-    const unsigned int                      Nfr,
     const std::vector<std::vector<double>> &eigenValues,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
@@ -475,10 +473,7 @@ namespace dftfe
   computeRhoFromPSI(
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::DEVICE> *X,
-    const dftfe::utils::MemoryStorage<dataTypes::number,
-                                      dftfe::utils::MemorySpace::DEVICE> *XFrac,
     const unsigned int                      totalNumWaveFunctions,
-    const unsigned int                      Nfr,
     const std::vector<std::vector<double>> &eigenValues,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
@@ -511,10 +506,7 @@ namespace dftfe
   computeRhoFromPSI(
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::HOST> *X,
-    const dftfe::utils::MemoryStorage<dataTypes::number,
-                                      dftfe::utils::MemorySpace::HOST> *XFrac,
     const unsigned int                      totalNumWaveFunctions,
-    const unsigned int                      Nfr,
     const std::vector<std::vector<double>> &eigenValues,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,

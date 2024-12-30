@@ -1685,7 +1685,8 @@ namespace dftfe
       {
         numberEigenValues =
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-        numCoreWfcForMixedPrecRR = prm.get_integer("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR");
+        numCoreWfcForMixedPrecRR =
+          prm.get_integer("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR");
         chebyshevOrder     = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
         useELPA            = prm.get_bool("USE ELPA");
         orthogType         = prm.get("ORTHOGONALIZATION TYPE");

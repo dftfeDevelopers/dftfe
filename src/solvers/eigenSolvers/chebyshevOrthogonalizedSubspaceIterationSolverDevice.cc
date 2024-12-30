@@ -158,7 +158,6 @@ namespace dftfe
       &                      BLASWrapperPtr,
     elpaScalaManager &       elpaScala,
     dataTypes::number *      eigenVectorsFlattenedDevice,
-    dataTypes::number *      eigenVectorsRotFracDensityFlattenedDevice,
     const unsigned int       flattenedSize,
     const unsigned int       totalNumberWaveFunctions,
     std::vector<double> &    eigenValues,
@@ -777,37 +776,21 @@ namespace dftfe
             computingTimerStandard.enter_subsection("Residual norm");
           }
 
-        if (eigenValues.size() != totalNumberWaveFunctions)
-          linearAlgebraOperationsDevice::computeEigenResidualNorm(
-            operatorMatrix,
-            eigenVectorsRotFracDensityFlattenedDevice,
-            (*XBlock),
-            (*HXBlock),
-            localVectorSize,
-            eigenValues.size(),
-            eigenValues,
-            d_mpiCommParent,
-            operatorMatrix.getMPICommunicatorDomain(),
-            interBandGroupComm,
-            BLASWrapperPtr,
-            residualNorms,
-            d_dftParams);
-        else
-          linearAlgebraOperationsDevice::computeEigenResidualNorm(
-            operatorMatrix,
-            eigenVectorsFlattenedDevice,
-            (*XBlock),
-            (*HXBlock),
-            localVectorSize,
-            totalNumberWaveFunctions,
-            eigenValues,
-            d_mpiCommParent,
-            operatorMatrix.getMPICommunicatorDomain(),
-            interBandGroupComm,
-            BLASWrapperPtr,
-            residualNorms,
-            d_dftParams,
-            true);
+        linearAlgebraOperationsDevice::computeEigenResidualNorm(
+          operatorMatrix,
+          eigenVectorsFlattenedDevice,
+          (*XBlock),
+          (*HXBlock),
+          localVectorSize,
+          totalNumberWaveFunctions,
+          eigenValues,
+          d_mpiCommParent,
+          operatorMatrix.getMPICommunicatorDomain(),
+          interBandGroupComm,
+          BLASWrapperPtr,
+          residualNorms,
+          d_dftParams,
+          true);
 
         if (d_dftParams.deviceFineGrainedTimings)
           {

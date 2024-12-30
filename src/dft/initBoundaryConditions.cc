@@ -347,11 +347,7 @@ namespace dftfe
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrHost->createScratchMultiVectorsSinglePrec(
             d_numEigenValues % BVec, 2);
-        if (d_numEigenValues != d_numEigenValuesRR &&
-            d_numEigenValuesRR % BVec != 0)
-          d_basisOperationsPtrHost->createScratchMultiVectors(
-            d_numEigenValuesRR % BVec,
-            (d_dftParamsPtr->useReformulatedChFSI) ? 4 : 2);
+
         unsigned int BVec2 = std::min(d_dftParamsPtr->wfcBlockSize,
                                       bandGroupLowHighPlusOneIndices[1]);
         if (BVec != BVec2)
@@ -362,18 +358,6 @@ namespace dftfe
               d_basisOperationsPtrHost->createScratchMultiVectors(
                 d_numEigenValues % BVec2,
                 (d_dftParamsPtr->useReformulatedChFSI) ? 4 : 2);
-          }
-        if (d_numEigenValues != d_numEigenValuesRR)
-          {
-            dftUtils::createBandParallelizationIndices(
-              interBandGroupComm,
-              d_numEigenValuesRR,
-              bandGroupLowHighPlusOneIndices);
-            unsigned int BVec2 = std::min(d_dftParamsPtr->wfcBlockSize,
-                                          bandGroupLowHighPlusOneIndices[1]);
-            d_basisOperationsPtrHost->createScratchMultiVectors(BVec2, 2);
-            d_basisOperationsPtrHost->createScratchMultiVectors(
-              d_numEigenValuesRR % BVec2, 2);
           }
       }
 #if defined(DFTFE_WITH_DEVICE)

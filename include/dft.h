@@ -290,11 +290,7 @@ namespace dftfe
      */
     unsigned int d_numEigenValues;
     unsigned int d_highestStateForResidualComputation;
-    /**
-     * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
-     * after spectrum splitting.
-     */
-    unsigned int d_numEigenValuesRR;
+
 
     /**
      * @brief Number of random wavefunctions
@@ -1640,9 +1636,6 @@ namespace dftfe
 
     std::vector<std::vector<double>> d_densityMatDerFermiEnergy;
 
-    /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
-    std::vector<std::vector<double>> eigenValuesRRSplit;
-
     /**
      * The indexing of d_eigenVectorsFlattenedHost and
      * d_eigenVectorsFlattenedDevice [kPoint * numSpinComponents *
@@ -1655,9 +1648,6 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::HOST>
-      d_eigenVectorsRotFracDensityFlattenedHost;
-    dftfe::utils::MemoryStorage<dataTypes::number,
-                                dftfe::utils::MemorySpace::HOST>
       d_eigenVectorsDensityMatrixPrimeHost;
 
     /// device eigenvectors
@@ -1665,9 +1655,6 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsFlattenedDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number,
-                                dftfe::utils::MemorySpace::DEVICE>
-      d_eigenVectorsRotFracFlattenedDevice;
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsDensityMatrixPrimeFlattenedDevice;

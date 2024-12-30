@@ -100,9 +100,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
           computeRhoFromPSI(&d_eigenVectorsFlattenedDevice,
-                            &d_eigenVectorsRotFracFlattenedDevice,
                             d_numEigenValues,
-                            d_numEigenValuesRR,
                             eigenValues,
                             fermiEnergy,
                             fermiEnergyUp,
@@ -122,9 +120,7 @@ namespace dftfe
 #endif
         if (!d_dftParamsPtr->useDevice)
           computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
-                            &d_eigenVectorsRotFracDensityFlattenedHost,
                             d_numEigenValues,
-                            d_numEigenValuesRR,
                             eigenValues,
                             fermiEnergy,
                             fermiEnergyUp,
@@ -332,9 +328,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       computeRhoFromPSI(&d_eigenVectorsFlattenedDevice,
-                        &d_eigenVectorsRotFracFlattenedDevice,
                         d_numEigenValues,
-                        d_numEigenValuesRR,
                         eigenValues,
                         fermiEnergy,
                         fermiEnergyUp,
@@ -354,9 +348,7 @@ namespace dftfe
 #endif
     if (!d_dftParamsPtr->useDevice)
       computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
-                        &d_eigenVectorsRotFracDensityFlattenedHost,
                         d_numEigenValues,
-                        d_numEigenValuesRR,
                         eigenValues,
                         fermiEnergy,
                         fermiEnergyUp,

@@ -146,7 +146,6 @@ namespace dftfe
       &                  BLASWrapperPtr,
     elpaScalaManager &   elpaScala,
     dataTypes::number *  eigenVectorsFlattened,
-    dataTypes::number *  eigenVectorsRotFracDensityFlattened,
     const unsigned int   totalNumberWaveFunctions,
     const unsigned int   localVectorSize,
     std::vector<double> &eigenValues,
@@ -578,40 +577,20 @@ namespace dftfe
           pcout << "Orthogonalization Done: " << std::endl;
 
         computing_timer.enter_subsection("Rayleigh-Ritz proj Opt");
-
-        if (eigenValues.size() != totalNumberWaveFunctions)
-          {
-            linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(
-              operatorMatrix,
-              BLASWrapperPtr,
-              elpaScala,
-              eigenVectorsFlattened,
-              eigenVectorsRotFracDensityFlattened,
-              totalNumberWaveFunctions,
-              localVectorSize,
-              totalNumberWaveFunctions - eigenValues.size(),
-              d_mpiCommParent,
-              interBandGroupComm,
-              mpiCommDomain,
-              useMixedPrec,
-              eigenValues,
-              d_dftParams);
-          }
-        else
-          {
-            linearAlgebraOperations::rayleighRitz(operatorMatrix,
-                                                  BLASWrapperPtr,
-                                                  elpaScala,
-                                                  eigenVectorsFlattened,
-                                                  totalNumberWaveFunctions,
-                                                  localVectorSize,
-                                                  d_mpiCommParent,
-                                                  interBandGroupComm,
-                                                  mpiCommDomain,
-                                                  eigenValues,
-                                                  d_dftParams,
-                                                  false);
-          }
+        {
+          linearAlgebraOperations::rayleighRitz(operatorMatrix,
+                                                BLASWrapperPtr,
+                                                elpaScala,
+                                                eigenVectorsFlattened,
+                                                totalNumberWaveFunctions,
+                                                localVectorSize,
+                                                d_mpiCommParent,
+                                                interBandGroupComm,
+                                                mpiCommDomain,
+                                                eigenValues,
+                                                d_dftParams,
+                                                false);
+        }
 
 
         computing_timer.leave_subsection("Rayleigh-Ritz proj Opt");
@@ -626,34 +605,18 @@ namespace dftfe
           {
             computing_timer.enter_subsection("eigen vectors residuals opt");
 
-            if (eigenValues.size() != totalNumberWaveFunctions)
-              {
-                linearAlgebraOperations::computeEigenResidualNorm(
-                  operatorMatrix,
-                  BLASWrapperPtr,
-                  eigenVectorsRotFracDensityFlattened,
-                  eigenValues,
-                  eigenValues.size(),
-                  localVectorSize,
-                  d_mpiCommParent,
-                  mpiCommDomain,
-                  interBandGroupComm,
-                  residualNorms,
-                  d_dftParams);
-              }
-            else
-              linearAlgebraOperations::computeEigenResidualNorm(
-                operatorMatrix,
-                BLASWrapperPtr,
-                eigenVectorsFlattened,
-                eigenValues,
-                totalNumberWaveFunctions,
-                localVectorSize,
-                d_mpiCommParent,
-                mpiCommDomain,
-                interBandGroupComm,
-                residualNorms,
-                d_dftParams);
+            linearAlgebraOperations::computeEigenResidualNorm(
+              operatorMatrix,
+              BLASWrapperPtr,
+              eigenVectorsFlattened,
+              eigenValues,
+              totalNumberWaveFunctions,
+              localVectorSize,
+              d_mpiCommParent,
+              mpiCommDomain,
+              interBandGroupComm,
+              residualNorms,
+              d_dftParams);
             computing_timer.leave_subsection("eigen vectors residuals opt");
           }
       }

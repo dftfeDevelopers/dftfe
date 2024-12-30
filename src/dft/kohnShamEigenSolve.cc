@@ -430,10 +430,6 @@ namespace dftfe
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
           d_numEigenValues *
           matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-      d_eigenVectorsRotFracDensityFlattenedHost.data() +
-        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValuesRR *
-          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_numEigenValues,
       matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       eigenValuesTemp,
@@ -556,10 +552,6 @@ namespace dftfe
             d_eigenVectorsFlattenedDevice.begin() +
               ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
                 d_numEigenValues *
-                matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-            d_eigenVectorsRotFracFlattenedDevice.begin() +
-              ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-                d_numEigenValuesRR *
                 matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             d_numEigenValues *
               matrix_free_data.get_vector_partitioner()->locally_owned_size(),
@@ -843,10 +835,6 @@ namespace dftfe
       kohnShamDFTEigenOperator,
       d_BLASWrapperPtrHost,
       *d_elpaScala,
-      d_eigenVectorsFlattenedHost.data() +
-        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValues *
-          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_eigenVectorsFlattenedHost.data() +
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
           d_numEigenValues *
