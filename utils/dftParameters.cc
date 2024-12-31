@@ -1336,6 +1336,8 @@ namespace dftfe
     useSubspaceProjectedSHEPGPU                    = false;
     useMixedPrecCGS_SR                             = false;
     useMixedPrecCGS_O                              = false;
+    approxOverlapMatrix                            = true;
+    useReformulatedChFSI                           = false;
     useMixedPrecSubspaceRotRR                      = false;
     useMixedPrecCommunOnlyXTHXCGSO                 = false;
     useELPA                                        = false;
@@ -1687,12 +1689,14 @@ namespace dftfe
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
         numCoreWfcForMixedPrecRR =
           prm.get_integer("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR");
-        chebyshevOrder     = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-        useELPA            = prm.get_bool("USE ELPA");
-        orthogType         = prm.get("ORTHOGONALIZATION TYPE");
-        chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-        wfcBlockSize       = prm.get_integer("WFC BLOCK SIZE");
-        chebyWfcBlockSize  = prm.get_integer("CHEBY WFC BLOCK SIZE");
+        chebyshevOrder       = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+        useELPA              = prm.get_bool("USE ELPA");
+        approxOverlapMatrix  = prm.get_bool("USE APPROXIMATE OVERLAP MATRIX");
+        useReformulatedChFSI = prm.get_bool("USE RE-FORMULATED CHFSI");
+        orthogType           = prm.get("ORTHOGONALIZATION TYPE");
+        chebyshevTolerance   = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+        wfcBlockSize         = prm.get_integer("WFC BLOCK SIZE");
+        chebyWfcBlockSize    = prm.get_integer("CHEBY WFC BLOCK SIZE");
         subspaceRotDofsBlockSize =
           prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
         scalapackParalProcs       = prm.get_integer("SCALAPACKPROCS");

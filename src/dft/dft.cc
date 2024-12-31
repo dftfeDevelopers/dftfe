@@ -591,7 +591,7 @@ namespace dftfe
         if (d_dftParamsPtr->TVal < 1000)
           {
             d_dftParamsPtr->numCoreWfcForMixedPrecRR = 0.8 * numElectrons / 2.0;
-            pcout << " Setting SPECTRUM SPLIT CORE EIGENSTATES to be "
+            pcout << " Setting MIXED PREC CORE EIGENSTATES to be "
                   << d_dftParamsPtr->numCoreWfcForMixedPrecRR
                   << std::endl; //@Kartick check if this is okay
           }
@@ -2155,6 +2155,12 @@ namespace dftfe
             "DFT-FE Error: wfc block size must be exactly divisible by cheby wfc block size and also larger for Device run."));
 
 
+        // AssertThrow(
+        //   (d_numEigenValuesRR % d_dftParamsPtr->wfcBlockSize == 0 ||
+        //    d_numEigenValuesRR / d_dftParamsPtr->wfcBlockSize == 0),
+        //   dealii::ExcMessage(
+        //     "DFT-FE Error: total number RR wavefunctions must be exactly
+        //     divisible by wfc block size for Device run."));
 
         // band group parallelization data structures
         const unsigned int numberBandGroups =

@@ -470,11 +470,9 @@ namespace dftfe
     d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
                            spinType] = false;
 
+    a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
+      eigenValuesTemp[0];
 
-    {
-      a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
-        eigenValuesTemp[0];
-    }
 
     computing_timer.leave_subsection("Chebyshev solve");
   }
