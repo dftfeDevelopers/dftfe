@@ -91,36 +91,6 @@ namespace dftfe
     const dftParameters &dftParams,
     const bool           spectrumSplit);
 
-  template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
-  void
-  computeExtraTermsForEnergyCalcTauMgga(
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
-    const unsigned int                      totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &eigenValues,
-    const double                            fermiEnergy,
-    const double                            fermiEnergyUp,
-    const double                            fermiEnergyDown,
-    std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
-      &basisOperationsPtr,
-    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      &                        BLASWrapperPtr,
-    const unsigned int         quadratureIndex,
-    const std::vector<double> &kPointCoords,
-    const std::vector<double> &kPointWeights,
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &kSquareWeightedWfcValuesSquare,
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  conjUKGradUMinusUKConjGradUValues,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams,
-    const bool           spectrumSplit);
-    
-
   template <typename NumberType>
   void
   computeRhoGradRhoFromInterpolatedValues(
@@ -160,25 +130,6 @@ namespace dftfe
     NumberType *                                gradWfcQuadPointData,
     double *kineticEnergyDensityCellsWfcContributions,
     double *tau);
-
-  template <typename NumberType>
-  void
-  computeExtraTermsTauMGGAFromInterpolatedValues(
-    std::shared_ptr<
-      dftfe::basis::
-        FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
-      &basisOperationsPtr,
-    std::shared_ptr<
-      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-      &                                         BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    double *                                    partialOccupVec,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                gradWfcQuadPointData,
-    double *                                    kSquareWeightedWfcSquare,
-    double *                                    conjUKGradUMinusUKConjGradU,
-    double *                                    kcoord);
 
 #if defined(DFTFE_WITH_DEVICE)
   template <typename NumberType>

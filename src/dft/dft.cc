@@ -2857,21 +2857,21 @@ namespace dftfe
                 // Compute the mixing coefficients
                 d_mixingScheme.computeAndersonMixingCoeff(
                   d_dftParamsPtr->spinPolarized == 1 ?
-                    // (isTauMGGA ?
-                    //    std::vector<mixingVariable>{mixingVariable::rho,
-                    //                                mixingVariable::tau,
-                    //                                mixingVariable::magZ,
-                    //                                mixingVariable::tauMagZ} :
-                    //    std::vector<mixingVariable>{mixingVariable::rho,
-                    //                                mixingVariable::magZ}) :
-                    // (isTauMGGA ?
-                    //    std::vector<mixingVariable>{mixingVariable::rho,
-                    //                                mixingVariable::tau} :
-                    //    std::vector<mixingVariable>{mixingVariable::rho}));
+                    (isTauMGGA ?
+                       std::vector<mixingVariable>{mixingVariable::rho,
+                                                   mixingVariable::tau,
+                                                   mixingVariable::magZ,
+                                                   mixingVariable::tauMagZ} :
+                       std::vector<mixingVariable>{mixingVariable::rho,
+                                                   mixingVariable::magZ}) :
+                    (isTauMGGA ?
+                       std::vector<mixingVariable>{mixingVariable::rho,
+                                                   mixingVariable::tau} :
+                       std::vector<mixingVariable>{mixingVariable::rho}));
 
-                    std::vector<mixingVariable>{mixingVariable::rho,
-                                                mixingVariable::magZ} :
-                    std::vector<mixingVariable>{mixingVariable::rho});
+                    // std::vector<mixingVariable>{mixingVariable::rho,
+                    //                             mixingVariable::magZ} :
+                    // std::vector<mixingVariable>{mixingVariable::rho});
 
                 // update the mixing variables
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
