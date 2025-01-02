@@ -3683,7 +3683,6 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
         BLASWrapperHostPtr)
   {
-	  pcout<<"entering c matrix global creation\n";
     d_totalLocallyOwnedNodes =
       basisOperationsPtr->nOwnedDofs();
     const unsigned int numberNodesPerElement =
