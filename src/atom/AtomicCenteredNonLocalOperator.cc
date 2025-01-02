@@ -1212,12 +1212,14 @@ namespace dftfe
                                                    d_maxSingleAtomContribution,
                                                  ValueType(0.0));
 
+        if (!d_useGlobalCMatrix)
+{
         d_cellHamMatrixTimesWaveMatrixNonLocalDevice.clear();
         d_cellHamMatrixTimesWaveMatrixNonLocalDevice.resize(
           d_numberWaveFunctions * d_totalNonlocalElems *
             d_numberNodesPerElement,
           ValueType(0.0));
-
+}
         for (unsigned int i = 0; i < d_totalNonlocalElems; i++)
           {
             hostPointerCDaggeOutTemp[i] =
@@ -3850,8 +3852,13 @@ namespace dftfe
     d_CMatrixEntriesConjugate.clear();
     d_CMatrixEntriesTranspose.clear();
 
+    
+#if defined(DFTFE_WITH_DEVICE)
     d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
     d_cellHamiltonianMatrixNonLocalFlattenedTranspose.clear();
+    d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice.clear();
+    d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice.clear();
+#endif
   }
 
 
