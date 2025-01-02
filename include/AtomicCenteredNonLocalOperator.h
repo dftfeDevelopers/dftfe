@@ -320,6 +320,7 @@ namespace dftfe
      */
     const ValueType *
     getCconjtansXLocalDataStructure(const unsigned int iAtom) const;
+
     /**
      * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and constraint nodes updated.
      * @param[in] src input nodal vector on which operator acts on.
@@ -338,31 +339,9 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
-      const bool flagScaleInternalMatrix = false);
-
-    /**
-     * @brief completes the VCconjX on nodal vector src using global C matrix.
-     * The global C matrix mush have been computed before.
-     * The src vector must have all ghost nodes and constraint nodes updated.
-     * @param[in] src input nodal vector on which operator acts on.
-     * @param[in] kPointIndex kPoint of interest for current operation
-     * @param[in] couplingtype structure of coupling matrix
-     * @param[in] couplingMatrix entries of the coupling matrix V in
-     * CVCconjtrans. Ensure the coupling matrix is padded
-     * @param[out] sphericalFunctionKetTimesVectorParFlattened multivector to
-     * store results of CconjtransX which is initiliased using
-     * initialiseFlattenedVector call
-     */
-    void
-    applyVCconjtransOnXUsingGlobalC(
-      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-      const unsigned int                                         kPointIndex,
-      const CouplingStructure                                    couplingtype,
-      const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
-      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
                 &        sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
+
 
     /**
      * @brief completes the action of CVCconjtranspose on nodal vector src. The src vector must have all ghost nodes and contraint nodes updated.
@@ -440,6 +419,51 @@ namespace dftfe
                                const unsigned int iElemComp) const;
 
   protected:
+
+    /**
+     * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and constraint nodes updated.
+     * @param[in] src input nodal vector on which operator acts on.
+     * @param[in] kPointIndex kPoint of interest for current operation
+     * @param[in] couplingtype structure of coupling matrix
+     * @param[in] couplingMatrix entries of the coupling matrix V in
+     * CVCconjtrans. Ensure the coupling matrix is padded
+     * @param[out] sphericalFunctionKetTimesVectorParFlattened multivector to
+     * store results of CconjtransX which is initiliased using
+     * initialiseFlattenedVector call
+     */
+    void
+    applyVCconjtransOnXCellLevel(
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
+      const unsigned int                                         kPointIndex,
+      const CouplingStructure                                    couplingtype,
+      const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
+      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+                &        sphericalFunctionKetTimesVectorParFlattened,
+      const bool flagScaleInternalMatrix = false);
+
+    /**
+     * @brief completes the VCconjX on nodal vector src using global C matrix.
+     * The global C matrix mush have been computed before.
+     * The src vector must have all ghost nodes and constraint nodes updated.
+     * @param[in] src input nodal vector on which operator acts on.
+     * @param[in] kPointIndex kPoint of interest for current operation
+     * @param[in] couplingtype structure of coupling matrix
+     * @param[in] couplingMatrix entries of the coupling matrix V in
+     * CVCconjtrans. Ensure the coupling matrix is padded
+     * @param[out] sphericalFunctionKetTimesVectorParFlattened multivector to
+     * store results of CconjtransX which is initiliased using
+     * initialiseFlattenedVector call
+     */
+    void
+    applyVCconjtransOnXUsingGlobalC(
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
+      const unsigned int                                         kPointIndex,
+      const CouplingStructure                                    couplingtype,
+      const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
+      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+                &        sphericalFunctionKetTimesVectorParFlattened,
+      const bool flagScaleInternalMatrix = false);
+
     bool                d_AllReduceCompleted;
     std::vector<double> d_kPointWeights;
     std::vector<double> d_kPointCoordinates;

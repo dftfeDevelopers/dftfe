@@ -2200,6 +2200,10 @@ namespace dftfe
     const ValueType *                           X,
     const std::pair<unsigned int, unsigned int> cellRange)
   {
+    Assert(
+      !d_useGlobalCMatrix,
+      dealii::ExcMessage(
+        "DFT-FE Error: applyCconjtransOnX() is called for cell level C matrix route without it being initialised "));
     if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
       {
         const ValueType    zero(0.0), one(1.0);
@@ -2414,50 +2418,59 @@ namespace dftfe
                         couplingMatrix,
                         sphericalFunctionKetTimesVectorParFlattened,
                         true);
-    dftfe::utils::MemoryStorage<ValueType, memorySpace> Xtemp;
-    Xtemp.resize(d_locallyOwnedCells * d_numberNodesPerElement *
-                   d_numberWaveFunctions,
-                 0.0);
-    applyCOnVCconjtransX(Xtemp.data(), std::make_pair(0, d_locallyOwnedCells));
-    if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
+
+    if(!d_useGlobalCMatrix)
       {
-        for (unsigned int iCell = 0; iCell < d_locallyOwnedCells; ++iCell)
+        dftfe::utils::MemoryStorage<ValueType, memorySpace> Xtemp;
+        Xtemp.resize(d_locallyOwnedCells * d_numberNodesPerElement *
+                       d_numberWaveFunctions,
+                     0.0);
+        applyCOnVCconjtransX(Xtemp.data(), std::make_pair(0, d_locallyOwnedCells));
+        if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
           {
-            for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
-                 ++iNode)
+            for (unsigned int iCell = 0; iCell < d_locallyOwnedCells; ++iCell)
               {
-                dealii::types::global_dof_index localNodeId =
-                  (d_basisOperatorPtr->d_cellDofIndexToProcessDofIndexMap
-                     [iCell * d_numberNodesPerElement + iNode]) *
-                  d_numberWaveFunctions;
-                d_BLASWrapperPtr->xcopy(d_numberWaveFunctions,
-                                        &Xtemp[iCell * d_numberNodesPerElement *
-                                                 d_numberWaveFunctions +
-                                               iNode * d_numberWaveFunctions],
-                                        inc,
-                                        dst.data() + localNodeId,
-                                        inc);
+                for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
+                     ++iNode)
+                  {
+                    dealii::types::global_dof_index localNodeId =
+                      (d_basisOperatorPtr->d_cellDofIndexToProcessDofIndexMap
+                         [iCell * d_numberNodesPerElement + iNode]) *
+                      d_numberWaveFunctions;
+                    d_BLASWrapperPtr->xcopy(d_numberWaveFunctions,
+                                            &Xtemp[iCell * d_numberNodesPerElement *
+                                                     d_numberWaveFunctions +
+                                                   iNode * d_numberWaveFunctions],
+                                            inc,
+                                            dst.data() + localNodeId,
+                                            inc);
+                  }
               }
           }
-      }
 #if defined(DFTFE_WITH_DEVICE)
+        else
+          {
+            Assert(
+              d_basisOperatorPtr->nVectors() == d_numberWaveFunctions,
+              dealii::ExcMessage(
+                "DFT-FE Error: d_BasisOperatorMemPtr in Atomic non local operator is not set with correct input size."));
+
+
+            d_BLASWrapperPtr->stridedCopyFromBlock(
+              d_numberWaveFunctions,
+              d_locallyOwnedCells * d_numberNodesPerElement,
+              Xtemp.begin(),
+              dst.data(),
+              d_basisOperatorPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+                .begin());
+          }
+#endif
+      }
     else
       {
-        Assert(
-          d_basisOperatorPtr->nVectors() == d_numberWaveFunctions,
-          dealii::ExcMessage(
-            "DFT-FE Error: d_BasisOperatorMemPtr in Atomic non local operator is not set with correct input size."));
-
-
-        d_BLASWrapperPtr->stridedCopyFromBlock(
-          d_numberWaveFunctions,
-          d_locallyOwnedCells * d_numberNodesPerElement,
-          Xtemp.begin(),
-          dst.data(),
-          d_basisOperatorPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-            .begin());
+        applyCOnVCconjtransX(dst);
       }
-#endif
+
   }
 
 
@@ -2465,6 +2478,39 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyVCconjtransOnX(
+    const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
+    const unsigned int                                         kPointIndex,
+    const CouplingStructure                                    couplingtype,
+    const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
+    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+              &        sphericalFunctionKetTimesVectorParFlattened,
+    const bool flagScaleInternalMatrix)
+  {
+    if (!d_useGlobalCMatrix)
+      {
+        applyVCconjtransOnXCellLevel(
+          src,
+          kPointIndex,
+          couplingtype,
+          couplingMatrix,
+          sphericalFunctionKetTimesVectorParFlattened,
+          flagScaleInternalMatrix);
+      }
+    else
+      {
+        applyVCconjtransOnXUsingGlobalC(
+          src,
+          kPointIndex,
+          couplingtype,
+          couplingMatrix,
+          sphericalFunctionKetTimesVectorParFlattened,
+          flagScaleInternalMatrix);
+      }
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyVCconjtransOnXCellLevel(
     const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
     const unsigned int                                         kPointIndex,
     const CouplingStructure                                    couplingtype,
@@ -2603,6 +2649,10 @@ namespace dftfe
     ValueType *                                 Xout,
     const std::pair<unsigned int, unsigned int> cellRange)
   {
+    Assert(
+      !d_useGlobalCMatrix,
+      dealii::ExcMessage(
+        "DFT-FE Error: applyCOnVCconjtransX() is called for cell level C matrix route without it being initialised "));
     if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
       {
         const ValueType                                zero(0.0), one(1.0);
@@ -3794,6 +3844,14 @@ namespace dftfe
                                                          0);
           }
       }
+
+
+    //deallocate the cell wise vectors
+    d_CMatrixEntriesConjugate.clear();
+    d_CMatrixEntriesTranspose.clear();
+
+    d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
+    d_cellHamiltonianMatrixNonLocalFlattenedTranspose.clear();
   }
 
 
