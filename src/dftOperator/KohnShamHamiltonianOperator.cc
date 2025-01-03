@@ -1096,9 +1096,9 @@ namespace dftfe
         d_srcNonLocalTemp.updateGhostValues();
         d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
 
-// TODO d_srcNonLocalTemp and d_dstNonLocalTemp can be removed
+        // TODO d_srcNonLocalTemp and d_dstNonLocalTemp can be removed
         d_dstNonLocalTemp.setValue(0.0);
-	d_excManagerPtr->getExcSSDFunctionalObj()
+        d_excManagerPtr->getExcSSDFunctionalObj()
           ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
                                                     d_dstNonLocalTemp,
                                                     numberWavefunctions,
@@ -1316,7 +1316,7 @@ namespace dftfe
             d_srcNonLocalTemp.updateGhostValues();
             d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
 
-	    d_dstNonLocalTemp.setValue(0.0);
+            d_dstNonLocalTemp.setValue(0.0);
             d_excManagerPtr->getExcSSDFunctionalObj()
               ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
                                                         d_dstNonLocalTemp,
@@ -1326,7 +1326,7 @@ namespace dftfe
 
 
             d_basisOperationsPtr
-      		    ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+              ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
               .distribute_slave_to_master(d_dstNonLocalTemp);
 
             d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
@@ -1334,23 +1334,23 @@ namespace dftfe
               relaventDofs,
               scalarHX,
               d_basisOperationsPtr->inverseMassVectorBasisData().data(),
-	      d_dstNonLocalTemp.data(),
+              d_dstNonLocalTemp.data(),
               dst.data(),
               d_mapNodeIdToProcId.data());
-/*
-            src.updateGhostValues();
-            d_basisOperationsPtr->distribute(src);
+            /*
+                        src.updateGhostValues();
+                        d_basisOperationsPtr->distribute(src);
 
-            d_excManagerPtr->getExcSSDFunctionalObj()
-              ->applyWaveFunctionDependentFuncDerWrtPsi(src,
-                                                        dst,
-                                                        numberWavefunctions,
-                                                        d_kPointIndex,
-                                                        d_spinIndex);
+                        d_excManagerPtr->getExcSSDFunctionalObj()
+                          ->applyWaveFunctionDependentFuncDerWrtPsi(src,
+                                                                    dst,
+                                                                    numberWavefunctions,
+                                                                    d_kPointIndex,
+                                                                    d_spinIndex);
 
-            src.zeroOutGhosts();
-            inverseMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
-	    */
+                        src.zeroOutGhosts();
+                        inverseMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
+                  */
           }
 
         inverseMassVectorScaledConstraintsNoneDataInfoPtr

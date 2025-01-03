@@ -339,7 +339,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                &        sphericalFunctionKetTimesVectorParFlattened,
+        &        sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
 
 
@@ -419,7 +419,6 @@ namespace dftfe
                                const unsigned int iElemComp) const;
 
   protected:
-
     /**
      * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and constraint nodes updated.
      * @param[in] src input nodal vector on which operator acts on.
@@ -438,7 +437,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                &        sphericalFunctionKetTimesVectorParFlattened,
+        &        sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
 
     /**
@@ -461,7 +460,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                &        sphericalFunctionKetTimesVectorParFlattened,
+        &        sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
 
     bool                d_AllReduceCompleted;
@@ -621,12 +620,15 @@ namespace dftfe
     std::vector<unsigned int> d_atomStartIndexGlobal;
     unsigned int              d_totalNumSphericalFunctionsGlobal;
 
-    std::vector<std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>>
+    std::vector<
+      std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>>
       d_CMatrixGlobal;
 
-    std::set<unsigned int> d_setOfAtomicNumber;
-    std::vector<unsigned int> d_mapAtomIdToSpeciesIndex, d_mapiAtomToSpeciesIndex;
-    std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>> d_dotProductAtomicWaveInputWaveTemp;
+    std::set<unsigned int>    d_setOfAtomicNumber;
+    std::vector<unsigned int> d_mapAtomIdToSpeciesIndex,
+      d_mapiAtomToSpeciesIndex;
+    std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>
+                              d_dotProductAtomicWaveInputWaveTemp;
     std::vector<unsigned int> d_mapIAtomicNumToDotProd;
     std::vector<unsigned int> d_mapiAtomToDotProd;
 

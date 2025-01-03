@@ -233,9 +233,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transA in gemm "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transA in gemm "));
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
@@ -243,9 +241,7 @@ namespace dftfe
         transb = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transB in gemm "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transB in gemm "));
         }
 
       dftfe::utils::deviceBlasStatus_t status = hipblasSgemm(d_deviceBlasHandle,
@@ -290,9 +286,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transA in gemm "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transA in gemm "));
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
@@ -302,9 +296,7 @@ namespace dftfe
         transb = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transB in gemm "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transB in gemm "));
         }
 
       dftfe::utils::deviceBlasStatus_t status =
@@ -349,9 +341,7 @@ namespace dftfe
 
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transA in gemm "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transA in gemm "));
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
@@ -360,9 +350,7 @@ namespace dftfe
 
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transB in gemm "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transB in gemm "));
         }
       dftfe::utils::deviceBlasStatus_t status = hipblasDgemm(d_deviceBlasHandle,
                                                              transa,
@@ -406,9 +394,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transA in gemm "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transA in gemm "));
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
@@ -418,9 +404,7 @@ namespace dftfe
         transb = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transB in gemm "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transB in gemm "));
         }
 
 
@@ -463,9 +447,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transA in gemv "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transA in gemv "));
         }
       dftfe::utils::deviceBlasStatus_t status = hipblasDgemv(d_deviceBlasHandle,
                                                              transa,
@@ -504,9 +486,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transA in gemv "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transA in gemv "));
         }
 
       dftfe::utils::deviceBlasStatus_t status = hipblasSgemv(d_deviceBlasHandle,
@@ -547,9 +527,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transA in gemv "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transA in gemv "));
         }
 
       dftfe::utils::deviceBlasStatus_t status =
@@ -591,9 +569,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-		AssertThrow(false,
-            dealii::ExcMessage(
-              "Incorrect transA in gemv "));
+          AssertThrow(false, dealii::ExcMessage("Incorrect transA in gemv "));
         }
 
       dftfe::utils::deviceBlasStatus_t status =

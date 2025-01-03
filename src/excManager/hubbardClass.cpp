@@ -325,7 +325,6 @@ namespace dftfe
               }
             else if (d_numSpins == 2)
               {
-
                 initOccValue =
                   d_hubbardSpeciesData[hubbardIds].initialOccupation /
                   (2.0 * d_hubbardSpeciesData[hubbardIds].numberSphericalFunc);
@@ -333,10 +332,10 @@ namespace dftfe
                 unsigned int majorSpin = 1000, minorSpin = 1000;
                 if (d_initialAtomicSpin[atomId] > 1e-3)
                   {
-                    majorSpin = 0 ;
+                    majorSpin = 0;
                     minorSpin = 1;
                   }
-                else if (d_initialAtomicSpin[atomId] < -1e-3 )
+                else if (d_initialAtomicSpin[atomId] < -1e-3)
                   {
                     majorSpin = 1;
                     minorSpin = 0;
@@ -529,8 +528,7 @@ namespace dftfe
     const unsigned int remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
 
-    const unsigned int BVec =
-      d_dftParamsPtr->chebyWfcBlockSize;
+    const unsigned int BVec = d_dftParamsPtr->chebyWfcBlockSize;
 
     d_BasisOperatorMemPtr->reinit(BVec, cellsBlockSize, d_densityQuadratureId);
     const unsigned int numQuadPoints = d_BasisOperatorMemPtr->nQuadsPerCell();
@@ -555,7 +553,7 @@ namespace dftfe
 
     unsigned int numLocalDofs       = d_BasisOperatorHostPtr->nOwnedDofs();
     unsigned int numNodesPerElement = d_BasisOperatorHostPtr->nDofsPerCell();
-    unsigned int                                        previousSize = 0;
+    unsigned int previousSize       = 0;
     for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
         for (unsigned int spinIndex = 0; spinIndex < d_noOfSpin; ++spinIndex)
@@ -620,7 +618,8 @@ namespace dftfe
                     d_BasisOperatorMemPtr->distribute(*(flattenedArrayBlock));
 
 
-                    d_nonLocalOperator->applyCconjtransOnX(*(flattenedArrayBlock));
+                    d_nonLocalOperator->applyCconjtransOnX(
+                      *(flattenedArrayBlock));
                   }
                 projectorKetTimesVector.setValue(0.0);
                 d_nonLocalOperator->applyAllReduceOnCconjtransX(
@@ -1241,105 +1240,110 @@ namespace dftfe
     d_nonLocalOperator->applyCOnVCconjtransX(dst);
   }
 
-//  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-//  void
-//  hubbard<ValueType, memorySpace>::applyPotentialDueToHubbardCorrection(
-//    const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-//    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &      dst,
-//    const unsigned int inputVecSize,
-//    const unsigned int kPointIndex,
-//    const unsigned int spinIndex)
-//  {
-//    dst.setValue(0.0);
-//    if (d_nonLocalOperator->getTotalNonLocalElementsInCurrentProcessor() > 0)
-//      {
-//        const unsigned int nCells       = d_BasisOperatorMemPtr->nCells();
-//        const unsigned int nDofsPerCell = d_BasisOperatorMemPtr->nDofsPerCell();
-//
-//        const ValueType scalarCoeffAlpha = ValueType(1.0),
-//                        scalarCoeffBeta  = ValueType(0.0);
-//
-//        // TODO check if this will lead to performance degradation
-//        d_cellWaveFunctionMatrixDst.setValue(0.0);
-//        d_cellWaveFunctionMatrixSrc.setValue(0.0);
-//        Assert(
-//          d_cellWaveFunctionMatrixSrc.size() >=
-//            nCells * nDofsPerCell * inputVecSize,
-//          dealii::ExcMessage(
-//            "DFT-FE Error: d_cellWaveFunctionMatrixSrc in Hubbard is not set properly. Call initialiseCellWaveFunctionPointers()."));
-//
-//        Assert(
-//          d_cellWaveFunctionMatrixDst.size() >=
-//            d_cellsBlockSizeApply * nDofsPerCell * inputVecSize,
-//          dealii::ExcMessage(
-//            "DFT-FE Error: d_cellWaveFunctionMatrixDst in Hubbard is not set properly. Call initialiseCellWaveFunctionPointers()."));
-//
-//        Assert(
-//          d_BasisOperatorMemPtr->nVectors() == inputVecSize,
-//          dealii::ExcMessage(
-//            "DFT-FE Error: d_BasisOperatorMemPtr in Hubbard is not set with correct input size."));
-//
-//
-//        unsigned int hamiltonianIndex =
-//          d_dftParamsPtr->memOptMode ?
-//            0 :
-//            kPointIndex * (d_dftParamsPtr->spinPolarized + 1) + spinIndex;
-//        for (unsigned int iCell = 0; iCell < nCells;
-//             iCell += d_cellsBlockSizeApply)
-//          {
-//            std::pair<unsigned int, unsigned int> cellRange(
-//              iCell, std::min(iCell + d_cellsBlockSizeApply, nCells));
-//
-//            d_BLASWrapperMemPtr->stridedCopyToBlock(
-//              inputVecSize,
-//              nDofsPerCell * (cellRange.second - cellRange.first),
-//              src.data(),
-//              d_cellWaveFunctionMatrixSrc.data() +
-//                cellRange.first * nDofsPerCell * inputVecSize,
-//              d_BasisOperatorMemPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-//                  .data() +
-//                cellRange.first * nDofsPerCell);
-//
-//            d_nonLocalOperator->applyCconjtransOnX(
-//              d_cellWaveFunctionMatrixSrc.data() +
-//                cellRange.first * nDofsPerCell * inputVecSize,
-//              cellRange);
-//          }
-//
-//        d_hubbNonLocalProjectorTimesVectorBlock.setValue(0);
-//        d_nonLocalOperator->applyAllReduceOnCconjtransX(
-//          d_hubbNonLocalProjectorTimesVectorBlock);
-//        d_nonLocalOperator->applyVOnCconjtransX(
-//          CouplingStructure::dense,
-//          d_couplingMatrixEntries[spinIndex],
-//          d_hubbNonLocalProjectorTimesVectorBlock,
-//          true);
-//
-//        for (unsigned int iCell = 0; iCell < nCells;
-//             iCell += d_cellsBlockSizeApply)
-//          {
-//            std::pair<unsigned int, unsigned int> cellRange(
-//              iCell, std::min(iCell + d_cellsBlockSizeApply, nCells));
-//
-//            // d_cellWaveFunctionMatrixDst has to be reinitialised to zero
-//            // before applyCOnVCconjtransX() is called
-//            d_cellWaveFunctionMatrixDst.setValue(0.0);
-//
-//            d_nonLocalOperator->applyCOnVCconjtransX(
-//              d_cellWaveFunctionMatrixDst.data(), cellRange);
-//
-//
-//            d_BLASWrapperMemPtr->axpyStridedBlockAtomicAdd(
-//              inputVecSize,
-//              nDofsPerCell * (cellRange.second - cellRange.first),
-//              d_cellWaveFunctionMatrixDst.data(),
-//              dst.data(),
-//              d_BasisOperatorMemPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-//                  .data() +
-//                cellRange.first * nDofsPerCell);
-//          }
-//      }
-//  }
+  //  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  //  void
+  //  hubbard<ValueType, memorySpace>::applyPotentialDueToHubbardCorrection(
+  //    const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
+  //    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &      dst,
+  //    const unsigned int inputVecSize,
+  //    const unsigned int kPointIndex,
+  //    const unsigned int spinIndex)
+  //  {
+  //    dst.setValue(0.0);
+  //    if (d_nonLocalOperator->getTotalNonLocalElementsInCurrentProcessor() >
+  //    0)
+  //      {
+  //        const unsigned int nCells       = d_BasisOperatorMemPtr->nCells();
+  //        const unsigned int nDofsPerCell =
+  //        d_BasisOperatorMemPtr->nDofsPerCell();
+  //
+  //        const ValueType scalarCoeffAlpha = ValueType(1.0),
+  //                        scalarCoeffBeta  = ValueType(0.0);
+  //
+  //        // TODO check if this will lead to performance degradation
+  //        d_cellWaveFunctionMatrixDst.setValue(0.0);
+  //        d_cellWaveFunctionMatrixSrc.setValue(0.0);
+  //        Assert(
+  //          d_cellWaveFunctionMatrixSrc.size() >=
+  //            nCells * nDofsPerCell * inputVecSize,
+  //          dealii::ExcMessage(
+  //            "DFT-FE Error: d_cellWaveFunctionMatrixSrc in Hubbard is not set
+  //            properly. Call initialiseCellWaveFunctionPointers()."));
+  //
+  //        Assert(
+  //          d_cellWaveFunctionMatrixDst.size() >=
+  //            d_cellsBlockSizeApply * nDofsPerCell * inputVecSize,
+  //          dealii::ExcMessage(
+  //            "DFT-FE Error: d_cellWaveFunctionMatrixDst in Hubbard is not set
+  //            properly. Call initialiseCellWaveFunctionPointers()."));
+  //
+  //        Assert(
+  //          d_BasisOperatorMemPtr->nVectors() == inputVecSize,
+  //          dealii::ExcMessage(
+  //            "DFT-FE Error: d_BasisOperatorMemPtr in Hubbard is not set with
+  //            correct input size."));
+  //
+  //
+  //        unsigned int hamiltonianIndex =
+  //          d_dftParamsPtr->memOptMode ?
+  //            0 :
+  //            kPointIndex * (d_dftParamsPtr->spinPolarized + 1) + spinIndex;
+  //        for (unsigned int iCell = 0; iCell < nCells;
+  //             iCell += d_cellsBlockSizeApply)
+  //          {
+  //            std::pair<unsigned int, unsigned int> cellRange(
+  //              iCell, std::min(iCell + d_cellsBlockSizeApply, nCells));
+  //
+  //            d_BLASWrapperMemPtr->stridedCopyToBlock(
+  //              inputVecSize,
+  //              nDofsPerCell * (cellRange.second - cellRange.first),
+  //              src.data(),
+  //              d_cellWaveFunctionMatrixSrc.data() +
+  //                cellRange.first * nDofsPerCell * inputVecSize,
+  //              d_BasisOperatorMemPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+  //                  .data() +
+  //                cellRange.first * nDofsPerCell);
+  //
+  //            d_nonLocalOperator->applyCconjtransOnX(
+  //              d_cellWaveFunctionMatrixSrc.data() +
+  //                cellRange.first * nDofsPerCell * inputVecSize,
+  //              cellRange);
+  //          }
+  //
+  //        d_hubbNonLocalProjectorTimesVectorBlock.setValue(0);
+  //        d_nonLocalOperator->applyAllReduceOnCconjtransX(
+  //          d_hubbNonLocalProjectorTimesVectorBlock);
+  //        d_nonLocalOperator->applyVOnCconjtransX(
+  //          CouplingStructure::dense,
+  //          d_couplingMatrixEntries[spinIndex],
+  //          d_hubbNonLocalProjectorTimesVectorBlock,
+  //          true);
+  //
+  //        for (unsigned int iCell = 0; iCell < nCells;
+  //             iCell += d_cellsBlockSizeApply)
+  //          {
+  //            std::pair<unsigned int, unsigned int> cellRange(
+  //              iCell, std::min(iCell + d_cellsBlockSizeApply, nCells));
+  //
+  //            // d_cellWaveFunctionMatrixDst has to be reinitialised to zero
+  //            // before applyCOnVCconjtransX() is called
+  //            d_cellWaveFunctionMatrixDst.setValue(0.0);
+  //
+  //            d_nonLocalOperator->applyCOnVCconjtransX(
+  //              d_cellWaveFunctionMatrixDst.data(), cellRange);
+  //
+  //
+  //            d_BLASWrapperMemPtr->axpyStridedBlockAtomicAdd(
+  //              inputVecSize,
+  //              nDofsPerCell * (cellRange.second - cellRange.first),
+  //              d_cellWaveFunctionMatrixDst.data(),
+  //              dst.data(),
+  //              d_BasisOperatorMemPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+  //                  .data() +
+  //                cellRange.first * nDofsPerCell);
+  //          }
+  //      }
+  //  }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
