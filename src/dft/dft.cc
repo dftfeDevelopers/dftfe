@@ -2919,7 +2919,7 @@ namespace dftfe
                   0,
                   true,
                   false,
-                  d_dftParamsPtr->multipoleBoundaryConditions);
+                  true);
               }
 #endif
           }
@@ -2968,7 +2968,7 @@ namespace dftfe
                 0,
                 true,
                 false,
-                d_dftParamsPtr->multipoleBoundaryConditions);
+                true);
           }
 
         computing_timer.enter_subsection("phiTot solve");
