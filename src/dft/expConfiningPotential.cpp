@@ -46,13 +46,13 @@ namespace dftfe
     double periodicFactorZ = dftParams.periodicZ == true ? 0.0 : 1.0;
     double maxDist         = 0.0;
 
-    
+
     AssertThrow(
       !(dftParams.periodicX && dftParams.periodicY && dftParams.periodicZ),
       dealii::ExcMessage(
         "DFT-FE Error: Confining potential can not be applied in an all-periodic setting"));
 
-    
+
     for (unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
       {
         double atomDist = 0.0;
