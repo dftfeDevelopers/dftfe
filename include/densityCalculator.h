@@ -153,6 +153,26 @@ namespace dftfe
     double *                                    rho,
     double *                                    gradRho,
     const bool                                  isEvaluateGradRho);
+
+  template <typename NumberType>
+  void
+  computeTauFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<NumberType,
+                                      double,
+                                      dftfe::utils::MemorySpace::DEVICE>>
+      &basisOperationsPtr,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                                         BLASWrapperPtr,
+    const std::pair<unsigned int, unsigned int> cellRange,
+    const std::pair<unsigned int, unsigned int> vecRange,
+    double *                                    partialOccupVec,
+    double *                                    kCoord,
+    NumberType *                                wfcQuadPointData,
+    NumberType *                                gradWfcQuadPointData,
+    double *kineticEnergyDensityCellsWfcContributions,
+    double *tau);
 #endif
 
 } // namespace dftfe

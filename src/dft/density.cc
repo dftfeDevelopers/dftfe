@@ -127,10 +127,13 @@ namespace dftfe
                             d_BLASWrapperPtr,
                             d_densityDofHandlerIndex,
                             d_densityQuadratureId,
+                            d_kPointCoordinates,
                             d_kPointWeights,
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
+                            d_tauOutQuadValues,
                             isGradDensityDataDependent,
+                            isTauMGGA,
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
@@ -165,7 +168,6 @@ namespace dftfe
                               *d_dftParamsPtr,
                               isConsiderSpectrumSplitting &&
                                 d_numEigenValues != d_numEigenValuesRR);
-
           }
         // normalizeRhoOutQuadValues();
 
@@ -394,9 +396,12 @@ namespace dftfe
                         d_BLASWrapperPtr,
                         d_densityDofHandlerIndex,
                         d_gllQuadratureId,
+                        d_kPointCoordinates,
                         d_kPointWeights,
                         densityPRefinedNodalData,
                         gradDensityPRefinedNodalData,
+                        tauPRefinedNodalData,
+                        false,
                         false,
                         d_mpiCommParent,
                         interpoolcomm,

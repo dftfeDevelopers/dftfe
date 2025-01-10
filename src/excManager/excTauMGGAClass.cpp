@@ -499,5 +499,8 @@ namespace dftfe
   {}
 
   template class excTauMGGAClass<dftfe::utils::MemorySpace::HOST>;
+#if defined(DFTFE_WITH_DEVICE)
+  template class excTauMGGAClass<dftfe::utils::MemorySpace::DEVICE>;
+#endif
 
 } // namespace dftfe

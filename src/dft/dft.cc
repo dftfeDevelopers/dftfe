@@ -1369,7 +1369,6 @@ namespace dftfe
 
             if (isGradDensityDataDependent)
               d_gradDensityOutQuadValues = d_gradDensityInQuadValues;
-            // unsure of the edit here for scan
             if (isTauMGGA)
               d_tauOutQuadValues = d_tauInQuadValues;
           }
@@ -2869,9 +2868,6 @@ namespace dftfe
                                                    mixingVariable::tau} :
                        std::vector<mixingVariable>{mixingVariable::rho}));
 
-                    // std::vector<mixingVariable>{mixingVariable::rho,
-                    //                             mixingVariable::magZ} :
-                    // std::vector<mixingVariable>{mixingVariable::rho});
 
                 // update the mixing variables
                 for (unsigned int iComp = 0; iComp < norms.size(); ++iComp)
@@ -3186,20 +3182,15 @@ namespace dftfe
               {
                 computing_timer.enter_subsection("VEff Computation");
 
-
-
                 kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
                                                      d_phiInQuadValues,
                                                      s);
                 computing_timer.leave_subsection("VEff Computation");
 
-
                 for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                      ++kPoint)
                   {
                     kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
-
-
 
                     computing_timer.enter_subsection(
                       "Hamiltonian Matrix Computation");

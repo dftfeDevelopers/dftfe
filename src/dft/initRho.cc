@@ -883,12 +883,6 @@ namespace dftfe
               }
           }
 
-        // Should I not do sth similar for isTauMGGA? (Not done in the previous
-        // implementation)
-
-        // Should I not do sth similar for isTauMGGA? (Not done in the previous
-        // implementation)
-
         normalizeRhoInQuadValues();
       }
     //

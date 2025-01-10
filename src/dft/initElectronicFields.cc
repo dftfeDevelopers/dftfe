@@ -140,6 +140,36 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator, "initRho called");
 
+#ifdef DFTFE_WITH_DEVICE
+    if (d_dftParamsPtr->useDevice)
+      {
+        d_eigenVectorsFlattenedDevice.resize(
+          d_eigenVectorsFlattenedHost.size());
+
+        if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+          d_eigenVectorsDensityMatrixPrimeFlattenedDevice.resize(
+            d_eigenVectorsFlattenedHost.size());
+
+        if (d_numEigenValuesRR != d_numEigenValues)
+          d_eigenVectorsRotFracFlattenedDevice.resize(
+            d_eigenVectorsRotFracDensityFlattenedHost.size());
+        else
+          d_eigenVectorsRotFracFlattenedDevice.resize(1);
+
+        d_eigenVectorsFlattenedDevice.copyFrom(d_eigenVectorsFlattenedHost);
+      }
+#endif
+
+    if (!d_dftParamsPtr->useDevice &&
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+      {
+        d_eigenVectorsDensityMatrixPrimeHost = d_eigenVectorsFlattenedHost;
+      }
+
+    if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
+      totalMagnetization(d_densityInQuadValues[1]);
+
+
     if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
         ExcFamilyType::TauMGGA)
       {
@@ -172,42 +202,33 @@ namespace dftfe
               }
           }
 #ifdef DFTFE_WITH_DEVICE
-        if (d_dftParamsPtr->useDevice)
+        else
           {
-            std::string errMsg = "GPU is not implemented yet in SCAN.";
-            dftfe::utils::throwException(false, errMsg);
+            MPI_Barrier(d_mpiCommParent);
+            computeInitTauFromPSI(&d_eigenVectorsFlattenedDevice,
+                                  &d_eigenVectorsRotFracFlattenedDevice,
+                                  numElectrons,
+                                  d_numEigenValues,
+                                  d_numEigenValuesRR,
+                                  eigenValues,
+                                  fermiEnergy,
+                                  fermiEnergyUp,
+                                  fermiEnergyDown,
+                                  d_basisOperationsPtrDevice,
+                                  d_BLASWrapperPtr,
+                                  d_densityDofHandlerIndex,
+                                  d_densityQuadratureId,
+                                  d_kPointCoordinates,
+                                  d_kPointWeights,
+                                  d_tauInQuadValues,
+                                  d_mpiCommParent,
+                                  interpoolcomm,
+                                  interBandGroupComm,
+                                  *d_dftParamsPtr,
+                                  false);
           }
 #endif
       }
-
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice)
-      {
-        d_eigenVectorsFlattenedDevice.resize(
-          d_eigenVectorsFlattenedHost.size());
-
-        if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-          d_eigenVectorsDensityMatrixPrimeFlattenedDevice.resize(
-            d_eigenVectorsFlattenedHost.size());
-
-        if (d_numEigenValuesRR != d_numEigenValues)
-          d_eigenVectorsRotFracFlattenedDevice.resize(
-            d_eigenVectorsRotFracDensityFlattenedHost.size());
-        else
-          d_eigenVectorsRotFracFlattenedDevice.resize(1);
-
-        d_eigenVectorsFlattenedDevice.copyFrom(d_eigenVectorsFlattenedHost);
-      }
-#endif
-
-    if (!d_dftParamsPtr->useDevice &&
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-      {
-        d_eigenVectorsDensityMatrixPrimeHost = d_eigenVectorsFlattenedHost;
-      }
-
-    if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
-      totalMagnetization(d_densityInQuadValues[1]);
   }
 #include "dft.inst.cc"
 } // namespace dftfe

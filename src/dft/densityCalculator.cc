@@ -76,8 +76,7 @@ namespace dftfe
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       dftfe::utils::deviceSynchronize();
 #endif
-    MPI_Barrier(mpiCommParent); // why is the barrier required here?
-
+    MPI_Barrier(mpiCommParent);
     double             computeRho_time = MPI_Wtime();
     const unsigned int numKPoints      = kPointWeights.size();
     const unsigned int numLocalDofs    = basisOperationsPtr->nOwnedDofs();
@@ -94,8 +93,7 @@ namespace dftfe
                                                bandGroupLowHighPlusOneIndices);
 
     const unsigned int BVec =
-      std::min(dftParams.chebyWfcBlockSize,
-               bandGroupLowHighPlusOneIndices[1]); // have to understand this
+      std::min(dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
       (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
@@ -113,16 +111,13 @@ namespace dftfe
     const unsigned int numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
     const unsigned int remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
-    basisOperationsPtr->reinit(BVec,
-                               cellsBlockSize,
-                               quadratureIndex); // why this is required ?
+    basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
     const unsigned int numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
     dftfe::utils::MemoryStorage<NumberType, memorySpace> gradWfcQuadPointData;
     dftfe::utils::MemoryStorage<double, memorySpace>     rhoWfcContributions;
-    dftfe::utils::MemoryStorage<double, memorySpace>
-                                                     tauWfcContributions; // why this is required ?
+    dftfe::utils::MemoryStorage<double, memorySpace>     tauWfcContributions;
     dftfe::utils::MemoryStorage<double, memorySpace> gradRhoWfcContributions;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       rhoHost;
@@ -137,9 +132,9 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace> gradRho;
     dftfe::utils::MemoryStorage<double, memorySpace> tau;
 #else
-    auto &rho                         = rhoHost;
-    auto &gradRho                     = gradRhoHost;
-    auto &tau                         = tauHost;
+    auto &rho             = rhoHost;
+    auto &gradRho         = gradRhoHost;
+    auto &tau             = tauHost;
 #endif
 
     rho.resize(totalLocallyOwnedCells * numQuadPoints * numSpinComponents, 0.0);
@@ -171,11 +166,15 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       partialOccupVecHost(BVec, 0.0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      kCoordHost(3, 0.0);
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, memorySpace> partialOccupVec(
       partialOccupVecHost.size());
+    dftfe::utils::MemoryStorage<double, memorySpace> kCoord(kCoordHost.size());
 #else
-    auto &partialOccupVec             = partialOccupVecHost;
+    auto &partialOccupVec = partialOccupVecHost;
+    auto &kCoord          = kCoordHost;
 #endif
 
     dftfe::linearAlgebra::MultiVector<NumberType, memorySpace>
@@ -183,9 +182,10 @@ namespace dftfe
 
     for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
-        std::vector<double> kCoord = {kPointCoords[3 * kPoint + 0],
-                                      kPointCoords[3 * kPoint + 1],
-                                      kPointCoords[3 * kPoint + 2]};
+        kCoordHost[0] = kPointCoords[3 * kPoint + 0];
+        kCoordHost[1] = kPointCoords[3 * kPoint + 1];
+        kCoordHost[2] = kPointCoords[3 * kPoint + 2];
+
         for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
              ++spinIndex)
           {
@@ -253,6 +253,7 @@ namespace dftfe
                       }
 #if defined(DFTFE_WITH_DEVICE)
                     partialOccupVec.copyFrom(partialOccupVecHost);
+                    kCoord.copyFrom(kCoordHost);
 #endif
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
                       for (unsigned int iNode = 0; iNode < numLocalDofs;
@@ -508,9 +509,8 @@ namespace dftfe
       }
     if (isEvaluateTau)
       {
-        std::string errMsg =
-          "Device implementation for tau computation is not implemented yet in SCAN.";
-        dftfe::utils::throwException(false, errMsg);
+        tauHost.resize(tau.size());
+        tauHost.copyFrom(tau);
       }
 
 #endif
@@ -689,8 +689,6 @@ namespace dftfe
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
 #if defined(DFTFE_WITH_DEVICE)
-    std::string errMsg = "GPU case is not implemented yet in SCAN.";
-    dftfe::utils::throwException(false, errMsg);
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       dftfe::utils::deviceSynchronize();
 #endif
@@ -738,7 +736,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, memorySpace> tau;
 #else
-    auto &tau                         = tauHost;
+    auto &tau             = tauHost;
 #endif
 
     wfcQuadPointData.resize(cellsBlockSize * numQuadPoints * BVec, zero);
@@ -759,6 +757,16 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       partialOccupVecHost(BVec, 0.0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      kCoordHost(3, 0.0);
+#if defined(DFTFE_WITH_DEVICE)
+    dftfe::utils::MemoryStorage<double, memorySpace> partialOccupVec(
+      partialOccupVecHost.size());
+    dftfe::utils::MemoryStorage<double, memorySpace> kCoord(kCoordHost.size());
+#else
+    auto &partialOccupVec = partialOccupVecHost;
+    auto &kCoord          = kCoordHost;
+#endif
 
     std::vector<double> initTauOccvec(numSpinComponents * totalNumWaveFunctions,
                                       0.0);
@@ -788,21 +796,24 @@ namespace dftfe
           }
       }
 
-#if defined(DFTFE_WITH_DEVICE)
-    dftfe::utils::MemoryStorage<double, memorySpace> partialOccupVec(
-      partialOccupVecHost.size());
-#else
-    auto &partialOccupVec             = partialOccupVecHost;
-#endif
+    // #if defined(DFTFE_WITH_DEVICE)
+    //     dftfe::utils::MemoryStorage<double, memorySpace> partialOccupVec(
+    //       partialOccupVecHost.size());
+    //     dftfe::utils::MemoryStorage<double, memorySpace>
+    //     kCoord(kCoordHost.size());
+    // #else
+    //     auto &partialOccupVec = partialOccupVecHost;
+    //     auto &kCoord          = kCoordHost;
+    // #endif
 
     dftfe::linearAlgebra::MultiVector<NumberType, memorySpace>
       *flattenedArrayBlock;
 
     for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
-        std::vector<double> kCoord = {kPointCoords[3 * kPoint + 0],
-                                      kPointCoords[3 * kPoint + 1],
-                                      kPointCoords[3 * kPoint + 2]};
+        kCoordHost[0] = kPointCoords[3 * kPoint + 0];
+        kCoordHost[1] = kPointCoords[3 * kPoint + 1];
+        kCoordHost[2] = kPointCoords[3 * kPoint + 2];
         for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
              ++spinIndex)
           {
@@ -862,6 +873,7 @@ namespace dftfe
                       }
 #if defined(DFTFE_WITH_DEVICE)
                     partialOccupVec.copyFrom(partialOccupVecHost);
+                    kCoord.copyFrom(kCoordHost);
 #endif
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
                       for (unsigned int iNode = 0; iNode < numLocalDofs;
@@ -876,18 +888,15 @@ namespace dftfe
                                     currentBlockSize * sizeof(NumberType));
 #if defined(DFTFE_WITH_DEVICE)
                     else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-                      dftfe::utils::deviceKernelsGeneric::
-                        stridedCopyToBlockConstantStride(
-                          currentBlockSize,
-                          totalNumWaveFunctions,
-                          numLocalDofs,
-                          jvec,
-                          X->data() +
-                            numLocalDofs * totalNumWaveFunctions *
-                              (numSpinComponents * kPoint + spinIndex),
-                          flattenedArrayBlock->data());
+                      BLASWrapperPtr->stridedCopyToBlockConstantStride(
+                        currentBlockSize,
+                        totalNumWaveFunctions,
+                        numLocalDofs,
+                        jvec,
+                        X->data() + numLocalDofs * totalNumWaveFunctions *
+                                      (numSpinComponents * kPoint + spinIndex),
+                        flattenedArrayBlock->data());
 #endif
-
 
                     basisOperationsPtr->reinit(currentBlockSize,
                                                cellsBlockSize,
@@ -915,7 +924,21 @@ namespace dftfe
                               std::pair<unsigned int, unsigned int>(
                                 startingCellId,
                                 startingCellId + currentCellsBlockSize));
+                            // {
+                            //   #if defined(DFTFE_WITH_DEVICE)
+                            //       if (memorySpace ==
+                            //       dftfe::utils::MemorySpace::DEVICE)
+                            //         dftfe::utils::deviceSynchronize();
+                            //   #endif
 
+                            //   MPI_Barrier(mpiCommParent);
+                            //   int rank;
+                            //   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+                            //   if (rank == 0)
+                            //     {
+                            //       std::cout <<"debug 3" << std::endl;
+                            //     }
+                            // }
                             computeTauFromInterpolatedValues(
                               basisOperationsPtr,
                               BLASWrapperPtr,
@@ -947,11 +970,8 @@ namespace dftfe
       }
 #if defined(DFTFE_WITH_DEVICE)
     tauHost.resize(tau.size());
-
     tauHost.copyFrom(tau);
-
 #endif
-
     int size;
     MPI_Comm_size(interpoolcomm, &size);
     if (size > 1)
@@ -1082,7 +1102,6 @@ namespace dftfe
           }
   }
 
-  // to  edit for device kernels as well
   template <typename NumberType>
   void
   computeTauFromInterpolatedValues(
@@ -1178,14 +1197,53 @@ namespace dftfe
       &                        BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
+    const std::vector<double> &kPointCoords,
     const std::vector<double> &kPointWeights,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &densityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  gradDensityValues,
+      &gradDensityValues,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  tauValues,
     const bool           isEvaluateGradRho,
+    const bool           isEvaluateTau,
+    const MPI_Comm &     mpiCommParent,
+    const MPI_Comm &     interpoolcomm,
+    const MPI_Comm &     interBandGroupComm,
+    const dftParameters &dftParams,
+    const bool           spectrumSplit);
+
+  template void
+  computeInitTauFromPSI(
+    const dftfe::utils::MemoryStorage<dataTypes::number,
+                                      dftfe::utils::MemorySpace::DEVICE> *X,
+    const dftfe::utils::MemoryStorage<dataTypes::number,
+                                      dftfe::utils::MemorySpace::DEVICE> *XFrac,
+    const unsigned int                      numElectrons,
+    const unsigned int                      totalNumWaveFunctions,
+    const unsigned int                      Nfr,
+    const std::vector<std::vector<double>> &eigenValues,
+    const double                            fermiEnergy,
+    const double                            fermiEnergyUp,
+    const double                            fermiEnergyDown,
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::DEVICE>>
+      &basisOperationsPtrDevice,
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      &                        BLASWrapperPtr,
+    const unsigned int         matrixFreeDofhandlerIndex,
+    const unsigned int         quadratureIndex,
+    const std::vector<double> &kPointCoords,
+    const std::vector<double> &kPointWeights,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &                  tauValues,
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
