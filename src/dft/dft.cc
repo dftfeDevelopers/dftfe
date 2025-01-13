@@ -5790,6 +5790,14 @@ namespace dftfe
     return d_useHubbard;
   }
 
+   template <unsigned int              FEOrder,
+             unsigned int              FEOrderElectro,
+             dftfe::utils::MemorySpace memorySpace>
+   const std::map<dealii::CellId, std::vector<double>> &
+   dftClass<FEOrder, FEOrderElectro, memorySpace>:: getPseudoVLoc() const
+   {
+     return d_pseudoVLoc;
+   }
 
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,

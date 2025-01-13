@@ -762,6 +762,12 @@ namespace dftfe
     void
     outputWfc(const std::string outputFileName = "wfcOutput");
 
+    /**
+     *@brief return the pseudo potential field
+     */
+    const std::map<dealii::CellId, std::vector<double>> &
+    getPseudoVLoc() const;
+  
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based

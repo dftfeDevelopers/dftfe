@@ -533,8 +533,6 @@ namespace dftfe
           }
       }
 
-    resetExtPotHamFlag();
-    setVEffExternalPotCorrToZero();
     computeCellHamiltonianMatrixExtPotContribution();
 #if defined(DFTFE_WITH_DEVICE)
     d_VeffJxW.resize(d_VeffJxWHost.size());
