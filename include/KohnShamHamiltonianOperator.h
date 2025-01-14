@@ -202,9 +202,9 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dstMX,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
-  private:
     void
     setVEffExternalPotCorrToZero();
+  private:
 
     std::shared_ptr<
       AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>

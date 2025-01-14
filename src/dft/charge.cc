@@ -485,74 +485,78 @@ namespace dftfe
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return i * (3.0 * q[2] * q[2] - q.norm_square());
       });
-    if (!d_smearedChargeMomentsComputed)
+
+    if (d_dftParamsPtr->smearedNuclearCharges)
       {
-        dealii::FEEvaluation<3,
-                             C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-                             C_num1DQuadSmearedCharge() *
-                               C_numCopies1DQuadSmearedCharge(),
-                             1,
-                             double>
-          FEEvalb(matrixFreeDataObject,
-                  d_densityDofHandlerIndexElectro,
-                  d_smearedChargeQuadratureIdElectro);
-        d_smearedChargeMoments.clear();
-        d_smearedChargeMoments.resize(13, 0.0);
-        for (unsigned int iMacroCell = 0;
-             iMacroCell < matrixFreeDataObject.n_cell_batches();
-             ++iMacroCell)
+        if (!d_smearedChargeMomentsComputed)
           {
-            FEEvalb.reinit(iMacroCell);
-            dealii::AlignedVector<dealii::VectorizedArray<double>> bVec(
-              FEEvalb.n_q_points, 0.0);
-            for (unsigned int iSubCell = 0;
-                 iSubCell <
-                 matrixFreeDataObject.n_active_entries_per_cell_batch(
-                   iMacroCell);
-                 ++iSubCell)
+            dealii::FEEvaluation<3,
+                                 C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+                                 C_num1DQuadSmearedCharge() *
+                                   C_numCopies1DQuadSmearedCharge(),
+                                 1,
+                                 double>
+              FEEvalb(matrixFreeDataObject,
+                      d_densityDofHandlerIndexElectro,
+                      d_smearedChargeQuadratureIdElectro);
+            d_smearedChargeMoments.clear();
+            d_smearedChargeMoments.resize(13, 0.0);
+            for (unsigned int iMacroCell = 0;
+                 iMacroCell < matrixFreeDataObject.n_cell_batches();
+                 ++iMacroCell)
               {
-                dealii::CellId subCellId =
-                  matrixFreeDataObject
-                    .get_cell_iterator(iMacroCell,
-                                       iSubCell,
-                                       d_densityDofHandlerIndexElectro)
-                    ->id();
-                const std::vector<double> &tempbVec =
-                  bQuadValues->find(subCellId)->second;
-                if (tempbVec.size() != 0)
-                  for (unsigned int iQuad = 0; iQuad < FEEvalb.n_q_points;
-                       ++iQuad)
-                    {
-                      bVec[iQuad][iSubCell] = tempbVec[iQuad];
-                    }
-              }
-            for (unsigned int iMomentComponent = 0; iMomentComponent < 13;
-                 ++iMomentComponent)
-              {
-                for (unsigned int iQuad = 0; iQuad < FEEvalb.n_q_points;
-                     ++iQuad)
-                  {
-                    FEEvalb.submit_value(momentsAtQuadPoints[iMomentComponent](
-                                           bVec[iQuad],
-                                           FEEvalb.quadrature_point(iQuad)),
-                                         iQuad);
-                  }
-                auto bMacroCellIntegral = FEEvalb.integrate_value();
+                FEEvalb.reinit(iMacroCell);
+                dealii::AlignedVector<dealii::VectorizedArray<double>> bVec(
+                  FEEvalb.n_q_points, 0.0);
                 for (unsigned int iSubCell = 0;
                      iSubCell <
                      matrixFreeDataObject.n_active_entries_per_cell_batch(
                        iMacroCell);
                      ++iSubCell)
                   {
-                    d_smearedChargeMoments[iMomentComponent] +=
-                      bMacroCellIntegral[iSubCell];
+                    dealii::CellId subCellId =
+                      matrixFreeDataObject
+                        .get_cell_iterator(iMacroCell,
+                                           iSubCell,
+                                           d_densityDofHandlerIndexElectro)
+                        ->id();
+                    const std::vector<double> &tempbVec =
+                      bQuadValues->find(subCellId)->second;
+                    if (tempbVec.size() != 0)
+                      for (unsigned int iQuad = 0; iQuad < FEEvalb.n_q_points;
+                           ++iQuad)
+                        {
+                          bVec[iQuad][iSubCell] = tempbVec[iQuad];
+                        }
+                  }
+                for (unsigned int iMomentComponent = 0; iMomentComponent < 13;
+                     ++iMomentComponent)
+                  {
+                    for (unsigned int iQuad = 0; iQuad < FEEvalb.n_q_points;
+                         ++iQuad)
+                      {
+                        FEEvalb.submit_value(
+                          momentsAtQuadPoints[iMomentComponent](
+                            bVec[iQuad], FEEvalb.quadrature_point(iQuad)),
+                          iQuad);
+                      }
+                    auto bMacroCellIntegral = FEEvalb.integrate_value();
+                    for (unsigned int iSubCell = 0;
+                         iSubCell <
+                         matrixFreeDataObject.n_active_entries_per_cell_batch(
+                           iMacroCell);
+                         ++iSubCell)
+                      {
+                        d_smearedChargeMoments[iMomentComponent] +=
+                          bMacroCellIntegral[iSubCell];
+                      }
                   }
               }
+            dealii::Utilities::MPI::sum(d_smearedChargeMoments,
+                                        mpi_communicator,
+                                        d_smearedChargeMoments);
+            d_smearedChargeMomentsComputed = true;
           }
-        dealii::Utilities::MPI::sum(d_smearedChargeMoments,
-                                    mpi_communicator,
-                                    d_smearedChargeMoments);
-        d_smearedChargeMomentsComputed = true;
       }
     std::vector<double> moments(13, 0.0);
     dealii::FEEvaluation<
