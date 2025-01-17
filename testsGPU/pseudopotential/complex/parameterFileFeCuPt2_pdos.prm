@@ -30,11 +30,6 @@ subsection Brillouin zone k point sampling options
   end
 end
 
-subsection DFT functional parameters
-  set SPIN POLARIZATION               = 1
-  set START MAGNETIZATION             = -0.2
-end
-
 subsection Parallelization
   set NPKPT                    = 2
 end
