@@ -767,7 +767,7 @@ namespace dftfe
      */
     const std::map<dealii::CellId, std::vector<double>> &
     getPseudoVLoc() const;
-  
+
   private:
     /**
      * @brief generate image charges and update k point cartesian coordinates based

@@ -1027,48 +1027,45 @@ namespace dftfe
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
       const double                            fermiEnergy,
       std::vector<double> &                   maxResidualsAllkPoints)
-    {
-      double maxHighestOccupiedStateResNorm = -1e+6;
-        for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+  {
+    double maxHighestOccupiedStateResNorm = -1e+6;
+    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+      {
+        unsigned int highestOccupiedState = 0;
+
+        for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
           {
-            unsigned int highestOccupiedState = 0;
-
-            for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size();
-                 i++)
+            const double factor =
+              (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
+              (C_kb * d_dftParamsPtr->TVal);
+            double functionValue;
+            if (factor <= 0.0)
               {
-                const double factor =
-                  (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
-                  (C_kb * d_dftParamsPtr->TVal);
-                double functionValue;
-                if (factor <= 0.0)
-                  {
-                    double temp2 = 1.0 / (1.0 + exp(factor));
-                    functionValue =
-                      (2.0 - d_dftParamsPtr->spinPolarized) * temp2;
-                  }
-                else
-                  {
-                    double temp2  = 1.0 / (1.0 + exp(-factor));
-                    functionValue = (2.0 - d_dftParamsPtr->spinPolarized) *
-                                    exp(-factor) * temp2;
-                  }
-                if (functionValue > 1e-3)
-                  highestOccupiedState = i;
+                double temp2  = 1.0 / (1.0 + exp(factor));
+                functionValue = (2.0 - d_dftParamsPtr->spinPolarized) * temp2;
               }
-
-            d_highestStateForResidualComputation = highestOccupiedState;
-
-            for (unsigned int i = 0; i <= d_highestStateForResidualComputation;
-                 i++)
+            else
               {
-                if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
-                    maxHighestOccupiedStateResNorm)
-                  {
-                    maxHighestOccupiedStateResNorm =
-                      residualNormWaveFunctionsAllkPoints[kPoint][i];
-                  }
+                double temp2 = 1.0 / (1.0 + exp(-factor));
+                functionValue =
+                  (2.0 - d_dftParamsPtr->spinPolarized) * exp(-factor) * temp2;
+              }
+            if (functionValue > 1e-3)
+              highestOccupiedState = i;
+          }
+
+        d_highestStateForResidualComputation = highestOccupiedState;
+
+        for (unsigned int i = 0; i <= d_highestStateForResidualComputation; i++)
+          {
+            if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
+                maxHighestOccupiedStateResNorm)
+              {
+                maxHighestOccupiedStateResNorm =
+                  residualNormWaveFunctionsAllkPoints[kPoint][i];
               }
           }
+      }
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
