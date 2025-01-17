@@ -1,0 +1,54 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT=true
+
+subsection Geometry
+  set NATOMS=1
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/oxygen_2neg_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/oxygen_2neg_domainVectors.inp
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+  set SELF POTENTIAL RADIUS=3.5
+  set MULTIPOLE BOUNDARY CONDITIONS = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=2
+  set POLYNOMIAL ORDER ELECTROSTATICS = 2
+  subsection Auto mesh generation parameters
+    set MESH SIZE AT ATOM = 0.03
+    set MESH SIZE AROUND ATOM = 0.45
+    set ATOM BALL RADIUS=3.5
+    set INNER ATOM BALL RADIUS = 0.3
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = LDA-PW
+  set PSEUDOPOTENTIAL CALCULATION = false
+  set NET CHARGE = 2
+  subsection CONFINING POTENTIAL parameters
+    set APPLY CONFINING POTENTIAL = true
+    set C PARAM                   = 1.0
+    set INNER RADIUS              = 9.0
+    set OUTER RADIUS              = 12.0
+    set W PARAM                   = 1.0
+  end 
+end
+
+subsection SCF parameters
+  set MIXING PARAMETER =0.2
+  set COMPUTE ENERGY EACH ITER = false
+  set MIXING METHOD= ANDERSON
+  set STARTING WFC             = RANDOM
+  set TEMPERATURE              = 500
+  set TOLERANCE                = 1e-6
+  subsection Eigen-solver parameters
+    set NUMBER OF KOHN-SHAM WAVEFUNCTIONS                    = 12
+    set CHEBYSHEV FILTER TOLERANCE = 1e-3
+  end
+end

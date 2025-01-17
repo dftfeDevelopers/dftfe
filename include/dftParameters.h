@@ -203,6 +203,13 @@ namespace dftfe
 
     bool writeStructreEnergyForcesFileForPostProcess;
 
+    // Parameters for confining potential
+    bool   confiningPotential;
+    double confiningInnerPotRad;
+    double confiningOuterPotRad;
+    double confiningWParam;
+    double confiningCParam;
+
     dftParameters();
 
     /**

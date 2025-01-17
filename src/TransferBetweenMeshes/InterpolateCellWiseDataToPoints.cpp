@@ -160,6 +160,20 @@ namespace dftfe
 
     d_numPointsLocal = targetPts.size() + d_ghostGlobalIds.size();
 
+    unsigned int maxPointsLocalTemp = d_numPointsLocal;
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &maxPointsLocalTemp,
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&maxPointsLocalTemp),
+                  MPI_MAX,
+                  d_mpiComm);
+
+    if ((dealii::Utilities::MPI::this_mpi_process(d_mpiComm) == 0) &&
+        (d_verbosity > 2))
+      {
+        std::cout << " Max number of points found locally  = "
+                  << maxPointsLocalTemp << "\n";
+      }
 
     size_type numFinalTargetPoints = targetPts.size();
 
@@ -235,6 +249,14 @@ namespace dftfe
     MPI_Barrier(d_mpiComm);
     double endMPIPattern = MPI_Wtime();
 
+    unsigned int maxPointsLocal = d_numPointsLocal;
+    MPI_Allreduce(MPI_IN_PLACE,
+                  &maxPointsLocal,
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&maxPointsLocal),
+                  MPI_MAX,
+                  d_mpiComm);
+
     double nonLocalFrac =
       ((double)((double)(numLocalPlusGhost - numTargetPointsInput)) /
        numTargetPointsInput);
@@ -246,6 +268,7 @@ namespace dftfe
                   << numTargetPointsFound << "\n";
         std::cout << " Total number of points in all procs = "
                   << numLocalPlusGhost << "\n";
+
         dftfe::utils::throwException(
           numTargetPointsFound >= numTargetPointsInput,
           " Number of points found is less than the input points \n");
@@ -361,8 +384,11 @@ namespace dftfe
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T,
                                   dftfe::utils::MemorySpace::HOST>
-        &  outputData, // this is not std::vector
-      bool resizeData)
+        &                outputData, // this is not std::vector
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeData)
   {
     if (resizeData)
       {
@@ -401,7 +427,8 @@ namespace dftfe
             BLASWrapperPtr->xcopy(
               numberOfVectors,
               inputVec.begin() +
-                mapVecToCells[d_cumulativeDofs[iElemSrc] + iNode],
+                mapVecToCells[d_cumulativeDofs[iElemSrc] + iNode] +
+                startIndexOfInputData,
               inc,
               &cellLevelInputVec[numberOfVectors * iNode],
               inc);
@@ -420,7 +447,7 @@ namespace dftfe
               &cellLevelOutputPoints[iPoint * numberOfVectors],
               inc,
               &outputData[d_mapCellLocalToProcLocal[iElemSrc][iPoint] *
-                          numberOfVectors],
+                          blockSizeOfOutputData],
               inc);
           }
       }
@@ -440,8 +467,11 @@ namespace dftfe
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T,
                                   memorySpace>
-        &  outputData, // this is not std::vector
-      bool resizeData)
+        &                outputData, // this is not std::vector
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeData)
   {
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
@@ -469,7 +499,8 @@ namespace dftfe
                  iPoint++)
               {
                 cellLocalToProcLocal[pointIndex] =
-                  d_mapCellLocalToProcLocal[iCell][iPoint] * numberOfVectors;
+                  d_mapCellLocalToProcLocal[iCell][iPoint] *
+                  blockSizeOfOutputData;
                 pointIndex++;
               }
           }
@@ -492,6 +523,7 @@ namespace dftfe
 
     BLASWrapperPtr->stridedCopyToBlock(numberOfVectors,
                                        totalDofsInCells,
+                                       startIndexOfInputData,
                                        inputVec.data(),
                                        d_cellLevelParentNodalMemSpace.begin(),
                                        mapVecToCells.data());

@@ -70,6 +70,8 @@
 
 #include <mixingClass.h>
 #include <oncvClass.h>
+#include <AuxDensityMatrix.h>
+#include "expConfiningPotential.h"
 #include <atomCenteredPostProcessing.h>
 
 namespace dftfe
@@ -496,6 +498,9 @@ namespace dftfe
     double
     getNumElectrons() const;
 
+    void
+    setNumElectrons(unsigned int inputNumElectrons);
+
     elpaScalaManager *
     getElpaScalaManager() const;
 #ifdef DFTFE_WITH_DEVICE
@@ -713,6 +718,22 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<unsigned int>> &
     getbCellNonTrivialAtomIds() const;
 
+    void
+    updatePRefinedConstraints();
+
+    void
+    computeMultipoleMoments(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int densityQuadratureId,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                                                  rhoQuadValues,
+      const std::map<dealii::CellId, std::vector<double>> *bQuadValues);
+
+    const expConfiningPotential &
+    getConfiningPotential() const;
 
     void
     computeFractionalOccupancies();
@@ -728,6 +749,18 @@ namespace dftfe
      */
     bool
     isHubbardCorrectionsUsed();
+
+    /**
+     *@brief write wavefunction solution fields
+     */
+    void
+    outputWfc(const std::string outputFileName = "wfcOutput");
+
+    /**
+     *@brief return the pseudo potential field
+     */
+    const std::map<dealii::CellId, std::vector<double>> &
+    getPseudoVLoc() const;
 
   private:
     /**
@@ -853,9 +886,6 @@ namespace dftfe
                         const bool vselfPerturbationUpdateForStress = false);
 
 
-    void
-    updatePRefinedConstraints();
-
     /**
      *@brief Sets inhomegeneous dirichlet boundary conditions upto quadrupole for total potential constraints on
      * non-periodic boundary (boundary id==0).
@@ -869,18 +899,6 @@ namespace dftfe
       const dealii::DoFHandler<3> &            _dofHandler,
       const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
       dealii::AffineConstraints<double> &      constraintMatrix);
-
-
-    void
-    computeMultipoleMoments(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                basisOperationsPtr,
-      const unsigned int densityQuadratureId,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                                                  rhoQuadValues,
-      const std::map<dealii::CellId, std::vector<double>> *bQuadValues);
 
 
     /**
@@ -1193,12 +1211,6 @@ namespace dftfe
      */
     void
     compute_localizationLength(const std::string &locLengthFileName);
-
-    /**
-     *@brief write wavefunction solution fields
-     */
-    void
-    outputWfc();
 
     /**
      *@brief write electron density solution fields
@@ -1917,6 +1929,7 @@ namespace dftfe
       std::vector<double> &                           residualNormWaveFunctions,
       unsigned int                                    ipass);
 
+    expConfiningPotential                                    d_expConfiningPot;
     std::shared_ptr<hubbard<dataTypes::number, memorySpace>> d_hubbardClassPtr;
     bool                                                     d_useHubbard;
   };
