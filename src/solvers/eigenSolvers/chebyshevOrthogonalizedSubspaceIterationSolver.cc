@@ -246,12 +246,12 @@ namespace dftfe
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 1);
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock3 =
-        (d_dftParams.useReformulatedChFSI) ?
+        (d_dftParams.useReformulatedChFSI||true) ?
           &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
           NULL;
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock4 =
-        (d_dftParams.useReformulatedChFSI) ?
+        (d_dftParams.useReformulatedChFSI||true) ?
           &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
           NULL;
     distributedCPUMultiVec<dataTypes::numberFP32>
@@ -380,14 +380,31 @@ namespace dftfe
                   }
 
                 else
-                  linearAlgebraOperations::chebyshevFilter(
-                    operatorMatrix,
-                    *eigenVectorsFlattenedArrayBlock,
-                    *eigenVectorsFlattenedArrayBlock2,
-                    chebyshevOrder,
-                    d_lowerBoundUnWantedSpectrum,
-                    d_upperBoundUnWantedSpectrum,
-                    d_lowerBoundWantedSpectrum);
+                  {
+                    // linearAlgebraOperations::chebyshevFilter(
+                    // operatorMatrix,
+                    // *eigenVectorsFlattenedArrayBlock,
+                    // *eigenVectorsFlattenedArrayBlock2,
+                    // chebyshevOrder,
+                    // d_lowerBoundUnWantedSpectrum,
+                    // d_upperBoundUnWantedSpectrum,
+                    // d_lowerBoundWantedSpectrum);
+                linearAlgebraOperations::chebyshevFilterNew(
+                  BLASWrapperPtr,
+                  operatorMatrix,
+                  (*eigenVectorsFlattenedArrayBlock),
+                  (*eigenVectorsFlattenedArrayBlock2),
+                  (*eigenVectorsFlattenedArrayBlockFP32),
+                  (*eigenVectorsFlattenedArrayBlock2FP32),
+                  std::vector<double>(BVec,0.0),
+                  chebyshevOrder,
+                  d_lowerBoundUnWantedSpectrum,
+                  d_upperBoundUnWantedSpectrum,
+                  d_lowerBoundWantedSpectrum,
+                  d_dftParams.approxOverlapMatrix);
+
+
+                  }
               }
 
             computing_timer.leave_subsection("Chebyshev filtering");

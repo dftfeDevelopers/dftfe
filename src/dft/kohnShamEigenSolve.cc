@@ -519,26 +519,8 @@ namespace dftfe
                                            kPointIndex +
                                          spinType]);
 
-    if (numberRayleighRitzAvoidancePasses > 0)
-      {
-        subspaceIterationSolverDevice.solveNoRR(
-          kohnShamDFTEigenOperator,
-          d_BLASWrapperPtr,
-          elpaScala,
-          d_eigenVectorsFlattenedDevice.begin() +
-            ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-              d_numEigenValues *
-              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-          d_numEigenValues *
-            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-          d_numEigenValues,
-          eigenValuesDummy,
-          *d_devicecclMpiCommDomainPtr,
-          interBandGroupComm,
-          numberRayleighRitzAvoidancePasses,
-          useMixedPrec);
-      }
-    else
+
+
       {
         d_upperBoundUnwantedSpectrumValues[(1 + d_dftParamsPtr->spinPolarized) *
                                              kPointIndex +

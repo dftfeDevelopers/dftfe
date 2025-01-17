@@ -76,25 +76,6 @@ namespace dftfe
           const bool               isFirstScf          = false);
 
 
-    /**
-     * @brief Used for XL-BOMD.
-     */
-    void
-    solveNoRR(
-      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                      BLASWrapperPtr,
-      elpaScalaManager &       elpaScala,
-      dataTypes::number *      eigenVectorsFlattenedDevice,
-      const unsigned int       flattenedSize,
-      const unsigned int       totalNumberWaveFunctions,
-      std::vector<double> &    eigenValues,
-      utils::DeviceCCLWrapper &devicecclMpiCommDomain,
-      const MPI_Comm &         interBandGroupComm,
-      const unsigned int       numberPasses,
-      const bool               useMixedPrecOverall);
-
 
     /**
      * @brief Used for LRD preconditioner, also required for XL-BOMD

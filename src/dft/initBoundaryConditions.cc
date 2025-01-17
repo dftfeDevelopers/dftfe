@@ -336,14 +336,14 @@ namespace dftfe
 
         d_basisOperationsPtrHost->createScratchMultiVectors(1, 4);
         d_basisOperationsPtrHost->createScratchMultiVectors(
-          BVec, (d_dftParamsPtr->useReformulatedChFSI) ? 4 : 2);
+          BVec, (d_dftParamsPtr->useReformulatedChFSI||true) ? 4 : 2);
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrHost->createScratchMultiVectorsSinglePrec(BVec,
                                                                         2);
         if (d_numEigenValues % BVec != 0)
           d_basisOperationsPtrHost->createScratchMultiVectors(
             d_numEigenValues % BVec,
-            (d_dftParamsPtr->useReformulatedChFSI) ? 4 : 2);
+            (d_dftParamsPtr->useReformulatedChFSI||true) ? 4 : 2);
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrHost->createScratchMultiVectorsSinglePrec(
             d_numEigenValues % BVec, 2);
@@ -353,11 +353,11 @@ namespace dftfe
         if (BVec != BVec2)
           {
             d_basisOperationsPtrHost->createScratchMultiVectors(
-              BVec2, (d_dftParamsPtr->useReformulatedChFSI) ? 4 : 2);
+              BVec2, (d_dftParamsPtr->useReformulatedChFSI||true) ? 4 : 2);
             if (d_numEigenValues % BVec2 != 0)
               d_basisOperationsPtrHost->createScratchMultiVectors(
                 d_numEigenValues % BVec2,
-                (d_dftParamsPtr->useReformulatedChFSI) ? 4 : 2);
+                (d_dftParamsPtr->useReformulatedChFSI||true) ? 4 : 2);
           }
       }
 #if defined(DFTFE_WITH_DEVICE)
@@ -374,8 +374,8 @@ namespace dftfe
             d_basisOperationsPtrDevice->createScratchMultiVectors(
               BVec,
               d_dftParamsPtr->overlapComputeCommunCheby ?
-                (d_dftParamsPtr->useReformulatedChFSI) ? 6 : 4 :
-                (d_dftParamsPtr->useReformulatedChFSI) ? 4 : 2);
+                (d_dftParamsPtr->useReformulatedChFSI||true) ? 6 : 4 :
+                (d_dftParamsPtr->useReformulatedChFSI||true) ? 4 : 2);
             if (d_dftParamsPtr->useSinglePrecCheby)
               d_basisOperationsPtrDevice->createScratchMultiVectorsSinglePrec(
                 BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);
@@ -432,8 +432,8 @@ namespace dftfe
         d_basisOperationsPtrDevice->createScratchMultiVectors(
           BVec,
           d_dftParamsPtr->overlapComputeCommunCheby ?
-            ((d_dftParamsPtr->useReformulatedChFSI) ? 6 : 4) :
-            ((d_dftParamsPtr->useReformulatedChFSI) ? 4 : 2));
+            ((d_dftParamsPtr->useReformulatedChFSI||true) ? 6 : 4) :
+            ((d_dftParamsPtr->useReformulatedChFSI||true) ? 4 : 2));
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrDevice->createScratchMultiVectorsSinglePrec(
             BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);

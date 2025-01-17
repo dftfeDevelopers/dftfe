@@ -123,6 +123,13 @@ namespace dftfe
       sigma1 = sigma;
       gamma  = 2.0 / sigma1;
 
+      bool   oldChFSI        = false;
+      double traceEigeValues = 0.0;
+      for (unsigned int i = 0; i < eigenvalues.size(); i++)
+        traceEigeValues += eigenvalues[i];
+      if (std::fabs(traceEigeValues) <= 1E-12)
+        oldChFSI = true;
+
       dftfe::utils::MemoryStorage<double, memorySpace> eigenValuesFiltered,
         eigenValuesFiltered1, eigenValuesFiltered2;
       eigenValuesFiltered.resize(eigenvalues.size());
@@ -131,42 +138,47 @@ namespace dftfe
       eigenValuesFiltered2 = eigenValuesFiltered;
       eigenValuesFiltered1.setValue(1.0);
 
-      // //compute initial Residual
-      operatorMatrix.overlapMatrixTimesX(
-        X, 1.0, 0.0, 0.0, Y, approxOverlapMatrix);
-      BLASWrapperPtr->rightDiagonalScale(Y.numVectors(),
-                                         Y.locallyOwnedSize(),
-                                         Y.data(),
-                                         eigenValuesFiltered.data());
-      operatorMatrix.HX(X, 1.0, -1.0, 0.0, Y);
-      BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
-        X.locallyOwnedSize() * X.numVectors(), Y.data(), ResidualNew.data());
-      // operatorMatrix.HX(X, 1.0, 0.0, 0.0, Y);
-      // operatorMatrix.overlapMatrixTimesX(
-      //   X, 1.0, 0.0, 0.0, Y, approxOverlapMatrix);
-      // BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
-      //                       X.numVectors(),
-      //                       -1.0,
-      //                       Y.data(),
-      //                       Residual.data(),
-      //                       eigenValuesFiltered.data(),
-      //                       Residual.data());
-      Residual.setValue(0.0);
-
 
       double alpha1 = sigma1 / e, alpha2 = -c;
-      // //m=1 operations
-      eigenValuesFiltered2.setValue(alpha1 * alpha2);
-      BLASWrapperPtr->ApaBD(1,
-                            eigenValuesFiltered2.size(),
-                            alpha1,
-                            eigenValuesFiltered2.data(),
-                            eigenValuesFiltered1.data(),
-                            eigenValuesFiltered.data(),
-                            eigenValuesFiltered2.data());
-      BLASWrapperPtr->xscal(ResidualNew.data(),
-                            T2(alpha1),
-                            X.locallyOwnedSize() * X.numVectors());
+      if (!oldChFSI)
+        {
+          // //compute initial Residual
+          operatorMatrix.overlapMatrixTimesX(
+            X, 1.0, 0.0, 0.0, Y, approxOverlapMatrix);
+          BLASWrapperPtr->rightDiagonalScale(Y.numVectors(),
+                                             Y.locallyOwnedSize(),
+                                             Y.data(),
+                                             eigenValuesFiltered.data());
+          operatorMatrix.HX(X, 1.0, -1.0, 0.0, Y);
+
+          BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+            X.locallyOwnedSize() * X.numVectors(),
+            Y.data(),
+            ResidualNew.data());
+          Residual.setValue(0.0);
+
+          // //m=1 operations
+          eigenValuesFiltered2.setValue(alpha1 * alpha2);
+          BLASWrapperPtr->ApaBD(1,
+                                eigenValuesFiltered2.size(),
+                                alpha1,
+                                eigenValuesFiltered2.data(),
+                                eigenValuesFiltered1.data(),
+                                eigenValuesFiltered.data(),
+                                eigenValuesFiltered2.data());
+          BLASWrapperPtr->xscal(ResidualNew.data(),
+                                T2(alpha1),
+                                X.locallyOwnedSize() * X.numVectors());
+        }
+      else
+        {
+          operatorMatrix.overlapMatrixTimesX(
+            X, 1.0, 0.0, 0.0, Y, approxOverlapMatrix);
+          BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
+            X.locallyOwnedSize() * X.numVectors(), Y.data(), Residual.data());
+          operatorMatrix.HXChebyNew(
+            Residual, alpha1, 0.0, alpha1 * alpha2, ResidualNew);
+        }
       // //
       // // polynomial loop
       // //
@@ -177,25 +189,28 @@ namespace dftfe
 
           operatorMatrix.HXChebyNew(
             ResidualNew, alpha1, alpha2, -c * alpha1, Residual);
-          BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
-                                X.numVectors(),
-                                alpha1,
-                                Residual.data(),
-                                Y.data(),
-                                eigenValuesFiltered2.data(),
-                                Residual.data());
-          BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
-                                -c * alpha1,
-                                eigenValuesFiltered2.data(),
-                                alpha2,
-                                eigenValuesFiltered1.data());
-          BLASWrapperPtr->ApaBD(1,
-                                eigenValuesFiltered1.size(),
-                                alpha1,
-                                eigenValuesFiltered1.data(),
-                                eigenValuesFiltered2.data(),
-                                eigenValuesFiltered.data(),
-                                eigenValuesFiltered1.data());
+          if (!oldChFSI)
+            {
+              BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
+                                    X.numVectors(),
+                                    alpha1,
+                                    Residual.data(),
+                                    Y.data(),
+                                    eigenValuesFiltered2.data(),
+                                    Residual.data());
+              BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
+                                    -c * alpha1,
+                                    eigenValuesFiltered2.data(),
+                                    alpha2,
+                                    eigenValuesFiltered1.data());
+              BLASWrapperPtr->ApaBD(1,
+                                    eigenValuesFiltered1.size(),
+                                    alpha1,
+                                    eigenValuesFiltered1.data(),
+                                    eigenValuesFiltered2.data(),
+                                    eigenValuesFiltered.data(),
+                                    eigenValuesFiltered1.data());
+            }
           //
           // XArray = YArray
           //
@@ -210,42 +225,6 @@ namespace dftfe
 
       operatorMatrix.overlapInverseMatrixTimesX(
         ResidualNew, 1.0, 0.0, 0.0, Residual);
-      // ResidualNew = Y;
-      // if (false)
-      //   {
-      //     bool flag    = false;
-      //     int  counter = 0;
-      //     while (!flag)
-      //       {
-      //         Residual = Y;
-      //         Y        = ResidualNew;
-      //         operatorMatrix.inverseOverlapOverlapMatrixTimesX(
-      //           Residual, -1.0, 1.0, 0.0, Y, approxOverlapMatrix);
-      //         std::vector<double> normX, normY;
-      //         normX.resize(Y.numVectors(), 0.0);
-      //         normY.resize(Y.numVectors(), 0.0);
-      //         Residual.l2Norm(&normX[0]);
-      //         Y.l2Norm(&normY[0]);
-      //         const unsigned int this_mpi_process =
-      //           dealii::Utilities::MPI::this_mpi_process(
-      //             operatorMatrix.getMPICommunicatorDomain());
-      //         if (this_mpi_process == 0)
-      //           {
-      //             for (int i = 0; i < Y.numVectors(); i++)
-      //               std::cout << "Norm Value: " << i << " " << normX[i] << "
-      //               "
-      //                         << normY[i] << " " << normY[i] / normX[i]
-      //                         << std::endl;
-      //           }
-      //         MPI_Barrier(operatorMatrix.getMPICommunicatorDomain());
-      //         Y.add(2.0, Residual);
-      //         if (counter == 0)
-      //           flag = true;
-      //         counter++;
-      //       }
-      //   }
-
-
       BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
                             X.numVectors(),
                             1.0,
