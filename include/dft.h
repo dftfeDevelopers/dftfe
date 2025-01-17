@@ -70,6 +70,8 @@
 
 #include <mixingClass.h>
 #include <oncvClass.h>
+#include <AuxDensityMatrix.h>
+#include "expConfiningPotential.h"
 #include <atomCenteredPostProcessing.h>
 
 namespace dftfe
@@ -290,11 +292,7 @@ namespace dftfe
      */
     unsigned int d_numEigenValues;
     unsigned int d_highestStateForResidualComputation;
-    /**
-     * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
-     * after spectrum splitting.
-     */
-    unsigned int d_numEigenValuesRR;
+
 
     /**
      * @brief Number of random wavefunctions
@@ -500,6 +498,9 @@ namespace dftfe
     double
     getNumElectrons() const;
 
+    void
+    setNumElectrons(unsigned int inputNumElectrons);
+
     elpaScalaManager *
     getElpaScalaManager() const;
 #ifdef DFTFE_WITH_DEVICE
@@ -529,9 +530,8 @@ namespace dftfe
       chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
       std::vector<double> &                           residualNormWaveFunctions,
       const bool                                      computeResidual,
-      const bool                                      isSpectrumSplit = false,
-      const bool                                      useMixedPrec    = false,
-      const bool                                      isFirstScf      = false);
+      const bool                                      useMixedPrec = false,
+      const bool                                      isFirstScf   = false);
 
 
 #ifdef DFTFE_WITH_DEVICE
@@ -550,7 +550,6 @@ namespace dftfe
       std::vector<double> &residualNormWaveFunctions,
       const bool           computeResidual,
       const unsigned int   numberRayleighRitzAvoidancePasses = 0,
-      const bool           isSpectrumSplit                   = false,
       const bool           useMixedPrec                      = false,
       const bool           isFirstScf                        = false);
 #endif
@@ -719,6 +718,22 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<unsigned int>> &
     getbCellNonTrivialAtomIds() const;
 
+    void
+    updatePRefinedConstraints();
+
+    void
+    computeMultipoleMoments(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int densityQuadratureId,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                                                  rhoQuadValues,
+      const std::map<dealii::CellId, std::vector<double>> *bQuadValues);
+
+    const expConfiningPotential &
+    getConfiningPotential() const;
 
     void
     computeFractionalOccupancies();
@@ -734,6 +749,18 @@ namespace dftfe
      */
     bool
     isHubbardCorrectionsUsed();
+
+    /**
+     *@brief write wavefunction solution fields
+     */
+    void
+    outputWfc(const std::string outputFileName = "wfcOutput");
+
+    /**
+     *@brief return the pseudo potential field
+     */
+    const std::map<dealii::CellId, std::vector<double>> &
+    getPseudoVLoc() const;
 
   private:
     /**
@@ -859,9 +886,6 @@ namespace dftfe
                         const bool vselfPerturbationUpdateForStress = false);
 
 
-    void
-    updatePRefinedConstraints();
-
     /**
      *@brief Sets inhomegeneous dirichlet boundary conditions upto quadrupole for total potential constraints on
      * non-periodic boundary (boundary id==0).
@@ -875,18 +899,6 @@ namespace dftfe
       const dealii::DoFHandler<3> &            _dofHandler,
       const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
       dealii::AffineConstraints<double> &      constraintMatrix);
-
-
-    void
-    computeMultipoleMoments(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                basisOperationsPtr,
-      const unsigned int densityQuadratureId,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                                                  rhoQuadValues,
-      const std::map<dealii::CellId, std::vector<double>> *bQuadValues);
 
 
     /**
@@ -1006,7 +1018,7 @@ namespace dftfe
      *@brief computes density nodal data from wavefunctions
      */
     void
-    computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting);
+    computeRhoNodalFromPSI();
 
 
     void
@@ -1151,8 +1163,7 @@ namespace dftfe
      *@brief Computes output electron-density from wavefunctions
      */
     void
-    compute_rhoOut(const bool isConsiderSpectrumSplitting,
-                   const bool isGroundState = false);
+    compute_rhoOut(const bool isGroundState = false);
 
     /**
      *@brief Mixing schemes for mixing electron-density
@@ -1200,12 +1211,6 @@ namespace dftfe
      */
     void
     compute_localizationLength(const std::string &locLengthFileName);
-
-    /**
-     *@brief write wavefunction solution fields
-     */
-    void
-    outputWfc();
 
     /**
      *@brief write electron density solution fields
@@ -1643,9 +1648,6 @@ namespace dftfe
 
     std::vector<std::vector<double>> d_densityMatDerFermiEnergy;
 
-    /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
-    std::vector<std::vector<double>> eigenValuesRRSplit;
-
     /**
      * The indexing of d_eigenVectorsFlattenedHost and
      * d_eigenVectorsFlattenedDevice [kPoint * numSpinComponents *
@@ -1658,9 +1660,6 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::HOST>
-      d_eigenVectorsRotFracDensityFlattenedHost;
-    dftfe::utils::MemoryStorage<dataTypes::number,
-                                dftfe::utils::MemorySpace::HOST>
       d_eigenVectorsDensityMatrixPrimeHost;
 
     /// device eigenvectors
@@ -1668,9 +1667,6 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsFlattenedDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number,
-                                dftfe::utils::MemorySpace::DEVICE>
-      d_eigenVectorsRotFracFlattenedDevice;
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsDensityMatrixPrimeFlattenedDevice;
@@ -1933,6 +1929,7 @@ namespace dftfe
       std::vector<double> &                           residualNormWaveFunctions,
       unsigned int                                    ipass);
 
+    expConfiningPotential                                    d_expConfiningPot;
     std::shared_ptr<hubbard<dataTypes::number, memorySpace>> d_hubbardClassPtr;
     bool                                                     d_useHubbard;
   };

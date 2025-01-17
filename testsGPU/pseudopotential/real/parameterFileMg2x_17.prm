@@ -1,21 +1,21 @@
 set VERBOSITY = 0
+set SOLVER MODE=GEOOPT
 set REPRODUCIBLE OUTPUT=true
 set USE GPU=true
 subsection GPU
   set AUTO GPU BLOCK SIZES=false
-  set USE GPUDIRECT MPI ALL REDUCE = true
 end
 
 subsection Boundary conditions
-  set SMEARED NUCLEAR CHARGES=false
-  set FLOATING NUCLEAR CHARGES=false
+  set SMEARED NUCLEAR CHARGES=true
+  set FLOATING NUCLEAR CHARGES=true
   set CONSTRAINTS FROM SERIAL DOFHANDLER = false
   set CONSTRAINTS PARALLEL CHECK         = false
   set PERIODIC1                       = true
   set PERIODIC2                       = true
   set PERIODIC3                       = true
   set SELF POTENTIAL RADIUS           = 3.0
-  set POINT WISE DIRICHLET CONSTRAINT  =true
+  set POINT WISE DIRICHLET CONSTRAINT =false
 end
 
 
@@ -43,13 +43,16 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinatesMg2x.inp
   set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
   subsection Optimization
-    set ION FORCE                 = false
+    set CELL STRESS              =true
+    set OPTIMIZATION MODE =CELL
+    set CELL CONSTRAINT TYPE=1
+    set REUSE DENSITY              = 0
+    set REUSE WFC                  = false
+    set CELL OPT SOLVER            = LBFGS 
+    set STRESS TOL=1e-3
   end
 end
 
-subsection Parallelization
- set NPBAND=2
-end
 
 subsection SCF parameters
   set COMPUTE ENERGY EACH ITER = false
@@ -60,16 +63,12 @@ subsection SCF parameters
   subsection Eigen-solver parameters
        set CHEBYSHEV POLYNOMIAL DEGREE       = 20
        set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
-       set SPECTRUM SPLIT CORE EIGENSTATES=90
        set CHEBY WFC BLOCK SIZE=45
        set WFC BLOCK SIZE=45
        set CHEBYSHEV FILTER TOLERANCE=1e-5
-       set OVERLAP COMPUTE COMMUN ORTHO RR=true
-       set USE MIXED PREC XTHX SPECTRUM SPLIT=true
-       set USE MIXED PREC CGS SR=true
-       set USE MIXED PREC CGS O=false
   end
 end
+
 subsection Poisson problem parameters
   set GPU MODE           = true
   set MAXIMUM ITERATIONS = 20000

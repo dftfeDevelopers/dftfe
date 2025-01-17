@@ -334,7 +334,6 @@ namespace dftfe
     chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
     std::vector<double> &                           residualNormWaveFunctions,
     const bool                                      computeResidual,
-    const bool                                      isSpectrumSplit,
     const bool                                      useMixedPrec,
     const bool                                      isFirstScf)
   {
@@ -348,16 +347,13 @@ namespace dftfe
           pcout << "spin: " << spinType + 1 << std::endl;
       }
 
-    std::vector<double> eigenValuesTemp(isSpectrumSplit ? d_numEigenValuesRR :
-                                                          d_numEigenValues,
-                                        0.0);
-    if (d_dftParamsPtr->useSinglePrecCheby ||
-        d_dftParamsPtr->useReformulatedChFSI)
-      for (unsigned int i = 0; i < d_numEigenValues; i++)
-        {
-          eigenValuesTemp[i] =
-            eigenValues[kPointIndex][spinType * d_numEigenValues + i];
-        }
+    std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
+
+    for (unsigned int i = 0; i < d_numEigenValues; i++)
+      {
+        eigenValuesTemp[i] =
+          eigenValues[kPointIndex][spinType * d_numEigenValues + i];
+      }
 
     if (d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) *
                                  kPointIndex +
@@ -434,10 +430,6 @@ namespace dftfe
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
           d_numEigenValues *
           matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-      d_eigenVectorsRotFracDensityFlattenedHost.data() +
-        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValuesRR *
-          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_numEigenValues,
       matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       eigenValuesTemp,
@@ -454,54 +446,23 @@ namespace dftfe
     // copy the eigenValues and corresponding residual norms back to data
     // members
     //
-    if (isSpectrumSplit)
-      {
-        for (unsigned int i = 0; i < d_numEigenValuesRR; i++)
-          {
-            if (d_dftParamsPtr->verbosity >= 4 &&
-                d_numEigenValues == d_numEigenValuesRR)
-              pcout << "eigen value " << std::setw(3) << i << ": "
-                    << eigenValuesTemp[i] << std::endl;
-            else if (d_dftParamsPtr->verbosity >= 4 &&
-                     d_numEigenValues != d_numEigenValuesRR)
-              pcout << "valence eigen value " << std::setw(3) << i << ": "
-                    << eigenValuesTemp[i] << std::endl;
 
-            eigenValuesRRSplit[kPointIndex][spinType * d_numEigenValuesRR + i] =
-              eigenValuesTemp[i];
-          }
 
-        for (unsigned int i = 0; i < d_numEigenValues; i++)
-          {
-            if (i >= (d_numEigenValues - d_numEigenValuesRR))
-              eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
-                eigenValuesTemp[i - (d_numEigenValues - d_numEigenValuesRR)];
-            else
-              eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
-                -100.0;
-          }
-      }
-    else
-      {
-        for (unsigned int i = 0; i < d_numEigenValues; i++)
-          {
-            if (d_dftParamsPtr->verbosity >= 4)
-              pcout << "eigen value " << std::setw(3) << i << ": "
-                    << eigenValuesTemp[i] << std::endl;
+    {
+      for (unsigned int i = 0; i < d_numEigenValues; i++)
+        {
+          if (d_dftParamsPtr->verbosity >= 4)
+            pcout << "eigen value " << std::setw(3) << i << ": "
+                  << eigenValuesTemp[i] << std::endl;
 
-            eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
-              eigenValuesTemp[i];
-          }
-      }
+          eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
+            eigenValuesTemp[i];
+        }
+    }
 
     if (d_dftParamsPtr->verbosity >= 4)
       pcout << std::endl;
 
-
-    // set a0 and bLow
-    /* a0[(1+d_dftParamsPtr->spinPolarized)*kPointIndex+spinType]=isSpectrumSplit?
-       d_dftParamsPtr->lowerEndWantedSpectrum
-       :eigenValuesTemp[0];*/
 
 
     bLow[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
@@ -509,11 +470,9 @@ namespace dftfe
     d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
                            spinType] = false;
 
-    if (!isSpectrumSplit)
-      {
-        a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
-          eigenValuesTemp[0];
-      }
+    a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
+      eigenValuesTemp[0];
+
 
     computing_timer.leave_subsection("Chebyshev solve");
   }
@@ -535,7 +494,6 @@ namespace dftfe
     std::vector<double> &residualNormWaveFunctions,
     const bool           computeResidual,
     const unsigned int   numberRayleighRitzAvoidancePasses,
-    const bool           isSpectrumSplit,
     const bool           useMixedPrec,
     const bool           isFirstScf)
   {
@@ -545,14 +503,9 @@ namespace dftfe
         if (d_dftParamsPtr->spinPolarized == 1)
           pcout << "spin: " << spinType + 1 << std::endl;
       }
-    std::vector<double> eigenValuesTemp(isSpectrumSplit ? d_numEigenValuesRR :
-                                                          d_numEigenValues,
-                                        0.0);
-    std::vector<double> eigenValuesDummy(isSpectrumSplit ? d_numEigenValuesRR :
-                                                           d_numEigenValues,
-                                         0.0);
-    if (d_dftParamsPtr->useSinglePrecCheby ||
-        d_dftParamsPtr->useReformulatedChFSI)
+    std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
+    std::vector<double> eigenValuesDummy(d_numEigenValues, 0.0);
+    if (d_dftParamsPtr->useSinglePrecCheby)
       for (unsigned int i = 0; i < d_numEigenValues; i++)
         {
           eigenValuesTemp[i] =
@@ -598,10 +551,6 @@ namespace dftfe
               ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
                 d_numEigenValues *
                 matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-            d_eigenVectorsRotFracFlattenedDevice.begin() +
-              ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-                d_numEigenValuesRR *
-                matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             d_numEigenValues *
               matrix_free_data.get_vector_partitioner()->locally_owned_size(),
             d_numEigenValues,
@@ -622,46 +571,17 @@ namespace dftfe
         // copy the eigenValues and corresponding residual norms back to data
         // members
         //
-        if (isSpectrumSplit)
-          {
-            for (unsigned int i = 0; i < d_numEigenValuesRR; i++)
-              {
-                if (d_dftParamsPtr->verbosity >= 5 &&
-                    d_numEigenValues == d_numEigenValuesRR)
-                  pcout << "eigen value " << std::setw(3) << i << ": "
-                        << eigenValuesTemp[i] << std::endl;
-                else if (d_dftParamsPtr->verbosity >= 5 &&
-                         d_numEigenValues != d_numEigenValuesRR)
-                  pcout << "valence eigen value " << std::setw(3) << i << ": "
-                        << eigenValuesTemp[i] << std::endl;
+        {
+          for (unsigned int i = 0; i < d_numEigenValues; i++)
+            {
+              if (d_dftParamsPtr->verbosity >= 5)
+                pcout << "eigen value " << std::setw(3) << i << ": "
+                      << eigenValuesTemp[i] << std::endl;
 
-                eigenValuesRRSplit[kPointIndex][spinType * d_numEigenValuesRR +
-                                                i] = eigenValuesTemp[i];
-              }
-
-            for (unsigned int i = 0; i < d_numEigenValues; i++)
-              {
-                if (i >= (d_numEigenValues - d_numEigenValuesRR))
-                  eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
-                    eigenValuesTemp[i -
-                                    (d_numEigenValues - d_numEigenValuesRR)];
-                else
-                  eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
-                    -100.0;
-              }
-          }
-        else
-          {
-            for (unsigned int i = 0; i < d_numEigenValues; i++)
-              {
-                if (d_dftParamsPtr->verbosity >= 5)
-                  pcout << "eigen value " << std::setw(3) << i << ": "
-                        << eigenValuesTemp[i] << std::endl;
-
-                eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
-                  eigenValuesTemp[i];
-              }
-          }
+              eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
+                eigenValuesTemp[i];
+            }
+        }
 
         if (d_dftParamsPtr->verbosity >= 4)
           pcout << std::endl;
@@ -672,11 +592,11 @@ namespace dftfe
         d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) *
                                  kPointIndex +
                                spinType] = false;
-        if (!isSpectrumSplit)
-          {
-            a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
-              eigenValuesTemp[0];
-          }
+
+        {
+          a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
+            eigenValuesTemp[0];
+        }
       }
   }
 #endif
@@ -913,10 +833,6 @@ namespace dftfe
       kohnShamDFTEigenOperator,
       d_BLASWrapperPtrHost,
       *d_elpaScala,
-      d_eigenVectorsFlattenedHost.data() +
-        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValues *
-          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_eigenVectorsFlattenedHost.data() +
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
           d_numEigenValues *

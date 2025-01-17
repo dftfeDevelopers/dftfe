@@ -64,7 +64,6 @@ namespace dftfe
             dftfe::utils::MemorySpace::DEVICE>> &              BLASWrapperPtr,
           elpaScalaManager &                                   elpaScala,
           dataTypes::number *      eigenVectorsFlattenedDevice,
-          dataTypes::number *      eigenVectorsRotFracDensityFlattenedDevice,
           const unsigned int       flattenedSize,
           const unsigned int       totalNumberWaveFunctions,
           std::vector<double> &    eigenValues,

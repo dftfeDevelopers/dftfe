@@ -60,6 +60,7 @@ SET(TARGET_SRC
   ./src/dft/computeAuxProjectedDensityMatrixFromPSI.cc
   ./src/dft/densityFirstOrderResponseCalculator.cc
   ./src/dft/applyMultipoleDirichletBC.cc
+  ./src/dft/expConfiningPotential.cpp
   ./src/excManager/excDensityLDAClass.cpp
   ./src/excManager/excDensityGGAClass.cpp
   ./src/excManager/excDensityLLMGGAClass.cpp

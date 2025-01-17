@@ -25,5 +25,4 @@ srun -n 6 -c 1 ./dftfe parameterFileMg2x_10.prm > outputMg2x_10
 srun -n 6 -c 1 ./dftfe parameterFileMg2x_11.prm > outputMg2x_11
 srun -n 6 -c 1 ./dftfe parameterFileMg2x_14.prm > outputMg2x_14
 srun -n 6 -c 1 ./dftfe parameterFileMg2x_15.prm > outputMg2x_15
-srun -n 6 -c 1 ./dftfe parameterFileMg2x_16.prm > outputMg2x_16
 srun -n 6 -c 7 ./dftfe Pt3Ni_hubbard_spin.prm > outputPt3Ni_hubbard_spin

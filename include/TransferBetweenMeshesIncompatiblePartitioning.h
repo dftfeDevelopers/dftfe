@@ -45,7 +45,8 @@ namespace dftfe
       const unsigned int                   matrixFreeMesh2VectorComponent,
       const unsigned int                   matrixFreeMesh2QuadratureComponent,
       const unsigned int                   verbosity,
-      const MPI_Comm &                     mpiComm);
+      const MPI_Comm &                     mpiComm,
+      const bool useMemOptForCellWiseInterpolation = false);
 
     void
     interpolateMesh1DataToMesh2QuadPoints(
@@ -57,8 +58,11 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-        &  outputQuadData,
-      bool resizeOutputVec); // override;
+        &                outputQuadData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeOutputVec); // override;
 
     void
     interpolateMesh2DataToMesh1QuadPoints(
@@ -70,8 +74,11 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-        &  outputQuadData,
-      bool resizeOutputVec); // override;
+        &                outputQuadData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeOutputVec); // override;
 
 
     void
@@ -86,8 +93,11 @@ namespace dftfe
         &fullFlattenedArrayCellLocalProcIndexIdMapParent,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-        &  outputQuadData,
-      bool resizeOutputVec); // override;
+        &                outputQuadData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeOutputVec); // override;
 
     void
     interpolateMesh2DataToMesh1QuadPoints(
@@ -101,8 +111,11 @@ namespace dftfe
         &mapVecToCells,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-        &  outputQuadData,
-      bool resizeOutputVec); // override;
+        &                outputQuadData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeOutputVec); // override;
 
   private:
     const dealii::MatrixFree<3, double> *d_matrixFreeMesh1Ptr;

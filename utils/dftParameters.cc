@@ -122,8 +122,7 @@ namespace dftfe
           "WRITE DENSITY QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns (in case of collinear spin polarization) and 5 columns in case of spin-restricted calculation. The first three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the fifth column has the total density. Default: false.");
-
+          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be seven columns (in case of collinear spin polarization) and 6 columns in case of spin-restricted calculation. The first column is the quadrature point index. The next three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fifth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the sixth and seventh columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the sixth column has the total density. Default: false.");
 
         prm.declare_entry(
           "WRITE DENSITY OF STATES",
@@ -636,6 +635,45 @@ namespace dftfe
 
       prm.enter_subsection("DFT functional parameters");
       {
+        prm.enter_subsection("CONFINING POTENTIAL parameters");
+        {
+          prm.declare_entry(
+            "APPLY CONFINING POTENTIAL",
+            "false",
+            dealii::Patterns::Bool(),
+            "[Advanced] Apply confining potential. Usually required for anionic charges."
+            "The confining potential is applied between maxDist + r1 and maxDist + r2. Where maxDist "
+            "is the maximum distance of atoms from the center. r1 and r2 is the INNER and OUTER radii respectively."
+            "Between 0 and maxdist + r1: V(r) = 0;"
+            "Between maxdist + r1 and maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(dist2*dist2 + 1E-6);"
+            "Beyond maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(1E-6);"
+            "where dist1 = r - (maxdist + r1) and dist2 = (maxdist + r2) - r");
+
+          prm.declare_entry(
+            "INNER RADIUS",
+            "17.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The inner radius (r1) for the confining potential.");
+
+          prm.declare_entry(
+            "OUTER RADIUS",
+            "20.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The outer radius (r2) for the confining potential.");
+
+          prm.declare_entry(
+            "W PARAM",
+            "1.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The W parameter for the confining potential.");
+
+          prm.declare_entry(
+            "C PARAM",
+            "1.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The C parameter for the confining potential.");
+        }
+        prm.leave_subsection();
         prm.declare_entry(
           "PSEUDOPOTENTIAL CALCULATION",
           "true",
@@ -928,23 +966,14 @@ namespace dftfe
             dealii::Patterns::Integer(0),
             "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-20 percent of N/2. If 5-20 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10. Default value of 0 automatically sets the number of Kohn-Sham wavefunctions close to 20 percent more than N/2. CAUTION: use more states when using higher electronic temperature.");
 
-          prm.declare_entry(
-            "SPECTRUM SPLIT CORE EIGENSTATES",
-            "0",
-            dealii::Patterns::Integer(0),
-            "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
 
-          prm.declare_entry("XTHX CORE EIGENSTATES",
+
+          prm.declare_entry("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR",
                             "0",
                             dealii::Patterns::Integer(0),
                             "[Advanced] For mixed precision optimization.");
 
 
-          prm.declare_entry(
-            "SPECTRUM SPLIT STARTING SCF ITER",
-            "0",
-            dealii::Patterns::Integer(0),
-            "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
           prm.declare_entry(
             "CHEBYSHEV POLYNOMIAL DEGREE",
@@ -1039,11 +1068,6 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
 
 
-          prm.declare_entry(
-            "USE MIXED PREC XTHX SPECTRUM SPLIT",
-            "false",
-            dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0.  Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC RR_SR",
@@ -1343,18 +1367,17 @@ namespace dftfe
     scalapackBlockSize                             = 50;
     natoms                                         = 0;
     natomTypes                                     = 0;
-    numCoreWfcRR                                   = 0;
-    numCoreWfcXtHX                                 = 0;
+    numCoreWfcForMixedPrecRR                       = 0;
     reuseWfcGeoOpt                                 = false;
     reuseDensityGeoOpt                             = 0;
     mpiAllReduceMessageBlockSizeMB                 = 2.0;
     useSubspaceProjectedSHEPGPU                    = false;
     useMixedPrecCGS_SR                             = false;
     useMixedPrecCGS_O                              = false;
-    useMixedPrecXTHXSpectrumSplit                  = false;
+    approxOverlapMatrix                            = true;
+    useReformulatedChFSI                           = false;
     useMixedPrecSubspaceRotRR                      = false;
     useMixedPrecCommunOnlyXTHXCGSO                 = false;
-    spectrumSplitStartingScfIter                   = 0;
     useELPA                                        = false;
     constraintsParallelCheck                       = true;
     createConstraintsFromSerialDofhandler          = true;
@@ -1429,6 +1452,14 @@ namespace dftfe
     maxStaggeredCycles = 100;
     maxIonUpdateStep   = 0.5;
     maxCellUpdateStep  = 0.1;
+
+    // Parameters for confining potential
+    confiningPotential   = false;
+    confiningInnerPotRad = 17.0;
+    confiningOuterPotRad = 20.0;
+    confiningWParam      = 1.0;
+    confiningCParam      = 1.0;
+
 
     writeStructreEnergyForcesFileForPostProcess = false;
   }
@@ -1630,6 +1661,17 @@ namespace dftfe
 
     prm.enter_subsection("DFT functional parameters");
     {
+      // Parameters for confining potential
+      prm.enter_subsection("CONFINING POTENTIAL parameters");
+      {
+        confiningPotential   = prm.get_bool("APPLY CONFINING POTENTIAL");
+        confiningInnerPotRad = prm.get_double("INNER RADIUS");
+        confiningOuterPotRad = prm.get_double("OUTER RADIUS");
+        confiningWParam      = prm.get_double("W PARAM");
+        confiningCParam      = prm.get_double("C PARAM");
+      }
+      prm.leave_subsection();
+
       prm.enter_subsection("Dispersion Correction");
       {
         dc_dispersioncorrectiontype =
@@ -1702,10 +1744,8 @@ namespace dftfe
       {
         numberEigenValues =
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-        numCoreWfcRR   = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
-        numCoreWfcXtHX = prm.get_integer("XTHX CORE EIGENSTATES");
-        spectrumSplitStartingScfIter =
-          prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
+        numCoreWfcForMixedPrecRR =
+          prm.get_integer("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR");
         chebyshevOrder       = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
         useELPA              = prm.get_bool("USE ELPA");
         approxOverlapMatrix  = prm.get_bool("USE APPROXIMATE OVERLAP MATRIX");
@@ -1716,12 +1756,10 @@ namespace dftfe
         chebyWfcBlockSize    = prm.get_integer("CHEBY WFC BLOCK SIZE");
         subspaceRotDofsBlockSize =
           prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
-        scalapackParalProcs = prm.get_integer("SCALAPACKPROCS");
-        scalapackBlockSize  = prm.get_integer("SCALAPACK BLOCK SIZE");
-        useMixedPrecCGS_SR  = prm.get_bool("USE MIXED PREC CGS SR");
-        useMixedPrecCGS_O   = prm.get_bool("USE MIXED PREC CGS O");
-        useMixedPrecXTHXSpectrumSplit =
-          prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
+        scalapackParalProcs       = prm.get_integer("SCALAPACKPROCS");
+        scalapackBlockSize        = prm.get_integer("SCALAPACK BLOCK SIZE");
+        useMixedPrecCGS_SR        = prm.get_bool("USE MIXED PREC CGS SR");
+        useMixedPrecCGS_O         = prm.get_bool("USE MIXED PREC CGS O");
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
         useMixedPrecCommunOnlyXTHXCGSO =
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
@@ -2044,7 +2082,6 @@ namespace dftfe
       {
         useMixedPrecCGS_O                   = true;
         useMixedPrecCGS_SR                  = true;
-        useMixedPrecXTHXSpectrumSplit       = true;
         useSinglePrecCommunCheby            = true;
         reuseLanczosUpperBoundFromFirstCall = true;
       }
@@ -2118,11 +2155,7 @@ namespace dftfe
         spinMixingEnhancementFactor = 1.0;
       }
 
-    if (numCoreWfcRR == 0)
-      spectrumSplitStartingScfIter = 10000;
 
-    if (numCoreWfcRR != 0)
-      useSinglePrecCheby = false;
 
     if (useReformulatedChFSI && overlapComputeCommunCheby)
       {

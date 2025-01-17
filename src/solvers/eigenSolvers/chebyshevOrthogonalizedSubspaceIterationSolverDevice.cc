@@ -158,7 +158,6 @@ namespace dftfe
       &                      BLASWrapperPtr,
     elpaScalaManager &       elpaScala,
     dataTypes::number *      eigenVectorsFlattenedDevice,
-    dataTypes::number *      eigenVectorsRotFracDensityFlattenedDevice,
     const unsigned int       flattenedSize,
     const unsigned int       totalNumberWaveFunctions,
     std::vector<double> &    eigenValues,
@@ -709,85 +708,64 @@ namespace dftfe
 
     std::fill(eigenValues.begin(), eigenValues.end(), 0.0);
 
-    if (eigenValues.size() != totalNumberWaveFunctions)
-      {
-        linearAlgebraOperationsDevice::rayleighRitzGEPSpectrumSplitDirect(
-          operatorMatrix,
-          elpaScala,
-          eigenVectorsFlattenedDevice,
-          eigenVectorsRotFracDensityFlattenedDevice,
-          (*XBlock),
-          (*HXBlock),
-          localVectorSize,
-          totalNumberWaveFunctions,
-          totalNumberWaveFunctions - eigenValues.size(),
-          d_mpiCommParent,
-          operatorMatrix.getMPICommunicatorDomain(),
-          devicecclMpiCommDomain,
-          interBandGroupComm,
-          eigenValues,
-          BLASWrapperPtr,
-          d_dftParams,
-          useMixedPrecOverall);
-      }
-    else
-      {
-        if (d_dftParams.useSubspaceProjectedSHEPGPU)
-          {
-            linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
-              operatorMatrix,
-              elpaScala,
-              eigenVectorsFlattenedDevice,
-              (*XBlock),
-              (*HXBlock),
-              localVectorSize,
-              totalNumberWaveFunctions,
-              d_mpiCommParent,
-              operatorMatrix.getMPICommunicatorDomain(),
-              devicecclMpiCommDomain,
-              interBandGroupComm,
-              BLASWrapperPtr,
-              d_dftParams,
-              useMixedPrecOverall);
+
+    {
+      if (d_dftParams.useSubspaceProjectedSHEPGPU)
+        {
+          linearAlgebraOperationsDevice::pseudoGramSchmidtOrthogonalization(
+            operatorMatrix,
+            elpaScala,
+            eigenVectorsFlattenedDevice,
+            (*XBlock),
+            (*HXBlock),
+            localVectorSize,
+            totalNumberWaveFunctions,
+            d_mpiCommParent,
+            operatorMatrix.getMPICommunicatorDomain(),
+            devicecclMpiCommDomain,
+            interBandGroupComm,
+            BLASWrapperPtr,
+            d_dftParams,
+            useMixedPrecOverall);
 
 
-            linearAlgebraOperationsDevice::rayleighRitz(
-              operatorMatrix,
-              elpaScala,
-              eigenVectorsFlattenedDevice,
-              (*XBlock),
-              (*HXBlock),
-              localVectorSize,
-              totalNumberWaveFunctions,
-              d_mpiCommParent,
-              operatorMatrix.getMPICommunicatorDomain(),
-              devicecclMpiCommDomain,
-              interBandGroupComm,
-              eigenValues,
-              BLASWrapperPtr,
-              d_dftParams,
-              useMixedPrecOverall);
-          }
-        else
-          {
-            linearAlgebraOperationsDevice::rayleighRitzGEP(
-              operatorMatrix,
-              elpaScala,
-              eigenVectorsFlattenedDevice,
-              (*XBlock),
-              (*HXBlock),
-              localVectorSize,
-              totalNumberWaveFunctions,
-              d_mpiCommParent,
-              operatorMatrix.getMPICommunicatorDomain(),
-              devicecclMpiCommDomain,
-              interBandGroupComm,
-              eigenValues,
-              BLASWrapperPtr,
-              d_dftParams,
-              useMixedPrecOverall);
-          }
-      }
+          linearAlgebraOperationsDevice::rayleighRitz(
+            operatorMatrix,
+            elpaScala,
+            eigenVectorsFlattenedDevice,
+            (*XBlock),
+            (*HXBlock),
+            localVectorSize,
+            totalNumberWaveFunctions,
+            d_mpiCommParent,
+            operatorMatrix.getMPICommunicatorDomain(),
+            devicecclMpiCommDomain,
+            interBandGroupComm,
+            eigenValues,
+            BLASWrapperPtr,
+            d_dftParams,
+            useMixedPrecOverall);
+        }
+      else
+        {
+          linearAlgebraOperationsDevice::rayleighRitzGEP(
+            operatorMatrix,
+            elpaScala,
+            eigenVectorsFlattenedDevice,
+            (*XBlock),
+            (*HXBlock),
+            localVectorSize,
+            totalNumberWaveFunctions,
+            d_mpiCommParent,
+            operatorMatrix.getMPICommunicatorDomain(),
+            devicecclMpiCommDomain,
+            interBandGroupComm,
+            eigenValues,
+            BLASWrapperPtr,
+            d_dftParams,
+            useMixedPrecOverall);
+        }
+    }
 
 
     if (computeResidual)
@@ -798,37 +776,21 @@ namespace dftfe
             computingTimerStandard.enter_subsection("Residual norm");
           }
 
-        if (eigenValues.size() != totalNumberWaveFunctions)
-          linearAlgebraOperationsDevice::computeEigenResidualNorm(
-            operatorMatrix,
-            eigenVectorsRotFracDensityFlattenedDevice,
-            (*XBlock),
-            (*HXBlock),
-            localVectorSize,
-            eigenValues.size(),
-            eigenValues,
-            d_mpiCommParent,
-            operatorMatrix.getMPICommunicatorDomain(),
-            interBandGroupComm,
-            BLASWrapperPtr,
-            residualNorms,
-            d_dftParams);
-        else
-          linearAlgebraOperationsDevice::computeEigenResidualNorm(
-            operatorMatrix,
-            eigenVectorsFlattenedDevice,
-            (*XBlock),
-            (*HXBlock),
-            localVectorSize,
-            totalNumberWaveFunctions,
-            eigenValues,
-            d_mpiCommParent,
-            operatorMatrix.getMPICommunicatorDomain(),
-            interBandGroupComm,
-            BLASWrapperPtr,
-            residualNorms,
-            d_dftParams,
-            true);
+        linearAlgebraOperationsDevice::computeEigenResidualNorm(
+          operatorMatrix,
+          eigenVectorsFlattenedDevice,
+          (*XBlock),
+          (*HXBlock),
+          localVectorSize,
+          totalNumberWaveFunctions,
+          eigenValues,
+          d_mpiCommParent,
+          operatorMatrix.getMPICommunicatorDomain(),
+          interBandGroupComm,
+          BLASWrapperPtr,
+          residualNorms,
+          d_dftParams,
+          true);
 
         if (d_dftParams.deviceFineGrainedTimings)
           {
