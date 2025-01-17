@@ -44,59 +44,7 @@ namespace dftfe
                     const double                                       a,
                     const double                                       b,
                     const double                                       a0)
-    {
-      double e, c, sigma, sigma1, sigma2, gamma;
-      e      = (b - a) / 2.0;
-      c      = (b + a) / 2.0;
-      sigma  = e / (a0 - c);
-      sigma1 = sigma;
-      gamma  = 2.0 / sigma1;
-
-
-      //
-      // create YArray
-      // initialize to zeros.
-      // x
-      Y.setValue(T(0.0));
-
-
-      //
-      // call HX
-      //
-
-
-      double alpha1 = sigma1 / e, alpha2 = -c;
-      operatorMatrix.HXCheby(X, alpha1, 0.0, alpha1 * alpha2, Y);
-      //
-      // polynomial loop
-      //
-      for (unsigned int degree = 2; degree < m + 1; ++degree)
-        {
-          sigma2 = 1.0 / (gamma - sigma);
-          alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
-
-
-
-          //
-          // call HX
-          //
-          operatorMatrix.HXCheby(Y, alpha1, alpha2, -c * alpha1, X);
-
-
-          //
-          // XArray = YArray
-          //
-          X.swap(Y);
-
-          //
-          // YArray = YNewArray
-          //
-          sigma = sigma2;
-        }
-
-      // copy back YArray to XArray
-      X = Y;
-    }
+    { }
 
 
     template <typename T1, typename T2, dftfe::utils::MemorySpace memorySpace>
@@ -128,7 +76,16 @@ namespace dftfe
       for (unsigned int i = 0; i < eigenvalues.size(); i++)
         traceEigeValues += eigenvalues[i];
       if (std::fabs(traceEigeValues) <= 1E-12)
-        oldChFSI = true;
+        {
+          if constexpr (std::is_same<T1,
+                                  T2>::value)
+            oldChFSI = true;
+          else
+          {
+            AssertThrow(false,dealii::ExcMessage(
+            "DFT-FE Error: Illegal, trying to use standard ChFSI with mixed precision."))
+          }  
+        }
 
       dftfe::utils::MemoryStorage<double, memorySpace> eigenValuesFiltered,
         eigenValuesFiltered1, eigenValuesFiltered2;
@@ -172,12 +129,15 @@ namespace dftfe
         }
       else
         {
+          if constexpr (std::is_same<T1,
+                                  T2>::value)
+          {
+
           operatorMatrix.overlapMatrixTimesX(
             X, 1.0, 0.0, 0.0, Y, approxOverlapMatrix);
-          BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
-            X.locallyOwnedSize() * X.numVectors(), Y.data(), Residual.data());
           operatorMatrix.HXChebyNew(
-            Residual, alpha1, 0.0, alpha1 * alpha2, ResidualNew);
+            Y, alpha1, 0.0, alpha1 * alpha2, X);
+          }
         }
       // //
       // // polynomial loop
@@ -222,9 +182,11 @@ namespace dftfe
           //
           sigma = sigma2;
         }
-
-      operatorMatrix.overlapInverseMatrixTimesX(
+        operatorMatrix.overlapInverseMatrixTimesX(
         ResidualNew, 1.0, 0.0, 0.0, Residual);
+      if(!oldChFSI)
+      {
+
       BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),
                             X.numVectors(),
                             1.0,
@@ -232,6 +194,15 @@ namespace dftfe
                             X.data(),
                             eigenValuesFiltered2.data(),
                             X.data());
+      }
+      else
+      {
+        if constexpr(std::is_same<T1,
+                                  T2>::value)
+        { 
+          ResidualNew.swap(Residual);
+        }       
+      }
     }
 
 
@@ -308,7 +279,8 @@ namespace dftfe
 
 
       operatorMatrix.HX(X, 1.0, 0.0, 0.0, tempVec);
-      operatorMatrix.HXCheby(X, 1.0, 0.0, 0.0, Y);
+      operatorMatrix.overlapInverseMatrixTimesX(tempVec,1.0,0.0,0.0,Y);
+
 
       BLASWrapperPtr->xdot(local_size,
                            tempVec.data(),
@@ -341,12 +313,14 @@ namespace dftfe
           BLASWrapperPtr->axpby(
             local_size, 1.0 / beta, Y.data(), 0.0, X.data());
 
-          operatorMatrix.HXCheby(X, 1.0, 0.0, 0.0, Y);
+          operatorMatrix.HX(X, 1.0, 0.0, 0.0, tempVec);
+          operatorMatrix.overlapInverseMatrixTimesX(tempVec,1.0,0.0,0.0,Y);
+
 
           alphaNeg = -beta;
           BLASWrapperPtr->xaxpy(
             local_size, &alphaNeg, Z.data(), 1, Y.data(), 1);
-          operatorMatrix.HX(X, 1.0, 0.0, 0.0, tempVec);
+          
           BLASWrapperPtr->xdot(local_size,
                                tempVec.data(),
                                1,

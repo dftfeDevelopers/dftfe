@@ -209,12 +209,12 @@ namespace dftfe
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
         NULL;
     distributedDeviceVec<dataTypes::number> *ResidualBlock =
-      (d_dftParams.useReformulatedChFSI||true) ?
+      (d_dftParams.useReformulatedChFSI) ?
         &operatorMatrix.getScratchFEMultivector(
           vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 4 : 2)) :
         NULL;
     distributedDeviceVec<dataTypes::number> *ResidualBlockNew =
-      (d_dftParams.useReformulatedChFSI||true) ?
+      (d_dftParams.useReformulatedChFSI) ?
         &operatorMatrix.getScratchFEMultivector(
           vectorsBlockSize, (d_dftParams.overlapComputeCommunCheby ? 5 : 3)) :
         NULL;
@@ -594,8 +594,8 @@ namespace dftfe
                       operatorMatrix,
                       (*XBlock),
                       (*HXBlock),
-                      (*ResidualBlock),
-                      (*ResidualBlockNew),
+                      (*HXBlock),
+                      (*XBlock),
                       std::vector<double>(BVec,0.0),
                       chebyshevOrder,
                       d_lowerBoundUnWantedSpectrum,

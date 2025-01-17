@@ -246,12 +246,12 @@ namespace dftfe
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 1);
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock3 =
-        (d_dftParams.useReformulatedChFSI||true) ?
+        (d_dftParams.useReformulatedChFSI) ?
           &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
           NULL;
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock4 =
-        (d_dftParams.useReformulatedChFSI||true) ?
+        (d_dftParams.useReformulatedChFSI) ?
           &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
           NULL;
     distributedCPUMultiVec<dataTypes::numberFP32>
@@ -394,8 +394,8 @@ namespace dftfe
                   operatorMatrix,
                   (*eigenVectorsFlattenedArrayBlock),
                   (*eigenVectorsFlattenedArrayBlock2),
-                  (*eigenVectorsFlattenedArrayBlockFP32),
-                  (*eigenVectorsFlattenedArrayBlock2FP32),
+                  (*eigenVectorsFlattenedArrayBlock2),
+                  (*eigenVectorsFlattenedArrayBlock),
                   std::vector<double>(BVec,0.0),
                   chebyshevOrder,
                   d_lowerBoundUnWantedSpectrum,
