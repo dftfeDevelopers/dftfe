@@ -75,35 +75,31 @@ namespace dftfe
         std::vector<std::vector<double>> parameterList;
         if (!customParameters)
           {
-            switch (d_dftParams.xc_id)
+            if (d_dftParams.XCType == "GGA-PBE")
               {
-                case 1:
-                case 2:
-                case 3:
+                if (d_dftParams.dc_dispersioncorrectiontype == 1)
                   AssertThrow(
-                    false,
+                    d_dftParams.dc_d3dampingtype != 4,
                     dealii::ExcMessage(std::string(
-                      "DFTD3/4 have not been parametrized for this functional")));
-                  break;
-                case 4:
-                  if (d_dftParams.dc_dispersioncorrectiontype == 1)
-                    AssertThrow(
-                      d_dftParams.dc_d3dampingtype != 4,
-                      dealii::ExcMessage(std::string(
-                        "The OP damping functions has not been parametrized for this functional")));
-                  functional = "pbe";
-                  break;
-                case 5:
-                  if (d_dftParams.dc_dispersioncorrectiontype == 1)
-                    AssertThrow(
-                      d_dftParams.dc_d3dampingtype == 0 ||
-                        d_dftParams.dc_d3dampingtype == 1,
-                      dealii::ExcMessage(std::string(
-                        "The OP, BJM and ZEROM damping functions have not been parametrized for this functional")));
-                  functional = "rpbe";
-                  break;
-                default:
-                  break;
+                      "The OP damping functions has not been parametrized for this functional")));
+                functional = "pbe";
+              }
+            else if (d_dftParams.XCType == "GGA-RPBE")
+              {
+                if (d_dftParams.dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    d_dftParams.dc_d3dampingtype == 0 ||
+                      d_dftParams.dc_d3dampingtype == 1,
+                    dealii::ExcMessage(std::string(
+                      "The OP, BJM and ZEROM damping functions have not been parametrized for this functional")));
+                functional = "rpbe";
+              }
+            else
+              {
+                AssertThrow(
+                  false,
+                  dealii::ExcMessage(std::string(
+                    "DFTD3/4 have not been parametrized for this functional")));
               }
           }
         switch (d_dftParams.dc_dispersioncorrectiontype)

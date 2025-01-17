@@ -79,7 +79,7 @@ namespace dftfe
     setupMatrixFree();
 
     // Setup MatrixFree Constraints
-    setupconstraints();
+    setupConstraints();
   }
 
 
@@ -103,7 +103,7 @@ namespace dftfe
 
   template <unsigned int FEOrderElectro>
   void
-  kerkerSolverProblemDevice<FEOrderElectro>::setupconstraints()
+  kerkerSolverProblemDevice<FEOrderElectro>::setupConstraints()
   {
     d_constraintsTotalPotentialInfo.initialize(
       d_matrixFreeDataPRefinedPtr->get_vector_partitioner(
@@ -192,7 +192,7 @@ namespace dftfe
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
           fe_eval.submit_value(residualQuads[q], q);
 
-        fe_eval.integrate(true, false);
+        fe_eval.integrate(dealii::EvaluationFlags::values);
 
         fe_eval.distribute_local_to_global(rhs);
       }
@@ -715,8 +715,13 @@ namespace dftfe
     for (int i = 0; i < p; i++)
       for (int j = 0; j < q; j++)
         {
+#if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
+          double value = shapeData.shape_values[j + i * q] *
+                         std::sqrt(shapeData.quadrature.weight(j));
+#else
           double value = shapeData.shape_values[j + i * q][0] *
                          std::sqrt(shapeData.quadrature.weight(j));
+#endif
           shapeFunction[j + i * q]               = value;
           shapeFunction[i + j * p + q * (p + q)] = value;
         }
@@ -724,9 +729,15 @@ namespace dftfe
     for (int i = 0; i < q; i++)
       for (int j = 0; j < q; j++)
         {
+#if (DEAL_II_VERSION_MAJOR >= 9 && DEAL_II_VERSION_MINOR >= 6)
+          double grad = shapeData.shape_gradients_collocation[j + i * q] *
+                        std::sqrt(shapeData.quadrature.weight(j)) /
+                        std::sqrt(shapeData.quadrature.weight(i));
+#else
           double grad = shapeData.shape_gradients_collocation[j + i * q][0] *
                         std::sqrt(shapeData.quadrature.weight(j)) /
                         std::sqrt(shapeData.quadrature.weight(i));
+#endif
           shapeFunction[j + i * q + q * p]           = grad;
           shapeFunction[i + j * q + (2 * p + q) * q] = grad;
         }

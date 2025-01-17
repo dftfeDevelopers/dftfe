@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -14,203 +14,266 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Vishal Subramanian
+// @author Vishal Subramanian, Sambit Das
 //
 
 #include <excDensityLDAClass.h>
 #include <NNLDA.h>
+#include <Exceptions.h>
+#include <dftfeDataTypes.h>
 
 namespace dftfe
 {
-  excDensityLDAClass::excDensityLDAClass(xc_func_type *funcXPtr,
-                                         xc_func_type *funcCPtr,
-                                         bool          isSpinPolarized,
-                                         bool          scaleExchange,
-                                         bool          computeCorrelation,
-                                         double        scaleExchangeFactor)
-    : excDensityBaseClass(isSpinPolarized)
+  template <dftfe::utils::MemorySpace memorySpace>
+  excDensityLDAClass<memorySpace>::excDensityLDAClass(
+    std::shared_ptr<xc_func_type> funcXPtr,
+    std::shared_ptr<xc_func_type> funcCPtr)
+    : ExcSSDFunctionalBaseClass<memorySpace>(
+        ExcFamilyType::LDA,
+        densityFamilyType::LDA,
+        std::vector<DensityDescriptorDataAttributes>{
+          DensityDescriptorDataAttributes::valuesSpinUp,
+          DensityDescriptorDataAttributes::valuesSpinDown})
   {
-    d_familyType = densityFamilyType::LDA;
-    d_funcXPtr   = funcXPtr;
-    d_funcCPtr   = funcCPtr;
-#ifdef DFTFE_WITH_TORCH
+    d_funcXPtr = funcXPtr;
+    d_funcCPtr = funcCPtr;
     d_NNLDAPtr = nullptr;
-#endif
   }
 
-  excDensityLDAClass::excDensityLDAClass(xc_func_type *funcXPtr,
-                                         xc_func_type *funcCPtr,
-                                         bool          isSpinPolarized,
-                                         std::string   modelXCInputFile,
-                                         bool          scaleExchange,
-                                         bool          computeCorrelation,
-                                         double        scaleExchangeFactor)
-    : excDensityBaseClass(isSpinPolarized)
+  template <dftfe::utils::MemorySpace memorySpace>
+  excDensityLDAClass<memorySpace>::excDensityLDAClass(
+    std::shared_ptr<xc_func_type> funcXPtr,
+    std::shared_ptr<xc_func_type> funcCPtr,
+    std::string                   modelXCInputFile)
+    : ExcSSDFunctionalBaseClass<memorySpace>(
+        ExcFamilyType::LDA,
+        densityFamilyType::LDA,
+        std::vector<DensityDescriptorDataAttributes>{
+          DensityDescriptorDataAttributes::valuesSpinUp,
+          DensityDescriptorDataAttributes::valuesSpinDown})
   {
-    d_familyType = densityFamilyType::LDA;
-    d_funcXPtr   = funcXPtr;
-    d_funcCPtr   = funcCPtr;
+    d_funcXPtr = funcXPtr;
+    d_funcCPtr = funcCPtr;
 #ifdef DFTFE_WITH_TORCH
     d_NNLDAPtr = new NNLDA(modelXCInputFile, true);
 #endif
   }
 
-  excDensityLDAClass::~excDensityLDAClass()
+  template <dftfe::utils::MemorySpace memorySpace>
+  excDensityLDAClass<memorySpace>::~excDensityLDAClass()
   {
     if (d_NNLDAPtr != nullptr)
       delete d_NNLDAPtr;
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityLDAClass::computeDensityBasedEnergyDensity(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::vector<double> &outputExchangeEnergyDensity,
-    std::vector<double> &outputCorrEnergyDensity) const
+  excDensityLDAClass<memorySpace>::checkInputOutputDataAttributesConsistency(
+    const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
+    const
   {
-    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
+    const std::vector<xcRemainderOutputDataAttributes>
+      allowedOutputDataAttributes = {
+        xcRemainderOutputDataAttributes::e,
+        xcRemainderOutputDataAttributes::pdeDensitySpinUp,
+        xcRemainderOutputDataAttributes::pdeDensitySpinDown};
 
-    xc_lda_exc(d_funcXPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &outputExchangeEnergyDensity[0]);
-    xc_lda_exc(d_funcCPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &outputCorrEnergyDensity[0]);
-
-#ifdef DFTFE_WITH_TORCH
-    if (d_NNLDAPtr != nullptr)
+    for (unsigned int i = 0; i < outputDataAttributes.size(); i++)
       {
-        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
-        if (d_isSpinPolarized)
+        bool isFound = false;
+        for (unsigned int j = 0; j < allowedOutputDataAttributes.size(); j++)
           {
-            for (unsigned int i = 0; i < 2 * sizeInput; i++)
-              {
-                rhoValuesForNN[i] = (*rhoValues)[i];
-              }
-          }
-        else
-          {
-            for (unsigned int i = 0; i < sizeInput; i++)
-              {
-                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
-                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
-              }
+            if (outputDataAttributes[i] == allowedOutputDataAttributes[j])
+              isFound = true;
           }
 
-        std::vector<double> excValuesFromNN(sizeInput, 0);
-        d_NNLDAPtr->evaluateexc(&(rhoValuesForNN[0]),
-                                sizeInput,
-                                &excValuesFromNN[0]);
-        for (unsigned int i = 0; i < sizeInput; i++)
-          outputExchangeEnergyDensity[i] += excValuesFromNN[i];
+
+        std::string errMsg =
+          "xcRemainderOutputDataAttributes do not matched allowed choices for the family type.";
+        dftfe::utils::throwException(isFound, errMsg);
       }
-#endif
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityLDAClass::computeDensityBasedVxc(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::map<VeffOutputDataAttributes, std::vector<double> *>
-      &outputDerExchangeEnergy,
-    std::map<VeffOutputDataAttributes, std::vector<double> *>
-      &outputDerCorrEnergy) const
+  excDensityLDAClass<memorySpace>::computeRhoTauDependentXCData(
+    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+    const std::vector<double> &    quadPoints,
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      &xDataOut,
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      &cDataOut) const
   {
-    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
+    const unsigned int                           nquad = quadPoints.size() / 3;
+    std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
+    for (const auto &element : xDataOut)
+      outputDataAttributes.push_back(element.first);
 
-    auto exchangePotentialVal =
-      outputDerExchangeEnergy
-        .find(VeffOutputDataAttributes::derEnergyWithDensity)
+    checkInputOutputDataAttributesConsistency(outputDataAttributes);
+
+
+    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+      densityDescriptorData;
+
+    for (unsigned int i = 0; i < this->d_densityDescriptorAttributesList.size();
+         i++)
+      {
+        densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
+          std::vector<double>(nquad, 0);
+      }
+
+    auxDensityMatrix.applyLocalOperations(quadPoints, densityDescriptorData);
+
+
+    auto &densityValuesSpinUp =
+      densityDescriptorData.find(DensityDescriptorDataAttributes::valuesSpinUp)
+        ->second;
+    auto &densityValuesSpinDown =
+      densityDescriptorData
+        .find(DensityDescriptorDataAttributes::valuesSpinDown)
         ->second;
 
-    auto corrPotentialVal =
-      outputDerCorrEnergy.find(VeffOutputDataAttributes::derEnergyWithDensity)
-        ->second;
 
-    xc_lda_vxc(d_funcXPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*exchangePotentialVal)[0]);
-    xc_lda_vxc(d_funcCPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*corrPotentialVal)[0]);
+
+    std::vector<double> densityValues(2 * nquad, 0);
+
+    std::vector<double> exValues(nquad, 0);
+    std::vector<double> ecValues(nquad, 0);
+    std::vector<double> pdexDensityValuesNonNN(2 * nquad, 0);
+    std::vector<double> pdecDensityValuesNonNN(2 * nquad, 0);
+    std::vector<double> pdexDensitySpinUpValues(nquad, 0);
+    std::vector<double> pdexDensitySpinDownValues(nquad, 0);
+    std::vector<double> pdecDensitySpinUpValues(nquad, 0);
+    std::vector<double> pdecDensitySpinDownValues(nquad, 0);
+
+    for (unsigned int i = 0; i < nquad; i++)
+      {
+        densityValues[2 * i + 0] = densityValuesSpinUp[i];
+        densityValues[2 * i + 1] = densityValuesSpinDown[i];
+      }
+
+    xc_lda_exc_vxc(d_funcXPtr.get(),
+                   nquad,
+                   &densityValues[0],
+                   &exValues[0],
+                   &pdexDensityValuesNonNN[0]);
+    xc_lda_exc_vxc(d_funcCPtr.get(),
+                   nquad,
+                   &densityValues[0],
+                   &ecValues[0],
+                   &pdecDensityValuesNonNN[0]);
+
+    for (unsigned int i = 0; i < nquad; i++)
+      {
+        exValues[i] =
+          exValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
+        ecValues[i] =
+          ecValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
+        pdexDensitySpinUpValues[i]   = pdexDensityValuesNonNN[2 * i + 0];
+        pdexDensitySpinDownValues[i] = pdexDensityValuesNonNN[2 * i + 1];
+        pdecDensitySpinUpValues[i]   = pdecDensityValuesNonNN[2 * i + 0];
+        pdecDensitySpinDownValues[i] = pdecDensityValuesNonNN[2 * i + 1];
+      }
 
 #ifdef DFTFE_WITH_TORCH
     if (d_NNLDAPtr != nullptr)
       {
-        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
-        if (d_isSpinPolarized)
-          {
-            for (unsigned int i = 0; i < 2 * sizeInput; i++)
-              {
-                rhoValuesForNN[i] = (*rhoValues)[i];
-              }
-          }
-        else
-          {
-            for (unsigned int i = 0; i < sizeInput; i++)
-              {
-                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
-                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
-              }
-          }
-
-        std::vector<double> excValuesFromNN(2 * sizeInput, 0);
-        std::vector<double> vxcValuesFromNN(2 * sizeInput, 0);
-        d_NNLDAPtr->evaluatevxc(&(rhoValuesForNN[0]),
-                                sizeInput,
+        std::vector<double> excValuesFromNN(nquad, 0);
+        const unsigned int  numDescriptors = 2;
+        std::vector<double> pdexcDescriptorValuesFromNN(numDescriptors * nquad,
+                                                        0);
+        d_NNLDAPtr->evaluatevxc(&(densityValues[0]),
+                                nquad,
                                 &excValuesFromNN[0],
-                                &vxcValuesFromNN[0]);
-        if (d_isSpinPolarized)
+                                &pdexcDescriptorValuesFromNN[0]);
+        for (unsigned int i = 0; i < nquad; i++)
           {
-            for (unsigned int i = 0; i < 2 * sizeInput; i++)
-              (*exchangePotentialVal)[i] += vxcValuesFromNN[i];
-          }
-        else
-          {
-            for (unsigned int i = 0; i < sizeInput; i++)
-              (*exchangePotentialVal)[i] += vxcValuesFromNN[2 * i];
+            exValues[i] += excValuesFromNN[i] * (densityValues[2 * i + 0] +
+                                                 densityValues[2 * i + 1]);
+            pdexDensitySpinUpValues[i] +=
+              pdexcDescriptorValuesFromNN[numDescriptors * i + 0];
+            pdexDensitySpinDownValues[i] +=
+              pdexcDescriptorValuesFromNN[numDescriptors * i + 1];
           }
       }
 #endif
+
+    for (unsigned int i = 0; i < outputDataAttributes.size(); i++)
+      {
+        if (outputDataAttributes[i] == xcRemainderOutputDataAttributes::e)
+          {
+            xDataOut.find(outputDataAttributes[i])->second = exValues;
+
+            cDataOut.find(outputDataAttributes[i])->second = ecValues;
+          }
+        else if (outputDataAttributes[i] ==
+                 xcRemainderOutputDataAttributes::pdeDensitySpinUp)
+          {
+            xDataOut.find(outputDataAttributes[i])->second =
+              pdexDensitySpinUpValues;
+
+            cDataOut.find(outputDataAttributes[i])->second =
+              pdecDensitySpinUpValues;
+          }
+        else if (outputDataAttributes[i] ==
+                 xcRemainderOutputDataAttributes::pdeDensitySpinDown)
+          {
+            xDataOut.find(outputDataAttributes[i])->second =
+              pdexDensitySpinDownValues;
+
+            cDataOut.find(outputDataAttributes[i])->second =
+              pdecDensitySpinDownValues;
+          }
+      }
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityLDAClass::computeDensityBasedFxc(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::map<fxcOutputDataAttributes, std::vector<double> *>
-      &outputDer2ExchangeEnergy,
-    std::map<fxcOutputDataAttributes, std::vector<double> *>
-      &outputDer2CorrEnergy) const
+  excDensityLDAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+      &                                                                src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+    const unsigned int inputVecSize,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
+  {}
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityLDAClass<memorySpace>::updateWaveFunctionDependentFuncDerWrtPsi(
+    const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
+    const std::vector<double> &                           kPointWeights)
+  {}
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityLDAClass<memorySpace>::computeWaveFunctionDependentExcEnergy(
+    const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
+    const std::vector<double> &                           kPointWeights)
+  {}
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  double
+  excDensityLDAClass<memorySpace>::getWaveFunctionDependentExcEnergy()
   {
-    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
-
-    auto der2ExchangeEnergyWithDensity =
-      outputDer2ExchangeEnergy
-        .find(fxcOutputDataAttributes::der2EnergyWithDensity)
-        ->second;
-
-    auto der2CorrEnergyWithDensity =
-      outputDer2CorrEnergy.find(fxcOutputDataAttributes::der2EnergyWithDensity)
-        ->second;
-
-
-
-    xc_lda_fxc(d_funcXPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*der2ExchangeEnergyWithDensity)[0]);
-
-    xc_lda_fxc(d_funcCPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*der2CorrEnergyWithDensity)[0]);
+    return 0.0;
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
+  double
+  excDensityLDAClass<
+    memorySpace>::getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi()
+  {
+    return 0.0;
+  }
 
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityLDAClass<memorySpace>::reinitKPointDependentVariables(
+    unsigned int kPointIndex)
+  {}
 
+  template class excDensityLDAClass<dftfe::utils::MemorySpace::HOST>;
+#ifdef DFTFE_WITH_DEVICE
+  template class excDensityLDAClass<dftfe::utils::MemorySpace::DEVICE>;
+#endif
 } // namespace dftfe

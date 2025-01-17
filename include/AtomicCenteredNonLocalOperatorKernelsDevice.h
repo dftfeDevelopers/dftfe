@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -48,6 +48,25 @@ namespace dftfe
       const ValueType *   sphericalFnTimesWfcParallelVec,
       ValueType *         sphericalFnTimesWfcDealiiParallelVec,
       const unsigned int *indexMapDealiiParallelNumbering);
+
+    template <typename ValueType>
+    void
+    copyFromDealiiParallelNonLocalVecToPaddedVector(
+      const unsigned int numWfcs,
+      const unsigned int totalEntriesPadded,
+      const ValueType *  sphericalFnTimesWfcDealiiParallelVec,
+      ValueType *        sphericalFnTimesWfcPaddedVec,
+      const int *        indexMapDealiiParallelNumbering);
+
+    template <typename ValueType>
+    void
+    copyToDealiiParallelNonLocalVecFromPaddedVector(
+      const unsigned int numWfcs,
+      const unsigned int totalEntriesPadded,
+      const ValueType *  sphericalFnTimesWfcPaddedVec,
+      ValueType *        sphericalFnTimesWfcDealiiParallelVec,
+      const int *        indexMapDealiiParallelNumbering);
+
     template <typename ValueType>
     void
     addNonLocalContribution(
@@ -62,6 +81,15 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<unsigned int,
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal);
+
+    template <typename ValueType>
+    void
+    sqrtAlphaScalingWaveFunctionEntries(
+      const unsigned int maxSingleAtomContribution,
+      const unsigned int numWfcs,
+      const unsigned int totalAtomsInCurrentProcessor,
+      const double *     scalingVector,
+      ValueType *        sphericalFnTimesWfcPadded);
 
 
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -933,6 +933,31 @@ namespace dftfe
     {
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
+
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::distribute(
+      distributedCPUVec<dataTypes::number> &fieldVector,
+      const unsigned int                    blockSize) const;
+
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::
+      distribute_slave_to_master(
+        distributedCPUVec<dataTypes::number> &fieldVector,
+        const unsigned int                    blockSize) const;
+
+#if defined(USE_COMPLEX)
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::
+      distribute_slave_to_master(distributedCPUVec<double> &fieldVector,
+                                 const unsigned int         blockSize) const;
+#endif
+
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::set_zero(
+      distributedCPUVec<dataTypes::number> &fieldVector,
+      const unsigned int                    blockSize) const;
+
+
 
     template void
     constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::distribute(

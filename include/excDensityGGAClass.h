@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -17,62 +17,73 @@
 #ifndef DFTFE_EXCDENSITYGGACLASS_H
 #define DFTFE_EXCDENSITYGGACLASS_H
 
-//#include <NNGGA.h>
-#include <excDensityBaseClass.h>
-
+#include <xc.h>
+#include <ExcSSDFunctionalBaseClass.h>
 namespace dftfe
 {
   class NNGGA;
-  class excDensityGGAClass : public excDensityBaseClass
+  template <dftfe::utils::MemorySpace memorySpace>
+  class excDensityGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityGGAClass(xc_func_type *funcXPtr,
-                       xc_func_type *funcCPtr,
-                       bool          isSpinPolarized,
-                       bool          scaleExchange,
-                       bool          computeCorrelation,
-                       double        scaleExchangeFactor);
+    excDensityGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
+                       std::shared_ptr<xc_func_type> funcCPtr);
 
-    excDensityGGAClass(xc_func_type *funcXPtr,
-                       xc_func_type *funcCPtr,
-                       bool          isSpinPolarized,
-                       std::string   modelXCInputFile,
-                       bool          scaleExchange,
-                       bool          computeCorrelation,
-                       double        scaleExchangeFactor);
+
+    excDensityGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
+                       std::shared_ptr<xc_func_type> funcCPtr,
+                       std::string                   modelXCInputFile);
+
 
     ~excDensityGGAClass();
 
     void
-    computeDensityBasedEnergyDensity(
-      unsigned int                                                    sizeInput,
-      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-      std::vector<double> &outputExchangeEnergyDensity,
-      std::vector<double> &outputCorrEnergyDensity) const override;
+    computeRhoTauDependentXCData(
+      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+      const std::vector<double> &    quadPoints,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &xDataOut,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &cDataout) const override;
 
     void
-    computeDensityBasedVxc(
-      unsigned int                                                    sizeInput,
-      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-      std::map<VeffOutputDataAttributes, std::vector<double> *>
-        &outputDerExchangeEnergy,
-      std::map<VeffOutputDataAttributes, std::vector<double> *>
-        &outputDerCorrEnergy) const override;
+    checkInputOutputDataAttributesConsistency(
+      const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
+      const override;
 
     void
-    computeDensityBasedFxc(
-      unsigned int                                                    sizeInput,
-      const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-      std::map<fxcOutputDataAttributes, std::vector<double> *>
-        &outputDer2ExchangeEnergy,
-      std::map<fxcOutputDataAttributes, std::vector<double> *>
-        &outputDer2CorrEnergy) const override;
+    applyWaveFunctionDependentFuncDerWrtPsi(
+      const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+        &                                                                src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const unsigned int inputVecSize,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex) override;
 
+    void
+    updateWaveFunctionDependentFuncDerWrtPsi(
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
+      const std::vector<double> &kPointWeights) override;
+    void
+    computeWaveFunctionDependentExcEnergy(
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
+      const std::vector<double> &kPointWeights) override;
+
+    double
+    getWaveFunctionDependentExcEnergy() override;
+
+    double
+    getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi() override;
+
+    void
+    reinitKPointDependentVariables(unsigned int kPointIndex) override;
 
   private:
-    NNGGA *       d_NNGGAPtr;
-    xc_func_type *d_funcXPtr;
-    xc_func_type *d_funcCPtr;
+    NNGGA *                       d_NNGGAPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
+    std::vector<double>           d_spacingFDStencil;
+    unsigned int                  d_vxcDivergenceTermFDStencilSize;
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYGGACLASS_H

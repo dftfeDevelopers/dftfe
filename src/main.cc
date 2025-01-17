@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -20,11 +20,15 @@
 //
 // dft header
 //
+
 #include "dftfeWrapper.h"
 #include "runParameters.h"
 #include "molecularDynamicsClass.h"
 #include "nudgedElasticBandClass.h"
 #include "geometryOptimizationClass.h"
+
+#include <dftUtils.h>
+
 
 //
 // C++ headers
@@ -97,6 +101,7 @@ main(int argc, char *argv[])
                 "\n"));
   const std::string parameter_file = argv[1];
 
+
   dftfe::runParameters runParams;
   runParams.parse_parameters(parameter_file);
 
@@ -144,7 +149,7 @@ main(int argc, char *argv[])
         << "=========================================================================================================="
         << std::endl;
       std::cout
-        << " 	     Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE authors         "
+        << " 	     Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE authors         "
         << std::endl;
       std::cout
         << " 			DFT-FE is published under [LGPL v2.1 or newer] 				"
@@ -232,7 +237,18 @@ main(int argc, char *argv[])
                                        runParams.useDevice);
       dftfeWrapped.run();
     }
-
+  else if (runParams.solvermode == "FUNCTIONAL_TEST")
+    {
+      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                       MPI_COMM_WORLD,
+                                       true,
+                                       true,
+                                       "FUNCTIONAL_TEST",
+                                       runParams.restartFilesPath,
+                                       runParams.verbosity,
+                                       runParams.useDevice);
+      dftfeWrapped.run();
+    }
   else
     {
       dftfe::dftfeWrapper dftfeWrapped(parameter_file,

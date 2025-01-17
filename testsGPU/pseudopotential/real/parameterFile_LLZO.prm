@@ -1,0 +1,86 @@
+set VERBOSITY = 0
+set USE GPU        = true
+set REPRODUCIBLE OUTPUT=true
+subsection Geometry
+  set NATOMS=192
+  set NATOM TYPES=4
+  set ATOMIC COORDINATES FILE      = coordinates_LLZO.inp          
+  set DOMAIN VECTORS FILE = domainVectors_LLZO.inp 
+  subsection Optimization
+    set CELL STRESS              = false
+    set ION FORCE                 = true
+  end
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=3
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 1.6
+    set ATOM BALL RADIUS = 5.4
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true  
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo_LLZO.inp
+
+end
+
+subsection SCF parameters
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 1e-6
+  set MIXING METHOD                     =ANDERSON
+  set MAXIMUM ITERATIONS       = 100
+ subsection Eigen-solver parameters
+    set ALGO                                                 = NORMAL
+    set USE DIAGONAL MASS MATRIX IN RR_ORTHO = true
+    set ALLOW MULTIPLE PASSES POST FIRST SCF                 = true
+    set CHEBYSHEV FILTER TOLERANCE                           = 0.0
+    set CHEBYSHEV POLYNOMIAL DEGREE                          = 0
+    set CHEBYSHEV POLYNOMIAL DEGREE SCALING FACTOR FIRST SCF = 1.34
+    set CHEBY WFC BLOCK SIZE                                 = 200
+    set ENABLE HAMILTONIAN TIMES VECTOR OPTIM                = false
+    set HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING    = 0
+    set NUMBER OF KOHN-SHAM WAVEFUNCTIONS                    = 720
+    set ORTHOGONALIZATION TYPE                               = Auto
+    set OVERLAP COMPUTE COMMUN CHEBY                         = false
+    set OVERLAP COMPUTE COMMUN ORTHO RR                      = true
+    set RESTRICT TO SINGLE FILTER PASS                       = false
+    set REUSE LANCZOS UPPER BOUND                            = false
+    set SCALAPACKPROCS                                       = 0
+    set SCALAPACK BLOCK SIZE                                 = 0
+    set SPECTRUM SPLIT CORE EIGENSTATES                      = 0
+    set SPECTRUM SPLIT STARTING SCF ITER                     = 0
+    set SUBSPACE PROJ SHEP GPU                               = true
+    set SUBSPACE ROT DOFS BLOCK SIZE                         = 10000
+    set USE ELPA                                             = true
+    set USE MIXED PREC CGS O                                 = false
+    set USE MIXED PREC CGS SR                                = false
+    set USE MIXED PREC CHEBY                                 = false
+    set USE MIXED PREC COMMUN ONLY XTX XTHX                  = false
+    set USE MIXED PREC RR_SR                                 = false
+    set USE MIXED PREC XTHX SPECTRUM SPLIT                   = false
+    set WFC BLOCK SIZE                                       = 400
+    set XTHX CORE EIGENSTATES                                = 0
+  end  
+end
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end
+
+
+
+
+
+ 
+
+

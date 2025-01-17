@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -536,6 +536,15 @@ namespace dftfe
         dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                           dftfe::utils::MemorySpace::HOST>
           &fieldVector) const;
+
+#if defined(USE_COMPLEX)
+    template void
+    constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::
+      distribute_slave_to_master(
+        dftfe::linearAlgebra::MultiVector<double,
+                                          dftfe::utils::MemorySpace::HOST>
+          &fieldVector) const;
+#endif
 
     template void
     constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>::

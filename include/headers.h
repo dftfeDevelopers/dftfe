@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -58,9 +58,7 @@
 
 #  include <deal.II/lac/affine_constraints.h>
 #  include <deal.II/lac/exceptions.h>
-#  include <deal.II/lac/full_matrix.h>
 #  include <deal.II/lac/la_parallel_vector.h>
-#  include <deal.II/lac/lapack_full_matrix.h>
 #  include <deal.II/lac/precondition.h>
 #  include <deal.II/lac/solver_cg.h>
 #  include <deal.II/lac/solver_gmres.h>
@@ -73,9 +71,6 @@
 #  include <deal.II/numerics/error_estimator.h>
 #  include <deal.II/numerics/matrix_tools.h>
 #  include <deal.II/numerics/vector_tools.h>
-#  ifdef USE_PETSC
-#    include <deal.II/lac/slepc_solver.h>
-#  endif
 #  include <deal.II/base/config.h>
 
 #  include <deal.II/base/smartpointer.h>

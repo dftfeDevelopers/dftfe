@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -79,9 +79,9 @@ namespace dftfe
             dvec.reinit(x, true);
             hvec.reinit(x, true);
 
-            gvec.zero_out_ghosts();
-            dvec.zero_out_ghosts();
-            hvec.zero_out_ghosts();
+            gvec.zero_out_ghost_values();
+            dvec.zero_out_ghost_values();
+            hvec.zero_out_ghost_values();
 
             double gh        = 0.0;
             double beta      = 0.0;
@@ -99,13 +99,12 @@ namespace dftfe
             else
               {
                 // gvec.equ(-1., rhs);
-                for (unsigned int i = 0; i < gvec.local_size(); i++)
+                for (unsigned int i = 0; i < gvec.locally_owned_size(); i++)
                   gvec.local_element(i) = -rhs.local_element(i);
               }
 
             res         = gvec.l2_norm();
             initial_res = res;
-
             if (res < absTolerance)
               conv = true;
             if (conv)
@@ -139,7 +138,7 @@ namespace dftfe
                             dealii::ExcMessage("Division by zero\n"));
                 alpha = gh / alpha;
 
-                for (unsigned int i = 0; i < x.local_size(); i++)
+                for (unsigned int i = 0; i < x.locally_owned_size(); i++)
                   x.local_element(i) += alpha * dvec.local_element(i);
                 // x.add(alpha, dvec);
 

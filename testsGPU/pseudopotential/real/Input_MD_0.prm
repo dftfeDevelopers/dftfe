@@ -24,7 +24,7 @@ subsection Finite element mesh parameters
 end
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 4
+  set EXCHANGE CORRELATION TYPE = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true  
   set PSEUDOPOTENTIAL FILE NAMES LIST = aluminumMD_pseudo.inp
   set PSEUDO TESTS FLAG               = true
@@ -54,8 +54,9 @@ subsection Molecular Dynamics
 end 
 
 
-
 subsection Poisson problem parameters
-  set MAXIMUM ITERATIONS = 4000
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
   set TOLERANCE          = 1e-10
 end
+

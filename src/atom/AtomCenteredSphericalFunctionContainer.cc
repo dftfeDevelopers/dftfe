@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -24,6 +24,16 @@ namespace dftfe
     unsigned int iElem)
   {
     return (d_AtomIdsInElement[iElem]);
+  }
+
+  const unsigned int
+  AtomCenteredSphericalFunctionContainer::getOffsetLocation(
+    const unsigned int iAtom)
+  {
+    AssertThrow(iAtom < d_AtomIdsInCurrentProcess.size(),
+                dealii::ExcMessage(
+                  "DFT-FE Error: Inconsistent iAtom index used to get OffSet"));
+    return (d_offsetLocation[iAtom]);
   }
 
   void
@@ -213,9 +223,16 @@ namespace dftfe
     numberCellsForEachAtom.clear();
     numberCellsForEachAtom.resize(totalAtomsInCurrentProcessor, 0);
     totalNonLocalElements = 0;
+    d_offsetLocation.clear();
+    d_offsetLocation.resize(totalAtomsInCurrentProcessor, 0);
+    unsigned int offset = 0;
     for (unsigned int iAtom = 0; iAtom < totalAtomsInCurrentProcessor; iAtom++)
       {
-        unsigned int       atomId = d_AtomIdsInCurrentProcess[iAtom];
+        unsigned int atomId = d_AtomIdsInCurrentProcess[iAtom];
+
+        d_offsetLocation[iAtom] = offset;
+        offset +=
+          getTotalNumberOfSphericalFunctionsPerAtom(d_atomicNumbers[atomId]);
         const unsigned int numberElementsInCompactSupport =
           d_elementIndexesInAtomCompactSupport[atomId].size();
         numberCellsAccumNonLocalAtoms[iAtom] = totalNonLocalElements;
@@ -312,6 +329,7 @@ namespace dftfe
     //
     int numberAtomsOfInterest = d_atomicNumbers.size(); //
 
+    // std::cout<<" numberAtomsOfInterest = "<<numberAtomsOfInterest<<"\n";
 
     //     //
     //     // pre-allocate data structures that stores the sparsity of deltaVl
@@ -359,10 +377,14 @@ namespace dftfe
         //
         int numberSphericalFunctions = d_numRadialSphericalFunctions[Znum];
 
+        // std::cout<<" iAtom = "<<iAtom <<" numberSphericalFunctions =
+        // "<<numberSphericalFunctions<<"\n";
         //
         // get the global charge Id of the current nonlocal atom
         //
 
+        // std::cout<<" totalLocallyOwnedCells = "<<totalLocallyOwnedCells<<"
+        // numberQuadraturePoints = "<<numberQuadraturePoints<<"\n";
 
         unsigned int imageIdsSize = d_periodicImageCoord[iAtom].size() / 3;
 
@@ -412,6 +434,7 @@ namespace dftfe
                     chargePoint[2] =
                       d_periodicImageCoord[iAtom][3 * iImageAtomCount + 2];
                   }
+
                 // if(iCell == 0)
                 //   std::cout<<"DEBUG coordinates: "<<iAtom<<"
                 //   "<<chargePoint[0]<<" "<<chargePoint[1]<<"
@@ -440,17 +463,24 @@ namespace dftfe
                             double RadVal =
                               SphericalFunction->getRadialValue(r);
 
+                            //                            std::cout
+                            //                              << "DEBUG: iAtom
+                            //                              RadVal projIndex
+                            //                              Cell: "
+                            //                              << iAtom << " " << r
+                            //                              << " "
+                            //                              << std::fabs(RadVal)
+                            //                              << " " << iPsp << "
+                            //                              "
+                            //                              << iCell <<
+                            //                              std::endl;
 
                             if (std::fabs(RadVal) >= cutOffVal)
                               {
                                 sparseFlag = 1;
                                 if (r > maxR)
                                   maxR = r;
-                                // std::cout
-                                //   << "DEBUG: iAtom RadVal projIndex Cell: "
-                                //   << iAtom << " " << r << " "
-                                //   << std::fabs(RadVal) << " " << iPsp << " "
-                                //   << iCell << std::endl;
+
                                 break;
                               }
                           }

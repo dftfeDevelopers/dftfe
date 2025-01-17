@@ -17,8 +17,8 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_real_cpu"
-dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_complex_cpu"
+dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_real_cpu_boostext"
+dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_complex_cpu_boostext"
 alglibDir="/home/vikramg/DFT-softwares-gcc/alglib/alglib-cpp/src"
 libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/libxc-5.2.3/install_libxc5.2.3"
 spglibDir="/home/vikramg/DFT-softwares-gcc/spglib/install"
@@ -31,7 +31,8 @@ ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install2024"
 # path for NCCL/RCCL libraries
 DCCL_PATH=""
 mdiPath=""
-torchDir="/scratch/vikramg_root/vikramg/dsambit/torch/libtorch/share/cmake/Torch"
+torchDir="/gpfs/accounts/vikramg_root/vikramg/shared_data/argha/torch/libtorch/pytorch-install/share/cmake/Torch"
+DFTD4Path="/home/vikramg/DFT-softwares-gcc/dftd4/install3.6.0"
 
 #Toggle GPU compilation
 withGPU=OFF
@@ -89,7 +90,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
@@ -103,7 +104,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
@@ -118,7 +119,7 @@ function cmake_configure() {
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
     -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
     -DWITH_COMPLEX=$withComplex \
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
     -DHIGHERQUAD_PSP=$withHigherQuadPSP $1    

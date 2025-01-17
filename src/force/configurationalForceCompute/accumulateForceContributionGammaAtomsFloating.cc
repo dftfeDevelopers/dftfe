@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -38,8 +38,17 @@ namespace dftfe
 
         if (forceContributionLocalGammaAtoms.find(iAtom) !=
             forceContributionLocalGammaAtoms.end())
-          forceContributionLocalGammaiAtomLocal =
-            forceContributionLocalGammaAtoms.find(iAtom)->second;
+          {
+            forceContributionLocalGammaiAtomLocal =
+              forceContributionLocalGammaAtoms.find(iAtom)->second;
+          }
+        else
+          {
+            std::fill(forceContributionLocalGammaiAtomLocal.begin(),
+                      forceContributionLocalGammaiAtomLocal.end(),
+                      0.0);
+          }
+
         // accumulate value
         MPI_Allreduce(&(forceContributionLocalGammaiAtomLocal[0]),
                       &(forceContributionLocalGammaiAtomGlobal[0]),

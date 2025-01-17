@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -19,6 +19,7 @@
 
 #include <constants.h>
 #include <poissonSolverProblem.h>
+#include <vectorUtilities.h>
 
 namespace dftfe
 {
@@ -164,7 +165,6 @@ namespace dftfe
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
     rhs.reinit(*d_xPtr);
     rhs = 0;
-
     if (d_isStoreSmearedChargeRhs)
       {
         d_rhsSmearedCharge.reinit(*d_xPtr);
@@ -194,6 +194,9 @@ namespace dftfe
       d_matrixFreeVectorComponent,
       d_matrixFreeQuadratureComponentAX);
 
+    const dealii::Quadrature<3> &quadratureRuleAxTemp =
+      d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponentAX);
+
     int isPerformStaticCondensation = (tempvec.linfty_norm() > 1e-10) ? 1 : 0;
 
     MPI_Bcast(&isPerformStaticCondensation, 1, MPI_INT, 0, mpi_communicator);
@@ -208,15 +211,16 @@ namespace dftfe
           {
             fe_eval.reinit(macrocell);
             fe_eval.read_dof_values_plain(tempvec);
-            fe_eval.evaluate(false, true);
+            fe_eval.evaluate(dealii::EvaluationFlags::gradients);
             for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
               {
                 fe_eval.submit_gradient(-quarter * fe_eval.get_gradient(q), q);
               }
-            fe_eval.integrate(false, true);
+            fe_eval.integrate(dealii::EvaluationFlags::gradients);
             fe_eval.distribute_local_to_global(rhs);
           }
       }
+
 
     // rhs contribution from electronic charge
     if (d_rhoValuesPtr)
@@ -261,7 +265,7 @@ namespace dftfe
               {
                 fe_eval_density.submit_value(rhoQuads[q], q);
               }
-            fe_eval_density.integrate(true, false);
+            fe_eval_density.integrate(dealii::EvaluationFlags::values);
             fe_eval_density.distribute_local_to_global(rhs);
           }
       }
@@ -328,7 +332,7 @@ namespace dftfe
                   {
                     fe_eval_sc.submit_value(smearedbQuads[q], q);
                   }
-                fe_eval_sc.integrate(true, false);
+                fe_eval_sc.integrate(dealii::EvaluationFlags::values);
 
                 fe_eval_sc.distribute_local_to_global(rhs);
 
@@ -339,7 +343,7 @@ namespace dftfe
                       {
                         fe_eval_sc.submit_value(smearedbQuads[q], q);
                       }
-                    fe_eval_sc.integrate(true, false);
+                    fe_eval_sc.integrate(dealii::EvaluationFlags::values);
 
                     fe_eval_sc.distribute_local_to_global(d_rhsSmearedCharge);
                   }
@@ -395,7 +399,7 @@ namespace dftfe
                   {
                     fe_eval_sc2.submit_gradient(smearedbQuads[q], q);
                   }
-                fe_eval_sc2.integrate(false, true);
+                fe_eval_sc2.integrate(dealii::EvaluationFlags::gradients);
                 fe_eval_sc2.distribute_local_to_global(rhs);
               }
           }
@@ -428,7 +432,7 @@ namespace dftfe
     // dst = src;
     // dst.scale(d_diagonalA);
 
-    for (unsigned int i = 0; i < dst.local_size(); i++)
+    for (unsigned int i = 0; i < dst.locally_owned_size(); i++)
       dst.local_element(i) =
         d_diagonalA.local_element(i) * src.local_element(i);
   }
@@ -705,12 +709,12 @@ namespace dftfe
         fe_eval.reinit(cell);
         // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::gradients);
         fe_eval.read_dof_values(src);
-        fe_eval.evaluate(false, true, false);
+        fe_eval.evaluate(dealii::EvaluationFlags::gradients);
         for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
           {
             fe_eval.submit_gradient(fe_eval.get_gradient(q) * quarter, q);
           }
-        fe_eval.integrate(false, true);
+        fe_eval.integrate(dealii::EvaluationFlags::gradients);
         fe_eval.distribute_local_to_global(dst);
         // fe_eval.integrate_scatter(dealii::EvaluationFlags::gradients,dst);
       }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -107,6 +107,12 @@ namespace dftfe
           R"([Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.)");
 
         prm.declare_entry(
+          "PRINT KINETIC ENERGY",
+          "false",
+          dealii::Patterns::Bool(),
+          R"([Standard] Prints the Kinetic energy of the electrons.  Default: false.)");
+
+        prm.declare_entry(
           "WRITE DENSITY FE MESH",
           "false",
           dealii::Patterns::Bool(),
@@ -116,14 +122,13 @@ namespace dftfe
           "WRITE DENSITY QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns (in case of collinear spin polarization) and 5 columns in case of spin-restricted calculation. The first three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the fifth column has the total density. Default: false.");
-
+          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be seven columns (in case of collinear spin polarization) and 6 columns in case of spin-restricted calculation. The first column is the quadrature point index. The next three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fifth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the sixth and seventh columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the sixth column has the total density. Default: false.");
 
         prm.declare_entry(
           "WRITE DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV relative to the Fermi energy and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
+          "[Standard] Computes density of states using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true' in 'GS' calculation) and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
 
         prm.declare_entry(
           "WRITE LOCAL DENSITY OF STATES",
@@ -135,7 +140,20 @@ namespace dftfe
           "WRITE PROJECTED DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          R"([Standard] Computes projected density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'pdosData\_x' with x denoting atomID. This file contains columns with first column indicating the energy in eV and all other columns indicating projected density of states corresponding to single atom wavefunctions.)");
+          R"([Standard] Computes projected density of states on each atomic orbital using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as the broadening parameter. Outputs files with name format 'pdosData_atom#{atom number}_wfc#{wfc number}({wfc name}).out'. For colinear, spin-unpolarized case, each of these file contain columns with format 'E sumPDOS  PDOS_0 .... PDOS_(2l)', where E: the energy is eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true'in 'GS' calculation),l: azimuthal quantum number, sumPDOS: PDOS_0 + .. +PDOS_(2l).
+          For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_down PDOS_0_up PDOS_0_down .... PDOS_(2l)_up PDOS_(2l)_down', where 'up' and 'down' refer to the spin up and spin down case with all other terms having the same meaning as of the spin-unpolarized case.)");
+
+        prm.declare_entry(
+          "DOS SMEAR TEMPERATURE",
+          "500",
+          dealii::Patterns::Double(),
+          "[standard] Gaussian smearing temperature (in K) for DOS, PDOS and LDOS calculation");
+
+        prm.declare_entry(
+          "DELTA ENERGY",
+          "0.01",
+          dealii::Patterns::Double(),
+          "[standard] Interval size of energy spectrum (in eV), for DOS, PDOS and LDOS calculation");
 
         prm.declare_entry(
           "READ ATOMIC WFC PDOS FROM PSP FILE",
@@ -157,6 +175,15 @@ namespace dftfe
       }
       prm.leave_subsection();
 
+      prm.enter_subsection("FunctionalTest");
+      {
+        prm.declare_entry(
+          "TEST NAME",
+          "",
+          dealii::Patterns::Anything(),
+          "[Standard] Name of the Functional test that needs to be run.");
+      }
+      prm.leave_subsection();
       prm.enter_subsection("Parallelization");
       {
         prm.declare_entry(
@@ -203,7 +230,7 @@ namespace dftfe
           "RESTART SP FROM NO SP",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the START MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false..");
+          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false.");
       }
       prm.leave_subsection();
 
@@ -213,8 +240,7 @@ namespace dftfe
           "ATOMIC COORDINATES FILE",
           "",
           dealii::Patterns::Anything(),
-          "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
-
+          "[Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.");
         prm.declare_entry(
           "ATOMIC DISP COORDINATES FILE",
           "",
@@ -536,11 +562,10 @@ namespace dftfe
             dealii::Patterns::Bool(),
             "[Developer] Use a composite generator flat top and Gaussian generator for mesh movement and configurational force computation.");
 
-          prm.declare_entry(
-            "USE MESH SIZES FROM ATOM LOCATIONS FILE",
-            "false",
-            dealii::Patterns::Bool(),
-            "[Developer] Use mesh sizes from atom locations file.");
+          prm.declare_entry("MESH SIZES FILE",
+                            "",
+                            dealii::Patterns::Anything(),
+                            "[Developer] Use mesh sizes from this file.");
         }
         prm.leave_subsection();
       }
@@ -610,6 +635,45 @@ namespace dftfe
 
       prm.enter_subsection("DFT functional parameters");
       {
+        prm.enter_subsection("CONFINING POTENTIAL parameters");
+        {
+          prm.declare_entry(
+            "APPLY CONFINING POTENTIAL",
+            "false",
+            dealii::Patterns::Bool(),
+            "[Advanced] Apply confining potential. Usually required for anionic charges."
+            "The confining potential is applied between maxDist + r1 and maxDist + r2. Where maxDist "
+            "is the maximum distance of atoms from the center. r1 and r2 is the INNER and OUTER radii respectively."
+            "Between 0 and maxdist + r1: V(r) = 0;"
+            "Between maxdist + r1 and maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(dist2*dist2 + 1E-6);"
+            "Beyond maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(1E-6);"
+            "where dist1 = r - (maxdist + r1) and dist2 = (maxdist + r2) - r");
+
+          prm.declare_entry(
+            "INNER RADIUS",
+            "17.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The inner radius (r1) for the confining potential.");
+
+          prm.declare_entry(
+            "OUTER RADIUS",
+            "20.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The outer radius (r2) for the confining potential.");
+
+          prm.declare_entry(
+            "W PARAM",
+            "1.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The W parameter for the confining potential.");
+
+          prm.declare_entry(
+            "C PARAM",
+            "1.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The C parameter for the confining potential.");
+        }
+        prm.leave_subsection();
         prm.declare_entry(
           "PSEUDOPOTENTIAL CALCULATION",
           "true",
@@ -630,16 +694,28 @@ namespace dftfe
 
         prm.declare_entry(
           "EXCHANGE CORRELATION TYPE",
-          "1",
-          dealii::Patterns::Integer(1, 8),
-          R"([Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)], 5(RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), 6(ML-XC NNLDA: LDA-PW + NN), 7(ML-XC NNGGA: GGA-PBE + NN). Caution: options 6-7 are experimental and only accessible to the DFT-FE developers currently.)");
+          "GGA-PBE",
+          dealii::Patterns::Selection(
+            "LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U"),
+          R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen & Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
 
         prm.declare_entry(
           "MODEL XC INPUT FILE",
           "",
           dealii::Patterns::Anything(),
-          "[Developer] File that contains both the pytorch ML-XC NN model (.ptc file) and the tolerances. This is an experimental feature to test out any new XC functional developed using machine learning.");
+          "[Developer] File that contains both the pytorch MLXC NN model (.ptc file) and the tolerances. This is an experimental feature to test out any new XC functional developed using machine learning.");
 
+        prm.declare_entry(
+          "AUX BASIS TYPE",
+          "FE",
+          dealii::Patterns::Selection("FE|SLATER|PW"),
+          "[Developer] Auxiliary basis for projecting the Kohn-Sham density or density matrix for XC evaluation. FE is the default option.");
+
+        prm.declare_entry(
+          "AUX BASIS DATA",
+          "",
+          dealii::Patterns::Anything(),
+          "[Developer] File that contains additional information for the Auxiliary basis selected in AUX BASIS TYPE.");
 
         prm.declare_entry(
           "NET CHARGE",
@@ -656,10 +732,10 @@ namespace dftfe
 
 
         prm.declare_entry(
-          "START MAGNETIZATION",
+          "TOTAL MAGNETIZATION",
           "0.0",
-          dealii::Patterns::Double(-0.5, 0.5),
-          "[Standard] Starting magnetization to be used for spin-polarized DFT calculations (must be between -0.5 and +0.5). Corresponding magnetization per simulation domain will be (2 x START MAGNETIZATION x Number of electrons) a.u. ");
+          dealii::Patterns::Double(-1.0, 1.0),
+          "[Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x Number of electrons) a.u. ");
 
         prm.declare_entry(
           "PSP CUTOFF IMAGE CHARGES",
@@ -710,6 +786,26 @@ namespace dftfe
             "[Advanced] Cutoff in a.u. for computing coordination number in D3 correction");
         }
         prm.leave_subsection();
+
+        prm.enter_subsection("Hubbard Parameters");
+        {
+          prm.declare_entry(
+            "HUBBARD PARAMETERS FILE",
+            "",
+            dealii::Patterns::Anything(),
+            "[Standard] Name of the file containing hubbard parameters. "
+            "This file describes the orbitals and the hubbard U parameter for each hubbard species."
+            " A sample file for Pt-Au dimer is as follows:  "
+            "3 (row1 - number of hubbard species, The ID 0 is reserved for atoms with no hubbard correction ),"
+            "0 0 (row2 - Hubbard species Id and the corresponding number of orbitals"
+            "1 78 0.110248 1 9.0 (row3 - hubbard species Id corresponding to Pt, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)"
+            "5 2 (row4 - the Quantum number n and Quantum number l of the orbital)"
+            "2 79 0.1469976 1 10.0 (row3 - hubbard species Id corresponding to Au, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)"
+            "5 2 (row4 - the Quantum number n and Quantum number l of the orbital)"
+            "78 1 (row5 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file"
+            "79 2 (row6 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file");
+        }
+        prm.leave_subsection();
       }
       prm.leave_subsection();
 
@@ -754,7 +850,7 @@ namespace dftfe
 
         prm.declare_entry(
           "SPIN MIXING ENHANCEMENT FACTOR",
-          "4.0",
+          "1.0",
           dealii::Patterns::Double(-1e-12, 100.0),
           "[Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.");
 
@@ -998,6 +1094,11 @@ namespace dftfe
             "false",
             dealii::Patterns::Bool(),
             "[Advanced] Use a modified single precision algorithm for Chebyshev filtering. This cannot be used in conjunction with spectrum splitting. Default setting is false.");
+          prm.declare_entry(
+            "TENSOR OP TYPE SINGLE PREC CHEBY",
+            "FP32",
+            dealii::Patterns::Selection("FP32|TF32"),
+            "[Advanced] Tensor operation datatype for the modified single precision algorithm for Chebyshev filtering, this only used on Nvidia GPUs with compute capability greater than 80. Default setting is FP32.");
 
           prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
@@ -1034,7 +1135,7 @@ namespace dftfe
             "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
             "0",
             dealii::Patterns::Integer(0),
-            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation ");
+            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation. For DOS/PDOS calculations, the value of this parameter should be large enough to ensure sufficient number of buffer states beyond the 'Fermi level'.");
 
           prm.declare_entry(
             "RESTRICT TO SINGLE FILTER PASS",
@@ -1163,9 +1264,11 @@ namespace dftfe
     finiteElementPolynomialOrderElectrostatics = 1;
     n_refinement_steps                         = 1;
     numberEigenValues                          = 1;
-    xc_id                                      = 1;
+    XCType                                     = "GGA-PBE";
     spinPolarized                              = 0;
     modelXCInputFile                           = "";
+    auxBasisTypeXC                             = "";
+    auxBasisDataXC                             = "";
     nkx                                        = 1;
     nky                                        = 1;
     nkz                                        = 1;
@@ -1182,13 +1285,14 @@ namespace dftfe
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
 
+    functionalTestName                = "";
     radiusAtomBall                    = 0.0;
     mixingParameter                   = 0.5;
     spinMixingEnhancementFactor       = 4.0;
     absLinearSolverTolerance          = 1e-10;
     selfConsistentSolverTolerance     = 1e-10;
     TVal                              = 500;
-    start_magnetization               = 0.0;
+    tot_magnetization                 = 0.0;
     absLinearSolverToleranceHelmholtz = 1e-10;
     chebyshevTolerance                = 1e-02;
     mixingMethod                      = "";
@@ -1207,6 +1311,8 @@ namespace dftfe
     writeDosFile                = false;
     writeLdosFile               = false;
     writePdosFile               = false;
+    smearTval                   = 500;
+    intervalSize                = 0.01;
     writeLocalizationLengths    = false;
     writeBandsFile              = false;
     std::string coordinatesFile = "";
@@ -1216,6 +1322,7 @@ namespace dftfe
     orthogType                  = "";
     algoType                    = "";
     pseudoPotentialFile         = "";
+    meshSizesFile               = "";
 
     std::string coordinatesGaussianDispFile = "";
 
@@ -1250,6 +1357,7 @@ namespace dftfe
     startingWFCType                                = "";
     restrictToOnePass                              = false;
     writeWfcSolutionFields                         = false;
+    printKE                                        = false;
     writeDensitySolutionFields                     = false;
     writeDensityQuadData                           = false;
     wfcBlockSize                                   = 400;
@@ -1295,7 +1403,6 @@ namespace dftfe
     gaussianOrderMoveMeshToAtoms                   = 4.0;
     useFlatTopGenerator                            = false;
     diracDeltaKernelScalingConstant                = 0.1;
-    useMeshSizesFromAtomsFile                      = false;
     chebyshevFilterPolyDegreeFirstScfScalingFactor = 1.34;
     useDensityMatrixPerturbationRankUpdates        = false;
     smearedNuclearCharges                          = false;
@@ -1317,6 +1424,7 @@ namespace dftfe
     tempControllerTypeBOMD     = "";
     MDTrack                    = 0;
 
+    hubbardFileName = "";
 
     // New paramter for selecting mode and NEB parameters
     TotalImages = 1;
@@ -1347,6 +1455,14 @@ namespace dftfe
     maxStaggeredCycles = 100;
     maxIonUpdateStep   = 0.5;
     maxCellUpdateStep  = 0.1;
+
+    // Parameters for confining potential
+    confiningPotential   = false;
+    confiningInnerPotRad = 17.0;
+    confiningOuterPotRad = 20.0;
+    confiningWParam      = 1.0;
+    confiningCParam      = 1.0;
+
 
     writeStructreEnergyForcesFileForPostProcess = false;
   }
@@ -1396,10 +1512,14 @@ namespace dftfe
     prm.enter_subsection("Post-processing Options");
     {
       writeWfcSolutionFields     = prm.get_bool("WRITE WFC FE MESH");
+      printKE                    = prm.get_bool("PRINT KINETIC ENERGY");
       writeDensitySolutionFields = prm.get_bool("WRITE DENSITY FE MESH");
       writeDensityQuadData       = prm.get_bool("WRITE DENSITY QUAD DATA");
       writeDosFile               = prm.get_bool("WRITE DENSITY OF STATES");
-      writeLdosFile            = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+      writeLdosFile = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+      writePdosFile = prm.get_bool("WRITE PROJECTED DENSITY OF STATES");
+      smearTval     = prm.get_double("DOS SMEAR TEMPERATURE");
+      intervalSize  = prm.get_double("DELTA ENERGY");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
@@ -1408,6 +1528,11 @@ namespace dftfe
     }
     prm.leave_subsection();
 
+    prm.enter_subsection("FunctionalTest");
+    {
+      functionalTestName = prm.get("TEST NAME");
+    }
+    prm.leave_subsection();
     prm.enter_subsection("Parallelization");
     {
       npool        = prm.get_integer("NPKPT");
@@ -1512,8 +1637,7 @@ namespace dftfe
         gaussianOrderMoveMeshToAtoms =
           prm.get_double("GAUSSIAN ORDER MOVE MESH TO ATOMS");
         useFlatTopGenerator = prm.get_bool("USE FLAT TOP GENERATOR");
-        useMeshSizesFromAtomsFile =
-          prm.get_bool("USE MESH SIZES FROM ATOM LOCATIONS FILE");
+        meshSizesFile       = prm.get("MESH SIZES FILE");
       }
       prm.leave_subsection();
     }
@@ -1540,6 +1664,17 @@ namespace dftfe
 
     prm.enter_subsection("DFT functional parameters");
     {
+      // Parameters for confining potential
+      prm.enter_subsection("CONFINING POTENTIAL parameters");
+      {
+        confiningPotential   = prm.get_bool("APPLY CONFINING POTENTIAL");
+        confiningInnerPotRad = prm.get_double("INNER RADIUS");
+        confiningOuterPotRad = prm.get_double("OUTER RADIUS");
+        confiningWParam      = prm.get_double("W PARAM");
+        confiningCParam      = prm.get_double("C PARAM");
+      }
+      prm.leave_subsection();
+
       prm.enter_subsection("Dispersion Correction");
       {
         dc_dispersioncorrectiontype =
@@ -1556,12 +1691,20 @@ namespace dftfe
       isPseudopotential     = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
       pseudoTestsFlag       = prm.get_bool("PSEUDO TESTS FLAG");
       pseudoPotentialFile   = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-      xc_id                 = prm.get_integer("EXCHANGE CORRELATION TYPE");
+      XCType                = prm.get("EXCHANGE CORRELATION TYPE");
       spinPolarized         = prm.get_integer("SPIN POLARIZATION");
       modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
-      start_magnetization   = prm.get_double("START MAGNETIZATION");
+      auxBasisTypeXC        = prm.get("AUX BASIS TYPE");
+      auxBasisDataXC        = prm.get("AUX BASIS DATA");
+      tot_magnetization     = prm.get_double("TOTAL MAGNETIZATION");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       netCharge             = prm.get_double("NET CHARGE");
+
+      prm.enter_subsection("Hubbard Parameters");
+      {
+        hubbardFileName = prm.get("HUBBARD PARAMETERS FILE");
+      }
+      prm.leave_subsection();
     }
     prm.leave_subsection();
 
@@ -1627,6 +1770,7 @@ namespace dftfe
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
         useSinglePrecCommunCheby = prm.get_bool("USE SINGLE PREC COMMUN CHEBY");
         useSinglePrecCheby       = prm.get_bool("USE SINGLE PREC CHEBY");
+        tensorOpType             = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -1713,10 +1857,9 @@ namespace dftfe
   dftParameters::check_parameters(const MPI_Comm &mpi_comm_parent) const
   {
     AssertThrow(
-      !((periodicX || periodicY || periodicZ) &&
-        (writeLdosFile || writePdosFile)),
+      !((periodicX || periodicY || periodicZ) && writeLdosFile),
       dealii::ExcMessage(
-        "DFT-FE Error: LOCAL DENSITY OF STATES and PROJECTED DENSITY OF STATES are currently not implemented in the case of periodic and semi-periodic boundary conditions."));
+        "DFT-FE Error: LOCAL DENSITY OF STATES is currently not implemented in the case of periodic and semi-periodic boundary conditions."));
 
 
     if (floatingNuclearCharges)
@@ -1782,12 +1925,6 @@ namespace dftfe
         !constraintMagnetization,
         dealii::ExcMessage(
           "DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
-
-    if (spinPolarized == 1 && !constraintMagnetization)
-      AssertThrow(
-        std::abs(std::abs(start_magnetization) - 0.5) > 1e-6,
-        dealii::ExcMessage(
-          "DFT-FE Error: START MAGNETIZATION =+-0.5 only applicable in case of CONSTRAINT MAGNETIZATION set to ON."));
 
     if (verbosity >= 1 &&
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
@@ -2029,6 +2166,17 @@ namespace dftfe
 
     if (numCoreWfcRR != 0)
       useSinglePrecCheby = false;
+
+    // checking if the XC type is compatible with
+    // overlap compute communication cheby
+
+    bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
+    bool isLocalXC =
+      (XCType.substr(0, 3) == "LDA") || (XCType.substr(0, 3) == "GGA");
+    if (isHubbard || !isLocalXC)
+      {
+        overlapComputeCommunCheby = false;
+      }
   }
 
 

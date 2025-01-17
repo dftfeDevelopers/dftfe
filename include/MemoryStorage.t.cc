@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -47,7 +47,11 @@ namespace dftfe
     MemoryStorage<ValueType, memorySpace>::resize(const std::size_t size,
                                                   const ValueType   initVal)
     {
-      dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
+      if (d_size > 0)
+        {
+          dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(
+            d_data);
+        }
       d_size = size;
       if (size > 0)
         {
@@ -75,7 +79,11 @@ namespace dftfe
     void
     MemoryStorage<ValueType, memorySpace>::clear()
     {
-      dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(d_data);
+      if (d_size > 0)
+        {
+          dftfe::utils::MemoryManager<ValueType, memorySpace>::deallocate(
+            d_data);
+        }
       d_size = 0;
       d_data = nullptr;
     }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -229,7 +229,7 @@ namespace dftfe
       // Get required sizes
       //
       const unsigned int n_ghosts  = partitioner->n_ghost_indices();
-      const unsigned int localSize = partitioner->local_size();
+      const unsigned int localSize = partitioner->locally_owned_size();
       const unsigned int totalSize = localSize + n_ghosts;
       const dealii::types::global_dof_index globalNumberDegreesOfFreedom =
         partitioner->size();
@@ -798,7 +798,7 @@ namespace dftfe
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
         &                partitioner = flattenedArray.get_partitioner();
       const unsigned int localSize =
-        partitioner->local_size() / totalNumberComponents;
+        partitioner->locally_owned_size() / totalNumberComponents;
       const unsigned int n_ghosts =
         partitioner->n_ghost_indices() / totalNumberComponents;
       const unsigned int totalSize = localSize + n_ghosts;
@@ -863,7 +863,7 @@ namespace dftfe
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
         &partitioner = flattenedArray.get_partitioner();
       const unsigned int localSize =
-        partitioner->local_size() / totalNumberComponents;
+        partitioner->locally_owned_size() / totalNumberComponents;
       const unsigned int n_ghosts =
         partitioner->n_ghost_indices() / totalNumberComponents;
       const unsigned int totalSize = localSize + n_ghosts;
@@ -923,7 +923,7 @@ namespace dftfe
                "componentIndexRange doesn't lie within totalNumberComponents"));
 
       const unsigned int localVectorSize =
-        flattenedArray.local_size() / totalNumberComponents;
+        flattenedArray.locally_owned_size() / totalNumberComponents;
       for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
         {
           for (unsigned int icomp = componentIndexRange.first;
@@ -963,7 +963,7 @@ namespace dftfe
              dealii::ExcMessage(
                "componentIndexRange doesn't lie within totalNumberComponents"));
       const unsigned int localVectorSize =
-        flattenedArray.local_size() / totalNumberComponents;
+        flattenedArray.locally_owned_size() / totalNumberComponents;
       for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
         {
           for (unsigned int icomp = componentIndexRange.first;
@@ -1110,7 +1110,7 @@ namespace dftfe
         matrix_free_data.get_dofs_per_cell(mfDofHandlerIndex);
       std::vector<dealii::types::global_dof_index> cell_dof_indices(
         numberNodesPerElement);
-      const unsigned int numberDoFs = dummyVector.local_size();
+      const unsigned int numberDoFs = dummyVector.locally_owned_size();
       globalArrayClassificationMap.resize(numberDoFs, 0);
 
       //

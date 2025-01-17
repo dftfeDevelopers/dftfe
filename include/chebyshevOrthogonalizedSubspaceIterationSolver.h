@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -65,7 +65,7 @@ namespace dftfe
      */
     void
     solve(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-          const std::shared_ptr<
+          std::shared_ptr<
             dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
             &                  BLASWrapperPtr,
           elpaScalaManager &   elpaScala,

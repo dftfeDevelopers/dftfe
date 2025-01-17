@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -48,13 +48,21 @@ namespace dftfe
         ValueTypeBasisCoeff *quadratureValues,
         ValueTypeBasisCoeff *quadratureGradients,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &nodalData) const
+          &nodalData,
+        dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+          &mapQuadIdToProcId) const
     {
-      integrateWithBasisKernel(quadratureValues,
-                               quadratureGradients,
-                               nodalData,
-                               std::pair<unsigned int, unsigned int>(0,
-                                                                     d_nCells));
+      for (unsigned int iCell = 0; iCell < d_nCells; iCell += d_cellsBlockSize)
+        {
+          unsigned int maxCellId = std::min(iCell + d_cellsBlockSize, d_nCells);
+          std::pair<unsigned int, unsigned int> cellRange =
+            std::make_pair(iCell, maxCellId);
+          integrateWithBasisKernel(quadratureValues,
+                                   quadratureGradients,
+                                   nodalData,
+                                   mapQuadIdToProcId,
+                                   cellRange);
+        }
     }
 
 
@@ -266,13 +274,34 @@ namespace dftfe
         const ValueTypeBasisCoeff *quadratureValues,
         const ValueTypeBasisCoeff *quadratureGradients,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &                                         nodalData,
+          &nodalData,
+        dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+          &                                         mapQuadIdToProcId,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
       const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
                                 scalarCoeffBeta  = ValueTypeBasisCoeff(0.0);
       if (quadratureValues != NULL)
         {
+          auto shapePtr = d_shapeFunctionData.find(d_quadratureID)->second;
+
+
+          auto jxwHost = d_JxWData.find(d_quadratureID)->second;
+
+
+          d_BLASWrapperPtr->stridedBlockScaleCopy(
+            d_nVectors,
+            d_nQuadsPerCell[d_quadratureIndex] *
+              (cellRange.second - cellRange.first),
+            1.0,
+            this->JxWBasisData().data() +
+              cellRange.first * d_nQuadsPerCell[d_quadratureIndex],
+            quadratureValues,
+            tempCellValuesBlockCoeff.data(),
+            mapQuadIdToProcId.data() +
+              cellRange.first * d_nQuadsPerCell[d_quadratureIndex]);
+
+
           d_BLASWrapperPtr->xgemmStridedBatched(
             'N',
             'T',
@@ -280,11 +309,11 @@ namespace dftfe
             d_nDofsPerCell,
             d_nQuadsPerCell[d_quadratureIndex],
             &scalarCoeffAlpha,
-            quadratureValues,
+            tempCellValuesBlockCoeff.data(),
             d_nVectors,
             d_nVectors * d_nQuadsPerCell[d_quadratureIndex],
             d_shapeFunctionData.find(d_quadratureID)->second.data(),
-            d_nQuadsPerCell[d_quadratureIndex],
+            d_nDofsPerCell,
             0,
             &scalarCoeffBeta,
             tempCellNodalData.data(),
@@ -294,6 +323,8 @@ namespace dftfe
         }
       if (quadratureGradients != NULL)
         {
+          std::cout
+            << " integrate with shape function is not tested with gradients \n";
           if (areAllCellsCartesian)
             {
               tempQuadratureGradientsData.template copyFrom<memorySpace>(
@@ -436,13 +467,24 @@ namespace dftfe
         d_flattenedCellDofIndexToProcessDofIndexMap.begin() +
           cellRange.first * d_nDofsPerCell);
     }
-    template class FEBasisOperations<dataTypes::number,
+#if defined(USE_COMPLEX)
+    template class FEBasisOperations<std::complex<double>,
+                                     double,
+                                     dftfe::utils::MemorySpace::HOST>;
+#endif
+
+    template class FEBasisOperations<double,
                                      double,
                                      dftfe::utils::MemorySpace::HOST>;
 #if defined(DFTFE_WITH_DEVICE)
-    template class FEBasisOperations<dataTypes::number,
+    template class FEBasisOperations<double,
                                      double,
                                      dftfe::utils::MemorySpace::DEVICE>;
+#  if defined(USE_COMPLEX)
+    template class FEBasisOperations<std::complex<double>,
+                                     double,
+                                     dftfe::utils::MemorySpace::DEVICE>;
+#  endif
 #endif
 
   } // namespace basis

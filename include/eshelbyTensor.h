@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -92,7 +92,6 @@ namespace dftfe
     /// exchange-correlation part of the ELoc Eshelby tensor
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const dealii::VectorizedArray<double> &                      rho,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRho,
       const dealii::VectorizedArray<double> &                      exc,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>

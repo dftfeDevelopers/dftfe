@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -19,10 +19,10 @@
 #define DFTFE_EXCMANAGER_H
 
 #include <xc.h>
-#include <excDensityBaseClass.h>
-#include <excWavefunctionBaseClass.h>
+#include <ExcSSDFunctionalBaseClass.h>
 namespace dftfe
 {
+  template <dftfe::utils::MemorySpace memorySpace>
   class excManager
   {
   public:
@@ -42,42 +42,30 @@ namespace dftfe
 
 
     void
-    init(unsigned int xc_id,
-         bool         isSpinPolarized,
-         unsigned int exxFactor,
-         bool         scaleExchange,
-         unsigned int scaleExchangeFactor,
-         bool         computeCorrelation,
-         std::string  modelXCInputFile);
+    init(std::string XCType,
+         bool        isSpinPolarized,
+         std::string modelXCInputFile);
 
-    densityFamilyType
-    getDensityBasedFamilyType() const;
-
-    wavefunctionFamilyType
-    getWavefunctionBasedFamilyType() const;
+    ExcSSDFunctionalBaseClass<memorySpace> *
+    getExcSSDFunctionalObj();
 
 
-    excDensityBaseClass *
-    getExcDensityObj();
+    const ExcSSDFunctionalBaseClass<memorySpace> *
+    getExcSSDFunctionalObj() const;
 
-    excWavefunctionBaseClass *
-    getExcWavefunctionObj();
+    const std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> &
+    getSSDSharedObj() const;
 
-
-    const excDensityBaseClass *
-    getExcDensityObj() const;
-
-    const excWavefunctionBaseClass *
-    getExcWavefunctionObj() const;
+    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> &
+    getSSDSharedObj();
 
 
   private:
     /// objects for various exchange-correlations (from libxc package)
-    xc_func_type *d_funcXPtr;
-    xc_func_type *d_funcCPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
 
-    excDensityBaseClass *     d_excDensityObjPtr;
-    excWavefunctionBaseClass *d_excWavefunctionObjPtr;
+    std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> d_excObj;
   };
 } // namespace dftfe
 

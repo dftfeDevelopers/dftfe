@@ -65,9 +65,7 @@ end
 
 subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION =false
-  set EXCHANGE CORRELATION TYPE = 1
-  set SPIN POLARIZATION=0
-  set START MAGNETIZATION=0.0
+  set EXCHANGE CORRELATION TYPE = LDA-PZ
 end
 
 

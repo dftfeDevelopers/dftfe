@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -97,21 +97,21 @@ namespace dftfe
 
     AssertThrow(
       (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
-          d_numEigenValues <
-        INT_MAX / matrix_free_data.get_vector_partitioner()->local_size(),
+          matrix_free_data.get_vector_partitioner()->locally_owned_size() <
+        INT_MAX / d_numEigenValues,
       dealii::ExcMessage(
         "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
 
     d_eigenVectorsFlattenedHost.resize(
       (d_numEigenValues *
-       matrix_free_data.get_vector_partitioner()->local_size()) *
+       matrix_free_data.get_vector_partitioner()->locally_owned_size()) *
         (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
       dataTypes::number(0.0));
     if (d_numEigenValuesRR != d_numEigenValues)
       {
         d_eigenVectorsRotFracDensityFlattenedHost.resize(
           d_numEigenValuesRR *
-            matrix_free_data.get_vector_partitioner()->local_size() *
+            matrix_free_data.get_vector_partitioner()->locally_owned_size() *
             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
           dataTypes::number(0.0));
       }
@@ -166,9 +166,7 @@ namespace dftfe
       }
 
     if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
-      pcout << std::endl
-            << "net magnetization: "
-            << totalMagnetization(d_densityInQuadValues[1]) << std::endl;
+      totalMagnetization(d_densityInQuadValues[1]);
   }
 #include "dft.inst.cc"
 } // namespace dftfe

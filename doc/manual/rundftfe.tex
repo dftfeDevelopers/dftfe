@@ -105,14 +105,14 @@ We note that \dftfe{} allows for arbitrary boundary conditions.
 Set the required DFT functional input parameters for pseudopotential calculation 	
 \begin{verbatim}
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 4
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
 end
 \end{verbatim}
 where
 \begin{itemize}		
-\item The choice of ``4'' for \verb|EXCHANGE CORRELATION TYPE| corresponds to ``GGA: Perdew-Burke-Ernzerhof
+\item The choice of ``GGA-PBE'' for \verb|EXCHANGE CORRELATION TYPE| corresponds to ``Perdew-Burke-Ernzerhof
 functional [PRL. 77, 3865 (1996)]'' functional. 
 		
 \item ``pseudo.inp'', given as input to \verb|PSEUDOPOTENTIAL FILE NAMES LIST| is an external file (any other file name can be used) in the same workspace, which contains the list of pseudopotential file names in \verb|UPF| format corresponding to the atom types involved in the calculations. The file is formatted as 

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -495,6 +495,9 @@ namespace dftfe
       ghostSize() const;
       size_type
       numVectors() const;
+
+      const Storage &
+      getData() const;
 
     private:
       std::unique_ptr<Storage> d_storage;

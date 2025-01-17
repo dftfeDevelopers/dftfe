@@ -28,7 +28,7 @@ subsection Parallelization
 end
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 1
+  set EXCHANGE CORRELATION TYPE = LDA-PZ
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlKB.inp
   set PSEUDO TESTS FLAG        = true

@@ -33,7 +33,7 @@ end
 
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE = 4
+  set EXCHANGE CORRELATION TYPE = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudoBe.inp
 end
@@ -51,3 +51,10 @@ subsection SCF parameters
     set WFC BLOCK SIZE = 45
   end
 end
+
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end
+

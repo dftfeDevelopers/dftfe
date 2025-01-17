@@ -35,7 +35,7 @@ subsection Finite element mesh parameters
 end
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 5
+  set EXCHANGE CORRELATION TYPE = GGA-RPBE
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoMethaneNLCC.inp
   set PSEUDO TESTS FLAG = true

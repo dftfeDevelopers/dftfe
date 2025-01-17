@@ -169,6 +169,10 @@ namespace dftfe
       dummy,
       false);
 
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
     // interpolate nodal data to quadrature data
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -184,7 +188,7 @@ namespace dftfe
       rhoPrimeValues[0],
       gradRhoPrimeValues[0],
       dummy,
-      d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA);
+      isGradDensityDataDependent);
 
 
     if (d_dftParamsPtr->spinPolarized == 1)
@@ -207,8 +211,7 @@ namespace dftfe
           vSpin0Values,
           gradvSpin0Values,
           dummy,
-          d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA,
+          isGradDensityDataDependent,
           false);
 
         interpolateDensityNodalDataToQuadratureDataGeneral(
@@ -219,8 +222,7 @@ namespace dftfe
           vSpin1Values,
           gradvSpin1Values,
           dummy,
-          d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA,
+          isGradDensityDataDependent,
           false);
 
         rhoPrimeValues[0].resize(vSpin0Values.size());
@@ -246,17 +248,33 @@ namespace dftfe
               gradvSpin0Values[i] - gradvSpin1Values[i];
           }
       }
+    else
+      {
+        rhoPrimeValues[1].clear();
+        rhoPrimeValues[1].resize(rhoPrimeValues[0].size(), 0);
+        gradRhoPrimeValues[1].clear();
+        gradRhoPrimeValues[1].resize(gradRhoPrimeValues[0].size(), 0);
+      }
 
     for (unsigned int s = 0; s < (1 + d_dftParamsPtr->spinPolarized); ++s)
       {
         computing_timer.enter_subsection("VEffPrime Computation");
-        kohnShamDFTEigenOperator.computeVEffPrime(d_densityInQuadValues,
+
+        updateAuxDensityXCMatrix(d_densityInQuadValues,
+                                 d_gradDensityInQuadValues,
+                                 d_rhoCore,
+                                 d_gradRhoCore,
+                                 getEigenVectors(),
+                                 eigenValues,
+                                 fermiEnergy,
+                                 fermiEnergyUp,
+                                 fermiEnergyDown,
+                                 d_auxDensityMatrixXCInPtr);
+
+        kohnShamDFTEigenOperator.computeVEffPrime(d_auxDensityMatrixXCInPtr,
                                                   rhoPrimeValues,
-                                                  d_gradDensityInQuadValues,
                                                   gradRhoPrimeValues,
                                                   electrostaticPotPrimeValues,
-                                                  d_rhoCore,
-                                                  d_gradRhoCore,
                                                   s);
         computing_timer.leave_subsection("VEffPrime Computation");
 
@@ -485,7 +503,7 @@ namespace dftfe
       -totalCharge(d_matrixFreeDataPRefined, fvHam) /
       totalCharge(d_matrixFreeDataPRefined, fvFermiEnergy);
 
-    for (unsigned int i = 0; i < fv.local_size(); i++)
+    for (unsigned int i = 0; i < fv.locally_owned_size(); i++)
       fv.local_element(i) =
         fvHam.local_element(i) +
         firstOrderResponseFermiEnergy * fvFermiEnergy.local_element(i);
@@ -554,7 +572,7 @@ namespace dftfe
               iCell++;
             }
 
-        for (unsigned int i = 0; i < fvHamSpin0.local_size(); i++)
+        for (unsigned int i = 0; i < fvHamSpin0.locally_owned_size(); i++)
           {
             fvSpin0.local_element(i) = fvHamSpin0.local_element(i) +
                                        firstOrderResponseFermiEnergy *

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -53,7 +53,9 @@ namespace dftfe
 
     void
     cgSolver(
-      dftfe::utils::deviceBlasHandle_t &handle,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &BLASWrapperPtr,
       dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
         &           constraintsMatrixDataInfoDevice,
       const double *bD,

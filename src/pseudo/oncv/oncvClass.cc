@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -29,7 +29,8 @@ namespace dftfe
     const std::map<unsigned int, unsigned int> &atomAttributes,
     const bool                                  reproducibleOutput,
     const int                                   verbosity,
-    const bool                                  useDevice)
+    const bool                                  useDevice,
+    const bool                                  memOptMode)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent))
@@ -44,6 +45,7 @@ namespace dftfe
     d_verbosity              = verbosity;
     d_atomTypeAtributes      = atomAttributes;
     d_useDevice              = useDevice;
+    d_memoryOptMode          = memOptMode;
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -111,15 +113,15 @@ namespace dftfe
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       BLASWrapperPtrDevice,
 #endif
-    unsigned int                            densityQuadratureId,
-    unsigned int                            localContributionQuadratureId,
-    unsigned int                            sparsityPatternQuadratureId,
-    unsigned int                            nlpspQuadratureId,
-    unsigned int                            densityQuadratureIdElectro,
-    std::shared_ptr<excManager>             excFunctionalPtr,
-    const std::vector<std::vector<double>> &atomLocations,
-    unsigned int                            numEigenValues,
-    const bool                              singlePrecNonLocalOperator)
+    unsigned int                             densityQuadratureId,
+    unsigned int                             localContributionQuadratureId,
+    unsigned int                             sparsityPatternQuadratureId,
+    unsigned int                             nlpspQuadratureId,
+    unsigned int                             densityQuadratureIdElectro,
+    std::shared_ptr<excManager<memorySpace>> excFunctionalPtr,
+    const std::vector<std::vector<double>> & atomLocations,
+    unsigned int                             numEigenValues,
+    const bool                               singlePrecNonLocalOperator)
   {
     MPI_Barrier(d_mpiCommParent);
     d_BasisOperatorHostPtr = basisOperationsHostPtr;
@@ -162,7 +164,8 @@ namespace dftfe
             d_BLASWrapperHostPtr,
             d_BasisOperatorHostPtr,
             d_atomicProjectorFnsContainer,
-            d_mpiCommParent);
+            d_mpiCommParent,
+            d_memoryOptMode);
         if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =
@@ -171,7 +174,8 @@ namespace dftfe
                 memorySpace>>(d_BLASWrapperHostPtr,
                               d_BasisOperatorHostPtr,
                               d_atomicProjectorFnsContainer,
-                              d_mpiCommParent);
+                              d_mpiCommParent,
+                              d_memoryOptMode);
       }
 #if defined(DFTFE_WITH_DEVICE)
     else
@@ -182,7 +186,8 @@ namespace dftfe
             d_BLASWrapperDevicePtr,
             d_BasisOperatorDevicePtr,
             d_atomicProjectorFnsContainer,
-            d_mpiCommParent);
+            d_mpiCommParent,
+            d_memoryOptMode);
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =
@@ -191,7 +196,8 @@ namespace dftfe
                 memorySpace>>(d_BLASWrapperDevicePtr,
                               d_BasisOperatorDevicePtr,
                               d_atomicProjectorFnsContainer,
-                              d_mpiCommParent);
+                              d_mpiCommParent,
+                              d_memoryOptMode);
       }
 #endif
 
@@ -644,31 +650,35 @@ namespace dftfe
   const dftfe::utils::MemoryStorage<ValueType, memorySpace> &
   oncvClass<ValueType, memorySpace>::getCouplingMatrix()
   {
+    std::vector<ValueType> Entries;
+    if (!d_HamiltonianCouplingMatrixEntriesUpdated)
+      {
+        const std::vector<unsigned int> atomIdsInProcessor =
+          d_atomicProjectorFnsContainer->getAtomIdsInCurrentProcess();
+        std::vector<unsigned int> atomicNumber =
+          d_atomicProjectorFnsContainer->getAtomicNumbers();
+        d_couplingMatrixEntries.clear();
+
+        for (int iAtom = 0; iAtom < atomIdsInProcessor.size(); iAtom++)
+          {
+            unsigned int atomId = atomIdsInProcessor[iAtom];
+            unsigned int Znum   = atomicNumber[atomId];
+            unsigned int numberSphericalFunctions =
+              d_atomicProjectorFnsContainer
+                ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+            for (unsigned int alpha = 0; alpha < numberSphericalFunctions;
+                 alpha++)
+              {
+                double V =
+                  d_atomicNonLocalPseudoPotentialConstants[Znum][alpha];
+                Entries.push_back(ValueType(V));
+              }
+          }
+      }
     if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
       {
         if (!d_HamiltonianCouplingMatrixEntriesUpdated)
           {
-            const std::vector<unsigned int> atomIdsInProcessor =
-              d_atomicProjectorFnsContainer->getAtomIdsInCurrentProcess();
-            std::vector<unsigned int> atomicNumber =
-              d_atomicProjectorFnsContainer->getAtomicNumbers();
-            d_couplingMatrixEntries.clear();
-            std::vector<ValueType> Entries;
-            for (int iAtom = 0; iAtom < atomIdsInProcessor.size(); iAtom++)
-              {
-                unsigned int atomId = atomIdsInProcessor[iAtom];
-                unsigned int Znum   = atomicNumber[atomId];
-                unsigned int numberSphericalFunctions =
-                  d_atomicProjectorFnsContainer
-                    ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
-                for (unsigned int alpha = 0; alpha < numberSphericalFunctions;
-                     alpha++)
-                  {
-                    double V =
-                      d_atomicNonLocalPseudoPotentialConstants[Znum][alpha];
-                    Entries.push_back(ValueType(V));
-                  }
-              }
             d_couplingMatrixEntries.resize(Entries.size());
             d_couplingMatrixEntries.copyFrom(Entries);
             d_HamiltonianCouplingMatrixEntriesUpdated = true;
@@ -681,36 +691,11 @@ namespace dftfe
       {
         if (!d_HamiltonianCouplingMatrixEntriesUpdated)
           {
-            const std::vector<unsigned int> atomIdsInProcessor =
-              d_atomicProjectorFnsContainer->getAtomIdsInCurrentProcess();
-            std::vector<unsigned int> atomicNumber =
-              d_atomicProjectorFnsContainer->getAtomicNumbers();
-            d_couplingMatrixEntries.clear();
-            std::vector<ValueType> Entries;
-            Entries.resize(
-              d_nonLocalOperator->getTotalNonLocalEntriesCurrentProcessor(),
-              0.0);
-            for (int iAtom = 0; iAtom < atomIdsInProcessor.size(); iAtom++)
-              {
-                unsigned int atomId = atomIdsInProcessor[iAtom];
-                unsigned int Znum   = atomicNumber[atomId];
-                unsigned int numberSphericalFunctions =
-                  d_atomicProjectorFnsContainer
-                    ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
-                for (unsigned int alpha = 0; alpha < numberSphericalFunctions;
-                     alpha++)
-                  {
-                    unsigned int globalId =
-                      d_nonLocalOperator->getGlobalDofAtomIdSphericalFnPair(
-                        atomId, alpha);
-                    const unsigned int id =
-                      d_nonLocalOperator->getLocalIdOfDistributedVec(globalId);
-                    Entries[id] = ValueType(
-                      d_atomicNonLocalPseudoPotentialConstants[Znum][alpha]);
-                  }
-              }
-            d_couplingMatrixEntries.resize(Entries.size());
-            d_couplingMatrixEntries.copyFrom(Entries);
+            std::vector<ValueType> EntriesPadded;
+            d_nonLocalOperator->paddingCouplingMatrix(
+              Entries, EntriesPadded, CouplingStructure::diagonal);
+            d_couplingMatrixEntries.resize(EntriesPadded.size());
+            d_couplingMatrixEntries.copyFrom(EntriesPadded);
             d_HamiltonianCouplingMatrixEntriesUpdated = true;
           }
         return (d_couplingMatrixEntries);

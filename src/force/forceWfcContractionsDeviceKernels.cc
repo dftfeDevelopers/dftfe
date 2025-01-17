@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -19,7 +19,6 @@
 
 // source file for force related computations
 #if defined(DFTFE_WITH_DEVICE)
-#  include "deviceKernelsGeneric.h"
 #  include "dftfeDataTypes.h"
 #  include <DeviceDataTypeOverloads.h>
 #  include <DeviceAPICalls.h>

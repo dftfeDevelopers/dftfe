@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -14,283 +14,319 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Vishal Subramanian
+// @author Vishal Subramanian, Sambit Das
 //
 
-#include <excDensityGGAClass.h>
-#include <NNGGA.h>
+#include "excDensityGGAClass.h"
+#include "NNGGA.h"
+#include "Exceptions.h"
+#include <dftfeDataTypes.h>
 
 namespace dftfe
 {
-  excDensityGGAClass::excDensityGGAClass(xc_func_type *funcXPtr,
-                                         xc_func_type *funcCPtr,
-                                         bool          isSpinPolarized,
-                                         bool          scaleExchange,
-                                         bool          computeCorrelation,
-                                         double        scaleExchangeFactor)
-    : excDensityBaseClass(isSpinPolarized)
+  template <dftfe::utils::MemorySpace memorySpace>
+  excDensityGGAClass<memorySpace>::excDensityGGAClass(
+    std::shared_ptr<xc_func_type> funcXPtr,
+    std::shared_ptr<xc_func_type> funcCPtr)
+    : ExcSSDFunctionalBaseClass<memorySpace>(
+        ExcFamilyType::GGA,
+        densityFamilyType::GGA,
+        std::vector<DensityDescriptorDataAttributes>{
+          DensityDescriptorDataAttributes::valuesSpinUp,
+          DensityDescriptorDataAttributes::valuesSpinDown,
+          DensityDescriptorDataAttributes::gradValuesSpinUp,
+          DensityDescriptorDataAttributes::gradValuesSpinDown})
   {
-    d_familyType = densityFamilyType::GGA;
-    d_funcXPtr   = funcXPtr;
-    d_funcCPtr   = funcCPtr;
-    d_NNGGAPtr   = nullptr;
+    d_funcXPtr = funcXPtr;
+    d_funcCPtr = funcCPtr;
+    d_NNGGAPtr = nullptr;
   }
 
-
-  excDensityGGAClass::excDensityGGAClass(xc_func_type *funcXPtr,
-                                         xc_func_type *funcCPtr,
-                                         bool          isSpinPolarized,
-                                         std::string   modelXCInputFile,
-                                         bool          scaleExchange,
-                                         bool          computeCorrelation,
-                                         double        scaleExchangeFactor)
-    : excDensityBaseClass(isSpinPolarized)
+  template <dftfe::utils::MemorySpace memorySpace>
+  excDensityGGAClass<memorySpace>::excDensityGGAClass(
+    std::shared_ptr<xc_func_type> funcXPtr,
+    std::shared_ptr<xc_func_type> funcCPtr,
+    std::string                   modelXCInputFile)
+    : ExcSSDFunctionalBaseClass<memorySpace>(
+        ExcFamilyType::GGA,
+        densityFamilyType::GGA,
+        std::vector<DensityDescriptorDataAttributes>{
+          DensityDescriptorDataAttributes::valuesSpinUp,
+          DensityDescriptorDataAttributes::valuesSpinDown,
+          DensityDescriptorDataAttributes::gradValuesSpinUp,
+          DensityDescriptorDataAttributes::gradValuesSpinDown})
   {
-    d_familyType = densityFamilyType::GGA;
-    d_funcXPtr   = funcXPtr;
-    d_funcCPtr   = funcCPtr;
+    d_funcXPtr = funcXPtr;
+    d_funcCPtr = funcCPtr;
 #ifdef DFTFE_WITH_TORCH
     d_NNGGAPtr = new NNGGA(modelXCInputFile, true);
 #endif
   }
 
-  excDensityGGAClass::~excDensityGGAClass()
+  template <dftfe::utils::MemorySpace memorySpace>
+  excDensityGGAClass<memorySpace>::~excDensityGGAClass()
   {
     if (d_NNGGAPtr != nullptr)
       delete d_NNGGAPtr;
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityGGAClass::computeDensityBasedEnergyDensity(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::vector<double> &outputExchangeEnergyDensity,
-    std::vector<double> &outputCorrEnergyDensity) const
+  excDensityGGAClass<memorySpace>::checkInputOutputDataAttributesConsistency(
+    const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
+    const
   {
-    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
-    auto rhoSigmaGradValues =
-      rhoData.find(rhoDataAttributes::sigmaGradValue)->second;
+    const std::vector<xcRemainderOutputDataAttributes>
+      allowedOutputDataAttributes = {
+        xcRemainderOutputDataAttributes::e,
+        xcRemainderOutputDataAttributes::pdeDensitySpinUp,
+        xcRemainderOutputDataAttributes::pdeDensitySpinDown,
+        xcRemainderOutputDataAttributes::pdeSigma};
 
-
-    // This * is not neccessary, unnessary referencing and de-referencing
-    xc_gga_exc(d_funcXPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*rhoSigmaGradValues)[0],
-               &outputExchangeEnergyDensity[0]);
-    xc_gga_exc(d_funcCPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*rhoSigmaGradValues)[0],
-               &outputCorrEnergyDensity[0]);
-
-#ifdef DFTFE_WITH_TORCH
-    if (d_NNGGAPtr != nullptr)
+    for (size_t i = 0; i < outputDataAttributes.size(); i++)
       {
-        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
-        std::vector<double> sigmaValuesForNN(3 * sizeInput, 0);
-        if (d_isSpinPolarized)
+        bool isFound = false;
+        for (size_t j = 0; j < allowedOutputDataAttributes.size(); j++)
           {
-            for (unsigned int i = 0; i < 2 * sizeInput; i++)
-              rhoValuesForNN[i] = (*rhoValues)[i];
-
-            for (unsigned int i = 0; i < 3 * sizeInput; i++)
-              sigmaValuesForNN[i] = (*rhoSigmaGradValues)[i];
-          }
-        else
-          {
-            for (unsigned int i = 0; i < sizeInput; i++)
-              {
-                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
-                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
-              }
-
-            for (unsigned int i = 0; i < sizeInput; i++)
-              {
-                sigmaValuesForNN[3 * i]     = (*rhoSigmaGradValues)[i] / 4.0;
-                sigmaValuesForNN[3 * i + 1] = (*rhoSigmaGradValues)[i] / 4.0;
-                sigmaValuesForNN[3 * i + 2] = (*rhoSigmaGradValues)[i] / 4.0;
-              }
+            if (outputDataAttributes[i] == allowedOutputDataAttributes[j])
+              isFound = true;
           }
 
-        std::vector<double> excValuesFromNN(sizeInput, 0);
-        d_NNGGAPtr->evaluateexc(&(rhoValuesForNN[0]),
-                                &(sigmaValuesForNN[0]),
-                                sizeInput,
-                                &excValuesFromNN[0]);
-        for (unsigned int i = 0; i < sizeInput; i++)
-          outputExchangeEnergyDensity[i] += excValuesFromNN[i];
+
+        std::string errMsg =
+          "xcRemainderOutputDataAttributes do not matched allowed choices for the family type.";
+        dftfe::utils::throwException(isFound, errMsg);
       }
-#endif
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityGGAClass::computeDensityBasedVxc(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::map<VeffOutputDataAttributes, std::vector<double> *>
-      &outputDerExchangeEnergy,
-    std::map<VeffOutputDataAttributes, std::vector<double> *>
-      &outputDerCorrEnergy) const
+  excDensityGGAClass<memorySpace>::computeRhoTauDependentXCData(
+    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
+    const std::vector<double> &    quadPoints,
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      &xDataOut,
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      &cDataOut) const
   {
-    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
-    auto rhoSigmaGradValues =
-      rhoData.find(rhoDataAttributes::sigmaGradValue)->second;
+    const unsigned int                           nquad = quadPoints.size() / 3;
+    std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
+    for (const auto &element : xDataOut)
+      outputDataAttributes.push_back(element.first);
 
-    auto derExchangeEnergyWithDensity =
-      outputDerExchangeEnergy
-        .find(VeffOutputDataAttributes::derEnergyWithDensity)
+    checkInputOutputDataAttributesConsistency(outputDataAttributes);
+
+
+    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+      densityDescriptorData;
+
+    for (size_t i = 0; i < this->d_densityDescriptorAttributesList.size(); i++)
+      {
+        if (this->d_densityDescriptorAttributesList[i] ==
+              DensityDescriptorDataAttributes::valuesSpinUp ||
+            this->d_densityDescriptorAttributesList[i] ==
+              DensityDescriptorDataAttributes::valuesSpinDown)
+          densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
+            std::vector<double>(nquad, 0);
+        else if (this->d_densityDescriptorAttributesList[i] ==
+                   DensityDescriptorDataAttributes::gradValuesSpinUp ||
+                 this->d_densityDescriptorAttributesList[i] ==
+                   DensityDescriptorDataAttributes::gradValuesSpinDown)
+          densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
+            std::vector<double>(3 * nquad, 0);
+      }
+
+    auxDensityMatrix.applyLocalOperations(quadPoints, densityDescriptorData);
+
+
+    auto &densityValuesSpinUp =
+      densityDescriptorData.find(DensityDescriptorDataAttributes::valuesSpinUp)
         ->second;
-    auto derExchangeEnergyWithSigmaGradDensity =
-      outputDerExchangeEnergy
-        .find(VeffOutputDataAttributes::derEnergyWithSigmaGradDensity)
+    auto &densityValuesSpinDown =
+      densityDescriptorData
+        .find(DensityDescriptorDataAttributes::valuesSpinDown)
+        ->second;
+    auto &gradValuesSpinUp =
+      densityDescriptorData
+        .find(DensityDescriptorDataAttributes::gradValuesSpinUp)
+        ->second;
+    auto &gradValuesSpinDown =
+      densityDescriptorData
+        .find(DensityDescriptorDataAttributes::gradValuesSpinDown)
         ->second;
 
-    auto derCorrEnergyWithDensity =
-      outputDerCorrEnergy.find(VeffOutputDataAttributes::derEnergyWithDensity)
-        ->second;
-
-    auto derCorrEnergyWithSigmaGradDensity =
-      outputDerCorrEnergy
-        .find(VeffOutputDataAttributes::derEnergyWithSigmaGradDensity)
-        ->second;
 
 
-    xc_gga_vxc(d_funcXPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*rhoSigmaGradValues)[0],
-               &(*derExchangeEnergyWithDensity)[0],
-               &(*derExchangeEnergyWithSigmaGradDensity)[0]);
-    xc_gga_vxc(d_funcCPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*rhoSigmaGradValues)[0],
-               &(*derCorrEnergyWithDensity)[0],
-               &(*derCorrEnergyWithSigmaGradDensity)[0]);
+    std::vector<double> densityValues(2 * nquad, 0);
+    std::vector<double> sigmaValues(3 * nquad, 0);
+
+    std::vector<double> exValues(nquad, 0);
+    std::vector<double> ecValues(nquad, 0);
+    std::vector<double> pdexDensityValuesNonNN(2 * nquad, 0);
+    std::vector<double> pdecDensityValuesNonNN(2 * nquad, 0);
+    std::vector<double> pdexDensitySpinUpValues(nquad, 0);
+    std::vector<double> pdexDensitySpinDownValues(nquad, 0);
+    std::vector<double> pdecDensitySpinUpValues(nquad, 0);
+    std::vector<double> pdecDensitySpinDownValues(nquad, 0);
+    std::vector<double> pdexSigmaValues(3 * nquad, 0);
+    std::vector<double> pdecSigmaValues(3 * nquad, 0);
+
+    for (size_t i = 0; i < nquad; i++)
+      {
+        densityValues[2 * i + 0] = densityValuesSpinUp[i];
+        densityValues[2 * i + 1] = densityValuesSpinDown[i];
+        for (size_t j = 0; j < 3; j++)
+          {
+            sigmaValues[3 * i + 0] +=
+              gradValuesSpinUp[3 * i + j] * gradValuesSpinUp[3 * i + j];
+            sigmaValues[3 * i + 1] +=
+              gradValuesSpinUp[3 * i + j] * gradValuesSpinDown[3 * i + j];
+            sigmaValues[3 * i + 2] +=
+              gradValuesSpinDown[3 * i + j] * gradValuesSpinDown[3 * i + j];
+          }
+      }
+
+    xc_gga_exc_vxc(d_funcXPtr.get(),
+                   nquad,
+                   &densityValues[0],
+                   &sigmaValues[0],
+                   &exValues[0],
+                   &pdexDensityValuesNonNN[0],
+                   &pdexSigmaValues[0]);
+    xc_gga_exc_vxc(d_funcCPtr.get(),
+                   nquad,
+                   &densityValues[0],
+                   &sigmaValues[0],
+                   &ecValues[0],
+                   &pdecDensityValuesNonNN[0],
+                   &pdecSigmaValues[0]);
+
+    for (size_t i = 0; i < nquad; i++)
+      {
+        exValues[i] =
+          exValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
+        ecValues[i] =
+          ecValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
+        pdexDensitySpinUpValues[i]   = pdexDensityValuesNonNN[2 * i + 0];
+        pdexDensitySpinDownValues[i] = pdexDensityValuesNonNN[2 * i + 1];
+        pdecDensitySpinUpValues[i]   = pdecDensityValuesNonNN[2 * i + 0];
+        pdecDensitySpinDownValues[i] = pdecDensityValuesNonNN[2 * i + 1];
+      }
 
 #ifdef DFTFE_WITH_TORCH
     if (d_NNGGAPtr != nullptr)
       {
-        std::vector<double> rhoValuesForNN(2 * sizeInput, 0);
-        std::vector<double> sigmaValuesForNN(3 * sizeInput, 0);
-        if (d_isSpinPolarized)
-          {
-            for (unsigned int i = 0; i < 2 * sizeInput; i++)
-              rhoValuesForNN[i] = (*rhoValues)[i];
-
-            for (unsigned int i = 0; i < 3 * sizeInput; i++)
-              sigmaValuesForNN[i] = (*rhoSigmaGradValues)[i];
-          }
-        else
-          {
-            for (unsigned int i = 0; i < sizeInput; i++)
-              {
-                rhoValuesForNN[2 * i]     = 0.5 * (*rhoValues)[i];
-                rhoValuesForNN[2 * i + 1] = 0.5 * (*rhoValues)[i];
-              }
-
-            for (unsigned int i = 0; i < sizeInput; i++)
-              {
-                sigmaValuesForNN[3 * i]     = (*rhoSigmaGradValues)[i] / 4.0;
-                sigmaValuesForNN[3 * i + 1] = (*rhoSigmaGradValues)[i] / 4.0;
-                sigmaValuesForNN[3 * i + 2] = (*rhoSigmaGradValues)[i] / 4.0;
-              }
-          }
-
-        std::vector<double> excValuesFromNN(sizeInput, 0);
-        std::vector<double> vxcValuesFromNN(5 * sizeInput, 0);
-        d_NNGGAPtr->evaluatevxc(&(rhoValuesForNN[0]),
-                                &(sigmaValuesForNN[0]),
-                                sizeInput,
+        std::vector<double> excValuesFromNN(nquad, 0);
+        const size_t        numDescriptors = 5;
+        std::vector<double> pdexcDescriptorValuesFromNN(numDescriptors * nquad,
+                                                        0);
+        d_NNGGAPtr->evaluatevxc(&(densityValues[0]),
+                                &sigmaValues[0],
+                                nquad,
                                 &excValuesFromNN[0],
-                                &vxcValuesFromNN[0]);
-        if (d_isSpinPolarized)
+                                &pdexcDescriptorValuesFromNN[0]);
+        for (size_t i = 0; i < nquad; i++)
           {
-            for (unsigned int i = 0; i < sizeInput; i++)
-              {
-                (*derExchangeEnergyWithDensity)[2 * i] +=
-                  vxcValuesFromNN[5 * i];
-                (*derExchangeEnergyWithDensity)[2 * i + 1] +=
-                  vxcValuesFromNN[5 * i + 1];
-                (*derExchangeEnergyWithSigmaGradDensity)[3 * i] +=
-                  vxcValuesFromNN[5 * i + 2];
-                (*derExchangeEnergyWithSigmaGradDensity)[3 * i + 1] +=
-                  vxcValuesFromNN[5 * i + 3];
-                (*derExchangeEnergyWithSigmaGradDensity)[3 * i + 2] +=
-                  vxcValuesFromNN[5 * i + 4];
-              }
-          }
-        else
-          {
-            for (unsigned int i = 0; i < sizeInput; i++)
-              {
-                (*derExchangeEnergyWithDensity)[i] += vxcValuesFromNN[5 * i];
-                (*derExchangeEnergyWithSigmaGradDensity)[i] +=
-                  vxcValuesFromNN[5 * i + 2];
-              }
+            exValues[i] += excValuesFromNN[i] * (densityValues[2 * i + 0] +
+                                                 densityValues[2 * i + 1]);
+            pdexDensitySpinUpValues[i] +=
+              pdexcDescriptorValuesFromNN[numDescriptors * i + 0];
+            pdexDensitySpinDownValues[i] +=
+              pdexcDescriptorValuesFromNN[numDescriptors * i + 1];
+            pdexSigmaValues[3 * i + 0] +=
+              pdexcDescriptorValuesFromNN[numDescriptors * i + 2];
+            pdexSigmaValues[3 * i + 1] +=
+              pdexcDescriptorValuesFromNN[numDescriptors * i + 3];
+            pdexSigmaValues[3 * i + 2] +=
+              pdexcDescriptorValuesFromNN[numDescriptors * i + 4];
           }
       }
 #endif
+
+    for (size_t i = 0; i < outputDataAttributes.size(); i++)
+      {
+        if (outputDataAttributes[i] == xcRemainderOutputDataAttributes::e)
+          {
+            xDataOut.find(outputDataAttributes[i])->second = exValues;
+
+            cDataOut.find(outputDataAttributes[i])->second = ecValues;
+          }
+        else if (outputDataAttributes[i] ==
+                 xcRemainderOutputDataAttributes::pdeDensitySpinUp)
+          {
+            xDataOut.find(outputDataAttributes[i])->second =
+              pdexDensitySpinUpValues;
+
+            cDataOut.find(outputDataAttributes[i])->second =
+              pdecDensitySpinUpValues;
+          }
+        else if (outputDataAttributes[i] ==
+                 xcRemainderOutputDataAttributes::pdeDensitySpinDown)
+          {
+            xDataOut.find(outputDataAttributes[i])->second =
+              pdexDensitySpinDownValues;
+
+            cDataOut.find(outputDataAttributes[i])->second =
+              pdecDensitySpinDownValues;
+          }
+        else if (outputDataAttributes[i] ==
+                 xcRemainderOutputDataAttributes::pdeSigma)
+          {
+            xDataOut.find(outputDataAttributes[i])->second = pdexSigmaValues;
+
+            cDataOut.find(outputDataAttributes[i])->second = pdecSigmaValues;
+          }
+      }
   }
 
-
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  excDensityGGAClass::computeDensityBasedFxc(
-    unsigned int                                                    sizeInput,
-    const std::map<rhoDataAttributes, const std::vector<double> *> &rhoData,
-    std::map<fxcOutputDataAttributes, std::vector<double> *>
-      &outputDer2ExchangeEnergy,
-    std::map<fxcOutputDataAttributes, std::vector<double> *>
-      &outputDer2CorrEnergy) const
+  excDensityGGAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+      &                                                                src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+    const unsigned int inputVecSize,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
+  {}
+
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityGGAClass<memorySpace>::updateWaveFunctionDependentFuncDerWrtPsi(
+    const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
+    const std::vector<double> &                           kPointWeights)
+  {}
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityGGAClass<memorySpace>::computeWaveFunctionDependentExcEnergy(
+    const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
+    const std::vector<double> &                           kPointWeights)
+  {}
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  double
+  excDensityGGAClass<memorySpace>::getWaveFunctionDependentExcEnergy()
   {
-    auto rhoValues = rhoData.find(rhoDataAttributes::values)->second;
-    auto rhoSigmaGradValues =
-      rhoData.find(rhoDataAttributes::sigmaGradValue)->second;
-
-
-    auto der2ExchangeEnergyWithDensity =
-      outputDer2ExchangeEnergy
-        .find(fxcOutputDataAttributes::der2EnergyWithDensity)
-        ->second;
-    auto der2ExchangeEnergyWithDensitySigma =
-      outputDer2ExchangeEnergy
-        .find(fxcOutputDataAttributes::der2EnergyWithDensitySigma)
-        ->second;
-
-    auto der2ExchangeEnergyWithSigmaGradDensity =
-      outputDer2ExchangeEnergy
-        .find(fxcOutputDataAttributes::der2EnergyWithSigma)
-        ->second;
-
-    auto der2CorrEnergyWithDensity =
-      outputDer2CorrEnergy.find(fxcOutputDataAttributes::der2EnergyWithDensity)
-        ->second;
-    auto der2CorrEnergyWithDensitySigma =
-      outputDer2CorrEnergy
-        .find(fxcOutputDataAttributes::der2EnergyWithDensitySigma)
-        ->second;
-
-    auto der2CorrEnergyWithSigmaGradDensity =
-      outputDer2CorrEnergy.find(fxcOutputDataAttributes::der2EnergyWithSigma)
-        ->second;
-
-
-
-    xc_gga_fxc(d_funcXPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*rhoSigmaGradValues)[0],
-               &(*der2ExchangeEnergyWithDensity)[0],
-               &(*der2ExchangeEnergyWithDensitySigma)[0],
-               &(*der2ExchangeEnergyWithSigmaGradDensity)[0]);
-
-    xc_gga_fxc(d_funcCPtr,
-               sizeInput,
-               &(*rhoValues)[0],
-               &(*rhoSigmaGradValues)[0],
-               &(*der2CorrEnergyWithDensity)[0],
-               &(*der2CorrEnergyWithDensitySigma)[0],
-               &(*der2CorrEnergyWithSigmaGradDensity)[0]);
+    return 0.0;
   }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  double
+  excDensityGGAClass<
+    memorySpace>::getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi()
+  {
+    return 0.0;
+  }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityGGAClass<memorySpace>::reinitKPointDependentVariables(
+    unsigned int kPointIndex)
+  {}
+
+  template class excDensityGGAClass<dftfe::utils::MemorySpace::HOST>;
+#ifdef DFTFE_WITH_DEVICE
+  template class excDensityGGAClass<dftfe::utils::MemorySpace::DEVICE>;
+#endif
 } // namespace dftfe

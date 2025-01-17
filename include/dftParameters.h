@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -36,8 +36,8 @@ namespace dftfe
   public:
     unsigned int finiteElementPolynomialOrder,
       finiteElementPolynomialOrderElectrostatics, n_refinement_steps,
-      numberEigenValues, xc_id, spinPolarized, nkx, nky, nkz, offsetFlagX,
-      offsetFlagY, offsetFlagZ;
+      numberEigenValues, spinPolarized, nkx, nky, nkz, offsetFlagX, offsetFlagY,
+      offsetFlagZ;
     unsigned int chebyshevOrder, numPass, numSCFIterations,
       maxLinearSolverIterations, mixingHistory, npool,
       numberWaveFunctionsForEstimate, numLevels,
@@ -45,13 +45,16 @@ namespace dftfe
 
     bool        poissonGPU;
     bool        vselfGPU;
+    std::string XCType;
     std::string modelXCInputFile;
+    std::string auxBasisTypeXC;
+    std::string auxBasisDataXC;
 
     double radiusAtomBall, mixingParameter, spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
-      selfConsistentSolverEnergyTolerance, start_magnetization,
-      absLinearSolverToleranceHelmholtz;
+      selfConsistentSolverEnergyTolerance, tot_magnetization,
+      absLinearSolverToleranceHelmholtz, smearTval, intervalSize;
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
@@ -60,6 +63,8 @@ namespace dftfe
 
     double netCharge;
 
+    /** parameters for functional tests **/
+    std::string functionalTestName;
     /** parameters for LRD preconditioner **/
 
     double      startingNormLRDLargeDamping;
@@ -74,7 +79,7 @@ namespace dftfe
 
     std::string coordinatesFile, domainBoundingVectorsFile, kPointDataFile,
       ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile,
-      restartFolder;
+      tensorOpType, restartFolder, meshSizesFile;
 
     std::string coordinatesGaussianDispFile;
 
@@ -85,7 +90,7 @@ namespace dftfe
       restaFermiWavevector;
     std::string optimizationMode, mixingMethod, ionOptSolver, cellOptSolver;
 
-
+    std::string  hubbardFileName;
     bool         isIonForce, isCellStress, isBOMD;
     bool         nonSelfConsistentForce, meshAdaption;
     double       forceRelaxTol, stressRelaxTol, toleranceKinetic;
@@ -101,6 +106,7 @@ namespace dftfe
     bool reproducible_output;
 
     bool writeWfcSolutionFields;
+    bool printKE;
 
     bool writeDensitySolutionFields;
 
@@ -154,7 +160,6 @@ namespace dftfe
     double       gaussianOrderMoveMeshToAtoms;
     bool         useFlatTopGenerator;
     double       diracDeltaKernelScalingConstant;
-    bool         useMeshSizesFromAtomsFile;
     double       xlbomdRestartChebyTol;
     bool         useDensityMatrixPerturbationRankUpdates;
     double       xlbomdKernelRankUpdateFDParameter;
@@ -199,6 +204,13 @@ namespace dftfe
     int         MDTrack;
 
     bool writeStructreEnergyForcesFileForPostProcess;
+
+    // Parameters for confining potential
+    bool   confiningPotential;
+    double confiningInnerPotRad;
+    double confiningOuterPotRad;
+    double confiningWParam;
+    double confiningCParam;
 
     dftParameters();
 

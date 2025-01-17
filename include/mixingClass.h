@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -33,7 +33,8 @@ namespace dftfe
     rho,
     gradRho,
     magZ,
-    gradMagZ
+    gradMagZ,
+    hubbardOccupation
   };
 
   /**
@@ -125,6 +126,19 @@ namespace dftfe
     mixVariable(const mixingVariable mixingVariableName,
                 double *             outputVariable,
                 const unsigned int   lenVar);
+
+
+    void
+    getOptimizedResidual(const mixingVariable mixingVariableName,
+                         double *             outputVariable,
+                         const unsigned int   lenVar);
+
+
+    void
+    mixPreconditionedResidual(const mixingVariable mixingVariableName,
+                              double *             inputVariable,
+                              double *             outputVariable,
+                              const unsigned int   lenVar);
 
 
   private:

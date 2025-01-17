@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -210,6 +210,19 @@ namespace dftfe
      */
     virtual void
     writeGSElectronDensity(const std::string Path) const = 0;
+
+
+    virtual const MPI_Comm &
+    getMPIDomain() const = 0;
+
+    virtual const MPI_Comm &
+    getMPIParent() const = 0;
+
+    virtual const MPI_Comm &
+    getMPIInterPool() const = 0;
+
+    virtual const MPI_Comm &
+    getMPIInterBand() const = 0;
   };
 
 } // namespace dftfe

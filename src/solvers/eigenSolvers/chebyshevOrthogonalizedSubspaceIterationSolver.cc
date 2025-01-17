@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -19,6 +19,7 @@
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsCPU.h>
 #include <vectorUtilities.h>
 
 static const unsigned int order_lookup[][2] = {
@@ -140,7 +141,7 @@ namespace dftfe
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(
     operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-    const std::shared_ptr<
+    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
       &                  BLASWrapperPtr,
     elpaScalaManager &   elpaScala,

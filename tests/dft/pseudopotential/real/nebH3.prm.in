@@ -23,12 +23,11 @@ subsection Finite element mesh parameters
 end
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 4
+  set EXCHANGE CORRELATION TYPE = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true  
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/H3NEB_pseudo.inp
   set PSEUDO TESTS FLAG               = true
   set SPIN POLARIZATION               = 1
-  set START MAGNETIZATION             = 0.45  
 end
 
 subsection SCF parameters

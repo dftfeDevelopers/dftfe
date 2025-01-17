@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -92,6 +92,24 @@ namespace dftfe
         accumulateAddLocallyOwnedEnd(
           MemoryStorage<ValueType, memorySpace> &dataArray);
 
+        /*
+         * @Brief This function copies the value from the ghost nodes
+         * to its corresponding local node
+         */
+        void
+        accumulateInsertLocallyOwned(
+          MemoryStorage<ValueType, memorySpace> &dataArray,
+          const size_type                        communicationChannel = 0);
+
+        void
+        accumulateInsertLocallyOwnedBegin(
+          MemoryStorage<ValueType, memorySpace> &dataArray,
+          const size_type                        communicationChannel = 0);
+
+        void
+        accumulateInsertLocallyOwnedEnd(
+          MemoryStorage<ValueType, memorySpace> &dataArray);
+
         std::shared_ptr<const MPIPatternP2P<memorySpace>>
         getMPIPatternP2P() const;
 
@@ -150,6 +168,7 @@ namespace dftfe
 
         std::vector<MPI_Request> d_requestsUpdateGhostValues;
         std::vector<MPI_Request> d_requestsAccumulateAddLocallyOwned;
+        std::vector<MPI_Request> d_requestsAccumulateInsertLocallyOwned;
         MPI_Comm                 d_mpiCommunicator;
 #ifdef DFTFE_WITH_DEVICE
         dftfe::utils::deviceStream_t d_deviceCommStream;

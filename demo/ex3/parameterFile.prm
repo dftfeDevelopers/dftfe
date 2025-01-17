@@ -39,7 +39,7 @@ end
 
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 4
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
 end

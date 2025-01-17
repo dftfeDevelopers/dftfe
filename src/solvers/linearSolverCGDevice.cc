@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -18,10 +18,10 @@
 //
 
 #include <linearSolverCGDevice.h>
-#include <deviceKernelsGeneric.h>
 #include <DeviceAPICalls.h>
 #include <DeviceKernelLauncherConstants.h>
 #include <MemoryTransfer.h>
+#include <deviceKernelsGeneric.h>
 
 namespace dftfe
 {
@@ -335,20 +335,12 @@ namespace dftfe
             problem.computeAX(d_rvec, x);
 
             // r = Ax - rhs
-            // dftfe::utils::deviceKernelsGeneric::add(d_rvec.begin(),
-            //                                         rhsDevice.begin(),
-            //                                         -1.,
-            //                                         d_xLocalDof,
-            //                                         deviceBlasHandle);
             d_BLASWrapperPtr->add(d_rvec.begin(),
                                   rhsDevice.begin(),
                                   -1,
                                   d_xLocalDof);
             // res = r.r
-            // res = dftfe::utils::deviceKernelsGeneric::l2_norm(d_rvec.begin(),
-            //                                                   d_xLocalDof,
-            //                                                   mpi_communicator,
-            //                                                   deviceBlasHandle);
+
 
             d_BLASWrapperPtr->xnrm2(
               d_xLocalDof, d_rvec.begin(), 1, mpi_communicator, &res);
@@ -393,11 +385,6 @@ namespace dftfe
 
                 // alpha = q.d
                 // alpha =
-                //   dftfe::utils::deviceKernelsGeneric::dot(d_qvec.begin(),
-                //                                           d_dvec.begin(),
-                //                                           d_xLocalDof,
-                //                                           mpi_communicator,
-                //                                           deviceBlasHandle);
 
                 d_BLASWrapperPtr->xdot(d_xLocalDof,
                                        d_qvec.begin(),

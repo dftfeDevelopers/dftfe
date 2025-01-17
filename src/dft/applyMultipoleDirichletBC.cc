@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -83,7 +83,35 @@ namespace dftfe
                                 quadrupole += d_quadrupole[iDim * 3 + jDim] *
                                               p[iDim] * p[jDim];
                             }
+
                           double constraintValue = 0.0;
+                          if (!d_dftParamsPtr->smearedNuclearCharges)
+                            {
+                              for (unsigned int iAtom = 0;
+                                   iAtom < atomLocations.size();
+                                   iAtom++)
+                                {
+                                  double dist = 0.0;
+                                  dist = (atomLocations[iAtom][2] - p[0]) *
+                                         (atomLocations[iAtom][2] - p[0]);
+                                  dist += (atomLocations[iAtom][3] - p[1]) *
+                                          (atomLocations[iAtom][3] - p[1]);
+                                  dist += (atomLocations[iAtom][4] - p[2]) *
+                                          (atomLocations[iAtom][4] - p[2]);
+                                  dist = std::sqrt(dist);
+                                  if (d_dftParamsPtr->isPseudopotential)
+                                    {
+                                      constraintValue -=
+                                        atomLocations[iAtom][1] / dist;
+                                    }
+                                  else
+                                    {
+                                      constraintValue -=
+                                        atomLocations[iAtom][0] / dist;
+                                    }
+                                }
+                            }
+
                           if (std::abs(d_monopole) > r * 1e-12)
                             constraintValue += d_monopole / r;
                           if (std::abs(dipole) > std::pow(r, 3) * 1e-12)

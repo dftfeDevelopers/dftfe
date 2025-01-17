@@ -24,6 +24,9 @@ subsection Boundary conditions
   set CONSTRAINTS PARALLEL CHECK=true
 end
 
+subsection Post-processing Options
+  set PRINT KINETIC ENERGY = true
+end
 
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 3
@@ -44,7 +47,7 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION =true
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlKB.inp 
   set PSEUDO TESTS FLAG = true
-  set EXCHANGE CORRELATION TYPE = 1
+  set EXCHANGE CORRELATION TYPE = LDA-PZ
 end
 
 

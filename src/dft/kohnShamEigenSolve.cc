@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -20,7 +20,7 @@
 #include <vector>
 #include <dft.h>
 #include <linearAlgebraOperations.h>
-
+#include <linearAlgebraOperationsCPU.h>
 namespace dftfe
 {
   namespace internal
@@ -144,8 +144,22 @@ namespace dftfe
     // //
     // // compute Veff
     // //
-    // if (d_excManagerPtr->getDensityBasedFamilyType() ==
-    // densityFamilyType::LDA)
+    //    bool isGradDensityDataDependent = false;
+    //    if (d_excManagerPtr->getXCPrimaryVariable() ==
+    //    XCPrimaryVariable::DENSITY)
+    //      {
+    //        isGradDensityDataDependent =
+    //        (d_excManagerPtr->getExcDensityObj()->getDensityBasedFamilyType()
+    //        == densityFamilyType::GGA) ;
+    //      }
+    //    else if (d_excManagerPtr->getXCPrimaryVariable() ==
+    //    XCPrimaryVariable::SSDETERMINANT)
+    //      {
+    //        isGradDensityDataDependent =
+    //        (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType()
+    //        == densityFamilyType::GGA) ;
+    //      }
+    // if (!isGradDensityDataDependent)
     //   {
     //     kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
     //                                          phiInValues,
@@ -153,8 +167,7 @@ namespace dftfe
     //                                          d_rhoCore,
     //                                          d_lpspQuadratureId);
     //   }
-    // else if (d_excManagerPtr->getDensityBasedFamilyType() ==
-    //          densityFamilyType::GGA)
+    // else if (isGradDensityDataDependent)
     //   {
     //     kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
     //                                          d_gradDensityInQuadValues,
@@ -636,7 +649,7 @@ namespace dftfe
           {
             for (unsigned int i = 0; i < d_numEigenValues; i++)
               {
-                if (d_dftParamsPtr->verbosity >= 5)
+                if (d_dftParamsPtr->verbosity >= 4)
                   pcout << "eigen value " << std::setw(3) << i << ": "
                         << eigenValuesTemp[i] << std::endl;
 
@@ -998,6 +1011,7 @@ namespace dftfe
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
+    d_highestStateForResidualComputation = highestState;
     return maxHighestOccupiedStateResNorm;
   }
   // compute the maximum of the residual norm of the highest occupied state
@@ -1013,47 +1027,48 @@ namespace dftfe
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
       const double                            fermiEnergy,
       std::vector<double> &                   maxResidualsAllkPoints)
-  {
-    double maxHighestOccupiedStateResNorm = -1e+6;
-    maxResidualsAllkPoints.clear();
-    maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size(), -1e+6);
-    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
-      {
-        unsigned int highestOccupiedState = 0;
+    {
+      double maxHighestOccupiedStateResNorm = -1e+6;
+        for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+          {
+            unsigned int highestOccupiedState = 0;
 
-        for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
-          {
-            const double factor =
-              (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
-              (C_kb * d_dftParamsPtr->TVal);
-            double functionValue;
-            if (factor <= 0.0)
+            for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size();
+                 i++)
               {
-                double temp2  = 1.0 / (1.0 + exp(factor));
-                functionValue = (2.0 - d_dftParamsPtr->spinPolarized) * temp2;
+                const double factor =
+                  (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
+                  (C_kb * d_dftParamsPtr->TVal);
+                double functionValue;
+                if (factor <= 0.0)
+                  {
+                    double temp2 = 1.0 / (1.0 + exp(factor));
+                    functionValue =
+                      (2.0 - d_dftParamsPtr->spinPolarized) * temp2;
+                  }
+                else
+                  {
+                    double temp2  = 1.0 / (1.0 + exp(-factor));
+                    functionValue = (2.0 - d_dftParamsPtr->spinPolarized) *
+                                    exp(-factor) * temp2;
+                  }
+                if (functionValue > 1e-3)
+                  highestOccupiedState = i;
               }
-            else
+
+            d_highestStateForResidualComputation = highestOccupiedState;
+
+            for (unsigned int i = 0; i <= d_highestStateForResidualComputation;
+                 i++)
               {
-                double temp2 = 1.0 / (1.0 + exp(-factor));
-                functionValue =
-                  (2.0 - d_dftParamsPtr->spinPolarized) * exp(-factor) * temp2;
+                if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
+                    maxHighestOccupiedStateResNorm)
+                  {
+                    maxHighestOccupiedStateResNorm =
+                      residualNormWaveFunctionsAllkPoints[kPoint][i];
+                  }
               }
-            if (functionValue > 1e-3)
-              highestOccupiedState = i;
           }
-        for (unsigned int i = 0; i <= highestOccupiedState; i++)
-          {
-            if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
-                maxResidualsAllkPoints[kPoint])
-              {
-                maxResidualsAllkPoints[kPoint] =
-                  residualNormWaveFunctionsAllkPoints[kPoint][i];
-              }
-          }
-      }
-    maxHighestOccupiedStateResNorm =
-      *std::max_element(maxResidualsAllkPoints.begin(),
-                        maxResidualsAllkPoints.end());
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);

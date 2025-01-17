@@ -36,13 +36,17 @@ subsection Finite element mesh parameters
 end
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 4
+  set EXCHANGE CORRELATION TYPE = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
 end
 
 subsection Parallelization
   set NPBAND=2
+end
+
+subsection Post-processing Options
+  set PRINT KINETIC ENERGY = true
 end
 
 subsection SCF parameters
@@ -65,3 +69,10 @@ subsection SCF parameters
       set OVERLAP COMPUTE COMMUN CHEBY=false
   end
 end
+
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end
+

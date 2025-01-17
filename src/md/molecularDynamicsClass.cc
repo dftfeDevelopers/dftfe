@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -1670,7 +1670,7 @@ namespace dftfe
       Folder + "/Step" + std::to_string(d_startingTimeStep);
     std::string newFolder0 =
       tempfolder + "/" + "UnwrappedFractionalCoordinates.chk";
-    dftUtils::readFile(5, d_atomFractionalunwrapped, newFolder0);
+    dftUtils::readFile(d_atomFractionalunwrapped, newFolder0);
     std::string                      fileName1  = "velocity.chk";
     std::string                      newFolder1 = tempfolder + "/" + fileName1;
     std::vector<std::vector<double>> fileVelData;
@@ -1956,7 +1956,7 @@ namespace dftfe
         // for loop
         pcout << "Using Extrapolated Density for init" << std::endl;
         d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
-        for (int i = 0; i < d_extrapDensity_t0.local_size(); i++)
+        for (int i = 0; i < d_extrapDensity_t0.locally_owned_size(); i++)
           {
             C = d_extrapDensity_t0.local_element(i);
             B = 0.5 * (3 * d_extrapDensity_t0.local_element(i) +
@@ -2007,7 +2007,7 @@ namespace dftfe
         pcout << "Using Split Extrapolated Density for initialization"
               << std::endl;
         d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
-        for (int i = 0; i < d_extrapDensity_t0.local_size(); i++)
+        for (int i = 0; i < d_extrapDensity_t0.locally_owned_size(); i++)
           {
             C = d_extrapDensity_t0.local_element(i);
             B = 0.5 * (3 * d_extrapDensity_t0.local_element(i) +

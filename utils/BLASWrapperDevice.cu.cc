@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -23,6 +23,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <cublas_v2.h>
 #include "BLASWrapperDeviceKernels.cc"
+
 namespace dftfe
 {
   namespace linearAlgebra
@@ -39,6 +40,25 @@ namespace dftfe
     {
       return d_deviceBlasHandle;
     }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2ArrDeviceCall(
+        const dftfe::size_type             size,
+        const ValueType1 *                 valueType1Arr,
+        ValueType2 *                       valueType2Arr,
+        const dftfe::utils::deviceStream_t streamId)
+    {
+      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        streamId>>>(size,
+                    dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+                    dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
+    }
+
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(
@@ -135,21 +155,33 @@ namespace dftfe
         {
           // Assert Statement
         }
-
-      dftfe::utils::deviceBlasStatus_t status = cublasSgemm(d_deviceBlasHandle,
-                                                            transa,
-                                                            transb,
-                                                            int(m),
-                                                            int(n),
-                                                            int(k),
-                                                            alpha,
-                                                            A,
-                                                            int(lda),
-                                                            B,
-                                                            int(ldb),
-                                                            beta,
-                                                            C,
-                                                            int(ldc));
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
+      dftfe::utils::deviceBlasStatus_t status =
+        cublasGemmEx(d_deviceBlasHandle,
+                     transa,
+                     transb,
+                     int(m),
+                     int(n),
+                     int(k),
+                     (const void *)alpha,
+                     (const void *)A,
+                     CUDA_R_32F,
+                     int(lda),
+                     (const void *)B,
+                     CUDA_R_32F,
+                     int(ldb),
+                     (const void *)beta,
+                     (void *)C,
+                     CUDA_R_32F,
+                     int(ldc),
+                     computeType,
+                     CUBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -191,22 +223,34 @@ namespace dftfe
         {
           // Assert Statement
         }
-
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
       dftfe::utils::deviceBlasStatus_t status =
-        cublasCgemm(d_deviceBlasHandle,
-                    transa,
-                    transb,
-                    int(m),
-                    int(n),
-                    int(k),
-                    dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                    dftfe::utils::makeDataTypeDeviceCompatible(A),
-                    int(lda),
-                    dftfe::utils::makeDataTypeDeviceCompatible(B),
-                    int(ldb),
-                    dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                    dftfe::utils::makeDataTypeDeviceCompatible(C),
-                    int(ldc));
+        cublasGemmEx(d_deviceBlasHandle,
+                     transa,
+                     transb,
+                     int(m),
+                     int(n),
+                     int(k),
+                     (const void *)alpha,
+                     (const void *)A,
+                     CUDA_C_32F,
+                     int(lda),
+                     (const void *)B,
+                     CUDA_C_32F,
+                     int(ldb),
+                     (const void *)beta,
+                     (void *)C,
+                     CUDA_C_32F,
+                     int(ldc),
+                     computeType,
+                     CUBLAS_GEMM_DEFAULT);
+
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -261,6 +305,8 @@ namespace dftfe
                                                             beta,
                                                             C,
                                                             int(ldc));
+
+
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -733,6 +779,110 @@ namespace dftfe
                     mpi_communicator);
     }
 
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProduct(
+      const unsigned int m,
+      const ValueType *  X,
+      const ValueType *  Y,
+      ValueType *        output) const
+    {
+      hadamardProductKernel<<<(m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                              dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        m,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
+        dftfe::utils::makeDataTypeDeviceCompatible(Y),
+        dftfe::utils::makeDataTypeDeviceCompatible(output));
+    }
+
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProductWithConj(
+      const unsigned int m,
+      const ValueType *  X,
+      const ValueType *  Y,
+      ValueType *        output) const
+    {
+      hadamardProductWithConjKernel<<<(m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        m,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
+        dftfe::utils::makeDataTypeDeviceCompatible(Y),
+        dftfe::utils::makeDataTypeDeviceCompatible(output));
+    }
+
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
+      const unsigned int contiguousBlockSize,
+      const unsigned int numContiguousBlocks,
+      const ValueType *  X,
+      const ValueType *  Y,
+      const ValueType *  onesVec,
+      ValueType *        tempVector,
+      ValueType *        tempResults,
+      ValueType *        result) const
+    {
+      hadamardProductWithConj(contiguousBlockSize * numContiguousBlocks,
+                              X,
+                              Y,
+                              tempVector);
+
+      ValueType    alpha  = 1.0;
+      ValueType    beta   = 0.0;
+      unsigned int numVec = 1;
+      xgemm('N',
+            'T',
+            numVec,
+            contiguousBlockSize,
+            numContiguousBlocks,
+            &alpha,
+            onesVec,
+            numVec,
+            tempVector,
+            contiguousBlockSize,
+            &beta,
+            tempResults,
+            numVec);
+
+      dftfe::utils::deviceMemcpyD2H(dftfe::utils::makeDataTypeDeviceCompatible(
+                                      result),
+                                    tempResults,
+                                    contiguousBlockSize * sizeof(ValueType));
+    }
+
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
+      const unsigned int contiguousBlockSize,
+      const unsigned int numContiguousBlocks,
+      const ValueType *  X,
+      const ValueType *  Y,
+      const ValueType *  onesVec,
+      ValueType *        tempVector,
+      ValueType *        tempResults,
+      const MPI_Comm &   mpi_communicator,
+      ValueType *        result) const
+
+    {
+      MultiVectorXDot(contiguousBlockSize,
+                      numContiguousBlocks,
+                      X,
+                      Y,
+                      onesVec,
+                      tempVector,
+                      tempResults,
+                      result);
+
+      MPI_Allreduce(MPI_IN_PLACE,
+                    &result[0],
+                    contiguousBlockSize,
+                    dataTypes::mpi_type_id(&result[0]),
+                    MPI_SUM,
+                    mpi_communicator);
+    }
+
+
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmStridedBatched(
       const char         transA,
@@ -900,26 +1050,38 @@ namespace dftfe
         {
           // Assert Statement
         }
-
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
       dftfe::utils::deviceBlasStatus_t status =
-        cublasSgemmStridedBatched(d_deviceBlasHandle,
-                                  transa,
-                                  transb,
-                                  int(m),
-                                  int(n),
-                                  int(k),
-                                  alpha,
-                                  A,
-                                  int(lda),
-                                  strideA,
-                                  B,
-                                  int(ldb),
-                                  strideB,
-                                  beta,
-                                  C,
-                                  int(ldc),
-                                  strideC,
-                                  int(batchCount));
+        cublasGemmStridedBatchedEx(d_deviceBlasHandle,
+                                   transa,
+                                   transb,
+                                   int(m),
+                                   int(n),
+                                   int(k),
+                                   (const void *)alpha,
+                                   (const void *)A,
+                                   CUDA_R_32F,
+                                   int(lda),
+                                   strideA,
+                                   (const void *)B,
+                                   CUDA_R_32F,
+                                   int(ldb),
+                                   strideB,
+                                   (const void *)beta,
+                                   (void *)C,
+                                   CUDA_R_32F,
+                                   int(ldc),
+                                   strideC,
+                                   int(batchCount),
+                                   computeType,
+                                   CUBLAS_GEMM_DEFAULT);
+
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -966,25 +1128,37 @@ namespace dftfe
           // Assert Statement
         }
 
-      dftfe::utils::deviceBlasStatus_t status = cublasCgemmStridedBatched(
-        d_deviceBlasHandle,
-        transa,
-        transb,
-        int(m),
-        int(n),
-        int(k),
-        dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-        dftfe::utils::makeDataTypeDeviceCompatible(A),
-        int(lda),
-        strideA,
-        dftfe::utils::makeDataTypeDeviceCompatible(B),
-        int(ldb),
-        strideB,
-        dftfe::utils::makeDataTypeDeviceCompatible(beta),
-        dftfe::utils::makeDataTypeDeviceCompatible(C),
-        int(ldc),
-        strideC,
-        int(batchCount));
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
+      dftfe::utils::deviceBlasStatus_t status =
+        cublasGemmStridedBatchedEx(d_deviceBlasHandle,
+                                   transa,
+                                   transb,
+                                   int(m),
+                                   int(n),
+                                   int(k),
+                                   (const void *)alpha,
+                                   (const void *)A,
+                                   CUDA_C_32F,
+                                   int(lda),
+                                   strideA,
+                                   (const void *)B,
+                                   CUDA_C_32F,
+                                   int(ldb),
+                                   strideB,
+                                   (const void *)beta,
+                                   (void *)C,
+                                   CUDA_C_32F,
+                                   int(ldc),
+                                   strideC,
+                                   int(batchCount),
+                                   computeType,
+                                   CUBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
     }
     void
@@ -1142,22 +1316,34 @@ namespace dftfe
           // Assert Statement
         }
 
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
       dftfe::utils::deviceBlasStatus_t status =
-        cublasSgemmBatched(d_deviceBlasHandle,
-                           transa,
-                           transb,
-                           int(m),
-                           int(n),
-                           int(k),
-                           alpha,
-                           A,
-                           int(lda),
-                           B,
-                           int(ldb),
-                           beta,
-                           C,
-                           int(ldc),
-                           int(batchCount));
+        cublasGemmBatchedEx(d_deviceBlasHandle,
+                            transa,
+                            transb,
+                            int(m),
+                            int(n),
+                            int(k),
+                            (const void *)alpha,
+                            (const void **)A,
+                            CUDA_R_32F,
+                            int(lda),
+                            (const void **)B,
+                            CUDA_R_32F,
+                            int(ldb),
+                            (const void *)beta,
+                            (void **)C,
+                            CUDA_R_32F,
+                            int(ldc),
+                            int(batchCount),
+                            computeType,
+                            CUBLAS_GEMM_DEFAULT);
 
       DEVICEBLAS_API_CHECK(status);
     }
@@ -1200,23 +1386,35 @@ namespace dftfe
         {
           // Assert Statement
         }
-
+      cublasComputeType_t computeType = CUBLAS_COMPUTE_32F;
+      if (d_opType == tensorOpDataType::tf32)
+        computeType = CUBLAS_COMPUTE_32F_FAST_TF32;
+      else if (d_opType == tensorOpDataType::bf16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16BF;
+      else if (d_opType == tensorOpDataType::fp16)
+        computeType = CUBLAS_COMPUTE_32F_FAST_16F;
       dftfe::utils::deviceBlasStatus_t status =
-        cublasCgemmBatched(d_deviceBlasHandle,
-                           transa,
-                           transb,
-                           int(m),
-                           int(n),
-                           int(k),
-                           dftfe::utils::makeDataTypeDeviceCompatible(alpha),
-                           (const dftfe::utils::deviceFloatComplex **)A,
-                           int(lda),
-                           (const dftfe::utils::deviceFloatComplex **)B,
-                           int(ldb),
-                           dftfe::utils::makeDataTypeDeviceCompatible(beta),
-                           (dftfe::utils::deviceFloatComplex **)C,
-                           int(ldc),
-                           int(batchCount));
+        cublasGemmBatchedEx(d_deviceBlasHandle,
+                            transa,
+                            transb,
+                            int(m),
+                            int(n),
+                            int(k),
+                            (const void *)alpha,
+                            (const void **)A,
+                            CUDA_C_32F,
+                            int(lda),
+                            (const void **)B,
+                            CUDA_C_32F,
+                            int(ldb),
+                            (const void *)beta,
+                            (void **)C,
+                            CUDA_C_32F,
+                            int(ldc),
+                            int(batchCount),
+                            computeType,
+                            CUBLAS_GEMM_DEFAULT);
+
 
       DEVICEBLAS_API_CHECK(status);
     }
@@ -1271,6 +1469,26 @@ namespace dftfe
     {
       xaxpy(size, &alpha, x, 1, y, 1);
     }
+
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::addVecOverContinuousIndex(
+      const dftfe::size_type numContiguousBlocks,
+      const dftfe::size_type contiguousBlockSize,
+      const ValueType *      input1,
+      const ValueType *      input2,
+      ValueType *            output)
+    {
+      addVecOverContinuousIndexKernel<<<
+        (numContiguousBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        numContiguousBlocks,
+        contiguousBlockSize,
+        dftfe::utils::makeDataTypeDeviceCompatible(input1),
+        dftfe::utils::makeDataTypeDeviceCompatible(input2),
+        dftfe::utils::makeDataTypeDeviceCompatible(output));
+    }
+
 
     template <typename ValueType1, typename ValueType2>
     void
@@ -1360,6 +1578,30 @@ namespace dftfe
         copyFromVecStartingContiguousBlockIds);
     }
 
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const dftfe::size_type         startingVecId,
+      const ValueType1 *             copyFromVec,
+      ValueType2 *                   copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+    {
+      stridedCopyToBlockDeviceKernel<<<(contiguousBlockSize *
+                                        numContiguousBlocks) /
+                                           dftfe::utils::DEVICE_BLOCK_SIZE +
+                                         1,
+                                       dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        startingVecId,
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
+        copyFromVecStartingContiguousBlockIds);
+    }
+
+
 
     template <typename ValueType1, typename ValueType2>
     void
@@ -1391,7 +1633,7 @@ namespace dftfe
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
                                        const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec)
+                                       ValueType2 *           copyToVec) const
     {
       stridedCopyToBlockConstantStrideDeviceKernel<<<
         (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1497,6 +1739,72 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(x));
     }
 
+
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleColumnWise(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType *      beta,
+      ValueType *            x)
+    {
+      stridedBlockScaleColumnWiseKernel<<<(contiguousBlockSize *
+                                           numContiguousBlocks) /
+                                              dftfe::utils::DEVICE_BLOCK_SIZE +
+                                            1,
+                                          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(beta),
+        dftfe::utils::makeDataTypeDeviceCompatible(x));
+    }
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      stridedBlockScaleAndAddColumnWise(
+        const dftfe::size_type contiguousBlockSize,
+        const dftfe::size_type numContiguousBlocks,
+        const ValueType *      x,
+        const ValueType *      beta,
+        ValueType *            y)
+    {
+      stridedBlockScaleAndAddColumnWiseKernel<<<
+        (contiguousBlockSize * numContiguousBlocks) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(x),
+        dftfe::utils::makeDataTypeDeviceCompatible(beta),
+        dftfe::utils::makeDataTypeDeviceCompatible(y));
+    }
+
+    template <typename ValueType>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      stridedBlockScaleAndAddTwoVecColumnWise(
+        const dftfe::size_type contiguousBlockSize,
+        const dftfe::size_type numContiguousBlocks,
+        const ValueType *      x,
+        const ValueType *      alpha,
+        const ValueType *      y,
+        const ValueType *      beta,
+        ValueType *            z)
+    {
+      stridedBlockScaleAndAddTwoVecColumnWiseKernel<<<
+        (contiguousBlockSize * numContiguousBlocks) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(x),
+        dftfe::utils::makeDataTypeDeviceCompatible(alpha),
+        dftfe::utils::makeDataTypeDeviceCompatible(y),
+        dftfe::utils::makeDataTypeDeviceCompatible(beta),
+        dftfe::utils::makeDataTypeDeviceCompatible(z));
+    }
 #include "./BLASWrapperDevice.inst.cc"
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

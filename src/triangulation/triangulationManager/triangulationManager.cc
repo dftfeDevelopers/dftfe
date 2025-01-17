@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -90,6 +90,8 @@ namespace dftfe
     d_nearestAtomDistances  = nearestAtomDistances;
     d_domainBoundingVectors = domainBoundingVectors;
 
+    if (d_dftParams.meshSizesFile != "")
+      dftUtils::readFile(d_meshSizes, d_dftParams.meshSizesFile);
     // clear existing triangulation data
     d_serialTriangulationUnmoved.clear();
     d_parallelTriangulationUnmoved.clear();
@@ -99,10 +101,14 @@ namespace dftfe
     //
     generateMesh(d_parallelTriangulationUnmoved,
                  d_serialTriangulationUnmoved,
+                 d_parallelTriaCurrentRefinement,
+                 d_serialTriaCurrentRefinement,
                  generateSerialTria);
 
     generateMesh(d_parallelTriangulationMoved,
                  d_serialTriangulationUnmoved,
+                 d_parallelTriaCurrentRefinement,
+                 d_serialTriaCurrentRefinement,
                  false);
   }
 
@@ -173,6 +179,8 @@ namespace dftfe
     d_nearestAtomDistances  = nearestAtomDistances;
     d_domainBoundingVectors = domainBoundingVectors;
 
+    if (d_dftParams.meshSizesFile != "")
+      dftUtils::readFile(d_meshSizes, d_dftParams.meshSizesFile);
     // clear existing triangulation data
     d_serialTriangulationUnmoved.clear();
     d_parallelTriangulationUnmoved.clear();

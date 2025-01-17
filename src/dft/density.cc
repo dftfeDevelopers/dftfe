@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -32,6 +32,10 @@ namespace dftfe
     const bool isConsiderSpectrumSplitting,
     const bool isGroundState)
   {
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
@@ -61,8 +65,7 @@ namespace dftfe
             d_densityOutQuadValues[iComp],
             d_gradDensityOutQuadValues[iComp],
             d_gradDensityOutQuadValues[iComp],
-            d_excManagerPtr->getDensityBasedFamilyType() ==
-              densityFamilyType::GGA);
+            isGradDensityDataDependent);
 
         if (d_dftParamsPtr->verbosity >= 3)
           {
@@ -81,8 +84,7 @@ namespace dftfe
         const unsigned int nCells = d_basisOperationsPtrHost->nCells();
         d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
-        if (d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isGradDensityDataDependent)
           {
             d_gradDensityOutQuadValues.resize(
               d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
@@ -113,8 +115,7 @@ namespace dftfe
                             d_kPointWeights,
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
-                            d_excManagerPtr->getDensityBasedFamilyType() ==
-                              densityFamilyType::GGA,
+                            isGradDensityDataDependent,
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
@@ -138,8 +139,7 @@ namespace dftfe
                             d_kPointWeights,
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
-                            d_excManagerPtr->getDensityBasedFamilyType() ==
-                              densityFamilyType::GGA,
+                            isGradDensityDataDependent,
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
@@ -219,10 +219,14 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::noRemeshRhoDataInit()
   {
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
     // cleanup of existing rho Out and rho In data
     clearRhoData();
     d_densityInQuadValues = d_densityOutQuadValues;
-    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (isGradDensityDataDependent)
       {
         d_gradDensityInQuadValues = d_gradDensityOutQuadValues;
       }
@@ -254,16 +258,14 @@ namespace dftfe
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            d_excManagerPtr->getDensityBasedFamilyType() ==
-              densityFamilyType::GGA);
+            isGradDensityDataDependent);
 
         d_densityOutQuadValues.resize(d_densityInNodalValues.size());
         for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
              ++iComp)
           d_densityOutQuadValues[iComp].resize(
             d_densityInQuadValues[iComp].size());
-        if (d_excManagerPtr->getDensityBasedFamilyType() ==
-            densityFamilyType::GGA)
+        if (isGradDensityDataDependent)
           {
             d_gradDensityOutQuadValues.resize(d_gradDensityInQuadValues.size());
             for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();

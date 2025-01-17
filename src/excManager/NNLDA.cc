@@ -28,6 +28,42 @@ namespace dftfe
       }
     };
 
+    std::string
+    trim(const std::string &str, const std::string &whitespace = " \t")
+    {
+      std::size_t strBegin = str.find_first_not_of(whitespace);
+      if (strBegin == std::string::npos)
+        return ""; // no content
+      std::size_t strEnd   = str.find_last_not_of(whitespace);
+      std::size_t strRange = strEnd - strBegin + 1;
+      return str.substr(strBegin, strRange);
+    }
+
+    std::map<std::string, std::string>
+    getKeyValuePairs(const std::string filename, const std::string delimiter)
+    {
+      std::map<std::string, std::string> returnValue;
+      std::ifstream                      readFile;
+      std::string                        readLine;
+      readFile.open(filename.c_str());
+      utils::throwException<utils::InvalidArgument>(readFile.is_open(),
+                                                    "Unable to open file " +
+                                                      filename);
+      while (std::getline(readFile, readLine))
+        {
+          auto pos = readLine.find_last_of(delimiter);
+          if (pos != std::string::npos)
+            {
+              std::string key   = trim(readLine.substr(0, pos));
+              std::string value = trim(readLine.substr(pos + 1));
+              returnValue[key]  = value;
+            }
+        }
+
+      readFile.close();
+      return returnValue;
+    }
+
     void
     excSpinUnpolarized(
       const double *                       rho,
@@ -248,17 +284,37 @@ namespace dftfe
     }
   } // namespace
 
-  NNLDA::NNLDA(std::string                          modelFileName,
+  NNLDA::NNLDA(std::string                          modelFilename,
                const bool                           isSpinPolarized /*=false*/,
-               const excDensityPositivityCheckTypes densityPositivityCheckType,
-               const double                         rhoTol)
-    : d_modelFileName(modelFileName)
+               const excDensityPositivityCheckTypes densityPositivityCheckType)
+    : d_modelFilename(modelFilename)
     , d_isSpinPolarized(isSpinPolarized)
     , d_densityPositivityCheckType(densityPositivityCheckType)
-    , d_rhoTol(rhoTol)
   {
+    std::map<std::string, std::string> modelKeyValues =
+      getKeyValuePairs(d_modelFilename, "=");
+
+    std::vector<std::string> keysToFind = {"PTC_FILE", "RHO_TOL"};
+
+    // check if all required keys are found
+    for (unsigned int i = 0; i < keysToFind.size(); ++i)
+      {
+        bool found = false;
+        for (auto it = modelKeyValues.begin(); it != modelKeyValues.end(); ++it)
+          {
+            if (keysToFind[i] == it->first)
+              found = true;
+          }
+        utils::throwException(found,
+                              "Unable to find the key " + keysToFind[i] +
+                                " in file " + d_modelFilename);
+      }
+
+    d_ptcFilename = modelKeyValues["PTC_FILE"];
+    d_rhoTol      = std::stod(modelKeyValues["RHO_TOL"]);
+
     d_model  = new torch::jit::script::Module;
-    *d_model = torch::jit::load(d_modelFileName);
+    *d_model = torch::jit::load(d_ptcFilename);
     // Explicitly load model onto CPU, you can use kGPU if you are on Linux
     // and have libtorch version with CUDA support (and a GPU)
     d_model->to(torch::kCPU);

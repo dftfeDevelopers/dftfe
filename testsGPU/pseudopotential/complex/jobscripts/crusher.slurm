@@ -32,3 +32,4 @@ srun -n 6 -c 1 ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
 
 srun -n 6 -c 1 ./dftfe parameterFileBe.prm > outputBe
 
+srun -n 6 -c 1 ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard

@@ -9,11 +9,11 @@ namespace dftfe
   class NNLDA
   {
   public:
-    NNLDA(std::string                          modelFileName,
+    NNLDA(std::string                          modelFilename,
           const bool                           isSpinPolarized = false,
           const excDensityPositivityCheckTypes densityPositivityCheckType =
-            excDensityPositivityCheckTypes::MAKE_POSITIVE,
-          const double rhoTol = 1.0e-8);
+            excDensityPositivityCheckTypes::MAKE_POSITIVE);
+
     ~NNLDA();
     void
     evaluateexc(const double *rho, const unsigned int numPoints, double *exc);
@@ -24,10 +24,11 @@ namespace dftfe
                 double *           vxc);
 
   private:
-    std::string                          d_modelFileName;
+    std::string                          d_modelFilename;
+    std::string                          d_ptcFilename;
     torch::jit::script::Module *         d_model;
     const bool                           d_isSpinPolarized;
-    const double                         d_rhoTol;
+    double                               d_rhoTol;
     const excDensityPositivityCheckTypes d_densityPositivityCheckType;
   };
 } // namespace dftfe

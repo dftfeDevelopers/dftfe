@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -85,6 +85,25 @@ namespace dftfe
                            ownedLocalIndicesForTargetProcs.data()[i] *
                              blockSize,
                          std::plus<>{});
+    }
+
+    template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+    template <typename ValueTypeComm>
+    void
+    MPICommunicatorP2PKernels<ValueType, memorySpace>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<ValueTypeComm, memorySpace> &recvBuffer,
+        const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
+        const size_type                        blockSize,
+        const size_type                        locallyOwnedSize,
+        const size_type                        ghostSize,
+        MemoryStorage<ValueType, memorySpace> &dataArray)
+    {
+      for (size_type i = 0; i < ownedLocalIndicesForTargetProcs.size(); ++i)
+        std::copy(recvBuffer.data() + i * blockSize,
+                  recvBuffer.data() + (i + 1) * blockSize,
+                  dataArray.data() +
+                    ownedLocalIndicesForTargetProcs.data()[i] * blockSize);
     }
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -225,6 +244,72 @@ namespace dftfe
     MPICommunicatorP2PKernels<std::complex<float>,
                               dftfe::utils::MemorySpace::HOST>::
       accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<std::complex<float>,
+                            dftfe::utils::MemorySpace::HOST> &recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<std::complex<float>, dftfe::utils::MemorySpace::HOST>
+          &dataArray);
+
+
+    template void
+    MPICommunicatorP2PKernels<double, dftfe::utils::MemorySpace::HOST>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &                   recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<double, dftfe::utils::MemorySpace::HOST> &dataArray);
+    template void
+    MPICommunicatorP2PKernels<double, dftfe::utils::MemorySpace::HOST>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<float, dftfe::utils::MemorySpace::HOST> &recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<double, dftfe::utils::MemorySpace::HOST> &dataArray);
+    template void
+    MPICommunicatorP2PKernels<float, dftfe::utils::MemorySpace::HOST>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<float, dftfe::utils::MemorySpace::HOST> &recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<float, dftfe::utils::MemorySpace::HOST> &dataArray);
+    template void
+    MPICommunicatorP2PKernels<std::complex<double>,
+                              dftfe::utils::MemorySpace::HOST>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<std::complex<double>,
+                            dftfe::utils::MemorySpace::HOST> &recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<std::complex<double>, dftfe::utils::MemorySpace::HOST>
+          &dataArray);
+    template void
+    MPICommunicatorP2PKernels<std::complex<double>,
+                              dftfe::utils::MemorySpace::HOST>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<std::complex<float>,
+                            dftfe::utils::MemorySpace::HOST> &recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<std::complex<double>, dftfe::utils::MemorySpace::HOST>
+          &dataArray);
+    template void
+    MPICommunicatorP2PKernels<std::complex<float>,
+                              dftfe::utils::MemorySpace::HOST>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
         const MemoryStorage<std::complex<float>,
                             dftfe::utils::MemorySpace::HOST> &recvBuffer,
         const SizeTypeVector &ownedLocalIndicesForTargetProcs,
@@ -412,6 +497,77 @@ namespace dftfe
         const size_type       ghostSize,
         MemoryStorage<std::complex<float>,
                       dftfe::utils::MemorySpace::HOST_PINNED> &dataArray);
+
+    template void
+    MPICommunicatorP2PKernels<double, dftfe::utils::MemorySpace::HOST_PINNED>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED>
+          &                   recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED>
+          &dataArray);
+    template void
+    MPICommunicatorP2PKernels<double, dftfe::utils::MemorySpace::HOST_PINNED>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<float, dftfe::utils::MemorySpace::HOST_PINNED>
+          &                   recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<double, dftfe::utils::MemorySpace::HOST_PINNED>
+          &dataArray);
+    template void
+    MPICommunicatorP2PKernels<float, dftfe::utils::MemorySpace::HOST_PINNED>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<float, dftfe::utils::MemorySpace::HOST_PINNED>
+          &                   recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<float, dftfe::utils::MemorySpace::HOST_PINNED>
+          &dataArray);
+    template void
+    MPICommunicatorP2PKernels<std::complex<double>,
+                              dftfe::utils::MemorySpace::HOST_PINNED>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<std::complex<double>,
+                            dftfe::utils::MemorySpace::HOST_PINNED> &recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<std::complex<double>,
+                      dftfe::utils::MemorySpace::HOST_PINNED> &dataArray);
+    template void
+    MPICommunicatorP2PKernels<std::complex<double>,
+                              dftfe::utils::MemorySpace::HOST_PINNED>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<std::complex<float>,
+                            dftfe::utils::MemorySpace::HOST_PINNED> &recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<std::complex<double>,
+                      dftfe::utils::MemorySpace::HOST_PINNED> &dataArray);
+    template void
+    MPICommunicatorP2PKernels<std::complex<float>,
+                              dftfe::utils::MemorySpace::HOST_PINNED>::
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<std::complex<float>,
+                            dftfe::utils::MemorySpace::HOST_PINNED> &recvBuffer,
+        const SizeTypeVector &ownedLocalIndicesForTargetProcs,
+        const size_type       blockSize,
+        const size_type       locallyOwnedSize,
+        const size_type       ghostSize,
+        MemoryStorage<std::complex<float>,
+                      dftfe::utils::MemorySpace::HOST_PINNED> &dataArray);
+
     template void
     MPICommunicatorP2PKernels<double, dftfe::utils::MemorySpace::HOST_PINNED>::
       copyValueType1ArrToValueType2Arr(const size_type blockSize,

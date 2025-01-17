@@ -19,11 +19,10 @@ end
 
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 4
+  set EXCHANGE CORRELATION TYPE = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudoMg.inp
   set SPIN POLARIZATION=1
-  set START MAGNETIZATION=0.1
 end
 
 
@@ -41,7 +40,7 @@ end
 subsection Geometry
   set NATOMS=31
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE      = coordinatesMg2x.inp
+  set ATOMIC COORDINATES FILE      = coordinatesMg2x_spin.inp
   set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
   subsection Optimization
     set ION FORCE                 = true
@@ -67,3 +66,10 @@ subsection SCF parameters
        set CHEBYSHEV FILTER TOLERANCE=1e-5
   end
 end
+
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end
+

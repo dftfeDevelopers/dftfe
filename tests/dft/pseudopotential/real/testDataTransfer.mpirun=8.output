@@ -1,0 +1,42 @@
+number of atoms: 1
+number of atoms types: 1
+Z:13
+=============================================================================================================================
+number of electrons: 3
+number of eigen values: 8
+=============================================================================================================================
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 4.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 4.000000000000000000e+01 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 4.000000000000000000e+01
+-----------------------------------------------------------------------------------------
+------------Cartesian coordinates of atoms (origin at center of domain)------------------
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+number of elements: 288
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 10381
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+ maxNumPoints = 2752 maxNumCells = 36
+ All points found successfully 
+ Total number of points provided as input = 22016
+ Total number of points found from input = 22016
+ Total number of points in all procs = 22016
+ maxNumPoints = 7776 maxNumCells = 43
+ All points found successfully 
+ Total number of points provided as input = 62208
+ Total number of points found from input = 62208
+ Total number of points in all procs = 62208
+ Interpolation to quad points of child of successful
+ Interpolation to quad points of parent of successful

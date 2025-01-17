@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -536,7 +536,13 @@ namespace dftfe
                            C_num1DQuadNLPSP<FEOrder>() *
                              C_numCopies1DQuadNLPSP(),
                            3> &            forceEvalNLP,
-      const unsigned int                   cell,
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                                       nonLocalOp,
+      unsigned int                     numNonLocalAtomsCurrentProcess,
+      const std::vector<int> &         globalChargeIdNonLocalAtoms,
+      const std::vector<unsigned int> &numberPseudoWaveFunctionsPerAtom,
+      const unsigned int               cell,
       const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
 #ifdef USE_COMPLEX
       const std::vector<dataTypes::number>
@@ -552,7 +558,13 @@ namespace dftfe
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &FVectQuads,
       const dealii::MatrixFree<3, double> &                     matrixFreeData,
       const unsigned int                                        numQuadPoints,
-      const unsigned int                                        cell,
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                                       nonLocalOp,
+      const unsigned int               numNonLocalAtomsCurrentProcess,
+      const std::vector<int> &         globalChargeIdNonLocalAtoms,
+      const std::vector<unsigned int> &numberPseudoWaveFunctionsPerAtom,
+      const unsigned int               cell,
       const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
       const std::vector<dataTypes::number> &        zetaDeltaVQuadsFlattened,
       const std::vector<dataTypes::number> &
@@ -564,11 +576,16 @@ namespace dftfe
         &forceContributionFnlGammaAtoms);
 
     void stressEnlElementalContribution(
-      dealii::Tensor<2, 3, double> &                stressContribution,
-      const dealii::MatrixFree<3, double> &         matrixFreeData,
-      const unsigned int                            numQuadPoints,
-      const std::vector<double> &                   jxwQuadsSubCells,
-      const unsigned int                            cell,
+      dealii::Tensor<2, 3, double> &       stressContribution,
+      const dealii::MatrixFree<3, double> &matrixFreeData,
+      const unsigned int                   numQuadPoints,
+      const std::vector<double> &          jxwQuadsSubCells,
+      const unsigned int                   cell,
+      const unsigned int                   numNonLocalAtomsCurrentProcess,
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                                       nonLocalOp,
+      const std::vector<unsigned int> &numberPseudoWaveFunctionsPerAtom,
       const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
       const std::vector<dataTypes::number> &zetalmDeltaVlProductDistImageAtoms,
 #ifdef USE_COMPLEX

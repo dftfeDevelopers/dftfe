@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -57,7 +57,7 @@ namespace dftfe
         MemoryStorage<ValueTypeComm, memorySpace> &sendBuffer);
 
       /**
-       * @brief Function template for architecture adaptable accumlate kernel from recv buffer
+       * @brief Function template for architecture adaptable accumulate add kernel from recv buffer
        * @tparam ValueType the type of the number
        * @tparam memorySpace
        * @param[in] recvBuffer
@@ -68,6 +68,25 @@ namespace dftfe
       template <typename ValueTypeComm>
       static void
       accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<ValueTypeComm, memorySpace> &recvBuffer,
+        const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
+        const size_type                        blockSize,
+        const size_type                        locallyOwnedSize,
+        const size_type                        ghostSize,
+        MemoryStorage<ValueType, memorySpace> &dataArray);
+
+      /**
+       * @brief Function template for architecture adaptable accumulate insert kernel from recv buffer
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace
+       * @param[in] recvBuffer
+       * @param[in] ownedLocalIndicesForTargetProcs
+       * @param[in] blockSize
+       * @param[out] dataArray
+       */
+      template <typename ValueTypeComm>
+      static void
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
         const MemoryStorage<ValueTypeComm, memorySpace> &recvBuffer,
         const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
         const size_type                        blockSize,
@@ -109,6 +128,28 @@ namespace dftfe
       template <typename ValueTypeComm>
       static void
       accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<ValueTypeComm, dftfe::utils::MemorySpace::DEVICE>
+          &recvBuffer,
+        const MemoryStorage<size_type, dftfe::utils::MemorySpace::DEVICE>
+          &             ownedLocalIndicesForTargetProcs,
+        const size_type blockSize,
+        const size_type locallyOwnedSize,
+        const size_type ghostSize,
+        MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+      /**
+       * @brief Function template for architecture adaptable accumulate insert kernel from recv buffer
+       * @tparam ValueType the type of the number
+       * @tparam memorySpace
+       * @param[in] recvBuffer
+       * @param[in] ownedLocalIndicesForTargetProcs
+       * @param[in] blockSize
+       * @param[out] dataArray
+       */
+      template <typename ValueTypeComm>
+      static void
+      accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
         const MemoryStorage<ValueTypeComm, dftfe::utils::MemorySpace::DEVICE>
           &recvBuffer,
         const MemoryStorage<size_type, dftfe::utils::MemorySpace::DEVICE>

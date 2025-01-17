@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -76,6 +76,8 @@ namespace dftfe
     const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
 
     const bool isPseudopotential = d_dftParams.isPseudopotential;
+
+    const bool useHubbard = dftPtr->isHubbardCorrectionsUsed();
 
     dealii::FEEvaluation<
       3,
@@ -221,9 +223,14 @@ namespace dftfe
         std::vector<dataTypes::number>
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened;
 
+        std::vector<dataTypes::number>
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard;
+
 #ifdef USE_COMPLEX
         std::vector<dataTypes::number>
           projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened;
+        std::vector<dataTypes::number>
+          projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard;
 #endif
 
         if (isPseudopotential)
@@ -245,6 +252,27 @@ namespace dftfe
 #endif
           }
 
+        if (useHubbard)
+          {
+            projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+              .resize(numKPoints *
+                        dftPtr->getHubbardClassPtr()
+                          ->getNonLocalOperator()
+                          ->getTotalNonTrivialSphericalFnsOverAllCells() *
+                        numQuadPointsNLP * 3,
+                      dataTypes::number(0.0));
+
+#ifdef USE_COMPLEX
+            projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
+              .resize(numKPoints *
+                        dftPtr->getHubbardClassPtr()
+                          ->getNonLocalOperator()
+                          ->getTotalNonTrivialSphericalFnsOverAllCells() *
+                        numQuadPointsNLP,
+                      dataTypes::number(0.0));
+#endif
+          }
+
 #if defined(DFTFE_WITH_DEVICE)
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           {
@@ -257,6 +285,8 @@ namespace dftfe
               dftPtr->d_nlpspQuadratureId,
               dftPtr->d_BLASWrapperPtr,
               dftPtr->d_oncvClassPtr,
+              dftPtr->getHubbardClassPtr(),
+              dftPtr->isHubbardCorrectionsUsed(),
               dftPtr->d_eigenVectorsFlattenedDevice.begin(),
               d_dftParams.spinPolarized,
               spinIndex,
@@ -271,8 +301,12 @@ namespace dftfe
               elocWfcEshelbyTensorQuadValuesH.data(),
               projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                 .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+                .data(),
 #  ifdef USE_COMPLEX
               projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
                 .data(),
 #  endif
               d_mpiCommParent,
@@ -299,6 +333,8 @@ namespace dftfe
               dftPtr->d_nlpspQuadratureId,
               dftPtr->d_BLASWrapperPtrHost,
               dftPtr->d_oncvClassPtr,
+              dftPtr->getHubbardClassPtr(),
+              dftPtr->isHubbardCorrectionsUsed(),
               dftPtr->d_eigenVectorsFlattenedHost.begin(),
               d_dftParams.spinPolarized,
               spinIndex,
@@ -313,8 +349,12 @@ namespace dftfe
               elocWfcEshelbyTensorQuadValuesH.data(),
               projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened
                 .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard
+                .data(),
 #ifdef USE_COMPLEX
               projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
+                .data(),
+              projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard
                 .data(),
 #endif
               d_mpiCommParent,
@@ -386,7 +426,7 @@ namespace dftfe
           }             // cell loop
 
 
-        if (isPseudopotential)
+        if (isPseudopotential || useHubbard)
           {
             for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
                  ++cell)
@@ -410,20 +450,106 @@ namespace dftfe
                         jxwQuadsVect[iSubCell];
                   }
 
-                stressEnlElementalContribution(
-                  d_stressKPoints,
-                  matrixFreeData,
-                  numQuadPointsNLP,
-                  jxwQuadsSubCells,
-                  cell,
-                  cellIdToCellNumberMap,
-                  dftPtr->d_oncvClassPtr->getNonLocalOperator()
-                    ->getAtomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues(),
+                if (isPseudopotential)
+                  {
+                    const unsigned int numNonLocalAtomsCurrentProcessPsP =
+                      (dftPtr->d_oncvClassPtr
+                         ->getTotalNumberOfAtomsInCurrentProcessor());
+
+                    std::vector<int> nonLocalAtomIdPsP;
+                    nonLocalAtomIdPsP.resize(numNonLocalAtomsCurrentProcessPsP);
+
+                    std::vector<unsigned int>
+                      numberPseudoWaveFunctionsPerAtomPsP;
+                    numberPseudoWaveFunctionsPerAtomPsP.resize(
+                      numNonLocalAtomsCurrentProcessPsP);
+
+                    for (unsigned int iAtom = 0;
+                         iAtom < numNonLocalAtomsCurrentProcessPsP;
+                         iAtom++)
+                      {
+                        nonLocalAtomIdPsP[iAtom] =
+                          dftPtr->d_oncvClassPtr->getAtomIdInCurrentProcessor(
+                            iAtom);
+
+                        numberPseudoWaveFunctionsPerAtomPsP[iAtom] =
+                          dftPtr->d_oncvClassPtr
+                            ->getTotalNumberOfSphericalFunctionsForAtomId(
+                              nonLocalAtomIdPsP[iAtom]);
+                      }
+
+                    const std::shared_ptr<
+                      AtomicCenteredNonLocalOperator<dataTypes::number,
+                                                     memorySpace>>
+                      oncvNonLocalOp =
+                        dftPtr->d_oncvClassPtr->getNonLocalOperator();
+
+                    stressEnlElementalContribution(
+                      d_stressKPoints,
+                      matrixFreeData,
+                      numQuadPointsNLP,
+                      jxwQuadsSubCells,
+                      cell,
+                      numNonLocalAtomsCurrentProcessPsP,
+                      oncvNonLocalOp,
+                      numberPseudoWaveFunctionsPerAtomPsP,
+                      cellIdToCellNumberMap,
+                      dftPtr->d_oncvClassPtr->getNonLocalOperator()
+                        ->getAtomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues(),
 #ifdef USE_COMPLEX
-                  projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+                      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
 #endif
-                  projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
-                  d_dftParams.spinPolarized == 1);
+                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
+                      d_dftParams.spinPolarized == 1);
+                  }
+
+                if (useHubbard)
+                  {
+                    const unsigned int numNonLocalAtomsCurrentProcessHubbard =
+                      (dftPtr->getHubbardClassPtr()
+                         ->getNonLocalOperator()
+                         ->getTotalAtomInCurrentProcessor());
+
+                    std::vector<unsigned int>
+                      numberPseudoWaveFunctionsPerAtomHubbard;
+                    numberPseudoWaveFunctionsPerAtomHubbard.resize(
+                      numNonLocalAtomsCurrentProcessHubbard);
+                    for (unsigned int iAtom = 0;
+                         iAtom < numNonLocalAtomsCurrentProcessHubbard;
+                         iAtom++)
+                      {
+                        numberPseudoWaveFunctionsPerAtomHubbard[iAtom] =
+                          dftPtr->getHubbardClassPtr()
+                            ->getTotalNumberOfSphericalFunctionsForAtomId(
+                              iAtom);
+                      }
+
+                    const std::shared_ptr<
+                      AtomicCenteredNonLocalOperator<dataTypes::number,
+                                                     memorySpace>>
+                      hubbardNonLocalOp =
+                        dftPtr->getHubbardClassPtr()->getNonLocalOperator();
+
+                    stressEnlElementalContribution(
+                      d_stressKPoints,
+                      matrixFreeData,
+                      numQuadPointsNLP,
+                      jxwQuadsSubCells,
+                      cell,
+                      numNonLocalAtomsCurrentProcessHubbard,
+                      hubbardNonLocalOp,
+                      numberPseudoWaveFunctionsPerAtomHubbard,
+                      cellIdToCellNumberMap,
+                      dftPtr->getHubbardClassPtr()
+                        ->getNonLocalOperator()
+                        ->getAtomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues(),
+#ifdef USE_COMPLEX
+                      projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHubbard,
+#endif
+                      projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHubbard,
+                      d_dftParams.spinPolarized == 1);
+                  }
+
 
               } // macro cell loop
           }     // pseudopotential check
@@ -431,6 +557,10 @@ namespace dftfe
 
     MPI_Barrier(d_mpiCommParent);
     double enowfc_time = MPI_Wtime();
+
+    bool isGradDensityDataRequired =
+      (dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
+         ->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
     /////////// Compute contribution independent of wavefunctions
     ////////////////////
@@ -450,825 +580,337 @@ namespace dftfe
             numMacroCells,
             kptGroupLowHighPlusOneIndices);
 
-        std::vector<double> rhoTotalCellQuadValues(numQuadPoints, 0);
-        std::vector<double> rhoSpinPolarizedCellQuadValues(numQuadPoints * 2,
-                                                           0);
-        std::vector<double> gradRhoTotalCellQuadValues(numQuadPoints * 3, 0);
-        std::vector<double> gradRhoSpinPolarizedCellQuadValues(numQuadPoints *
-                                                                 6,
-                                                               0);
+        dftPtr->d_basisOperationsPtrHost->reinit(0,
+                                                 0,
+                                                 dftPtr->d_densityQuadratureId);
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          gradDensityOutValuesSpinPolarized;
 
-
-        if (d_dftParams.spinPolarized == 1)
+        if (isGradDensityDataRequired)
           {
-            dealii::AlignedVector<dealii::VectorizedArray<double>>
-              rhoXCQuadsVect(numQuadPoints, dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<
-              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-              gradRhoSpin0QuadsVect(numQuadPoints, zeroTensor3);
-            dealii::AlignedVector<
-              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-                                                                   gradRhoSpin1QuadsVect(numQuadPoints, zeroTensor3);
-            dealii::AlignedVector<dealii::VectorizedArray<double>> excQuads(
-              numQuadPoints, dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<dealii::VectorizedArray<double>>
-              vxcRhoOutSpin0Quads(numQuadPoints,
-                                  dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<dealii::VectorizedArray<double>>
-              vxcRhoOutSpin1Quads(numQuadPoints,
-                                  dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<
-              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-              derExchCorrEnergyWithGradRhoOutSpin0Quads(numQuadPoints,
-                                                        zeroTensor3);
-            dealii::AlignedVector<
-              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-              derExchCorrEnergyWithGradRhoOutSpin1Quads(numQuadPoints,
-                                                        zeroTensor3);
-            dealii::AlignedVector<
-              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-              gradRhoCoreQuads(numQuadPoints, zeroTensor3);
-            dealii::AlignedVector<
-              dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
-              hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
+            gradDensityOutValuesSpinPolarized = gradRhoOutValues;
 
-            for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
-                 ++cell)
+            if (d_dftParams.spinPolarized == 0)
+              gradDensityOutValuesSpinPolarized.push_back(
+                dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>(
+                  gradRhoOutValues[0].size(), 0.0));
+          }
+
+
+        dealii::AlignedVector<
+          dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+          gradRhoSpin0QuadsVect(numQuadPoints, zeroTensor3);
+        dealii::AlignedVector<
+          dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+                                                               gradRhoSpin1QuadsVect(numQuadPoints, zeroTensor3);
+        dealii::AlignedVector<dealii::VectorizedArray<double>> excQuads(
+          numQuadPoints, dealii::make_vectorized_array(0.0));
+        dealii::AlignedVector<dealii::VectorizedArray<double>>
+          vxcRhoOutSpin0Quads(numQuadPoints,
+                              dealii::make_vectorized_array(0.0));
+        dealii::AlignedVector<dealii::VectorizedArray<double>>
+          vxcRhoOutSpin1Quads(numQuadPoints,
+                              dealii::make_vectorized_array(0.0));
+        dealii::AlignedVector<
+          dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+          derExchCorrEnergyWithGradRhoOutSpin0Quads(numQuadPoints, zeroTensor3);
+        dealii::AlignedVector<
+          dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+          derExchCorrEnergyWithGradRhoOutSpin1Quads(numQuadPoints, zeroTensor3);
+        dealii::AlignedVector<
+          dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+          gradRhoCoreQuads(numQuadPoints, zeroTensor3);
+        dealii::AlignedVector<
+          dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
+          hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
+
+        std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+          xDensityOutDataOut;
+        std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+          cDensityOutDataOut;
+
+        std::vector<double> &xEnergyDensityOut =
+          xDensityOutDataOut[xcRemainderOutputDataAttributes::e];
+        std::vector<double> &cEnergyDensityOut =
+          cDensityOutDataOut[xcRemainderOutputDataAttributes::e];
+
+        std::vector<double> &pdexDensityOutSpinUp =
+          xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+        std::vector<double> &pdexDensityOutSpinDown = xDensityOutDataOut
+          [xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+        std::vector<double> &pdecDensityOutSpinUp =
+          cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+        std::vector<double> &pdecDensityOutSpinDown = cDensityOutDataOut
+          [xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+
+        if (isGradDensityDataRequired)
+          {
+            xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
+              std::vector<double>();
+            cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
+              std::vector<double>();
+          }
+
+
+        auto quadPointsAll = dftPtr->d_basisOperationsPtrHost->quadPoints();
+
+        auto quadWeightsAll = dftPtr->d_basisOperationsPtrHost->JxW();
+
+        for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
+             ++cell)
+          {
+            if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
+                cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
               {
-                if (cell <
-                      kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
-                    cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+                forceEval.reinit(cell);
+
+                std::fill(gradRhoSpin0QuadsVect.begin(),
+                          gradRhoSpin0QuadsVect.end(),
+                          zeroTensor3);
+                std::fill(gradRhoSpin1QuadsVect.begin(),
+                          gradRhoSpin1QuadsVect.end(),
+                          zeroTensor3);
+                std::fill(excQuads.begin(),
+                          excQuads.end(),
+                          dealii::make_vectorized_array(0.0));
+                std::fill(vxcRhoOutSpin0Quads.begin(),
+                          vxcRhoOutSpin0Quads.end(),
+                          dealii::make_vectorized_array(0.0));
+                std::fill(vxcRhoOutSpin1Quads.begin(),
+                          vxcRhoOutSpin1Quads.end(),
+                          dealii::make_vectorized_array(0.0));
+                std::fill(derExchCorrEnergyWithGradRhoOutSpin0Quads.begin(),
+                          derExchCorrEnergyWithGradRhoOutSpin0Quads.end(),
+                          zeroTensor3);
+                std::fill(derExchCorrEnergyWithGradRhoOutSpin1Quads.begin(),
+                          derExchCorrEnergyWithGradRhoOutSpin1Quads.end(),
+                          zeroTensor3);
+                std::fill(gradRhoCoreQuads.begin(),
+                          gradRhoCoreQuads.end(),
+                          zeroTensor3);
+                std::fill(hessianRhoCoreQuads.begin(),
+                          hessianRhoCoreQuads.end(),
+                          zeroTensor4);
+
+                const unsigned int numSubCells =
+                  matrixFreeData.n_active_entries_per_cell_batch(cell);
+
+
+                //
+                for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                     ++iSubCell)
                   {
-                    forceEval.reinit(cell);
+                    subCellPtr =
+                      matrixFreeData.get_cell_iterator(cell, iSubCell);
+                    dealii::CellId subCellId = subCellPtr->id();
 
-                    std::fill(rhoXCQuadsVect.begin(),
-                              rhoXCQuadsVect.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(gradRhoSpin0QuadsVect.begin(),
-                              gradRhoSpin0QuadsVect.end(),
-                              zeroTensor3);
-                    std::fill(gradRhoSpin1QuadsVect.begin(),
-                              gradRhoSpin1QuadsVect.end(),
-                              zeroTensor3);
-                    std::fill(excQuads.begin(),
-                              excQuads.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(vxcRhoOutSpin0Quads.begin(),
-                              vxcRhoOutSpin0Quads.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(vxcRhoOutSpin1Quads.begin(),
-                              vxcRhoOutSpin1Quads.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(derExchCorrEnergyWithGradRhoOutSpin0Quads.begin(),
-                              derExchCorrEnergyWithGradRhoOutSpin0Quads.end(),
-                              zeroTensor3);
-                    std::fill(derExchCorrEnergyWithGradRhoOutSpin1Quads.begin(),
-                              derExchCorrEnergyWithGradRhoOutSpin1Quads.end(),
-                              zeroTensor3);
-                    std::fill(gradRhoCoreQuads.begin(),
-                              gradRhoCoreQuads.end(),
-                              zeroTensor3);
-                    std::fill(hessianRhoCoreQuads.begin(),
-                              hessianRhoCoreQuads.end(),
-                              zeroTensor4);
 
-                    const unsigned int numSubCells =
-                      matrixFreeData.n_active_entries_per_cell_batch(cell);
-                    // For LDA
-                    std::vector<double> exchValRhoOut(numQuadPoints);
-                    std::vector<double> corrValRhoOut(numQuadPoints);
-                    std::vector<double> exchPotValRhoOut(2 * numQuadPoints);
-                    std::vector<double> corrPotValRhoOut(2 * numQuadPoints);
-                    std::vector<double> rhoOutQuadsXC(2 * numQuadPoints);
+                    const unsigned int subCellIndex =
+                      dftPtr->d_basisOperationsPtrHost->cellIndex(subCellId);
 
-                    //
-                    // For GGA
-                    std::vector<double> sigmaValRhoOut(3 * numQuadPoints);
-                    std::vector<double> derExchEnergyWithDensityValRhoOut(
-                      2 * numQuadPoints),
-                      derCorrEnergyWithDensityValRhoOut(2 * numQuadPoints),
-                      derExchEnergyWithSigmaRhoOut(3 * numQuadPoints),
-                      derCorrEnergyWithSigmaRhoOut(3 * numQuadPoints);
-                    std::vector<dealii::Tensor<1, 3, double>>
-                      gradRhoOutQuadsXCSpin0(numQuadPoints);
-                    std::vector<dealii::Tensor<1, 3, double>>
-                      gradRhoOutQuadsXCSpin1(numQuadPoints);
-
-                    //
-                    for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-                         ++iSubCell)
+                    std::vector<double> quadPointsInCell(numQuadPoints * 3);
+                    std::vector<double> quadWeightsInCell(numQuadPoints);
+                    for (unsigned int iQuad = 0; iQuad < numQuadPoints; ++iQuad)
                       {
-                        subCellPtr =
-                          matrixFreeData.get_cell_iterator(cell, iSubCell);
-                        dealii::CellId subCellId = subCellPtr->id();
+                        for (unsigned int idim = 0; idim < 3; ++idim)
+                          quadPointsInCell[3 * iQuad + idim] =
+                            quadPointsAll[subCellIndex * numQuadPoints * 3 +
+                                          3 * iQuad + idim];
+                        quadWeightsInCell[iQuad] = std::real(
+                          quadWeightsAll[subCellIndex * numQuadPoints + iQuad]);
+                      }
 
-                        // const std::vector<double> &temp =
-                        //  (rhoOutValues).find(subCellId)->second;
-                        // const std::vector<double> &temp1 =
-                        //  (*dftPtr->rhoOutValuesSpinPolarized)
+                    dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
+                      ->computeRhoTauDependentXCData(
+                        *(dftPtr->d_auxDensityMatrixXCOutPtr),
+                        quadPointsInCell,
+                        xDensityOutDataOut,
+                        cDensityOutDataOut);
+
+                    std::vector<double> pdexDensityOutSigma;
+                    std::vector<double> pdecDensityOutSigma;
+                    if (isGradDensityDataRequired)
+                      {
+                        pdexDensityOutSigma = xDensityOutDataOut
+                          [xcRemainderOutputDataAttributes::pdeSigma];
+                        pdecDensityOutSigma = cDensityOutDataOut
+                          [xcRemainderOutputDataAttributes::pdeSigma];
+                      }
+
+
+                    std::unordered_map<DensityDescriptorDataAttributes,
+                                       std::vector<double>>
+                                        densityXCOutData;
+                    std::vector<double> gradDensityXCOutSpinUp;
+                    std::vector<double> gradDensityXCOutSpinDown;
+
+                    if (isGradDensityDataRequired)
+                      {
+                        densityXCOutData
+                          [DensityDescriptorDataAttributes::gradValuesSpinUp] =
+                            std::vector<double>();
+                        densityXCOutData[DensityDescriptorDataAttributes::
+                                           gradValuesSpinDown] =
+                          std::vector<double>();
+                      }
+
+                    dftPtr->d_auxDensityMatrixXCOutPtr->applyLocalOperations(
+                      quadPointsInCell, densityXCOutData);
+
+                    if (isGradDensityDataRequired)
+                      {
+                        gradDensityXCOutSpinUp = densityXCOutData
+                          [DensityDescriptorDataAttributes::gradValuesSpinUp];
+                        gradDensityXCOutSpinDown = densityXCOutData
+                          [DensityDescriptorDataAttributes::gradValuesSpinDown];
+                      }
+
+
+                    if (isGradDensityDataRequired)
+                      {
+                        // const std::vector<double> &temp3 =
+                        //  (*dftPtr->gradRhoOutValuesSpinPolarized)
                         //    .find(subCellId)
                         //    ->second;
 
-                        const unsigned int subCellIndex =
-                          dftPtr->d_basisOperationsPtrHost->cellIndex(
-                            subCellId);
-                        const auto &rhoTotalOutValues = rhoOutValues[0];
-                        const auto &rhoMagOutValues   = rhoOutValues[1];
-                        for (unsigned int q = 0; q < numQuadPoints; ++q)
-                          {
-                            rhoTotalCellQuadValues[q] =
-                              rhoTotalOutValues[subCellIndex * numQuadPoints +
-                                                q];
-                            rhoSpinPolarizedCellQuadValues[2 * q + 0] =
-                              (rhoTotalOutValues[subCellIndex * numQuadPoints +
-                                                 q] +
-                               rhoMagOutValues[subCellIndex * numQuadPoints +
-                                               q]) /
-                              2.0;
-                            rhoSpinPolarizedCellQuadValues[2 * q + 1] =
-                              (rhoTotalOutValues[subCellIndex * numQuadPoints +
-                                                 q] -
-                               rhoMagOutValues[subCellIndex * numQuadPoints +
-                                               q]) /
-                              2.0;
-                          }
-
-                        rhoOutQuadsXC = rhoSpinPolarizedCellQuadValues;
-                        for (unsigned int q = 0; q < numQuadPoints; ++q)
-                          {
-                            rhoXCQuadsVect[q][iSubCell] =
-                              rhoTotalCellQuadValues[q];
-                          }
-
-                        if (d_dftParams.nonLinearCoreCorrection)
-                          {
-                            const std::vector<double> &temp2 =
-                              rhoCoreValues.find(subCellId)->second;
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              {
-                                rhoOutQuadsXC[2 * q + 0] += temp2[q] / 2.0;
-                                rhoOutQuadsXC[2 * q + 1] += temp2[q] / 2.0;
-                                rhoXCQuadsVect[q][iSubCell] += temp2[q];
-                              }
-                          }
-
-                        if (dftPtr->d_excManagerPtr
-                              ->getDensityBasedFamilyType() ==
-                            densityFamilyType::GGA)
-                          {
-                            // const std::vector<double> &temp3 =
-                            //  (*dftPtr->gradRhoOutValuesSpinPolarized)
-                            //    .find(subCellId)
-                            //    ->second;
-                            const auto &gradRhoTotalOutValues =
-                              gradRhoOutValues[0];
-                            const auto &gradRhoMagOutValues =
-                              gradRhoOutValues[1];
-
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              for (unsigned int idim = 0; idim < 3; idim++)
-                                {
-                                  gradRhoSpinPolarizedCellQuadValues[6 * q +
-                                                                     idim] =
-                                    (gradRhoTotalOutValues[subCellIndex *
-                                                             numQuadPoints * 3 +
-                                                           q * 3 + idim] +
-                                     gradRhoMagOutValues[subCellIndex *
-                                                           numQuadPoints * 3 +
-                                                         q * 3 + idim]) /
-                                    2.0;
-                                  gradRhoSpinPolarizedCellQuadValues[6 * q + 3 +
-                                                                     idim] =
-                                    (gradRhoTotalOutValues[subCellIndex *
-                                                             numQuadPoints * 3 +
-                                                           q * 3 + idim] -
-                                     gradRhoMagOutValues[subCellIndex *
-                                                           numQuadPoints * 3 +
-                                                         q * 3 + idim]) /
-                                    2.0;
-                                }
-
-
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              for (unsigned int idim = 0; idim < 3; idim++)
-                                {
-                                  gradRhoOutQuadsXCSpin0[q][idim] =
-                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
-                                                                       idim];
-                                  gradRhoOutQuadsXCSpin1[q][idim] =
-                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
-                                                                       3 +
-                                                                       idim];
-                                  gradRhoSpin0QuadsVect[q][idim][iSubCell] =
-                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
-                                                                       idim];
-                                  gradRhoSpin1QuadsVect[q][idim][iSubCell] =
-                                    gradRhoSpinPolarizedCellQuadValues[6 * q +
-                                                                       3 +
-                                                                       idim];
-                                }
-
-                            if (d_dftParams.nonLinearCoreCorrection)
-                              {
-                                const std::vector<double> &temp4 =
-                                  gradRhoCoreValues.find(subCellId)->second;
-                                for (unsigned int q = 0; q < numQuadPoints; ++q)
-                                  for (unsigned int idim = 0; idim < 3; idim++)
-                                    {
-                                      gradRhoOutQuadsXCSpin0[q][idim] +=
-                                        temp4[3 * q + idim] / 2.0;
-                                      gradRhoOutQuadsXCSpin1[q][idim] +=
-                                        temp4[3 * q + idim] / 2.0;
-                                    }
-                              }
-                          }
-
-                        if (dftPtr->d_excManagerPtr
-                              ->getDensityBasedFamilyType() ==
-                            densityFamilyType::GGA)
-                          {
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              {
-                                sigmaValRhoOut[3 * q + 0] =
-                                  scalar_product(gradRhoOutQuadsXCSpin0[q],
-                                                 gradRhoOutQuadsXCSpin0[q]);
-                                sigmaValRhoOut[3 * q + 1] =
-                                  scalar_product(gradRhoOutQuadsXCSpin0[q],
-                                                 gradRhoOutQuadsXCSpin1[q]);
-                                sigmaValRhoOut[3 * q + 2] =
-                                  scalar_product(gradRhoOutQuadsXCSpin1[q],
-                                                 gradRhoOutQuadsXCSpin1[q]);
-                              }
-
-                            std::map<rhoDataAttributes,
-                                     const std::vector<double> *>
-                              rhoOutData;
-
-                            std::map<VeffOutputDataAttributes,
-                                     std::vector<double> *>
-                              outputDerExchangeEnergy;
-                            std::map<VeffOutputDataAttributes,
-                                     std::vector<double> *>
-                              outputDerCorrEnergy;
-
-                            rhoOutData[rhoDataAttributes::values] =
-                              &rhoOutQuadsXC;
-                            rhoOutData[rhoDataAttributes::sigmaGradValue] =
-                              &sigmaValRhoOut;
-
-                            outputDerExchangeEnergy
-                              [VeffOutputDataAttributes::derEnergyWithDensity] =
-                                &derExchEnergyWithDensityValRhoOut;
-                            outputDerExchangeEnergy
-                              [VeffOutputDataAttributes::
-                                 derEnergyWithSigmaGradDensity] =
-                                &derExchEnergyWithSigmaRhoOut;
-
-                            outputDerCorrEnergy
-                              [VeffOutputDataAttributes::derEnergyWithDensity] =
-                                &derCorrEnergyWithDensityValRhoOut;
-                            outputDerCorrEnergy
-                              [VeffOutputDataAttributes::
-                                 derEnergyWithSigmaGradDensity] =
-                                &derCorrEnergyWithSigmaRhoOut;
-
-                            dftPtr->d_excManagerPtr->getExcDensityObj()
-                              ->computeDensityBasedEnergyDensity(numQuadPoints,
-                                                                 rhoOutData,
-                                                                 exchValRhoOut,
-                                                                 corrValRhoOut);
-
-                            dftPtr->d_excManagerPtr->getExcDensityObj()
-                              ->computeDensityBasedVxc(numQuadPoints,
-                                                       rhoOutData,
-                                                       outputDerExchangeEnergy,
-                                                       outputDerCorrEnergy);
-
-
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              {
-                                excQuads[q][iSubCell] =
-                                  exchValRhoOut[q] + corrValRhoOut[q];
-                                vxcRhoOutSpin0Quads[q][iSubCell] =
-                                  derExchEnergyWithDensityValRhoOut[2 * q] +
-                                  derCorrEnergyWithDensityValRhoOut[2 * q];
-                                vxcRhoOutSpin1Quads[q][iSubCell] =
-                                  derExchEnergyWithDensityValRhoOut[2 * q + 1] +
-                                  derCorrEnergyWithDensityValRhoOut[2 * q + 1];
-                                for (unsigned int idim = 0; idim < 3; idim++)
-                                  {
-                                    derExchCorrEnergyWithGradRhoOutSpin0Quads
-                                      [q][idim][iSubCell] =
-                                        2.0 *
-                                        (derExchEnergyWithSigmaRhoOut[3 * q +
-                                                                      0] +
-                                         derCorrEnergyWithSigmaRhoOut[3 * q +
-                                                                      0]) *
-                                        gradRhoOutQuadsXCSpin0[q][idim];
-                                    derExchCorrEnergyWithGradRhoOutSpin0Quads
-                                      [q][idim][iSubCell] +=
-                                      (derExchEnergyWithSigmaRhoOut[3 * q + 1] +
-                                       derCorrEnergyWithSigmaRhoOut[3 * q +
-                                                                    1]) *
-                                      gradRhoOutQuadsXCSpin1[q][idim];
-
-                                    derExchCorrEnergyWithGradRhoOutSpin1Quads
-                                      [q][idim][iSubCell] +=
-                                      2.0 *
-                                      (derExchEnergyWithSigmaRhoOut[3 * q + 2] +
-                                       derCorrEnergyWithSigmaRhoOut[3 * q +
-                                                                    2]) *
-                                      gradRhoOutQuadsXCSpin1[q][idim];
-                                    derExchCorrEnergyWithGradRhoOutSpin1Quads
-                                      [q][idim][iSubCell] +=
-                                      (derExchEnergyWithSigmaRhoOut[3 * q + 1] +
-                                       derCorrEnergyWithSigmaRhoOut[3 * q +
-                                                                    1]) *
-                                      gradRhoOutQuadsXCSpin0[q][idim];
-                                  }
-                              }
-                          }
-                        else if (dftPtr->d_excManagerPtr
-                                   ->getDensityBasedFamilyType() ==
-                                 densityFamilyType::LDA)
-                          {
-                            std::map<rhoDataAttributes,
-                                     const std::vector<double> *>
-                              rhoOutData;
-
-                            std::map<VeffOutputDataAttributes,
-                                     std::vector<double> *>
-                              outputDerExchangeEnergy;
-                            std::map<VeffOutputDataAttributes,
-                                     std::vector<double> *>
-                              outputDerCorrEnergy;
-
-                            rhoOutData[rhoDataAttributes::values] =
-                              &rhoOutQuadsXC;
-
-                            outputDerExchangeEnergy
-                              [VeffOutputDataAttributes::derEnergyWithDensity] =
-                                &exchPotValRhoOut;
-
-                            outputDerCorrEnergy
-                              [VeffOutputDataAttributes::derEnergyWithDensity] =
-                                &corrPotValRhoOut;
-
-                            dftPtr->d_excManagerPtr->getExcDensityObj()
-                              ->computeDensityBasedEnergyDensity(numQuadPoints,
-                                                                 rhoOutData,
-                                                                 exchValRhoOut,
-                                                                 corrValRhoOut);
-
-                            dftPtr->d_excManagerPtr->getExcDensityObj()
-                              ->computeDensityBasedVxc(numQuadPoints,
-                                                       rhoOutData,
-                                                       outputDerExchangeEnergy,
-                                                       outputDerCorrEnergy);
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              {
-                                excQuads[q][iSubCell] =
-                                  exchValRhoOut[q] + corrValRhoOut[q];
-                                vxcRhoOutSpin0Quads[q][iSubCell] =
-                                  exchPotValRhoOut[2 * q] +
-                                  corrPotValRhoOut[2 * q];
-                                vxcRhoOutSpin1Quads[q][iSubCell] =
-                                  exchPotValRhoOut[2 * q + 1] +
-                                  corrPotValRhoOut[2 * q + 1];
-                              }
-                          }
+                        const auto &gradRhoTotalOutValues =
+                          gradDensityOutValuesSpinPolarized[0];
+                        const auto &gradRhoMagOutValues =
+                          gradDensityOutValuesSpinPolarized[1];
 
                         for (unsigned int q = 0; q < numQuadPoints; ++q)
-                          {
-                            if (d_dftParams.nonLinearCoreCorrection == true)
-                              {
-                                const std::vector<double> &temp1 =
-                                  gradRhoCoreValues.find(subCellId)->second;
-                                for (unsigned int q = 0; q < numQuadPoints; ++q)
-                                  for (unsigned int idim = 0; idim < 3; idim++)
-                                    gradRhoCoreQuads[q][idim][iSubCell] =
-                                      temp1[3 * q + idim] / 2.0;
-
-                                if (dftPtr->d_excManagerPtr
-                                      ->getDensityBasedFamilyType() ==
-                                    densityFamilyType::GGA)
-                                  {
-                                    const std::vector<double> &temp2 =
-                                      hessianRhoCoreValues.find(subCellId)
-                                        ->second;
-                                    for (unsigned int q = 0; q < numQuadPoints;
-                                         ++q)
-                                      for (unsigned int idim = 0; idim < 3;
-                                           ++idim)
-                                        for (unsigned int jdim = 0; jdim < 3;
-                                             ++jdim)
-                                          hessianRhoCoreQuads
-                                            [q][idim][jdim][iSubCell] =
-                                              temp2[9 * q + 3 * idim + jdim] /
-                                              2.0;
-                                  }
-                              }
-                          }
-
-                      } // subcell loop
-
-                    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-                      EQuadSum = zeroTensor4;
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
-                      {
-                        dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-                          E = eshelbyTensorSP::getELocXcEshelbyTensor(
-                            rhoXCQuadsVect[q],
-                            gradRhoSpin0QuadsVect[q],
-                            gradRhoSpin1QuadsVect[q],
-                            excQuads[q],
-                            derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
-                            derExchCorrEnergyWithGradRhoOutSpin1Quads[q]);
-
-                        EQuadSum += E * forceEval.JxW(q);
-                      } // quad point loop
-
-                    if (isPseudopotential)
-                      {
-                        if (d_dftParams.nonLinearCoreCorrection)
-                          addENonlinearCoreCorrectionStressContributionSpinPolarized(
-                            forceEval,
-                            matrixFreeData,
-                            cell,
-                            vxcRhoOutSpin0Quads,
-                            vxcRhoOutSpin1Quads,
-                            derExchCorrEnergyWithGradRhoOutSpin0Quads,
-                            derExchCorrEnergyWithGradRhoOutSpin1Quads,
-                            gradRhoCoreAtoms,
-                            hessianRhoCoreAtoms,
-                            dftPtr->d_excManagerPtr
-                                ->getDensityBasedFamilyType() ==
-                              densityFamilyType::GGA);
+                          for (unsigned int idim = 0; idim < 3; idim++)
+                            {
+                              gradRhoSpin0QuadsVect[q][idim][iSubCell] =
+                                (gradRhoTotalOutValues[subCellIndex *
+                                                         numQuadPoints * 3 +
+                                                       q * 3 + idim] +
+                                 gradRhoMagOutValues[subCellIndex *
+                                                       numQuadPoints * 3 +
+                                                     q * 3 + idim]) /
+                                2.0;
+                              gradRhoSpin1QuadsVect[q][idim][iSubCell] =
+                                (gradRhoTotalOutValues[subCellIndex *
+                                                         numQuadPoints * 3 +
+                                                       q * 3 + idim] -
+                                 gradRhoMagOutValues[subCellIndex *
+                                                       numQuadPoints * 3 +
+                                                     q * 3 + idim]) /
+                                2.0;
+                            }
                       }
 
-                    for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-                         ++iSubCell)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        for (unsigned int jdim = 0; jdim < 3; ++jdim)
-                          {
-                            d_stress[idim][jdim] +=
-                              EQuadSum[idim][jdim][iSubCell];
-                          }
-                  } // kpt paral
-              }     // macrocell loop
-          }
-        else
-          {
-            dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
-              numQuadPoints, dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<dealii::VectorizedArray<double>> rhoXCQuads(
-              numQuadPoints, dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<dealii::VectorizedArray<double>>
-              phiTotRhoOutQuads(numQuadPoints,
-                                dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<
-              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-              gradRhoQuads(numQuadPoints, zeroTensor3);
-            dealii::AlignedVector<
-              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-              gradRhoCoreQuads(numQuadPoints, zeroTensor3);
-            dealii::AlignedVector<
-              dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
-                                                                   hessianRhoCoreQuads(numQuadPoints, zeroTensor4);
-            dealii::AlignedVector<dealii::VectorizedArray<double>> excQuads(
-              numQuadPoints, dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<dealii::VectorizedArray<double>>
-              vxcRhoOutQuads(numQuadPoints, dealii::make_vectorized_array(0.0));
-            dealii::AlignedVector<
-              dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-              derExchCorrEnergyWithGradRhoOutQuads(numQuadPoints, zeroTensor3);
 
-            for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
-                 ++cell)
-              {
-                if (cell <
-                      kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
-                    cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
+                    for (unsigned int q = 0; q < numQuadPoints; ++q)
+                      {
+                        excQuads[q][iSubCell] =
+                          xEnergyDensityOut[q] + cEnergyDensityOut[q];
+                        vxcRhoOutSpin0Quads[q][iSubCell] =
+                          pdexDensityOutSpinUp[q] + pdecDensityOutSpinUp[q];
+                        vxcRhoOutSpin1Quads[q][iSubCell] =
+                          pdexDensityOutSpinDown[q] + pdecDensityOutSpinDown[q];
+                      }
+
+                    if (isGradDensityDataRequired)
+                      {
+                        for (unsigned int q = 0; q < numQuadPoints; ++q)
+                          {
+                            for (unsigned int idim = 0; idim < 3; idim++)
+                              {
+                                derExchCorrEnergyWithGradRhoOutSpin0Quads
+                                  [q][idim][iSubCell] =
+                                    2.0 *
+                                    (pdexDensityOutSigma[3 * q + 0] +
+                                     pdecDensityOutSigma[3 * q + 0]) *
+                                    gradDensityXCOutSpinUp[3 * q + idim];
+                                derExchCorrEnergyWithGradRhoOutSpin0Quads
+                                  [q][idim][iSubCell] +=
+                                  (pdexDensityOutSigma[3 * q + 1] +
+                                   pdecDensityOutSigma[3 * q + 1]) *
+                                  gradDensityXCOutSpinDown[3 * q + idim];
+
+                                derExchCorrEnergyWithGradRhoOutSpin1Quads
+                                  [q][idim][iSubCell] +=
+                                  2.0 *
+                                  (pdexDensityOutSigma[3 * q + 2] +
+                                   pdecDensityOutSigma[3 * q + 2]) *
+                                  gradDensityXCOutSpinDown[3 * q + idim];
+                                derExchCorrEnergyWithGradRhoOutSpin1Quads
+                                  [q][idim][iSubCell] +=
+                                  (pdexDensityOutSigma[3 * q + 1] +
+                                   pdecDensityOutSigma[3 * q + 1]) *
+                                  gradDensityXCOutSpinUp[3 * q + idim];
+                              }
+                          }
+                      }
+                    if (d_dftParams.nonLinearCoreCorrection == true)
+                      for (unsigned int q = 0; q < numQuadPoints; ++q)
+                        {
+                          const std::vector<double> &temp1 =
+                            gradRhoCoreValues.find(subCellId)->second;
+                          for (unsigned int q = 0; q < numQuadPoints; ++q)
+                            for (unsigned int idim = 0; idim < 3; idim++)
+                              gradRhoCoreQuads[q][idim][iSubCell] =
+                                temp1[3 * q + idim] / 2.0;
+
+                          if (isGradDensityDataRequired)
+                            {
+                              const std::vector<double> &temp2 =
+                                hessianRhoCoreValues.find(subCellId)->second;
+                              for (unsigned int q = 0; q < numQuadPoints; ++q)
+                                for (unsigned int idim = 0; idim < 3; ++idim)
+                                  for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                                    hessianRhoCoreQuads
+                                      [q][idim][jdim][iSubCell] =
+                                        temp2[9 * q + 3 * idim + jdim] / 2.0;
+                            }
+                        }
+
+                  } // subcell loop
+
+                dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EQuadSum =
+                  zeroTensor4;
+                for (unsigned int q = 0; q < numQuadPoints; ++q)
                   {
-                    forceEval.reinit(cell);
+                    dealii::Tensor<2, 3, dealii::VectorizedArray<double>> E =
+                      eshelbyTensorSP::getELocXcEshelbyTensor(
+                        gradRhoSpin0QuadsVect[q],
+                        gradRhoSpin1QuadsVect[q],
+                        excQuads[q],
+                        derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
+                        derExchCorrEnergyWithGradRhoOutSpin1Quads[q]);
 
-                    std::fill(rhoQuads.begin(),
-                              rhoQuads.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(rhoXCQuads.begin(),
-                              rhoXCQuads.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(phiTotRhoOutQuads.begin(),
-                              phiTotRhoOutQuads.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(gradRhoQuads.begin(),
-                              gradRhoQuads.end(),
-                              zeroTensor3);
-                    std::fill(gradRhoCoreQuads.begin(),
-                              gradRhoCoreQuads.end(),
-                              zeroTensor3);
-                    std::fill(hessianRhoCoreQuads.begin(),
-                              hessianRhoCoreQuads.end(),
-                              zeroTensor4);
-                    std::fill(excQuads.begin(),
-                              excQuads.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(vxcRhoOutQuads.begin(),
-                              vxcRhoOutQuads.end(),
-                              dealii::make_vectorized_array(0.0));
-                    std::fill(derExchCorrEnergyWithGradRhoOutQuads.begin(),
-                              derExchCorrEnergyWithGradRhoOutQuads.end(),
-                              zeroTensor3);
+                    EQuadSum += E * forceEval.JxW(q);
+                  } // quad point loop
 
-                    const unsigned int numSubCells =
-                      matrixFreeData.n_active_entries_per_cell_batch(cell);
-                    // For LDA
-                    std::vector<double> exchValRhoOut(numQuadPoints);
-                    std::vector<double> corrValRhoOut(numQuadPoints);
-                    std::vector<double> exchPotValRhoOut(numQuadPoints);
-                    std::vector<double> corrPotValRhoOut(numQuadPoints);
-                    std::vector<double> rhoOutQuadsXC(numQuadPoints);
+                if (isPseudopotential)
+                  {
+                    if (d_dftParams.nonLinearCoreCorrection)
+                      addENonlinearCoreCorrectionStressContributionSpinPolarized(
+                        forceEval,
+                        matrixFreeData,
+                        cell,
+                        vxcRhoOutSpin0Quads,
+                        vxcRhoOutSpin1Quads,
+                        derExchCorrEnergyWithGradRhoOutSpin0Quads,
+                        derExchCorrEnergyWithGradRhoOutSpin1Quads,
+                        gradRhoCoreAtoms,
+                        hessianRhoCoreAtoms,
+                        isGradDensityDataRequired);
+                  }
 
-                    //
-                    // For GGA
-                    std::vector<double> sigmaValRhoOut(numQuadPoints);
-                    std::vector<double> derExchEnergyWithDensityValRhoOut(
-                      numQuadPoints),
-                      derCorrEnergyWithDensityValRhoOut(numQuadPoints),
-                      derExchEnergyWithSigmaRhoOut(numQuadPoints),
-                      derCorrEnergyWithSigmaRhoOut(numQuadPoints);
-                    std::vector<dealii::Tensor<1, 3, double>> gradRhoOutQuadsXC(
-                      numQuadPoints);
-
-                    //
-                    for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-                         ++iSubCell)
+                for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                     ++iSubCell)
+                  for (unsigned int idim = 0; idim < 3; ++idim)
+                    for (unsigned int jdim = 0; jdim < 3; ++jdim)
                       {
-                        subCellPtr =
-                          matrixFreeData.get_cell_iterator(cell, iSubCell);
-                        dealii::CellId subCellId = subCellPtr->id();
-
-                        // const std::vector<double> &temp1 =
-                        //  rhoOutValues.find(subCellId)->second;
-
-                        const unsigned int subCellIndex =
-                          dftPtr->d_basisOperationsPtrHost->cellIndex(
-                            subCellId);
-                        const auto &rhoTotalOutValues = rhoOutValues[0];
-                        for (unsigned int q = 0; q < numQuadPoints; ++q)
-                          {
-                            rhoTotalCellQuadValues[q] =
-                              rhoTotalOutValues[subCellIndex * numQuadPoints +
-                                                q];
-                          }
-
-                        for (unsigned int q = 0; q < numQuadPoints; ++q)
-                          {
-                            rhoOutQuadsXC[q]        = rhoTotalCellQuadValues[q];
-                            rhoQuads[q][iSubCell]   = rhoTotalCellQuadValues[q];
-                            rhoXCQuads[q][iSubCell] = rhoTotalCellQuadValues[q];
-                          }
-
-                        if (d_dftParams.nonLinearCoreCorrection)
-                          {
-                            const std::vector<double> &temp2 =
-                              rhoCoreValues.find(subCellId)->second;
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              {
-                                rhoOutQuadsXC[q] += temp2[q];
-                                rhoXCQuads[q][iSubCell] += temp2[q];
-                              }
-                          }
-
-                        if (dftPtr->d_excManagerPtr
-                              ->getDensityBasedFamilyType() ==
-                            densityFamilyType::GGA)
-                          {
-                            // const std::vector<double> &temp3 =
-                            //  gradRhoOutValues.find(subCellId)->second;
-                            const auto &gradRhoTotalOutValuesTemp =
-                              gradRhoOutValues[0];
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              for (unsigned int idim = 0; idim < 3; idim++)
-                                gradRhoTotalCellQuadValues[3 * q + idim] =
-                                  gradRhoTotalOutValuesTemp[subCellIndex *
-                                                              numQuadPoints *
-                                                              3 +
-                                                            q * 3 + idim];
-
-
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              for (unsigned int idim = 0; idim < 3; idim++)
-                                {
-                                  gradRhoOutQuadsXC[q][idim] =
-                                    gradRhoTotalCellQuadValues[3 * q + idim];
-                                  gradRhoQuads[q][idim][iSubCell] =
-                                    gradRhoTotalCellQuadValues[3 * q + idim];
-                                }
-
-                            if (d_dftParams.nonLinearCoreCorrection)
-                              {
-                                const std::vector<double> &temp4 =
-                                  gradRhoCoreValues.find(subCellId)->second;
-                                for (unsigned int q = 0; q < numQuadPoints; ++q)
-                                  {
-                                    gradRhoOutQuadsXC[q][0] += temp4[3 * q + 0];
-                                    gradRhoOutQuadsXC[q][1] += temp4[3 * q + 1];
-                                    gradRhoOutQuadsXC[q][2] += temp4[3 * q + 2];
-                                  }
-                              }
-                          }
-
-                        if (dftPtr->d_excManagerPtr
-                              ->getDensityBasedFamilyType() ==
-                            densityFamilyType::GGA)
-                          {
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              sigmaValRhoOut[q] =
-                                gradRhoOutQuadsXC[q].norm_square();
-
-                            std::map<rhoDataAttributes,
-                                     const std::vector<double> *>
-                              rhoOutData;
-
-                            std::map<VeffOutputDataAttributes,
-                                     std::vector<double> *>
-                              outputDerExchangeEnergy;
-                            std::map<VeffOutputDataAttributes,
-                                     std::vector<double> *>
-                              outputDerCorrEnergy;
-
-                            rhoOutData[rhoDataAttributes::values] =
-                              &rhoOutQuadsXC;
-                            rhoOutData[rhoDataAttributes::sigmaGradValue] =
-                              &sigmaValRhoOut;
-
-                            outputDerExchangeEnergy
-                              [VeffOutputDataAttributes::derEnergyWithDensity] =
-                                &derExchEnergyWithDensityValRhoOut;
-                            outputDerExchangeEnergy
-                              [VeffOutputDataAttributes::
-                                 derEnergyWithSigmaGradDensity] =
-                                &derExchEnergyWithSigmaRhoOut;
-
-                            outputDerCorrEnergy
-                              [VeffOutputDataAttributes::derEnergyWithDensity] =
-                                &derCorrEnergyWithDensityValRhoOut;
-                            outputDerCorrEnergy
-                              [VeffOutputDataAttributes::
-                                 derEnergyWithSigmaGradDensity] =
-                                &derCorrEnergyWithSigmaRhoOut;
-
-                            dftPtr->d_excManagerPtr->getExcDensityObj()
-                              ->computeDensityBasedEnergyDensity(numQuadPoints,
-                                                                 rhoOutData,
-                                                                 exchValRhoOut,
-                                                                 corrValRhoOut);
-
-                            dftPtr->d_excManagerPtr->getExcDensityObj()
-                              ->computeDensityBasedVxc(numQuadPoints,
-                                                       rhoOutData,
-                                                       outputDerExchangeEnergy,
-                                                       outputDerCorrEnergy);
-
-
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              {
-                                excQuads[q][iSubCell] =
-                                  exchValRhoOut[q] + corrValRhoOut[q];
-                                vxcRhoOutQuads[q][iSubCell] =
-                                  derExchEnergyWithDensityValRhoOut[q] +
-                                  derCorrEnergyWithDensityValRhoOut[q];
-
-                                for (unsigned int idim = 0; idim < 3; idim++)
-                                  {
-                                    derExchCorrEnergyWithGradRhoOutQuads
-                                      [q][idim][iSubCell] =
-                                        2.0 *
-                                        (derExchEnergyWithSigmaRhoOut[q] +
-                                         derCorrEnergyWithSigmaRhoOut[q]) *
-                                        gradRhoOutQuadsXC[q][idim];
-                                  }
-                              }
-                          }
-                        else if (dftPtr->d_excManagerPtr
-                                   ->getDensityBasedFamilyType() ==
-                                 densityFamilyType::LDA)
-                          {
-                            std::map<rhoDataAttributes,
-                                     const std::vector<double> *>
-                              rhoOutData;
-
-                            std::map<VeffOutputDataAttributes,
-                                     std::vector<double> *>
-                              outputDerExchangeEnergy;
-                            std::map<VeffOutputDataAttributes,
-                                     std::vector<double> *>
-                              outputDerCorrEnergy;
-
-                            rhoOutData[rhoDataAttributes::values] =
-                              &rhoOutQuadsXC;
-
-                            outputDerExchangeEnergy
-                              [VeffOutputDataAttributes::derEnergyWithDensity] =
-                                &exchPotValRhoOut;
-
-                            outputDerCorrEnergy
-                              [VeffOutputDataAttributes::derEnergyWithDensity] =
-                                &corrPotValRhoOut;
-
-                            dftPtr->d_excManagerPtr->getExcDensityObj()
-                              ->computeDensityBasedEnergyDensity(numQuadPoints,
-                                                                 rhoOutData,
-                                                                 exchValRhoOut,
-                                                                 corrValRhoOut);
-
-                            dftPtr->d_excManagerPtr->getExcDensityObj()
-                              ->computeDensityBasedVxc(numQuadPoints,
-                                                       rhoOutData,
-                                                       outputDerExchangeEnergy,
-                                                       outputDerCorrEnergy);
-
-
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
-                              {
-                                excQuads[q][iSubCell] =
-                                  exchValRhoOut[q] + corrValRhoOut[q];
-                                vxcRhoOutQuads[q][iSubCell] =
-                                  exchPotValRhoOut[q] + corrPotValRhoOut[q];
-                              }
-                          }
-
-                        for (unsigned int q = 0; q < numQuadPoints; ++q)
-                          {
-                            if (d_dftParams.nonLinearCoreCorrection == true)
-                              {
-                                const std::vector<double> &temp1 =
-                                  gradRhoCoreValues.find(subCellId)->second;
-                                for (unsigned int q = 0; q < numQuadPoints; ++q)
-                                  for (unsigned int idim = 0; idim < 3; idim++)
-                                    gradRhoCoreQuads[q][idim][iSubCell] =
-                                      temp1[3 * q + idim];
-
-                                if (dftPtr->d_excManagerPtr
-                                      ->getDensityBasedFamilyType() ==
-                                    densityFamilyType::GGA)
-                                  {
-                                    const std::vector<double> &temp2 =
-                                      hessianRhoCoreValues.find(subCellId)
-                                        ->second;
-                                    for (unsigned int q = 0; q < numQuadPoints;
-                                         ++q)
-                                      for (unsigned int idim = 0; idim < 3;
-                                           ++idim)
-                                        for (unsigned int jdim = 0; jdim < 3;
-                                             ++jdim)
-                                          hessianRhoCoreQuads
-                                            [q][idim][jdim][iSubCell] =
-                                              temp2[9 * q + 3 * idim + jdim];
-                                  }
-                              }
-                          }
-                      } // subcell loop
-
-                    dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-                      EQuadSum = zeroTensor4;
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
-                      {
-                        dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-                          E = eshelbyTensor::getELocXcEshelbyTensor(
-                            rhoXCQuads[q],
-                            gradRhoQuads[q],
-                            excQuads[q],
-                            derExchCorrEnergyWithGradRhoOutQuads[q]);
-
-                        EQuadSum += E * forceEval.JxW(q);
-                      } // quad point loop
-
-                    if (isPseudopotential)
-                      {
-                        if (d_dftParams.nonLinearCoreCorrection)
-                          addENonlinearCoreCorrectionStressContribution(
-                            forceEval,
-                            matrixFreeData,
-                            cell,
-                            vxcRhoOutQuads,
-                            derExchCorrEnergyWithGradRhoOutQuads,
-                            gradRhoCoreAtoms,
-                            hessianRhoCoreAtoms);
+                        d_stress[idim][jdim] += EQuadSum[idim][jdim][iSubCell];
                       }
+              } // kpt paral
+          }     // macrocell loop
 
-                    for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-                         ++iSubCell)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        for (unsigned int jdim = 0; jdim < 3; ++jdim)
-                          {
-                            d_stress[idim][jdim] +=
-                              EQuadSum[idim][jdim][iSubCell];
-                          }
-                  } // kpt paral
-              }     // cell loop
-          }
 
         ////Add electrostatic stress contribution////////////////
         computeStressEEshelbyEElectroPhiTot(matrixFreeDataElectro,
@@ -1475,7 +1117,8 @@ namespace dftfe
 
             phiTotEvalElectro.reinit(cell);
             phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
-            phiTotEvalElectro.evaluate(true, true);
+            phiTotEvalElectro.evaluate(dealii::EvaluationFlags::values |
+                                       dealii::EvaluationFlags::gradients);
 
             if (d_dftParams.smearedNuclearCharges &&
                 nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
@@ -1484,7 +1127,8 @@ namespace dftfe
                 phiTotEvalSmearedCharge.reinit(cell);
                 phiTotEvalSmearedCharge.read_dof_values_plain(
                   phiTotRhoOutElectro);
-                phiTotEvalSmearedCharge.evaluate(false, true);
+                phiTotEvalSmearedCharge.evaluate(
+                  dealii::EvaluationFlags::gradients);
               }
 
             std::fill(rhoQuadsElectro.begin(),

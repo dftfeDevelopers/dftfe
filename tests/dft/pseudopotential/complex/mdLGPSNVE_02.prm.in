@@ -23,7 +23,7 @@ subsection Finite element mesh parameters
 end
 
 subsection DFT functional parameters
-  set EXCHANGE CORRELATION TYPE   = 4
+  set EXCHANGE CORRELATION TYPE = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true  
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/LGPSMD_pseudo.inp
   set PSEUDO TESTS FLAG               = true

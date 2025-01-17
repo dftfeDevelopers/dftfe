@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025  The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -197,7 +197,6 @@ namespace dftfe
       const unsigned int                        nComponents,
       std::vector<distributedCPUVec<double> *> &solutionVectors);
 
-  private:
     /**
      * @brief internal function which generates a parallel and serial mesh using a adaptive refinement strategy.
      *
@@ -205,9 +204,12 @@ namespace dftfe
     void generateMesh(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
       dealii::parallel::distributed::Triangulation<3> &serialTriangulation,
-      const bool generateSerialTria = false);
+      std::vector<std::vector<bool>> &parallelTriaCurrentRefinement,
+      std::vector<std::vector<bool>> &serialTriaCurrentRefinement,
+      const bool                      generateSerialTria         = false,
+      const bool                      enableManualRepartitioning = false);
 
-
+  private:
     /**
      * @brief internal function which generates a coarse mesh which is required for the load function call in
      * restarts.
@@ -300,6 +302,7 @@ namespace dftfe
 
     std::vector<std::vector<double>> d_atomPositions;
     std::vector<std::vector<double>> d_imageAtomPositions;
+    std::vector<std::vector<double>> d_meshSizes;
     std::vector<int>                 d_imageIds;
     std::vector<double>              d_nearestAtomDistances;
     std::vector<std::vector<double>> d_domainBoundingVectors;

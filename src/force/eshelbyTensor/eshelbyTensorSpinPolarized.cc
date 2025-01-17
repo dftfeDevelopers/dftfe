@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -25,7 +25,6 @@ namespace dftfe
   {
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
     getELocXcEshelbyTensor(
-      const dealii::VectorizedArray<double> &                      rho,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin0,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin1,
       const dealii::VectorizedArray<double> &                      exc,
@@ -37,7 +36,7 @@ namespace dftfe
       dealii::Tensor<2, 3, dealii::VectorizedArray<double>> eshelbyTensor =
         -outer_product(derExcGradRhoSpin0, gradRhoSpin0) -
         outer_product(derExcGradRhoSpin1, gradRhoSpin1);
-      dealii::VectorizedArray<double> identityTensorFactor = exc * rho;
+      dealii::VectorizedArray<double> identityTensorFactor = exc;
       eshelbyTensor[0][0] += identityTensorFactor;
       eshelbyTensor[1][1] += identityTensorFactor;
       eshelbyTensor[2][2] += identityTensorFactor;

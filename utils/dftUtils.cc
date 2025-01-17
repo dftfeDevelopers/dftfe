@@ -8,7 +8,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -35,6 +35,8 @@
 
 #include <fstream>
 #include <iostream>
+#include "sys/types.h"
+#include "sys/sysinfo.h"
 
 namespace dftfe
 {
@@ -77,7 +79,6 @@ namespace dftfe
                (-beta * std::exp(factor) / (1.0 + std::exp(factor)) /
                 (1.0 + std::exp(factor)));
     }
-
 
     dealii::BoundingBox<3>
     createBoundingBoxForSphere(const dealii::Point<3> &center,
@@ -144,6 +145,28 @@ namespace dftfe
                   << message +
                        ", Current maximum memory usage across all processors: "
                   << maxBytes / 1.0e+6 << " MB." << std::endl
+                  << std::endl;
+      MPI_Barrier(mpiComm);
+#else
+      MPI_Barrier(mpiComm);
+      struct sysinfo memInfo;
+      sysinfo(&memInfo);
+      double totalVirtualMem = memInfo.totalram;
+      totalVirtualMem += memInfo.totalswap;
+      totalVirtualMem *= memInfo.mem_unit;
+      double virtualMemUsed = memInfo.totalram - memInfo.freeram;
+      virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
+      virtualMemUsed *= memInfo.mem_unit;
+      const double maxBytes =
+        dealii::Utilities::MPI::max(virtualMemUsed, mpiComm);
+      const unsigned int taskId =
+        dealii::Utilities::MPI::this_mpi_process(mpiComm);
+      if (taskId == 0)
+        std::cout << std::endl
+                  << message +
+                       ", Current maximum memory usage across all processors: "
+                  << maxBytes / 1024.0 / 1024.0 / 1024.0 << " GB out of "
+                  << totalVirtualMem / 1024.0 / 1024.0 / 1024.0 << std::endl
                   << std::endl;
       MPI_Barrier(mpiComm);
 #endif

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2022 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -38,6 +38,10 @@ namespace dftfe
     d_rhoAtomsValues.clear();
     d_gradRhoAtomsValuesSeparate.clear();
     d_hessianRhoAtomsValuesSeparate.clear();
+
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
 
     // Reading single atom rho initial guess
     pcout << std::endl
@@ -159,8 +163,7 @@ namespace dftfe
 
             std::vector<double> &hessianRhoAtomsQuadValues =
               d_hessianRhoAtomsValues[cell->id()];
-            if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                densityFamilyType::GGA)
+            if (isGradDensityDataDependent)
               hessianRhoAtomsQuadValues.resize(n_q_points * 9, 0.0);
 
             std::vector<double>                       rhoAtom(n_q_points, 0.0);
@@ -241,8 +244,7 @@ namespace dftfe
                     gradRhoAtomsQuadValues[3 * q + 1] += gradRhoAtom[q][1];
                     gradRhoAtomsQuadValues[3 * q + 2] += gradRhoAtom[q][2];
 
-                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataDependent)
                       {
                         for (unsigned int iDim = 0; iDim < 3; ++iDim)
                           {
@@ -277,8 +279,7 @@ namespace dftfe
 
                     std::vector<double> &hessianRhoAtomCell =
                       d_hessianRhoAtomsValuesSeparate[iAtom][cell->id()];
-                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataDependent)
                       hessianRhoAtomCell.resize(n_q_points * 9, 0.0);
 
                     for (unsigned int q = 0; q < n_q_points; ++q)
@@ -287,8 +288,7 @@ namespace dftfe
                         gradRhoAtomCell[3 * q + 1] = gradRhoAtom[q][1];
                         gradRhoAtomCell[3 * q + 2] = gradRhoAtom[q][2];
 
-                        if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                            densityFamilyType::GGA)
+                        if (isGradDensityDataDependent)
                           {
                             for (unsigned int iDim = 0; iDim < 3; ++iDim)
                               {
@@ -378,8 +378,7 @@ namespace dftfe
                     gradRhoAtomsQuadValues[3 * q + 1] += gradRhoAtom[q][1];
                     gradRhoAtomsQuadValues[3 * q + 2] += gradRhoAtom[q][2];
 
-                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataDependent)
                       {
                         for (unsigned int iDim = 0; iDim < 3; ++iDim)
                           {
@@ -415,8 +414,7 @@ namespace dftfe
                     std::vector<double> &hessianRhoAtomCell =
                       d_hessianRhoAtomsValuesSeparate[numberGlobalCharges +
                                                       iImageCharge][cell->id()];
-                    if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                        densityFamilyType::GGA)
+                    if (isGradDensityDataDependent)
                       hessianRhoAtomCell.resize(n_q_points * 9);
 
                     for (unsigned int q = 0; q < n_q_points; ++q)
@@ -425,8 +423,7 @@ namespace dftfe
                         gradRhoAtomCell[3 * q + 1] = gradRhoAtom[q][1];
                         gradRhoAtomCell[3 * q + 2] = gradRhoAtom[q][2];
 
-                        if (d_excManagerPtr->getDensityBasedFamilyType() ==
-                            densityFamilyType::GGA)
+                        if (isGradDensityDataDependent)
                           {
                             for (unsigned int iDim = 0; iDim < 3; ++iDim)
                               {
@@ -468,6 +465,9 @@ namespace dftfe
         << "Total charge rho single atomic before normalizing to number of electrons: "
         << charge << std::endl;
 
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
 
     for (auto it1 = d_rhoAtomsValues.begin(); it1 != d_rhoAtomsValues.end();
          ++it1)
@@ -494,7 +494,7 @@ namespace dftfe
         for (unsigned int i = 0; i < (it2->second).size(); ++i)
           (it2->second)[i] *= scaling;
 
-    if (d_excManagerPtr->getDensityBasedFamilyType() == densityFamilyType::GGA)
+    if (isGradDensityDataDependent)
       {
         for (auto it1 = d_hessianRhoAtomsValues.begin();
              it1 != d_hessianRhoAtomsValues.end();
