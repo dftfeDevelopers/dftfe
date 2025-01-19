@@ -1029,6 +1029,8 @@ namespace dftfe
       std::vector<double> &                   maxResidualsAllkPoints)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
+    maxResidualsAllkPoints.clear();
+    maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size(), -1e+6);
     for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
         unsigned int highestOccupiedState = 0;
@@ -1059,13 +1061,16 @@ namespace dftfe
         for (unsigned int i = 0; i <= d_highestStateForResidualComputation; i++)
           {
             if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
-                maxHighestOccupiedStateResNorm)
+                maxResidualsAllkPoints[kPoint])
               {
-                maxHighestOccupiedStateResNorm =
+                maxResidualsAllkPoints[kPoint] =
                   residualNormWaveFunctionsAllkPoints[kPoint][i];
               }
           }
       }
+    maxHighestOccupiedStateResNorm =
+      *std::max_element(maxResidualsAllkPoints.begin(),
+                        maxResidualsAllkPoints.end());
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
