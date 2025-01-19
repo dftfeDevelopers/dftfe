@@ -356,7 +356,7 @@ namespace dftfe
       const double                                                          b,
       const double                                                          a0)
     {
-      AssertThrow(false,dftUtils::ExcNotImplementedYet());
+      AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
 
     void
@@ -391,7 +391,7 @@ namespace dftfe
       const double        b,
       const double        a0)
     {
-      AssertThrow(false,dftUtils::ExcNotImplementedYet());
+      AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
 
 

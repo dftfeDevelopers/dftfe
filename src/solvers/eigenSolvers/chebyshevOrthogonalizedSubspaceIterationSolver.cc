@@ -381,29 +381,14 @@ namespace dftfe
 
                 else
                   {
-                    // linearAlgebraOperations::chebyshevFilter(
-                    // operatorMatrix,
-                    // *eigenVectorsFlattenedArrayBlock,
-                    // *eigenVectorsFlattenedArrayBlock2,
-                    // chebyshevOrder,
-                    // d_lowerBoundUnWantedSpectrum,
-                    // d_upperBoundUnWantedSpectrum,
-                    // d_lowerBoundWantedSpectrum);
-                linearAlgebraOperations::chebyshevFilterNew(
-                  BLASWrapperPtr,
-                  operatorMatrix,
-                  (*eigenVectorsFlattenedArrayBlock),
-                  (*eigenVectorsFlattenedArrayBlock2),
-                  (*eigenVectorsFlattenedArrayBlock2),
-                  (*eigenVectorsFlattenedArrayBlock),
-                  std::vector<double>(BVec,0.0),
-                  chebyshevOrder,
-                  d_lowerBoundUnWantedSpectrum,
-                  d_upperBoundUnWantedSpectrum,
-                  d_lowerBoundWantedSpectrum,
-                  d_dftParams.approxOverlapMatrix);
-
-
+                    linearAlgebraOperations::chebyshevFilter(
+                      operatorMatrix,
+                      *eigenVectorsFlattenedArrayBlock,
+                      *eigenVectorsFlattenedArrayBlock2,
+                      chebyshevOrder,
+                      d_lowerBoundUnWantedSpectrum,
+                      d_upperBoundUnWantedSpectrum,
+                      d_lowerBoundWantedSpectrum);
                   }
               }
 

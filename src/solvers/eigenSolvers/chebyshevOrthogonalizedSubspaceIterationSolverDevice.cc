@@ -581,27 +581,14 @@ namespace dftfe
 
                 else
                   {
-                    // linearAlgebraOperations::chebyshevFilter(
-                    // operatorMatrix,
-                    // (*XBlock),
-                    // (*HXBlock),
-                    // chebyshevOrder,
-                    // d_lowerBoundUnWantedSpectrum,
-                    // d_upperBoundUnWantedSpectrum,
-                    // d_lowerBoundWantedSpectrum);
-                    linearAlgebraOperations::chebyshevFilterNew(
-                      BLASWrapperPtr,
+                    linearAlgebraOperations::chebyshevFilter(
                       operatorMatrix,
                       (*XBlock),
                       (*HXBlock),
-                      (*HXBlock),
-                      (*XBlock),
-                      std::vector<double>(BVec,0.0),
                       chebyshevOrder,
                       d_lowerBoundUnWantedSpectrum,
                       d_upperBoundUnWantedSpectrum,
-                      d_lowerBoundWantedSpectrum,
-                      d_dftParams.approxOverlapMatrix);
+                      d_lowerBoundWantedSpectrum);
                   }
                 if (useMixedPrecOverall && d_dftParams.useSinglePrecCommunCheby)
                   {
@@ -822,7 +809,7 @@ namespace dftfe
   //
   // solve
   //
- 
+
 
   //
   //
