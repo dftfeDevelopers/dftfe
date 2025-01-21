@@ -325,7 +325,6 @@ namespace dftfe
       const bool smearedNuclearCharges);
 
 
-    // is it density in vaues or out values in the below declaration
     void
     computeXCEnergyTermsSpinPolarized(
       const std::shared_ptr<

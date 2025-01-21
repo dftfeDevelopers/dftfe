@@ -357,23 +357,28 @@ namespace dftfe
     std::vector<double> &pdecDensitySpinDown =
       cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
+    pdexDensitySpinUp.resize(numberQuadraturePointsPerCell, 0.0);
+    pdecDensitySpinUp.resize(numberQuadraturePointsPerCell, 0.0);
+    pdexDensitySpinDown.resize(numberQuadraturePointsPerCell, 0.0);
+    pdecDensitySpinDown.resize(numberQuadraturePointsPerCell, 0.0);
+
     if (isGGA)
       {
         xDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
-          std::vector<double>();
+          std::vector<double>(3 * numberQuadraturePointsPerCell, 0.0);
         cDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
-          std::vector<double>();
+          std::vector<double>(3 * numberQuadraturePointsPerCell, 0.0);
       }
     if (isTauMGGA)
       {
         xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] =
-          std::vector<double>();
+          std::vector<double>(numberQuadraturePointsPerCell, 0.0);
         xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown] =
-          std::vector<double>();
+          std::vector<double>(numberQuadraturePointsPerCell, 0.0);
         cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] =
-          std::vector<double>();
+          std::vector<double>(numberQuadraturePointsPerCell, 0.0);
         cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown] =
-          std::vector<double>();
+          std::vector<double>(numberQuadraturePointsPerCell, 0.0);
       }
 
     for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();

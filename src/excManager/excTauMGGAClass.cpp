@@ -202,8 +202,8 @@ namespace dftfe
     std::vector<double> pdexTauSpinDownValues(nquad, 0);
     std::vector<double> pdecTauSpinUpValues(nquad, 0);
     std::vector<double> pdecTauSpinDownValues(nquad, 0);
-    std::vector<double> pdexLaplacianValues(nquad, 0);
-    std::vector<double> pdecLaplacianValues(nquad, 0);
+    std::vector<double> pdexLaplacianValues(2 * nquad, 0);
+    std::vector<double> pdecLaplacianValues(2 * nquad, 0);
 
     for (size_t i = 0; i < nquad; i++)
       {
@@ -228,7 +228,6 @@ namespace dftfe
       }
 
     std::vector<double> laplacianValues(2 * nquad, 0.0);
-    // laplacianValues.resize(2 * nquad,0.0);
 
     // xc_func_set_dens_threshold(d_funcXPtr.get(), rhoThresholdMgga);
     // xc_func_set_dens_threshold(d_funcCPtr.get(), rhoThresholdMgga);

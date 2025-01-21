@@ -1016,6 +1016,26 @@ namespace dftfe
         tauValues[0] = tauHost;
       }
 
+    {
+      int rank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+      double sumVal = 0.0;
+
+      for (int idx = 0; idx < tauHost.size(); idx++)
+        {
+          sumVal += tauHost[idx];
+        }
+
+      MPI_Allreduce(
+        MPI_IN_PLACE, &sumVal, 1, MPI_DOUBLE, MPI_SUM, mpiCommParent);
+
+      if (rank == 0)
+        {
+          std::cout << "Initial L2 norm of Tau is: " << sumVal << std::endl;
+        }
+    }
+
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       dftfe::utils::deviceSynchronize();
