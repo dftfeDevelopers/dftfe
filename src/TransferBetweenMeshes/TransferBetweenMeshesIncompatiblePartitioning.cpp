@@ -35,7 +35,8 @@ namespace dftfe
       const unsigned int                   matrixFreeMesh2VectorComponent,
       const unsigned int                   matrixFreeMesh2QuadratureComponent,
       const unsigned int                   verbosity,
-      const MPI_Comm &                     mpiComm)
+      const MPI_Comm &                     mpiComm,
+      const bool                           useMemOptForCellWiseInterpolation)
     : d_mpiComm(mpiComm)
   {
     d_matrixFreeMesh1Ptr                 = &matrixFreeMesh1;
@@ -114,7 +115,9 @@ namespace dftfe
 
             interpolateLocalMesh1.push_back(
               std::make_shared<InterpolateFromCellToLocalPoints<memorySpace>>(
-                srcCellPtr, numberDofsPerCell1[iElemIndex]));
+                srcCellPtr,
+                numberDofsPerCell1[iElemIndex],
+                useMemOptForCellWiseInterpolation));
             fe_valuesMesh1.reinit(cellMesh1);
             for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsMesh1;
                  iQuad++)
@@ -154,7 +157,9 @@ namespace dftfe
 
             interpolateLocalMesh2.push_back(
               std::make_shared<InterpolateFromCellToLocalPoints<memorySpace>>(
-                srcCellPtr, numberDofsPerCell2[iElemIndex]));
+                srcCellPtr,
+                numberDofsPerCell2[iElemIndex],
+                useMemOptForCellWiseInterpolation));
             fe_valuesMesh2.reinit(cellMesh2);
             for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsMesh2;
                  iQuad++)
@@ -226,8 +231,11 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-        &  outputQuadData,
-      bool resizeOutputVec)
+        &                outputQuadData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeOutputVec)
   {
     d_mesh1toMesh2->interpolateSrcDataToTargetPoints(
       BLASWrapperPtr,
@@ -235,6 +243,9 @@ namespace dftfe
       numberOfVectors,
       fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       outputQuadData,
+      blockSizeOfInputData,
+      blockSizeOfOutputData,
+      startIndexOfInputData,
       resizeOutputVec);
   }
 
@@ -250,8 +261,11 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh2,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-        &  outputQuadData,
-      bool resizeOutputVec)
+        &                outputQuadData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeOutputVec)
   {
     d_mesh2toMesh1->interpolateSrcDataToTargetPoints(
       BLASWrapperPtr,
@@ -259,6 +273,9 @@ namespace dftfe
       numberOfVectors,
       fullFlattenedArrayCellLocalProcIndexIdMapMesh2,
       outputQuadData,
+      blockSizeOfInputData,
+      blockSizeOfOutputData,
+      startIndexOfInputData,
       resizeOutputVec);
   }
 
@@ -276,14 +293,20 @@ namespace dftfe
         &mapVecToCells,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-        &  outputQuadData,
-      bool resizeOutputVec)
+        &                outputQuadData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeOutputVec)
   {
     d_mesh2toMesh1->interpolateSrcDataToTargetPoints(BLASWrapperPtr,
                                                      inputVec,
                                                      numberOfVectors,
                                                      mapVecToCells,
                                                      outputQuadData,
+                                                     blockSizeOfInputData,
+                                                     blockSizeOfOutputData,
+                                                     startIndexOfInputData,
                                                      resizeOutputVec);
   }
 
@@ -301,8 +324,11 @@ namespace dftfe
         &fullFlattenedArrayCellLocalProcIndexIdMapParent,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-        &  outputQuadData,
-      bool resizeOutputVec)
+        &                outputQuadData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeOutputVec)
   {
     d_mesh1toMesh2->interpolateSrcDataToTargetPoints(
       BLASWrapperPtr,
@@ -310,6 +336,9 @@ namespace dftfe
       numberOfVectors,
       fullFlattenedArrayCellLocalProcIndexIdMapParent,
       outputQuadData,
+      blockSizeOfInputData,
+      blockSizeOfOutputData,
+      startIndexOfInputData,
       resizeOutputVec);
   }
 

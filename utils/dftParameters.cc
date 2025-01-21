@@ -122,8 +122,7 @@ namespace dftfe
           "WRITE DENSITY QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be six columns (in case of collinear spin polarization) and 5 columns in case of spin-restricted calculation. The first three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fourth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the fifth and sixth columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the fifth column has the total density. Default: false.");
-
+          "[Standard] Writes DFT ground state electron-density solution fields at generally non-uniform quadrature points to a .txt file for post-processing. There will be seven columns (in case of collinear spin polarization) and 6 columns in case of spin-restricted calculation. The first column is the quadrature point index. The next three columns are the quadrature point cartesian coordinates (non-uniform grid with origin at cell center), fifth column is the quadrature integration weight incorporating the determinant of FE cell jacobian, and the sixth and seventh columns are the spin-up and spin-down densities in case of collinear spin polarization. In case of spin-restricted calculation, the sixth column has the total density. Default: false.");
 
         prm.declare_entry(
           "WRITE DENSITY OF STATES",
@@ -636,6 +635,45 @@ namespace dftfe
 
       prm.enter_subsection("DFT functional parameters");
       {
+        prm.enter_subsection("CONFINING POTENTIAL parameters");
+        {
+          prm.declare_entry(
+            "APPLY CONFINING POTENTIAL",
+            "false",
+            dealii::Patterns::Bool(),
+            "[Advanced] Apply confining potential. Usually required for anionic charges."
+            "The confining potential is applied between maxDist + r1 and maxDist + r2. Where maxDist "
+            "is the maximum distance of atoms from the center. r1 and r2 is the INNER and OUTER radii respectively."
+            "Between 0 and maxdist + r1: V(r) = 0;"
+            "Between maxdist + r1 and maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(dist2*dist2 + 1E-6);"
+            "Beyond maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(1E-6);"
+            "where dist1 = r - (maxdist + r1) and dist2 = (maxdist + r2) - r");
+
+          prm.declare_entry(
+            "INNER RADIUS",
+            "17.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The inner radius (r1) for the confining potential.");
+
+          prm.declare_entry(
+            "OUTER RADIUS",
+            "20.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The outer radius (r2) for the confining potential.");
+
+          prm.declare_entry(
+            "W PARAM",
+            "1.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The W parameter for the confining potential.");
+
+          prm.declare_entry(
+            "C PARAM",
+            "1.0",
+            dealii::Patterns::Double(0, 100),
+            "[Advanced] The C parameter for the confining potential.");
+        }
+        prm.leave_subsection();
         prm.declare_entry(
           "PSEUDOPOTENTIAL CALCULATION",
           "true",
@@ -1418,6 +1456,14 @@ namespace dftfe
     maxIonUpdateStep   = 0.5;
     maxCellUpdateStep  = 0.1;
 
+    // Parameters for confining potential
+    confiningPotential   = false;
+    confiningInnerPotRad = 17.0;
+    confiningOuterPotRad = 20.0;
+    confiningWParam      = 1.0;
+    confiningCParam      = 1.0;
+
+
     writeStructreEnergyForcesFileForPostProcess = false;
   }
 
@@ -1618,6 +1664,17 @@ namespace dftfe
 
     prm.enter_subsection("DFT functional parameters");
     {
+      // Parameters for confining potential
+      prm.enter_subsection("CONFINING POTENTIAL parameters");
+      {
+        confiningPotential   = prm.get_bool("APPLY CONFINING POTENTIAL");
+        confiningInnerPotRad = prm.get_double("INNER RADIUS");
+        confiningOuterPotRad = prm.get_double("OUTER RADIUS");
+        confiningWParam      = prm.get_double("W PARAM");
+        confiningCParam      = prm.get_double("C PARAM");
+      }
+      prm.leave_subsection();
+
       prm.enter_subsection("Dispersion Correction");
       {
         dc_dispersioncorrectiontype =
