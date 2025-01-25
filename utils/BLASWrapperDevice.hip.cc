@@ -22,6 +22,7 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <hipblas.h>
+#include <hip/hip_version.h>
 #ifdef DFTFE_WITH_DEVICE_AMD
 #  include <rocblas.h>
 #endif
@@ -66,7 +67,43 @@ namespace dftfe
       return reinterpret_cast<const double *>(a);
     }
 
+#if ROCM_VERSION >= 50701
+    inline hipDoubleComplex
+    makeDataTypeHipBlasCompatible(std::complex<double> a)
+    {
+      return hipDoubleComplex(a.real(), a.imag());
+    }
 
+    inline hipComplex
+    makeDataTypeHipBlasCompatible(std::complex<float> a)
+    {
+      return hipComplex(a.real(), a.imag());
+    }
+
+    inline hipComplex *
+    makeDataTypeHipBlasCompatible(std::complex<float> *a)
+    {
+      return reinterpret_cast<hipComplex *>(a);
+    }
+
+    inline const hipComplex *
+    makeDataTypeHipBlasCompatible(const std::complex<float> *a)
+    {
+      return reinterpret_cast<const hipComplex *>(a);
+    }
+
+    inline hipDoubleComplex *
+    makeDataTypeHipBlasCompatible(std::complex<double> *a)
+    {
+      return reinterpret_cast<hipDoubleComplex *>(a);
+    }
+
+    inline const hipDoubleComplex *
+    makeDataTypeHipBlasCompatible(const std::complex<double> *a)
+    {
+      return reinterpret_cast<const hipDoubleComplex *>(a);
+    }
+#else
     inline hipblasDoubleComplex
     makeDataTypeHipBlasCompatible(std::complex<double> a)
     {
@@ -102,6 +139,7 @@ namespace dftfe
     {
       return reinterpret_cast<const hipblasDoubleComplex *>(a);
     }
+#endif
   } // namespace utils
 
   namespace linearAlgebra
