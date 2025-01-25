@@ -1728,7 +1728,8 @@ namespace dftfe
                 {
                   BLASWrapperPtr->stridedCopyToBlockConstantStride(
                     chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                  XBlock.zeroOutGhosts();
+                  OXBlock.zeroOutGhosts();
                   // evaluate XBlock^{T} times H^{T} and store in HXBlock
                   operatorMatrix.overlapMatrixTimesX(
                     XBlock,
@@ -1978,7 +1979,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      OXBlock.zeroOutGhosts();
                       // evaluate XBlock^{T} times H^{T} and store in HXBlock
                       operatorMatrix.overlapMatrixTimesX(
                         XBlock,
@@ -2049,7 +2051,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      OXBlock.zeroOutGhosts();
                       // evaluate XBlock^{T} times H^{T} and store in HXBlock
                       operatorMatrix.overlapMatrixTimesX(
                         XBlock,
@@ -2315,7 +2318,8 @@ namespace dftfe
                 {
                   BLASWrapperPtr->stridedCopyToBlockConstantStride(
                     chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                  (XBlock).zeroOutGhosts();
+                  (OXBlock).zeroOutGhosts();
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
                   operatorMatrix.overlapMatrixTimesX(
                     XBlock,
@@ -2778,7 +2782,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      OXBlock.zeroOutGhosts();
                       operatorMatrix.overlapMatrixTimesX(
                         XBlock,
                         1.0,
@@ -2900,7 +2905,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      OXBlock.zeroOutGhosts();
                       operatorMatrix.overlapMatrixTimesX(
                         XBlock,
                         1.0,
@@ -3371,7 +3377,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      (XBlock).zeroOutGhosts();
+                      (OXBlock).zeroOutGhosts();
                       // evaluate XBlock^{T} times H^{T} and store in HXBlock
                       operatorMatrix.overlapMatrixTimesX(
                         XBlock,
@@ -3445,7 +3452,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      OXBlock.zeroOutGhosts();
                       // evaluate XBlock^{T} times H^{T} and store in HXBlock
                       operatorMatrix.overlapMatrixTimesX(
                         XBlock,
@@ -3817,7 +3825,8 @@ namespace dftfe
                 {
                   BLASWrapperPtr->stridedCopyToBlockConstantStride(
                     chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                  XBlock.zeroOutGhosts();
+                  HXBlock.zeroOutGhosts();
                   // evaluate H times XBlock^{T} and store in HXBlock^{T}
                   operatorMatrix.overlapMatrixTimesX(
                     XBlock,
@@ -4021,7 +4030,8 @@ namespace dftfe
                 {
                   BLASWrapperPtr->stridedCopyToBlockConstantStride(
                     chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                  XBlock.zeroOutGhosts();
+                  HXBlock.zeroOutGhosts();
                   // evaluate XBlock^{T} times H^{T} and store in HXBlock
                   operatorMatrix.HX(
                     XBlock,
@@ -4257,7 +4267,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      HXBlock.zeroOutGhosts();
                       // evaluate H times XBlock^{T} and store in HXBlock^{T}
                       operatorMatrix.HX(
                         XBlock,
@@ -4325,7 +4336,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      HXBlock.zeroOutGhosts();
                       // evaluate H times XBlock^{T} and store in HXBlock^{T}
                       operatorMatrix.HX(
                         XBlock,
@@ -4649,7 +4661,7 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
                       // evaluate H times XBlock^{T} and store in HXBlock^{T}
                       HXBlock.setValue(0);
                       const bool   scaleFlag = false;
@@ -4780,7 +4792,7 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
                       // evaluate H times XBlock^{T} and store in HXBlock^{T}
                       HXBlock.setValue(0);
                       const bool   scaleFlag = false;
@@ -5274,7 +5286,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      HXBlock.zeroOutGhosts();
                       // evaluate H times XBlock^{T} and store in HXBlock^{T}
                       operatorMatrix.HX(
                         XBlock,
@@ -5342,7 +5355,8 @@ namespace dftfe
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
-
+                      XBlock.zeroOutGhosts();
+                      HXBlock.zeroOutGhosts();
                       // evaluate H times XBlock^{T} and store in HXBlock^{T}
                       operatorMatrix.HX(
                         XBlock,

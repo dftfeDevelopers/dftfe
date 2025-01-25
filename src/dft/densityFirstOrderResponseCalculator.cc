@@ -211,7 +211,7 @@ namespace dftfe
                                    (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock[0]->data());
 #endif
-
+                    flattenedArrayBlock[0]->zeroOutGhosts();
 
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
                     for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
@@ -234,7 +234,7 @@ namespace dftfe
                           (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock[1]->data());
 #endif
-
+                  flattenedArrayBlock[1]->zeroOutGhosts();
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,
                                              quadratureIndex,

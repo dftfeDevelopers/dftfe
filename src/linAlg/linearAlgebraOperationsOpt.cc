@@ -63,10 +63,9 @@ namespace dftfe
       //
       // call HX
       //
-
-
       double alpha1 = sigma1 / e, alpha2 = -c;
       operatorMatrix.overlapMatrixTimesX(X,1.0,0.0,0.0,Y);
+     
       operatorMatrix.HXChebyNew(Y, alpha1, 0.0, alpha1 * alpha2, X);
       X.swap(Y);
       //
@@ -96,7 +95,7 @@ namespace dftfe
           sigma = sigma2;
         }
         operatorMatrix.overlapInverseMatrixTimesX(
-        Y, 1.0, 0.0, 0.0, X);
+        Y, 1.0, 0.0, 0.0, X);       
       // copy back YArray to XArray
       //X = Y;
     }

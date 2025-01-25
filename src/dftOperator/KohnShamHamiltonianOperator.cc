@@ -971,7 +971,7 @@ namespace dftfe
                             dst.data());
     src.updateGhostValues();
     d_basisOperationsPtr->distribute(src);
-    const dataTypes::number scalarCoeffAlpha = scalarHX,
+    const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
                             scalarCoeffBeta  = dataTypes::number(0.0);
     if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
       {
@@ -1156,7 +1156,7 @@ namespace dftfe
           src.locallyOwnedSize(),
           src.data(),
           d_basisOperationsPtr->massVectorBasisData().data(),
-          1.0,
+          scalarOX,
           dst.data());
       }
     else
@@ -1213,6 +1213,7 @@ namespace dftfe
             d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
               numberWavefunctions,
               numDoFsPerCell * (cellRange.second - cellRange.first),
+              scalarOX,
               d_cellWaveFunctionMatrixDst.data() +
                 omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
                   numberWavefunctions,

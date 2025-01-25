@@ -406,16 +406,20 @@ namespace dftfe
               jvec,
               eigenVectorsFlattenedDevice,
               (*XBlock).begin());
+            (*XBlock).zeroOutGhosts();  
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
-              BLASWrapperPtr->stridedCopyToBlockConstantStride(
+              {
+                BLASWrapperPtr->stridedCopyToBlockConstantStride(
                 BVec,
                 totalNumberWaveFunctions,
                 localVectorSize,
                 jvec + BVec,
                 eigenVectorsFlattenedDevice,
                 (*XBlock2).begin());
+                (*XBlock2).zeroOutGhosts();
+              }
             //
             // call Chebyshev filtering function only for the current block
             // or two simulataneous blocks (in case of overlap computation
