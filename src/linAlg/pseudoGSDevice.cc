@@ -20,64 +20,13 @@
 #include <dftParameters.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <linearAlgebraOperationsInternal.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceKernelLauncherConstants.h>
+#include "linearAlgebraOperationsDeviceKernels.h"
 
 
 namespace dftfe
 {
   namespace linearAlgebraOperationsDevice
   {
-    namespace
-    {
-      __global__ void
-      setZeroKernel(const unsigned int BVec,
-                    const unsigned int M,
-                    const unsigned int N,
-                    double *           yVec,
-                    const unsigned int startingXVecId)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerBVec =
-          (BVec + blockDim.x - 1) / blockDim.x;
-        const unsigned int gangBlockId = blockIdx.x / numGangsPerBVec;
-        const unsigned int localThreadId =
-          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-            localThreadId < BVec)
-          {
-            *(yVec + gangBlockId * N + startingXVecId + localThreadId) = 0.0;
-          }
-      }
-
-
-      __global__ void
-      setZeroKernel(const unsigned int                 BVec,
-                    const unsigned int                 M,
-                    const unsigned int                 N,
-                    dftfe::utils::deviceDoubleComplex *yVec,
-                    const unsigned int                 startingXVecId)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerBVec =
-          (BVec + blockDim.x - 1) / blockDim.x;
-        const unsigned int gangBlockId = blockIdx.x / numGangsPerBVec;
-        const unsigned int localThreadId =
-          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-            localThreadId < BVec)
-          {
-            *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-              dftfe::utils::makeComplex(0.0, 0.0);
-          }
-      }
-    } // namespace
-
     void
     pseudoGramSchmidtOrthogonalization(
       elpaScalaManager &       elpaScala,
@@ -396,30 +345,7 @@ namespace dftfe
                 {
                   // set to zero wavefunctions which are not inside a given band
                   // paral group
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-                  setZeroKernel<<<(BVec +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                    BVec,
-                    M,
-                    N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(X),
-                    jvec);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-                  hipLaunchKernelGGL(
-                    setZeroKernel,
-                    (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                    0,
-                    0,
-                    BVec,
-                    M,
-                    N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(X),
-                    jvec);
-#endif
+                  setZero(BVec, M, N, X, jvec);
                 }
             }
 

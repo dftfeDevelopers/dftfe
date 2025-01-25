@@ -17,323 +17,19 @@
 
 
 
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceKernelLauncherConstants.h>
 #include <MemoryStorage.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <linearAlgebraOperationsInternal.h>
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
+#include "linearAlgebraOperationsDeviceKernels.h"
 
 
 namespace dftfe
 {
   namespace linearAlgebraOperationsDevice
   {
-    namespace
-    {
-      __global__ void
-      combinedDeviceKernel(const unsigned int contiguousBlockSize,
-                           const unsigned int numContiguousBlocks,
-                           double *           x,
-                           double *           y,
-                           const double       a,
-                           const double       b,
-                           const double       scalar,
-                           const double       scalarOld,
-                           const double *     invSqrtMassVec,
-                           const double *     sqrtMassVec)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex = index / contiguousBlockSize;
-            *(y + index) *= (*(sqrtMassVec + blockIndex) * 1.0 / scalarOld);
-            *(x + index) *= (*(invSqrtMassVec + blockIndex));
-            y[index] = a * x[index] + b * y[index];
-            *(x + index) *= (*(invSqrtMassVec + blockIndex) * scalar);
-            *(y + index) *= (*(sqrtMassVec + blockIndex));
-          }
-      }
-
-
-      __global__ void
-      combinedDeviceKernel(const unsigned int contiguousBlockSize,
-                           const unsigned int numContiguousBlocks,
-                           dftfe::utils::deviceDoubleComplex *X,
-                           dftfe::utils::deviceDoubleComplex *Y,
-                           const double                       a,
-                           const double                       b,
-                           const double                       scalar,
-                           const double                       scalarOld,
-                           const double *                     invSqrtMassVec,
-                           const double *                     sqrtMassVec)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex = index / contiguousBlockSize;
-            *(Y + index)            = dftfe::utils::makeComplex(
-              (Y + index)->x * (*(sqrtMassVec + blockIndex) * 1.0 / scalarOld),
-              (Y + index)->y * (*(sqrtMassVec + blockIndex) * 1.0 / scalarOld));
-            *(X + index) = dftfe::utils::makeComplex(
-              (X + index)->x * (*(invSqrtMassVec + blockIndex)),
-              (X + index)->y * (*(invSqrtMassVec + blockIndex)));
-            Y[index] =
-              dftfe::utils::makeComplex(a * X[index].x + b * Y[index].x,
-                                        a * X[index].y + b * Y[index].y);
-            *(X + index) = dftfe::utils::makeComplex(
-              (X + index)->x * (*(invSqrtMassVec + blockIndex) * scalar),
-              (X + index)->y * (*(invSqrtMassVec + blockIndex) * scalar));
-            *(Y + index) = dftfe::utils::makeComplex(
-              (Y + index)->x * (*(sqrtMassVec + blockIndex)),
-              (Y + index)->y * (*(sqrtMassVec + blockIndex)));
-          }
-      }
-
-
-
-      __global__ void
-      addSubspaceRotatedBlockToXKernel(const unsigned int BDof,
-                                       const unsigned int BVec,
-                                       const float *      rotatedXBlockSP,
-                                       double *           X,
-                                       const unsigned int startingDofId,
-                                       const unsigned int startingVecId,
-                                       const unsigned int N)
-      {
-        const unsigned int numEntries = BVec * BDof;
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int ibdof = i / BVec;
-            const unsigned int ivec  = i % BVec;
-
-            *(X + N * (startingDofId + ibdof) + startingVecId + ivec) +=
-              rotatedXBlockSP[ibdof * BVec + ivec];
-          }
-      }
-
-      __global__ void
-      addSubspaceRotatedBlockToXKernel(
-        const unsigned int                      BDof,
-        const unsigned int                      BVec,
-        const dftfe::utils::deviceFloatComplex *rotatedXBlockSP,
-        dftfe::utils::deviceDoubleComplex *     X,
-        const unsigned int                      startingDofId,
-        const unsigned int                      startingVecId,
-        const unsigned int                      N)
-      {
-        const unsigned int numEntries = BVec * BDof;
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int ibdof = i / BVec;
-            const unsigned int ivec  = i % BVec;
-
-            *(X + N * (startingDofId + ibdof) + startingVecId + ivec) =
-              dftfe::utils::add(*(X + N * (startingDofId + ibdof) +
-                                  startingVecId + ivec),
-                                rotatedXBlockSP[ibdof * BVec + ivec]);
-          }
-      }
-
-
-      __global__ void
-      copyFromOverlapMatBlockToDPSPBlocks(const unsigned int B,
-                                          const unsigned int D,
-                                          const double *     overlapMatrixBlock,
-                                          double *overlapMatrixBlockDP,
-                                          float * overlapMatrixBlockSP)
-      {
-        const unsigned int numEntries = B * D;
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int ibdof = i / D;
-            const unsigned int ivec  = i % D;
-
-            if (ivec < B)
-              overlapMatrixBlockDP[ibdof * B + ivec] = overlapMatrixBlock[i];
-            else
-              overlapMatrixBlockSP[ibdof * (D - B) + (ivec - B)] =
-                overlapMatrixBlock[i];
-          }
-      }
-
-
-      __global__ void
-      copyFromOverlapMatBlockToDPSPBlocks(
-        const unsigned int                       B,
-        const unsigned int                       D,
-        const dftfe::utils::deviceDoubleComplex *overlapMatrixBlock,
-        dftfe::utils::deviceDoubleComplex *      overlapMatrixBlockDP,
-        dftfe::utils::deviceFloatComplex *       overlapMatrixBlockSP)
-      {
-        const unsigned int numEntries = B * D;
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int ibdof = i / D;
-            const unsigned int ivec  = i % D;
-
-            if (ivec < B)
-              dftfe::utils::copyValue(overlapMatrixBlockDP + ibdof * B + ivec,
-                                      overlapMatrixBlock[i]);
-            else
-              dftfe::utils::copyValue(overlapMatrixBlockSP + ibdof * (D - B) +
-                                        (ivec - B),
-                                      overlapMatrixBlock[i]);
-          }
-      }
-
-      __global__ void
-      computeDiagQTimesXKernel(const double *     diagValues,
-                               double *           X,
-                               const unsigned int N,
-                               const unsigned int M)
-      {
-        const unsigned int numEntries = N * M;
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int idof = i / N;
-            const unsigned int ivec = i % N;
-
-            *(X + N * idof + ivec) = *(X + N * idof + ivec) * diagValues[ivec];
-          }
-      }
-
-
-      __global__ void
-      computeDiagQTimesXKernel(
-        const dftfe::utils::deviceDoubleComplex *diagValues,
-        dftfe::utils::deviceDoubleComplex *      X,
-        const unsigned int                       N,
-        const unsigned int                       M)
-      {
-        const unsigned int numEntries = N * M;
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int idof = i / N;
-            const unsigned int ivec = i % N;
-
-            *(X + N * idof + ivec) =
-              dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
-          }
-      }
-
-
-      // R^2=||Y-X*Gamma||^2
-      __global__ void
-      computeResidualDeviceKernel(const unsigned int numVectors,
-                                  const unsigned int numDofs,
-                                  const unsigned int N,
-                                  const unsigned int startingVecId,
-                                  const double *     eigenValues,
-                                  const double *     x,
-                                  const double *     y,
-                                  double *           r)
-      {
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numVectors * numDofs;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int dofIndex  = i / numVectors;
-            const unsigned int waveIndex = i % numVectors;
-            r[i] = y[i] - x[dofIndex * N + startingVecId + waveIndex] *
-                            eigenValues[startingVecId + waveIndex];
-            r[i] = r[i] * r[i];
-          }
-      }
-
-      // R^2=||Y-X*Gamma||^2
-      __global__ void
-      computeResidualDeviceKernel(const unsigned int numVectors,
-                                  const unsigned int numDofs,
-                                  const unsigned int N,
-                                  const unsigned int startingVecId,
-                                  const double *     eigenValues,
-                                  const dftfe::utils::deviceDoubleComplex *X,
-                                  const dftfe::utils::deviceDoubleComplex *Y,
-                                  double *                                 r)
-      {
-        for (int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numVectors * numDofs;
-             i += blockDim.x * gridDim.x)
-          {
-            const unsigned int                      dofIndex  = i / numVectors;
-            const unsigned int                      waveIndex = i % numVectors;
-            const dftfe::utils::deviceDoubleComplex diff =
-              dftfe::utils::makeComplex(
-                Y[i].x - X[dofIndex * N + startingVecId + waveIndex].x *
-                           eigenValues[startingVecId + waveIndex],
-                Y[i].y - X[dofIndex * N + startingVecId + waveIndex].y *
-                           eigenValues[startingVecId + waveIndex]);
-            r[i] = diff.x * diff.x + diff.y * diff.y;
-          }
-      }
-
-      __global__ void
-      copyFloatArrToDoubleArrLocallyOwned(
-        const unsigned int  contiguousBlockSize,
-        const unsigned int  numContiguousBlocks,
-        const float *       floatArr,
-        const unsigned int *locallyOwnedFlagArr,
-        double *            doubleArr)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex = index / contiguousBlockSize;
-            if (locallyOwnedFlagArr[blockIndex] == 1)
-              doubleArr[index] = floatArr[index];
-          }
-      }
-
-
-      __global__ void
-      copyFloatArrToDoubleArrLocallyOwned(
-        const unsigned int                      contiguousBlockSize,
-        const unsigned int                      numContiguousBlocks,
-        const dftfe::utils::deviceFloatComplex *floatArr,
-        const unsigned int *                    locallyOwnedFlagArr,
-        dftfe::utils::deviceDoubleComplex *     doubleArr)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (unsigned int index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            unsigned int blockIndex = index / contiguousBlockSize;
-            if (locallyOwnedFlagArr[blockIndex] == 1)
-              dftfe::utils::copyValue(doubleArr + index, floatArr[index]);
-          }
-      }
-    } // namespace
-
-
     void
     chebyshevFilterOverlapComputeCommunication(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
@@ -1731,29 +1427,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
         dftfe::utils::makeDataTypeDeviceCompatible(diagValuesHost.begin()),
         N * sizeof(dataTypes::number));
-
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      computeDiagQTimesXKernel<<<(M * N +
-                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
-        dftfe::utils::makeDataTypeDeviceCompatible(X),
-        N,
-        M);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(computeDiagQTimesXKernel,
-                         (M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           diagValues.begin()),
-                         dftfe::utils::makeDataTypeDeviceCompatible(X),
-                         N,
-                         M);
-#endif
+      computeDiagQTimesX(diagValues.begin(), X, N, M);
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -1948,38 +1622,15 @@ namespace dftfe
                                             rotatedVectorsMatBlockSP.begin(),
                                             BVec);
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-                      addSubspaceRotatedBlockToXKernel<<<
-                        (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE,
-                        dftfe::utils::DEVICE_BLOCK_SIZE,
-                        0,
-                        streamCompute>>>(
+                      addSubspaceRotatedBlockToX(
                         BDof,
                         BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotatedVectorsMatBlockSP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(X),
+                        rotatedVectorsMatBlockSP.begin(),
+                        X,
                         idof,
                         jvec,
-                        N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-                      hipLaunchKernelGGL(
-                        addSubspaceRotatedBlockToXKernel,
-                        (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE,
-                        dftfe::utils::DEVICE_BLOCK_SIZE,
-                        0,
-                        streamCompute,
-                        BDof,
-                        BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotatedVectorsMatBlockSP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(X),
-                        idof,
-                        jvec,
-                        N);
-#endif
+                        N,
+                        streamCompute);
                     }
                 } // block loop over dofs
             }     // band parallalelization loop
@@ -2146,29 +1797,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
         dftfe::utils::makeDataTypeDeviceCompatible(diagValuesHost.begin()),
         N * sizeof(dataTypes::number));
-
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      computeDiagQTimesXKernel<<<(M * N +
-                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        dftfe::utils::makeDataTypeDeviceCompatible(diagValues.begin()),
-        dftfe::utils::makeDataTypeDeviceCompatible(X),
-        N,
-        M);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(computeDiagQTimesXKernel,
-                         (M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           diagValues.begin()),
-                         dftfe::utils::makeDataTypeDeviceCompatible(X),
-                         N,
-                         M);
-#endif
+      computeDiagQTimesX(diagValues.begin(), X, N, M);
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -2363,39 +1992,15 @@ namespace dftfe
                                             &scalarCoeffBetaSP,
                                             rotatedVectorsMatBlockSP.begin(),
                                             BVec);
-
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-                      addSubspaceRotatedBlockToXKernel<<<
-                        (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE,
-                        dftfe::utils::DEVICE_BLOCK_SIZE,
-                        0,
-                        streamCompute>>>(
+                      addSubspaceRotatedBlockToX(
                         BDof,
                         BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotatedVectorsMatBlockSP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(X),
+                        rotatedVectorsMatBlockSP.begin(),
+                        X,
                         idof,
                         jvec,
-                        N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-                      hipLaunchKernelGGL(
-                        addSubspaceRotatedBlockToXKernel,
-                        (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE,
-                        dftfe::utils::DEVICE_BLOCK_SIZE,
-                        0,
-                        streamCompute,
-                        BDof,
-                        BVec,
-                        dftfe::utils::makeDataTypeDeviceCompatible(
-                          rotatedVectorsMatBlockSP.begin()),
-                        dftfe::utils::makeDataTypeDeviceCompatible(X),
-                        idof,
-                        jvec,
-                        N);
-#endif
+                        N,
+                        streamCompute);
                     }
                 } // block loop over dofs
             }     // band parallelization
@@ -2747,7 +2352,7 @@ namespace dftfe
 
               const unsigned int ivecNew = ivec + vectorsBlockSize;
               const unsigned int DNew    = N - ivecNew;
-              const unsigned int BNew    = min(vectorsBlockSize, N - ivecNew);
+              const unsigned int BNew = std::min(vectorsBlockSize, N - ivecNew);
 
 
               // start computations on the next block
@@ -3365,7 +2970,7 @@ namespace dftfe
 
               const unsigned int ivecNew = ivec + vectorsBlockSize;
               const unsigned int DNew    = N - ivecNew;
-              const unsigned int BNew    = min(vectorsBlockSize, N - ivecNew);
+              const unsigned int BNew = std::min(vectorsBlockSize, N - ivecNew);
 
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
@@ -3729,7 +3334,7 @@ namespace dftfe
 
               const unsigned int ivecNew = ivec + vectorsBlockSize;
               const unsigned int DNew    = N - ivecNew;
-              const unsigned int BNew    = min(vectorsBlockSize, N - ivecNew);
+              const unsigned int BNew = std::min(vectorsBlockSize, N - ivecNew);
 
 
               // start computations on the next block
@@ -3762,38 +3367,12 @@ namespace dftfe
 
 
               const unsigned int DRem = D - B;
-
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-              copyFromOverlapMatBlockToDPSPBlocks<<<
-                (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE,
-                dftfe::utils::DEVICE_BLOCK_SIZE,
-                0,
-                streamDataMove>>>(B,
-                                  D,
-                                  dftfe::utils::makeDataTypeDeviceCompatible(
-                                    overlapMatrixBlock.begin()),
-                                  dftfe::utils::makeDataTypeDeviceCompatible(
-                                    overlapMatrixBlockDP.begin()),
-                                  dftfe::utils::makeDataTypeDeviceCompatible(
-                                    overlapMatrixBlockSP.begin()));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-              hipLaunchKernelGGL(copyFromOverlapMatBlockToDPSPBlocks,
-                                 (D * B +
-                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE,
-                                 0,
-                                 streamDataMove,
-                                 B,
-                                 D,
-                                 dftfe::utils::makeDataTypeDeviceCompatible(
-                                   overlapMatrixBlock.begin()),
-                                 dftfe::utils::makeDataTypeDeviceCompatible(
-                                   overlapMatrixBlockDP.begin()),
-                                 dftfe::utils::makeDataTypeDeviceCompatible(
-                                   overlapMatrixBlockSP.begin()));
-#endif
+              copyFromOverlapMatBlockToDPSPBlocks(B,
+                                                  D,
+                                                  overlapMatrixBlock.begin(),
+                                                  overlapMatrixBlockDP.begin(),
+                                                  overlapMatrixBlockSP.begin(),
+                                                  streamDataMove);
 
               if (dftParams.useDeviceDirectAllReduce)
                 {
@@ -4019,36 +3598,14 @@ namespace dftfe
                     HXBlockFull.begin());
                 }
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-              computeResidualDeviceKernel<<<
-                (B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                B,
-                M,
-                N,
-                jvec,
-                eigenValuesDevice.begin(),
-                dftfe::utils::makeDataTypeDeviceCompatible(X),
-                dftfe::utils::makeDataTypeDeviceCompatible(HXBlockFull.begin()),
-                residualSqDevice.begin());
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-              hipLaunchKernelGGL(computeResidualDeviceKernel,
-                                 (B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE,
-                                 0,
-                                 0,
-                                 B,
-                                 M,
-                                 N,
-                                 jvec,
-                                 eigenValuesDevice.begin(),
-                                 dftfe::utils::makeDataTypeDeviceCompatible(X),
-                                 dftfe::utils::makeDataTypeDeviceCompatible(
-                                   HXBlockFull.begin()),
-                                 residualSqDevice.begin());
-#endif
+              computeResidualDevice(B,
+                                    M,
+                                    N,
+                                    jvec,
+                                    eigenValuesDevice.begin(),
+                                    X,
+                                    HXBlockFull.begin(),
+                                    residualSqDevice.begin());
 
               BLASWrapperPtr->xgemm('N',
                                     'T',

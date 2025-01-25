@@ -22,8 +22,6 @@
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceAPICalls.h>
-#include <dftUtils.h>
-#include <headers.h>
 
 namespace dftfe
 {
@@ -135,13 +133,12 @@ namespace dftfe
     namespace deviceKernelsGeneric
     {
       void
-      setupDevice()
+      setupDevice(const int &mpi_rank)
       {
         int n_devices = 0;
         dftfe::utils::getDeviceCount(&n_devices);
         // std::cout<< "Number of Devices "<<n_devices<<std::endl;
-        int device_id =
-          dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) % n_devices;
+        int device_id = mpi_rank % n_devices;
         // std::cout<<"Device Id: "<<device_id<<" Task Id
         // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
         dftfe::utils::setDevice(device_id);

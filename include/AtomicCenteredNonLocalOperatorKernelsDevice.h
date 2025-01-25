@@ -24,7 +24,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
-
+#include <MemoryStorage.h>
 namespace dftfe
 {
   namespace AtomicCenteredNonLocalOperatorKernelsDevice
