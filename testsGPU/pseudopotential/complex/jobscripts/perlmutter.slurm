@@ -18,23 +18,17 @@ LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$WD/env2/lib
 LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$WD/env2/lib64
 module load nccl
 
-
 srun ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
-
 srun ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
-
 srun ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
-
 srun ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
-
 srun ./dftfe parameterFileMg2x_5.prm > outputMg2x_5
-
 srun ./dftfe parameterFileMg2x_6.prm > outputMg2x_6
-
 srun ./dftfe parameterFileMg2x_7.prm > outputMg2x_7
-
 srun ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
-
+srun ./dftfe parameterFileMg2x_9.prm > outputMg2x_9
+srun ./dftfe parameterFileMg2x_10.prm > outputMg2x_10
 srun ./dftfe parameterFileBe.prm > outputBe
-
 srun ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard
+srun ./dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
+srun ./dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
