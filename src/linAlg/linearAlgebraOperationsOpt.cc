@@ -138,7 +138,7 @@ namespace dftfe
               AssertThrow(
                 false,
                 dealii::ExcMessage(
-                  "DFT-FE Error: Illegal, trying to use standard ChFSI with mixed precision."))
+                  "DFT-FE Error: Illegal, trying to use standard ChFSI with mixed precision."));
             }
         }
 

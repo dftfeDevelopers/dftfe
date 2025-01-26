@@ -24,7 +24,9 @@
 #include <TypeConfig.h>
 #include <DeviceTypeConfig.h>
 #include <cmath>
-
+#if defined(DFTFE_WITH_DEVICE)
+#  include "Exceptions.h"
+#endif
 namespace dftfe
 {
   namespace linearAlgebra
@@ -700,6 +702,7 @@ namespace dftfe
     private:
     };
 #if defined(DFTFE_WITH_DEVICE)
+#  include "Exceptions.h"
     enum class tensorOpDataType
     {
       fp32,

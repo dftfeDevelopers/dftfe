@@ -20,63 +20,12 @@
 #include "linearAlgebraOperationsDevice.h"
 #include "linearAlgebraOperationsInternal.h"
 #include "constants.h"
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceKernelLauncherConstants.h>
+#include "linearAlgebraOperationsDeviceKernels.h"
 
 namespace dftfe
 {
   namespace linearAlgebraOperationsDevice
   {
-    namespace
-    {
-      __global__ void
-      setZeroKernel(const unsigned int BVec,
-                    const unsigned int M,
-                    const unsigned int N,
-                    double *           yVec,
-                    const unsigned int startingXVecId)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerBVec =
-          (BVec + blockDim.x - 1) / blockDim.x;
-        const unsigned int gangBlockId = blockIdx.x / numGangsPerBVec;
-        const unsigned int localThreadId =
-          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-            localThreadId < BVec)
-          {
-            *(yVec + gangBlockId * N + startingXVecId + localThreadId) = 0.0;
-          }
-      }
-
-
-      __global__ void
-      setZeroKernel(const unsigned int                 BVec,
-                    const unsigned int                 M,
-                    const unsigned int                 N,
-                    dftfe::utils::deviceDoubleComplex *yVec,
-                    const unsigned int                 startingXVecId)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerBVec =
-          (BVec + blockDim.x - 1) / blockDim.x;
-        const unsigned int gangBlockId = blockIdx.x / numGangsPerBVec;
-        const unsigned int localThreadId =
-          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-            localThreadId < BVec)
-          {
-            *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-              dftfe::utils::makeComplex(0.0, 0.0);
-          }
-      }
-    } // namespace
-
     void
     rayleighRitz(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,

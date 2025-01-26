@@ -23,6 +23,7 @@
 #include "dftParameters.h"
 #include "FEBasisOperations.h"
 #include <BLASWrapper.h>
+#include "densityCalculatorDeviceKernels.h"
 
 
 namespace dftfe
@@ -58,14 +59,11 @@ namespace dftfe
   void
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
-      dftfe::basis::
-        FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
-      &basisOperationsPtr,
-    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    onesVec,
     double *                                    partialOccupPrimeVec,
     NumberType *                                wfcQuadPointData,
@@ -74,30 +72,6 @@ namespace dftfe
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,
     double *rhoResponseFermiEnergy);
-
-#if defined(DFTFE_WITH_DEVICE)
-  template <typename NumberType>
-  void
-  computeRhoResponseFromInterpolatedValues(
-    std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &basisOperationsPtr,
-    std::shared_ptr<
-      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                         BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    double *                                    onesVec,
-    double *                                    partialOccupVecPrime,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                wfcPrimeQuadPointData,
-    double *rhoResponseHamCellsWfcContributions,
-    double *rhoResponseFermiEnergyCellsWfcContributions,
-    double *rhoResponseHam,
-    double *rhoResponseFermiEnergy);
-#endif
 
 } // namespace dftfe
 #endif

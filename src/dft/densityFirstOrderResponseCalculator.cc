@@ -23,13 +23,6 @@
 #include <dftUtils.h>
 #include <vectorUtilities.h>
 #include <MemoryStorage.h>
-#include <DataTypeOverloads.h>
-#include <linearAlgebraOperationsDevice.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
-
 
 namespace dftfe
 {
@@ -278,13 +271,13 @@ namespace dftfe
 
 
                           computeRhoResponseFromInterpolatedValues(
-                            basisOperationsPtr,
                             BLASWrapperPtr,
                             std::pair<unsigned int, unsigned int>(
                               startingCellId,
                               startingCellId + currentCellsBlockSize),
                             std::pair<unsigned int, unsigned int>(
                               jvec, jvec + currentBlockSize),
+                            numQuadPoints,
                             onesVec.data(),
                             partialOccupPrimeVec.data(),
                             wfcQuadPointData.data(),
@@ -414,14 +407,11 @@ namespace dftfe
   void
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
-      dftfe::basis::
-        FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
-      &basisOperationsPtr,
-    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    onesVec,
     double *                                    partialOccupVecPrime,
     NumberType *                                wfcQuadPointData,
@@ -433,8 +423,6 @@ namespace dftfe
   {
     const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
     const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells           = basisOperationsPtr->nCells();
     for (unsigned int iCell = cellRange.first; iCell < cellRange.second;
          ++iCell)
       for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)

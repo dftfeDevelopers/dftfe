@@ -840,7 +840,8 @@ namespace dftfe
         if (useDevice && setDeviceToMPITaskBindingInternally &&
             !d_isDeviceToMPITaskBindingSetInternally)
           {
-            dftfe::utils::deviceKernelsGeneric::setupDevice();
+            dftfe::utils::deviceKernelsGeneric::setupDevice(
+              dealii::Utilities::MPI::this_mpi_process(d_mpi_comm_parent));
             d_isDeviceToMPITaskBindingSetInternally = true;
           }
 #endif
