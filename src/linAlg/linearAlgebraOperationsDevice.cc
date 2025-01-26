@@ -3408,7 +3408,7 @@ namespace dftfe
                     HXBlock,
                     dftParams.approxOverlapMatrix);
 
-                  computeDiagQTimesX(eigenValuesDevice.begin(), HXBlock.begin(), N, M);
+                  computeDiagQTimesX(eigenValuesDevice.begin()+k, HXBlock.begin(),chebyBlockSize , M);
 
 
                   operatorMatrix.HX(XBlock, 1.0, -1.0, 0.0, HXBlock);

@@ -28,10 +28,10 @@ namespace dftfe
       ValueType2 *                  overlapMatrixBlockSP,
       dftfe::utils::deviceStream_t &streamDataMove);
 
-    template <typename ValueType>
+    template <typename ValueType1, typename ValueType2>
     void
-    computeDiagQTimesX(const ValueType *  diagValues,
-                       ValueType *        X,
+    computeDiagQTimesX(const ValueType1 *  diagValues,
+                       ValueType2 *        X,
                        const unsigned int N,
                        const unsigned int M);
 

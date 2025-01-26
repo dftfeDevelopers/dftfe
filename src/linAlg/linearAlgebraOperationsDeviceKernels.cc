@@ -140,6 +140,25 @@ namespace dftfe
       }
 
 
+      __global__ void
+      computeDiagQTimesXKernel(
+        const double *diagValues,
+        dftfe::utils::deviceDoubleComplex *      X,
+        const unsigned int                       N,
+        const unsigned int                       M)
+      {
+        const unsigned int numEntries = N * M;
+        for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+             i += blockDim.x * gridDim.x)
+          {
+            const unsigned int idof = i / N;
+            const unsigned int ivec = i % N;
+
+            *(X + N * idof + ivec) =
+              dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
+          }
+      }
+
       // R^2=||Y-X*Gamma||^2
       __global__ void
       computeResidualDeviceKernel(const unsigned int numVectors,
@@ -361,10 +380,10 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(overlapMatrixBlockSP));
 #endif
     }
-    template <typename ValueType>
+    template <typename ValueType1, typename ValueType2>
     void
-    computeDiagQTimesX(const ValueType *  diagValues,
-                       ValueType *        X,
+    computeDiagQTimesX(const ValueType1 *  diagValues,
+                       ValueType2 *        X,
                        const unsigned int N,
                        const unsigned int M)
     {
@@ -547,6 +566,12 @@ namespace dftfe
                        const unsigned int M);
     template void
     computeDiagQTimesX(const std::complex<double> *diagValues,
+                       std::complex<double> *      X,
+                       const unsigned int          N,
+                       const unsigned int          M);
+
+    template void
+    computeDiagQTimesX(const double *diagValues,
                        std::complex<double> *      X,
                        const unsigned int          N,
                        const unsigned int          M);
