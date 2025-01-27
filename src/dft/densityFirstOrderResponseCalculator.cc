@@ -204,7 +204,7 @@ namespace dftfe
                                    (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock[0]->data());
 #endif
-                    flattenedArrayBlock[0]->zeroOutGhosts();
+                  flattenedArrayBlock[0]->zeroOutGhosts();
 
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
                     for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)

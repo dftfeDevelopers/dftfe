@@ -141,11 +141,10 @@ namespace dftfe
 
 
       __global__ void
-      computeDiagQTimesXKernel(
-        const double *diagValues,
-        dftfe::utils::deviceDoubleComplex *      X,
-        const unsigned int                       N,
-        const unsigned int                       M)
+      computeDiagQTimesXKernel(const double *                     diagValues,
+                               dftfe::utils::deviceDoubleComplex *X,
+                               const unsigned int                 N,
+                               const unsigned int                 M)
       {
         const unsigned int numEntries = N * M;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
@@ -254,7 +253,6 @@ namespace dftfe
               dftfe::utils::makeComplex(0.0, 0.0);
           }
       }
-
 
 
 
@@ -382,8 +380,8 @@ namespace dftfe
     }
     template <typename ValueType1, typename ValueType2>
     void
-    computeDiagQTimesX(const ValueType1 *  diagValues,
-                       ValueType2 *        X,
+    computeDiagQTimesX(const ValueType1 * diagValues,
+                       ValueType2 *       X,
                        const unsigned int N,
                        const unsigned int M)
     {
@@ -455,37 +453,36 @@ namespace dftfe
     template <typename ValueType>
     void
     computeGeneralisedResidualDevice(const unsigned int numVectors,
-                          const unsigned int numDofs,
-                          const unsigned int N,
-                          const unsigned int startingVecId,
-                          const ValueType *  X,
-                          double *           residualSqDevice)
+                                     const unsigned int numDofs,
+                                     const unsigned int N,
+                                     const unsigned int startingVecId,
+                                     const ValueType *  X,
+                                     double *           residualSqDevice)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-              computeResidualDeviceKernelGeneralised<<<
-                (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                  dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
-                dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                numVectors,
-                numDofs,
-                N,
-                startingVecId,
-                dftfe::utils::makeDataTypeDeviceCompatible(X),
-                residualSqDevice);
+      computeResidualDeviceKernelGeneralised<<<
+        (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        numVectors,
+        numDofs,
+        N,
+        startingVecId,
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
+        residualSqDevice);
 #elif DFTFE_WITH_DEVICE_LANG_HIP
-              hipLaunchKernelGGL(computeResidualDeviceKernelGeneralised,
-                                 (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE,
-                                 0,
-                                 0,
-                                 numVectors,
-                                 numDofs,
-                                 N,
-                                 startingVecId,
-                                 dftfe::utils::makeDataTypeDeviceCompatible(
-                                   X),
-                                 residualSqDevice);
+      hipLaunchKernelGGL(computeResidualDeviceKernelGeneralised,
+                         (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                           dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         numVectors,
+                         numDofs,
+                         N,
+                         startingVecId,
+                         dftfe::utils::makeDataTypeDeviceCompatible(X),
+                         residualSqDevice);
 #endif
     }
 
@@ -571,10 +568,10 @@ namespace dftfe
                        const unsigned int          M);
 
     template void
-    computeDiagQTimesX(const double *diagValues,
-                       std::complex<double> *      X,
-                       const unsigned int          N,
-                       const unsigned int          M);
+    computeDiagQTimesX(const double *        diagValues,
+                       std::complex<double> *X,
+                       const unsigned int    N,
+                       const unsigned int    M);
 
     template void
     computeResidualDevice(const unsigned int numVectors,
@@ -597,19 +594,19 @@ namespace dftfe
 
     template void
     computeGeneralisedResidualDevice(const unsigned int numVectors,
-                          const unsigned int numDofs,
-                          const unsigned int N,
-                          const unsigned int startingVecId,
-                          const double *  X,
-                          double *           residualSqDevice);
+                                     const unsigned int numDofs,
+                                     const unsigned int N,
+                                     const unsigned int startingVecId,
+                                     const double *     X,
+                                     double *           residualSqDevice);
 
     template void
-    computeGeneralisedResidualDevice(const unsigned int numVectors,
-                          const unsigned int numDofs,
-                          const unsigned int N,
-                          const unsigned int startingVecId,
-                          const std::complex<double> *  X,
-                          double *           residualSqDevice);
+    computeGeneralisedResidualDevice(const unsigned int          numVectors,
+                                     const unsigned int          numDofs,
+                                     const unsigned int          N,
+                                     const unsigned int          startingVecId,
+                                     const std::complex<double> *X,
+                                     double *residualSqDevice);
 
     template void
     setZero(const unsigned int BVec,

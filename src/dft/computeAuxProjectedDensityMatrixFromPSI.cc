@@ -252,7 +252,7 @@ namespace dftfe
                                    (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock->data());
 #endif
-                    flattenedArrayBlock->zeroOutGhosts();
+                  flattenedArrayBlock->zeroOutGhosts();
 
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,

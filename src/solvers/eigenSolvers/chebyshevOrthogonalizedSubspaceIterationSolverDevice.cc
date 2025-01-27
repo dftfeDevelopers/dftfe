@@ -362,18 +362,18 @@ namespace dftfe
               jvec,
               eigenVectorsFlattenedDevice,
               (*XBlock).begin());
-            (*XBlock).zeroOutGhosts();  
+            (*XBlock).zeroOutGhosts();
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
               {
                 BLASWrapperPtr->stridedCopyToBlockConstantStride(
-                BVec,
-                totalNumberWaveFunctions,
-                localVectorSize,
-                jvec + BVec,
-                eigenVectorsFlattenedDevice,
-                (*XBlock2).begin());
+                  BVec,
+                  totalNumberWaveFunctions,
+                  localVectorSize,
+                  jvec + BVec,
+                  eigenVectorsFlattenedDevice,
+                  (*XBlock2).begin());
                 (*XBlock2).zeroOutGhosts();
               }
             //

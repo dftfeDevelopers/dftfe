@@ -30,8 +30,8 @@ namespace dftfe
 
     template <typename ValueType1, typename ValueType2>
     void
-    computeDiagQTimesX(const ValueType1 *  diagValues,
-                       ValueType2 *        X,
+    computeDiagQTimesX(const ValueType1 * diagValues,
+                       ValueType2 *       X,
                        const unsigned int N,
                        const unsigned int M);
 
@@ -49,11 +49,11 @@ namespace dftfe
     template <typename ValueType>
     void
     computeGeneralisedResidualDevice(const unsigned int numVectors,
-                          const unsigned int numDofs,
-                          const unsigned int N,
-                          const unsigned int startingVecId,
-                          const ValueType *  X,
-                          double *           residualSqDevice);
+                                     const unsigned int numDofs,
+                                     const unsigned int N,
+                                     const unsigned int startingVecId,
+                                     const ValueType *  X,
+                                     double *           residualSqDevice);
 
 
     template <typename ValueType>

@@ -212,28 +212,30 @@ namespace dftfe
 #endif
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
                     {
-                      for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
-                      std::memcpy(flattenedArrayBlock->data() +
-                                    iNode * currentBlockSize,
-                                  X->data() +
-                                    numLocalDofs * totalNumWaveFunctions *
-                                      (numSpinComponents * kPoint + spinIndex) +
-                                    iNode * totalNumWaveFunctions + jvec,
-                                  currentBlockSize * sizeof(NumberType));
-                     flattenedArrayBlock->zeroOutGhosts();
+                      for (unsigned int iNode = 0; iNode < numLocalDofs;
+                           ++iNode)
+                        std::memcpy(flattenedArrayBlock->data() +
+                                      iNode * currentBlockSize,
+                                    X->data() +
+                                      numLocalDofs * totalNumWaveFunctions *
+                                        (numSpinComponents * kPoint +
+                                         spinIndex) +
+                                      iNode * totalNumWaveFunctions + jvec,
+                                    currentBlockSize * sizeof(NumberType));
+                      flattenedArrayBlock->zeroOutGhosts();
                     }
 
 #if defined(DFTFE_WITH_DEVICE)
                   else if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
-                      currentBlockSize,
-                      totalNumWaveFunctions,
-                      numLocalDofs,
-                      jvec,
-                      X->data() + numLocalDofs * totalNumWaveFunctions *
-                                    (numSpinComponents * kPoint + spinIndex),
-                      flattenedArrayBlock->data());
+                        currentBlockSize,
+                        totalNumWaveFunctions,
+                        numLocalDofs,
+                        jvec,
+                        X->data() + numLocalDofs * totalNumWaveFunctions *
+                                      (numSpinComponents * kPoint + spinIndex),
+                        flattenedArrayBlock->data());
                       flattenedArrayBlock->zeroOutGhosts();
                     }
 #endif

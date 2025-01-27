@@ -3096,12 +3096,13 @@ namespace dftfe
 
 
               const unsigned int DRem = D - B;
-              copyFromOverlapMatBlockToDPSPBlocks(B,
-                                                  D,
-                                                  projOverlapMatrixBlock.begin(),
-                                                  projOverlapMatrixBlockMove.begin(),
-                                                  projOverlapMatrixBlockSP.begin(),
-                                                  streamDataMove);
+              copyFromOverlapMatBlockToDPSPBlocks(
+                B,
+                D,
+                projOverlapMatrixBlock.begin(),
+                projOverlapMatrixBlockMove.begin(),
+                projOverlapMatrixBlockSP.begin(),
+                streamDataMove);
 
 
               if (dftParams.useDeviceDirectAllReduce)
@@ -3408,7 +3409,10 @@ namespace dftfe
                     HXBlock,
                     dftParams.approxOverlapMatrix);
 
-                  computeDiagQTimesX(eigenValuesDevice.begin()+k, HXBlock.begin(),chebyBlockSize , M);
+                  computeDiagQTimesX(eigenValuesDevice.begin() + k,
+                                     HXBlock.begin(),
+                                     chebyBlockSize,
+                                     M);
 
 
                   operatorMatrix.HX(XBlock, 1.0, -1.0, 0.0, HXBlock);
@@ -3431,12 +3435,8 @@ namespace dftfe
                     HXBlockFull.begin());
                 }
 
-              computeGeneralisedResidualDevice(B,
-                                    M,
-                                    N,
-                                    jvec,
-                                    HXBlockFull.begin(),
-                                    residualSqDevice.begin());
+              computeGeneralisedResidualDevice(
+                B, M, N, jvec, HXBlockFull.begin(), residualSqDevice.begin());
 
               BLASWrapperPtr->xgemm('N',
                                     'T',
@@ -4312,7 +4312,7 @@ namespace dftfe
               const unsigned int DRem    = D - B;
               const unsigned int jvecNew = jvec + vectorsBlockSize;
               const unsigned int DNew    = N - jvecNew;
-              const unsigned int BNew    = std::min(vectorsBlockSize, N - jvecNew);
+              const unsigned int BNew = std::min(vectorsBlockSize, N - jvecNew);
               if (jvecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
@@ -4944,12 +4944,12 @@ namespace dftfe
                   //     projHamBlock.begin(),
                   //     projHamBlockMove.begin(),
                   //     projHamBlockFP32.begin());
-              copyFromOverlapMatBlockToDPSPBlocks(B,
-                                                  D,
-                                                  projHamBlock.begin(),
-                                                  projHamBlockMove.begin(),
-                                                  projHamBlockFP32.begin(),
-                                                  streamDataMove);
+                  copyFromOverlapMatBlockToDPSPBlocks(B,
+                                                      D,
+                                                      projHamBlock.begin(),
+                                                      projHamBlockMove.begin(),
+                                                      projHamBlockFP32.begin(),
+                                                      streamDataMove);
                 }
 
               if (dftParams.useDeviceDirectAllReduce)

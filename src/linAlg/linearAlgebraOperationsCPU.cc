@@ -804,8 +804,8 @@ namespace dftfe
                   XBlock->data()[iNode * B + iWave] =
                     X[iNode * N + jvec + iWave];
 
-              (*XBlock).zeroOutGhosts();  
-              (*HXBlock).zeroOutGhosts();    
+              (*XBlock).zeroOutGhosts();
+              (*HXBlock).zeroOutGhosts();
 
               // evaluate H times XBlock and store in HXBlock^{T}
               operatorMatrix.HX(*XBlock,

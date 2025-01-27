@@ -1100,7 +1100,7 @@ namespace dftfe
 
           prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
-            "true",
+            "false",
             dealii::Patterns::Bool(),
             "[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is true.");
 
