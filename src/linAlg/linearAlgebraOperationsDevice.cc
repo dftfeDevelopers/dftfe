@@ -317,24 +317,24 @@ namespace dftfe
                                     eigenValuesFiltered2.data() +
                                       X1_SP.numVectors(),
                                     X2_SP.data());
-            }
-          BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
-                                -c * alpha1Old,
-                                eigenValuesFiltered2.data(),
-                                alpha2Old,
-                                eigenValuesFiltered1.data());
-          BLASWrapperPtr->ApaBD(1,
-                                eigenValuesFiltered1.size(),
-                                alpha1Old,
-                                eigenValuesFiltered1.data(),
-                                eigenValuesFiltered2.data(),
-                                eigenValuesFiltered.data(),
-                                eigenValuesFiltered1.data());
-          if (degree != 2)
-            {
+
+              BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
+                                    -c * alpha1Old,
+                                    eigenValuesFiltered2.data(),
+                                    alpha2Old,
+                                    eigenValuesFiltered1.data());
+              BLASWrapperPtr->ApaBD(1,
+                                    eigenValuesFiltered1.size(),
+                                    alpha1Old,
+                                    eigenValuesFiltered1.data(),
+                                    eigenValuesFiltered2.data(),
+                                    eigenValuesFiltered.data(),
+                                    eigenValuesFiltered1.data());
+
               X2_SP.swap(Y2_SP);
+              eigenValuesFiltered1.swap(eigenValuesFiltered2);
             }
-          eigenValuesFiltered1.swap(eigenValuesFiltered2);
+
 
 
           operatorMatrix.HXChebyNew(Y1_SP,

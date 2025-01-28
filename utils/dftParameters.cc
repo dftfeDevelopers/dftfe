@@ -2175,7 +2175,9 @@ namespace dftfe
     //         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
     //       {
     //         std::cout
-    //           << "DFT-FE Warning: Single Prec ChFSI cannot be used with OVERLAP COMPUTE COMMUN CHEBY = true. Setting OVERLAP COMPUTE COMMUN CHEBY to false"
+    //           << "DFT-FE Warning: Single Prec ChFSI cannot be used with
+    //           OVERLAP COMPUTE COMMUN CHEBY = true. Setting OVERLAP COMPUTE
+    //           COMMUN CHEBY to false"
     //           << std::endl;
     //       }
     //   }
