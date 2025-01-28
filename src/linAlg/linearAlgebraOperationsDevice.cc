@@ -69,7 +69,7 @@ namespace dftfe
 
 
       double alpha1 = sigma1 / e, alpha2 = -c;
-      operatorMatrix.HXChebyNew(X1, alpha1, 0.0, alpha1 * alpha2, Y1);
+      operatorMatrix.HXChebyNew(Y1, alpha1, 0.0, alpha1 * alpha2, X1);
       X1.swap(Y1); 
       Y2.updateGhostValues();
       operatorMatrix.HXChebyNew(
@@ -82,36 +82,9 @@ namespace dftfe
           sigma2    = 1.0 / (gamma - sigma);
           alpha1Old = alpha1, alpha2Old = alpha2;
           alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
-
-          if (degree == 2)
-            {
               operatorMatrix.HXChebyNew(Y2,
                                      alpha1Old,
-                                     0.0,
-                                     alpha1Old * alpha2Old,
-                                     X2,
-                                     false,
-                                     true,
-                                     false,
-                                     true);                      
-              Y1.updateGhostValuesBegin();
-              operatorMatrix.HXChebyNew(Y2,
-                                     alpha1Old,
-                                     0.0,
-                                     alpha1Old * alpha2Old,
-                                     X2,
-                                     false,
-                                     true,
-                                     true,
-                                     false);
-              Y1.updateGhostValuesEnd();
-              X2.accumulateAddLocallyOwnedBegin();
-            }
-          else
-            {
-              operatorMatrix.HXChebyNew(Y2,
-                                     alpha1Old,
-                                     alpha2Old,
+                                     degree == 2? 0.0: alpha2Old,
                                      -c * alpha1Old,
                                      X2,
                                      false,
@@ -121,7 +94,7 @@ namespace dftfe
               Y1.updateGhostValuesBegin();
               operatorMatrix.HXChebyNew(Y2,
                                      alpha1Old,
-                                     alpha2Old,
+                                     degree == 2? 0.0: alpha2Old,
                                      -c * alpha1Old,
                                      X2,
                                      false,
@@ -130,7 +103,7 @@ namespace dftfe
                                      false);
               Y1.updateGhostValuesEnd();
               X2.accumulateAddLocallyOwnedBegin();
-            }
+            
 
 
           //
@@ -138,19 +111,9 @@ namespace dftfe
           //
           operatorMatrix.HXChebyNew(
             Y1, alpha1, alpha2, -c * alpha1, X1, false, false, true, true);
-          if (degree == 2)
-            {
               X2.accumulateAddLocallyOwnedEnd();
               X2.zeroOutGhosts();
-              X2.swap(Y2);
-              
-            }
-          else
-            {
-              X2.accumulateAddLocallyOwnedEnd();
-              X2.zeroOutGhosts();
-              X2.swap(Y2);
-            }
+              X2.swap(Y2);          
 
           operatorMatrix.HXChebyNew(
             Y1, alpha1, alpha2, -c * alpha1, X1, false, true, false, true);
@@ -187,18 +150,8 @@ namespace dftfe
       // copy back YArray to XArray
       operatorMatrix.overlapInverseMatrixTimesX(Y1, 1.0, 0.0, 0.0, X1);
       operatorMatrix.overlapInverseMatrixTimesX(Y2, 1.0, 0.0, 0.0, X2);
-    //   X1.l2Norm(&normX1[0]);
-    //   X2.l2Norm(&normX2[0]);
-    //   if(dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicatorDomain()) ==0)
-    //   {
-    //     for (int i = 0; i < normX1.size(); i++)
-    //     {
-    //       std::cout << normX1[i]<<" "<<normX2[i]<<std::endl;
-    //     }
-    //   }
-    //   MPI_Barrier(operatorMatrix.getMPICommunicatorDomain());
-    //   std::exit(0);
-    // }
+
+     }
 
     void
     chebyshevFilterOverlapComputeCommunicationSinglePrec(
