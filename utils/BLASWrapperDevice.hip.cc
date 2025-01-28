@@ -176,7 +176,7 @@ namespace dftfe
         ValueType2 *                       valueType2Arr,
         const dftfe::utils::deviceStream_t streamId)
     {
-      hipLaunchKernelGGL(
+      hipLaunchKernelGGL(copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
@@ -1472,7 +1472,7 @@ namespace dftfe
                                        const ValueType1 *     valueType1Arr,
                                        ValueType2 *           valueType2Arr)
     {
-      hipLaunchKernelGGL(
+      hipLaunchKernelGGL(copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
