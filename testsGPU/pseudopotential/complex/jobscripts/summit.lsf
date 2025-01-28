@@ -34,3 +34,7 @@ jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe p
 jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
 
 jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
+
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileCubicFe_scf.prm > outputCubicFe_scf
+
+jsrun --smpiargs "-gpu" -n 6 -a 1 -c 7 -g 1 -r 6 -d packed -b packed:7 ./dftfe parameterFileCubicFe_pdos.prm > outputCubicFe_pdos

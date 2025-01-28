@@ -36,3 +36,5 @@ srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBe.prm > outputBe
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileTiAl.prm > outputTiAl_hubbard
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileCubicFe_scf.prm > outputCubicFe_scf
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileCubicFe_pdos.prm > outputCubicFe_pdos

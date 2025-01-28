@@ -37,3 +37,7 @@ srun -n 6 -c 1 ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard
 srun -n 6 -c 1 ./dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
 
 srun -n 6 -c 1 ./dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
+
+srun -n 6 -c 1 ./dftfe parameterFileCubicFe_scf.prm > outputCubicFe_scf
+
+srun -n 6 -c 1 ./dftfe parameterFileCubicFe_pdos.prm > outputCubicFe_pdos

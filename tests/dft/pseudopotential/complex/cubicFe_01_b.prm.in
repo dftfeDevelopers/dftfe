@@ -1,0 +1,66 @@
+set SOLVER MODE = NSCF
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+set RESTART FOLDER = cubicFe_01
+subsection Geometry
+  set NATOMS=1
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/cubicFe_coordinates.inp          
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/cubicFe_domainVectors.inp 
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Brillouin zone k point sampling options
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 0
+    set SAMPLING SHIFT 2  = 0
+    set SAMPLING SHIFT 3  = 0
+  end
+end
+
+subsection DFT functional parameters
+  set SPIN POLARIZATION               = 1
+end
+
+subsection Parallelization
+  set NPKPT                    = 2
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 1.2
+    set ATOM BALL RADIUS = 3.0
+  end
+end
+
+subsection SCF Checkpointing and Restart
+    set LOAD RHO DATA = true
+end
+
+subsection Post-processing Options
+  set WRITE PROJECTED DENSITY OF STATES = true
+  set DELTA ENERGY                       = 0.3
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true  
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudo_cubicFe.inp
+  set PSEUDO TESTS FLAG        = true
+end
+
+subsection SCF parameters
+  set MIXING METHOD                   = ANDERSON_WITH_KERKER
+  set MIXING PARAMETER                = 0.1
+  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
+  set KERKER MIXING PARAMETER         = 0.5
+end
