@@ -46,8 +46,159 @@ namespace dftfe
       const double                                                          b,
       const double                                                          a0)
     {
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
-    }
+      double e, c, sigma, sigma1, sigma2, gamma, alpha1Old, alpha2Old;
+      e      = (b - a) / 2.0;
+      c      = (b + a) / 2.0;
+      sigma  = e / (a0 - c);
+      sigma1 = sigma;
+      gamma  = 2.0 / sigma1;
+
+
+      //
+      // create YArray
+      // initialize to zeros.
+      // x
+      Y1.setValue(dataTypes::number(0.0));
+      Y2.setValue(dataTypes::number(0.0));
+      operatorMatrix.overlapMatrixTimesX(X1, 1.0, 0.0, 0.0, Y1);
+      operatorMatrix.overlapMatrixTimesX(X2, 1.0, 0.0, 0.0, Y2);
+
+      //
+      // call HX
+      //
+
+
+      double alpha1 = sigma1 / e, alpha2 = -c;
+      operatorMatrix.HXChebyNew(X1, alpha1, 0.0, alpha1 * alpha2, Y1);
+      X1.swap(Y1); 
+      Y2.updateGhostValues();
+      operatorMatrix.HXChebyNew(
+        Y2, alpha1, 0.0, alpha1 * alpha2, X2, false, false, true, true);
+      //
+      // polynomial loop
+      //
+     for (unsigned int degree = 2; degree < m + 1; ++degree)
+        {
+          sigma2    = 1.0 / (gamma - sigma);
+          alpha1Old = alpha1, alpha2Old = alpha2;
+          alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
+
+          if (degree == 2)
+            {
+              operatorMatrix.HXChebyNew(Y2,
+                                     alpha1Old,
+                                     0.0,
+                                     alpha1Old * alpha2Old,
+                                     X2,
+                                     false,
+                                     true,
+                                     false,
+                                     true);                      
+              Y1.updateGhostValuesBegin();
+              operatorMatrix.HXChebyNew(Y2,
+                                     alpha1Old,
+                                     0.0,
+                                     alpha1Old * alpha2Old,
+                                     X2,
+                                     false,
+                                     true,
+                                     true,
+                                     false);
+              Y1.updateGhostValuesEnd();
+              X2.accumulateAddLocallyOwnedBegin();
+            }
+          else
+            {
+              operatorMatrix.HXChebyNew(Y2,
+                                     alpha1Old,
+                                     alpha2Old,
+                                     -c * alpha1Old,
+                                     X2,
+                                     false,
+                                     true,
+                                     false,
+                                     true);
+              Y1.updateGhostValuesBegin();
+              operatorMatrix.HXChebyNew(Y2,
+                                     alpha1Old,
+                                     alpha2Old,
+                                     -c * alpha1Old,
+                                     X2,
+                                     false,
+                                     true,
+                                     true,
+                                     false);
+              Y1.updateGhostValuesEnd();
+              X2.accumulateAddLocallyOwnedBegin();
+            }
+
+
+          //
+          // call HX
+          //
+          operatorMatrix.HXChebyNew(
+            Y1, alpha1, alpha2, -c * alpha1, X1, false, false, true, true);
+          if (degree == 2)
+            {
+              X2.accumulateAddLocallyOwnedEnd();
+              X2.zeroOutGhosts();
+              X2.swap(Y2);
+              
+            }
+          else
+            {
+              X2.accumulateAddLocallyOwnedEnd();
+              X2.zeroOutGhosts();
+              X2.swap(Y2);
+            }
+
+          operatorMatrix.HXChebyNew(
+            Y1, alpha1, alpha2, -c * alpha1, X1, false, true, false, true);
+          Y2.updateGhostValuesBegin();
+          operatorMatrix.HXChebyNew(
+            Y1, alpha1, alpha2, -c * alpha1, X1, false, true, true, false);
+          Y2.updateGhostValuesEnd();
+          X1.accumulateAddLocallyOwnedBegin();
+          operatorMatrix.HXChebyNew(
+            Y2, alpha1, alpha2, -c * alpha1, X2, false, false, true, true);
+          X1.accumulateAddLocallyOwnedEnd();
+          X1.zeroOutGhosts();
+
+          //
+          // XArray = YArray
+          //
+          X1.swap(Y1);
+
+          if (degree == m)
+            {
+              operatorMatrix.HXChebyNew(
+                Y2, alpha1, alpha2, -c * alpha1, X2, false, true, false, false);
+              X2.accumulateAddLocallyOwned();
+              X2.zeroOutGhosts();
+              X2.swap(Y2);
+            }
+
+          //
+          // YArray = YNewArray
+          //
+          sigma = sigma2;
+        }
+
+      // copy back YArray to XArray
+      operatorMatrix.overlapInverseMatrixTimesX(Y1, 1.0, 0.0, 0.0, X1);
+      operatorMatrix.overlapInverseMatrixTimesX(Y2, 1.0, 0.0, 0.0, X2);
+    //   X1.l2Norm(&normX1[0]);
+    //   X2.l2Norm(&normX2[0]);
+    //   if(dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicatorDomain()) ==0)
+    //   {
+    //     for (int i = 0; i < normX1.size(); i++)
+    //     {
+    //       std::cout << normX1[i]<<" "<<normX2[i]<<std::endl;
+    //     }
+    //   }
+    //   MPI_Barrier(operatorMatrix.getMPICommunicatorDomain());
+    //   std::exit(0);
+    // }
 
     void
     chebyshevFilterOverlapComputeCommunicationSinglePrec(
