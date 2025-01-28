@@ -419,7 +419,8 @@ namespace dftfe
                         chebyshevOrder,
                         d_lowerBoundUnWantedSpectrum,
                         d_upperBoundUnWantedSpectrum,
-                        d_lowerBoundWantedSpectrum);
+                        d_lowerBoundWantedSpectrum,
+                        d_dftParams.approxOverlapMatrix);
                     if (useMixedPrecOverall &&
                         d_dftParams.useSinglePrecCommunCheby)
                       {
