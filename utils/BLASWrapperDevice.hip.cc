@@ -176,13 +176,14 @@ namespace dftfe
         ValueType2 *                       valueType2Arr,
         const dftfe::utils::deviceStream_t streamId)
     {
-      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+      hipLaunchKernelGGL(
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        streamId>>>(size,
-                    dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
-                    dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
+        streamId,
+        size,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
 
 
@@ -1471,14 +1472,15 @@ namespace dftfe
                                        const ValueType1 *     valueType1Arr,
                                        ValueType2 *           valueType2Arr)
     {
-      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+      hipLaunchKernelGGL(
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        d_streamId>>>(size,
-                      dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        valueType2Arr));
+        d_streamId,
+        size,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+        valueType2Arr));
     }
 
     template <typename ValueType1, typename ValueType2>
