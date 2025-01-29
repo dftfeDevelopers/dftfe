@@ -556,7 +556,7 @@ namespace dftfe
     //
     // compute residual and find FermiEnergy using Newton-Raphson solve
     //
-    // double R = 1.0;
+    R = 1.0;
     iter = 0;
 
     while ((std::abs(R) > newtonIterTol) &&
