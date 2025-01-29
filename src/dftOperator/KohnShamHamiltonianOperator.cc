@@ -534,7 +534,7 @@ namespace dftfe
       }
 
     if (!d_isExternalPotCorrHamiltonianComputed)
-    	computeCellHamiltonianMatrixExtPotContribution();
+      computeCellHamiltonianMatrixExtPotContribution();
 #if defined(DFTFE_WITH_DEVICE)
     d_VeffJxW.resize(d_VeffJxWHost.size());
     d_VeffJxW.copyFrom(d_VeffJxWHost);
