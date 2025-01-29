@@ -2157,30 +2157,6 @@ namespace dftfe
 
 
 
-    if (useReformulatedChFSI && overlapComputeCommunCheby)
-      {
-        overlapComputeCommunCheby = false;
-        if (verbosity >= 1 &&
-            dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
-          {
-            std::cout
-              << "DFT-FE Warning: Reformulated ChFSI cannot be used with OVERLAP COMPUTE COMMUN CHEBY = true. Setting OVERLAP COMPUTE COMMUN CHEBY to false"
-              << std::endl;
-          }
-      }
-    // if (useSinglePrecCheby && overlapComputeCommunCheby)
-    //   {
-    //     overlapComputeCommunCheby = false;
-    //     if (verbosity >= 1 &&
-    //         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
-    //       {
-    //         std::cout
-    //           << "DFT-FE Warning: Single Prec ChFSI cannot be used with
-    //           OVERLAP COMPUTE COMMUN CHEBY = true. Setting OVERLAP COMPUTE
-    //           COMMUN CHEBY to false"
-    //           << std::endl;
-    //       }
-    //   }
     // checking if the XC type is compatible with
     // overlap compute communication cheby
 
@@ -2190,6 +2166,13 @@ namespace dftfe
     if (isHubbard || !isLocalXC)
       {
         overlapComputeCommunCheby = false;
+        if (verbosity >= 1 &&
+            dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+          {
+            std::cout
+              << "DFT-FE Warning: Hubbard cannot be used with OVERLAP COMPUTE COMMUN CHEBY = true. Setting OVERLAP COMPUTE COMMUN CHEBY to false"
+              << std::endl;
+          }
       }
   }
 
