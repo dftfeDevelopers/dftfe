@@ -12,6 +12,7 @@ IF (WITH_COMPLEX)
 ELSE()
   SET(TARGETLIB "dftfeReal")
 ENDIF()
+OPTION(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
