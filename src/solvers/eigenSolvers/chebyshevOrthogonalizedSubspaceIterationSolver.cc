@@ -341,7 +341,7 @@ namespace dftfe
                     eigenValuesBlock[i] = eigenValues[jvec + i];
                   }
 
-                linearAlgebraOperations::chebyshevFilterNew(
+                linearAlgebraOperations::reformulatedChebyshevFilter(
                   BLASWrapperPtr,
                   operatorMatrix,
                   (*eigenVectorsFlattenedArrayBlock),
@@ -364,7 +364,7 @@ namespace dftfe
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
-                    linearAlgebraOperations::chebyshevFilterNew(
+                    linearAlgebraOperations::reformulatedChebyshevFilter(
                       BLASWrapperPtr,
                       operatorMatrix,
                       *eigenVectorsFlattenedArrayBlock,

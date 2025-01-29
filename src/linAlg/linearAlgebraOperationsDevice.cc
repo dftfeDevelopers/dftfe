@@ -151,32 +151,28 @@ namespace dftfe
       operatorMatrix.overlapInverseMatrixTimesX(Y1, 1.0, 0.0, 0.0, X1);
       operatorMatrix.overlapInverseMatrixTimesX(Y2, 1.0, 0.0, 0.0, X2);
     }
-
+    template <typename T1, typename T2>
     void
-    chebyshevFilterOverlapComputeCommunicationSinglePrec(
+    reformulatedChebyshevFilterOverlapComputeCommunication(
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                                  BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE> &X1,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE> &Y1,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE> &X2,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE> &Y2,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                        dftfe::utils::MemorySpace::DEVICE>
+      dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
+        &X1,
+      dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
+        &Y1,
+      dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
+        &X2,
+      dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
+        &Y2,
+      dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &X1_SP,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                        dftfe::utils::MemorySpace::DEVICE>
+      dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &Y1_SP,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                        dftfe::utils::MemorySpace::DEVICE>
+      dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &X2_SP,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                        dftfe::utils::MemorySpace::DEVICE>
+      dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &                 Y2_SP,
       std::vector<double> eigenvalues,
       const unsigned int  m,
@@ -243,7 +239,7 @@ namespace dftfe
       BLASWrapperPtr->copyValueType1ArrToValueType2Arr(
         X1.locallyOwnedSize() * X1.numVectors(), Y1.data(), Y1_SP.data());
       BLASWrapperPtr->xscal(Y1_SP.data(),
-                            dataTypes::numberFP32(alpha1),
+                            T2(alpha1),
                             X2.locallyOwnedSize() * X2.numVectors());
 
       //
@@ -263,7 +259,7 @@ namespace dftfe
                 Y2_SP.data());
               Y1_SP.updateGhostValuesBegin();
               BLASWrapperPtr->xscal(Y2_SP.data(),
-                                    dataTypes::numberFP32(alpha1Old),
+                                    T2(alpha1Old),
                                     X2.locallyOwnedSize() * X2.numVectors());
               Y1_SP.updateGhostValuesEnd();
             }
@@ -5530,8 +5526,72 @@ namespace dftfe
           linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(
             processGrid, projHamPar, interBandGroupComm);
         }
-    } // namespace linearAlgebraOperationsDevice
+    }
+    template void
+    reformulatedChebyshevFilterOverlapComputeCommunication(
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                                  BLASWrapperPtr,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X1,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y1,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X2,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y2,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &X1_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &Y1_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &X2_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &                 Y2_SP,
+      std::vector<double> eigenvalues,
+      const unsigned int  m,
+      const double        a,
+      const double        b,
+      const double        a0,
+      const bool          approxOverlapMatrix);
 
+    template void
+    reformulatedChebyshevFilterOverlapComputeCommunication(
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+        &                                                  BLASWrapperPtr,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X1,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y1,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &X2,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE> &Y2,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &X1_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &Y1_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &X2_SP,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &                 Y2_SP,
+      std::vector<double> eigenvalues,
+      const unsigned int  m,
+      const double        a,
+      const double        b,
+      const double        a0,
+      const bool          approxOverlapMatrix);
 
   } // namespace linearAlgebraOperationsDevice
 } // namespace dftfe

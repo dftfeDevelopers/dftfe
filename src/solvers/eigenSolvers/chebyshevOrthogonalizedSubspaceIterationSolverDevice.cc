@@ -404,7 +404,7 @@ namespace dftfe
                           dftfe::utils::mpi::communicationPrecision::single);
                       }
                     linearAlgebraOperationsDevice::
-                      chebyshevFilterOverlapComputeCommunicationSinglePrec(
+                      reformulatedChebyshevFilterOverlapComputeCommunication(
                         BLASWrapperPtr,
                         operatorMatrix,
                         (*XBlock),
@@ -448,7 +448,7 @@ namespace dftfe
                         (*HXBlock).setCommunicationPrecision(
                           dftfe::utils::mpi::communicationPrecision::single);
                       }
-                    linearAlgebraOperations::chebyshevFilterNew(
+                    linearAlgebraOperations::reformulatedChebyshevFilter(
                       BLASWrapperPtr,
                       operatorMatrix,
                       (*XBlock),
@@ -525,7 +525,7 @@ namespace dftfe
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
-                    linearAlgebraOperations::chebyshevFilterNew(
+                    linearAlgebraOperations::reformulatedChebyshevFilter(
                       BLASWrapperPtr,
                       operatorMatrix,
                       (*XBlock),

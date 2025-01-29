@@ -557,7 +557,7 @@ namespace dftfe
 
     template <typename T1, typename T2, dftfe::utils::MemorySpace memorySpace>
     void
-    chebyshevFilterNew(
+    reformulatedChebyshevFilter(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         &                                                 BLASWrapperPtr,
       operatorDFTClass<memorySpace> &                     operatorMatrix,

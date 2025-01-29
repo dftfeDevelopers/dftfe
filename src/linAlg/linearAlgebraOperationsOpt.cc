@@ -102,7 +102,7 @@ namespace dftfe
 
     template <typename T1, typename T2, dftfe::utils::MemorySpace memorySpace>
     void
-    chebyshevFilterNew(
+    reformulatedChebyshevFilter(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         &                                                 BLASWrapperPtr,
       operatorDFTClass<memorySpace> &                     operatorMatrix,
@@ -475,7 +475,7 @@ namespace dftfe
 
 
     template void
-    chebyshevFilterNew(
+    reformulatedChebyshevFilter(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
         &                                                BLASWrapperPtr,
@@ -497,7 +497,7 @@ namespace dftfe
       const double        a0,
       const bool          approxOverlapMatrix);
     template void
-    chebyshevFilterNew(
+    reformulatedChebyshevFilter(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
         &                                                BLASWrapperPtr,
@@ -534,7 +534,7 @@ namespace dftfe
 
 
     template void
-    chebyshevFilterNew(
+    reformulatedChebyshevFilter(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                                  BLASWrapperPtr,
@@ -557,7 +557,7 @@ namespace dftfe
       const bool          approxOverlapMatrix);
 
     template void
-    chebyshevFilterNew(
+    reformulatedChebyshevFilter(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                                  BLASWrapperPtr,
