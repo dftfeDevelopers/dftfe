@@ -487,7 +487,7 @@ namespace dftfe
 
     initialGuessLeft = eigenValuesAllkPointsDown[0];
     initialGuessRight =
-      eigenValuesAllkPointsDown[eigenValuesAllkPoints.size() - 1];
+      eigenValuesAllkPointsDown[eigenValuesAllkPointsDown.size() - 1];
 
 
     xRight = dealii::Utilities::MPI::max(initialGuessRight, interpoolcomm);
