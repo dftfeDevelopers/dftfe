@@ -324,12 +324,23 @@ namespace dftfe
 
                           if (dftParams.constraintMagnetization)
                             {
+                              /*
                               partialOccupancy = 1.0, partialOccupancy2 = 1.0;
                               if (eigenValues[kPoint][i + numEigenValues] >
                                   fermiEnergyDown)
                                 partialOccupancy2 = 0.0;
                               if (eigenValues[kPoint][i] > fermiEnergyUp)
                                 partialOccupancy = 0.0;
+                              */
+                              double partialOccupancy =
+                                dftUtils::getPartialOccupancy(
+                                  eigenValues[kPoint][i], fermiEnergyUp, C_kb, TVal);
+                              double partialOccupancy2 =
+                                dftUtils::getPartialOccupancy(
+                                  eigenValues[kPoint][i + numEigenValues],
+                                  fermiEnergyDown,
+                                  C_kb,
+                                  TVal);                                
                             }
                           bandEnergyLocal += partialOccupancy *
                                              kPointWeights[kPoint] *
@@ -1186,11 +1197,21 @@ namespace dftfe
 
               if (d_dftParams.constraintMagnetization)
                 {
+                  /*
                   partOccSpin0 = 1.0, partOccSpin1 = 1.0;
                   if (eigenValues[kPoint][i + numEigenValues] > fermiEnergyDown)
                     partOccSpin1 = 0.0;
                   if (eigenValues[kPoint][i] > fermiEnergyUp)
                     partOccSpin0 = 0.0;
+                  */
+
+                  double partOccSpin0 = dftUtils::getPartialOccupancy(
+                    eigenValues[kPoint][i], fermiEnergyUp, C_kb, temperature);
+                  double partOccSpin1 = dftUtils::getPartialOccupancy(
+                    eigenValues[kPoint][i + numEigenValues],
+                    fermiEnergyDown,
+                    C_kb,
+                    temperature);
                 }
 
 

@@ -188,6 +188,15 @@ namespace dftfe
 
             if (d_dftParams.constraintMagnetization)
               {
+                const double fermiEnergy=spinIndex==0?dftPtr->fermiEnergyUp:dftPtr->fermiEnergyDown;
+                eigenValue =
+                  dftPtr->eigenValues[kPoint][numEigenVectors * spinIndex + iWave];
+                partialOccupancies[kPoint][numEigenVectors * spinIndex + iWave] =
+                  dftUtils::getPartialOccupancy(eigenValue,
+                                                fermiEnergy,
+                                                C_kb,
+                                                d_dftParams.TVal);
+                /*                
                 partialOccupancies[kPoint]
                                   [numEigenVectors * spinIndex + iWave] = 1.0;
                 if (spinIndex == 0)
@@ -202,6 +211,7 @@ namespace dftfe
                       partialOccupancies[kPoint][numEigenVectors * spinIndex +
                                                  iWave] = 0.0;
                   }
+                */
               }
           }
 

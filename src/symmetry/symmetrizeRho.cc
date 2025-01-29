@@ -385,6 +385,22 @@ namespace dftfe
                         if (dftPtr->getParametersObject()
                               .constraintMagnetization)
                           {
+                            factor =
+                              ((dftPtr->eigenValues)[kPoint][i] -
+                               (dftPtr->fermiEnergyUp)) /
+                              (C_kb * dftPtr->getParametersObject().TVal);
+                            partialOccupancyAlpha = getOccupancy(factor);
+                            //
+                            factor =
+                              ((dftPtr->eigenValues)
+                                 [kPoint]
+                                 [i + dftPtr->getParametersObject().spinPolarized *
+                                        (dftPtr->d_numEigenValues)] -
+                               (dftPtr->fermiEnergyDown)) /
+                              (C_kb * dftPtr->getParametersObject().TVal);
+                            partialOccupancyBeta = getOccupancy(factor);
+
+                            /*
                             partialOccupancyAlpha = 1.0,
                             partialOccupancyBeta  = 1.0;
                             if ((dftPtr->eigenValues)
@@ -396,6 +412,7 @@ namespace dftfe
                             if ((dftPtr->eigenValues)[kPoint][i] >
                                 (dftPtr->fermiEnergyUp))
                               partialOccupancyAlpha = 0.0;
+                            */
                           }
                         //
                         fe_values.get_function_values(

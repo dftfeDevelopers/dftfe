@@ -195,20 +195,21 @@ namespace dftfe
                 {
                   if (dftParams.constraintMagnetization)
                     {
-                      const double fermiEnergyConstraintMag =
+                      const double fermiEnergy =
                         spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
                       for (unsigned int iEigenVec = 0;
                            iEigenVec < currentBlockSize;
                            ++iEigenVec)
                         {
-                          if (eigenValues[kPoint]
+                          *(partialOccupVecHost.begin() + iEigenVec) =
+                            dftUtils::getPartialOccupancy(
+                              eigenValues[kPoint]
                                          [totalNumWaveFunctions * spinIndex +
-                                          jvec + iEigenVec] >
-                              fermiEnergyConstraintMag)
-                            *(partialOccupVecHost.begin() + iEigenVec) = 0;
-                          else
-                            *(partialOccupVecHost.begin() + iEigenVec) =
-                              kPointWeights[kPoint] * spinPolarizedFactor;
+                                          jvec + iEigenVec],
+                              fermiEnergy,
+                              C_kb,
+                              dftParams.TVal) *
+                            kPointWeights[kPoint] * spinPolarizedFactor;
                         }
                     }
                   else

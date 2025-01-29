@@ -249,6 +249,8 @@ namespace dftfe
       pcout << "Fermi energy                                     : "
             << fermiEnergy << std::endl;
   }
+
+  /*
   // compute fermi energy constrained magnetization
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
@@ -306,6 +308,312 @@ namespace dftfe
           << "Fermi energy for spin down                                    : "
           << fermiEnergyDown << std::endl;
       }
+  }
+*/
+
+  // compute fermi energy constrained magnetization
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::
+    compute_fermienergy_constraintMagnetization(
+      const std::vector<std::vector<double>> &eigenValuesInput)
+  {
+    int countUp   = numElectronsUp;
+    int countDown = numElectronsDown;    
+    double TVal  = d_dftParamsPtr->TVal;
+
+
+    //
+    const unsigned int nk =
+      d_dftParamsPtr->nkx * d_dftParamsPtr->nky * d_dftParamsPtr->nkz;
+    //
+    std::vect<std::vector<double>> eigenValuesInputUp(eigenValuesInput.size());
+    std::vect<std::vector<double>> eigenValuesInputDown(eigenValuesInput.size());
+
+    std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
+    for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      {
+        unsigned int numberOfkPointsUnderGroup =
+          (unsigned int)round(nk * d_kPointWeights[kPoint]);
+        for (int ik = 0; ik < numberOfkPointsUnderGroup; ++ik)
+          for (int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
+            {
+              eigenValuesAllkPointsUp.push_back(
+                eigenValuesInput[kPoint][statesIter]);
+              eigenValuesAllkPointsDown.push_back(
+                eigenValuesInput[kPoint][d_numEigenValues + statesIter]);
+
+              eigenValuesInputUp[kPoint].push_back(
+                eigenValuesInput[kPoint][statesIter]);
+              eigenValuesInputDown[kPoint].push_back(
+                eigenValuesInput[kPoint][d_numEigenValues + statesIter]);
+            }
+      }
+
+    std::sort(eigenValuesAllkPointsUp.begin(), eigenValuesAllkPointsUp.end());
+    std::sort(eigenValuesAllkPointsDown.begin(),
+              eigenValuesAllkPointsDown.end());
+
+    unsigned int maxNumberFermiEnergySolveIterations = 100;
+    double       fe;
+    double       R = 1.0;
+
+#ifdef USE_COMPLEX
+    //
+    // compute Fermi-energy first by bisection method
+    //
+    // double initialGuessLeft =
+    // dealii::Utilities::MPI::min(eigenValuesAllkPoints[0],interpoolcomm);
+    // double initialGuessRight =
+    // dealii::Utilities::MPI::max(eigenValuesAllkPoints[eigenValuesAllkPoints.size()
+    // - 1],interpoolcomm);
+
+    double initialGuessLeft = eigenValuesAllkPointsUp[0];
+    double initialGuessRight =
+      eigenValuesAllkPointsUp[eigenValuesAllkPointsUp.size() - 1];
+
+
+    double xLeft, xRight;
+
+    xRight = dealii::Utilities::MPI::max(initialGuessRight, interpoolcomm);
+    xLeft  = dealii::Utilities::MPI::min(initialGuessLeft, interpoolcomm);
+
+
+    for (int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
+      {
+        double yRightLocal = internal::FermiDiracFunctionValue(
+          xRight, eigenValuesInputUp, d_kPointWeights, TVal, *d_dftParamsPtr);
+
+        double yRight = dealii::Utilities::MPI::sum(yRightLocal, interpoolcomm);
+
+        yRight -= (double)numElectronsUp;
+
+        double yLeftLocal = internal::FermiDiracFunctionValue(
+          xLeft, eigenValuesInputUp, d_kPointWeights, TVal, *d_dftParamsPtr);
+
+        double yLeft = dealii::Utilities::MPI::sum(yLeftLocal, interpoolcomm);
+
+        yLeft -= (double)numElectronsUp;
+
+        if ((yLeft * yRight) > 0.0)
+          {
+            pcout << " Bisection Method Failed " << std::endl;
+            exit(-1);
+          }
+
+        double xBisected = (xLeft + xRight) / 2.0;
+
+        double yBisectedLocal = internal::FermiDiracFunctionValue(
+          xBisected, eigenValuesInputUp, d_kPointWeights, TVal, *d_dftParamsPtr);
+        double yBisected =
+          dealii::Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
+        yBisected -= (double)numElectronsUp;
+
+        if ((yBisected * yLeft) > 0.0)
+          xLeft = xBisected;
+        else
+          xRight = xBisected;
+
+        if (std::abs(yBisected) <= 1.0e-09 ||
+            iter == maxNumberFermiEnergySolveIterations - 1)
+          {
+            fe = xBisected;
+            R  = std::abs(yBisected);
+            break;
+          }
+      }
+    if (d_dftParamsPtr->verbosity >= 4)
+      pcout << "Fermi energy constraint residual (bisection): " << R
+            << std::endl;
+#else
+    fe = eigenValuesAllkPointsUp[d_kPointWeights.size() * count - 1];
+#endif
+    //
+    // compute residual and find FermiEnergy using Newton-Raphson solve
+    //
+    // double R = 1.0;
+    unsigned int iter          = 0;
+    const double newtonIterTol = 1e-10;
+    double       functionValue, functionDerivativeValue;
+
+    while ((std::abs(R) > newtonIterTol) &&
+           (iter < maxNumberFermiEnergySolveIterations))
+      {
+        double functionValueLocal = internal::FermiDiracFunctionValue(
+          fe, eigenValuesInputUp, d_kPointWeights, TVal, *d_dftParamsPtr);
+        functionValue =
+          dealii::Utilities::MPI::sum(functionValueLocal, interpoolcomm);
+
+        double functionDerivativeValueLocal =
+          internal::FermiDiracFunctionDerivativeValue(
+            fe, eigenValuesInputUp, d_kPointWeights, TVal, *d_dftParamsPtr);
+
+        functionDerivativeValue =
+          dealii::Utilities::MPI::sum(functionDerivativeValueLocal,
+                                      interpoolcomm);
+
+
+        R = functionValue - numElectronsUp;
+        fe += -R / functionDerivativeValue;
+        iter++;
+      }
+
+    if (std::abs(R) > newtonIterTol)
+      {
+        AssertThrow(
+          false,
+          dealii::ExcMessage(
+            "DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));
+      }
+
+    // set Fermi energy
+    fermiEnergyUp = fe;
+
+    if (d_dftParamsPtr->verbosity >= 4)
+      pcout << "Fermi energy constraint residual (Newton-Raphson): "
+            << std::abs(R) << std::endl;
+
+    if (d_dftParamsPtr->verbosity >= 2)
+      pcout << "Fermi energy up                                     : "
+            << fermiEnergyUp << std::endl;
+
+
+#ifdef USE_COMPLEX
+    //
+    // compute Fermi-energy first by bisection method
+    //
+    // double initialGuessLeft =
+    // dealii::Utilities::MPI::min(eigenValuesAllkPoints[0],interpoolcomm);
+    // double initialGuessRight =
+    // dealii::Utilities::MPI::max(eigenValuesAllkPoints[eigenValuesAllkPoints.size()
+    // - 1],interpoolcomm);
+
+    initialGuessLeft = eigenValuesAllkPointsDown[0];
+    initialGuessRight =
+      eigenValuesAllkPointsDown[eigenValuesAllkPoints.size() - 1];
+
+
+    xRight = dealii::Utilities::MPI::max(initialGuessRight, interpoolcomm);
+    xLeft  = dealii::Utilities::MPI::min(initialGuessLeft, interpoolcomm);
+
+
+    for (int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
+      {
+        double yRightLocal = internal::FermiDiracFunctionValue(
+          xRight, eigenValuesInputDown, d_kPointWeights, TVal, *d_dftParamsPtr);
+
+        double yRight = dealii::Utilities::MPI::sum(yRightLocal, interpoolcomm);
+
+        yRight -= (double)numElectronsDown;
+
+        double yLeftLocal = internal::FermiDiracFunctionValue(
+          xLeft, eigenValuesInputDown, d_kPointWeights, TVal, *d_dftParamsPtr);
+
+        double yLeft = dealii::Utilities::MPI::sum(yLeftLocal, interpoolcomm);
+
+        yLeft -= (double)numElectronsDown;
+
+        if ((yLeft * yRight) > 0.0)
+          {
+            pcout << " Bisection Method Failed " << std::endl;
+            exit(-1);
+          }
+
+        double xBisected = (xLeft + xRight) / 2.0;
+
+        double yBisectedLocal = internal::FermiDiracFunctionValue(
+          xBisected, eigenValuesInputDown, d_kPointWeights, TVal, *d_dftParamsPtr);
+        double yBisected =
+          dealii::Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
+        yBisected -= (double)numElectronsDown;
+
+        if ((yBisected * yLeft) > 0.0)
+          xLeft = xBisected;
+        else
+          xRight = xBisected;
+
+        if (std::abs(yBisected) <= 1.0e-09 ||
+            iter == maxNumberFermiEnergySolveIterations - 1)
+          {
+            fe = xBisected;
+            R  = std::abs(yBisected);
+            break;
+          }
+      }
+    if (d_dftParamsPtr->verbosity >= 4)
+      pcout << "Fermi energy constraint residual (bisection): " << R
+            << std::endl;
+#else
+    fe = eigenValuesAllkPointsDown[d_kPointWeights.size() * count - 1];
+#endif
+    //
+    // compute residual and find FermiEnergy using Newton-Raphson solve
+    //
+    // double R = 1.0;
+    unsigned int iter          = 0;
+    const double newtonIterTol = 1e-10;
+    double       functionValue, functionDerivativeValue;
+
+    while ((std::abs(R) > newtonIterTol) &&
+           (iter < maxNumberFermiEnergySolveIterations))
+      {
+        double functionValueLocal = internal::FermiDiracFunctionValue(
+          fe, eigenValuesInputDown, d_kPointWeights, TVal, *d_dftParamsPtr);
+        functionValue =
+          dealii::Utilities::MPI::sum(functionValueLocal, interpoolcomm);
+
+        double functionDerivativeValueLocal =
+          internal::FermiDiracFunctionDerivativeValue(
+            fe, eigenValuesInputDown, d_kPointWeights, TVal, *d_dftParamsPtr);
+
+        functionDerivativeValue =
+          dealii::Utilities::MPI::sum(functionDerivativeValueLocal,
+                                      interpoolcomm);
+
+
+        R = functionValue - numElectronsDown;
+        fe += -R / functionDerivativeValue;
+        iter++;
+      }
+
+    if (std::abs(R) > newtonIterTol)
+      {
+        AssertThrow(
+          false,
+          dealii::ExcMessage(
+            "DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));
+      }
+
+    // set Fermi energy
+    fermiEnergyDown = fe;
+
+    if (d_dftParamsPtr->verbosity >= 4)
+      pcout << "Fermi energy constraint residual (Newton-Raphson): "
+            << std::abs(R) << std::endl;
+
+    if (d_dftParamsPtr->verbosity >= 2)
+      pcout << "Fermi energy down                                     : "
+            << fermiEnergyDown << std::endl;
+
+
+
+    //
+    fermiEnergy = std::max(fermiEnergyUp, fermiEnergyDown);
+    //
+    if (d_dftParamsPtr->verbosity >= 2)
+      {
+        pcout << " This is a constrained magnetization calculation "
+              << std::endl;
+        pcout
+          << "Fermi energy for spin up                                    : "
+          << fermiEnergyUp << std::endl;
+        pcout
+          << "Fermi energy for spin down                                    : "
+          << fermiEnergyDown << std::endl;
+      }
+
   }
 #include "dft.inst.cc"
 
