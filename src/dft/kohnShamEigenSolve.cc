@@ -716,6 +716,9 @@ namespace dftfe
           eigenValues[kPointIndex][spinType * d_numEigenValues + i];
       }
 
+    double fermiEnergyInput=fermiEnergy;
+    if (d_dftParamsPtr->constraintMagnetization)
+      fermiEnergyInput=spinType==0?fermiEnergyUp:fermiEnergyDown;
 
     linearAlgebraOperations::densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
@@ -729,7 +732,7 @@ namespace dftfe
       kohnShamDFTEigenOperator.getMPICommunicatorDomain(),
       interBandGroupComm,
       eigenValuesTemp,
-      fermiEnergy,
+      fermiEnergyInput,
       d_densityMatDerFermiEnergy[(1 + d_dftParamsPtr->spinPolarized) *
                                    kPointIndex +
                                  spinType],
@@ -781,6 +784,11 @@ namespace dftfe
           eigenValues[kPointIndex][spinType * d_numEigenValues + i];
       }
 
+
+    double fermiEnergyInput=fermiEnergy;
+    if (d_dftParamsPtr->constraintMagnetization)
+      fermiEnergyInput=spinType==0?fermiEnergyUp:fermiEnergyDown;
+
     subspaceIterationSolverDevice.densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
       d_BLASWrapperPtr,
@@ -792,7 +800,7 @@ namespace dftfe
         matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_numEigenValues,
       eigenValuesTemp,
-      fermiEnergy,
+      fermiEnergyInput,
       d_densityMatDerFermiEnergy[(1 + d_dftParamsPtr->spinPolarized) *
                                    kPointIndex +
                                  spinType],

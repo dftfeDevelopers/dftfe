@@ -572,15 +572,38 @@ namespace dftfe
               iCell++;
             }
 
-        for (unsigned int i = 0; i < fvHamSpin0.locally_owned_size(); i++)
-          {
-            fvSpin0.local_element(i) = fvHamSpin0.local_element(i) +
-                                       firstOrderResponseFermiEnergy *
-                                         fvFermiEnergySpin0.local_element(i);
-            fvSpin1.local_element(i) = fvHamSpin1.local_element(i) +
-                                       firstOrderResponseFermiEnergy *
-                                         fvFermiEnergySpin1.local_element(i);
-          }
+        if (d_dftParamsPtr->constraintMagnetization)
+        {
+          const double firstOrderResponseFermiEnergySpin0 =
+            -totalCharge(d_matrixFreeDataPRefined, fvHamSpin0) /
+            totalCharge(d_matrixFreeDataPRefined, fvFermiEnergySpin0);
+
+          const double firstOrderResponseFermiEnergySpin1 =
+            -totalCharge(d_matrixFreeDataPRefined, fvHamSpin1) /
+            totalCharge(d_matrixFreeDataPRefined, fvFermiEnergySpin1);
+
+          for (unsigned int i = 0; i < fvHamSpin0.locally_owned_size(); i++)
+            {
+              fvSpin0.local_element(i) = fvHamSpin0.local_element(i) +
+                                         firstOrderResponseFermiEnergySpin0 *
+                                           fvFermiEnergySpin0.local_element(i);
+              fvSpin1.local_element(i) = fvHamSpin1.local_element(i) +
+                                         firstOrderResponseFermiEnergySpin1 *
+                                           fvFermiEnergySpin1.local_element(i);
+            }          
+        }
+        else
+        {
+          for (unsigned int i = 0; i < fvHamSpin0.locally_owned_size(); i++)
+            {
+              fvSpin0.local_element(i) = fvHamSpin0.local_element(i) +
+                                         firstOrderResponseFermiEnergy *
+                                           fvFermiEnergySpin0.local_element(i);
+              fvSpin1.local_element(i) = fvHamSpin1.local_element(i) +
+                                         firstOrderResponseFermiEnergy *
+                                           fvFermiEnergySpin1.local_element(i);
+            }
+        }
       }
   }
 #include "dft.inst.cc"

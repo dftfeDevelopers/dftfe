@@ -1933,11 +1933,13 @@ namespace dftfe
           << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
           << std::endl;
 
+    /*
     if (spinPolarized == 1 && mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       AssertThrow(
         !constraintMagnetization,
         dealii::ExcMessage(
           "DFT-FE Error: CONSTRAINT MAGNETIZATION for LRD Preconditioner is not yet supported."));
+    */
 
     AssertThrow(
       natoms != 0,
