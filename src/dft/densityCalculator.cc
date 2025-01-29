@@ -194,6 +194,7 @@ namespace dftfe
                                iEigenVec < currentBlockSize;
                                ++iEigenVec)
                             {
+                              /*
                               if (eigenValues[kPoint][totalNumWaveFunctions *
                                                         spinIndex +
                                                       jvec + iEigenVec] >
@@ -202,6 +203,17 @@ namespace dftfe
                               else
                                 *(partialOccupVecHost.begin() + iEigenVec) =
                                   kPointWeights[kPoint] * spinPolarizedFactor;
+                              */
+
+                              *(partialOccupVecHost.begin() + iEigenVec) =
+                                dftUtils::getPartialOccupancy(
+                                  eigenValues[kPoint][totalNumWaveFunctions *
+                                                        spinIndex +
+                                                      jvec + iEigenVec],
+                                  fermiEnergyConstraintMag,
+                                  C_kb,
+                                  dftParams.TVal) *
+                                kPointWeights[kPoint] * spinPolarizedFactor;
                             }
                         }
                       else
