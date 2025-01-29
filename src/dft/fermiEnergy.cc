@@ -329,8 +329,8 @@ namespace dftfe
     const unsigned int nk =
       d_dftParamsPtr->nkx * d_dftParamsPtr->nky * d_dftParamsPtr->nkz;
     //
-    std::vect<std::vector<double>> eigenValuesInputUp(eigenValuesInput.size());
-    std::vect<std::vector<double>> eigenValuesInputDown(eigenValuesInput.size());
+    std::vector<std::vector<double>> eigenValuesInputUp(eigenValuesInput.size());
+    std::vector<std::vector<double>> eigenValuesInputDown(eigenValuesInput.size());
 
     std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -425,10 +425,10 @@ namespace dftfe
           }
       }
     if (d_dftParamsPtr->verbosity >= 4)
-      pcout << "Fermi energy constraint residual (bisection): " << R
+      pcout << "Fermi energy up constraint residual (bisection): " << R
             << std::endl;
 #else
-    fe = eigenValuesAllkPointsUp[d_kPointWeights.size() * count - 1];
+    fe = eigenValuesAllkPointsUp[d_kPointWeights.size() * countUp - 1];
 #endif
     //
     // compute residual and find FermiEnergy using Newton-Raphson solve
@@ -472,13 +472,8 @@ namespace dftfe
     fermiEnergyUp = fe;
 
     if (d_dftParamsPtr->verbosity >= 4)
-      pcout << "Fermi energy constraint residual (Newton-Raphson): "
+      pcout << "Fermi energy up constraint residual (Newton-Raphson): "
             << std::abs(R) << std::endl;
-
-    if (d_dftParamsPtr->verbosity >= 2)
-      pcout << "Fermi energy up                                     : "
-            << fermiEnergyUp << std::endl;
-
 
 #ifdef USE_COMPLEX
     //
@@ -543,18 +538,16 @@ namespace dftfe
           }
       }
     if (d_dftParamsPtr->verbosity >= 4)
-      pcout << "Fermi energy constraint residual (bisection): " << R
+      pcout << "Fermi energy down constraint residual (bisection): " << R
             << std::endl;
 #else
-    fe = eigenValuesAllkPointsDown[d_kPointWeights.size() * count - 1];
+    fe = eigenValuesAllkPointsDown[d_kPointWeights.size() * countDown - 1];
 #endif
     //
     // compute residual and find FermiEnergy using Newton-Raphson solve
     //
     // double R = 1.0;
-    unsigned int iter          = 0;
-    const double newtonIterTol = 1e-10;
-    double       functionValue, functionDerivativeValue;
+    iter          = 0;
 
     while ((std::abs(R) > newtonIterTol) &&
            (iter < maxNumberFermiEnergySolveIterations))
@@ -590,13 +583,8 @@ namespace dftfe
     fermiEnergyDown = fe;
 
     if (d_dftParamsPtr->verbosity >= 4)
-      pcout << "Fermi energy constraint residual (Newton-Raphson): "
+      pcout << "Fermi energy down constraint residual (Newton-Raphson): "
             << std::abs(R) << std::endl;
-
-    if (d_dftParamsPtr->verbosity >= 2)
-      pcout << "Fermi energy down                                     : "
-            << fermiEnergyDown << std::endl;
-
 
 
     //
