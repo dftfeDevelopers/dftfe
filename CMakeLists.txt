@@ -208,19 +208,6 @@ SET(TARGET_SRC
   ./src/pseudo/oncv/atomCenteredPostProcessing.cc)
 
 IF ("${GPU_LANG}" STREQUAL "cuda")
-SET(DEVICE_HOST_SRC
-  ./src/linAlg/linearAlgebraOperationsDevice.cc
-  ./utils/constraintMatrixInfoDevice.cc
-  ./src/dft/solveVselfInBinsDevice.cc
-  ./src/linAlg/pseudoGSDevice.cc
-  ./src/linAlg/rayleighRitzDevice.cc
-  ./src/poisson/poissonSolverProblemDevice.cc
-  ./src/helmholtz/kerkerSolverProblemDevice.cc
-  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
-  ./src/solvers/linearSolverDevice.cc
-  ./src/solvers/linearSolverProblemDevice.cc
-  ./src/solvers/linearSolverCGDevice.cc
-)
 SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
@@ -236,24 +223,11 @@ SET(DEVICE_SRC
   ./utils/BLASWrapperDevice.cu.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
-  ./src/poisson/poissonSolverProblemDeviceKernels.cc
+  ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
-SET(DEVICE_HOST_SRC
-  ./src/linAlg/linearAlgebraOperationsDevice.cc
-  ./utils/constraintMatrixInfoDevice.cc
-  ./src/dft/solveVselfInBinsDevice.cc
-  ./src/linAlg/pseudoGSDevice.cc
-  ./src/linAlg/rayleighRitzDevice.cc
-  ./src/poisson/poissonSolverProblemDevice.cc
-  ./src/helmholtz/kerkerSolverProblemDevice.cc
-  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
-  ./src/solvers/linearSolverDevice.cc
-  ./src/solvers/linearSolverProblemDevice.cc
-  ./src/solvers/linearSolverCGDevice.cc
-)
 SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
@@ -269,7 +243,7 @@ SET(DEVICE_SRC
   ./utils/BLASWrapperDevice.hip.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
-  ./src/poisson/poissonSolverProblemDeviceKernelss.cc
+  ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   )
@@ -290,11 +264,24 @@ IF (WITH_GPU)
     ENDIF()
 ENDIF()
 IF (WITH_GPU)
-  LIST(APPEND TARGET_SRC ${DEVICE_HOST_SRC} ${DEVICE_SRC})
+  LIST(APPEND TARGET_SRC 
+  ./src/linAlg/linearAlgebraOperationsDevice.cc
+  ./utils/constraintMatrixInfoDevice.cc
+  ./src/dft/solveVselfInBinsDevice.cc
+  ./src/linAlg/pseudoGSDevice.cc
+  ./src/linAlg/rayleighRitzDevice.cc
+  ./src/poisson/poissonSolverProblemDevice.cc
+  ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
+  ./src/solvers/linearSolverDevice.cc
+  ./src/solvers/linearSolverProblemDevice.cc
+  ./src/solvers/linearSolverCGDevice.cc
+  )
+  LIST(APPEND TARGET_SRC ${DEVICE_SRC})
 ENDIF()
 
 
-ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
+ADD_LIBRARY(${TARGETLIB} ${TARGET_SRC})
 
 #IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 #
