@@ -340,7 +340,7 @@ namespace dftfe
                                  C_kb,
                                  dftParams.TVal) -
                                1.0) *
-                              kPointWeights[kPoint] * spinPolarizedFactor;                            
+                              kPointWeights[kPoint] * spinPolarizedFactor;
                           }
                       }
                     else

@@ -393,9 +393,9 @@ namespace dftfe
                             //
                             factor =
                               ((dftPtr->eigenValues)
-                                 [kPoint]
-                                 [i + dftPtr->getParametersObject().spinPolarized *
-                                        (dftPtr->d_numEigenValues)] -
+                                 [kPoint][i + dftPtr->getParametersObject()
+                                                  .spinPolarized *
+                                                (dftPtr->d_numEigenValues)] -
                                (dftPtr->fermiEnergyDown)) /
                               (C_kb * dftPtr->getParametersObject().TVal);
                             partialOccupancyBeta = getOccupancy(factor);

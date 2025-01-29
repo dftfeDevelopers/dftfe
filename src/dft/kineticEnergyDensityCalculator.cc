@@ -214,7 +214,6 @@ namespace dftfe
                                 C_kb,
                                 dftParams.TVal) *
                               kPointWeights[kPoint] * spinPolarizedFactor;
-
                           }
                       }
                     else

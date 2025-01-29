@@ -586,7 +586,9 @@ namespace dftfe
                 rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
-                    if (d_dftParamsPtr->constraintMagnetization)
+                    if (d_dftParamsPtr->constraintMagnetization &&
+                        !d_dftParamsPtr
+                           ->useAtomicMagnetizationGuessConstraintMag)
                       magInValuesPtr[q] = (d_dftParamsPtr->tot_magnetization) *
                                           (std::abs(rhoValueAtQuadPt));
                     else
@@ -837,7 +839,9 @@ namespace dftfe
                       signRho * gradRhoZValueAtQuadPt;
                     if (d_dftParamsPtr->spinPolarized == 1)
                       {
-                        if (d_dftParamsPtr->constraintMagnetization)
+                        if (d_dftParamsPtr->constraintMagnetization &&
+                            !d_dftParamsPtr
+                               ->useAtomicMagnetizationGuessConstraintMag)
                           {
                             gradMagInValuesPtr[3 * q + 0] =
                               d_dftParamsPtr->tot_magnetization *

@@ -334,13 +334,16 @@ namespace dftfe
                               */
                               double partialOccupancy =
                                 dftUtils::getPartialOccupancy(
-                                  eigenValues[kPoint][i], fermiEnergyUp, C_kb, TVal);
+                                  eigenValues[kPoint][i],
+                                  fermiEnergyUp,
+                                  C_kb,
+                                  TVal);
                               double partialOccupancy2 =
                                 dftUtils::getPartialOccupancy(
                                   eigenValues[kPoint][i + numEigenValues],
                                   fermiEnergyDown,
                                   C_kb,
-                                  TVal);                                
+                                  TVal);
                             }
                           bandEnergyLocal += partialOccupancy *
                                              kPointWeights[kPoint] *

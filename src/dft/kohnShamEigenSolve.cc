@@ -716,9 +716,9 @@ namespace dftfe
           eigenValues[kPointIndex][spinType * d_numEigenValues + i];
       }
 
-    double fermiEnergyInput=fermiEnergy;
+    double fermiEnergyInput = fermiEnergy;
     if (d_dftParamsPtr->constraintMagnetization)
-      fermiEnergyInput=spinType==0?fermiEnergyUp:fermiEnergyDown;
+      fermiEnergyInput = spinType == 0 ? fermiEnergyUp : fermiEnergyDown;
 
     linearAlgebraOperations::densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
@@ -785,9 +785,9 @@ namespace dftfe
       }
 
 
-    double fermiEnergyInput=fermiEnergy;
+    double fermiEnergyInput = fermiEnergy;
     if (d_dftParamsPtr->constraintMagnetization)
-      fermiEnergyInput=spinType==0?fermiEnergyUp:fermiEnergyDown;
+      fermiEnergyInput = spinType == 0 ? fermiEnergyUp : fermiEnergyDown;
 
     subspaceIterationSolverDevice.densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,

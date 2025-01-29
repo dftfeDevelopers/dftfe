@@ -320,17 +320,19 @@ namespace dftfe
     compute_fermienergy_constraintMagnetization(
       const std::vector<std::vector<double>> &eigenValuesInput)
   {
-    int countUp   = numElectronsUp;
-    int countDown = numElectronsDown;    
-    double TVal  = d_dftParamsPtr->TVal;
+    int    countUp   = numElectronsUp;
+    int    countDown = numElectronsDown;
+    double TVal      = d_dftParamsPtr->TVal;
 
 
     //
     const unsigned int nk =
       d_dftParamsPtr->nkx * d_dftParamsPtr->nky * d_dftParamsPtr->nkz;
     //
-    std::vector<std::vector<double>> eigenValuesInputUp(eigenValuesInput.size());
-    std::vector<std::vector<double>> eigenValuesInputDown(eigenValuesInput.size());
+    std::vector<std::vector<double>> eigenValuesInputUp(
+      eigenValuesInput.size());
+    std::vector<std::vector<double>> eigenValuesInputDown(
+      eigenValuesInput.size());
 
     std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -405,8 +407,12 @@ namespace dftfe
 
         double xBisected = (xLeft + xRight) / 2.0;
 
-        double yBisectedLocal = internal::FermiDiracFunctionValue(
-          xBisected, eigenValuesInputUp, d_kPointWeights, TVal, *d_dftParamsPtr);
+        double yBisectedLocal =
+          internal::FermiDiracFunctionValue(xBisected,
+                                            eigenValuesInputUp,
+                                            d_kPointWeights,
+                                            TVal,
+                                            *d_dftParamsPtr);
         double yBisected =
           dealii::Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
         yBisected -= (double)numElectronsUp;
@@ -518,8 +524,12 @@ namespace dftfe
 
         double xBisected = (xLeft + xRight) / 2.0;
 
-        double yBisectedLocal = internal::FermiDiracFunctionValue(
-          xBisected, eigenValuesInputDown, d_kPointWeights, TVal, *d_dftParamsPtr);
+        double yBisectedLocal =
+          internal::FermiDiracFunctionValue(xBisected,
+                                            eigenValuesInputDown,
+                                            d_kPointWeights,
+                                            TVal,
+                                            *d_dftParamsPtr);
         double yBisected =
           dealii::Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
         yBisected -= (double)numElectronsDown;
@@ -547,7 +557,7 @@ namespace dftfe
     // compute residual and find FermiEnergy using Newton-Raphson solve
     //
     // double R = 1.0;
-    iter          = 0;
+    iter = 0;
 
     while ((std::abs(R) > newtonIterTol) &&
            (iter < maxNumberFermiEnergySolveIterations))
@@ -601,7 +611,6 @@ namespace dftfe
           << "Fermi energy for spin down                                    : "
           << fermiEnergyDown << std::endl;
       }
-
   }
 #include "dft.inst.cc"
 

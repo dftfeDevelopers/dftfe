@@ -240,7 +240,7 @@ namespace dftfe
           "ATOMIC COORDINATES FILE",
           "",
           dealii::Patterns::Anything(),
-          "[Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.");
+          "[Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. Parameter c scales the valence charge as (scaledAtomicValenceCharge= c * atomicValenceCharge). File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. In case both m and c are used, please use the scaled valence charge to set the value appropriately (m*scaledAtomicValenceCharge=atomicMagnetization). The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.");
         prm.declare_entry(
           "ATOMIC DISP COORDINATES FILE",
           "",
@@ -735,7 +735,13 @@ namespace dftfe
           "TOTAL MAGNETIZATION",
           "0.0",
           dealii::Patterns::Double(-1.0, 1.0),
-          "[Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x Number of electrons) a.u. ");
+          "[Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x (Number of electrons+Net charge)) a.u. ");
+
+        prm.declare_entry(
+          "USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Use atomic magnetization initial guess from coordinates.inp when using constrained magnetization solve for a set TOTAL MAGNETIZATION. The default value of false sets the initial guess of spin density to be a scaling of the total atomic density.");
 
         prm.declare_entry(
           "PSP CUTOFF IMAGE CHARGES",
@@ -1285,20 +1291,21 @@ namespace dftfe
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
 
-    functionalTestName                = "";
-    radiusAtomBall                    = 0.0;
-    mixingParameter                   = 0.5;
-    spinMixingEnhancementFactor       = 4.0;
-    absLinearSolverTolerance          = 1e-10;
-    selfConsistentSolverTolerance     = 1e-10;
-    TVal                              = 500;
-    tot_magnetization                 = 0.0;
-    absLinearSolverToleranceHelmholtz = 1e-10;
-    chebyshevTolerance                = 1e-02;
-    mixingMethod                      = "";
-    optimizationMode                  = "";
-    ionOptSolver                      = "";
-    cellOptSolver                     = "";
+    functionalTestName                       = "";
+    radiusAtomBall                           = 0.0;
+    mixingParameter                          = 0.5;
+    spinMixingEnhancementFactor              = 4.0;
+    absLinearSolverTolerance                 = 1e-10;
+    selfConsistentSolverTolerance            = 1e-10;
+    TVal                                     = 500;
+    tot_magnetization                        = 0.0;
+    useAtomicMagnetizationGuessConstraintMag = false;
+    absLinearSolverToleranceHelmholtz        = 1e-10;
+    chebyshevTolerance                       = 1e-02;
+    mixingMethod                             = "";
+    optimizationMode                         = "";
+    ionOptSolver                             = "";
+    cellOptSolver                            = "";
 
     isPseudopotential           = false;
     periodicX                   = false;
@@ -1688,15 +1695,17 @@ namespace dftfe
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
       prm.leave_subsection();
-      isPseudopotential     = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-      pseudoTestsFlag       = prm.get_bool("PSEUDO TESTS FLAG");
-      pseudoPotentialFile   = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-      XCType                = prm.get("EXCHANGE CORRELATION TYPE");
-      spinPolarized         = prm.get_integer("SPIN POLARIZATION");
-      modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
-      auxBasisTypeXC        = prm.get("AUX BASIS TYPE");
-      auxBasisDataXC        = prm.get("AUX BASIS DATA");
-      tot_magnetization     = prm.get_double("TOTAL MAGNETIZATION");
+      isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
+      pseudoPotentialFile = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
+      XCType              = prm.get("EXCHANGE CORRELATION TYPE");
+      spinPolarized       = prm.get_integer("SPIN POLARIZATION");
+      modelXCInputFile    = prm.get("MODEL XC INPUT FILE");
+      auxBasisTypeXC      = prm.get("AUX BASIS TYPE");
+      auxBasisDataXC      = prm.get("AUX BASIS DATA");
+      tot_magnetization   = prm.get_double("TOTAL MAGNETIZATION");
+      useAtomicMagnetizationGuessConstraintMag ==
+        prm.get_bool("USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       netCharge             = prm.get_double("NET CHARGE");
 
@@ -1938,7 +1947,8 @@ namespace dftfe
       AssertThrow(
         !constraintMagnetization,
         dealii::ExcMessage(
-          "DFT-FE Error: CONSTRAINT MAGNETIZATION for LRD Preconditioner is not yet supported."));
+          "DFT-FE Error: CONSTRAINT MAGNETIZATION for LRD Preconditioner is not
+    yet supported."));
     */
 
     AssertThrow(
