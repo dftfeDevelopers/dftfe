@@ -1044,7 +1044,7 @@ namespace dftfe
 
           prm.declare_entry(
             "USE RE-FORMULATED CHFSI",
-            "false",
+            "true",
             dealii::Patterns::Bool(),
             "[Advanced] Builds the Chebyshev filtered subspace in full precision based on a residual equation. To be used when USE APPROXIMATE OVERLAP MATRIX is set to false.");
 
@@ -1100,7 +1100,7 @@ namespace dftfe
 
           prm.declare_entry(
             "OVERLAP COMPUTE COMMUN CHEBY",
-            "false",
+            "true",
             dealii::Patterns::Bool(),
             "[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is true.");
 
