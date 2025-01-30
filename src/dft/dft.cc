@@ -763,8 +763,7 @@ namespace dftfe
       {
         //
         const double netMagnetization =
-          std::round(static_cast<double>(numElectrons) *
-                     d_dftParamsPtr->tot_magnetization);
+          static_cast<double>(numElectrons) * d_dftParamsPtr->tot_magnetization;
 
         numElectronsUp =
           0.5 * (static_cast<double>(numElectrons) + netMagnetization);
