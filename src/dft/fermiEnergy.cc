@@ -480,7 +480,8 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       pcout << "Fermi energy up constraint residual (Newton-Raphson): "
             << std::abs(R) << std::endl;
-
+   
+    R=1.0;
 #ifdef USE_COMPLEX
     //
     // compute Fermi-energy first by bisection method
@@ -556,7 +557,6 @@ namespace dftfe
     //
     // compute residual and find FermiEnergy using Newton-Raphson solve
     //
-    R = 1.0;
     iter = 0;
 
     while ((std::abs(R) > newtonIterTol) &&
