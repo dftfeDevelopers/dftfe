@@ -19,6 +19,7 @@
 #define DFTFE_EXCMANAGER_H
 
 #include <xc.h>
+#include "xc_funcs.h"
 #include <ExcSSDFunctionalBaseClass.h>
 namespace dftfe
 {
