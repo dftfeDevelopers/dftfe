@@ -320,8 +320,8 @@ namespace dftfe
     compute_fermienergy_constraintMagnetization(
       const std::vector<std::vector<double>> &eigenValuesInput)
   {
-    int    countUp   = numElectronsUp;
-    int    countDown = numElectronsDown;
+    int    countUp   = std::ceil(numElectronsUp);
+    int    countDown = std::ceil(numElectronsDown);
     double TVal      = d_dftParamsPtr->TVal;
 
 
@@ -390,14 +390,14 @@ namespace dftfe
 
         double yRight = dealii::Utilities::MPI::sum(yRightLocal, interpoolcomm);
 
-        yRight -= (double)numElectronsUp;
+        yRight -= numElectronsUp;
 
         double yLeftLocal = internal::FermiDiracFunctionValue(
           xLeft, eigenValuesInputUp, d_kPointWeights, TVal, *d_dftParamsPtr);
 
         double yLeft = dealii::Utilities::MPI::sum(yLeftLocal, interpoolcomm);
 
-        yLeft -= (double)numElectronsUp;
+        yLeft -= numElectronsUp;
 
         if ((yLeft * yRight) > 0.0)
           {
@@ -415,7 +415,7 @@ namespace dftfe
                                             *d_dftParamsPtr);
         double yBisected =
           dealii::Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
-        yBisected -= (double)numElectronsUp;
+        yBisected -= numElectronsUp;
 
         if ((yBisected * yLeft) > 0.0)
           xLeft = xBisected;
@@ -480,8 +480,8 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       pcout << "Fermi energy up constraint residual (Newton-Raphson): "
             << std::abs(R) << std::endl;
-   
-    R=1.0;
+
+    R = 1.0;
 #ifdef USE_COMPLEX
     //
     // compute Fermi-energy first by bisection method
@@ -508,14 +508,14 @@ namespace dftfe
 
         double yRight = dealii::Utilities::MPI::sum(yRightLocal, interpoolcomm);
 
-        yRight -= (double)numElectronsDown;
+        yRight -= numElectronsDown;
 
         double yLeftLocal = internal::FermiDiracFunctionValue(
           xLeft, eigenValuesInputDown, d_kPointWeights, TVal, *d_dftParamsPtr);
 
         double yLeft = dealii::Utilities::MPI::sum(yLeftLocal, interpoolcomm);
 
-        yLeft -= (double)numElectronsDown;
+        yLeft -= numElectronsDown;
 
         if ((yLeft * yRight) > 0.0)
           {
@@ -533,7 +533,7 @@ namespace dftfe
                                             *d_dftParamsPtr);
         double yBisected =
           dealii::Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
-        yBisected -= (double)numElectronsDown;
+        yBisected -= numElectronsDown;
 
         if ((yBisected * yLeft) > 0.0)
           xLeft = xBisected;

@@ -761,17 +761,16 @@ namespace dftfe
 #endif
     if (d_dftParamsPtr->constraintMagnetization)
       {
-        numElectronsUp   = std::ceil(static_cast<double>(numElectrons) / 2.0);
-        numElectronsDown = numElectrons - numElectronsUp;
         //
-        int netMagnetization = std::round(static_cast<double>(numElectrons) *
-                                          d_dftParamsPtr->tot_magnetization);
-        //
-        while ((numElectronsUp - numElectronsDown) < std::abs(netMagnetization))
-          {
-            numElectronsDown -= 1;
-            numElectronsUp += 1;
-          }
+        const double netMagnetization =
+          std::round(static_cast<double>(numElectrons) *
+                     d_dftParamsPtr->tot_magnetization);
+
+        numElectronsUp =
+          0.5 * (static_cast<double>(numElectrons) + netMagnetization);
+        numElectronsDown =
+          0.5 * (static_cast<double>(numElectrons) - netMagnetization);
+
         //
         if (d_dftParamsPtr->verbosity >= 1)
           {
