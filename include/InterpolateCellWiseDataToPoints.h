@@ -111,6 +111,9 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
         &                                          mapVecToCells,
       dftfe::utils::MemoryStorage<T, memorySpace> &outputData,
+      const unsigned int                           blockSizeOfInputData,
+      const unsigned int                           blockSizeOfOutputData,
+      const unsigned int                           startIndexOfInputData,
       bool                                         resizeData = false);
 
     /**
@@ -145,8 +148,11 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::HOST>
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
-        &  outputData,
-      bool resizeData = false);
+        &                outputData,
+      const unsigned int blockSizeOfInputData,
+      const unsigned int blockSizeOfOutputData,
+      const unsigned int startIndexOfInputData,
+      bool               resizeData = false);
 
   private:
     void

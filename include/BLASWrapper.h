@@ -530,6 +530,15 @@ namespace dftfe
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyToBlock(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const dftfe::size_type         startingVecId,
+        const ValueType1 *             copyFromVec,
+        ValueType2 *                   copyToVecBlock,
+        const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
       template <typename ValueType1, typename ValueType2>
       void
@@ -1159,6 +1168,15 @@ namespace dftfe
         ValueType2 *                   copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedCopyToBlock(
+        const dftfe::size_type         contiguousBlockSize,
+        const dftfe::size_type         numContiguousBlocks,
+        const dftfe::size_type         startingVecId,
+        const ValueType1 *             copyFromVec,
+        ValueType2 *                   copyToVecBlock,
+        const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
 
       template <typename ValueType1, typename ValueType2>

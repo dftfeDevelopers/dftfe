@@ -214,6 +214,11 @@ namespace dftfe
       d_dftParamsPtr->reproducible_output ?
         30.0 :
         (std::max(d_dftParamsPtr->pspCutoffImageCharges, d_pspCutOffTrunc));
+
+    d_smearedChargeMoments.resize(13, 0.0);
+    std::fill(d_smearedChargeMoments.begin(),
+              d_smearedChargeMoments.end(),
+              0.0);
   }
 
   template <unsigned int              FEOrder,
@@ -2530,6 +2535,14 @@ namespace dftfe
               d_dftParamsPtr->adaptAndersonMixingParameter);
           }
       }
+
+    if (d_dftParamsPtr->confiningPotential)
+      {
+        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
+        d_expConfiningPot.init(d_basisOperationsPtrHost,
+                               *d_dftParamsPtr,
+                               atomLocations);
+      }
     //
     // Begin SCF iteration
     //
@@ -2908,7 +2921,7 @@ namespace dftfe
                   0,
                   true,
                   false,
-                  d_dftParamsPtr->multipoleBoundaryConditions);
+                  true);
               }
 #endif
           }
@@ -2957,7 +2970,7 @@ namespace dftfe
                 0,
                 true,
                 false,
-                d_dftParamsPtr->multipoleBoundaryConditions);
+                true);
           }
 
         computing_timer.enter_subsection("phiTot solve");
@@ -2990,6 +3003,11 @@ namespace dftfe
           d_phiTotRhoIn,
           d_phiInQuadValues,
           dummy);
+
+        if (d_dftParamsPtr->confiningPotential)
+          {
+            d_expConfiningPot.addConfiningPotential(d_phiInQuadValues);
+          }
 
         //
         // impose integral phi equals 0
@@ -4396,7 +4414,8 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::outputWfc()
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::outputWfc(
+    const std::string outputFileName)
   {
     //
     // identify the index which is close to Fermi Energy
@@ -4532,7 +4551,7 @@ namespace dftfe
                                                interpoolcomm,
                                                interBandGroupComm,
                                                tempFolder,
-                                               "wfcOutput");
+                                               outputFileName);
     //"wfcOutput_"+std::to_string(k)+"_"+std::to_string(i));
   }
 
@@ -5056,6 +5075,37 @@ namespace dftfe
                                         dealii::update_JxW_values);
         const unsigned int  n_q_points = quadrature_formula.size();
 
+        const unsigned int totalLocallyOwnedCells =
+          d_basisOperationsPtrHost->nCells();
+
+        const unsigned int totalQuadPoints =
+          totalLocallyOwnedCells * n_q_points;
+
+        std::vector<unsigned int> numberOfPointsInEachProc;
+        numberOfPointsInEachProc.resize(n_mpi_processes);
+        std::fill(numberOfPointsInEachProc.begin(),
+                  numberOfPointsInEachProc.end(),
+                  0);
+
+        numberOfPointsInEachProc[this_mpi_process] = totalQuadPoints;
+
+
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &numberOfPointsInEachProc[0],
+                      n_mpi_processes,
+                      dataTypes::mpi_type_id(&numberOfPointsInEachProc[0]),
+                      MPI_SUM,
+                      mpi_communicator);
+
+        unsigned int quadIdStartIndex = 0;
+
+        for (unsigned int iProc = 0; iProc < this_mpi_process; iProc++)
+          {
+            quadIdStartIndex += numberOfPointsInEachProc[iProc];
+          }
+
+
+
         // loop over elements
         typename dealii::DoFHandler<3>::active_cell_iterator
           cell = dofHandler.begin_active(),
@@ -5082,6 +5132,8 @@ namespace dftfe
                       fe_values.quadrature_point(q_point);
                     const double jxw = fe_values.JxW(q_point);
 
+                    quadVals.push_back(quadIdStartIndex +
+                                       cellIndex * n_q_points + q_point);
                     quadVals.push_back(quadPoint[0]);
                     quadVals.push_back(quadPoint[1]);
                     quadVals.push_back(quadPoint[2]);
@@ -5351,6 +5403,16 @@ namespace dftfe
         }
   }
 
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::setNumElectrons(
+    unsigned int inputNumElectrons)
+  {
+    this->numElectrons = inputNumElectrons;
+  }
 
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
@@ -5675,6 +5737,14 @@ namespace dftfe
     return interBandGroupComm;
   }
 
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  const expConfiningPotential &
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::getConfiningPotential() const
+  {
+    return d_expConfiningPot;
+  }
 
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
@@ -5722,6 +5792,14 @@ namespace dftfe
     return d_useHubbard;
   }
 
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  const std::map<dealii::CellId, std::vector<double>> &
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::getPseudoVLoc() const
+  {
+    return d_pseudoVLoc;
+  }
 
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,

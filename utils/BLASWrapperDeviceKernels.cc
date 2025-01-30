@@ -115,6 +115,34 @@ namespace dftfe
 
     template <typename ValueType1, typename ValueType2>
     __global__ void
+    stridedCopyToBlockDeviceKernel(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const dftfe::size_type         stratingVecId,
+      const ValueType1 *             copyFromVec,
+      ValueType2 *                   copyToVec,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex =
+            index - blockIndex * contiguousBlockSize;
+          dftfe::utils::copyValue(
+            copyToVec + index,
+            copyFromVec[copyFromVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex + stratingVecId]);
+        }
+    }
+
+    template <typename ValueType1, typename ValueType2>
+    __global__ void
     stridedCopyToBlockScaleDeviceKernel(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,

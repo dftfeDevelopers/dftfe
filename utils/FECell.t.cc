@@ -118,6 +118,57 @@ namespace dftfe
     }
 
     template <unsigned int dim>
+    std::vector<double>
+    FECell<dim>::getParametricPointForAllPoints(
+      unsigned int               numPoints,
+      const std::vector<double> &realPoint) const
+    {
+      dealii::Point<dim, double> pointRealDealii;
+      std::vector<double>        pointParam(dim * numPoints, 0.0);
+      for (unsigned int iPoint = 0; iPoint < numPoints; iPoint++)
+        {
+          for (unsigned int j = 0; j < dim; j++)
+            {
+              pointRealDealii[j] = realPoint[iPoint * dim + j];
+            }
+          dealii::Point<dim, double> pointParamDealii =
+            d_mappingQ1.transform_real_to_unit_cell(d_dealiiFECellIter,
+                                                    pointRealDealii);
+          for (unsigned int j = 0; j < dim; j++)
+            {
+              pointParam[iPoint * dim + j] = pointParamDealii[j];
+            }
+        }
+
+      return pointParam;
+    }
+
+    template <unsigned int dim>
+    void
+    FECell<dim>::getShapeFuncValuesFromParametricPoints(
+      unsigned int                    numPointsInCell,
+      const std::vector<double> &     parametricPoints,
+      std::vector<dataTypes::number> &shapeFuncValues,
+      unsigned int                    cellShapeFuncStartIndex,
+      unsigned int                    numDofsPerElement) const
+    {
+      for (size_type iPoint = 0; iPoint < numPointsInCell; iPoint++)
+        {
+          dealii::Point<dim, double> pointParamDealii(
+            parametricPoints[dim * iPoint + 0],
+            parametricPoints[dim * iPoint + 1],
+            parametricPoints[dim * iPoint + 2]);
+
+          for (unsigned int iNode = 0; iNode < numDofsPerElement; iNode++)
+            {
+              shapeFuncValues[cellShapeFuncStartIndex + iNode +
+                              iPoint * numDofsPerElement] =
+                d_feCell.shape_value(iNode, pointParamDealii);
+            }
+        }
+    }
+
+    template <unsigned int dim>
     void
     FECell<dim>::getShapeFuncValues(
       unsigned int                    numPointsInCell,
@@ -128,10 +179,10 @@ namespace dftfe
     {
       for (size_type iPoint = 0; iPoint < numPointsInCell; iPoint++)
         {
-          dealii::Point<3, double> realCoord(
-            coordinatesOfPointsInCell[3 * iPoint + 0],
-            coordinatesOfPointsInCell[3 * iPoint + 1],
-            coordinatesOfPointsInCell[3 * iPoint + 2]);
+          dealii::Point<dim, double> realCoord(
+            coordinatesOfPointsInCell[dim * iPoint + 0],
+            coordinatesOfPointsInCell[dim * iPoint + 1],
+            coordinatesOfPointsInCell[dim * iPoint + 2]);
 
           dealii::Point<dim, double> pointParamDealii =
             d_mappingQ1.transform_real_to_unit_cell(d_dealiiFECellIter,

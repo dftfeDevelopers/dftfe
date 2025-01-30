@@ -22,6 +22,7 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <hipblas.h>
+#include <hip/hip_version.h>
 #ifdef DFTFE_WITH_DEVICE_AMD
 #  include <rocblas.h>
 #endif
@@ -66,7 +67,43 @@ namespace dftfe
       return reinterpret_cast<const double *>(a);
     }
 
+#if ROCM_VERSION >= 50701
+    inline hipDoubleComplex
+    makeDataTypeHipBlasCompatible(std::complex<double> a)
+    {
+      return hipDoubleComplex(a.real(), a.imag());
+    }
 
+    inline hipComplex
+    makeDataTypeHipBlasCompatible(std::complex<float> a)
+    {
+      return hipComplex(a.real(), a.imag());
+    }
+
+    inline hipComplex *
+    makeDataTypeHipBlasCompatible(std::complex<float> *a)
+    {
+      return reinterpret_cast<hipComplex *>(a);
+    }
+
+    inline const hipComplex *
+    makeDataTypeHipBlasCompatible(const std::complex<float> *a)
+    {
+      return reinterpret_cast<const hipComplex *>(a);
+    }
+
+    inline hipDoubleComplex *
+    makeDataTypeHipBlasCompatible(std::complex<double> *a)
+    {
+      return reinterpret_cast<hipDoubleComplex *>(a);
+    }
+
+    inline const hipDoubleComplex *
+    makeDataTypeHipBlasCompatible(const std::complex<double> *a)
+    {
+      return reinterpret_cast<const hipDoubleComplex *>(a);
+    }
+#else
     inline hipblasDoubleComplex
     makeDataTypeHipBlasCompatible(std::complex<double> a)
     {
@@ -102,6 +139,7 @@ namespace dftfe
     {
       return reinterpret_cast<const hipblasDoubleComplex *>(a);
     }
+#endif
   } // namespace utils
 
   namespace linearAlgebra
@@ -138,13 +176,15 @@ namespace dftfe
         ValueType2 *                       valueType2Arr,
         const dftfe::utils::deviceStream_t streamId)
     {
-      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+      hipLaunchKernelGGL(
+        copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        streamId>>>(size,
-                    dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
-                    dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
+        streamId,
+        size,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
 
 
@@ -1433,14 +1473,15 @@ namespace dftfe
                                        const ValueType1 *     valueType1Arr,
                                        ValueType2 *           valueType2Arr)
     {
-      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+      hipLaunchKernelGGL(
+        copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        d_streamId>>>(size,
-                      dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        valueType2Arr));
+        d_streamId,
+        size,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
 
     template <typename ValueType1, typename ValueType2>
@@ -1466,6 +1507,33 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
         copyFromVecStartingContiguousBlockIds);
     }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const dftfe::size_type         startingVecId,
+      const ValueType1 *             copyFromVec,
+      ValueType2 *                   copyToVecBlock,
+      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+    {
+      hipLaunchKernelGGL(
+        stridedCopyToBlockDeviceKernel,
+        (contiguousBlockSize * numContiguousBlocks) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        0,
+        contiguousBlockSize,
+        numContiguousBlocks,
+        startingVecId,
+        dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(copyToVecBlock),
+        copyFromVecStartingContiguousBlockIds);
+    }
+
 
     template <typename ValueType1, typename ValueType2>
     void
