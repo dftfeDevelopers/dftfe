@@ -19,7 +19,7 @@
 
 #include <poissonSolverProblemDevice.h>
 #include <MemoryTransfer.h>
-#include "poissonSolverProblemDeviceKernels.h"
+#include "matrixFreeDeviceKernels.h"
 
 namespace dftfe
 {
@@ -928,6 +928,11 @@ namespace dftfe
     d_shapeFunctionPtr  = d_shapeFunction.data();
     d_jacobianFactorPtr = d_jacobianFactor.data();
     d_mapPtr            = d_map.data();
+
+    constexpr std::size_t smem =
+      (4 * q * q * q + 2 * p * q + 2 * q * q + dim * dim) * sizeof(double);
+    matrixFreeDeviceKernels<double, p * p, q, p, dim>::
+      computeAXDevicePoissonSetAttributes(smem);
   }
 
 
@@ -957,14 +962,15 @@ namespace dftfe
 
     d_constraintsTotalPotentialInfo.distribute(x);
 
-    computeAXDevicePoisson<double, p * p, q, p, dim>(blocks,
-                                                     threads,
-                                                     smem,
-                                                     Ax.begin(),
-                                                     x.begin(),
-                                                     d_shapeFunctionPtr,
-                                                     d_jacobianFactorPtr,
-                                                     d_mapPtr);
+    matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
+      blocks,
+      threads,
+      smem,
+      Ax.begin(),
+      x.begin(),
+      d_shapeFunctionPtr,
+      d_jacobianFactorPtr,
+      d_mapPtr);
 
 
     d_constraintsTotalPotentialInfo.set_zero(x);
