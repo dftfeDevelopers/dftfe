@@ -553,7 +553,7 @@ namespace dftfe
     //
     for (unsigned int i = 0; i < d_numEigenValues; i++)
       {
-        if (d_dftParamsPtr->verbosity >= 5)
+        if (d_dftParamsPtr->verbosity >= 4)
           pcout << "eigen value " << std::setw(3) << i << ": "
                 << eigenValuesTemp[i] << std::endl;
 
@@ -675,11 +675,13 @@ namespace dftfe
       }
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
-    for (unsigned int i = 0; i < d_numEigenValues; i++)
-      {
-        eigenValuesTemp[i] =
-          eigenValues[kPointIndex][spinType * d_numEigenValues + i];
-      }
+    if (d_dftParamsPtr->useSinglePrecCheby ||
+        d_dftParamsPtr->useReformulatedChFSI)
+      for (unsigned int i = 0; i < d_numEigenValues; i++)
+        {
+          eigenValuesTemp[i] =
+            eigenValues[kPointIndex][spinType * d_numEigenValues + i];
+        }
 
     subspaceIterationSolverDevice.densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
