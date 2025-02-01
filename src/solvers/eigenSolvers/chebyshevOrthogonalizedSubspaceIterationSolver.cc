@@ -520,12 +520,6 @@ namespace dftfe
     computingTimerStandard.leave_subsection("Chebyshev filtering on CPU");
     if (d_dftParams.verbosity >= 4)
       pcout << "ChebyShev Filtering Done: " << std::endl;
-    //
-    // scale the eigenVectors (initial guess of single atom wavefunctions or
-    // previous guess) to convert into Lowden Orthonormalized FE basis multiply
-    // by M^{1/2}
-
-
 
     if (d_dftParams.orthogType.compare("CGS") == 0)
       {
@@ -567,20 +561,25 @@ namespace dftfe
       }
     else if (d_dftParams.orthogType.compare("GS") == 0)
       {
-        
         computing_timer.enter_subsection("Gram-Schmidt Orthogn Opt");
-                  BLASWrapperPtr->stridedBlockScale(
-                    totalNumberWaveFunctions,
-                    localVectorSize,
-                    1.0,
-                    operatorMatrix.getSqrtMassVector().data(),
-                    eigenVectorsFlattened);
+        BLASWrapperPtr->stridedBlockScale(
+          totalNumberWaveFunctions,
+          localVectorSize,
+          1.0,
+          operatorMatrix.getSqrtMassVector().data(),
+          eigenVectorsFlattened);
 
         linearAlgebraOperations::gramSchmidtOrthogonalization(
           eigenVectorsFlattened,
           totalNumberWaveFunctions,
           localVectorSize,
           mpiCommDomain);
+        BLASWrapperPtr->stridedBlockScale(
+          totalNumberWaveFunctions,
+          localVectorSize,
+          1.0,
+          operatorMatrix.getInverseSqrtMassVector().data(),
+          eigenVectorsFlattened);
         computing_timer.leave_subsection("Gram-Schmidt Orthogn Opt");
 
         if (d_dftParams.verbosity >= 4)
