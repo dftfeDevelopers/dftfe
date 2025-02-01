@@ -17,14 +17,14 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_real_cpu_boostext"
-dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_complex_cpu_boostext"
-alglibDir="/home/vikramg/DFT-softwares-gcc/alglib/alglib-cpp/src"
-libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/libxc-5.2.3/install_libxc5.2.3"
-spglibDir="/home/vikramg/DFT-softwares-gcc/spglib/install"
+dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/install_DFTFE/env2/dealii_real"
+dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/install_DFTFE/env2/dealii_complex"
+alglibDir="/home/vikramg/DFT-softwares-gcc/install_DFTFE/env2/lib/alglib"
+libxcDir="/home/vikramg/DFT-softwares-gcc/install_DFTFE/env2"
+spglibDir="/home/vikramg/DFT-softwares-gcc/install_DFTFE/env2"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install2024"
+ELPA_PATH="/home/vikramg/DFT-softwares-gcc/install_DFTFE/env2"
 
 
 #Paths for optional external libraries
@@ -32,7 +32,7 @@ ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install2024"
 DCCL_PATH=""
 mdiPath=""
 torchDir="/gpfs/accounts/vikramg_root/vikramg/shared_data/argha/torch/libtorch/pytorch-install/share/cmake/Torch"
-DFTD4Path="/home/vikramg/DFT-softwares-gcc/dftd4/install3.6.0"
+DFTD4Path="/home/vikramg/DFT-softwares-gcc/install_DFTFE/env2"
 
 #Toggle GPU compilation
 withGPU=OFF
@@ -50,7 +50,7 @@ withTorch=OFF
 withCustomizedDealii=OFF
 
 #Compiler options and flags
-cxx_compiler=/sw/pkgs/arc/stacks/gcc/10.3.0/openmpi/4.1.6/bin/mpicxx  #sets DCMAKE_CXX_COMPILER
+cxx_compiler=/sw/pkgs/arc/stacks/gcc/13.2.0/openmpi/5.0.3/bin/mpicxx  #sets DCMAKE_CXX_COMPILER
 cxx_flags="-std=c++17 -march=native -fopenmp -fPIC" #sets DCMAKE_CXX_FLAGS
 cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
 device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA_FLAGS 

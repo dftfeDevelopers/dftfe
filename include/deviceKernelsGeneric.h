@@ -20,7 +20,6 @@
 
 #    include <dftfeDataTypes.h>
 #    include <MemorySpaceType.h>
-#    include <headers.h>
 #    include <TypeConfig.h>
 #    include <DeviceTypeConfig.h>
 
@@ -31,7 +30,7 @@ namespace dftfe
     namespace deviceKernelsGeneric
     {
       void
-      setupDevice();
+      setupDevice(const int &mpi_rank);
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void

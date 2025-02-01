@@ -93,7 +93,7 @@ function cmake_configure() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1
   elif [ "$gpuLang" = "hip" ]; then
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -107,7 +107,7 @@ function cmake_configure() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1
   else
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -121,7 +121,7 @@ function cmake_configure() {
     -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex \
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1    
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1    
   fi
 }
 

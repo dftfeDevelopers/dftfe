@@ -18,14 +18,7 @@
 //
 
 // source file for electron density related computations
-#include <constants.h>
-#include <densityFirstOrderResponseCalculator.h>
-#include <dftUtils.h>
-#include <DataTypeOverloads.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
+#include "densityCalculatorDeviceKernels.h"
 
 namespace dftfe
 {
@@ -85,15 +78,11 @@ namespace dftfe
   void
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &basisOperationsPtr,
-    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    onesVec,
     double *                                    partialOccupPrimeVec,
     NumberType *                                wfcQuadPointData,
@@ -103,10 +92,8 @@ namespace dftfe
     double *rhoResponseHam,
     double *rhoResponseFermiEnergy)
   {
-    const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
-    const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells           = basisOperationsPtr->nCells();
+    const unsigned int cellsBlockSize      = cellRange.second - cellRange.first;
+    const unsigned int vectorsBlockSize    = vecRange.second - vecRange.first;
     const double       scalarCoeffAlphaRho = 1.0;
     const double       scalarCoeffBetaRho  = 1.0;
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -169,15 +156,11 @@ namespace dftfe
   template void
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<dataTypes::number,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &basisOperationsPtr,
-    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    onesVec,
     double *                                    partialOccupVec,
     dataTypes::number *                         wfcQuadPointData,

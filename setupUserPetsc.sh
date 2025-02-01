@@ -17,21 +17,22 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii/install_real_cpu"
-dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii/install_complex_cpu"
+dealiiPetscRealDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_real_cpu_boostext"
+dealiiPetscComplexDir="/home/vikramg/DFT-softwares-gcc/dealii9.5.2/install_complex_cpu_boostext"
 alglibDir="/home/vikramg/DFT-softwares-gcc/alglib/alglib-cpp/src"
-libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/install_libxc5.2.3"
+libxcDir="/home/vikramg/DFT-softwares-gcc/libxc/libxc-5.2.3/install_libxc5.2.3"
 spglibDir="/home/vikramg/DFT-softwares-gcc/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install"
-
+ELPA_PATH="/home/vikramg/DFT-softwares-gcc/elpa/install2024"
 
 
 #Paths for optional external libraries
 # path for NCCL/RCCL libraries
 DCCL_PATH=""
 mdiPath=""
+torchDir="/gpfs/accounts/vikramg_root/vikramg/shared_data/argha/torch/libtorch/pytorch-install/share/cmake/Torch"
+DFTD4Path="/home/vikramg/DFT-softwares-gcc/dftd4/install3.6.0"
 
 #Toggle GPU compilation
 withGPU=OFF
@@ -49,12 +50,12 @@ withTorch=OFF
 withCustomizedDealii=OFF
 
 #Compiler options and flags
-cxx_compiler=mpic++  #sets DCMAKE_CXX_COMPILER
-cxx_flags="-fPIC" #sets DCMAKE_CXX_FLAGS
+cxx_compiler=/sw/pkgs/arc/stacks/gcc/10.3.0/openmpi/4.1.6/bin/mpicxx  #sets DCMAKE_CXX_COMPILER
+cxx_flags="-std=c++17 -march=native -fopenmp -fPIC" #sets DCMAKE_CXX_FLAGS
 cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
-device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA/HIP_FLAGS 
+device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA_FLAGS 
                            #(only applicable for withGPU=ON)
-device_architectures="70" # set DCMAKE_CXX_CUDA/HIP_ARCHITECTURES 
+device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES 
                            #(only applicable for withGPU=ON)
 
 
@@ -65,7 +66,7 @@ withHigherQuadPSP=OFF
 # build type: "Release" or "Debug"
 build_type=Release
 
-testing=OFF
+testing=ON
 minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
@@ -78,9 +79,7 @@ minimal_compile=ON
 #fi
 out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 
-
 function cmake_configure() {
-  mkdir -p complex && cd complex
   if [ "$gpuLang" = "cuda" ]; then
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -89,12 +88,12 @@ function cmake_configure() {
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
-    -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
+    -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1
   elif [ "$gpuLang" = "hip" ]; then
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
@@ -103,26 +102,27 @@ function cmake_configure() {
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
-    -DWITH_COMPLEX=ON -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
+    -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1
   else
     cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
+    -DCMAKE_C_FLAGS="-lm -ldl"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH"\
-    -DWITH_COMPLEX=ON \
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$DFTD4PATH"\
+    -DWITH_COMPLEX=$withComplex \
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1    
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1    
   fi
 }
 
