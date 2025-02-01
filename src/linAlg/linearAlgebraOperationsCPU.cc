@@ -284,84 +284,84 @@ namespace dftfe
     {
 #ifdef USE_PETSC
 
-      // //
-      // // Create template PETSc vector to create BV object later
-      // //
-      // Vec templateVec;
-      // VecCreateMPI(mpiComm, localVectorSize, PETSC_DETERMINE, &templateVec);
-      // VecSetFromOptions(templateVec);
+      //
+      // Create template PETSc vector to create BV object later
+      //
+      Vec templateVec;
+      VecCreateMPI(mpiComm, localVectorSize, PETSC_DETERMINE, &templateVec);
+      VecSetFromOptions(templateVec);
 
 
-      // //
-      // // Set BV options after creating BV object
-      // //
-      // BV columnSpaceOfVectors;
-      // BVCreate(mpiComm, &columnSpaceOfVectors);
-      // BVSetSizesFromVec(columnSpaceOfVectors, templateVec, numberVectors);
-      // BVSetFromOptions(columnSpaceOfVectors);
+      //
+      // Set BV options after creating BV object
+      //
+      BV columnSpaceOfVectors;
+      BVCreate(mpiComm, &columnSpaceOfVectors);
+      BVSetSizesFromVec(columnSpaceOfVectors, templateVec, numberVectors);
+      BVSetFromOptions(columnSpaceOfVectors);
 
 
-      // //
-      // // create list of indices
-      // //
-      // std::vector<PetscInt>    indices(localVectorSize);
-      // std::vector<PetscScalar> data(localVectorSize, 0.0);
+      //
+      // create list of indices
+      //
+      std::vector<PetscInt>    indices(localVectorSize);
+      std::vector<PetscScalar> data(localVectorSize, 0.0);
 
-      // PetscInt low, high;
+      PetscInt low, high;
 
-      // VecGetOwnershipRange(templateVec, &low, &high);
+      VecGetOwnershipRange(templateVec, &low, &high);
 
 
-      // for (PetscInt index = 0; index < localVectorSize; ++index)
-      //   indices[index] = low + index;
+      for (PetscInt index = 0; index < localVectorSize; ++index)
+        indices[index] = low + index;
 
-      // VecDestroy(&templateVec);
+      VecDestroy(&templateVec);
 
-      // //
-      // // Fill in data into BV object
-      // //
-      // Vec v;
-      // for (unsigned int iColumn = 0; iColumn < numberVectors; ++iColumn)
-      //   {
-      //     BVGetColumn(columnSpaceOfVectors, iColumn, &v);
-      //     VecSet(v, 0.0);
-      //     for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-      //       data[iNode] = X[numberVectors * iNode + iColumn];
+      //
+      // Fill in data into BV object
+      //
+      Vec v;
+      for (unsigned int iColumn = 0; iColumn < numberVectors; ++iColumn)
+        {
+          BVGetColumn(columnSpaceOfVectors, iColumn, &v);
+          VecSet(v, 0.0);
+          for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+            data[iNode] = X[numberVectors * iNode + iColumn];
 
-      //     VecSetValues(
-      //       v, localVectorSize, &indices[0], &data[0], INSERT_VALUES);
+          VecSetValues(
+            v, localVectorSize, &indices[0], &data[0], INSERT_VALUES);
 
-      //     VecAssemblyBegin(v);
-      //     VecAssemblyEnd(v);
+          VecAssemblyBegin(v);
+          VecAssemblyEnd(v);
 
-      //     BVRestoreColumn(columnSpaceOfVectors, iColumn, &v);
-      //   }
+          BVRestoreColumn(columnSpaceOfVectors, iColumn, &v);
+        }
 
-      // //
-      // // orthogonalize
-      // //
-      // BVOrthogonalize(columnSpaceOfVectors, NULL);
+      //
+      // orthogonalize
+      //
+      BVOrthogonalize(columnSpaceOfVectors, NULL);
 
-      // //
-      // // Copy data back into X
-      // //
-      // Vec          v1;
-      // PetscScalar *pointerv1;
-      // for (unsigned int iColumn = 0; iColumn < numberVectors; ++iColumn)
-      //   {
-      //     BVGetColumn(columnSpaceOfVectors, iColumn, &v1);
+      //
+      // Copy data back into X
+      //
+      Vec          v1;
+      PetscScalar *pointerv1;
+      for (unsigned int iColumn = 0; iColumn < numberVectors; ++iColumn)
+        {
+          BVGetColumn(columnSpaceOfVectors, iColumn, &v1);
 
-      //     VecGetArray(v1, &pointerv1);
+          VecGetArray(v1, &pointerv1);
 
-      //     for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-      //       X[numberVectors * iNode + iColumn] = pointerv1[iNode];
+          for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+            X[numberVectors * iNode + iColumn] = pointerv1[iNode];
 
-      //     VecRestoreArray(v1, &pointerv1);
+          VecRestoreArray(v1, &pointerv1);
 
-      //     BVRestoreColumn(columnSpaceOfVectors, iColumn, &v1);
-      //   }
+          BVRestoreColumn(columnSpaceOfVectors, iColumn, &v1);
+        }
 
-      // BVDestroy(&columnSpaceOfVectors);
+      BVDestroy(&columnSpaceOfVectors);
 #else
       AssertThrow(
         false,

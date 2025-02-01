@@ -567,7 +567,15 @@ namespace dftfe
       }
     else if (d_dftParams.orthogType.compare("GS") == 0)
       {
+        
         computing_timer.enter_subsection("Gram-Schmidt Orthogn Opt");
+                  BLASWrapperPtr->stridedBlockScale(
+                    totalNumberWaveFunctions,
+                    localVectorSize,
+                    1.0,
+                    operatorMatrix.getSqrtMassVector().data(),
+                    eigenVectorsFlattened);
+
         linearAlgebraOperations::gramSchmidtOrthogonalization(
           eigenVectorsFlattened,
           totalNumberWaveFunctions,
