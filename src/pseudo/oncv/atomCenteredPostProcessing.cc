@@ -975,7 +975,7 @@ namespace dftfe
                           {
                             double epsValueTrunc =
                               std::floor(100000 * epsValue * C_haToeV) / 100000;
-                            pcout << std::fixed << std::setprecision(5)
+                            pcout << std::fixed << std::setprecision(4)
                                   << std::setw(15) << epsValueTrunc << "\t";
                           }
 
@@ -1033,14 +1033,14 @@ namespace dftfe
                                 dftParamsPtr->verbosity == 0 && atomId == 0)
                               {
                                 pcout << std::setw(15)
-                                      << std::floor(100000 * pdosSumUp) / 100000
+                                      << std::floor(10000 * pdosSumUp) / 10000
                                       << "\t";
                                 for (auto it = pdosVec.begin();
                                      it != pdosVec.end();
                                      ++it)
                                   {
                                     pcout << std::setw(15)
-                                          << std::floor((*it) * 100000) / 100000
+                                          << std::floor((*it) * 10000) / 10000
                                           << "\t";
                                   }
                                 pcout << std::endl;
@@ -1065,11 +1065,11 @@ namespace dftfe
                                 dftParamsPtr->verbosity == 0 && atomId == 0)
                               {
                                 pcout << std::setw(15)
-                                      << std::floor(pdosSumUp * 100000) / 100000
+                                      << std::floor(pdosSumUp * 10000) / 10000
                                       << "\t";
                                 pcout
                                   << std::setw(15)
-                                  << std::floor(pdosSumDown * 100000) / 100000
+                                  << std::floor(pdosSumDown * 10000) / 10000
                                   << "\t";
 
                                 for (auto it = pdosVec.begin();
@@ -1080,8 +1080,8 @@ namespace dftfe
                                           << std::setw(15)
                                           << std::floor(
                                                (*(it + pdosVec.size() / 2)) *
-                                               100000) /
-                                               100000
+                                               10000) /
+                                               10000
                                           << "\t";
                                   }
                                 pcout << std::endl;
