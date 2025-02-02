@@ -17,20 +17,23 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/shared/dftfesoftwares2021/dealii/installgcc9.2cudaawarempiWithPetscSlpec"
-dealiiPetscComplexDir="/shared/dftfesoftwares2021/dealii/installgcc9.2cudaawarempiWithPetscSlpecComplex"
-alglibDir="/shared/dftfesoftwares2021/alglib/cpp/src"
-libxcDir="/shared/dftfesoftwares2021/libxc/gcc9.2_libxc_5.1.5"
-spglibDir="/shared/dftfesoftwares2021/spglib/gcc9.2_spglib"
+dealiiPetscRealDir="/storage/dftfeDependencies/dealii/installReal"
+dealiiPetscComplexDir="/storage/dftfeDependencies/dealii/installComplex"
+alglibDir="/storage/dftfeDependencies/alglib/install"
+libxcDir="/storage/dftfeDependencies/libxc/install"
+spglibDir="/storage/dftfeDependencies/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
-xmlLibDir="/usr/lib64"
-ELPA_PATH="/shared/dftfesoftwares2021/elpa2022/installgcc9.2elpa2022withcudaawarempi"
-numdiffdir="/shared/dftfesoftwares2021/numdiff/build"
+xmlLibDir="/usr/lib/x86_64-linux-gnu"
+ELPA_PATH="/storage/dftfeDependencies/elpa/install"
+dftdpath="/storage/dftfeDependencies/dftd/install"
+numdiffdir="/storage/dftfeDependencies/numdiff/install"
+
 
 #Paths for optional external libraries
 # path for NCCL/RCCL libraries
-DCCL_PATH=""
+DCCL_PATH="/apps/softwares/spack/opt/spack/linux-ubuntu24.04-cascadelake/gcc-13.3.0/nccl-2.23.4-1-xyspmp23glxb4slgne4xpemahjrkuyrj"
 mdiPath=""
+torchDir=""
 
 #Toggle GPU compilation
 withGPU=ON
@@ -45,13 +48,13 @@ withGPUAwareMPI=OFF #Please use this option with care
 withDCCL=OFF
 withMDI=OFF
 withTorch=OFF
-withCustomizedDealii=ON
+withCustomizedDealii=OFF
 
 #Compiler options and flags
-cxx_compiler=mpic++  #sets DCMAKE_CXX_COMPILER
-cxx_flags="-march=native -fPIC" #sets DCMAKE_CXX_FLAGS
+cxx_compiler=mpicxx  #sets DCMAKE_CXX_COMPILER
+cxx_flags="-std=c++17 -march=native -fopenmp -fPIC" #sets DCMAKE_CXX_FLAGS
 cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
-device_flags="-arch=sm_70" # set DCMAKE_CXX_CUDA_FLAGS 
+device_flags="-arch=sm_70 -ccbin=mpicxx" # set DCMAKE_CXX_CUDA_FLAGS 
                            #(only applicable for withGPU=ON)
 device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES 
                            #(only applicable for withGPU=ON)
@@ -79,47 +82,47 @@ out=`echo "$build_type" | tr '[:upper:]' '[:lower:]'`
 
 function cmake_configure() {
   if [ "$gpuLang" = "cuda" ]; then
-    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$numdiffdir"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_CUDA_FLAGS="$device_flags" -DCMAKE_CUDA_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1
   elif [ "$gpuLang" = "hip" ]; then
-    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$numdiffdir"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex -DWITH_GPU=$withGPU -DGPU_LANG=$gpuLang -DGPU_VENDOR=$gpuVendor -DWITH_GPU_AWARE_MPI=$withGPUAwareMPI -DCMAKE_HIP_FLAGS="$device_flags" -DCMAKE_HIP_ARCHITECTURES="$device_architectures"\
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1
   else
-    cmake -DCMAKE_CXX_STANDARD=14 -DCMAKE_CXX_COMPILER=$cxx_compiler\
+    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_COMPILER=$cxx_compiler\
     -DCMAKE_CXX_FLAGS="$cxx_flags"\
     -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" \
     -DCMAKE_BUILD_TYPE=$build_type -DDEAL_II_DIR=$dealiiDir \
     -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir \
     -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir \
     -DXML_INCLUDE_DIR=$xmlIncludeDir\
-    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch \
+    -DWITH_MDI=$withMDI -DMDI_PATH=$mdiPath -DWITH_TORCH=$withTorch -DTORCH_DIR=$torchDir\
     -DWITH_CUSTOMIZED_DEALII=$withCustomizedDealii\
-    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$numdiffdir"\
+    -DWITH_DCCL=$withDCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$DCCL_PATH;$dftdpath;$numdiffdir"\
     -DWITH_COMPLEX=$withComplex \
     -DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile\
-    -DHIGHERQUAD_PSP=$withHigherQuadPSP $1    
+    -DHIGHERQUAD_PSP=$withHigherQuadPSP -DBUILD_SHARED_LIBS=ON $1    
   fi
 }
 
