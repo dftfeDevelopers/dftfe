@@ -738,7 +738,7 @@ namespace dftfe
     MPI_Allreduce(MPI_IN_PLACE,
                   &mpiVectorSummedOverBlocks[0],
                   cumulativeNumAtomicOrbitals[dftParamsPtr->natoms - 1] *
-                    numberIntervals,
+                    numberIntervals * numSpinComponents,
                   dataTypes::mpi_type_id(&mpiVectorSummedOverBlocks[0]),
                   MPI_MAX,
                   d_mpiCommDomain);
@@ -975,7 +975,7 @@ namespace dftfe
                           {
                             double epsValueTrunc =
                               std::floor(100000 * epsValue * C_haToeV) / 100000;
-                            pcout << std::fixed << std::setprecision(4)
+                            pcout << std::fixed << std::setprecision(5)
                                   << std::setw(15) << epsValueTrunc << "\t";
                           }
 
