@@ -23,6 +23,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <cublas_v2.h>
 #include "BLASWrapperDeviceKernels.cc"
+#include "headers.h"
 
 namespace dftfe
 {
