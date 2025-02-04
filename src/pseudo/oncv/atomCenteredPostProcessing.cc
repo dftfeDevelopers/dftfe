@@ -1067,10 +1067,9 @@ namespace dftfe
                                 pcout << std::setw(15)
                                       << std::floor(pdosSumUp * 10000) / 10000
                                       << "\t";
-                                pcout
-                                  << std::setw(15)
-                                  << std::floor(pdosSumDown * 10000) / 10000
-                                  << "\t";
+                                pcout << std::setw(15)
+                                      << std::floor(pdosSumDown * 10000) / 10000
+                                      << "\t";
 
                                 for (auto it = pdosVec.begin();
                                      it != pdosVec.begin() + pdosVec.size() / 2;
