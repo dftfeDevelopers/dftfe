@@ -18,15 +18,8 @@
 //
 
 // source file for electron density related computations
-#include <constants.h>
-#include <kineticEnergyDensityCalculator.h>
-#include <dftUtils.h>
-#include <DataTypeOverloads.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
-
+#include "densityCalculatorDeviceKernels.h"
+#include "MemoryStorage.h"
 namespace dftfe
 {
   namespace
@@ -131,14 +124,10 @@ namespace dftfe
   void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
-      &BLASWrapperPtr,
-    std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &                                         basisOperationsPtr,
+      &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     double *                                    kcoord,
     NumberType *                                wfcQuadPointData,
@@ -147,10 +136,8 @@ namespace dftfe
     double *        kineticEnergyDensity,
     const MPI_Comm &mpiCommDomain)
   {
-    const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
-    const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells           = basisOperationsPtr->nCells();
+    const unsigned int cellsBlockSize      = cellRange.second - cellRange.first;
+    const unsigned int vectorsBlockSize    = vecRange.second - vecRange.first;
     const double       scalarCoeffAlphaKed = 1.0;
     const double       scalarCoeffBetaKed  = 1.0;
     const double       kcoordSq =
@@ -212,14 +199,10 @@ namespace dftfe
   template void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
-      &BLASWrapperPtr,
-    std::shared_ptr<
-      dftfe::basis::FEBasisOperations<dataTypes::number,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &                                         basisOperationsPtr,
+      &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     double *                                    kcoord,
     dataTypes::number *                         wfcQuadPointData,
