@@ -52,8 +52,7 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
-  set TOLERANCE                        = 1e-6
-  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
+  set TOLERANCE                        = 1e-8
   set MIXING PARAMETER                = 0.5
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS  = 45 

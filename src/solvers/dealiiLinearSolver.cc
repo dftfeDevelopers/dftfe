@@ -160,10 +160,10 @@ namespace dftfe
                         dealii::ExcMessage("DFT-FE Error: Not implemented"));
           }
 
+        x.update_ghost_values();
+
         if (distributeFlag)
           problem.distributeX();
-
-        x.update_ghost_values();
       }
     catch (...)
       {

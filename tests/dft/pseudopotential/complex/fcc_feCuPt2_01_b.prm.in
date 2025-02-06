@@ -53,15 +53,14 @@ end
 
 subsection Post-processing Options
   set WRITE PROJECTED DENSITY OF STATES = true
-  set DELTA ENERGY                       = 0.3
+  set DELTA ENERGY                       = 1.5
 end
 subsection SCF parameters
   set TEMPERATURE                      = 500
   subsection Eigen-solver parameters
       set USE SINGLE PREC CHEBY = true
       set USE SINGLE PREC COMMUN CHEBY = false
+      set CHEBYSHEV FILTER TOLERANCE  = 1e-12
       set HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING    = 35
-      set OVERLAP COMPUTE COMMUN CHEBY                         = true
-      set OVERLAP COMPUTE COMMUN ORTHO RR                      = true
   end
 end

@@ -1,12 +1,12 @@
-set SOLVER MODE = GS
+set SOLVER MODE = NSCF
 set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
-set RESTART FOLDER = ./cubicFe_01
+set RESTART FOLDER = ../../bccFe_01_a.release/mpirun=8/bccFe_01
 subsection Geometry
-  set NATOMS=1
+  set NATOMS=2
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE      = cubicFe_coordinates.inp          
-  set DOMAIN VECTORS FILE = cubicFe_domainVectors.inp 
+  set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/bccFe_fm_coordinates.inp          
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/bccFe_domainVectors.inp 
 end
 
 subsection Boundary conditions
@@ -43,13 +43,18 @@ subsection Finite element mesh parameters
 end
 
 subsection SCF Checkpointing and Restart
-    set SAVE RHO DATA = true
+    set LOAD RHO DATA = true
+end
+
+subsection Post-processing Options
+  set WRITE PROJECTED DENSITY OF STATES = true
+  set DELTA ENERGY                       = 1.5
 end
 
 subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true  
-  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo_cubicFe.inp
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudo_bccFe_01.inp
   set PSEUDO TESTS FLAG        = true
 end
 
@@ -58,4 +63,7 @@ subsection SCF parameters
   set MIXING PARAMETER                = 0.1
   set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
   set KERKER MIXING PARAMETER         = 0.5
+  subsection Eigen-solver parameters
+      set CHEBYSHEV FILTER TOLERANCE  = 1e-12
+  end
 end

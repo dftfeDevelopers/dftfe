@@ -975,7 +975,7 @@ namespace dftfe
                           {
                             double epsValueTrunc =
                               std::floor(100000 * epsValue * C_haToeV) / 100000;
-                            pcout << std::fixed << std::setprecision(5)
+                            pcout << std::fixed << std::setprecision(4)
                                   << std::setw(15) << epsValueTrunc << "\t";
                           }
 

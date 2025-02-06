@@ -32,5 +32,5 @@ srun ./dftfe parameterFileBe.prm > outputBe
 srun ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard
 srun ./dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
 srun ./dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
-srun ./dftfe parameterFileCubicFe_scf.prm > outputCubicFe_scf
-srun ./dftfe parameterFileCubicFe_pdos.prm > outputCubicFe_pdos
+srun ./dftfe parameterFileBccFe_scf.prm > outputBccFe_scf
+srun ./dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos

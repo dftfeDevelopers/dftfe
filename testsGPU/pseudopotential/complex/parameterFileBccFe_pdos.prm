@@ -1,12 +1,13 @@
 set SOLVER MODE = NSCF
+set USE GPU   = true
 set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
-set RESTART FOLDER = ./cubicFe_01
+set RESTART FOLDER = /data1/users/srinibasn/pdosCtestUpdate_test/gpuCtest/bcc_fe
 subsection Geometry
-  set NATOMS=1
+  set NATOMS=2
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE      = cubicFe_coordinates.inp          
-  set DOMAIN VECTORS FILE = cubicFe_domainVectors.inp 
+  set ATOMIC COORDINATES FILE      = bccFe_coordinates.inp          
+  set DOMAIN VECTORS FILE = bccFe_domainVectors.inp 
 end
 
 subsection Boundary conditions
@@ -35,10 +36,10 @@ subsection Parallelization
 end
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER = 3
+  set POLYNOMIAL ORDER = 5
   subsection Auto mesh generation parameters
-    set MESH SIZE AROUND ATOM  = 1.2
-    set ATOM BALL RADIUS = 3.0
+    set MESH SIZE AROUND ATOM  = 1.0
+    set ATOM BALL RADIUS = 4.0
   end
 end
 
@@ -48,19 +49,31 @@ end
 
 subsection Post-processing Options
   set WRITE PROJECTED DENSITY OF STATES = true
-  set DELTA ENERGY                       = 0.3
+  set DELTA ENERGY                       = 1.5
 end
 
 subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = GGA-PBE
   set PSEUDOPOTENTIAL CALCULATION = true  
-  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo_cubicFe.inp
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo_bccFe.inp
   set PSEUDO TESTS FLAG        = true
 end
 
 subsection SCF parameters
-  set MIXING METHOD                   = ANDERSON_WITH_KERKER
-  set MIXING PARAMETER                = 0.1
-  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
-  set KERKER MIXING PARAMETER         = 0.5
+  subsection Eigen-solver parameters
+      set CHEBYSHEV FILTER TOLERANCE  = 1e-12
+  end
+end
+
+subsection GPU
+  set AUTO GPU BLOCK SIZES         = true
+  set FINE GRAINED GPU TIMINGS     = true
+  set USE ELPA GPU KERNEL          = true
+  set USE GPUDIRECT MPI ALL REDUCE = true
+end
+
+subsection Poisson problem parameters
+  set GPU MODE           = false
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
 end
