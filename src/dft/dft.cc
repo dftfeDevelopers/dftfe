@@ -4575,6 +4575,9 @@ namespace dftfe
                             d_densityOutQuadValues[0],
                             rhoNodalField);
 
+    d_constraintsRhoNodal.distribute(rhoNodalField);
+    rhoNodalField.update_ghost_values();
+
     distributedCPUVec<double> magNodalField;
     if (d_dftParamsPtr->spinPolarized == 1)
       {
@@ -4586,6 +4589,9 @@ namespace dftfe
                                 d_densityQuadratureIdElectro,
                                 d_densityOutQuadValues[1],
                                 magNodalField);
+
+        d_constraintsRhoNodal.distribute(magNodalField);
+        magNodalField.update_ghost_values();
       }
 
     //
