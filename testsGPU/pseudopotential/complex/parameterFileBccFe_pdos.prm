@@ -2,7 +2,7 @@ set SOLVER MODE = NSCF
 set USE GPU   = true
 set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
-set RESTART FOLDER = /data1/users/srinibasn/pdosCtestUpdate_test/gpuCtest/bcc_fe
+set RESTART FOLDER = ./bcc_fe
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
