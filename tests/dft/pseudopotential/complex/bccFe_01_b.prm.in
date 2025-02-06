@@ -59,10 +59,6 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
-  set MIXING METHOD                   = ANDERSON_WITH_KERKER
-  set MIXING PARAMETER                = 0.1
-  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
-  set KERKER MIXING PARAMETER         = 0.5
   subsection Eigen-solver parameters
       set CHEBYSHEV FILTER TOLERANCE  = 1e-12
   end

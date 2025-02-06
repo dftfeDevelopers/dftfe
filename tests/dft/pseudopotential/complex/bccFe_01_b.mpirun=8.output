@@ -38,10 +38,10 @@ Starting NSCF iteration....
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -248.92676512
-Total energy  : -248.92676512
+             Total energy:        -248.89246670
+Total energy  : -248.89246670
 Total entropic energy: 0.00077636
-Total free energy: -248.92754148
+Total free energy: -248.89324306
 Writing PDOS outputs...
 File: pdosData_atom#0_wfc#0(3s).out
         # E(eV)     sumPDOS_up   sumPDOS_down           s_up         s_down
