@@ -69,10 +69,10 @@ namespace dftfe
 
 
       double alpha1 = sigma1 / e, alpha2 = -c;
-      operatorMatrix.HXChebyNew(Y1, alpha1, 0.0, alpha1 * alpha2, X1);
+      operatorMatrix.HXCheby(Y1, alpha1, 0.0, alpha1 * alpha2, X1);
       X1.swap(Y1);
       Y2.updateGhostValues();
-      operatorMatrix.HXChebyNew(
+      operatorMatrix.HXCheby(
         Y2, alpha1, 0.0, alpha1 * alpha2, X2, false, false, true, true);
       //
       // polynomial loop
@@ -82,25 +82,25 @@ namespace dftfe
           sigma2    = 1.0 / (gamma - sigma);
           alpha1Old = alpha1, alpha2Old = alpha2;
           alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
-          operatorMatrix.HXChebyNew(Y2,
-                                    alpha1Old,
-                                    degree == 2 ? 0.0 : alpha2Old,
-                                    -c * alpha1Old,
-                                    X2,
-                                    false,
-                                    true,
-                                    false,
-                                    true);
+          operatorMatrix.HXCheby(Y2,
+                                 alpha1Old,
+                                 degree == 2 ? 0.0 : alpha2Old,
+                                 -c * alpha1Old,
+                                 X2,
+                                 false,
+                                 true,
+                                 false,
+                                 true);
           Y1.updateGhostValuesBegin();
-          operatorMatrix.HXChebyNew(Y2,
-                                    alpha1Old,
-                                    degree == 2 ? 0.0 : alpha2Old,
-                                    -c * alpha1Old,
-                                    X2,
-                                    false,
-                                    true,
-                                    true,
-                                    false);
+          operatorMatrix.HXCheby(Y2,
+                                 alpha1Old,
+                                 degree == 2 ? 0.0 : alpha2Old,
+                                 -c * alpha1Old,
+                                 X2,
+                                 false,
+                                 true,
+                                 true,
+                                 false);
           Y1.updateGhostValuesEnd();
           X2.accumulateAddLocallyOwnedBegin();
 
@@ -109,20 +109,20 @@ namespace dftfe
           //
           // call HX
           //
-          operatorMatrix.HXChebyNew(
+          operatorMatrix.HXCheby(
             Y1, alpha1, alpha2, -c * alpha1, X1, false, false, true, true);
           X2.accumulateAddLocallyOwnedEnd();
           X2.zeroOutGhosts();
           X2.swap(Y2);
 
-          operatorMatrix.HXChebyNew(
+          operatorMatrix.HXCheby(
             Y1, alpha1, alpha2, -c * alpha1, X1, false, true, false, true);
           Y2.updateGhostValuesBegin();
-          operatorMatrix.HXChebyNew(
+          operatorMatrix.HXCheby(
             Y1, alpha1, alpha2, -c * alpha1, X1, false, true, true, false);
           Y2.updateGhostValuesEnd();
           X1.accumulateAddLocallyOwnedBegin();
-          operatorMatrix.HXChebyNew(
+          operatorMatrix.HXCheby(
             Y2, alpha1, alpha2, -c * alpha1, X2, false, false, true, true);
           X1.accumulateAddLocallyOwnedEnd();
           X1.zeroOutGhosts();
@@ -134,7 +134,7 @@ namespace dftfe
 
           if (degree == m)
             {
-              operatorMatrix.HXChebyNew(
+              operatorMatrix.HXCheby(
                 Y2, alpha1, alpha2, -c * alpha1, X2, false, true, false, false);
               X2.accumulateAddLocallyOwned();
               X2.zeroOutGhosts();
@@ -265,25 +265,25 @@ namespace dftfe
             }
           else
             {
-              operatorMatrix.HXChebyNew(Y2_SP,
-                                        alpha1Old,
-                                        alpha2Old,
-                                        -c * alpha1Old,
-                                        X2_SP,
-                                        false,
-                                        true,
-                                        false,
-                                        true);
+              operatorMatrix.HXCheby(Y2_SP,
+                                     alpha1Old,
+                                     alpha2Old,
+                                     -c * alpha1Old,
+                                     X2_SP,
+                                     false,
+                                     true,
+                                     false,
+                                     true);
               Y1_SP.updateGhostValuesBegin();
-              operatorMatrix.HXChebyNew(Y2_SP,
-                                        alpha1Old,
-                                        alpha2Old,
-                                        -c * alpha1Old,
-                                        X2_SP,
-                                        false,
-                                        true,
-                                        true,
-                                        false);
+              operatorMatrix.HXCheby(Y2_SP,
+                                     alpha1Old,
+                                     alpha2Old,
+                                     -c * alpha1Old,
+                                     X2_SP,
+                                     false,
+                                     true,
+                                     true,
+                                     false);
               Y1_SP.updateGhostValuesEnd();
               X2_SP.accumulateAddLocallyOwnedBegin();
             }
@@ -292,15 +292,15 @@ namespace dftfe
           //
           // call HX
           //
-          operatorMatrix.HXChebyNew(Y1_SP,
-                                    alpha1,
-                                    alpha2,
-                                    -c * alpha1,
-                                    X1_SP,
-                                    false,
-                                    false,
-                                    true,
-                                    true);
+          operatorMatrix.HXCheby(Y1_SP,
+                                 alpha1,
+                                 alpha2,
+                                 -c * alpha1,
+                                 X1_SP,
+                                 false,
+                                 false,
+                                 true,
+                                 true);
           if (degree != 2)
             {
               X2_SP.accumulateAddLocallyOwnedEnd();
@@ -333,36 +333,36 @@ namespace dftfe
 
 
 
-          operatorMatrix.HXChebyNew(Y1_SP,
-                                    alpha1,
-                                    alpha2,
-                                    -c * alpha1,
-                                    X1_SP,
-                                    false,
-                                    true,
-                                    false,
-                                    true);
+          operatorMatrix.HXCheby(Y1_SP,
+                                 alpha1,
+                                 alpha2,
+                                 -c * alpha1,
+                                 X1_SP,
+                                 false,
+                                 true,
+                                 false,
+                                 true);
           Y2_SP.updateGhostValuesBegin();
-          operatorMatrix.HXChebyNew(Y1_SP,
-                                    alpha1,
-                                    alpha2,
-                                    -c * alpha1,
-                                    X1_SP,
-                                    false,
-                                    true,
-                                    true,
-                                    false);
+          operatorMatrix.HXCheby(Y1_SP,
+                                 alpha1,
+                                 alpha2,
+                                 -c * alpha1,
+                                 X1_SP,
+                                 false,
+                                 true,
+                                 true,
+                                 false);
           Y2_SP.updateGhostValuesEnd();
           X1_SP.accumulateAddLocallyOwnedBegin();
-          operatorMatrix.HXChebyNew(Y2_SP,
-                                    alpha1,
-                                    alpha2,
-                                    -c * alpha1,
-                                    X2_SP,
-                                    false,
-                                    false,
-                                    true,
-                                    true);
+          operatorMatrix.HXCheby(Y2_SP,
+                                 alpha1,
+                                 alpha2,
+                                 -c * alpha1,
+                                 X2_SP,
+                                 false,
+                                 false,
+                                 true,
+                                 true);
           X1_SP.accumulateAddLocallyOwnedEnd();
           X1_SP.zeroOutGhosts();
           BLASWrapperPtr->ApaBD(X1_SP.locallyOwnedSize(),
@@ -380,15 +380,15 @@ namespace dftfe
 
           if (degree == m)
             {
-              operatorMatrix.HXChebyNew(Y2_SP,
-                                        alpha1,
-                                        alpha2,
-                                        -c * alpha1,
-                                        X2_SP,
-                                        false,
-                                        true,
-                                        false,
-                                        false);
+              operatorMatrix.HXCheby(Y2_SP,
+                                     alpha1,
+                                     alpha2,
+                                     -c * alpha1,
+                                     X2_SP,
+                                     false,
+                                     true,
+                                     false,
+                                     false);
               X2_SP.accumulateAddLocallyOwned();
               X2_SP.zeroOutGhosts();
               BLASWrapperPtr->ApaBD(X2_SP.locallyOwnedSize(),
