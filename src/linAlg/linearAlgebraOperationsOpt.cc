@@ -66,7 +66,7 @@ namespace dftfe
       double alpha1 = sigma1 / e, alpha2 = -c;
       operatorMatrix.overlapMatrixTimesX(X, 1.0, 0.0, 0.0, Y);
 
-      operatorMatrix.HXChebyNew(Y, alpha1, 0.0, alpha1 * alpha2, X);
+      operatorMatrix.HXCheby(Y, alpha1, 0.0, alpha1 * alpha2, X);
       X.swap(Y);
       //
       // polynomial loop
@@ -81,7 +81,7 @@ namespace dftfe
           //
           // call HX
           //
-          operatorMatrix.HXChebyNew(Y, alpha1, alpha2, -c * alpha1, X);
+          operatorMatrix.HXCheby(Y, alpha1, alpha2, -c * alpha1, X);
 
 
           //
@@ -171,7 +171,7 @@ namespace dftfe
           sigma2 = 1.0 / (gamma - sigma);
           alpha1 = 2.0 * sigma2 / e, alpha2 = -(sigma * sigma2);
 
-          operatorMatrix.HXChebyNew(
+          operatorMatrix.HXCheby(
             ResidualNew, alpha1, alpha2, -c * alpha1, Residual);
 
           BLASWrapperPtr->ApaBD(X.locallyOwnedSize(),

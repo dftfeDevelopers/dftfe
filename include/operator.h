@@ -128,6 +128,8 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
         &src0) = 0;
 
+
+
     virtual void
     HXCheby(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
@@ -141,29 +143,17 @@ namespace dftfe
       const bool skip3                                         = false) = 0;
 
     virtual void
-    HXChebyNew(
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-      const double scalarHX,
-      const double scalarY,
-      const double scalarX,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
-      const bool skip1                                         = false,
-      const bool skip2                                         = false,
-      const bool skip3                                         = false) = 0;
-
-    virtual void
-    HXChebyNew(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                                 memorySpace> &src,
-               const double                                    scalarHX,
-               const double                                    scalarY,
-               const double                                    scalarX,
-               dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                                 memorySpace> &dst,
-               const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
-               const bool skip1                                         = false,
-               const bool skip2                                         = false,
-               const bool skip3 = false) = 0;
+    HXCheby(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                              memorySpace> &src,
+            const double                                    scalarHX,
+            const double                                    scalarY,
+            const double                                    scalarX,
+            dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                              memorySpace> &dst,
+            const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
+            const bool skip1                                         = false,
+            const bool skip2                                         = false,
+            const bool skip3 = false) = 0;
 
     virtual dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST> *
     getOverloadedConstraintMatrixHost() const = 0;
