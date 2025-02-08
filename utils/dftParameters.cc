@@ -2121,7 +2121,7 @@ namespace dftfe
     if (verbosity >= 5)
       computeEnergyEverySCF = true;
 
-    if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-12)
+    if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-20)
       {
         if (restrictToOnePass)
           chebyshevTolerance = 1.0e+4;
