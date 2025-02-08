@@ -3772,8 +3772,7 @@ namespace dftfe
 
 
                   operatorMatrix.HX(XBlock, 1.0, -1.0, 0.0, HXBlock);
-                  if (dftParams.reproducible_output &&
-                      dftParams.approxOverlapMatrix)
+                  if (dftParams.approxOverlapMatrix)
                     {
                       BLASWrapperPtr->stridedBlockScale(
                         chebyBlockSize,

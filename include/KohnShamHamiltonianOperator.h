@@ -162,6 +162,16 @@ namespace dftfe
     void
     computeCellHamiltonianMatrixExtPotContribution();
 
+    /**
+     * @brief Computing Y = scalarHX*HX + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarHX scalar for HX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+     */
     void
     HX(dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
        const double scalarHX,
@@ -170,6 +180,16 @@ namespace dftfe
        dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
+    /**
+     * @brief Computing Y = scalarOX*OX + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarHX scalar for OX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param useApproximateMatrixEntries flag to use approximate overlap matrix
+     */
     void
     overlapMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
@@ -179,25 +199,17 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
       const bool useApproximateMatrixEntries = true);
 
-    void
-    applyOverlapMatrixCorrection(
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src0);
 
-    void
-    inverseOverlapOverlapMatrixTimesX(
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-      const double scalarOinvX,
-      const double scalarY,
-      const double scalarX,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const bool useApproximateMatrixEntries = true);
 
-    void
-    inplaceOverlapInverseMatrixTimesX(
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-        &src);
-
+    /**
+     * @brief Computing Y = scalarOinvX*O^{-1}X + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarOinvX scalar for O^{-1}X
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     */
     void
     overlapInverseMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
@@ -206,6 +218,15 @@ namespace dftfe
       const double scalarX,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst);
 
+    /**
+     * @brief Computing Y = scalarOinvX*O^{-1}X + scalarX*X + scalarY*Y for a given X and Y in Reduced precision
+     *
+     * @param src X vector
+     * @param scalarOinvX scalar for O^{-1}X
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     */
     void
     overlapInverseMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
@@ -216,7 +237,19 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
         &dst);
 
-
+    /**
+     * @brief Computing Y = scalarHX*M^{-1}HX + scalarX*X + scalarY*Y for a given X and Y in reduced precision
+     *
+     * @param src X vector
+     * @param scalarHX scalar for HX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+     * @param skip1 flag to skip extraction
+     * @param skip2 flag to skip nonLoal All Reduce
+     * @param skip3 flag to skip local HX and Assembly
+     */
 
     void
     HXCheby(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
@@ -230,6 +263,20 @@ namespace dftfe
             const bool skip1,
             const bool skip2,
             const bool skip3);
+
+    /**
+     * @brief Computing Y = scalarHX*M^{-1}HX + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarHX scalar for HX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+     * @param skip1 flag to skip extraction
+     * @param skip2 flag to skip nonLoal All Reduce
+     * @param skip3 flag to skip local HX and Assembly
+     */
 
     void
     HXCheby(

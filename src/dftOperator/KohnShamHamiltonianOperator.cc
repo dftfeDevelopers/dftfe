@@ -1278,127 +1278,8 @@ namespace dftfe
       scalarOinvX,
       dst.data());
   }
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  KohnShamHamiltonianOperator<memorySpace>::applyOverlapMatrixCorrection(
-    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src0)
-  {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
-    const double       one(1.0);
-    if (d_numVectorsInternal != numberWavefunctions)
-      reinitNumberWavefunctions(numberWavefunctions);
-
-    if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
-      d_basisOperationsPtr->reinit(numberWavefunctions,
-                                   d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
-    src.updateGhostValues();
-    d_basisOperationsPtr->distribute(src);
-    const dataTypes::number scalarCoeffAlpha = 1.0,
-                            scalarCoeffBeta  = dataTypes::number(0.0);
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
-      {
-        std::pair<unsigned int, unsigned int> cellRange(
-          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-        d_BLASWrapperPtr->stridedCopyToBlock(
-          numberWavefunctions,
-          numDoFsPerCell * (cellRange.second - cellRange.first),
-          src.data(),
-          d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
-          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-              .data() +
-            cellRange.first * numDoFsPerCell);
-      }
-    src.zeroOutGhosts();
-    inverseMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
-    d_BLASWrapperPtr->xaxpy(src.locallyOwnedSize() * src.numVectors(),
-                            &scalarCoeffAlpha,
-                            src0.data(),
-                            1,
-                            src.data(),
-                            1);
-
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
-      {
-        std::pair<unsigned int, unsigned int> cellRange(
-          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-
-        d_BLASWrapperPtr->xgemmStridedBatched(
-          'N',
-          'N',
-          numberWavefunctions,
-          numDoFsPerCell,
-          numDoFsPerCell,
-          &scalarCoeffAlpha,
-          d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
-          numberWavefunctions,
-          numDoFsPerCell * numberWavefunctions,
-          d_basisOperationsPtr->cellMassMatrix().data() +
-            cellRange.first * numDoFsPerCell * numDoFsPerCell,
-          numDoFsPerCell,
-          numDoFsPerCell * numDoFsPerCell,
-          &scalarCoeffBeta,
-          d_cellWaveFunctionMatrixDst.data(),
-          numberWavefunctions,
-          numDoFsPerCell * numberWavefunctions,
-          cellRange.second - cellRange.first);
-        d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
-          numberWavefunctions,
-          numDoFsPerCell * (cellRange.second - cellRange.first),
-          -1.0,
-          d_basisOperationsPtr->cellInverseMassVectorBasisData().data() +
-            cellRange.first * numDoFsPerCell,
-          d_cellWaveFunctionMatrixDst.data(),
-          src.data(),
-          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-              .data() +
-            cellRange.first * numDoFsPerCell);
-      }
-
-    inverseMassVectorScaledConstraintsNoneDataInfoPtr
-      ->distribute_slave_to_master(src);
-    src.accumulateAddLocallyOwned();
-    src.zeroOutGhosts();
-  }
 
 
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  KohnShamHamiltonianOperator<memorySpace>::inverseOverlapOverlapMatrixTimesX(
-    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-    const double scalarOinvX,
-    const double scalarY,
-    const double scalarX,
-    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-    const bool useApproximateMatrixEntries)
-  {
-    overlapMatrixTimesX(src,
-                        1.0,
-                        0.0,
-                        0.0,
-                        d_tempBlockVectorOverlapInvX,
-                        useApproximateMatrixEntries);
-    const unsigned int blockSize = src.numVectors();
-    d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * blockSize,
-                            scalarX,
-                            src.data(),
-                            scalarY,
-                            dst.data());
-    d_BLASWrapperPtr->stridedBlockAxpy(
-      blockSize,
-      src.locallyOwnedSize(),
-      d_tempBlockVectorOverlapInvX.data(),
-      d_basisOperationsPtr->inverseMassVectorBasisData().data(),
-      scalarOinvX,
-      dst.data());
-  }
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
@@ -1608,19 +1489,6 @@ namespace dftfe
         dst.accumulateAddLocallyOwned();
         dst.zeroOutGhosts();
       }
-  }
-
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  KohnShamHamiltonianOperator<memorySpace>::inplaceOverlapInverseMatrixTimesX(
-    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &src)
-  {
-    d_BLASWrapperPtr->stridedBlockScale(
-      src.numVectors(),
-      src.locallyOwnedSize(),
-      1.0,
-      d_basisOperationsPtr->inverseMassVectorBasisData().data(),
-      src.data());
   }
 
 
