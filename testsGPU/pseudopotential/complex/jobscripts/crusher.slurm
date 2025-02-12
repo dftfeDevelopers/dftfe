@@ -33,3 +33,11 @@ srun -n 6 -c 1 ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
 srun -n 6 -c 1 ./dftfe parameterFileBe.prm > outputBe
 
 srun -n 6 -c 1 ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard
+
+srun -n 6 -c 1 ./dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
+
+srun -n 6 -c 1 ./dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
+
+srun -n 6 -c 1 ./dftfe parameterFileBccFe_scf.prm > outputBccFe_scf
+
+srun -n 6 -c 1 ./dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
