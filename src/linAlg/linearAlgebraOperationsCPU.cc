@@ -804,9 +804,6 @@ namespace dftfe
                   XBlock->data()[iNode * B + iWave] =
                     X[iNode * N + jvec + iWave];
 
-              (*XBlock).zeroOutGhosts();
-              (*HXBlock).zeroOutGhosts();
-
               // evaluate H times XBlock and store in HXBlock^{T}
               operatorMatrix.HX(*XBlock,
                                 1.0,
@@ -1579,9 +1576,7 @@ namespace dftfe
                 for (unsigned int iWave = 0; iWave < B; ++iWave)
                   XBlock->data()[iNode * B + iWave] =
                     X[iNode * totalNumberVectors + jvec + iWave];
-              (*XBlock).zeroOutGhosts();
-              (*HXBlock).zeroOutGhosts();
-              MPI_Barrier(mpiCommDomain);
+
               // evaluate H times XBlock and store in HXBlock
               operatorMatrix.overlapMatrixTimesX(*XBlock,
                                                  1.0,
@@ -2448,10 +2443,7 @@ namespace dftfe
                 for (unsigned int iWave = 0; iWave < B; ++iWave)
                   XBlock->data()[iNode * B + iWave] =
                     X[iNode * numberWaveFunctions + jvec + iWave];
-              (*XBlock).zeroOutGhosts();
-              (*HXBlock).zeroOutGhosts();
 
-              MPI_Barrier(mpiCommDomain);
               // evaluate H times XBlock and store in HXBlock^{T}
               operatorMatrix.HX(*XBlock,
                                 1.0,
@@ -2622,10 +2614,7 @@ namespace dftfe
                 for (unsigned int iWave = 0; iWave < B; ++iWave)
                   XBlock->data()[iNode * B + iWave] =
                     X[iNode * numberWaveFunctions + jvec + iWave];
-              (*XBlock).zeroOutGhosts();
-              (*OXBlock).zeroOutGhosts();
 
-              MPI_Barrier(mpiCommDomain);
               // evaluate H times XBlock and store in HXBlock^{T}
               operatorMatrix.overlapMatrixTimesX(*XBlock,
                                                  1.0,
@@ -2809,10 +2798,7 @@ namespace dftfe
                 for (unsigned int iWave = 0; iWave < B; ++iWave)
                   XBlock->data()[iNode * B + iWave] =
                     X[iNode * N + jvec + iWave];
-              (*XBlock).zeroOutGhosts();
-              (*HXBlock).zeroOutGhosts();
 
-              MPI_Barrier(mpiCommDomain);
               // evaluate H times XBlock and store in HXBlock^{T}
               operatorMatrix.HX(*XBlock,
                                 1.0,
@@ -3095,10 +3081,6 @@ namespace dftfe
                 for (unsigned int iWave = 0; iWave < B; ++iWave)
                   XBlock->data()[iNode * B + iWave] =
                     X[iNode * N + jvec + iWave];
-              (*XBlock).zeroOutGhosts();
-              (*OXBlock).zeroOutGhosts();
-
-              MPI_Barrier(mpiCommDomain);
 
               operatorMatrix.overlapMatrixTimesX(*XBlock,
                                                  1.0,
@@ -3301,10 +3283,6 @@ namespace dftfe
                 for (unsigned int iWave = 0; iWave < B; ++iWave)
                   XBlock->data()[iNode * B + iWave] =
                     X[iNode * numberComponents + jvec + iWave];
-              (*XBlock).zeroOutGhosts();
-              (*OXBlock).zeroOutGhosts();
-              MPI_Barrier(mpiCommDomain);
-
               // XtOX operations
 
               operatorMatrix.overlapMatrixTimesX(*XBlock,

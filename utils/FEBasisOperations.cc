@@ -2722,6 +2722,7 @@ namespace dftfe
                     scratchMultiVectors.end(),
                   dealii::ExcMessage(
                     "DFT-FE Error: MultiVector not found in scratch storage."));
+      scratchMultiVectors[vecBlockSize][index].zeroOutGhosts();
       return scratchMultiVectors[vecBlockSize][index];
     }
 
@@ -2739,6 +2740,7 @@ namespace dftfe
                     scratchMultiVectorsSinglePrec.end(),
                   dealii::ExcMessage(
                     "DFT-FE Error: MultiVector not found in scratch storage."));
+      scratchMultiVectorsSinglePrec[vecBlockSize][index].zeroOutGhosts();
       return scratchMultiVectorsSinglePrec[vecBlockSize][index];
     }
 

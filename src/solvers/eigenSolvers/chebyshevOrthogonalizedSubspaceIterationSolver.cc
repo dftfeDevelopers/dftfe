@@ -326,7 +326,6 @@ namespace dftfe
                         eigenVectorsFlattenedArrayBlock->data() + iNode * BVec);
             computing_timer.leave_subsection(
               "Copy from full to block flattened array");
-            eigenVectorsFlattenedArrayBlock->zeroOutGhosts();
 
 
             //

@@ -373,7 +373,6 @@ namespace dftfe
               jvec,
               eigenVectorsFlattenedDevice,
               (*XBlock).begin());
-            (*XBlock).zeroOutGhosts();
 
             if (d_dftParams.overlapComputeCommunCheby &&
                 numSimultaneousBlocksCurrent == 2)
@@ -385,7 +384,6 @@ namespace dftfe
                   jvec + BVec,
                   eigenVectorsFlattenedDevice,
                   (*XBlock2).begin());
-                (*XBlock2).zeroOutGhosts();
               }
             //
             // call Chebyshev filtering function only for the current block

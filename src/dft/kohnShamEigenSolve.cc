@@ -502,7 +502,6 @@ namespace dftfe
           pcout << "spin: " << spinType + 1 << std::endl;
       }
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
-    std::vector<double> eigenValuesDummy(d_numEigenValues, 0.0);
     if (d_dftParamsPtr->useSinglePrecCheby ||
         d_dftParamsPtr->useReformulatedChFSI)
       for (unsigned int i = 0; i < d_numEigenValues; i++)
@@ -675,13 +674,11 @@ namespace dftfe
       }
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
-    if (d_dftParamsPtr->useSinglePrecCheby ||
-        d_dftParamsPtr->useReformulatedChFSI)
-      for (unsigned int i = 0; i < d_numEigenValues; i++)
-        {
-          eigenValuesTemp[i] =
-            eigenValues[kPointIndex][spinType * d_numEigenValues + i];
-        }
+    for (unsigned int i = 0; i < d_numEigenValues; i++)
+      {
+        eigenValuesTemp[i] =
+          eigenValues[kPointIndex][spinType * d_numEigenValues + i];
+      }
 
     subspaceIterationSolverDevice.densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
