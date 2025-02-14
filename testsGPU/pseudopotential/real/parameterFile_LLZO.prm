@@ -62,7 +62,7 @@ subsection SCF parameters
     set USE MIXED PREC CGS O                                 = false
     set USE MIXED PREC CGS SR                                = false
     set USE MIXED PREC CHEBY                                 = false
-    set USE MIXED PREC COMMUN ONLY XTX XTHX                  = false
+    set USE MIXED PREC COMMUN ONLY XTOX XTHX                  = false
     set USE MIXED PREC RR_SR                                 = false
     set WFC BLOCK SIZE                                       = 400
     set XTHX CORE EIGENSTATES                                = 0

@@ -1062,11 +1062,17 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in subspace rotation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC CGS O",
+            "USE MIXED PREC XTOX",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in X^{T} Overlap matrix times X computation. Default setting is false.");
 
+
+          prm.declare_entry(
+            "USE MIXED PREC XTHX",
+            "false",
+            dealii::Patterns::Bool(),
+            "[Advanced] Use mixed precision arithmetic in X^{T} Hamiltonian matrix times X computation. Default setting is false.");
 
 
           prm.declare_entry(
@@ -1082,10 +1088,10 @@ namespace dftfe
             "[Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC COMMUN ONLY XTX XTHX",
+            "USE MIXED PREC COMMUN ONLY XTOX XTHX",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision communication only for XtX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.");
+            "[Advanced] Use mixed precision communication only for XtOX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.");
 
           prm.declare_entry(
             "USE SINGLE PREC CHEBY",
@@ -1373,11 +1379,12 @@ namespace dftfe
     mpiAllReduceMessageBlockSizeMB                 = 2.0;
     useSubspaceProjectedSHEPGPU                    = false;
     useMixedPrecCGS_SR                             = false;
-    useMixedPrecCGS_O                              = false;
+    useMixedPrecXtOX                               = false;
+    useMixedPrecXtHX                               = false;
     approxOverlapMatrix                            = true;
     useReformulatedChFSI                           = false;
     useMixedPrecSubspaceRotRR                      = false;
-    useMixedPrecCommunOnlyXTHXCGSO                 = false;
+    useMixedPrecCommunOnlyXtHXXtOX                 = false;
     useELPA                                        = false;
     constraintsParallelCheck                       = true;
     createConstraintsFromSerialDofhandler          = true;
@@ -1759,10 +1766,11 @@ namespace dftfe
         scalapackParalProcs       = prm.get_integer("SCALAPACKPROCS");
         scalapackBlockSize        = prm.get_integer("SCALAPACK BLOCK SIZE");
         useMixedPrecCGS_SR        = prm.get_bool("USE MIXED PREC CGS SR");
-        useMixedPrecCGS_O         = prm.get_bool("USE MIXED PREC CGS O");
+        useMixedPrecXtOX          = prm.get_bool("USE MIXED PREC XTOX");
+        useMixedPrecXtHX          = prm.get_bool("USE MIXED PREC XTHX");
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
-        useMixedPrecCommunOnlyXTHXCGSO =
-          prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
+        useMixedPrecCommunOnlyXtHXXtOX =
+          prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
         useSinglePrecCommunCheby = prm.get_bool("USE SINGLE PREC COMMUN CHEBY");
         useSinglePrecCheby       = prm.get_bool("USE SINGLE PREC CHEBY");
         tensorOpType             = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
@@ -2080,7 +2088,8 @@ namespace dftfe
 
     if (algoType == "FAST")
       {
-        useMixedPrecCGS_O                   = true;
+        useMixedPrecXtOX                    = true;
+        useMixedPrecXtHX                    = true;
         useMixedPrecCGS_SR                  = true;
         useSinglePrecCommunCheby            = true;
         reuseLanczosUpperBoundFromFirstCall = true;

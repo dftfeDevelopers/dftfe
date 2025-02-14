@@ -65,7 +65,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
             computing_timer.enter_subsection("SConj=X^{T}XConj Mixed Prec");
           else
             computing_timer.enter_subsection("SConj=X^{T}XConj");
@@ -84,11 +84,11 @@ namespace dftfe
 
       // SConj=X^{T}*XConj with X^{T} stored in the column
       // major format
-      if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+      if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
         {
           if (dftParams.overlapComputeCommunOrthoRR)
             {
-              if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
+              if (dftParams.useMixedPrecCommunOnlyXtHXXtOX)
                 linearAlgebraOperationsDevice::
                   fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
                     operatorMatrix,
@@ -179,7 +179,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
             computing_timer.leave_subsection("SConj=X^{T}XConj Mixed Prec");
           else
             computing_timer.leave_subsection("SConj=X^{T}XConj");

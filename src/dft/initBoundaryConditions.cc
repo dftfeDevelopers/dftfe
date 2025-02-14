@@ -94,7 +94,8 @@ namespace dftfe
           0.5 * dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
 #else
         const double totalMem =
-          (d_dftParamsPtr->useMixedPrecCGS_O == true ||
+          (d_dftParamsPtr->useMixedPrecXtOX == true ||
+           d_dftParamsPtr->useMixedPrecXtHX == true ||
            d_dftParamsPtr->useMixedPrecCGS_SR == true) ?
             dofHandler.n_dofs() * (d_dftParamsPtr->spinPolarized + 1) *
                 d_numEigenValues *
@@ -435,17 +436,17 @@ namespace dftfe
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
         d_basisOperationsPtrDevice->createScratchMultiVectors(1, 4);
-            d_basisOperationsPtrDevice->createScratchMultiVectors(
-              BVec,
-              d_dftParamsPtr->overlapComputeCommunCheby ?
-                (d_dftParamsPtr->useReformulatedChFSI &&
-                 !d_dftParamsPtr->useSinglePrecCheby) ?
-                8 :
-                4 :
-                (d_dftParamsPtr->useReformulatedChFSI &&
-                 !d_dftParamsPtr->useSinglePrecCheby) ?
-                4 :
-                2);
+        d_basisOperationsPtrDevice->createScratchMultiVectors(
+          BVec,
+          d_dftParamsPtr->overlapComputeCommunCheby ?
+            (d_dftParamsPtr->useReformulatedChFSI &&
+             !d_dftParamsPtr->useSinglePrecCheby) ?
+            8 :
+            4 :
+            (d_dftParamsPtr->useReformulatedChFSI &&
+             !d_dftParamsPtr->useSinglePrecCheby) ?
+            4 :
+            2);
         if (d_dftParamsPtr->useSinglePrecCheby)
           d_basisOperationsPtrDevice->createScratchMultiVectorsSinglePrec(
             BVec, d_dftParamsPtr->overlapComputeCommunCheby ? 4 : 2);

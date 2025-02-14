@@ -74,7 +74,7 @@ namespace dftfe
 
       // SConj=X^{T}*XConj with X^{T} stored in the column
       // major format
-      if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
+      if (!(dftParams.useMixedPrecXtOX && useMixedPrec))
         {
           computing_timer.enter_subsection("Fill overlap matrix CGS");
           internal::fillParallelOverlapMatrix(X,

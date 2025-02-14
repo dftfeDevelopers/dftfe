@@ -87,9 +87,9 @@ namespace dftfe
         }
 
 
-      if (useMixedPrecOverall && dftParams.numCoreWfcForMixedPrecRR > 0)
+      if (useMixedPrecOverall && dftParams.useMixedPrecXtHX)
         {
-          if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
+          if (dftParams.useMixedPrecCommunOnlyXtHXXtOX)
             XtHXMixedPrecCommunOverlapComputeCommun(
               operatorMatrix,
               X,
@@ -354,7 +354,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
             computing_timer.enter_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
           else
@@ -374,7 +374,7 @@ namespace dftfe
                     overlapMatPar.local_m() * overlapMatPar.local_n(),
                   dataTypes::number(0.0));
 
-      if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+      if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
         {
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
@@ -449,7 +449,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
             computing_timer.leave_subsection(
               "SConj=X^{T}XConj Mixed Prec, RR GEP step");
           else
@@ -477,9 +477,9 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   dataTypes::number(0.0));
 
-      if (useMixedPrecOverall)
+      if (useMixedPrecOverall && dftParams.useMixedPrecXtHX)
         {
-          if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
+          if (dftParams.useMixedPrecCommunOnlyXtHXXtOX)
             XtHXMixedPrecCommunOverlapComputeCommun(
               operatorMatrix,
               X,

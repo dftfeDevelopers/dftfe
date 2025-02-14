@@ -130,9 +130,10 @@ namespace dftfe
     double       mpiAllReduceMessageBlockSizeMB;
     bool         useSubspaceProjectedSHEPGPU;
     bool         useMixedPrecCGS_SR;
-    bool         useMixedPrecCGS_O;
+    bool         useMixedPrecXtOX;
+    bool         useMixedPrecXtHX;
     bool         useMixedPrecSubspaceRotRR;
-    bool         useMixedPrecCommunOnlyXTHXCGSO;
+    bool         useMixedPrecCommunOnlyXtHXXtOX;
     bool         useELPA;
     bool         constraintsParallelCheck;
     bool         createConstraintsFromSerialDofhandler;
