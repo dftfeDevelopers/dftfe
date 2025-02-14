@@ -180,6 +180,26 @@ namespace dftfe
        dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
+
+    /**
+     * @brief Computing Y = scalarHX*M^{1/2}HM^{1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision. Used for TD-DFT and Inverse DFT calc.
+     *
+     * @param src X vector
+     * @param scalarHX scalar for HX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+     */
+    void
+    HXWithLowdinOrthonormalisedInput(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarHX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
+
     /**
      * @brief Computing Y = scalarOX*OX + scalarX*X + scalarY*Y for a given X and Y in full precision
      *

@@ -81,6 +81,15 @@ namespace dftfe
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     virtual void
+    HXWithLowdinOrthonormalisedInput(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarHX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
+
+    virtual void
     overlapMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       const double scalarOX,
