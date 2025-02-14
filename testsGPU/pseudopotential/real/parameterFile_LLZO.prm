@@ -59,7 +59,7 @@ subsection SCF parameters
     set SUBSPACE PROJ SHEP GPU                               = true
     set SUBSPACE ROT DOFS BLOCK SIZE                         = 10000
     set USE ELPA                                             = true
-    set USE MIXED PREC CGS O                                 = false
+    set USE MIXED PREC XTOX                                 = false
     set USE MIXED PREC CGS SR                                = false
     set USE MIXED PREC CHEBY                                 = false
     set USE MIXED PREC COMMUN ONLY XTOX XTHX                  = false
