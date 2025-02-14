@@ -429,7 +429,7 @@ namespace dftfe
                     projHamPar.local_m() * projHamPar.local_n(),
                   T(0.0));
 
-      if (!(useMixedPrec) || dftParams.numCoreWfcForMixedPrecRR == 0)
+      if (!(useMixedPrec) || !dftParams.useMixedPrecXtOX)
         {
           XtHXXtOX(operatorMatrix,
                    BLASWrapperPtr,
