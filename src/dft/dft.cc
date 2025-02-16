@@ -1323,16 +1323,6 @@ namespace dftfe
           (d_excManagerPtr->getExcSSDFunctionalObj()
              ->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
-        interpolateDensityNodalDataToQuadratureDataGeneral(
-          d_basisOperationsPtrElectroHost,
-          d_densityDofHandlerIndexElectro,
-          d_densityQuadratureIdElectro,
-          d_densityInNodalValues[0],
-          d_densityInQuadValues[0],
-          d_gradDensityInQuadValues[0],
-          d_gradDensityInQuadValues[0],
-          isGradDensityDataDependent);
-
         if (d_dftParamsPtr->spinPolarized == 1)
           {
             d_densityInNodalValues[1] = 0;
@@ -1343,17 +1333,44 @@ namespace dftfe
                 d_densityInNodalValues[1].local_element(i) =
                   d_magInNodalValuesRead.local_element(i);
               }
-
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
-              d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-              d_densityInNodalValues[1],
-              d_densityInQuadValues[1],
-              d_gradDensityInQuadValues[1],
-              d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent);
           }
+
+        if (d_dftParamsPtr->spinPolarized == 1 &&
+            d_dftParamsPtr->constraintMagnetization)
+        {
+          // normalize rho mag
+          const double netMag =
+            totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
+
+
+          const double scalingFactor = (d_dftParamsPtr->tot_magnetization*numElectrons) / netMag;
+
+            d_densityInNodalValues[1] *= scalingFactor;
+
+          if (d_dftParamsPtr->verbosity >= 3)
+            {
+              pcout << "Net magnetization before Normalizing:  " << netMag
+                    << std::endl;
+              pcout << "Net magnetization after Normalizing: "
+                    << totalCharge(d_matrixFreeDataPRefined,
+                                   d_densityInNodalValues[1])
+                    << std::endl;
+            }
+        }
+
+        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+             ++iComp)
+          interpolateDensityNodalDataToQuadratureDataGeneral(
+            d_basisOperationsPtrElectroHost,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_densityInNodalValues[iComp],
+            d_densityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            isGradDensityDataDependent);
+
+
         if ((d_dftParamsPtr->solverMode == "GEOOPT"))
           {
             d_densityOutNodalValues = d_densityInNodalValues;

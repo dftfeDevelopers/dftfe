@@ -1154,7 +1154,15 @@ namespace dftfe
     normalizeRhoInQuadValues();
 
     /**
-     *@brief normalize the output electron density in each scf
+     *@brief normalize input mag electron density to total magnetization
+     *for use in constraint magnetization case
+     */
+    void
+    normalizeRhoMagInQuadValues();
+
+
+    /**
+     *@brief normalize the output total electron density in each scf
      */
     void
     normalizeRhoOutQuadValues();
