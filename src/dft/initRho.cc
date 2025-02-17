@@ -1468,9 +1468,9 @@ namespace dftfe
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
   
-    if (d_dftParamsPtr->verbosity >= 2)
+    if (d_dftParamsPtr->verbosity >= 1)
       pcout
-        << "initial net magnetization before normalization: "
+        << "Initial net magnetization before normalization: "
         << netMag << std::endl;
   
     // scaling rho

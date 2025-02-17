@@ -1347,7 +1347,7 @@ namespace dftfe
 
             d_densityInNodalValues[1] *= scalingFactor;
 
-          if (d_dftParamsPtr->verbosity >= 3)
+          if (d_dftParamsPtr->verbosity >= 1)
             {
               pcout << "Net magnetization before Normalizing:  " << netMag
                     << std::endl;
