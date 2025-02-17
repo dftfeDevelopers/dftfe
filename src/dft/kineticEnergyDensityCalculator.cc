@@ -25,10 +25,7 @@
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
 #include <linearAlgebraOperationsDevice.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
+#include "densityCalculatorDeviceKernels.h"
 
 
 namespace dftfe
@@ -291,12 +288,12 @@ namespace dftfe
                              ++spinIndex)
                           computeKineticEnergyDensityFromInterpolatedValues(
                             BLASWrapperPtr,
-                            basisOperationsPtr,
                             std::pair<unsigned int, unsigned int>(
                               startingCellId,
                               startingCellId + currentCellsBlockSize),
                             std::pair<unsigned int, unsigned int>(
                               jvec, jvec + currentBlockSize),
+                            numQuadPoints,
                             partialOccupVec[spinIndex].data(),
                             &kcoord[0],
                             wfcQuadPointData[spinIndex].data(),
@@ -384,13 +381,10 @@ namespace dftfe
   void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>
-      &BLASWrapperPtr,
-    std::shared_ptr<
-      dftfe::basis::
-        FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
-      &                                         basisOperationsPtr,
+      &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     double *                                    kcoord,
     NumberType *                                wfcQuadPointData,
@@ -401,8 +395,6 @@ namespace dftfe
   {
     const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
     const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells           = basisOperationsPtr->nCells();
     const double       kcoordSq =
       kcoord[0] * kcoord[0] + kcoord[1] * kcoord[1] + kcoord[2] * kcoord[2];
     for (unsigned int iCell = cellRange.first; iCell < cellRange.second;

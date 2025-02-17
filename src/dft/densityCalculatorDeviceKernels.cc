@@ -18,14 +18,7 @@
 //
 
 // source file for electron density related computations
-#include <constants.h>
-#include <densityCalculator.h>
-#include <dftUtils.h>
-#include <DataTypeOverloads.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
+#include "densityCalculatorDeviceKernels.h"
 
 namespace dftfe
 {
@@ -238,15 +231,11 @@ namespace dftfe
   void
   computeRhoGradRhoFromInterpolatedValues(
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &basisOperationsPtr,
-    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     NumberType *                                wfcQuadPointData,
     NumberType *                                gradWfcQuadPointData,
@@ -256,12 +245,10 @@ namespace dftfe
     double *                                    gradRho,
     const bool                                  isEvaluateGradRho)
   {
-    const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
-    const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells           = basisOperationsPtr->nCells();
-    const double       scalarCoeffAlphaRho     = 1.0;
-    const double       scalarCoeffBetaRho      = 1.0;
+    const unsigned int cellsBlockSize      = cellRange.second - cellRange.first;
+    const unsigned int vectorsBlockSize    = vecRange.second - vecRange.first;
+    const double       scalarCoeffAlphaRho = 1.0;
+    const double       scalarCoeffBetaRho  = 1.0;
     const double       scalarCoeffAlphaGradRho = 1.0;
     const double       scalarCoeffBetaGradRho  = 1.0;
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -327,15 +314,11 @@ namespace dftfe
   void
   computeTauFromInterpolatedValues(
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &basisOperationsPtr,
-    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     double *                                    kCoord,
     NumberType *                                wfcQuadPointData,
@@ -345,8 +328,6 @@ namespace dftfe
   {
     const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
     const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells           = basisOperationsPtr->nCells();
     const double       scalarCoeffAlpha = 1.0;
     const double       scalarCoeffBeta  = 1.0;
 
@@ -397,15 +378,11 @@ namespace dftfe
   template void
   computeRhoGradRhoFromInterpolatedValues(
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<dataTypes::number,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &basisOperationsPtr,
-    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     dataTypes::number *                         wfcQuadPointData,
     dataTypes::number *                         gradWfcQuadPointData,
@@ -418,15 +395,11 @@ namespace dftfe
   template void
   computeTauFromInterpolatedValues(
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<dataTypes::number,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &basisOperationsPtr,
-    std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     double *                                    kCoord,
     dataTypes::number *                         wfcQuadPointData,

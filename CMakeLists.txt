@@ -12,6 +12,7 @@ IF (WITH_COMPLEX)
 ELSE()
   SET(TARGETLIB "dftfeReal")
 ENDIF()
+OPTION(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 SET(TARGET_VERSION "1.0-pre") # used in docs/Doxyfile.in
 
@@ -209,57 +210,42 @@ SET(TARGET_SRC
   ./src/pseudo/oncv/atomCenteredPostProcessing.cc)
 
 IF ("${GPU_LANG}" STREQUAL "cuda")
-
 SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
-  ./src/dft/solveVselfInBinsDevice.cc
+  ./src/dft/solveVselfInBinsDeviceKernels.cc
   ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.cc
-  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
-  ./src/linAlg/linearAlgebraOperationsDevice.cc
-  ./src/linAlg/pseudoGSDevice.cc
-  ./src/linAlg/rayleighRitzDevice.cc
+  ./src/linAlg/linearAlgebraOperationsDeviceKernels.cc
   ./src/force/forceWfcContractionsDeviceKernels.cc
-  ./utils/constraintMatrixInfoDevice.cc
+  ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.cu.cc
   ./utils/BLASWrapperDevice.cu.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
-  ./src/solvers/linearSolverDevice.cc
-  ./src/solvers/linearSolverCGDevice.cc
-  ./src/solvers/linearSolverProblemDevice.cc
-  ./src/poisson/poissonSolverProblemDevice.cc
-  ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./src/solvers/linearSolverCGDeviceKernels.cc
+  ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   )
-
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
-
 SET(DEVICE_SRC
   ./utils/MemoryTransferKernelsDevice.cc
   ./utils/DeviceKernelsGeneric.cc
   ./utils/DeviceDirectCCLWrapper.cc
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
-  ./src/dft/solveVselfInBinsDevice.cc
+  ./src/dft/solveVselfInBinsDeviceKernels.cc
   ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.cc
-  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
-  ./src/linAlg/linearAlgebraOperationsDevice.cc
-  ./src/linAlg/pseudoGSDevice.cc
-  ./src/linAlg/rayleighRitzDevice.cc
+  ./src/linAlg/linearAlgebraOperationsDeviceKernels.cc
   ./src/force/forceWfcContractionsDeviceKernels.cc
-  ./utils/constraintMatrixInfoDevice.cc
+  ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.hip.cc
   ./utils/BLASWrapperDevice.hip.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
-  ./src/solvers/linearSolverDevice.cc
-  ./src/solvers/linearSolverCGDevice.cc
-  ./src/solvers/linearSolverProblemDevice.cc
-  ./src/poisson/poissonSolverProblemDevice.cc
-  ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./src/solvers/linearSolverCGDeviceKernels.cc
+  ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   )
@@ -280,11 +266,24 @@ IF (WITH_GPU)
     ENDIF()
 ENDIF()
 IF (WITH_GPU)
+  LIST(APPEND TARGET_SRC 
+  ./src/linAlg/linearAlgebraOperationsDevice.cc
+  ./utils/constraintMatrixInfoDevice.cc
+  ./src/dft/solveVselfInBinsDevice.cc
+  ./src/linAlg/pseudoGSDevice.cc
+  ./src/linAlg/rayleighRitzDevice.cc
+  ./src/poisson/poissonSolverProblemDevice.cc
+  ./src/helmholtz/kerkerSolverProblemDevice.cc
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverDevice.cc
+  ./src/solvers/linearSolverDevice.cc
+  ./src/solvers/linearSolverProblemDevice.cc
+  ./src/solvers/linearSolverCGDevice.cc
+  )
   LIST(APPEND TARGET_SRC ${DEVICE_SRC})
 ENDIF()
 
 
-ADD_LIBRARY(${TARGETLIB} SHARED ${TARGET_SRC})
+ADD_LIBRARY(${TARGETLIB} ${TARGET_SRC})
 
 #IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 #
@@ -582,7 +581,7 @@ ENDIF()
 #
 # ELPA. Pass path to -DCMAKE_PREFIX_PATH
 #
-find_package(ELPA 2024 REQUIRED)
+find_package(ELPA 2023 REQUIRED)
 MESSAGE(STATUS "Will Link With ELPA")
 target_link_libraries(${TARGETLIB} PUBLIC ELPA::ELPA)
 

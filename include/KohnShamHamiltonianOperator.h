@@ -204,8 +204,8 @@ namespace dftfe
 
     void
     setVEffExternalPotCorrToZero();
-  private:
 
+  private:
     std::shared_ptr<
       AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
       d_ONCVnonLocalOperator;
