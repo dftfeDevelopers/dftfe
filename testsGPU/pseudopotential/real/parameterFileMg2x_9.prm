@@ -60,14 +60,12 @@ subsection SCF parameters
   subsection Eigen-solver parameters
        set CHEBYSHEV POLYNOMIAL DEGREE       = 20
        set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
-       set SPECTRUM SPLIT CORE EIGENSTATES=90
        set CHEBY WFC BLOCK SIZE=45
        set WFC BLOCK SIZE=45
        set CHEBYSHEV FILTER TOLERANCE=1e-5
        set OVERLAP COMPUTE COMMUN ORTHO RR=true
-       set USE MIXED PREC XTHX SPECTRUM SPLIT=true
        set USE MIXED PREC CGS SR=true
-       set USE MIXED PREC CGS O=false
+       set USE MIXED PREC XTOX=false
   end
 end
 subsection Poisson problem parameters

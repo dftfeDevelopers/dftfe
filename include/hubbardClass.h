@@ -176,8 +176,8 @@ namespace dftfe
     void
     initialiseFlattenedDataStructure(unsigned int numVectors);
 
-    void
-    initialiseCellWaveFunctionPointers(unsigned int numVectors);
+//    void
+//    initialiseCellWaveFunctionPointers(unsigned int numVectors);
 
     /*
      * @brief Functions that returns the coupling matrix A required in the apply().
@@ -300,6 +300,12 @@ namespace dftfe
     std::shared_ptr<AtomicCenteredNonLocalOperator<ValueType, memorySpace>>
       d_nonLocalOperator;
 
+    std::shared_ptr<
+      AtomicCenteredNonLocalOperator<dataTypes::numberFP32, memorySpace>>
+      d_nonLocalOperatorSinglePrec;
+
+    bool d_useSinglePrec;
+
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
       d_BLASWrapperMemPtr;
 
@@ -364,8 +370,11 @@ namespace dftfe
 
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
       d_hubbNonLocalProjectorTimesVectorBlock;
-    dftfe::utils::MemoryStorage<ValueType, memorySpace>
-      d_cellWaveFunctionMatrixSrc, d_cellWaveFunctionMatrixDst;
+
+    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+      d_hubbNonLocalProjectorTimesVectorBlockSinglePrec;
+//    dftfe::utils::MemoryStorage<ValueType, memorySpace>
+//      d_cellWaveFunctionMatrixSrc, d_cellWaveFunctionMatrixDst;
 
     unsigned int d_cellsBlockSizeApply;
     unsigned int d_verbosity;

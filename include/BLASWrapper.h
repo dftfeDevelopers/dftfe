@@ -584,6 +584,25 @@ namespace dftfe
 
       template <typename ValueType1, typename ValueType2>
       void
+      stridedBlockAxpy(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const ValueType1 *     addFromVec,
+                       const ValueType2 *     scalingVector,
+                       const ValueType2       a,
+                       ValueType1 *           addToVec) const;
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockAxpBy(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const ValueType1 *     addFromVec,
+                        const ValueType2 *     scalingVector,
+                        const ValueType2       a,
+                        const ValueType2       b,
+                        ValueType1 *           addToVec) const;
+      template <typename ValueType1, typename ValueType2>
+      void
       axpby(const unsigned int n,
             const ValueType2   alpha,
             const ValueType1 * x,
@@ -618,6 +637,15 @@ namespace dftfe
                                 const dftfe::size_type numContiguousBlocks,
                                 const ValueType1       a,
                                 const ValueType1 *     s,
+                                const ValueType2 *     addFromVec,
+                                ValueType3 *           addToVec,
+                                const dftfe::global_size_type
+                                  *addToVecStartingContiguousBlockIds) const;
+      template <typename ValueType1, typename ValueType2, typename ValueType3>
+      void
+      axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
+                                const dftfe::size_type numContiguousBlocks,
+                                const ValueType1       a,
                                 const ValueType2 *     addFromVec,
                                 ValueType3 *           addToVec,
                                 const dftfe::global_size_type
@@ -681,6 +709,13 @@ namespace dftfe
         const ValueType *      y,
         const ValueType *      beta,
         ValueType *            z);
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      rightDiagonalScale(const dftfe::size_type numberofVectors,
+                         const dftfe::size_type sizeOfVector,
+                         ValueType1 *           X,
+                         ValueType2 *           D);
 
     private:
     };
@@ -1229,6 +1264,24 @@ namespace dftfe
             const ValueType2   beta,
             ValueType1 *       y) const;
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockAxpy(const dftfe::size_type contiguousBlockSize,
+                       const dftfe::size_type numContiguousBlocks,
+                       const ValueType1 *     addFromVec,
+                       const ValueType2 *     scalingVector,
+                       const ValueType2       a,
+                       ValueType1 *           addToVec) const;
+      template <typename ValueType1, typename ValueType2>
+      void
+      stridedBlockAxpBy(const dftfe::size_type contiguousBlockSize,
+                        const dftfe::size_type numContiguousBlocks,
+                        const ValueType1 *     addFromVec,
+                        const ValueType2 *     scalingVector,
+                        const ValueType2       a,
+                        const ValueType2       b,
+                        ValueType1 *           addToVec) const;
+
       template <typename ValueType0,
                 typename ValueType1,
                 typename ValueType2,
@@ -1259,6 +1312,15 @@ namespace dftfe
                                 const dftfe::size_type numContiguousBlocks,
                                 const ValueType1       a,
                                 const ValueType1 *     s,
+                                const ValueType2 *     addFromVec,
+                                ValueType3 *           addToVec,
+                                const dftfe::global_size_type
+                                  *addToVecStartingContiguousBlockIds) const;
+      template <typename ValueType1, typename ValueType2, typename ValueType3>
+      void
+      axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
+                                const dftfe::size_type numContiguousBlocks,
+                                const ValueType1       a,
                                 const ValueType2 *     addFromVec,
                                 ValueType3 *           addToVec,
                                 const dftfe::global_size_type
@@ -1322,8 +1384,26 @@ namespace dftfe
         const ValueType *      beta,
         ValueType *            z);
 
+      template <typename ValueType1, typename ValueType2>
+      void
+      rightDiagonalScale(const dftfe::size_type numberofVectors,
+                         const dftfe::size_type sizeOfVector,
+                         ValueType1 *           X,
+                         ValueType2 *           D);
+
       dftfe::utils::deviceBlasHandle_t &
       getDeviceBlasHandle();
+
+
+      template <typename ValueType1, typename ValueType2>
+      void
+      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
+        const dftfe::size_type B,
+        const dftfe::size_type DRem,
+        const dftfe::size_type D,
+        const ValueType1 *     valueType1SrcArray,
+        ValueType1 *           valueType1DstArray,
+        ValueType2 *           valueType2DstArray);
 
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dftfe::utils::deviceBlasStatus_t

@@ -472,119 +472,26 @@ namespace dftfe
             double *WORK,
             int *   lwork,
             int *   INFO);
+    // LU decomoposition of a general matrix
+    void
+    zgetrf_(int *                 M,
+            int *                 N,
+            std::complex<double> *A,
+            int *                 lda,
+            int *                 IPIV,
+            int *                 INFO);
+
+    // generate inverse of a matrix given its LU decomposition
+    void
+    zgetri_(int *                 N,
+            std::complex<double> *A,
+            int *                 lda,
+            int *                 IPIV,
+            std::complex<double> *WORK,
+            int *                 lwork,
+            int *                 INFO);
   }
 #endif
-
-  inline void
-  xgemm(const char *        transA,
-        const char *        transB,
-        const unsigned int *m,
-        const unsigned int *n,
-        const unsigned int *k,
-        const double *      alpha,
-        const double *      A,
-        const unsigned int *lda,
-        const double *      B,
-        const unsigned int *ldb,
-        const double *      beta,
-        double *            C,
-        const unsigned int *ldc)
-  {
-    dgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-  }
-
-  inline void
-  xgemm(const char *        transA,
-        const char *        transB,
-        const unsigned int *m,
-        const unsigned int *n,
-        const unsigned int *k,
-        const float *       alpha,
-        const float *       A,
-        const unsigned int *lda,
-        const float *       B,
-        const unsigned int *ldb,
-        const float *       beta,
-        float *             C,
-        const unsigned int *ldc)
-  {
-    sgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-  }
-
-  inline void
-  xgemm(const char *                transA,
-        const char *                transB,
-        const unsigned int *        m,
-        const unsigned int *        n,
-        const unsigned int *        k,
-        const std::complex<double> *alpha,
-        const std::complex<double> *A,
-        const unsigned int *        lda,
-        const std::complex<double> *B,
-        const unsigned int *        ldb,
-        const std::complex<double> *beta,
-        std::complex<double> *      C,
-        const unsigned int *        ldc)
-  {
-    zgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-  }
-
-  inline void
-  xgemm(const char *               transA,
-        const char *               transB,
-        const unsigned int *       m,
-        const unsigned int *       n,
-        const unsigned int *       k,
-        const std::complex<float> *alpha,
-        const std::complex<float> *A,
-        const unsigned int *       lda,
-        const std::complex<float> *B,
-        const unsigned int *       ldb,
-        const std::complex<float> *beta,
-        std::complex<float> *      C,
-        const unsigned int *       ldc)
-  {
-    cgemm_(transA, transB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc);
-  }
-
-
-  inline void
-  xscal(const unsigned int *n,
-        const double *      alpha,
-        double *            x,
-        const unsigned int *inc)
-  {
-    dscal_(n, alpha, x, inc);
-  }
-
-  inline void
-  xscal(const unsigned int *        n,
-        const std::complex<double> *alpha,
-        std::complex<double> *      x,
-        const unsigned int *        inc)
-  {
-    zscal_(n, alpha, x, inc);
-  }
-
-  inline void
-  xcopy(const unsigned int *n,
-        const double *      x,
-        const unsigned int *incx,
-        double *            y,
-        const unsigned int *incy)
-  {
-    dcopy_(n, x, incx, y, incy);
-  }
-
-  inline void
-  xcopy(const unsigned int *        n,
-        const std::complex<double> *x,
-        const unsigned int *        incx,
-        std::complex<double> *      y,
-        const unsigned int *        incy)
-  {
-    zcopy_(n, x, incx, y, incy);
-  }
 
   /**
    *  @brief Contains linear algebra functions used in the implementation of an eigen solver
@@ -598,8 +505,14 @@ namespace dftfe
     void
     inverse(double *A, int N);
 
+    /** @brief Compute inverse of serial matrix using LAPACK LU factorization
+     */
+    void
+    inverse(std::complex<double> *A, int N);
+
+
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
-     *  k-step Lanczos method.
+     *  k-step Generalised Lanczos method. Algo is present in PAW PRB paper
      *
      *  @param  operatorMatrix An object which has access to the given matrix
      *  @param  vect A dummy vector
@@ -607,14 +520,16 @@ namespace dftfe
      */
     template <typename T, dftfe::utils::MemorySpace memorySpace>
     std::pair<double, double>
-    lanczosLowerUpperBoundEigenSpectrum(
+    generalisedLanczosLowerUpperBoundEigenSpectrum(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         &                                                BLASWrapperPtr,
       operatorDFTClass<memorySpace> &                    operatorMatrix,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Z,
+      dftfe::linearAlgebra::MultiVector<T, memorySpace> &tempVec,
       const dftParameters &                              dftParams);
+
 
 
     /** @brief Apply Chebyshev filter to a given subspace
@@ -638,22 +553,24 @@ namespace dftfe
                     const double                                       b,
                     const double                                       a0);
 
-    template <typename T, typename TFP32, dftfe::utils::MemorySpace memorySpace>
-    void
-    chebyshevFilterSinglePrec(
-      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                    BLASWrapperPtr,
-      operatorDFTClass<memorySpace> &                        operatorMatrix,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &    X,
-      dftfe::linearAlgebra::MultiVector<T, memorySpace> &    Y,
-      dftfe::linearAlgebra::MultiVector<TFP32, memorySpace> &X_SP,
-      dftfe::linearAlgebra::MultiVector<TFP32, memorySpace> &Y_SP,
-      std::vector<double>                                    eigenvalues,
-      const unsigned int                                     m,
-      const double                                           a,
-      const double                                           b,
-      const double                                           a0);
 
+
+    template <typename T1, typename T2, dftfe::utils::MemorySpace memorySpace>
+    void
+    reformulatedChebyshevFilter(
+      const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+        &                                                 BLASWrapperPtr,
+      operatorDFTClass<memorySpace> &                     operatorMatrix,
+      dftfe::linearAlgebra::MultiVector<T1, memorySpace> &X,
+      dftfe::linearAlgebra::MultiVector<T1, memorySpace> &Y,
+      dftfe::linearAlgebra::MultiVector<T2, memorySpace> &Residual,
+      dftfe::linearAlgebra::MultiVector<T2, memorySpace> &ResidualNew,
+      std::vector<double>                                 eigenvalues,
+      const unsigned int                                  m,
+      const double                                        a,
+      const double                                        b,
+      const double                                        a0,
+      const bool                                          approxOverlapMatrix);
 
 
   } // namespace linearAlgebraOperations

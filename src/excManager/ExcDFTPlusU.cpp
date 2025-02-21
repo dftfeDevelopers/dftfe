@@ -84,6 +84,20 @@ namespace dftfe
       src, dst, inputVecSize, kPointIndex, spinIndex);
   }
 
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  ExcDFTPlusU<ValueType, memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+                                                                      &                                                                src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
+    const unsigned int inputVecSize,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
+  {
+    d_hubbardClassPtr->applyPotentialDueToHubbardCorrection(
+      src, dst, inputVecSize, kPointIndex, spinIndex);
+  }
+
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void

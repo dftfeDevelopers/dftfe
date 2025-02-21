@@ -107,14 +107,7 @@ namespace dftfe
        matrix_free_data.get_vector_partitioner()->locally_owned_size()) *
         (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
       dataTypes::number(0.0));
-    if (d_numEigenValuesRR != d_numEigenValues)
-      {
-        d_eigenVectorsRotFracDensityFlattenedHost.resize(
-          d_numEigenValuesRR *
-            matrix_free_data.get_vector_partitioner()->locally_owned_size() *
-            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
-          dataTypes::number(0.0));
-      }
+
 
     pcout << std::endl
           << "Setting initial guess for wavefunctions...." << std::endl;
@@ -149,11 +142,7 @@ namespace dftfe
           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.resize(
             d_eigenVectorsFlattenedHost.size());
 
-        if (d_numEigenValuesRR != d_numEigenValues)
-          d_eigenVectorsRotFracFlattenedDevice.resize(
-            d_eigenVectorsRotFracDensityFlattenedHost.size());
-        else
-          d_eigenVectorsRotFracFlattenedDevice.resize(1);
+
 
         d_eigenVectorsFlattenedDevice.copyFrom(d_eigenVectorsFlattenedHost);
       }

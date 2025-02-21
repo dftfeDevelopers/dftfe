@@ -53,6 +53,7 @@ namespace dftfe
     d_hubbardEnergy                 = 0.0;
     d_expectationOfHubbardPotential = 0.0;
     d_maxOccMatSizePerAtom          = 0;
+    d_useSinglePrec = false;
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -146,6 +147,8 @@ namespace dftfe
     d_numKPoints        = kPointCoordinates.size() / 3;
     d_domainBoundaries  = domainBoundaries;
 
+    d_useSinglePrec = d_dftParamsPtr->useSinglePrecCheby;
+
 
     d_cellsBlockSizeApply = memorySpace == dftfe::utils::MemorySpace::HOST ?
                               1 :
@@ -174,6 +177,19 @@ namespace dftfe
         true,
         true);
 
+    if(d_useSinglePrec)
+      {
+        d_nonLocalOperatorSinglePrec =
+            std::make_shared<AtomicCenteredNonLocalOperator<
+              typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+              memorySpace>>(d_BLASWrapperMemPtr,
+                          d_BasisOperatorMemPtr,
+                          d_atomicProjectorFnsContainer,
+                          d_mpi_comm_domain,
+                          true,
+                          true);
+      }
+
 
     d_atomicProjectorFnsContainer->initaliseCoordinates(d_atomicCoords,
                                                         d_periodicImagesCoords,
@@ -190,6 +206,19 @@ namespace dftfe
       d_BasisOperatorHostPtr,
       d_BLASWrapperHostPtr,
       densityQuadratureId);
+
+    if(d_useSinglePrec)
+      {
+        d_nonLocalOperatorSinglePrec->copyPartitionerKPointsAndComputeCMatrixEntries
+          (updateNonlocalSparsity,
+           kPointWeights,
+           kPointCoordinates,
+           d_BasisOperatorHostPtr,
+           d_BLASWrapperHostPtr,
+           densityQuadratureId,
+           d_nonLocalOperator);
+
+      }
 
     MPI_Barrier(d_mpi_comm_domain);
     double endRead = MPI_Wtime();
@@ -1208,6 +1237,11 @@ namespace dftfe
     unsigned int kPointIndex)
   {
     d_nonLocalOperator->initialiseOperatorActionOnX(kPointIndex);
+
+    if(d_useSinglePrec)
+      {
+        d_nonLocalOperatorSinglePrec->initialiseOperatorActionOnX(kPointIndex);
+      }
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -1217,6 +1251,12 @@ namespace dftfe
   {
     d_nonLocalOperator->initialiseFlattenedDataStructure(
       numVectors, d_hubbNonLocalProjectorTimesVectorBlock);
+
+    if(d_useSinglePrec)
+      {
+        d_nonLocalOperatorSinglePrec->initialiseFlattenedDataStructure(
+          numVectors, d_hubbNonLocalProjectorTimesVectorBlockSinglePrec);
+      }
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -1238,6 +1278,27 @@ namespace dftfe
       d_hubbNonLocalProjectorTimesVectorBlock,
       true);
     d_nonLocalOperator->applyCOnVCconjtransX(dst);
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  hubbard<ValueType, memorySpace>::applyPotentialDueToHubbardCorrection(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::singlePrecType<ValueType>, memorySpace> &src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::singlePrecType<ValueType>, memorySpace> &      dst,
+    const unsigned int inputVecSize,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
+  {
+    d_nonLocalOperatorSinglePrec->applyCconjtransOnX(src);
+    d_hubbNonLocalProjectorTimesVectorBlockSinglePrec.setValue(0);
+    d_nonLocalOperatorSinglePrec->applyAllReduceOnCconjtransX(
+      d_hubbNonLocalProjectorTimesVectorBlockSinglePrec);
+    d_nonLocalOperatorSinglePrec->applyVOnCconjtransX(
+      CouplingStructure::dense,
+      d_couplingMatrixEntries[spinIndex],
+      d_hubbNonLocalProjectorTimesVectorBlock,
+      true);
+    d_nonLocalOperatorSinglePrec->applyCOnVCconjtransX(dst);
   }
 
   //  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -1345,31 +1406,31 @@ namespace dftfe
   //      }
   //  }
 
-  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-  void
-  hubbard<ValueType, memorySpace>::initialiseCellWaveFunctionPointers(
-    unsigned int numVectors)
-  {
-    const unsigned int nCells       = d_BasisOperatorMemPtr->nCells();
-    const unsigned int nDofsPerCell = d_BasisOperatorMemPtr->nDofsPerCell();
-    unsigned int       cellWaveFuncSizeSrc = nCells * nDofsPerCell * numVectors;
-    if (d_cellWaveFunctionMatrixSrc.size() < cellWaveFuncSizeSrc)
-      {
-        d_cellWaveFunctionMatrixSrc.resize(cellWaveFuncSizeSrc);
-      }
-    if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
-      {
-        d_nonLocalOperator->initialiseCellWaveFunctionPointers(
-          d_cellWaveFunctionMatrixSrc);
-      }
-
-    if (d_cellWaveFunctionMatrixDst.size() <
-        d_cellsBlockSizeApply * nDofsPerCell * numVectors)
-      {
-        d_cellWaveFunctionMatrixDst.resize(d_cellsBlockSizeApply *
-                                           nDofsPerCell * numVectors);
-      }
-  }
+//  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+//  void
+//  hubbard<ValueType, memorySpace>::initialiseCellWaveFunctionPointers(
+//    unsigned int numVectors)
+//  {
+//    const unsigned int nCells       = d_BasisOperatorMemPtr->nCells();
+//    const unsigned int nDofsPerCell = d_BasisOperatorMemPtr->nDofsPerCell();
+//    unsigned int       cellWaveFuncSizeSrc = nCells * nDofsPerCell * numVectors;
+//    if (d_cellWaveFunctionMatrixSrc.size() < cellWaveFuncSizeSrc)
+//      {
+//        d_cellWaveFunctionMatrixSrc.resize(cellWaveFuncSizeSrc);
+//      }
+//    if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+//      {
+//        d_nonLocalOperator->initialiseCellWaveFunctionPointers(
+//          d_cellWaveFunctionMatrixSrc);
+//      }
+//
+//    if (d_cellWaveFunctionMatrixDst.size() <
+//        d_cellsBlockSizeApply * nDofsPerCell * numVectors)
+//      {
+//        d_cellWaveFunctionMatrixDst.resize(d_cellsBlockSizeApply *
+//                                           nDofsPerCell * numVectors);
+//      }
+//  }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   double

@@ -698,6 +698,29 @@ namespace dftfe
     }
 
 
+    template <typename ValueType1, typename ValueType2, typename ValueType3>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const ValueType1               a,
+      const ValueType2 *             addFromVec,
+      ValueType3 *                   addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
+    {
+      axpyStridedBlockAtomicAddDeviceKernel<<<
+        (contiguousBlockSize * numContiguousBlocks) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(a),
+        dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
+        addToVecStartingContiguousBlockIds);
+    }
+
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
@@ -1562,6 +1585,33 @@ namespace dftfe
 
     template <typename ValueType1, typename ValueType2>
     void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
+        const dftfe::size_type B,
+        const dftfe::size_type DRem,
+        const dftfe::size_type D,
+        const ValueType1 *     valueType1SrcArray,
+        ValueType1 *           valueType1DstArray,
+        ValueType2 *           valueType2DstArray)
+    {
+      const dftfe::size_type size = D * B;
+      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        d_streamId>>>(
+        B,
+        DRem,
+        D,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1SrcArray),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1DstArray),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2DstArray));
+    }
+
+
+
+    template <typename ValueType1, typename ValueType2>
+    void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
@@ -1783,6 +1833,54 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(y));
     }
 
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType1 *     addFromVec,
+      const ValueType2 *     scalingVector,
+      const ValueType2       a,
+      ValueType1 *           addToVec) const
+    {
+      stridedBlockAxpyDeviceKernel<<<(contiguousBlockSize *
+                                      numContiguousBlocks) /
+                                         dftfe::utils::DEVICE_BLOCK_SIZE +
+                                       1,
+                                     dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(a),
+        dftfe::utils::makeDataTypeDeviceCompatible(scalingVector),
+        dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(addToVec));
+    }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType1 *     addFromVec,
+      const ValueType2 *     scalingVector,
+      const ValueType2       a,
+      const ValueType2       b,
+      ValueType1 *           addToVec) const
+    {
+      stridedBlockAxpByDeviceKernel<<<(contiguousBlockSize *
+                                       numContiguousBlocks) /
+                                          dftfe::utils::DEVICE_BLOCK_SIZE +
+                                        1,
+                                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(a),
+        dftfe::utils::makeDataTypeDeviceCompatible(b),
+        dftfe::utils::makeDataTypeDeviceCompatible(scalingVector),
+        dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(addToVec));
+    }
+
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
@@ -1808,6 +1906,26 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(beta),
         dftfe::utils::makeDataTypeDeviceCompatible(z));
     }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
+      const dftfe::size_type numberofVectors,
+      const dftfe::size_type sizeOfVector,
+      ValueType1 *           X,
+      ValueType2 *           D)
+    {
+      computeRightDiagonalScaleKernel<<<
+        (numberofVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+          dftfe::utils::DEVICE_BLOCK_SIZE * sizeOfVector,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        dftfe::utils::makeDataTypeDeviceCompatible(D),
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
+        numberofVectors,
+        sizeOfVector);
+    }
+
+
 #include "./BLASWrapperDevice.inst.cc"
   } // End of namespace linearAlgebra
 } // End of namespace dftfe

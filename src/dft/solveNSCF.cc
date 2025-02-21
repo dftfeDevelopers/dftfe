@@ -429,7 +429,6 @@ namespace dftfe
                         true,
                         0,
                         false,
-                        false,
                         true);
 #endif
                     if constexpr (dftfe::utils::MemorySpace::HOST ==
@@ -442,7 +441,6 @@ namespace dftfe
                         d_subspaceIterationSolver,
                         residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
-                        false,
                         false,
                         true);
                   }
@@ -565,7 +563,6 @@ namespace dftfe
                         true,
                         0,
                         false,
-                        false,
                         true);
 #endif
                     if constexpr (dftfe::utils::MemorySpace::HOST ==
@@ -578,7 +575,6 @@ namespace dftfe
                         d_subspaceIterationSolver,
                         residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
-                        false,
                         false,
                         true);
                   }
@@ -705,7 +701,6 @@ namespace dftfe
                     true,
                     0,
                     false,
-                    false,
                     true);
 #endif
                 if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
@@ -717,7 +712,6 @@ namespace dftfe
                     d_subspaceIterationSolver,
                     residualNormWaveFunctionsAllkPoints[kPoint],
                     true,
-                    false,
                     false,
                     true);
               }
@@ -808,7 +802,6 @@ namespace dftfe
                     residualNormWaveFunctionsAllkPoints[kPoint],
                     true,
                     0,
-                    false,
                     true,
                     true);
 
@@ -822,7 +815,6 @@ namespace dftfe
                     d_subspaceIterationSolver,
                     residualNormWaveFunctionsAllkPoints[kPoint],
                     true,
-                    false,
                     true,
                     true);
               }
@@ -885,7 +877,7 @@ namespace dftfe
       }
     computing_timer.enter_subsection("compute rho");
 
-    compute_rhoOut(false, true);
+    compute_rhoOut(true);
 
     computing_timer.leave_subsection("compute rho");
 
