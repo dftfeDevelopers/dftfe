@@ -27,6 +27,7 @@
 #  include <rocblas.h>
 #endif
 #include "BLASWrapperDeviceKernels.cc"
+#include "headers.h"
 namespace dftfe
 {
   namespace utils

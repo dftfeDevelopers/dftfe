@@ -186,7 +186,8 @@ namespace dftfe
                           d_BasisOperatorMemPtr,
                           d_atomicProjectorFnsContainer,
                           d_mpi_comm_domain,
-                          true,
+                          false,
+			  true,
                           true);
       }
 
@@ -209,6 +210,14 @@ namespace dftfe
 
     if(d_useSinglePrec)
       {
+	      d_nonLocalOperatorSinglePrec->intitialisePartitionerKPointsAndComputeCMatrixEntries(
+      updateNonlocalSparsity,
+      kPointWeights,
+      kPointCoordinates,
+      d_BasisOperatorHostPtr,
+      d_BLASWrapperHostPtr,
+      densityQuadratureId);
+/*
         d_nonLocalOperatorSinglePrec->copyPartitionerKPointsAndComputeCMatrixEntries
           (updateNonlocalSparsity,
            kPointWeights,
@@ -217,7 +226,7 @@ namespace dftfe
            d_BLASWrapperHostPtr,
            densityQuadratureId,
            d_nonLocalOperator);
-
+*/
       }
 
     MPI_Barrier(d_mpi_comm_domain);

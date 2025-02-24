@@ -1448,10 +1448,6 @@ namespace dftfe
                     dealii::ExcMessage(
                       "LRDM preconditioner is not compatible with hubbard "));
 
-        AssertThrow(d_dftParamsPtr->useSinglePrecCheby == false,
-                    dealii::ExcMessage(
-                      "single prec in cheby is not compatible with hubbard "));
-
         init_hubbOp = MPI_Wtime() - init_hubbOp;
 
         if (d_dftParamsPtr->verbosity >= 2)

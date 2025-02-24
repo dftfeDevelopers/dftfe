@@ -1098,6 +1098,7 @@ namespace dftfe
         d_srcNonLocalTemp.updateGhostValues();
         d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
 
+	d_dstNonLocalTemp.setValue(0.0);
         d_excManagerPtr->getExcSSDFunctionalObj()
           ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
                                                     d_dstNonLocalTemp,
