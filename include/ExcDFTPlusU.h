@@ -55,9 +55,9 @@ namespace dftfe
      */
     void
     applyWaveFunctionDependentFuncDerWrtPsi(
-      const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+      const dftfe::linearAlgebra::MultiVector<typename dataTypes::singlePrecType<ValueType>::type, memorySpace>
                                                                             &                                                                src,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
+      dftfe::linearAlgebra::MultiVector<typename dataTypes::singlePrecType<ValueType>::type, memorySpace> &dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
       const unsigned int spinIndex) override;

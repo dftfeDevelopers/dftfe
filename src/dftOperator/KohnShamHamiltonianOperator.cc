@@ -725,9 +725,9 @@ namespace dftfe
 
         if(d_dftParamsPtr->useSinglePrecCheby)
           {
-            d_basisOperationsPtr->createMultiVector(numWaveFunctions,
+            d_basisOperationsPtr->createMultiVectorSinglePrec(numWaveFunctions,
                                                     d_srcNonLocalTempSinglePrec);
-            d_basisOperationsPtr->createMultiVector(numWaveFunctions,
+            d_basisOperationsPtr->createMultiVectorSinglePrec(numWaveFunctions,
                                                     d_dstNonLocalTempSinglePrec);
           }
       }
@@ -1868,7 +1868,11 @@ namespace dftfe
               d_srcNonLocalTempSinglePrec.data());
 
             d_srcNonLocalTempSinglePrec.updateGhostValues();
-            d_basisOperationsPtr->distribute(d_srcNonLocalTempSinglePrec);
+            //d_basisOperationsPtr->distribute(d_srcNonLocalTempSinglePrec);
+
+	    d_basisOperationsPtr
+          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+          .distribute(src);
 
             d_dstNonLocalTempSinglePrec.setValue(0.0);
             d_excManagerPtr->getExcSSDFunctionalObj()

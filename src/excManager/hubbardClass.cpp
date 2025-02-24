@@ -1010,6 +1010,12 @@ namespace dftfe
   hubbard<ValueType, memorySpace>::computeCouplingMatrix()
   {
     d_couplingMatrixEntries.resize(d_numSpins);
+    
+    if(d_useSinglePrec)
+    {
+	    d_couplingMatrixEntriesSinglePrec.resize(d_numSpins);
+    }
+
     for (unsigned int spinIndex = 0; spinIndex < d_numSpins; spinIndex++)
       {
         std::vector<ValueType>          Entries;
@@ -1072,6 +1078,22 @@ namespace dftfe
           {
             d_couplingMatrixEntries[spinIndex].resize(Entries.size());
             d_couplingMatrixEntries[spinIndex].copyFrom(Entries);
+
+	    if (d_useSinglePrec)
+	    {
+		    std::vector<typename dftfe::dataTypes::singlePrecType<ValueType>::type> EntriesSinglePrec;
+		    EntriesSinglePrec.resize(Entries.size());
+
+		    for(unsigned int index = 0 ; index < Entries.size(); index++)
+		    {
+			    EntriesSinglePrec[index] = Entries[index];
+		    }
+		    
+		    d_couplingMatrixEntriesSinglePrec[spinIndex].resize(EntriesSinglePrec.size());
+		    d_couplingMatrixEntriesSinglePrec[spinIndex].copyFrom(EntriesSinglePrec);
+
+	    }
+
           }
 #if defined(DFTFE_WITH_DEVICE)
         else
@@ -1082,8 +1104,25 @@ namespace dftfe
                                                       CouplingStructure::dense);
             d_couplingMatrixEntries[spinIndex].resize(EntriesPadded.size());
             d_couplingMatrixEntries[spinIndex].copyFrom(EntriesPadded);
+
+	    if(d_useSinglePrec)
+	    {
+		    std::vector<typename dftfe::dataTypes::singlePrecType<ValueType>::type> EntriesPaddedSinglePrec;
+		    EntriesPaddedSinglePrec.resize(EntriesPadded.size());
+
+		    for(unsigned int index = 0 ; index <  EntriesPadded.size(); index++)
+		    {
+			    EntriesPaddedSinglePrec[index] = EntriesPadded[index];
+		    }
+
+		    d_couplingMatrixEntriesSinglePrec[spinIndex].resize(EntriesPaddedSinglePrec.size());
+		    d_couplingMatrixEntriesSinglePrec[spinIndex].copyFrom(EntriesPaddedSinglePrec);
+
+
+	    }
           }
 #endif
+
       }
   }
 
@@ -1283,8 +1322,8 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   hubbard<ValueType, memorySpace>::applyPotentialDueToHubbardCorrection(
-    const dftfe::linearAlgebra::MultiVector<dataTypes::singlePrecType<ValueType>, memorySpace> &src,
-    dftfe::linearAlgebra::MultiVector<dataTypes::singlePrecType<ValueType>, memorySpace> &      dst,
+    const dftfe::linearAlgebra::MultiVector<typename dataTypes::singlePrecType<ValueType>::type, memorySpace> &src,
+    dftfe::linearAlgebra::MultiVector<typename dataTypes::singlePrecType<ValueType>::type, memorySpace> &      dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
     const unsigned int spinIndex)
@@ -1295,8 +1334,8 @@ namespace dftfe
       d_hubbNonLocalProjectorTimesVectorBlockSinglePrec);
     d_nonLocalOperatorSinglePrec->applyVOnCconjtransX(
       CouplingStructure::dense,
-      d_couplingMatrixEntries[spinIndex],
-      d_hubbNonLocalProjectorTimesVectorBlock,
+      d_couplingMatrixEntriesSinglePrec[spinIndex],
+      d_hubbNonLocalProjectorTimesVectorBlockSinglePrec,
       true);
     d_nonLocalOperatorSinglePrec->applyCOnVCconjtransX(dst);
   }
