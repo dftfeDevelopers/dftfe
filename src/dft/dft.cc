@@ -1342,8 +1342,9 @@ namespace dftfe
           const double netMag =
             totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
 
-
-          const double scalingFactor = (d_dftParamsPtr->tot_magnetization*numElectrons) / netMag;
+          double scalingFactor=1.0;
+          if (std::fabs(netMag)>1e-6)
+            scalingFactor = (d_dftParamsPtr->tot_magnetization*numElectrons) / netMag;
 
             d_densityInNodalValues[1] *= scalingFactor;
 

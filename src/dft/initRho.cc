@@ -440,10 +440,11 @@ namespace dftfe
           const double netMag =
             totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
 
-
-          const double scalingFactor = (d_dftParamsPtr->tot_magnetization*numElectrons) / netMag;
-
-            d_densityInNodalValues[1] *= scalingFactor;
+          double scalingFactor=1.0;
+          if (std::fabs(netMag)>1e-6)
+            scalingFactor = (d_dftParamsPtr->tot_magnetization*numElectrons) / netMag;
+            
+          d_densityInNodalValues[1] *= scalingFactor;
 
           if (d_dftParamsPtr->verbosity >= 3)
             {
@@ -1462,7 +1463,10 @@ namespace dftfe
     const unsigned int nCells     = matrix_free_data.n_physical_cells();
     const double       netMag =
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[1]);
-    const double scaling = (d_dftParamsPtr->tot_magnetization*numElectrons) / netMag;
+    double scaling=1.0;
+
+    if (std::fabs(netMag)>1e-6)
+        scaling = (d_dftParamsPtr->tot_magnetization*numElectrons) / netMag;
 
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
