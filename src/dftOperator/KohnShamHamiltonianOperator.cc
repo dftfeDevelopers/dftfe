@@ -1873,7 +1873,7 @@ namespace dftfe
 
 	    d_basisOperationsPtr
           ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-          .distribute(src);
+          .distribute(d_srcNonLocalTempSinglePrec);
 
             d_dstNonLocalTempSinglePrec.setValue(0.0);
             d_excManagerPtr->getExcSSDFunctionalObj()
