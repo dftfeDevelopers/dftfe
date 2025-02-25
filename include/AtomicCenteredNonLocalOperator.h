@@ -606,6 +606,23 @@ namespace dftfe
                          basisOperationsPtr,
       const unsigned int quadratureIndex);
 
+    template <typename ValueTypeSrc>
+    void
+    copyGlobalCMatrix(
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
+        nonLocalOperatorSrc,
+      std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+                         basisOperationsPtr,
+      const unsigned int quadratureIndex);
+
+    const std::vector<
+      std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
+      getGlobalCMatrix() const;
+
     std::map<
       unsigned int,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>

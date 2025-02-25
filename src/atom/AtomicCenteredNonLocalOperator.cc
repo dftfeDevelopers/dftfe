@@ -3014,11 +3014,216 @@ namespace dftfe
     if (updateSparsity)
       initialisePartitioner();
     initKpoints(kPointWeights, kPointCoordinates);
-    copyCMatrixEntries(nonLocalOperatorSrc,
+    if ( d_useGlobalCMatrix )
+      {
+        copyGlobalCMatrix(nonLocalOperatorSrc ,
+                          basisOperationsPtr,
+                          quadratureIndex);
+      }
+    else
+      {
+        copyCMatrixEntries(nonLocalOperatorSrc,
+                           basisOperationsPtr,
+                           quadratureIndex);
+      }
+  }
+
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  template <typename ValueTypeSrc>
+  void
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::copyGlobalCMatrix(
+    const std::shared_ptr<
+      AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
+      nonLocalOperatorSrc,
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
                        basisOperationsPtr,
-                       quadratureIndex);
-    if (d_useGlobalCMatrix)
-      computeGlobalCMatrixVector(basisOperationsPtr, BLASWrapperHostPtr);
+    const unsigned int quadratureIndex)
+  {
+    d_locallyOwnedCells = basisOperationsPtr->nCells();
+    basisOperationsPtr->reinit(0, 0, quadratureIndex);
+    const unsigned int numberAtomsOfInterest =
+      d_atomCenteredSphericalFunctionContainer->getNumAtomCentersSize();
+    d_numberNodesPerElement     = basisOperationsPtr->nDofsPerCell();
+    const unsigned int numCells = d_locallyOwnedCells;
+    const unsigned int numberQuadraturePoints =
+      basisOperationsPtr->nQuadsPerCell();
+    const std::vector<unsigned int> &atomicNumber =
+      d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
+    const std::vector<double> &atomCoordinates =
+      d_atomCenteredSphericalFunctionContainer->getAtomCoordinates();
+    const std::map<unsigned int, std::vector<double>> &periodicImageCoord =
+      d_atomCenteredSphericalFunctionContainer
+        ->getPeriodicImageCoordinatesList();
+    const unsigned int maxkPoints = d_kPointWeights.size();
+    const std::map<std::pair<unsigned int, unsigned int>,
+                   std::shared_ptr<AtomCenteredSphericalFunctionBase>>
+      sphericalFunction =
+        d_atomCenteredSphericalFunctionContainer->getSphericalFunctions();
+
+
+    d_CMatrixEntriesConjugate.clear();
+    d_CMatrixEntriesConjugate.resize(numberAtomsOfInterest);
+    d_CMatrixEntriesTranspose.clear();
+    d_CMatrixEntriesTranspose.resize(numberAtomsOfInterest);
+    d_atomCenteredKpointIndexedSphericalFnQuadValues.clear();
+    d_atomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues.clear();
+    d_cellIdToAtomIdsLocalCompactSupportMap.clear();
+    const std::vector<unsigned int> atomIdsInProc =
+      d_atomCenteredSphericalFunctionContainer->getAtomIdsInCurrentProcess();
+
+    d_nonTrivialSphericalFnPerCell.clear();
+    d_nonTrivialSphericalFnPerCell.resize(numCells, 0);
+
+    d_nonTrivialSphericalFnsCellStartIndex.clear();
+    d_nonTrivialSphericalFnsCellStartIndex.resize(numCells, 0);
+
+    d_atomIdToNonTrivialSphericalFnCellStartIndex.clear();
+
+    d_totalLocallyOwnedNodes = basisOperationsPtr->nOwnedDofs();
+    const unsigned int numberNodesPerElement =
+      basisOperationsPtr->nDofsPerCell();
+
+    const ValueType           alpha1 = 1.0;
+
+    std::vector<unsigned int> atomicNumbers =
+      d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
+
+    const std::vector<unsigned int> atomIdsInCurrentProcess =
+      d_atomCenteredSphericalFunctionContainer->getAtomIdsInCurrentProcess();
+    d_atomStartIndexGlobal.clear();
+    d_atomStartIndexGlobal.resize(atomicNumbers.size(), 0);
+
+    unsigned int                                      counter = 0;
+    std::map<unsigned int, std::vector<unsigned int>> listOfAtomIdsInSpecies;
+    for (unsigned int atomId = 0; atomId < atomicNumbers.size(); atomId++)
+      {
+        const unsigned int Znum = atomicNumbers[atomId];
+        d_setOfAtomicNumber.insert(Znum);
+        d_atomStartIndexGlobal[atomId] = counter;
+        unsigned int numSphFunc =
+          d_atomCenteredSphericalFunctionContainer
+            ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+        counter += numSphFunc;
+      }
+    std::map<unsigned int, unsigned int> mapSpeciesIdToAtomicNum;
+    d_totalNumSphericalFunctionsGlobal = counter;
+
+    for (unsigned int iAtomicNum = 0; iAtomicNum < d_setOfAtomicNumber.size();
+         iAtomicNum++)
+      {
+        unsigned int Znum = *std::next(d_setOfAtomicNumber.begin(), iAtomicNum);
+        listOfAtomIdsInSpecies[Znum].resize(0);
+        d_listOfiAtomInSpecies[Znum].resize(0);
+        mapSpeciesIdToAtomicNum[Znum] = iAtomicNum;
+      }
+
+    d_mapAtomIdToSpeciesIndex.resize(atomicNumbers.size());
+    std::fill(d_mapAtomIdToSpeciesIndex.begin(),
+              d_mapAtomIdToSpeciesIndex.end(),
+              0);
+
+    d_mapiAtomToSpeciesIndex.resize(atomIdsInCurrentProcess.size());
+    std::fill(d_mapiAtomToSpeciesIndex.begin(),
+              d_mapiAtomToSpeciesIndex.end(),
+              0);
+
+    for (int iAtom = 0; iAtom < atomIdsInCurrentProcess.size(); iAtom++)
+      {
+        unsigned int atomId               = atomIdsInCurrentProcess[iAtom];
+        unsigned int Znum                 = atomicNumbers[atomId];
+        unsigned int iAtomicNum           = mapSpeciesIdToAtomicNum[Znum];
+        d_mapAtomIdToSpeciesIndex[atomId] = listOfAtomIdsInSpecies[Znum].size();
+        d_mapiAtomToSpeciesIndex[iAtom]   = d_listOfiAtomInSpecies[Znum].size();
+        listOfAtomIdsInSpecies[Znum].push_back(atomId);
+        d_listOfiAtomInSpecies[Znum].push_back(iAtom);
+      }
+
+    d_CMatrixGlobal.resize(d_kPointWeights.size());
+
+
+    for (int kPoint = 0; kPoint < d_kPointWeights.size(); kPoint++)
+      {
+        d_CMatrixGlobal[kPoint].resize(d_setOfAtomicNumber.size());
+        for (unsigned int iAtomicNum = 0;
+             iAtomicNum < d_setOfAtomicNumber.size();
+             iAtomicNum++)
+          {
+            unsigned int Znum =
+              *std::next(d_setOfAtomicNumber.begin(), iAtomicNum);
+            unsigned int numSphFunc =
+              d_atomCenteredSphericalFunctionContainer
+                ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+            unsigned int numAtomsPerSpecies =
+              d_listOfiAtomInSpecies[Znum].size();
+            d_CMatrixGlobal[kPoint][iAtomicNum].resize(
+              numAtomsPerSpecies * numSphFunc * d_totalLocallyOwnedNodes);
+            d_CMatrixGlobal[kPoint][iAtomicNum].setValue(0.0);
+          }
+      }
+
+    const std::vector<
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeSrc, memorySpace>>> &
+      globalCMatrixSrc =
+      nonLocalOperatorSrc->getGlobalCMatrix();
+    for (int kPoint = 0; kPoint < d_kPointWeights.size(); kPoint++)
+      {
+        for (unsigned int iAtomicNum = 0;
+             iAtomicNum < d_setOfAtomicNumber.size();
+             iAtomicNum++)
+          {
+            unsigned int Znum =
+              *std::next(d_setOfAtomicNumber.begin(), iAtomicNum);
+
+            unsigned int numSphFunc =
+              d_atomCenteredSphericalFunctionContainer
+                ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+            unsigned int numAtomsPerSpecies =
+              d_listOfiAtomInSpecies[Znum].size();
+
+
+            if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
+              {
+                for(unsigned int iNode = 0; iNode < globalCMatrixSrc[kPoint][iAtomicNum].size(); iNode++)
+                  {
+                    d_CMatrixGlobal[kPoint][iAtomicNum].data()[iNode] = globalCMatrixSrc[kPoint][iAtomicNum].data()[iNode];
+                  }
+              }
+#if defined(DFTFE_WITH_DEVICE)
+            else
+              {
+                std::vector<ValueTypeSrc> CmatrixGlobalTempSrc(
+                  d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc);
+
+                CmatrixGlobalTempSrc. template copyFrom<dftfe::utils::MemorySpace::DEVICE>
+                  (globalCMatrixSrc[kPoint][iAtomicNum].data(),
+                   d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc,
+                   0,
+                   0);
+
+                std::vector<ValueType> CmatrixGlobalTempDst(
+                  d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc);
+
+                for(unsigned int iNode = 0; iNode < globalCMatrixSrc[kPoint][iAtomicNum].size(); iNode++)
+                  {
+                    CmatrixGlobalTempDst[iNode] = CmatrixGlobalTempSrc[iNode];
+                  }
+
+                d_CMatrixGlobal[kPoint][iAtomicNum]
+                  .template copyFrom<dftfe::utils::MemorySpace::HOST>(
+                    CmatrixGlobalTempDst.data(),
+                    d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc,
+                    0,
+                    0);
+              }
+#endif
+
+          }
+      }
+
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -3691,6 +3896,15 @@ namespace dftfe
               }
           }
       }
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  const std::vector<
+    std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
+    AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
+      getGlobalCMatrix() const
+  {
+    return d_CMatrixGlobal
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>

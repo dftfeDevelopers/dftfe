@@ -210,6 +210,7 @@ namespace dftfe
 
     if(d_useSinglePrec)
       {
+        /*
 	      d_nonLocalOperatorSinglePrec->intitialisePartitionerKPointsAndComputeCMatrixEntries(
       updateNonlocalSparsity,
       kPointWeights,
@@ -217,7 +218,7 @@ namespace dftfe
       d_BasisOperatorHostPtr,
       d_BLASWrapperHostPtr,
       densityQuadratureId);
-/*
+*/
         d_nonLocalOperatorSinglePrec->copyPartitionerKPointsAndComputeCMatrixEntries
           (updateNonlocalSparsity,
            kPointWeights,
@@ -226,7 +227,7 @@ namespace dftfe
            d_BLASWrapperHostPtr,
            densityQuadratureId,
            d_nonLocalOperator);
-*/
+
       }
 
     MPI_Barrier(d_mpi_comm_domain);
