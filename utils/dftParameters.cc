@@ -1704,7 +1704,7 @@ namespace dftfe
       auxBasisTypeXC      = prm.get("AUX BASIS TYPE");
       auxBasisDataXC      = prm.get("AUX BASIS DATA");
       tot_magnetization   = prm.get_double("TOTAL MAGNETIZATION");
-      useAtomicMagnetizationGuessConstraintMag ==
+      useAtomicMagnetizationGuessConstraintMag =
         prm.get_bool("USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       netCharge             = prm.get_double("NET CHARGE");
