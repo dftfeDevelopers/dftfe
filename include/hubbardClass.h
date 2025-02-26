@@ -184,8 +184,6 @@ namespace dftfe
     void
     initialiseFlattenedDataStructure(unsigned int numVectors);
 
-//    void
-//    initialiseCellWaveFunctionPointers(unsigned int numVectors);
 
     /*
      * @brief Functions that returns the coupling matrix A required in the apply().
@@ -383,8 +381,7 @@ namespace dftfe
 
     dftfe::linearAlgebra::MultiVector<typename dftfe::dataTypes::singlePrecType<ValueType>::type, memorySpace>
       d_hubbNonLocalProjectorTimesVectorBlockSinglePrec;
-//    dftfe::utils::MemoryStorage<ValueType, memorySpace>
-//      d_cellWaveFunctionMatrixSrc, d_cellWaveFunctionMatrixDst;
+
 
     unsigned int d_cellsBlockSizeApply;
     unsigned int d_verbosity;

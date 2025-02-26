@@ -283,8 +283,6 @@ namespace dftfe
         d_hubbardClassPtr->initialiseFlattenedDataStructure(
           d_numVectorsInternal);
 
-//        d_hubbardClassPtr->initialiseCellWaveFunctionPointers(
-//          d_numVectorsInternal);
       }
   }
 
@@ -671,7 +669,6 @@ namespace dftfe
       {
         d_hubbardClassPtr->initialiseFlattenedDataStructure(numWaveFunctions);
 
-//        d_hubbardClassPtr->initialiseCellWaveFunctionPointers(numWaveFunctions);
       }
 
     if (d_dftParamsPtr->isPseudopotential)
@@ -1869,7 +1866,6 @@ namespace dftfe
               d_srcNonLocalTempSinglePrec.data());
 
             d_srcNonLocalTempSinglePrec.updateGhostValues();
-            //d_basisOperationsPtr->distribute(d_srcNonLocalTempSinglePrec);
 
 	    d_basisOperationsPtr
           ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]

@@ -2352,10 +2352,6 @@ namespace dftfe
         d_dotProductAtomicWaveInputWaveTemp[iAtomicNum].setValue(0.0);
         if (totalAtomicWaveFunctions > 0)
           {
-		  //pcout<<" kPoint = "<<d_kPointIndex<<" iAtomicNum = "<<iAtomicNum<<" d_CMatrixGlobal = "<<
-		//	  d_CMatrixGlobal[d_kPointIndex][iAtomicNum].size()<<"\n";
-		 // pcout<<" X = "<<X.localSize()<<"\n";
-		 // pcout<<" d_dotProductAtomicWaveInputWaveTemp = "<<d_dotProductAtomicWaveInputWaveTemp[iAtomicNum].size()<<"\n";
             d_BLASWrapperPtr->xgemm(
               transA,
               doTransMatrix,
@@ -2395,18 +2391,14 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
         else
           {
-		  //pcout<<" map size = "<<d_mapiAtomTosphFuncWaveStart.size()<<"\n";
             for (unsigned int atomIndex = 0; atomIndex < numAtomsPerSpecies;
                  atomIndex++)
               {
 		      
                 unsigned int iAtom  = d_listOfiAtomInSpecies[Znum][atomIndex];
                 unsigned int atomId = atomIdsInCurrentProcess[iAtom];
-                
-		//pcout <<" iAtom = "<<iAtom<<" map "<<d_mapiAtomTosphFuncWaveStart[iAtom];
-		//pcout<<" sph size = "<<d_sphericalFnTimesWavefunctionMatrix.size()<<"\n";
-		//pcout<<" d_sphericalFnTimesWavefunctionMatrix size = "<<d_sphericalFnTimesWavefunctionMatrix.size()<<"\n";
-		d_BLASWrapperPtr->xcopy(
+
+                d_BLASWrapperPtr->xcopy(
                   numSphFunc * d_numberWaveFunctions,
                   &d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
                                                       [atomIndex * numSphFunc *
@@ -2774,23 +2766,6 @@ namespace dftfe
                                   d_cellHamMatrixTimesWaveMatrixNonLocalDevice,
                                   Xout);
 
-        // for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc;
-        // ++iAtom)
-        //   {
-        //     const unsigned int accum  =
-        //     d_numberCellsAccumNonLocalAtoms[iAtom]; const unsigned int Ncells
-        //     = d_numberCellsForEachAtom[iAtom];
-
-        //     dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
-        //       addNonLocalContribution(
-        //         Ncells,
-        //         d_numberNodesPerElement,
-        //         d_numberWaveFunctions,
-        //         accum,
-        //         d_cellHamMatrixTimesWaveMatrixNonLocalDevice,
-        //         Xout,
-        //         d_cellNodeIdMapNonLocalToLocalDevice);
-        //   }
       }
 #endif
   }
@@ -3038,13 +3013,6 @@ namespace dftfe
       }
   }
 
-
-  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-  const std::vector<unsigned int> & AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
-  getMapiAtomTosphFuncWave() const
-  {
-	  return d_mapiAtomTosphFuncWaveStart;
-  }
 	  
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   template <typename ValueTypeSrc>
@@ -3583,23 +3551,6 @@ namespace dftfe
 
           }
       }
-/*
-    #if defined(DFTFE_WITH_DEVICE)
-
-    if(dftfe::utils::MemorySpace::DEVICE == memorySpace)
-       {
-	       const std::vector<unsigned int> & mapiAtomSrc = 
-		       nonLocalOperatorSrc->getMapiAtomTosphFuncWave();
-               d_mapiAtomTosphFuncWaveStart.resize(mapiAtomSrc.size());
-
-	       for(unsigned int iAtom = 0; iAtom < mapiAtomSrc.size(); iAtom++)
-	       {
-		       d_mapiAtomTosphFuncWaveStart[iAtom] = mapiAtomSrc[iAtom];
-	       }
-       }
-    #endif
-
-    */
         // deallocate the cell wise vectors
     d_CMatrixEntriesConjugate.clear();
     d_CMatrixEntriesTranspose.clear();

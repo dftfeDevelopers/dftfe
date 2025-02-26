@@ -423,7 +423,6 @@ namespace dftfe
       std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
       getGlobalCMatrix() const;
 
-  const std::vector<unsigned int> & getMapiAtomTosphFuncWave() const;
 
   protected:
     /**
