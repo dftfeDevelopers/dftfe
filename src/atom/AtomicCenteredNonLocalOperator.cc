@@ -2352,6 +2352,10 @@ namespace dftfe
         d_dotProductAtomicWaveInputWaveTemp[iAtomicNum].setValue(0.0);
         if (totalAtomicWaveFunctions > 0)
           {
+		  //pcout<<" kPoint = "<<d_kPointIndex<<" iAtomicNum = "<<iAtomicNum<<" d_CMatrixGlobal = "<<
+		//	  d_CMatrixGlobal[d_kPointIndex][iAtomicNum].size()<<"\n";
+		 // pcout<<" X = "<<X.localSize()<<"\n";
+		 // pcout<<" d_dotProductAtomicWaveInputWaveTemp = "<<d_dotProductAtomicWaveInputWaveTemp[iAtomicNum].size()<<"\n";
             d_BLASWrapperPtr->xgemm(
               transA,
               doTransMatrix,
@@ -2391,12 +2395,18 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
         else
           {
+		  //pcout<<" map size = "<<d_mapiAtomTosphFuncWaveStart.size()<<"\n";
             for (unsigned int atomIndex = 0; atomIndex < numAtomsPerSpecies;
                  atomIndex++)
               {
+		      
                 unsigned int iAtom  = d_listOfiAtomInSpecies[Znum][atomIndex];
                 unsigned int atomId = atomIdsInCurrentProcess[iAtom];
-                d_BLASWrapperPtr->xcopy(
+                
+		//pcout <<" iAtom = "<<iAtom<<" map "<<d_mapiAtomTosphFuncWaveStart[iAtom];
+		//pcout<<" sph size = "<<d_sphericalFnTimesWavefunctionMatrix.size()<<"\n";
+		//pcout<<" d_sphericalFnTimesWavefunctionMatrix size = "<<d_sphericalFnTimesWavefunctionMatrix.size()<<"\n";
+		d_BLASWrapperPtr->xcopy(
                   numSphFunc * d_numberWaveFunctions,
                   &d_dotProductAtomicWaveInputWaveTemp[iAtomicNum]
                                                       [atomIndex * numSphFunc *
@@ -3030,6 +3040,13 @@ namespace dftfe
 
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  const std::vector<unsigned int> & AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
+  getMapiAtomTosphFuncWave() const
+  {
+	  return d_mapiAtomTosphFuncWaveStart;
+  }
+	  
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   template <typename ValueTypeSrc>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::copyGlobalCMatrix(
@@ -3082,6 +3099,353 @@ namespace dftfe
     d_nonTrivialSphericalFnsCellStartIndex.resize(numCells, 0);
 
     d_atomIdToNonTrivialSphericalFnCellStartIndex.clear();
+
+    std::map<unsigned int, std::vector<unsigned int>>
+                              globalAtomIdToNonTrivialSphericalFnsCellStartIndex;
+    std::vector<unsigned int> accumTemp(numCells, 0);
+    // Loop over atoms to determine sizes of various vectors for forces
+    for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
+      {
+        unsigned int       atomId = atomIdsInProc[iAtom];
+        const unsigned int Znum   = atomicNumber[atomId];
+        const unsigned int numSphericalFunctions =
+          d_atomCenteredSphericalFunctionContainer
+            ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+        std::vector<unsigned int> elementIndexesInAtomCompactSupport =
+          d_atomCenteredSphericalFunctionContainer
+            ->d_elementIndexesInAtomCompactSupport[atomId];
+        const unsigned int numberElementsInAtomCompactSupport =
+          elementIndexesInAtomCompactSupport.size();
+        d_atomIdToNonTrivialSphericalFnCellStartIndex[iAtom] =
+          std::vector<unsigned int>(numCells, 0);
+        globalAtomIdToNonTrivialSphericalFnsCellStartIndex[atomId] =
+          std::vector<unsigned int>(numCells, 0);
+        for (int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport;
+             ++iElemComp)
+          {
+            const unsigned int elementId =
+              elementIndexesInAtomCompactSupport[iElemComp];
+
+            d_cellIdToAtomIdsLocalCompactSupportMap[elementId].push_back(iAtom);
+
+            d_nonTrivialSphericalFnPerCell[elementId] += numSphericalFunctions;
+            d_atomIdToNonTrivialSphericalFnCellStartIndex[iAtom][elementId] =
+              accumTemp[elementId];
+            globalAtomIdToNonTrivialSphericalFnsCellStartIndex
+              [atomId][elementId] = accumTemp[elementId];
+            accumTemp[elementId] += numSphericalFunctions;
+          }
+      }
+
+    d_sumNonTrivialSphericalFnOverAllCells =
+      std::accumulate(d_nonTrivialSphericalFnPerCell.begin(),
+                      d_nonTrivialSphericalFnPerCell.end(),
+                      0);
+
+    unsigned int accumNonTrivialSphericalFnCells = 0;
+    for (int iElem = 0; iElem < numCells; ++iElem)
+      {
+        d_nonTrivialSphericalFnsCellStartIndex[iElem] =
+          accumNonTrivialSphericalFnCells;
+        accumNonTrivialSphericalFnCells +=
+          d_nonTrivialSphericalFnPerCell[iElem];
+      }
+    if (d_computeSphericalFnTimesX)
+      {
+        d_atomCenteredKpointIndexedSphericalFnQuadValues.resize(
+          maxkPoints * d_sumNonTrivialSphericalFnOverAllCells *
+            numberQuadraturePoints,
+          ValueType(0));
+        d_atomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues.resize(
+          maxkPoints * d_sumNonTrivialSphericalFnOverAllCells *
+            numberQuadraturePoints * 3,
+          ValueType(0));
+      }
+
+    std::vector<std::vector<unsigned int>> sphericalFnKetTimesVectorLocalIds;
+    sphericalFnKetTimesVectorLocalIds.clear();
+    sphericalFnKetTimesVectorLocalIds.resize(d_totalAtomsInCurrentProc);
+    for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
+      {
+        const unsigned int atomId = atomIdsInProc[iAtom];
+        const unsigned int Znum   = atomicNumber[atomId];
+        const unsigned int numSphericalFunctions =
+          d_atomCenteredSphericalFunctionContainer
+            ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+
+
+        for (unsigned int alpha = 0; alpha < numSphericalFunctions; ++alpha)
+          {
+            unsigned int globalId =
+              d_sphericalFunctionIdsNumberingMapCurrentProcess
+                .find(std::make_pair(atomId, alpha))
+                ->second;
+
+            unsigned int localId = d_SphericalFunctionKetTimesVectorPar[0]
+                                     .get_partitioner()
+                                     ->global_to_local(globalId);
+            sphericalFnKetTimesVectorLocalIds[iAtom].push_back(localId);
+          }
+      }
+
+    d_sphericalFnTimesVectorFlattenedVectorLocalIds.clear();
+    d_nonTrivialAllCellsSphericalFnAlphaToElemIdMap.clear();
+    for (unsigned int ielem = 0; ielem < numCells; ++ielem)
+      {
+        for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
+          {
+            bool isNonTrivial = false;
+            for (unsigned int i = 0;
+                 i < d_cellIdToAtomIdsLocalCompactSupportMap[ielem].size();
+                 i++)
+              if (d_cellIdToAtomIdsLocalCompactSupportMap[ielem][i] == iAtom)
+                {
+                  isNonTrivial = true;
+                  break;
+                }
+            if (isNonTrivial)
+              {
+                unsigned int       atomId = atomIdsInProc[iAtom];
+                const unsigned int Znum   = atomicNumber[atomId];
+                const unsigned int numSphericalFunctions =
+                  d_atomCenteredSphericalFunctionContainer
+                    ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+                for (unsigned int iAlpha = 0; iAlpha < numSphericalFunctions;
+                     ++iAlpha)
+                  {
+                    d_nonTrivialAllCellsSphericalFnAlphaToElemIdMap.push_back(
+                      ielem);
+                    d_sphericalFnTimesVectorFlattenedVectorLocalIds.push_back(
+                      sphericalFnKetTimesVectorLocalIds[iAtom][iAlpha]);
+                  }
+              }
+          }
+      }
+
+
+    #if defined(DFTFE_WITH_DEVICE)
+
+    if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+    {
+
+	     d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
+        d_cellHamiltonianMatrixNonLocalFlattenedTranspose.clear();
+
+	       std::vector<unsigned int> atomIdsInCurrentProcess =
+          d_atomCenteredSphericalFunctionContainer
+            ->getAtomIdsInCurrentProcess();
+        const std::vector<unsigned int> &atomicNumber =
+          d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
+
+        d_sphericalFnIdsParallelNumberingMap.clear();
+        d_sphericalFnIdsParallelNumberingMap.resize(d_totalNonLocalEntries, 0);
+        d_sphericalFnIdsPaddedParallelNumberingMap.clear();
+        d_sphericalFnIdsPaddedParallelNumberingMap.resize(
+          atomIdsInCurrentProcess.size() * d_maxSingleAtomContribution, -1);
+
+        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec.clear();
+        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec.resize(
+          d_totalNonlocalElems * d_maxSingleAtomContribution, -1);
+
+        d_nonlocalElemIdToLocalElemIdMap.clear();
+        d_nonlocalElemIdToLocalElemIdMap.resize(d_totalNonlocalElems, 0);
+        d_sphericalFnTimesVectorAllCellsReduction.clear();
+        d_sphericalFnTimesVectorAllCellsReduction.resize(
+          d_totalNonlocalElems * d_maxSingleAtomContribution *
+            d_totalNonLocalEntries,
+          ValueType(0.0));
+        d_cellNodeIdMapNonLocalToLocal.clear();
+        d_cellNodeIdMapNonLocalToLocal.resize(d_totalNonlocalElems *
+                                              d_numberNodesPerElement);
+
+
+
+        unsigned int countElemNode    = 0;
+        unsigned int countElem        = 0;
+        unsigned int countAlpha       = 0;
+        unsigned int numShapeFnsAccum = 0;
+
+        int totalElements = 0;
+        d_mapiAtomTosphFuncWaveStart.resize(d_totalAtomsInCurrentProc);
+        for (int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; iAtom++)
+          {
+            const unsigned int        atomId = atomIdsInCurrentProcess[iAtom];
+            std::vector<unsigned int> elementIndexesInAtomCompactSupport =
+              d_atomCenteredSphericalFunctionContainer
+                ->d_elementIndexesInAtomCompactSupport[atomId];
+            unsigned int totalAtomIdElementIterators =
+              elementIndexesInAtomCompactSupport.size();
+            totalElements += totalAtomIdElementIterators;
+            const unsigned int Znum = atomicNumber[atomId];
+            const unsigned int numberSphericalFunctions =
+              d_atomCenteredSphericalFunctionContainer
+                ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+
+
+            for (unsigned int alpha = 0; alpha < numberSphericalFunctions;
+                 alpha++)
+              {
+                unsigned int globalId =
+                  d_sphericalFunctionIdsNumberingMapCurrentProcess
+                    [std::make_pair(atomId, alpha)];
+
+                const unsigned int id = d_SphericalFunctionKetTimesVectorPar[0]
+                                          .get_partitioner()
+                                          ->global_to_local(globalId);
+
+                if (alpha == 0)
+                  {
+                    d_mapiAtomTosphFuncWaveStart[iAtom] = countAlpha;
+                  }
+                d_sphericalFnIdsParallelNumberingMap[countAlpha] = id;
+                d_sphericalFnIdsPaddedParallelNumberingMap
+                  [iAtom * d_maxSingleAtomContribution + alpha] = id;
+                for (unsigned int iElemComp = 0;
+                     iElemComp < totalAtomIdElementIterators;
+                     iElemComp++)
+                  {
+                    d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec
+                      [d_numberCellsAccumNonLocalAtoms[iAtom] *
+                         d_maxSingleAtomContribution +
+                       iElemComp * d_maxSingleAtomContribution + alpha] =
+                        iAtom * d_maxSingleAtomContribution + alpha;
+                  }
+                countAlpha++;
+              }
+            for (unsigned int iElemComp = 0;
+                 iElemComp < totalAtomIdElementIterators;
+                 ++iElemComp)
+              {
+                const unsigned int elementId =
+                  elementIndexesInAtomCompactSupport[iElemComp];
+
+                for (unsigned int iNode = 0; iNode < d_numberNodesPerElement;
+                     ++iNode)
+                  {
+                    dftfe::global_size_type localNodeId =
+                      basisOperationsPtr->d_cellDofIndexToProcessDofIndexMap
+                        [elementId * d_numberNodesPerElement + iNode];
+                    d_cellNodeIdMapNonLocalToLocal[countElemNode] =
+                      elementId * d_numberNodesPerElement + iNode;
+                    countElemNode++;
+                  }
+              }
+
+            for (unsigned int iElemComp = 0;
+                 iElemComp < totalAtomIdElementIterators;
+                 ++iElemComp)
+              {
+                const unsigned int elementId =
+                  elementIndexesInAtomCompactSupport[iElemComp];
+                d_nonlocalElemIdToLocalElemIdMap[countElem] = elementId;
+                if (!d_useGlobalCMatrix)
+                  {
+                    for (unsigned int ikpoint = 0;
+                         ikpoint < d_kPointWeights.size();
+                         ikpoint++)
+                      for (unsigned int iNode = 0;
+                           iNode < d_numberNodesPerElement;
+                           ++iNode)
+                        {
+                          for (unsigned int alpha = 0;
+                               alpha < numberSphericalFunctions;
+                               ++alpha)
+                            {
+                              d_cellHamiltonianMatrixNonLocalFlattenedConjugate
+                                [ikpoint * d_totalNonlocalElems *
+                                   d_numberNodesPerElement *
+                                   d_maxSingleAtomContribution +
+                                 countElem * d_maxSingleAtomContribution *
+                                   d_numberNodesPerElement +
+                                 d_numberNodesPerElement * alpha + iNode] =
+                                  d_CMatrixEntriesConjugate
+                                    [atomId][iElemComp]
+                                    [ikpoint * d_numberNodesPerElement *
+                                       numberSphericalFunctions +
+                                     d_numberNodesPerElement * alpha + iNode];
+
+                              d_cellHamiltonianMatrixNonLocalFlattenedTranspose
+                                [ikpoint * d_totalNonlocalElems *
+                                   d_numberNodesPerElement *
+                                   d_maxSingleAtomContribution +
+                                 countElem * d_numberNodesPerElement *
+                                   d_maxSingleAtomContribution +
+                                 d_maxSingleAtomContribution * iNode + alpha] =
+                                  d_CMatrixEntriesTranspose
+                                    [atomId][iElemComp]
+                                    [ikpoint * d_numberNodesPerElement *
+                                       numberSphericalFunctions +
+                                     numberSphericalFunctions * iNode + alpha];
+                            }
+                        }
+                  }
+                for (unsigned int alpha = 0; alpha < numberSphericalFunctions;
+                     ++alpha)
+                  {
+                    const unsigned int columnStartId =
+                      (numShapeFnsAccum + alpha) * d_totalNonlocalElems *
+                      d_maxSingleAtomContribution;
+                    const unsigned int columnRowId =
+                      countElem * d_maxSingleAtomContribution + alpha;
+                    d_sphericalFnTimesVectorAllCellsReduction[columnStartId +
+                                                              columnRowId] =
+                      ValueType(1.0);
+                  }
+
+                countElem++;
+              }
+
+            numShapeFnsAccum += numberSphericalFunctions;
+          }
+
+
+        d_sphericalFnIdsParallelNumberingMapDevice.clear();
+        d_sphericalFnIdsPaddedParallelNumberingMapDevice.clear();
+        d_sphericalFnIdsPaddedParallelNumberingMapDevice.resize(
+          d_sphericalFnIdsPaddedParallelNumberingMap.size());
+        d_sphericalFnIdsParallelNumberingMapDevice.resize(
+          d_sphericalFnIdsParallelNumberingMap.size());
+        d_sphericalFnIdsParallelNumberingMapDevice.copyFrom(
+          d_sphericalFnIdsParallelNumberingMap);
+        d_sphericalFnIdsPaddedParallelNumberingMapDevice.copyFrom(
+          d_sphericalFnIdsPaddedParallelNumberingMap);
+        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.clear();
+        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.resize(
+          d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec.size());
+        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice.copyFrom(
+          d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec);
+        d_sphericalFnTimesVectorAllCellsReductionDevice.clear();
+        d_sphericalFnTimesVectorAllCellsReductionDevice.resize(
+          d_sphericalFnTimesVectorAllCellsReduction.size());
+        d_sphericalFnTimesVectorAllCellsReductionDevice.copyFrom(
+          d_sphericalFnTimesVectorAllCellsReduction);
+
+        d_cellNodeIdMapNonLocalToLocalDevice.clear();
+        d_cellNodeIdMapNonLocalToLocalDevice.resize(
+          d_cellNodeIdMapNonLocalToLocal.size());
+
+        d_cellNodeIdMapNonLocalToLocalDevice.copyFrom(
+          d_cellNodeIdMapNonLocalToLocal);
+        d_nonlocalElemIdToCellIdVector.clear();
+        d_flattenedNonLocalCellDofIndexToProcessDofIndexVector.clear();
+        for (unsigned int i = 0; i < d_totalNonlocalElems; i++)
+          {
+            unsigned int iCell = d_nonlocalElemIdToLocalElemIdMap[i];
+
+            d_nonlocalElemIdToCellIdVector.push_back(iCell);
+            for (int iNode = 0; iNode < d_numberNodesPerElement; iNode++)
+              {
+                dftfe::global_size_type localNodeId =
+                  basisOperationsPtr->d_cellDofIndexToProcessDofIndexMap
+                    [iCell * d_numberNodesPerElement + iNode];
+                d_flattenedNonLocalCellDofIndexToProcessDofIndexVector
+                  .push_back(localNodeId);
+              }
+          }
+
+    }
+
+#endif 
 
     d_totalLocallyOwnedNodes = basisOperationsPtr->nOwnedDofs();
     const unsigned int numberNodesPerElement =
@@ -3144,7 +3508,7 @@ namespace dftfe
 
     d_CMatrixGlobal.resize(d_kPointWeights.size());
 
-
+    d_dotProductAtomicWaveInputWaveTemp.resize(d_setOfAtomicNumber.size());
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); kPoint++)
       {
         d_CMatrixGlobal[kPoint].resize(d_setOfAtomicNumber.size());
@@ -3198,13 +3562,9 @@ namespace dftfe
                 std::vector<ValueTypeSrc> CmatrixGlobalTempSrc(
                   d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc);
 
-                CmatrixGlobalTempSrc. template copyFrom<dftfe::utils::MemorySpace::DEVICE>
-                  (globalCMatrixSrc[kPoint][iAtomicNum].data(),
-                   d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc,
-                   0,
-                   0);
-
-                std::vector<ValueType> CmatrixGlobalTempDst(
+		globalCMatrixSrc[kPoint][iAtomicNum].copyTo(CmatrixGlobalTempSrc);
+                
+		std::vector<ValueType> CmatrixGlobalTempDst(
                   d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc);
 
                 for(unsigned int iNode = 0; iNode < globalCMatrixSrc[kPoint][iAtomicNum].size(); iNode++)
@@ -3223,6 +3583,34 @@ namespace dftfe
 
           }
       }
+/*
+    #if defined(DFTFE_WITH_DEVICE)
+
+    if(dftfe::utils::MemorySpace::DEVICE == memorySpace)
+       {
+	       const std::vector<unsigned int> & mapiAtomSrc = 
+		       nonLocalOperatorSrc->getMapiAtomTosphFuncWave();
+               d_mapiAtomTosphFuncWaveStart.resize(mapiAtomSrc.size());
+
+	       for(unsigned int iAtom = 0; iAtom < mapiAtomSrc.size(); iAtom++)
+	       {
+		       d_mapiAtomTosphFuncWaveStart[iAtom] = mapiAtomSrc[iAtom];
+	       }
+       }
+    #endif
+
+    */
+        // deallocate the cell wise vectors
+    d_CMatrixEntriesConjugate.clear();
+    d_CMatrixEntriesTranspose.clear();
+
+
+#if defined(DFTFE_WITH_DEVICE)
+    d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
+    d_cellHamiltonianMatrixNonLocalFlattenedTranspose.clear();
+    d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice.clear();
+    d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice.clear();
+#endif
 
   }
 
@@ -3904,7 +4292,7 @@ namespace dftfe
     AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
       getGlobalCMatrix() const
   {
-    return d_CMatrixGlobal
+    return d_CMatrixGlobal;
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>

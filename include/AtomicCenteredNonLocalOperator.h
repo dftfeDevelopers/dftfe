@@ -418,6 +418,13 @@ namespace dftfe
     getCmatrixEntriesTranspose(const unsigned int chargeId,
                                const unsigned int iElemComp) const;
 
+
+    const std::vector<
+      std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
+      getGlobalCMatrix() const;
+
+  const std::vector<unsigned int> & getMapiAtomTosphFuncWave() const;
+
   protected:
     /**
      * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and constraint nodes updated.
@@ -619,9 +626,6 @@ namespace dftfe
                          basisOperationsPtr,
       const unsigned int quadratureIndex);
 
-    const std::vector<
-      std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
-      getGlobalCMatrix() const;
 
     std::map<
       unsigned int,

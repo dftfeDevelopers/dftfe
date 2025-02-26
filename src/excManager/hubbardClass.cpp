@@ -173,7 +173,7 @@ namespace dftfe
         d_BasisOperatorMemPtr,
         d_atomicProjectorFnsContainer,
         d_mpi_comm_domain,
-        false,
+        true,
         true,
         true);
 
@@ -186,7 +186,7 @@ namespace dftfe
                           d_BasisOperatorMemPtr,
                           d_atomicProjectorFnsContainer,
                           d_mpi_comm_domain,
-                          false,
+                          true,
 			  true,
                           true);
       }
@@ -1338,6 +1338,7 @@ namespace dftfe
     const unsigned int kPointIndex,
     const unsigned int spinIndex)
   {
+	  //pcout<<" Entering single prec applyPotentialDueToHubbardCorrection\n";
     d_nonLocalOperatorSinglePrec->applyCconjtransOnX(src);
     d_hubbNonLocalProjectorTimesVectorBlockSinglePrec.setValue(0);
     d_nonLocalOperatorSinglePrec->applyAllReduceOnCconjtransX(
