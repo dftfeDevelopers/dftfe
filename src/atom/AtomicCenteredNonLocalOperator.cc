@@ -2394,7 +2394,6 @@ namespace dftfe
             for (unsigned int atomIndex = 0; atomIndex < numAtomsPerSpecies;
                  atomIndex++)
               {
-		      
                 unsigned int iAtom  = d_listOfiAtomInSpecies[Znum][atomIndex];
                 unsigned int atomId = atomIdsInCurrentProcess[iAtom];
 
@@ -2765,7 +2764,6 @@ namespace dftfe
                                   d_iElemNonLocalToElemIndexMap,
                                   d_cellHamMatrixTimesWaveMatrixNonLocalDevice,
                                   Xout);
-
       }
 #endif
   }
@@ -2999,9 +2997,9 @@ namespace dftfe
     if (updateSparsity)
       initialisePartitioner();
     initKpoints(kPointWeights, kPointCoordinates);
-    if ( d_useGlobalCMatrix )
+    if (d_useGlobalCMatrix)
       {
-        copyGlobalCMatrix(nonLocalOperatorSrc ,
+        copyGlobalCMatrix(nonLocalOperatorSrc,
                           basisOperationsPtr,
                           quadratureIndex);
       }
@@ -3013,7 +3011,7 @@ namespace dftfe
       }
   }
 
-	  
+
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   template <typename ValueTypeSrc>
   void
@@ -3191,15 +3189,14 @@ namespace dftfe
       }
 
 
-    #if defined(DFTFE_WITH_DEVICE)
+#if defined(DFTFE_WITH_DEVICE)
 
     if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
-    {
-
-	     d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
+      {
+        d_cellHamiltonianMatrixNonLocalFlattenedConjugate.clear();
         d_cellHamiltonianMatrixNonLocalFlattenedTranspose.clear();
 
-	       std::vector<unsigned int> atomIdsInCurrentProcess =
+        std::vector<unsigned int> atomIdsInCurrentProcess =
           d_atomCenteredSphericalFunctionContainer
             ->getAtomIdsInCurrentProcess();
         const std::vector<unsigned int> &atomicNumber =
@@ -3410,16 +3407,15 @@ namespace dftfe
                   .push_back(localNodeId);
               }
           }
+      }
 
-    }
-
-#endif 
+#endif
 
     d_totalLocallyOwnedNodes = basisOperationsPtr->nOwnedDofs();
     const unsigned int numberNodesPerElement =
       basisOperationsPtr->nDofsPerCell();
 
-    const ValueType           alpha1 = 1.0;
+    const ValueType alpha1 = 1.0;
 
     std::vector<unsigned int> atomicNumbers =
       d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
@@ -3498,9 +3494,8 @@ namespace dftfe
       }
 
     const std::vector<
-      std::vector<dftfe::utils::MemoryStorage<ValueTypeSrc, memorySpace>>> &
-      globalCMatrixSrc =
-      nonLocalOperatorSrc->getGlobalCMatrix();
+      std::vector<dftfe::utils::MemoryStorage<ValueTypeSrc, memorySpace>>>
+      &globalCMatrixSrc = nonLocalOperatorSrc->getGlobalCMatrix();
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); kPoint++)
       {
         for (unsigned int iAtomicNum = 0;
@@ -3519,9 +3514,12 @@ namespace dftfe
 
             if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
               {
-                for(unsigned int iNode = 0; iNode < globalCMatrixSrc[kPoint][iAtomicNum].size(); iNode++)
+                for (unsigned int iNode = 0;
+                     iNode < globalCMatrixSrc[kPoint][iAtomicNum].size();
+                     iNode++)
                   {
-                    d_CMatrixGlobal[kPoint][iAtomicNum].data()[iNode] = globalCMatrixSrc[kPoint][iAtomicNum].data()[iNode];
+                    d_CMatrixGlobal[kPoint][iAtomicNum].data()[iNode] =
+                      globalCMatrixSrc[kPoint][iAtomicNum].data()[iNode];
                   }
               }
 #if defined(DFTFE_WITH_DEVICE)
@@ -3530,12 +3528,15 @@ namespace dftfe
                 std::vector<ValueTypeSrc> CmatrixGlobalTempSrc(
                   d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc);
 
-		globalCMatrixSrc[kPoint][iAtomicNum].copyTo(CmatrixGlobalTempSrc);
-                
-		std::vector<ValueType> CmatrixGlobalTempDst(
+                globalCMatrixSrc[kPoint][iAtomicNum].copyTo(
+                  CmatrixGlobalTempSrc);
+
+                std::vector<ValueType> CmatrixGlobalTempDst(
                   d_totalLocallyOwnedNodes * numAtomsPerSpecies * numSphFunc);
 
-                for(unsigned int iNode = 0; iNode < globalCMatrixSrc[kPoint][iAtomicNum].size(); iNode++)
+                for (unsigned int iNode = 0;
+                     iNode < globalCMatrixSrc[kPoint][iAtomicNum].size();
+                     iNode++)
                   {
                     CmatrixGlobalTempDst[iNode] = CmatrixGlobalTempSrc[iNode];
                   }
@@ -3548,10 +3549,9 @@ namespace dftfe
                     0);
               }
 #endif
-
           }
       }
-        // deallocate the cell wise vectors
+    // deallocate the cell wise vectors
     d_CMatrixEntriesConjugate.clear();
     d_CMatrixEntriesTranspose.clear();
 
@@ -3562,7 +3562,6 @@ namespace dftfe
     d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice.clear();
     d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice.clear();
 #endif
-
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -4240,8 +4239,8 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   const std::vector<
     std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
-    AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
-      getGlobalCMatrix() const
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::getGlobalCMatrix()
+    const
   {
     return d_CMatrixGlobal;
   }

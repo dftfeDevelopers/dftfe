@@ -172,8 +172,12 @@ namespace dftfe
 
     void
     applyPotentialDueToHubbardCorrection(
-      const dftfe::linearAlgebra::MultiVector<typename dftfe::dataTypes::singlePrecType<ValueType>::type, memorySpace> &src,
-      dftfe::linearAlgebra::MultiVector<typename dftfe::dataTypes::singlePrecType<ValueType>::type, memorySpace> &      dst,
+      const dftfe::linearAlgebra::MultiVector<
+        typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+        memorySpace> &src,
+      dftfe::linearAlgebra::MultiVector<
+        typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+        memorySpace> &   dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
       const unsigned int spinIndex);
@@ -363,7 +367,9 @@ namespace dftfe
     std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>
       d_couplingMatrixEntries;
 
-    std::vector<dftfe::utils::MemoryStorage<typename dftfe::dataTypes::singlePrecType<ValueType>::type, memorySpace>>
+    std::vector<dftfe::utils::MemoryStorage<
+      typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+      memorySpace>>
       d_couplingMatrixEntriesSinglePrec;
     std::map<
       HubbardOccFieldType,
@@ -379,7 +385,9 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
       d_hubbNonLocalProjectorTimesVectorBlock;
 
-    dftfe::linearAlgebra::MultiVector<typename dftfe::dataTypes::singlePrecType<ValueType>::type, memorySpace>
+    dftfe::linearAlgebra::MultiVector<
+      typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+      memorySpace>
       d_hubbNonLocalProjectorTimesVectorBlockSinglePrec;
 
 

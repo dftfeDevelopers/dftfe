@@ -124,9 +124,10 @@ namespace dftfe
      */
     virtual void
     applyWaveFunctionDependentFuncDerWrtPsi(
-      const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-                                                                        &                                                                src,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32 ,memorySpace> &dst,
+      const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                              memorySpace> &src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &                dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
       const unsigned int spinIndex) = 0;

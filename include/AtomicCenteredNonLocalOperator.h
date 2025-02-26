@@ -421,7 +421,7 @@ namespace dftfe
 
     const std::vector<
       std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
-      getGlobalCMatrix() const;
+    getGlobalCMatrix() const;
 
 
   protected:

@@ -53,7 +53,7 @@ namespace dftfe
     d_hubbardEnergy                 = 0.0;
     d_expectationOfHubbardPotential = 0.0;
     d_maxOccMatSizePerAtom          = 0;
-    d_useSinglePrec = false;
+    d_useSinglePrec                 = false;
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -177,17 +177,17 @@ namespace dftfe
         true,
         true);
 
-    if(d_useSinglePrec)
+    if (d_useSinglePrec)
       {
         d_nonLocalOperatorSinglePrec =
-            std::make_shared<AtomicCenteredNonLocalOperator<
-              typename dftfe::dataTypes::singlePrecType<ValueType>::type,
-              memorySpace>>(d_BLASWrapperMemPtr,
+          std::make_shared<AtomicCenteredNonLocalOperator<
+            typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+            memorySpace>>(d_BLASWrapperMemPtr,
                           d_BasisOperatorMemPtr,
                           d_atomicProjectorFnsContainer,
                           d_mpi_comm_domain,
                           true,
-			  true,
+                          true,
                           true);
       }
 
@@ -208,17 +208,17 @@ namespace dftfe
       d_BLASWrapperHostPtr,
       densityQuadratureId);
 
-    if(d_useSinglePrec)
+    if (d_useSinglePrec)
       {
-        d_nonLocalOperatorSinglePrec->copyPartitionerKPointsAndComputeCMatrixEntries
-          (updateNonlocalSparsity,
-           kPointWeights,
-           kPointCoordinates,
-           d_BasisOperatorHostPtr,
-           d_BLASWrapperHostPtr,
-           densityQuadratureId,
-           d_nonLocalOperator);
-
+        d_nonLocalOperatorSinglePrec
+          ->copyPartitionerKPointsAndComputeCMatrixEntries(
+            updateNonlocalSparsity,
+            kPointWeights,
+            kPointCoordinates,
+            d_BasisOperatorHostPtr,
+            d_BLASWrapperHostPtr,
+            densityQuadratureId,
+            d_nonLocalOperator);
       }
 
     MPI_Barrier(d_mpi_comm_domain);
@@ -1011,11 +1011,11 @@ namespace dftfe
   hubbard<ValueType, memorySpace>::computeCouplingMatrix()
   {
     d_couplingMatrixEntries.resize(d_numSpins);
-    
-    if(d_useSinglePrec)
-    {
-	    d_couplingMatrixEntriesSinglePrec.resize(d_numSpins);
-    }
+
+    if (d_useSinglePrec)
+      {
+        d_couplingMatrixEntriesSinglePrec.resize(d_numSpins);
+      }
 
     for (unsigned int spinIndex = 0; spinIndex < d_numSpins; spinIndex++)
       {
@@ -1080,21 +1080,23 @@ namespace dftfe
             d_couplingMatrixEntries[spinIndex].resize(Entries.size());
             d_couplingMatrixEntries[spinIndex].copyFrom(Entries);
 
-	    if (d_useSinglePrec)
-	    {
-		    std::vector<typename dftfe::dataTypes::singlePrecType<ValueType>::type> EntriesSinglePrec;
-		    EntriesSinglePrec.resize(Entries.size());
+            if (d_useSinglePrec)
+              {
+                std::vector<
+                  typename dftfe::dataTypes::singlePrecType<ValueType>::type>
+                  EntriesSinglePrec;
+                EntriesSinglePrec.resize(Entries.size());
 
-		    for(unsigned int index = 0 ; index < Entries.size(); index++)
-		    {
-			    EntriesSinglePrec[index] = Entries[index];
-		    }
-		    
-		    d_couplingMatrixEntriesSinglePrec[spinIndex].resize(EntriesSinglePrec.size());
-		    d_couplingMatrixEntriesSinglePrec[spinIndex].copyFrom(EntriesSinglePrec);
+                for (unsigned int index = 0; index < Entries.size(); index++)
+                  {
+                    EntriesSinglePrec[index] = Entries[index];
+                  }
 
-	    }
-
+                d_couplingMatrixEntriesSinglePrec[spinIndex].resize(
+                  EntriesSinglePrec.size());
+                d_couplingMatrixEntriesSinglePrec[spinIndex].copyFrom(
+                  EntriesSinglePrec);
+              }
           }
 #if defined(DFTFE_WITH_DEVICE)
         else
@@ -1106,24 +1108,26 @@ namespace dftfe
             d_couplingMatrixEntries[spinIndex].resize(EntriesPadded.size());
             d_couplingMatrixEntries[spinIndex].copyFrom(EntriesPadded);
 
-	    if(d_useSinglePrec)
-	    {
-		    std::vector<typename dftfe::dataTypes::singlePrecType<ValueType>::type> EntriesPaddedSinglePrec;
-		    EntriesPaddedSinglePrec.resize(EntriesPadded.size());
+            if (d_useSinglePrec)
+              {
+                std::vector<
+                  typename dftfe::dataTypes::singlePrecType<ValueType>::type>
+                  EntriesPaddedSinglePrec;
+                EntriesPaddedSinglePrec.resize(EntriesPadded.size());
 
-		    for(unsigned int index = 0 ; index <  EntriesPadded.size(); index++)
-		    {
-			    EntriesPaddedSinglePrec[index] = EntriesPadded[index];
-		    }
+                for (unsigned int index = 0; index < EntriesPadded.size();
+                     index++)
+                  {
+                    EntriesPaddedSinglePrec[index] = EntriesPadded[index];
+                  }
 
-		    d_couplingMatrixEntriesSinglePrec[spinIndex].resize(EntriesPaddedSinglePrec.size());
-		    d_couplingMatrixEntriesSinglePrec[spinIndex].copyFrom(EntriesPaddedSinglePrec);
-
-
-	    }
+                d_couplingMatrixEntriesSinglePrec[spinIndex].resize(
+                  EntriesPaddedSinglePrec.size());
+                d_couplingMatrixEntriesSinglePrec[spinIndex].copyFrom(
+                  EntriesPaddedSinglePrec);
+              }
           }
 #endif
-
       }
   }
 
@@ -1278,7 +1282,7 @@ namespace dftfe
   {
     d_nonLocalOperator->initialiseOperatorActionOnX(kPointIndex);
 
-    if(d_useSinglePrec)
+    if (d_useSinglePrec)
       {
         d_nonLocalOperatorSinglePrec->initialiseOperatorActionOnX(kPointIndex);
       }
@@ -1292,7 +1296,7 @@ namespace dftfe
     d_nonLocalOperator->initialiseFlattenedDataStructure(
       numVectors, d_hubbNonLocalProjectorTimesVectorBlock);
 
-    if(d_useSinglePrec)
+    if (d_useSinglePrec)
       {
         d_nonLocalOperatorSinglePrec->initialiseFlattenedDataStructure(
           numVectors, d_hubbNonLocalProjectorTimesVectorBlockSinglePrec);
@@ -1323,8 +1327,12 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   hubbard<ValueType, memorySpace>::applyPotentialDueToHubbardCorrection(
-    const dftfe::linearAlgebra::MultiVector<typename dataTypes::singlePrecType<ValueType>::type, memorySpace> &src,
-    dftfe::linearAlgebra::MultiVector<typename dataTypes::singlePrecType<ValueType>::type, memorySpace> &      dst,
+    const dftfe::linearAlgebra::MultiVector<
+      typename dataTypes::singlePrecType<ValueType>::type,
+      memorySpace> &src,
+    dftfe::linearAlgebra::MultiVector<
+      typename dataTypes::singlePrecType<ValueType>::type,
+      memorySpace> &   dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
     const unsigned int spinIndex)

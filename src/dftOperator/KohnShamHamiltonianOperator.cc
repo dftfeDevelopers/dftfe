@@ -282,7 +282,6 @@ namespace dftfe
 
         d_hubbardClassPtr->initialiseFlattenedDataStructure(
           d_numVectorsInternal);
-
       }
   }
 
@@ -668,7 +667,6 @@ namespace dftfe
     if (d_useHubbard)
       {
         d_hubbardClassPtr->initialiseFlattenedDataStructure(numWaveFunctions);
-
       }
 
     if (d_dftParamsPtr->isPseudopotential)
@@ -720,12 +718,12 @@ namespace dftfe
         d_basisOperationsPtr->createMultiVector(numWaveFunctions,
                                                 d_dstNonLocalTemp);
 
-        if(d_dftParamsPtr->useSinglePrecCheby)
+        if (d_dftParamsPtr->useSinglePrecCheby)
           {
-            d_basisOperationsPtr->createMultiVectorSinglePrec(numWaveFunctions,
-                                                    d_srcNonLocalTempSinglePrec);
-            d_basisOperationsPtr->createMultiVectorSinglePrec(numWaveFunctions,
-                                                    d_dstNonLocalTempSinglePrec);
+            d_basisOperationsPtr->createMultiVectorSinglePrec(
+              numWaveFunctions, d_srcNonLocalTempSinglePrec);
+            d_basisOperationsPtr->createMultiVectorSinglePrec(
+              numWaveFunctions, d_dstNonLocalTempSinglePrec);
           }
       }
 
@@ -1095,7 +1093,7 @@ namespace dftfe
         d_srcNonLocalTemp.updateGhostValues();
         d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
 
-	d_dstNonLocalTemp.setValue(0.0);
+        d_dstNonLocalTemp.setValue(0.0);
         d_excManagerPtr->getExcSSDFunctionalObj()
           ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
                                                     d_dstNonLocalTemp,
@@ -1867,17 +1865,18 @@ namespace dftfe
 
             d_srcNonLocalTempSinglePrec.updateGhostValues();
 
-	    d_basisOperationsPtr
-          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-          .distribute(d_srcNonLocalTempSinglePrec);
+            d_basisOperationsPtr
+              ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+              .distribute(d_srcNonLocalTempSinglePrec);
 
             d_dstNonLocalTempSinglePrec.setValue(0.0);
             d_excManagerPtr->getExcSSDFunctionalObj()
-              ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTempSinglePrec,
-                                                        d_dstNonLocalTempSinglePrec,
-                                                        numberWavefunctions,
-                                                        d_kPointIndex,
-                                                        d_spinIndex);
+              ->applyWaveFunctionDependentFuncDerWrtPsi(
+                d_srcNonLocalTempSinglePrec,
+                d_dstNonLocalTempSinglePrec,
+                numberWavefunctions,
+                d_kPointIndex,
+                d_spinIndex);
 
             d_BLASWrapperPtr->axpby(relaventDofs * numberWavefunctions,
                                     scalarHX,

@@ -294,7 +294,7 @@ namespace dftfe
   void
   excDensityGGAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
     const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-                                                                      &                                                                src,
+      &                                                                    src,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
