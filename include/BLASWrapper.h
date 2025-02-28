@@ -295,6 +295,24 @@ namespace dftfe
             std::complex<double> *      y,
             const unsigned int          incy) const;
 
+      // Real float Ax+y
+      void
+      xaxpy(const unsigned int n,
+            const float *      alpha,
+            const float *      x,
+            const unsigned int incx,
+            float *            y,
+            const unsigned int incy) const;
+
+      // Complex double Ax+y
+      void
+      xaxpy(const unsigned int         n,
+            const std::complex<float> *alpha,
+            const std::complex<float> *x,
+            const unsigned int         incx,
+            std::complex<float> *      y,
+            const unsigned int         incy) const;
+
       // Real copy of double data
       void
       xcopy(const unsigned int n,

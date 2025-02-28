@@ -171,13 +171,23 @@ namespace dftfe
       const unsigned int spinIndex);
 
     void
+    applyPotentialDueToHubbardCorrection(
+      const dftfe::linearAlgebra::MultiVector<
+        typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+        memorySpace> &src,
+      dftfe::linearAlgebra::MultiVector<
+        typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+        memorySpace> &   dst,
+      const unsigned int inputVecSize,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex);
+
+    void
     initialiseOperatorActionOnX(unsigned int kPointIndex);
 
     void
     initialiseFlattenedDataStructure(unsigned int numVectors);
 
-    void
-    initialiseCellWaveFunctionPointers(unsigned int numVectors);
 
     /*
      * @brief Functions that returns the coupling matrix A required in the apply().
@@ -300,6 +310,12 @@ namespace dftfe
     std::shared_ptr<AtomicCenteredNonLocalOperator<ValueType, memorySpace>>
       d_nonLocalOperator;
 
+    std::shared_ptr<
+      AtomicCenteredNonLocalOperator<dataTypes::numberFP32, memorySpace>>
+      d_nonLocalOperatorSinglePrec;
+
+    bool d_useSinglePrec;
+
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
       d_BLASWrapperMemPtr;
 
@@ -338,6 +354,7 @@ namespace dftfe
     dealii::ConditionalOStream pcout;
 
     std::vector<double>              d_atomicCoords;
+    std::vector<double>              d_initialAtomicSpin;
     std::vector<std::vector<double>> d_periodicImagesCoords;
     std::vector<int>                 d_imageIds;
     std::vector<unsigned int>        d_mapAtomToHubbardIds;
@@ -350,6 +367,10 @@ namespace dftfe
     std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>
       d_couplingMatrixEntries;
 
+    std::vector<dftfe::utils::MemoryStorage<
+      typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+      memorySpace>>
+      d_couplingMatrixEntriesSinglePrec;
     std::map<
       HubbardOccFieldType,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -363,8 +384,12 @@ namespace dftfe
 
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
       d_hubbNonLocalProjectorTimesVectorBlock;
-    dftfe::utils::MemoryStorage<ValueType, memorySpace>
-      d_cellWaveFunctionMatrixSrc, d_cellWaveFunctionMatrixDst;
+
+    dftfe::linearAlgebra::MultiVector<
+      typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+      memorySpace>
+      d_hubbNonLocalProjectorTimesVectorBlockSinglePrec;
+
 
     unsigned int d_cellsBlockSizeApply;
     unsigned int d_verbosity;

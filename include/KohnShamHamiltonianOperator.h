@@ -426,6 +426,11 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       d_dstNonLocalTemp;
 
+    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+      d_srcNonLocalTempSinglePrec;
+    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+      d_dstNonLocalTempSinglePrec;
+
     dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
       d_mapNodeIdToProcId;
   };

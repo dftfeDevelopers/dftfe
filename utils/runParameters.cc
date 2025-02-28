@@ -173,6 +173,16 @@ namespace dftfe
     restart          = prm.get_bool("RESTART");
     restartFilesPath = prm.get("RESTART FOLDER");
     useDevice        = prm.get_bool("USE GPU");
+#ifdef DFTFE_WITH_DEVICE
+
+#else
+    Assert(
+      !useDevice,
+      dealii::ExcMessage(
+        "DFT-FE Error: DFT-FE was compiled with GPU MODE off. However, USE GPU is used. Please re-compile DFT-FE with GPU MODE on"));
+#endif
+
+
     prm.enter_subsection("NEB");
     {
       numberOfImages      = prm.get_integer("NUMBER OF IMAGES");

@@ -282,9 +282,6 @@ namespace dftfe
 
         d_hubbardClassPtr->initialiseFlattenedDataStructure(
           d_numVectorsInternal);
-
-        d_hubbardClassPtr->initialiseCellWaveFunctionPointers(
-          d_numVectorsInternal);
       }
   }
 
@@ -670,8 +667,6 @@ namespace dftfe
     if (d_useHubbard)
       {
         d_hubbardClassPtr->initialiseFlattenedDataStructure(numWaveFunctions);
-
-        d_hubbardClassPtr->initialiseCellWaveFunctionPointers(numWaveFunctions);
       }
 
     if (d_dftParamsPtr->isPseudopotential)
@@ -722,6 +717,14 @@ namespace dftfe
                                                 d_srcNonLocalTemp);
         d_basisOperationsPtr->createMultiVector(numWaveFunctions,
                                                 d_dstNonLocalTemp);
+
+        if (d_dftParamsPtr->useSinglePrecCheby)
+          {
+            d_basisOperationsPtr->createMultiVectorSinglePrec(
+              numWaveFunctions, d_srcNonLocalTempSinglePrec);
+            d_basisOperationsPtr->createMultiVectorSinglePrec(
+              numWaveFunctions, d_dstNonLocalTempSinglePrec);
+          }
       }
 
 
@@ -1073,8 +1076,6 @@ namespace dftfe
             cellRange.first * numDoFsPerCell);
       }
 
-    d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-      .distribute_slave_to_master(dst);
     if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
          ExcFamilyType::DFTPlusU) ||
         (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -1092,6 +1093,7 @@ namespace dftfe
         d_srcNonLocalTemp.updateGhostValues();
         d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
 
+        d_dstNonLocalTemp.setValue(0.0);
         d_excManagerPtr->getExcSSDFunctionalObj()
           ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
                                                     d_dstNonLocalTemp,
@@ -1099,19 +1101,16 @@ namespace dftfe
                                                     d_kPointIndex,
                                                     d_spinIndex);
 
-
-        d_basisOperationsPtr
-          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-          .distribute_slave_to_master(d_dstNonLocalTemp);
-        d_dstNonLocalTemp.accumulateAddLocallyOwned();
-        d_dstNonLocalTemp.zeroOutGhosts();
-
-        d_BLASWrapperPtr->axpby(dst.locallyOwnedSize() * numberWavefunctions,
+        d_BLASWrapperPtr->axpby(dst.localSize() * numberWavefunctions,
                                 scalarHX,
                                 d_dstNonLocalTemp.data(),
                                 1.0,
                                 dst.data());
       }
+
+    d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+      .distribute_slave_to_master(dst);
+
 
     src.zeroOutGhosts();
     inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
@@ -1257,9 +1256,6 @@ namespace dftfe
             cellRange.first * numDoFsPerCell);
       }
 
-    inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr
-      ->distribute_slave_to_master(dst);
-
     if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
          ExcFamilyType::DFTPlusU) ||
         (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -1280,6 +1276,8 @@ namespace dftfe
         d_srcNonLocalTemp.updateGhostValues();
         d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
 
+        // TODO d_srcNonLocalTemp and d_dstNonLocalTemp can be removed
+        d_dstNonLocalTemp.setValue(0.0);
         d_excManagerPtr->getExcSSDFunctionalObj()
           ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
                                                     d_dstNonLocalTemp,
@@ -1303,6 +1301,8 @@ namespace dftfe
           d_mapNodeIdToProcId.data());
       }
 
+    inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr
+      ->distribute_slave_to_master(dst);
     src.zeroOutGhosts();
     inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
     dst.accumulateAddLocallyOwned();
@@ -1632,9 +1632,6 @@ namespace dftfe
                 cellRange.first * numDoFsPerCell);
           }
 
-        d_basisOperationsPtr
-          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-          .distribute_slave_to_master(dst);
         if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
              ExcFamilyType::DFTPlusU) ||
             (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -1655,6 +1652,7 @@ namespace dftfe
             d_srcNonLocalTemp.updateGhostValues();
             d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
 
+            d_dstNonLocalTemp.setValue(0.0);
             d_excManagerPtr->getExcSSDFunctionalObj()
               ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
                                                         d_dstNonLocalTemp,
@@ -1662,18 +1660,16 @@ namespace dftfe
                                                         d_kPointIndex,
                                                         d_spinIndex);
 
-
-            d_basisOperationsPtr
-              ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-              .distribute_slave_to_master(d_dstNonLocalTemp);
-            d_dstNonLocalTemp.accumulateAddLocallyOwned();
-            d_dstNonLocalTemp.zeroOutGhosts();
             d_BLASWrapperPtr->axpby(relaventDofs * numberWavefunctions,
                                     scalarHX,
                                     d_dstNonLocalTemp.data(),
                                     1.0,
                                     dst.data());
           }
+
+        d_basisOperationsPtr
+          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+          .distribute_slave_to_master(dst);
       }
     if (!skip1 && !skip2 && !skip3)
       {
@@ -1849,9 +1845,7 @@ namespace dftfe
                 cellRange.first * numDoFsPerCell);
           }
 
-        d_basisOperationsPtr
-          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-          .distribute_slave_to_master(dst);
+
         if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
              ExcFamilyType::DFTPlusU) ||
             (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -1859,7 +1853,41 @@ namespace dftfe
             (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
              ExcFamilyType::MGGA))
           {
+            unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+            d_BLASWrapperPtr->stridedBlockAxpBy(
+              numberWavefunctions,
+              src.locallyOwnedSize(),
+              src.data(),
+              d_basisOperationsPtr->inverseMassVectorBasisData().data(),
+              1.0,
+              0.0,
+              d_srcNonLocalTempSinglePrec.data());
+
+            d_srcNonLocalTempSinglePrec.updateGhostValues();
+
+            d_basisOperationsPtr
+              ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+              .distribute(d_srcNonLocalTempSinglePrec);
+
+            d_dstNonLocalTempSinglePrec.setValue(0.0);
+            d_excManagerPtr->getExcSSDFunctionalObj()
+              ->applyWaveFunctionDependentFuncDerWrtPsi(
+                d_srcNonLocalTempSinglePrec,
+                d_dstNonLocalTempSinglePrec,
+                numberWavefunctions,
+                d_kPointIndex,
+                d_spinIndex);
+
+            d_BLASWrapperPtr->axpby(relaventDofs * numberWavefunctions,
+                                    scalarHX,
+                                    d_dstNonLocalTempSinglePrec.data(),
+                                    1.0,
+                                    dst.data());
           }
+
+        d_basisOperationsPtr
+          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+          .distribute_slave_to_master(dst);
       }
     if (!skip1 && !skip2 && !skip3)
       {

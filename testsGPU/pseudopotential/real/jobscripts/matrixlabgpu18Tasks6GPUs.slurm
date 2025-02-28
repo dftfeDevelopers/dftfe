@@ -51,3 +51,4 @@ mpirun -n 6  $DFTFE_PATH/dftfe parameterFileMg2x_11.prm > outputMg2x_11
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileMg2x_14.prm > outputMg2x_14
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileMg2x_15.prm > outputMg2x_15
 mpirun -n 6  $DFTFE_PATH/dftfe Pt3Ni_hubbard_spin.prm   > outputPt3Ni_hubbard_spin
+mpirun -n 6  $DFTFE_PATH/dftfe Pt3Ni_hubbard_spin_mixedPrec.prm > outputPt3Ni_hubbard_spin_mixedPrec

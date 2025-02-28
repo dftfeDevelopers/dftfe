@@ -121,7 +121,8 @@ namespace dftfe
     std::shared_ptr<excManager<memorySpace>> excFunctionalPtr,
     const std::vector<std::vector<double>> & atomLocations,
     unsigned int                             numEigenValues,
-    const bool                               singlePrecNonLocalOperator)
+    const bool                               singlePrecNonLocalOperator,
+    const bool computeSphericalFnTimesXNonLocalOperator)
   {
     MPI_Barrier(d_mpiCommParent);
     d_BasisOperatorHostPtr = basisOperationsHostPtr;
@@ -165,7 +166,8 @@ namespace dftfe
             d_BasisOperatorHostPtr,
             d_atomicProjectorFnsContainer,
             d_mpiCommParent,
-            d_memoryOptMode);
+            d_memoryOptMode,
+            computeSphericalFnTimesXNonLocalOperator);
         if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =
@@ -175,7 +177,8 @@ namespace dftfe
                               d_BasisOperatorHostPtr,
                               d_atomicProjectorFnsContainer,
                               d_mpiCommParent,
-                              d_memoryOptMode);
+                              d_memoryOptMode,
+                              computeSphericalFnTimesXNonLocalOperator);
       }
 #if defined(DFTFE_WITH_DEVICE)
     else
@@ -187,7 +190,8 @@ namespace dftfe
             d_BasisOperatorDevicePtr,
             d_atomicProjectorFnsContainer,
             d_mpiCommParent,
-            d_memoryOptMode);
+            d_memoryOptMode,
+            computeSphericalFnTimesXNonLocalOperator);
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =
@@ -197,7 +201,8 @@ namespace dftfe
                               d_BasisOperatorDevicePtr,
                               d_atomicProjectorFnsContainer,
                               d_mpiCommParent,
-                              d_memoryOptMode);
+                              d_memoryOptMode,
+                              computeSphericalFnTimesXNonLocalOperator);
       }
 #endif
 
@@ -252,15 +257,17 @@ namespace dftfe
       kPointWeights,
       kPointCoordinates,
       d_BasisOperatorHostPtr,
+      d_BLASWrapperHostPtr,
       d_nlpspQuadratureId);
     if (d_singlePrecNonLocalOperator)
       d_nonLocalOperatorSinglePrec
-        ->intitialisePartitionerKPointsAndComputeCMatrixEntries(
-          updateNonlocalSparsity,
-          kPointWeights,
-          kPointCoordinates,
-          d_BasisOperatorHostPtr,
-          d_nlpspQuadratureId);
+        ->copyPartitionerKPointsAndComputeCMatrixEntries(updateNonlocalSparsity,
+                                                         kPointWeights,
+                                                         kPointCoordinates,
+                                                         d_BasisOperatorHostPtr,
+                                                         d_BLASWrapperHostPtr,
+                                                         d_nlpspQuadratureId,
+                                                         d_nonLocalOperator);
 
 
     MPI_Barrier(d_mpiCommParent);
@@ -331,6 +338,7 @@ namespace dftfe
       kPointWeights,
       kPointCoordinates,
       d_BasisOperatorHostPtr,
+      d_BLASWrapperHostPtr,
       d_nlpspQuadratureId);
     if (d_singlePrecNonLocalOperator)
       d_nonLocalOperatorSinglePrec
@@ -339,6 +347,7 @@ namespace dftfe
           kPointWeights,
           kPointCoordinates,
           d_BasisOperatorHostPtr,
+          d_BLASWrapperHostPtr,
           d_nlpspQuadratureId);
 
     MPI_Barrier(d_mpiCommParent);

@@ -1250,7 +1250,9 @@ namespace dftfe
                                  d_excManagerPtr,
                                  atomLocations,
                                  d_numEigenValues,
-                                 d_dftParamsPtr->useSinglePrecCheby);
+                                 d_dftParamsPtr->useSinglePrecCheby,
+                                 (d_dftParamsPtr->isIonForce) ||
+                                   d_dftParamsPtr->isCellStress);
 
     if (d_dftParamsPtr->solverMode == "NSCF")
       {
@@ -1445,10 +1447,6 @@ namespace dftfe
         AssertThrow(d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND",
                     dealii::ExcMessage(
                       "LRDM preconditioner is not compatible with hubbard "));
-
-        AssertThrow(d_dftParamsPtr->useSinglePrecCheby == false,
-                    dealii::ExcMessage(
-                      "single prec in cheby is not compatible with hubbard "));
 
         init_hubbOp = MPI_Wtime() - init_hubbOp;
 
