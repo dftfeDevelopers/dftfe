@@ -113,7 +113,20 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                          BLASWrapperHostPtr,
       const unsigned int quadratureIndex);
-
+    /**
+     * @brief calls internal function: initialisePartitioner, initialiseKpoint and computeCMatrixEntries
+     * @param[in] updateSparsity flag on whether the sparstiy patten was
+     * updated, hence the partitioner is updated.
+     * @param[in] kPointWeights std::vector<double> of size number of kPoints
+     * @param[out] kPointCoordinates std::vector<double> of kPoint coordinates
+     * @param[in] basisOperationsPtr HOST FEBasisOperations shared_ptr required
+     * to indetify the element ids and quad points
+     * @param[in] BLASWrapperHostPtr CPU blasWrapperPtr, used for xcopy calls
+     * @param[in] quadratureIndex quadrature index for sampling the spherical
+     * function. Quadrature Index is used to reinit basisOperationsPtr
+     * @param[in] nonLocalOperatorSrc The source nonLocalOpertor from where the
+     * CMatrix and partitioner is copied. Generally, it is of higher precision.
+     */
     template <typename ValueTypeSrc>
     void
     copyPartitionerKPointsAndComputeCMatrixEntries(
@@ -231,7 +244,9 @@ namespace dftfe
 
     const std::vector<unsigned int> &
     getOwnedAtomIdsInCurrentProcessor() const;
-
+    /**
+     * @brief Computes C^{T}D^{-1}C at the global level for atomId. This is required in PAW
+     */
     void
     computeCconjtransCMatrix(
       const unsigned int atomId,
@@ -408,17 +423,21 @@ namespace dftfe
                           std::vector<ValueType> &      entriesPadded,
                           const CouplingStructure       couplingtype);
 
-
-
+    /**
+     * @brief Returns C matrix entries for chargeId and it compact support element Id.
+     */
     const std::vector<ValueType> &
     getCmatrixEntriesConjugate(const unsigned int chargeId,
                                const unsigned int iElemComp) const;
-
+    /**
+     * @brief Returns C conj matrix entries for chargeId and it compact support element Id.
+     */
     const std::vector<ValueType> &
     getCmatrixEntriesTranspose(const unsigned int chargeId,
                                const unsigned int iElemComp) const;
-
-
+    /**
+     * @brief Returns global C matrix of all atoms.
+     */
     const std::vector<
       std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
     getGlobalCMatrix() const;
@@ -656,6 +675,13 @@ namespace dftfe
 
     std::vector<unsigned int> d_mapiAtomTosphFuncWaveStart;
     std::map<unsigned int, std::vector<unsigned int>> d_listOfiAtomInSpecies;
+
+    /**
+     * @brief computes Global Cmatrix on HOST.
+     * @param[in] basisOperationsPtr HOST FEBasisOperations shared_ptr required
+     * to indetify the element ids and quad points
+     * @param[in] BLASWrapperHostPtr HOST BLASWrapper
+     */
     void
     computeGlobalCMatrixVector(
       std::shared_ptr<dftfe::basis::FEBasisOperations<
