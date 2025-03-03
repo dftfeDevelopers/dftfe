@@ -39,3 +39,5 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileFeCuPt2_scf.prm > output
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scf.prm > outputBccFe_scf
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
