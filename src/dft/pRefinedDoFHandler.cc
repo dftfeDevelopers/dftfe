@@ -415,7 +415,8 @@ namespace dftfe
               dftfe::basis::update_values | dftfe::basis::update_jxw;
 
             dftfe::basis::UpdateFlags updateFlagsLPSP =
-              dftfe::basis::update_values | dftfe::basis::update_jxw;
+              dftfe::basis::update_values | dftfe::basis::update_jxw |
+              dftfe::basis::update_quadpoints;
 
             dftfe::basis::UpdateFlags updateFlagsphiTotAX =
               d_dftParamsPtr->useDevice && FEOrder != FEOrderElectro ?
