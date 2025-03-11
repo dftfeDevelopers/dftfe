@@ -1426,7 +1426,7 @@ namespace dftfe
                                 }
                             }
 
-                          if (i >= jvec && i < (jvec + BVec))
+                          if (i == jvec)
                             {
                               std::unordered_map<unsigned int,
                                                  unsigned int>::iterator it =
@@ -1461,7 +1461,7 @@ namespace dftfe
                                 }
                             }
 
-                          if (i >= jvec && i < (jvec + BVec))
+                          if (i == jvec)
                             {
                               std::unordered_map<unsigned int,
                                                  unsigned int>::iterator it =
