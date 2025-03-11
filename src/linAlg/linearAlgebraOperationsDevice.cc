@@ -1426,7 +1426,7 @@ namespace dftfe
                                 }
                             }
 
-                          if (i == jvec)
+                          if (i == j+jvec)
                             {
                               std::unordered_map<unsigned int,
                                                  unsigned int>::iterator it =
@@ -1434,7 +1434,7 @@ namespace dftfe
                               if (it != globalToLocalColumnIdMap.end())
                                 {
                                   *(rotationMatBlockHostSP.begin() + i * BVec +
-                                    i - jvec) = dataTypes::numberFP32(0);
+                                    j) = dataTypes::numberFP32(0);
                                 }
                             }
                         }
