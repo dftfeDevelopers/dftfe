@@ -565,7 +565,7 @@ namespace dftfe
 
     if (d_dftParams.smearedNuclearCharges &&
         (d_storedAdaptiveBallRadius < 1e-6))
-      radiusAtomBallAdaptive = ((d_dftParams.meshSizeOuterBall > 1.5 &&
+      radiusAtomBallAdaptive = ((d_dftParams.meshSizeOuterBall > 0.1 &&
                                  d_dftParams.outerAtomBallRadius < 6.0) ||
                                 (d_dftParams.meshSizeOuterBall > 2.2)) ?
                                  6.0 :
@@ -589,9 +589,9 @@ namespace dftfe
                                                  n_mpi_processes,
                                                  mpi_communicator,
                                                  computing_timer);
-        while (check != 0 && radiusAtomBallAdaptive >= 1.0)
+        while (check != 0 && radiusAtomBallAdaptive >= 0.1)
           {
-            radiusAtomBallAdaptive -= 0.25;
+            radiusAtomBallAdaptive -= 0.05;
             check =
               internal::createAndCheckInteractionMap(interactionMap,
                                                      dofHandler,
@@ -609,7 +609,7 @@ namespace dftfe
         std::string message;
         if (check == 1 || check == 2)
           message =
-            "DFT-FE error: Tried to adaptively determine the ball radius for nuclear self-potential solve and it has reached the minimum allowed value of 1.0, which can severly detoriate the accuracy of the KSDFT groundstate energy and forces. Please use a larger periodic super cell which can accomodate a larger ball radius.";
+            "DFT-FE error: Tried to adaptively determine the ball radius for nuclear self-potential solve and it has reached the minimum allowed value of 0.1, which can severly detoriate the accuracy of the KSDFT groundstate energy and forces. Please use a larger periodic super cell which can accomodate a larger ball radius.";
 
         AssertThrow(check == 0, dealii::ExcMessage(message));
 
@@ -1274,9 +1274,9 @@ namespace dftfe
 
             if (!d_dftParams.reproducible_output)
               AssertThrow(
-                radiusAtomBallReduced >= 1.5,
+                radiusAtomBallReduced >= 0.1,
                 dealii::ExcMessage(
-                  "DFT-FE error: Adaptively determined reduced ball radius for applying correct Dirichlet boundary condtions taking hanging nodes into account is less than minimum value of 1.5. Try increasing SELF POTENTIAL RADIUS to > 6.0. If that is not possible due to small domain sizes along the periodic directions, reduce MESH SIZE AROUND ATOM and/or increase ATOM BALL RADIUS."));
+                  "DFT-FE error: Adaptively determined reduced ball radius for applying correct Dirichlet boundary condtions taking hanging nodes into account is less than minimum value of 0.1. Try increasing SELF POTENTIAL RADIUS to > 6.0. If that is not possible due to small domain sizes along the periodic directions, reduce MESH SIZE AROUND ATOM and/or increase ATOM BALL RADIUS."));
           }
 
         if (d_dftParams.verbosity >= 4 && !d_dftParams.reproducible_output)

@@ -4288,7 +4288,7 @@ namespace dftfe
             }
         }
 
-    const double fdparam          = 1e-5;
+    const double fdparam          = 1e-6;
     unsigned int flattenedIdCount = 0;
     for (unsigned int idim = 0; idim < 3; ++idim)
       for (unsigned int jdim = 0; jdim <= idim; jdim++)
