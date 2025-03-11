@@ -88,6 +88,6 @@ subsection SCF parameters
      set ORTHOGONALIZATION TYPE=CGS
      set CHEBYSHEV POLYNOMIAL DEGREE=8
      set USE ELPA=true
-     set USE RE-FORMULATED CHFSI                              = false   
+     set USE RESIDUAL CHFSI                            = false   
   end
 end

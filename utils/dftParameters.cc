@@ -1043,7 +1043,7 @@ namespace dftfe
             "[Standard] Use approximate overlap matrix (diagonal for FE basis overlap).  Default setting is true.");
 
           prm.declare_entry(
-            "USE RE-FORMULATED CHFSI",
+            "USE RESIDUAL CHFSI",
             "true",
             dealii::Patterns::Bool(),
             "[Advanced] Builds the Chebyshev filtered subspace in full precision based on a residual equation. To be used when USE APPROXIMATE OVERLAP MATRIX is set to false.");
@@ -1756,7 +1756,7 @@ namespace dftfe
         chebyshevOrder       = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
         useELPA              = prm.get_bool("USE ELPA");
         approxOverlapMatrix  = prm.get_bool("USE APPROXIMATE OVERLAP MATRIX");
-        useReformulatedChFSI = prm.get_bool("USE RE-FORMULATED CHFSI");
+        useReformulatedChFSI = prm.get_bool("USE RESIDUAL CHFSI");
         orthogType           = prm.get("ORTHOGONALIZATION TYPE");
         chebyshevTolerance   = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
         wfcBlockSize         = prm.get_integer("WFC BLOCK SIZE");

@@ -38,7 +38,7 @@ subsection SCF parameters
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS =  5
       set CHEBYSHEV FILTER TOLERANCE=1e-3  
-      set USE RE-FORMULATED CHFSI                              = false    
+      set USE RESIDUAL CHFSI                              = false    
   end
 end
 
