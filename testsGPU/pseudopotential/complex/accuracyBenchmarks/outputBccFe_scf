@@ -42,7 +42,9 @@ Checkpointing tria info and rho data in progress...
 ...checkpointing done.
 Checkpointing tria info and rho data in progress...
 ...checkpointing done.
-SCF iterations converged to the specified tolerance after: 37 iterations.
+Checkpointing tria info and rho data in progress...
+...checkpointing done.
+SCF iterations converged to the specified tolerance after: 41 iterations.
 
 Energy computations (Hartree) 
 -------------------
