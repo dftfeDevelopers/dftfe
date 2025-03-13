@@ -1046,7 +1046,7 @@ namespace dftfe
             "USE RESIDUAL CHFSI",
             "true",
             dealii::Patterns::Bool(),
-            "[Advanced] Builds the Chebyshev filtered subspace in full precision based on a residual equation. To be used when USE APPROXIMATE OVERLAP MATRIX is set to false.");
+            "[Advanced] Builds the Chebyshev filtered subspace in full precision based on a residual-ChFSI algorithm.");
 
           prm.declare_entry(
             "SUBSPACE PROJ SHEP GPU",

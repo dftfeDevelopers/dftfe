@@ -258,7 +258,7 @@ namespace dftfe
         &dst);
 
     /**
-     * @brief Computing Y = scalarHX*M^{-1}HX + scalarX*X + scalarY*Y for a given X and Y in reduced precision
+     * @brief Computing Y = scalarHX*HM^{-1}X + scalarX*X + scalarY*Y for a given X and Y in reduced precision
      *
      * @param src X vector
      * @param scalarHX scalar for HX
