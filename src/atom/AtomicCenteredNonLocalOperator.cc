@@ -549,10 +549,14 @@ namespace dftfe
 
                   } // image atom loop
                 const unsigned int startIndex1 =
-                  d_nonTrivialSphericalFnsCellStartIndex[elementIndex]; //extract the location of first projector in the elementIndex 
+                  d_nonTrivialSphericalFnsCellStartIndex
+                    [elementIndex]; // extract the location of first projector
+                                    // in the elementIndex
                 const unsigned int startIndex2 =
                   globalAtomIdToNonTrivialSphericalFnsCellStartIndex
-                    [ChargeId][elementIndex]; //extract the location of the ChargeId's first projector in the cell
+                    [ChargeId]
+                    [elementIndex]; // extract the location of the ChargeId's
+                                    // first projector in the cell
                 if (d_computeSphericalFnTimesX)
                   {
                     for (int kPoint = 0; kPoint < maxkPoints; ++kPoint)
