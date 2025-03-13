@@ -553,7 +553,20 @@ namespace dftfe
                     const double                                       b,
                     const double                                       a0);
 
-
+    /** @brief Apply Residual based Chebyshev filter to a given subspace
+     *
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as a dealii array representing multiple
+     * fields as a flattened array. In-place update of the given subspace.
+     *  @param[in]  eigenvalues estimate of eigenvalues, usually the eigenvalues
+     * from previous pass
+     *  @param[in]  m Chebyshev polynomial degree
+     *  @param[in]  a lower bound of unwanted spectrum
+     *  @param[in]  b upper bound of unwanted spectrum
+     *  @param[in]  a0 lower bound of wanted spectrum
+     *  @param[in]  approxOverlapMatrix to use approximate overlap matrix while
+     * computing initial residual
+     */
 
     template <typename T1, typename T2, dftfe::utils::MemorySpace memorySpace>
     void
