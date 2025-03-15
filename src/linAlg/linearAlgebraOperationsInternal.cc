@@ -193,13 +193,11 @@ namespace dftfe
                 elpa_set_integer(elpaHandle, "use_gpu_id", gpuID, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-                if (!dftParams.reproducible_output)
-                  {
-                    error = elpa_setup_gpu(elpaHandle);
-                    AssertThrow(error == ELPA_OK,
+                   
+		error = elpa_setup_gpu(elpaHandle);
+                AssertThrow(error == ELPA_OK,
                                 dealii::ExcMessage(
                                   "DFT-FE Error: ELPA Error."));
-                  }
               }
             else
               {
