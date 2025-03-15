@@ -372,12 +372,12 @@ namespace dftfe
         dftfe::ScaLAPACKMatrix<T> &                      mat,
         const T                                          scalar)
       {
-        // if (processGrid->is_process_active())
-        //   {
-        //     const unsigned int numberComponents = mat.local_m() *
-        //     mat.local_n(); const unsigned int inc              = 1;
-        //     xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
-        //   }
+        if (processGrid->is_process_active())
+          {
+            const unsigned int numberComponents = mat.local_m() * mat.local_n();
+            const unsigned int inc              = 1;
+            xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
+          }
       }
 
 
