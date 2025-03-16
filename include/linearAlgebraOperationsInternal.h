@@ -25,6 +25,7 @@
 #include <BLASWrapper.h>
 #include <elpa/elpa.h>
 #include <unordered_map>
+#include <dftUtils.h>
 namespace dftfe
 {
   namespace linearAlgebraOperations
@@ -109,8 +110,10 @@ namespace dftfe
       void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<T> &                      mat,
-        const T                                          scalar);
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<T> &                              mat,
+        const T                                                  scalar);
 
 
       /** @brief MPI_Bcast of ScaLAPACKMat across a given inter communicator from a given broadcast root.

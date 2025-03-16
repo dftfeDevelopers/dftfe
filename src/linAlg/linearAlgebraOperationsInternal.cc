@@ -193,11 +193,10 @@ namespace dftfe
                 elpa_set_integer(elpaHandle, "use_gpu_id", gpuID, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-                   
-		error = elpa_setup_gpu(elpaHandle);
+
+                error = elpa_setup_gpu(elpaHandle);
                 AssertThrow(error == ELPA_OK,
-                                dealii::ExcMessage(
-                                  "DFT-FE Error: ELPA Error."));
+                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
               }
             else
               {
@@ -367,15 +366,17 @@ namespace dftfe
       void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<T> &                      mat,
-        const T                                          scalar)
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<T> &                              mat,
+        const T                                                  scalar)
       {
-        if (processGrid->is_process_active())
-          {
-            const unsigned int numberComponents = mat.local_m() * mat.local_n();
-            const unsigned int inc              = 1;
-            xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
-          }
+        // if (processGrid->is_process_active())
+        //   {
+        //     const unsigned int numberComponents = mat.local_m() *
+        //     mat.local_n(); const unsigned int inc              = 1;
+        //     xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
+        //   }
       }
 
 
@@ -2266,14 +2267,18 @@ namespace dftfe
       template void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<double> &                 mat,
-        const double                                     scalar);
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<double> &                         mat,
+        const double                                             scalar);
 
       template void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &   mat,
-        const std::complex<double>                       scalar);
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &           mat,
+        const std::complex<double>                               scalar);
 
       template void
       sumAcrossInterCommScaLAPACKMat(
