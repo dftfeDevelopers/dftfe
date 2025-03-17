@@ -28,15 +28,19 @@ namespace dftfe
   {
     template <typename T>
     unsigned int
-    pseudoGramSchmidtOrthogonalization(elpaScalaManager &   elpaScala,
-                                       T *                  X,
-                                       const unsigned int   numberVectors,
-                                       const unsigned int   numLocalDofs,
-                                       const MPI_Comm &     mpiCommParent,
-                                       const MPI_Comm &     interBandGroupComm,
-                                       const MPI_Comm &     mpiComm,
-                                       const bool           useMixedPrec,
-                                       const dftParameters &dftParams)
+    pseudoGramSchmidtOrthogonalization(
+      elpaScalaManager &elpaScala,
+      const std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        &                  BLASWrapperPtr,
+      T *                  X,
+      const unsigned int   numberVectors,
+      const unsigned int   numLocalDofs,
+      const MPI_Comm &     mpiCommParent,
+      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm &     mpiComm,
+      const bool           useMixedPrec,
+      const dftParameters &dftParams)
 
     {
       dealii::ConditionalOStream pcout(
@@ -70,10 +74,11 @@ namespace dftfe
 
       // SConj=X^{T}*XConj with X^{T} stored in the column
       // major format
-      if (!(dftParams.useMixedPrecCGS_O && useMixedPrec))
+      if (!(dftParams.useMixedPrecXtOX && useMixedPrec))
         {
           computing_timer.enter_subsection("Fill overlap matrix CGS");
           internal::fillParallelOverlapMatrix(X,
+                                              BLASWrapperPtr,
                                               numberVectors * numLocalDofs,
                                               numberVectors,
                                               processGrid,
@@ -91,6 +96,7 @@ namespace dftfe
             internal::fillParallelOverlapMatrixMixedPrec<T,
                                                          std::complex<float>>(
               X,
+              BLASWrapperPtr,
               numberVectors * numLocalDofs,
               numberVectors,
               processGrid,
@@ -101,6 +107,7 @@ namespace dftfe
           else
             internal::fillParallelOverlapMatrixMixedPrec<T, float>(
               X,
+              BLASWrapperPtr,
               numberVectors * numLocalDofs,
               numberVectors,
               processGrid,
@@ -218,6 +225,7 @@ namespace dftfe
         {
           computing_timer.enter_subsection("Subspace rotation CGS");
           internal::subspaceRotation(X,
+                                     BLASWrapperPtr,
                                      numberVectors * numLocalDofs,
                                      numberVectors,
                                      processGrid,
@@ -235,6 +243,7 @@ namespace dftfe
           if (std::is_same<T, std::complex<double>>::value)
             internal::subspaceRotationCGSMixedPrec<T, std::complex<float>>(
               X,
+              BLASWrapperPtr,
               numberVectors * numLocalDofs,
               numberVectors,
               processGrid,
@@ -245,6 +254,7 @@ namespace dftfe
               false);
           else
             internal::subspaceRotationCGSMixedPrec<T, float>(X,
+                                                             BLASWrapperPtr,
                                                              numberVectors *
                                                                numLocalDofs,
                                                              numberVectors,

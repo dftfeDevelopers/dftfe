@@ -215,7 +215,8 @@ namespace dftfe
       unsigned int &             totalAtomsInCurrentProcessor,
       unsigned int &             totalNonLocalElements,
       std::vector<unsigned int> &numberCellsForEachAtom,
-      std::vector<unsigned int> &numberCellsAccumNonLocalAtoms)
+      std::vector<unsigned int> &numberCellsAccumNonLocalAtoms,
+      std::vector<unsigned int> &iElemNonLocalToElemIndexMap)
   {
     totalAtomsInCurrentProcessor = d_AtomIdsInCurrentProcess.size();
     numberCellsAccumNonLocalAtoms.clear();
@@ -238,6 +239,22 @@ namespace dftfe
         numberCellsAccumNonLocalAtoms[iAtom] = totalNonLocalElements;
         totalNonLocalElements += numberElementsInCompactSupport;
         numberCellsForEachAtom[iAtom] = numberElementsInCompactSupport;
+      }
+    iElemNonLocalToElemIndexMap.clear();
+    iElemNonLocalToElemIndexMap.resize(totalNonLocalElements, 0);
+    offset = 0;
+    for (unsigned int iAtom = 0; iAtom < totalAtomsInCurrentProcessor; iAtom++)
+      {
+        unsigned int atomId = d_AtomIdsInCurrentProcess[iAtom];
+
+        const unsigned int numberElementsInCompactSupport =
+          d_elementIndexesInAtomCompactSupport[atomId].size();
+        for (int iElem = 0; iElem < numberElementsInCompactSupport; iElem++)
+          {
+            iElemNonLocalToElemIndexMap[offset] =
+              d_elementIndexesInAtomCompactSupport[atomId][iElem];
+            offset++;
+          }
       }
   }
 

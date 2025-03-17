@@ -29,7 +29,6 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_rhoOut(
-    const bool isConsiderSpectrumSplitting,
     const bool isGroundState)
   {
     bool isGradDensityDataDependent =
@@ -40,7 +39,7 @@ namespace dftfe
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
-        computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
+        computeRhoNodalFromPSI();
 
         // normalize rho
         const double charge =
@@ -101,9 +100,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice)
           computeRhoFromPSI(&d_eigenVectorsFlattenedDevice,
-                            &d_eigenVectorsRotFracFlattenedDevice,
                             d_numEigenValues,
-                            d_numEigenValuesRR,
                             eigenValues,
                             fermiEnergy,
                             fermiEnergyUp,
@@ -119,15 +116,11 @@ namespace dftfe
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
-                            *d_dftParamsPtr,
-                            isConsiderSpectrumSplitting &&
-                              d_numEigenValues != d_numEigenValuesRR);
+                            *d_dftParamsPtr);
 #endif
         if (!d_dftParamsPtr->useDevice)
           computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
-                            &d_eigenVectorsRotFracDensityFlattenedHost,
                             d_numEigenValues,
-                            d_numEigenValuesRR,
                             eigenValues,
                             fermiEnergy,
                             fermiEnergyUp,
@@ -143,14 +136,12 @@ namespace dftfe
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
-                            *d_dftParamsPtr,
-                            isConsiderSpectrumSplitting &&
-                              d_numEigenValues != d_numEigenValuesRR);
+                            *d_dftParamsPtr);
         // normalizeRhoOutQuadValues();
 
         if (d_dftParamsPtr->computeEnergyEverySCF || isGroundState)
           {
-            computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
+            computeRhoNodalFromPSI();
 
             // normalize rho
             const double charge =
@@ -283,8 +274,7 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeRhoNodalFromPSI(
-    bool isConsiderSpectrumSplitting)
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeRhoNodalFromPSI()
   {
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -338,9 +328,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     if (d_dftParamsPtr->useDevice)
       computeRhoFromPSI(&d_eigenVectorsFlattenedDevice,
-                        &d_eigenVectorsRotFracFlattenedDevice,
                         d_numEigenValues,
-                        d_numEigenValuesRR,
                         eigenValues,
                         fermiEnergy,
                         fermiEnergyUp,
@@ -356,15 +344,11 @@ namespace dftfe
                         d_mpiCommParent,
                         interpoolcomm,
                         interBandGroupComm,
-                        *d_dftParamsPtr,
-                        isConsiderSpectrumSplitting &&
-                          d_numEigenValues != d_numEigenValuesRR);
+                        *d_dftParamsPtr);
 #endif
     if (!d_dftParamsPtr->useDevice)
       computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
-                        &d_eigenVectorsRotFracDensityFlattenedHost,
                         d_numEigenValues,
-                        d_numEigenValuesRR,
                         eigenValues,
                         fermiEnergy,
                         fermiEnergyUp,
@@ -380,9 +364,7 @@ namespace dftfe
                         d_mpiCommParent,
                         interpoolcomm,
                         interBandGroupComm,
-                        *d_dftParamsPtr,
-                        isConsiderSpectrumSplitting &&
-                          d_numEigenValues != d_numEigenValuesRR);
+                        *d_dftParamsPtr);
 
     // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
     dealii::DoFHandler<3>::active_cell_iterator cellP = d_dofHandlerRhoNodal

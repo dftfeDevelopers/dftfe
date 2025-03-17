@@ -114,8 +114,7 @@ namespace dftfe
 
     std::string  startingWFCType;
     bool         restrictToOnePass;
-    unsigned int numCoreWfcRR;
-    unsigned int numCoreWfcXtHX;
+    unsigned int numCoreWfcForMixedPrecRR;
     unsigned int wfcBlockSize;
     unsigned int chebyWfcBlockSize;
     unsigned int subspaceRotDofsBlockSize;
@@ -131,11 +130,10 @@ namespace dftfe
     double       mpiAllReduceMessageBlockSizeMB;
     bool         useSubspaceProjectedSHEPGPU;
     bool         useMixedPrecCGS_SR;
-    bool         useMixedPrecCGS_O;
-    bool         useMixedPrecXTHXSpectrumSplit;
+    bool         useMixedPrecXtOX;
+    bool         useMixedPrecXtHX;
     bool         useMixedPrecSubspaceRotRR;
-    bool         useMixedPrecCommunOnlyXTHXCGSO;
-    unsigned int spectrumSplitStartingScfIter;
+    bool         useMixedPrecCommunOnlyXtHXXtOX;
     bool         useELPA;
     bool         constraintsParallelCheck;
     bool         createConstraintsFromSerialDofhandler;
@@ -177,7 +175,8 @@ namespace dftfe
     unsigned int highestStateOfInterestForChebFiltering;
     bool         useELPADeviceKernel;
     bool         memOptMode;
-
+    bool         approxOverlapMatrix;
+    bool         useReformulatedChFSI;
 
     unsigned int dc_dispersioncorrectiontype;
     unsigned int dc_d3dampingtype;

@@ -37,7 +37,7 @@ Initialising Velocities of species no: 0 mass in amu: 1.400000000000000000e+01Ve
 Starting SCF iterations....
 Checkpointing tria info and rho data in progress...
 ...checkpointing done.
-SCF iterations converged to the specified tolerance after: 8 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -45,8 +45,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290858,0.000000,0.000000
-AtomId    1:  0.290822,0.000000,0.000000
+AtomId    0:  0.290839,0.000000,0.000000
+AtomId    1:  0.290839,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 0 ------------------ 
  Temperature from velocities: 300.00
@@ -73,11 +73,11 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78599333
+             Total energy:         -19.78599332
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290901,0.000519,0.000509
+AtomId    0:  0.290902,0.000519,0.000509
 AtomId    1:  0.290901,0.000519,0.000509
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 1 ------------------ 
@@ -104,12 +104,12 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78841762
+             Total energy:         -19.78841761
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
 AtomId    0:  0.290496,0.001037,0.001017
-AtomId    1:  0.290496,0.001037,0.001017
+AtomId    1:  0.290495,0.001037,0.001017
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 2 ------------------ 
  Temperature from velocities: 727.39

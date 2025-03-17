@@ -30,7 +30,10 @@ srun ./dftfe parameterFileMg2x_9.prm > outputMg2x_9
 srun ./dftfe parameterFileMg2x_10.prm > outputMg2x_10
 srun ./dftfe parameterFileBe.prm > outputBe
 srun ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard
+srun ./dftfe parameterFileTiAl_mixedPrec.prm > outputTiAl_hubbard_mixedPrec_mpi6
 srun ./dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
 srun ./dftfe parameterFileFeCuPt2_pdos.prm > outputFeCuPt2_pdos
 srun ./dftfe parameterFileBccFe_scf.prm > outputBccFe_scf
 srun ./dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
+srun ./dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
+srun ./dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix

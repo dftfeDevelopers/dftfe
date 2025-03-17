@@ -103,6 +103,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt MEM OPT MODE}
+\phantomsection\label{parameters:MEM OPT MODE}
+\label{parameters:MEM_20OPT_20MODE}
+
+
+\index[prmindex]{MEM OPT MODE}
+\index[prmindexfull]{MEM OPT MODE}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Adavanced] Uses algorithms which have lower peak memory but with a marginal performance degradation. Default: true.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt REPRODUCIBLE OUTPUT}
 \phantomsection\label{parameters:REPRODUCIBLE OUTPUT}
 \label{parameters:REPRODUCIBLE_20OUTPUT}
@@ -134,23 +151,6 @@
 
 
 {\it Description:} [Standard] Write ground-state atomistics data to a file (structureEnergyForcesGSData*.txt) with the suffix number in the file-name denoting the geometry relaxation step number. Order: number of atoms, lattice vectors (see format for DOMAIN BOUNDING VECTORS), structure, electronic free energy, internal energy, ionic forces and finally the cell stress. Structure format is four columns with the first column being atomic number and the next three columns in fractional coordinates for periodic and semi-periodic systems and Cartesian coordinates with origin at the domain center for non-periodic systems. Ionic forces are negative of gradient of DFT free energy with respect to ionic positions with the first, second and third column in each row corresponding to the x,y and z components. Cell stress is negative of gradient of the DFT free energy with respect to affine strain components scaled by volume. Cell stress is printed as sigma\_{ij} with i denoting the row index and j denoting the column index of the stress tensor. Atomic units are used everywhere. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt MEM OPT MODE}
-\phantomsection\label{parameters:MEM OPT MODE}
-\label{parameters:MEM_20OPT_20MODE}
-
-
-\index[prmindex]{MEM OPT MODE}
-\index[prmindexfull]{MEM OPT MODE}
-{\it Value:} true
-
-
-{\it Default:} true
-
-
-{\it Description:} [Advanced] Uses algorithms which have lower peak memory but with a marginal performance degradation. Default: true.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -213,6 +213,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt MULTIPOLE BOUNDARY CONDITIONS}
+\phantomsection\label{parameters:Boundary conditions/MULTIPOLE BOUNDARY CONDITIONS}
+\label{parameters:Boundary_20conditions/MULTIPOLE_20BOUNDARY_20CONDITIONS}
+
+
+\index[prmindex]{MULTIPOLE BOUNDARY CONDITIONS}
+\index[prmindexfull]{Boundary conditions!MULTIPOLE BOUNDARY CONDITIONS}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Flag to set point wise multipole boundary conditions (upto quadrupole term) for non-periodic systems.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt PERIODIC1}
 \phantomsection\label{parameters:Boundary conditions/PERIODIC1}
 \label{parameters:Boundary_20conditions/PERIODIC1}
@@ -220,7 +237,7 @@
 
 \index[prmindex]{PERIODIC1}
 \index[prmindexfull]{Boundary conditions!PERIODIC1}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -237,7 +254,7 @@
 
 \index[prmindex]{PERIODIC2}
 \index[prmindexfull]{Boundary conditions!PERIODIC2}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -254,7 +271,7 @@
 
 \index[prmindex]{PERIODIC3}
 \index[prmindexfull]{Boundary conditions!PERIODIC3}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -278,23 +295,6 @@
 
 
 {\it Description:} [Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt MULTIPOLE BOUNDARY CONDITIONS}
-\phantomsection\label{parameters:Boundary conditions/MULTIPOLE BOUNDARY CONDITIONS}
-\label{parameters:Boundary_20conditions/MULTIPOLE_20BOUNDARY_20CONDITIONS}
-
-
-\index[prmindex]{MULTIPOLE BOUNDARY CONDITIONS}
-\index[prmindexfull]{Boundary conditions!MULTIPOLE BOUNDARY CONDITIONS}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Flag to set point wise multipole boundary conditions (upto quadrupole term) for non-periodic systems.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -505,37 +505,21 @@
 \label{parameters:DFT_20functional_20parameters}
 
 \begin{itemize}
-\item {\it Parameter name:} {\tt EXCHANGE CORRELATION TYPE}
-\phantomsection\label{parameters:DFT functional parameters/EXCHANGE CORRELATION TYPE}
-\label{parameters:DFT_20functional_20parameters/EXCHANGE_20CORRELATION_20TYPE}
+\item {\it Parameter name:} {\tt AUX BASIS DATA}
+\phantomsection\label{parameters:DFT functional parameters/AUX BASIS DATA}
+\label{parameters:DFT_20functional_20parameters/AUX_20BASIS_20DATA}
 
 
-\index[prmindex]{EXCHANGE CORRELATION TYPE}
-\index[prmindexfull]{DFT functional parameters!EXCHANGE CORRELATION TYPE}
-{\it Value:} GGA-PBE
-
-
-{\it Default:} GGA-PBE
-
-
-{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental. Add +U at the end for Hubbard corrections.
-
-
-{\it Possible values:} Any one of LDA-PZ, LDA-PW, LDA-VWN, GGA-PBE, GGA-RPBE, GGA-LBxPBEc, MLXC-NNLDA, MLXC-NNGGA, and MLXC-NNLLMGGA, LDA-PZ+U, LDA-PW+U, LDA-VWN+U, GGA-PBE+U, GGA-RPBE+U, GGA-LBxPBEc+U, MLXC-NNLDA+U, MLXC-NNGGA+U, and MLXC-NNLLMGGA+U.
-\item {\it Parameter name:} {\tt MODEL XC INPUT FILE}
-\phantomsection\label{parameters:DFT functional parameters/MODEL XC INPUT FILE}
-\label{parameters:DFT_20functional_20parameters/MODEL_20XC_20INPUT_20FILE}
-
-
-\index[prmindex]{MODEL XC INPUT FILE}
-\index[prmindexfull]{DFT functional parameters!MODEL XC INPUT FILE}
+\index[prmindex]{AUX BASIS DATA}
+\index[prmindexfull]{DFT functional parameters!AUX BASIS DATA}
 {\it Value:} 
 
 
 {\it Default:} 
 
 
-{\it Description:} [Developer] File that contains both the pytorch MLXC NN model (.ptc file) and the tolerances. This is an experimental feature to test out any new XC functional developed using machine learning.
+{\it Description:} [Developer] File that contains additional information for the Auxiliary basis selected in AUX BASIS TYPE.
+
 
 {\it Possible values:} Any string
 \item {\it Parameter name:} {\tt AUX BASIS TYPE}
@@ -554,21 +538,39 @@
 {\it Description:} [Developer] Auxiliary basis for projecting the Kohn-Sham density or density matrix for XC evaluation. FE is the default option.
 
 
-{\it Possible values:} Any one of FE, SLATER, and PW
-\item {\it Parameter name:} {\tt AUX BASIS DATA}
-\phantomsection\label{parameters:DFT functional parameters/AUX BASIS DATA}
-\label{parameters:DFT_20functional_20parameters/AUX_20BASIS_20DATA}
+{\it Possible values:} Any one of FE, SLATER, PW
+\item {\it Parameter name:} {\tt EXCHANGE CORRELATION TYPE}
+\phantomsection\label{parameters:DFT functional parameters/EXCHANGE CORRELATION TYPE}
+\label{parameters:DFT_20functional_20parameters/EXCHANGE_20CORRELATION_20TYPE}
 
 
-\index[prmindex]{AUX BASIS DATA}
-\index[prmindexfull]{DFT functional parameters!AUX BASIS DATA}
+\index[prmindex]{EXCHANGE CORRELATION TYPE}
+\index[prmindexfull]{DFT functional parameters!EXCHANGE CORRELATION TYPE}
+{\it Value:} GGA-PBE
+
+
+{\it Default:} GGA-PBE
+
+
+{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental. Add +U to use hubbard correction
+
+
+{\it Possible values:} Any one of LDA-PZ, LDA-PW, LDA-VWN, GGA-PBE, GGA-RPBE, GGA-LBxPBEc, MLXC-NNLDA, MLXC-NNGGA, MLXC-NNLLMGGA, LDA-PZ+U, LDA-PW+U, LDA-VWN+U, GGA-PBE+U, GGA-RPBE+U, GGA-LBxPBEc+U, MLXC-NNLDA+U, MLXC-NNGGA+U, MLXC-NNLLMGGA+U
+\item {\it Parameter name:} {\tt MODEL XC INPUT FILE}
+\phantomsection\label{parameters:DFT functional parameters/MODEL XC INPUT FILE}
+\label{parameters:DFT_20functional_20parameters/MODEL_20XC_20INPUT_20FILE}
+
+
+\index[prmindex]{MODEL XC INPUT FILE}
+\index[prmindexfull]{DFT functional parameters!MODEL XC INPUT FILE}
 {\it Value:} 
 
 
 {\it Default:} 
 
 
-{\it Description:} [Developer] File that contains additional information for the Auxiliary basis selected in AUX BASIS TYPE.
+{\it Description:} [Developer] File that contains both the pytorch MLXC NN model (.ptc file) and the tolerances. This is an experimental feature to test out any new XC functional developed using machine learning.
+
 
 {\it Possible values:} Any string
 \item {\it Parameter name:} {\tt NET CHARGE}
@@ -578,16 +580,16 @@
 
 \index[prmindex]{NET CHARGE}
 \index[prmindexfull]{DFT functional parameters!NET CHARGE}
-{\it Value:} 0
+{\it Value:} 0.0
 
 
-{\it Default:} 0
+{\it Default:} 0.0
 
 
 {\it Description:} [Standard] Net charge of the system in atomic units, positive quantity implies addition of electrons. In case of non-periodic boundary conditions, this capability is implemented using multipole Dirichlet inhomogeneous boundary conditions for the electrostatics. In case of periodic and semi-periodic conditions a uniform background charge is used to create a neutral system.
 
 
-{\it Possible values:}  A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
 \item {\it Parameter name:} {\tt PSEUDOPOTENTIAL CALCULATION}
 \phantomsection\label{parameters:DFT functional parameters/PSEUDOPOTENTIAL CALCULATION}
 \label{parameters:DFT_20functional_20parameters/PSEUDOPOTENTIAL_20CALCULATION}
@@ -689,22 +691,21 @@
 {\it Description:} [Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x Number of electrons) a.u. 
 
 
-{\it Possible values:} A floating point number $v$ such that $-1.0 \leq v \leq 1.0$
+{\it Possible values:} A floating point number $v$ such that $-1 \leq v \leq 1$
 \end{itemize}
+
+
 
 \subsection{Parameters in section \tt DFT functional parameters/CONFINING POTENTIAL parameters}
 \label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters}
 
 \begin{itemize}
-
 \item {\it Parameter name:} {\tt APPLY CONFINING POTENTIAL}
 \phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/APPLY CONFINING POTENTIAL}
 \label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/APPLY_20CONFINING_20POTENTIAL}
 
 
 \index[prmindex]{APPLY CONFINING POTENTIAL}
-
-
 \index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!APPLY CONFINING POTENTIAL}
 {\it Value:} false
 
@@ -712,78 +713,16 @@
 {\it Default:} false
 
 
-{\it Description:} [Advanced]  [Advanced] Boolean operator to apply confining potential. Usually required for anionic charges.
-            The confining potential is applied between maxDist + r1 and maxDist + r2. Where maxDist is the maximum distance of atoms from the center. r1 and r2 is the INNER and OUTER radii respectively. Between 0 and maxdist + r1: V(r) = 0; Between maxdist + r1 and maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(dist2*dist2 + 1E-6); Beyond maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(1E-6); where dist1 = r - (maxdist + r1) and dist2 = (maxdist + r2) - r
+{\it Description:} [Advanced] Apply confining potential. Usually required for anionic charges.The confining potential is applied between maxDist + r1 and maxDist + r2. Where maxDist is the maximum distance of atoms from the center. r1 and r2 is the INNER and OUTER radii respectively.Between 0 and maxdist + r1: V(r) = 0;Between maxdist + r1 and maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(dist2*dist2 + 1E-6);Beyond maxdist + r2: V(r) = (C*exp(-W/(dist1)))/(1E-6);where dist1 = r - (maxdist + r1) and dist2 = (maxdist + r2) - r
 
 
 {\it Possible values:} A boolean value (true or false)
-
-\item {\it Parameter name:} {\tt INNER RADIUS}
-\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/INNER RADIUS}
-\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/INNER_20RADIUS}
-
-
-\index[prmindex]{INNER RADIUS}
-
-
-\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!INNER RADIUS}
-{\it Value:} 17.0
-
-
-{\it Default:} 17.0
-
-
-{\it Description:} [Advanced] The inner radius (r1) for the confining potential.
-
-
-{\it Possible values:} A floating point number between $0$ and $100.0$
-
-
-\item {\it Parameter name:} {\tt OUTER RADIUS}
-\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/OUTER RADIUS}
-\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/OUTER_20RADIUS}
-
-
-\index[prmindex]{OUTER RADIUS}
-
-
-\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!OUTER RADIUS}
-{\it Value:} 20.0
-
-
-{\it Default:} 20.0
-
-
-{\it Description:} [Advanced] The outer radius (r1) for the confining potential.
-
-
-{\it Possible values:} A floating point number between $0$ and $100.0$
-
-\item {\it Parameter name:} {\tt W PARAM}
-\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/W PARAM}
-\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/W_20PARAM}
-
-
-\index[prmindex]{W PARAM}
-
-
-\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!W PARAM}
-{\it Value:} 1.0
-
-
-{\it Default:} 1.0
-
-
-{\it Description:} [Advanced] The W parameter for the confining potential.
-
 \item {\it Parameter name:} {\tt C PARAM}
 \phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/C PARAM}
 \label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/C_20PARAM}
 
 
 \index[prmindex]{C PARAM}
-
-
 \index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!C PARAM}
 {\it Value:} 1.0
 
@@ -794,10 +733,59 @@
 {\it Description:} [Advanced] The C parameter for the confining potential.
 
 
-{\it Possible values:} A floating point number between $0$ and $100.0$
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 100$
+\item {\it Parameter name:} {\tt INNER RADIUS}
+\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/INNER RADIUS}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/INNER_20RADIUS}
 
+
+\index[prmindex]{INNER RADIUS}
+\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!INNER RADIUS}
+{\it Value:} 17.0
+
+
+{\it Default:} 17.0
+
+
+{\it Description:} [Advanced] The inner radius (r1) for the confining potential.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 100$
+\item {\it Parameter name:} {\tt OUTER RADIUS}
+\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/OUTER RADIUS}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/OUTER_20RADIUS}
+
+
+\index[prmindex]{OUTER RADIUS}
+\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!OUTER RADIUS}
+{\it Value:} 20.0
+
+
+{\it Default:} 20.0
+
+
+{\it Description:} [Advanced] The outer radius (r2) for the confining potential.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 100$
+\item {\it Parameter name:} {\tt W PARAM}
+\phantomsection\label{parameters:DFT functional parameters/CONFINING POTENTIAL parameters/W PARAM}
+\label{parameters:DFT_20functional_20parameters/CONFINING_20POTENTIAL_20parameters/W_20PARAM}
+
+
+\index[prmindex]{W PARAM}
+\index[prmindexfull]{DFT functional parameters!CONFINING POTENTIAL parameters!W PARAM}
+{\it Value:} 1.0
+
+
+{\it Default:} 1.0
+
+
+{\it Description:} [Advanced] The W parameter for the confining potential.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 100$
 \end{itemize}
-
 
 \subsection{Parameters in section \tt DFT functional parameters/Dispersion Correction}
 \label{parameters:DFT_20functional_20parameters/Dispersion_20Correction}
@@ -941,29 +929,28 @@
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
 \end{itemize}
 
-
-\subsection{Parameters in section \tt Hubbard Parameters}
-\label{parameters:Hubbard}
+\subsection{Parameters in section \tt DFT functional parameters/Hubbard Parameters}
+\label{parameters:DFT_20functional_20parameters/Hubbard_20Parameters}
 
 \begin{itemize}
 \item {\it Parameter name:} {\tt HUBBARD PARAMETERS FILE}
-\phantomsection\label{parameters:Hubbard Parameters/HUBBARD PARAMETERS FILE}
-\label{parameters:Hubbard/HUBBARD_PARAMETERS_FILE}
+\phantomsection\label{parameters:DFT functional parameters/Hubbard Parameters/HUBBARD PARAMETERS FILE}
+\label{parameters:DFT_20functional_20parameters/Hubbard_20Parameters/HUBBARD_20PARAMETERS_20FILE}
+
+
 \index[prmindex]{HUBBARD PARAMETERS FILE}
-\index[prmindexfull]{Hubbard Parameters!HUBBARD PARAMETERS FILE} \\
-{\it Value:} \\
-{\it Default:}\\
-{\it Description:} [Standard] Name of the file containing hubbard parameters. This file describes the orbitals and the hubbard U parameter for each hubbard species.  A sample file for Pt-Au dimer is as follows: \\ 3 (row1 - number of hubbard species, The ID 0 is reserved for atoms with no hubbard correction )\\
-0 0 (row2 - Hubbard species Id and the corresponding number of orbitals)\\ 1 78 0.110248 1 9.0 (row3 - hubbard species Id corresponding to Pt, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)\\
-5 2 (row4 - the Quantum number n and Quantum number l of the orbital)\\
-2 79 0.1469976 1 10.0 (row3 - hubbard species Id corresponding to Au, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)\\
-5 2 (row4 - the Quantum number n and Quantum number l of the orbital)\\
-78 1 (row5 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file.)\\
-79 2 (row6 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file)\\
+\index[prmindexfull]{DFT functional parameters!Hubbard Parameters!HUBBARD PARAMETERS FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Standard] Name of the file containing hubbard parameters. This file describes the orbitals and the hubbard U parameter for each hubbard species. A sample file for Pt-Au dimer is as follows:  3 (row1 - number of hubbard species, The ID 0 is reserved for atoms with no hubbard correction ),0 0 (row2 - Hubbard species Id and the corresponding number of orbitals1 78 0.110248 1 9.0 (row3 - hubbard species Id corresponding to Pt, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)5 2 (row4 - the Quantum number n and Quantum number l of the orbital)2 79 0.1469976 1 10.0 (row3 - hubbard species Id corresponding to Au, Atomic number, Hubbard U parameter in Ha, Number of orbitals on which the hubbard correction is applied (5D in this case), The initial occupancy of the orbitals)5 2 (row4 - the Quantum number n and Quantum number l of the orbital)78 1 (row5 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file79 2 (row6 - the atomic number and the corresponding hubbard species Id. The list has to be copied from the coordinates file
+
 
 {\it Possible values:} Any string
 \end{itemize}
-
 
 \subsection{Parameters in section \tt Finite element mesh parameters}
 \label{parameters:Finite_20element_20mesh_20parameters}
@@ -976,7 +963,7 @@
 
 \index[prmindex]{POLYNOMIAL ORDER}
 \index[prmindexfull]{Finite element mesh parameters!POLYNOMIAL ORDER}
-{\it Value:} 6
+{\it Value:} 7
 
 
 {\it Default:} 6
@@ -1018,7 +1005,7 @@
 
 \index[prmindex]{ATOM BALL RADIUS}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!ATOM BALL RADIUS}
-{\it Value:} 0.0
+{\it Value:} 4
 
 
 {\it Default:} 0.0
@@ -1164,6 +1151,23 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt MESH SIZES FILE}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/MESH SIZES FILE}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/MESH_20SIZES_20FILE}
+
+
+\index[prmindex]{MESH SIZES FILE}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZES FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} [Developer] Use mesh sizes from this file.
+
+
+{\it Possible values:} Any string
 \item {\it Parameter name:} {\tt MESH SIZE AROUND ATOM}
 \phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/MESH SIZE AROUND ATOM}
 \label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/MESH_20SIZE_20AROUND_20ATOM}
@@ -1171,7 +1175,7 @@
 
 \index[prmindex]{MESH SIZE AROUND ATOM}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZE AROUND ATOM}
-{\it Value:} 1.0
+{\it Value:} 1.4
 
 
 {\it Default:} 1.0
@@ -1266,20 +1270,26 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt MESH SIZES FILE}
-\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/MESH SIZES FILE}
-\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/MESH_20SIZES_20FILE}
+\end{itemize}
+
+\subsection{Parameters in section \tt FunctionalTest}
+\label{parameters:FunctionalTest}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt TEST NAME}
+\phantomsection\label{parameters:FunctionalTest/TEST NAME}
+\label{parameters:FunctionalTest/TEST_20NAME}
 
 
-\index[prmindex]{MESH SIZES FILE}
-\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZES FILE}
-{\it Value:}
+\index[prmindex]{TEST NAME}
+\index[prmindexfull]{FunctionalTest!TEST NAME}
+{\it Value:} 
 
 
-{\it Default:}
+{\it Default:} 
 
 
-{\it Description:} [Developer] Use mesh sizes from this file.
+{\it Description:} [Standard] Name of the Functional test that needs to be run.
 
 
 {\it Possible values:} Any string
@@ -1313,7 +1323,7 @@
 
 \index[prmindex]{FINE GRAINED GPU TIMINGS}
 \index[prmindexfull]{GPU!FINE GRAINED GPU TIMINGS}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -1438,7 +1448,7 @@
 
 \index[prmindex]{DOMAIN VECTORS FILE}
 \index[prmindexfull]{Geometry!DOMAIN VECTORS FILE}
-{\it Value:} domainBoundingVectors.inp
+{\it Value:} domainVectors.inp
 
 
 {\it Default:} 
@@ -1454,7 +1464,7 @@
 
 \index[prmindex]{NATOMS}
 \index[prmindexfull]{Geometry!NATOMS}
-{\it Value:} 1
+{\it Value:} 192
 
 
 {\it Default:} 0
@@ -1471,7 +1481,7 @@
 
 \index[prmindex]{NATOM TYPES}
 \index[prmindexfull]{Geometry!NATOM TYPES}
-{\it Value:} 1
+{\it Value:} 4
 
 
 {\it Default:} 0
@@ -1547,7 +1557,7 @@
 
 \index[prmindex]{CELL STRESS}
 \index[prmindexfull]{Geometry!Optimization!CELL STRESS}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -1581,7 +1591,7 @@
 
 \index[prmindex]{ION FORCE}
 \index[prmindexfull]{Geometry!Optimization!ION FORCE}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -2191,12 +2201,80 @@
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+\item {\it Parameter name:} {\tt VSELF GPU MODE}
+\phantomsection\label{parameters:Poisson problem parameters/VSELF GPU MODE}
+\label{parameters:Poisson_20problem_20parameters/VSELF_20GPU_20MODE}
+
+
+\index[prmindex]{VSELF GPU MODE}
+\index[prmindexfull]{Poisson problem parameters!VSELF GPU MODE}
+{\it Value:} true
+
+
+{\it Default:} true
+
+
+{\it Description:} [Advanced] Toggle GPU MODE in vself Poisson solve.
+
+
+{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 \subsection{Parameters in section \tt Post-processing Options}
 \label{parameters:Post_2dprocessing_20Options}
 
 \begin{itemize}
+\item {\it Parameter name:} {\tt DELTA ENERGY}
+\phantomsection\label{parameters:Post_2dprocessing Options/DELTA ENERGY}
+\label{parameters:Post_2dprocessing_20Options/DELTA_20ENERGY}
+
+
+\index[prmindex]{DELTA ENERGY}
+\index[prmindexfull]{Post-processing Options!DELTA ENERGY}
+{\it Value:} 0.01
+
+
+{\it Default:} 0.01
+
+
+{\it Description:} [standard] Interval size of energy spectrum (in eV), for DOS, PDOS and LDOS calculation
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt DOS SMEAR TEMPERATURE}
+\phantomsection\label{parameters:Post_2dprocessing Options/DOS SMEAR TEMPERATURE}
+\label{parameters:Post_2dprocessing_20Options/DOS_20SMEAR_20TEMPERATURE}
+
+
+\index[prmindex]{DOS SMEAR TEMPERATURE}
+\index[prmindexfull]{Post-processing Options!DOS SMEAR TEMPERATURE}
+{\it Value:} 500
+
+
+{\it Default:} 500
+
+
+{\it Description:} [standard] Gaussian smearing temperature (in K) for DOS, PDOS and LDOS calculation
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt PRINT KINETIC ENERGY}
+\phantomsection\label{parameters:Post_2dprocessing Options/PRINT KINETIC ENERGY}
+\label{parameters:Post_2dprocessing_20Options/PRINT_20KINETIC_20ENERGY}
+
+
+\index[prmindex]{PRINT KINETIC ENERGY}
+\index[prmindexfull]{Post-processing Options!PRINT KINETIC ENERGY}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Prints the Kinetic energy of the electrons.  Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt READ ATOMIC WFC PDOS FROM PSP FILE}
 \phantomsection\label{parameters:Post_2dprocessing Options/READ ATOMIC WFC PDOS FROM PSP FILE}
 \label{parameters:Post_2dprocessing_20Options/READ_20ATOMIC_20WFC_20PDOS_20FROM_20PSP_20FILE}
@@ -2227,7 +2305,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. If it is set to true, Fermi energy is obtained from "fermiEnergy.out" file, created from previous GS calculation with "SAVE RHO DATA" set to true. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 4 columns with first column indicating the k-point index, second column indicating band index, third column indicating corresponding eigenvalue and fourth column indicating the corresponding occupation number.
+{\it Description:} [Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. If it is set to true, Fermi energy is obtained from 'fermiEnergy.out' file, created from previous GS calculation with 'SAVE RHO DATA' set to true. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 4 columns with first column indicating the k-point index, second column indicating band index, third column indicating corresponding eigenvalue and fourth column indicating the corresponding occupation number.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2248,25 +2326,6 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-
-\item {\it Parameter name:} {\tt PRINT KINETIC ENERGY}
-\phantomsection\label{parameters:Post_2dprocessing Options/PRINT KINETIC ENERGY}
-\label{parameters:Post_2dprocessing_20Options/PRINT_20KINETIC_20ENERGY}
-
-
-\index[prmindex]{PRINT KINETIC ENERGY}
-\index[prmindexfull]{Post-processing Options!PRINT KINETIC ENERGY}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Computes and prints the Kinetic energy of electrons. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-
 \item {\it Parameter name:} {\tt WRITE DENSITY OF STATES}
 \phantomsection\label{parameters:Post_2dprocessing Options/WRITE DENSITY OF STATES}
 \label{parameters:Post_2dprocessing_20Options/WRITE_20DENSITY_20OF_20STATES}
@@ -2280,7 +2339,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Computes density of states using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file 'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true' in 'GS' calculation.) and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.
+{\it Description:} [Standard] Computes density of states using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true' in 'GS' calculation) and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2347,43 +2406,11 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Computes projected density of states on each atomic orbital using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as the broadening parameter. Outputs files with name format 'pdosData_atom#{atom number}_wfc#{wfc number}({wfc name}).out'. For colinear, spin-unpolarized case, each of these file contain columns with format 'E sumPDOS  PDOS_0 .... PDOS_(2l)', where E: the energy is eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true'in 'GS' calculation),l: azimuthal quantum number, sumPDOS: PDOS_0 + .. +PDOS_(2l).
-For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_down PDOS_0_up PDOS_0_down .... PDOS_(2l)_up PDOS_(2l)_down', where 'up' and 'down' refer to the spin up and spin down case with all other terms having the same meaning as of the spin-unpolarized case.
+{\it Description:} [Standard] Computes projected density of states on each atomic orbital using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as the broadening parameter. Outputs files with name format 'pdosData\_atom\#\{atom number\}\_wfc\#\{wfc number\}(\{wfc name\}).out'. For colinear, spin-unpolarized case, each of these file contain columns with format 'E sumPDOS  PDOS\_0 .... PDOS\_(2l)', where E: the energy is eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file 'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true' in 'GS' calculation), l: azimuthal quantum number, sumPDOS: PDOS\_0 + .. + PDOS\_(2l). 
+For colinear, spin-polarized case, the columns has format 'E sumPDOS\_up sumPDOS\_down PDOS\_0\_up PDOS\_0\_down .... PDOS\_(2l)\_up PDOS\_(2l)\_down', where 'up' and 'down' refer to the spin up and spin down case with all other terms having the same meaning as of the spin-unpolarized case.
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt DOS SMEAR TEMPERATURE}
-\phantomsection\label{parameters:Post_2dprocessing Options/DOS SMEAR TEMPERATURE}
-\label{parameters:Post_2dprocessing_20Options/DOS_20SMEAR_20TEMPERATURE}
-
-
-\index[prmindex]{DOS SMEAR TEMPERATURE}
-\index[prmindexfull]{Post-processing Options!DOS SMEAR TEMPERATURE}
-{\it Value:} 500.0
-
-
-{\it Default:} 500.0
-
-
-{\it Description:}[Standard] Gaussian smearing temperature (in K) for DOS, PDOS and LDOS calculations.
-
-{\it Possible values:} A floating point value
-\item {\it Parameter name:} {\tt DELTA ENERGY}
-\phantomsection\label{parameters:Post_2dprocessing Options/DELTA ENERGY}
-\label{parameters:Post_2dprocessing_20Options/DELTA_20ENERGY}
-
-
-\index[prmindex]{DELTA ENERGY}
-\index[prmindexfull]{Post-processing Options!DELTA ENERGY}
-{\it Value:} 0.01
-
-
-{\it Default:} 0.01
-
-
-{\it Description:}[Standard]  Interval size of energy spectrum (in eV), for DOS, PDOS and LDOS calculation.
-
-{\it Possible values:} A floating point value
 \item {\it Parameter name:} {\tt WRITE WFC FE MESH}
 \phantomsection\label{parameters:Post_2dprocessing Options/WRITE WFC FE MESH}
 \label{parameters:Post_2dprocessing_20Options/WRITE_20WFC_20FE_20MESH}
@@ -2454,7 +2481,7 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 {\it Default:} false
 
 
-{\it Description:} [Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve. If the value is "true", the SOLVER MODE is GS and if the SCF loop converges, an outputfile "fermiEnergy.out" is written that contains the fermi energy in the units of Ha. This Fermi energy is used when "WRITE BANDS" is true.
+{\it Description:} [Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve. If the value is 'true', the SOLVER MODE is GS and if the SCF loop converges, an outputfile 'fermiEnergy.out' is written that contains the fermi energy in the units of Ha. This Fermi energy is used when 'WRITE BANDS' is true
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -2498,23 +2525,6 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE ENERGY RESIDUAL METRIC}
-\phantomsection\label{parameters:SCF parameters/USE ENERGY RESIDUAL METRIC}
-\label{parameters:SCF_20parameters/USE_20ENERGY_20RESIDUAL_20METRIC}
-
-
-\index[prmindex]{USE ENERGY RESIDUAL METRIC}
-\index[prmindexfull]{SCF parameters!USE ENERGY RESIDUAL METRIC}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Advanced] Boolean parameter specifying whether to use the energy residual metric (equation 7.23 of Richard Matrin second edition) for convergence check. Setting it to false can lead to some computational time savings. Default value is false
-
-
-{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt CONSTRAINT MAGNETIZATION}
 \phantomsection\label{parameters:SCF parameters/CONSTRAINT MAGNETIZATION}
 \label{parameters:SCF_20parameters/CONSTRAINT_20MAGNETIZATION}
@@ -2532,6 +2542,23 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt ENERGY TOLERANCE}
+\phantomsection\label{parameters:SCF parameters/ENERGY TOLERANCE}
+\label{parameters:SCF_20parameters/ENERGY_20TOLERANCE}
+
+
+\index[prmindex]{ENERGY TOLERANCE}
+\index[prmindexfull]{SCF parameters!ENERGY TOLERANCE}
+{\it Value:} 1e-07
+
+
+{\it Default:} 1e-07
+
+
+{\it Description:} [Standard] SCF iterations stopping tolerance in terms of difference between Harris-Foulkes and Kohn-Sham energies. The default tolerance of is set to a tight value of 1e-7 for accurate ionic forces and cell stresses keeping structural optimization and molecular dynamics in mind. A tolerance of 1e-6 would be accurate enough for calculations without structural optimization and dynamics.
+
+
+{\it Possible values:} A floating point number $v$ such that $1e-12 \leq v \leq 1$
 \item {\it Parameter name:} {\tt KERKER MIXING PARAMETER}
 \phantomsection\label{parameters:SCF parameters/KERKER MIXING PARAMETER}
 \label{parameters:SCF_20parameters/KERKER_20MIXING_20PARAMETER}
@@ -2617,23 +2644,6 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} A floating point number $v$ such that $-1e-12 \leq v \leq 1$
-\item {\it Parameter name:} {\tt SPIN MIXING ENHANCEMENT FACTOR}
-\phantomsection\label{parameters:SCF parameters/SPIN MIXING ENHANCEMENT FACTOR}
-\label{parameters:SCF_20parameters/SPIN_20MIXING_20ENHANCEMENT_20FACTOR}
-
-
-\index[prmindex]{SPIN MIXING ENHANCEMENT FACTOR}
-\index[prmindexfull]{SCF parameters!SPIN MIXING ENHANCEMENT FACTOR}
-{\it Value:} 1.0
-
-
-{\it Default:} 1.0
-
-
-{\it Description:} [Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.
-
-
-{\it Possible values:} A floating point number $v$ such that $-1e-12 \leq v \leq 100$
 \item {\it Parameter name:} {\tt RESTA FERMI WAVEVECTOR}
 \phantomsection\label{parameters:SCF parameters/RESTA FERMI WAVEVECTOR}
 \label{parameters:SCF_20parameters/RESTA_20FERMI_20WAVEVECTOR}
@@ -2668,6 +2678,23 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1000$
+\item {\it Parameter name:} {\tt SPIN MIXING ENHANCEMENT FACTOR}
+\phantomsection\label{parameters:SCF parameters/SPIN MIXING ENHANCEMENT FACTOR}
+\label{parameters:SCF_20parameters/SPIN_20MIXING_20ENHANCEMENT_20FACTOR}
+
+
+\index[prmindex]{SPIN MIXING ENHANCEMENT FACTOR}
+\index[prmindexfull]{SCF parameters!SPIN MIXING ENHANCEMENT FACTOR}
+{\it Value:} 1.0
+
+
+{\it Default:} 1.0
+
+
+{\it Description:} [Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.
+
+
+{\it Possible values:} A floating point number $v$ such that $-1e-12 \leq v \leq 100$
 \item {\it Parameter name:} {\tt STARTING WFC}
 \phantomsection\label{parameters:SCF parameters/STARTING WFC}
 \label{parameters:SCF_20parameters/STARTING_20WFC}
@@ -2709,7 +2736,7 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 \index[prmindex]{TOLERANCE}
 \index[prmindexfull]{SCF parameters!TOLERANCE}
-{\it Value:} 1e-05
+{\it Value:} 1e-6
 
 
 {\it Default:} 1e-05
@@ -2719,6 +2746,23 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} A floating point number $v$ such that $1e-12 \leq v \leq 1$
+\item {\it Parameter name:} {\tt USE ENERGY RESIDUAL METRIC}
+\phantomsection\label{parameters:SCF parameters/USE ENERGY RESIDUAL METRIC}
+\label{parameters:SCF_20parameters/USE_20ENERGY_20RESIDUAL_20METRIC}
+
+
+\index[prmindex]{USE ENERGY RESIDUAL METRIC}
+\index[prmindexfull]{SCF parameters!USE ENERGY RESIDUAL METRIC}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Boolean parameter specifying whether to use the energy residual metric (equation 7.23 of Richard Matrin second edition) for convergence check. Setting it to false can lead to some computational time savings. Default value is false
+
+
+{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 
@@ -2843,6 +2887,23 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Description:} [Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation. For DOS/PDOS calculations, the value of this parameter should be large enough to ensure sufficient number of buffer states beyond the 'Fermi level'.
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/NUMBER_20OF_20CORE_20EIGEN_20STATES_20FOR_20MIXED_20PREC_20RR}
+
+
+\index[prmindex]{NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR}
+{\it Value:} 0
+
+
+{\it Default:} 0
+
+
+{\it Description:} [Advanced] For mixed precision optimization.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
@@ -2982,40 +3043,6 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 300$
-\item {\it Parameter name:} {\tt SPECTRUM SPLIT CORE EIGENSTATES}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SPECTRUM SPLIT CORE EIGENSTATES}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SPECTRUM_20SPLIT_20CORE_20EIGENSTATES}
-
-
-\index[prmindex]{SPECTRUM SPLIT CORE EIGENSTATES}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!SPECTRUM SPLIT CORE EIGENSTATES}
-{\it Value:} 0
-
-
-{\it Default:} 0
-
-
-{\it Description:} [Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.
-
-
-{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
-\item {\it Parameter name:} {\tt SPECTRUM SPLIT STARTING SCF ITER}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SPECTRUM SPLIT STARTING SCF ITER}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SPECTRUM_20SPLIT_20STARTING_20SCF_20ITER}
-
-
-\index[prmindex]{SPECTRUM SPLIT STARTING SCF ITER}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!SPECTRUM SPLIT STARTING SCF ITER}
-{\it Value:} 0
-
-
-{\it Default:} 0
-
-
-{\it Description:} [Advanced] SCF iteration no beyond which spectrum splitting based can be used.
-
-
-{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
 \item {\it Parameter name:} {\tt SUBSPACE PROJ SHEP GPU}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SUBSPACE PROJ SHEP GPU}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SUBSPACE_20PROJ_20SHEP_20GPU}
@@ -3050,6 +3077,40 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt TENSOR OP TYPE SINGLE PREC CHEBY}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/TENSOR OP TYPE SINGLE PREC CHEBY}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/TENSOR_20OP_20TYPE_20SINGLE_20PREC_20CHEBY}
+
+
+\index[prmindex]{TENSOR OP TYPE SINGLE PREC CHEBY}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!TENSOR OP TYPE SINGLE PREC CHEBY}
+{\it Value:} FP32
+
+
+{\it Default:} FP32
+
+
+{\it Description:} [Advanced] Tensor operation datatype for the modified single precision algorithm for Chebyshev filtering, this only used on Nvidia GPUs with compute capability greater than 80. Default setting is FP32.
+
+
+{\it Possible values:} Any one of FP32, TF32
+\item {\it Parameter name:} {\tt USE APPROXIMATE OVERLAP MATRIX}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE APPROXIMATE OVERLAP MATRIX}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20APPROXIMATE_20OVERLAP_20MATRIX}
+
+
+\index[prmindex]{USE APPROXIMATE OVERLAP MATRIX}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE APPROXIMATE OVERLAP MATRIX}
+{\it Value:} true
+
+
+{\it Default:} true
+
+
+{\it Description:} [Standard] Use approximate overlap matrix (diagonal for FE basis overlap).  Default setting is true.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt USE ELPA}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE ELPA}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20ELPA}
@@ -3064,23 +3125,6 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Description:} [Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE MIXED PREC CGS O}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC CGS O}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20CGS_20O}
-
-
-\index[prmindex]{USE MIXED PREC CGS O}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE MIXED PREC CGS O}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Advanced] Use mixed precision arithmetic in overlap matrix computation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -3101,57 +3145,23 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE SINGLE PREC COMMUN CHEBY}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE USE SINGLE PREC COMMUN CHEBY}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20SINGLE_20PREC_20COMMUN_20CHEBY}
+\item {\it Parameter name:} {\tt USE MIXED PREC COMMUN ONLY XTOX XTHX}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC COMMUN ONLY XTOX XTHX}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20COMMUN_20ONLY_20XTOX_20XTHX}
 
 
-\index[prmindex]{USE SINGLE PREC COMMUN CHEBY}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE SINGLE PREC COMMUN CHEBY}
+\index[prmindex]{USE MIXED PREC COMMUN ONLY XTOX XTHX}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE MIXED PREC COMMUN ONLY XTOX XTHX}
 {\it Value:} false
 
 
 {\it Default:} false
 
 
-{\it Description:} [Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.
+{\it Description:} [Advanced] Use mixed precision communication only for XtOX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE MIXED PREC COMMUN ONLY XTX XTHX}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC COMMUN ONLY XTX XTHX}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20COMMUN_20ONLY_20XTX_20XTHX}
-
-
-\index[prmindex]{USE MIXED PREC COMMUN ONLY XTX XTHX}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE MIXED PREC COMMUN ONLY XTX XTHX}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Advanced] Use mixed precision communication only for XtX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE SINGLE PREC CHEBY}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE USE SINGLE PREC CHEBY}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20SINGLE_20PREC_20CHEBY}
-
-
-\index[prmindex]{USE SINGLE PREC CHEBY}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE SINGLE PREC CHEBY}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Advanced] Use a modified single precision algorithm for Chebyshev filtering. This cannot be used in conjunction with spectrum splitting. Default setting is false.
-
-{\it Possible values:} A boolean value (true or false)
-
 \item {\it Parameter name:} {\tt USE MIXED PREC RR\_SR}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC RR_5fSR}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20RR_5fSR}
@@ -3169,20 +3179,88 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt USE MIXED PREC XTHX SPECTRUM SPLIT}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC XTHX SPECTRUM SPLIT}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20XTHX_20SPECTRUM_20SPLIT}
+\item {\it Parameter name:} {\tt USE MIXED PREC XTHX}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC XTHX}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20XTHX}
 
 
-\index[prmindex]{USE MIXED PREC XTHX SPECTRUM SPLIT}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE MIXED PREC XTHX SPECTRUM SPLIT}
+\index[prmindex]{USE MIXED PREC XTHX}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE MIXED PREC XTHX}
 {\it Value:} false
 
 
 {\it Default:} false
 
 
-{\it Description:} [Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0.  Default setting is false.
+{\it Description:} [Advanced] Use mixed precision arithmetic in $X^{T}$ Hamiltonian matrix times X computation. Default setting is false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE MIXED PREC XTOX}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE MIXED PREC XTOX}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20MIXED_20PREC_20XTOX}
+
+
+\index[prmindex]{USE MIXED PREC XTOX}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE MIXED PREC XTOX}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Use mixed precision arithmetic in $X^{T}$ Overlap matrix times X computation. Default setting is false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE RESIDUAL CHFSI}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE RESIDUAL CHFSI}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20RESIDUAL_20CHFSI}
+
+
+\index[prmindex]{USE RESIDUAL CHFSI}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE RESIDUAL CHFSI}
+{\it Value:} true
+
+
+{\it Default:} true
+
+
+{\it Description:} [Advanced] Builds the Chebyshev filtered subspace in full precision based on a residual equation. To be used when USE APPROXIMATE OVERLAP MATRIX is set to false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE SINGLE PREC CHEBY}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE SINGLE PREC CHEBY}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20SINGLE_20PREC_20CHEBY}
+
+
+\index[prmindex]{USE SINGLE PREC CHEBY}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE SINGLE PREC CHEBY}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Use a modified single precision algorithm for Chebyshev filtering. This cannot be used in conjunction with spectrum splitting. Default setting is false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE SINGLE PREC COMMUN CHEBY}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/USE SINGLE PREC COMMUN CHEBY}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/USE_20SINGLE_20PREC_20COMMUN_20CHEBY}
+
+
+\index[prmindex]{USE SINGLE PREC COMMUN CHEBY}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!USE SINGLE PREC COMMUN CHEBY}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -3203,23 +3281,6 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
-\item {\it Parameter name:} {\tt XTHX CORE EIGENSTATES}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/XTHX CORE EIGENSTATES}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/XTHX_20CORE_20EIGENSTATES}
-
-
-\index[prmindex]{XTHX CORE EIGENSTATES}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!XTHX CORE EIGENSTATES}
-{\it Value:} 0
-
-
-{\it Default:} 0
-
-
-{\it Description:} [Advanced] For mixed precision optimization.
-
-
-{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
 \end{itemize}
 
 \subsection{Parameters in section \tt SCF parameters/LOW RANK DIELECM PRECOND}

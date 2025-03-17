@@ -205,7 +205,6 @@ namespace dftfe
                       flattenedArrayBlock[0]->data());
 #endif
 
-
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
                     for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
                       std::memcpy(flattenedArrayBlock[1]->data() +
@@ -227,7 +226,6 @@ namespace dftfe
                           (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock[1]->data());
 #endif
-
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,
                                              quadratureIndex,

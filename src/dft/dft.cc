@@ -595,9 +595,10 @@ namespace dftfe
       {
         if (d_dftParamsPtr->TVal < 1000)
           {
-            d_dftParamsPtr->numCoreWfcRR = 0.8 * numElectrons / 2.0;
-            pcout << " Setting SPECTRUM SPLIT CORE EIGENSTATES to be "
-                  << d_dftParamsPtr->numCoreWfcRR << std::endl;
+            d_dftParamsPtr->numCoreWfcForMixedPrecRR = 0.8 * numElectrons / 2.0;
+            pcout << " Setting MIXED PREC CORE EIGENSTATES to be "
+                  << d_dftParamsPtr->numCoreWfcForMixedPrecRR
+                  << std::endl; //@Kartick check if this is okay
           }
       }
 
@@ -738,10 +739,11 @@ namespace dftfe
           }
 
         if (d_dftParamsPtr->algoType == "FAST")
-          d_dftParamsPtr->numCoreWfcRR =
-            std::floor(d_dftParamsPtr->numCoreWfcRR /
+          d_dftParamsPtr->numCoreWfcForMixedPrecRR =
+            std::floor(d_dftParamsPtr->numCoreWfcForMixedPrecRR /
                        d_dftParamsPtr->wfcBlockSize) *
-            d_dftParamsPtr->wfcBlockSize;
+            d_dftParamsPtr
+              ->numCoreWfcForMixedPrecRR; //@Kartick check if this is okay
 
         if (d_dftParamsPtr->verbosity >= 1)
           {
@@ -754,8 +756,8 @@ namespace dftfe
                   << d_dftParamsPtr->wfcBlockSize << std::endl;
             if (d_dftParamsPtr->algoType == "FAST")
               pcout
-                << " Setting SPECTRUM SPLIT CORE EIGENSTATES for Device run to be "
-                << d_dftParamsPtr->numCoreWfcRR << std::endl;
+                << " Setting CORE EIGENSTATES for MIXED PRECISION STRATEGY on  Device run to be "
+                << d_dftParamsPtr->numCoreWfcForMixedPrecRR << std::endl;
           }
       }
 #endif
@@ -809,10 +811,9 @@ namespace dftfe
       determineOrbitalFilling();
 
     AssertThrow(
-      d_dftParamsPtr->numCoreWfcRR <= d_numEigenValues,
+      d_dftParamsPtr->numCoreWfcForMixedPrecRR <= d_numEigenValues,
       dealii::ExcMessage(
-        "DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES should be less than the total number of wavefunctions."));
-    d_numEigenValuesRR = d_numEigenValues - d_dftParamsPtr->numCoreWfcRR;
+        "DFT-FE Error: Incorrect input value used- CORE EIGENSTATES should be less than the total number of wavefunctions."));
 
 #ifdef USE_COMPLEX
     if (d_dftParamsPtr->solverMode == "NSCF")
@@ -835,7 +836,6 @@ namespace dftfe
 
     // set size of eigenvalues and eigenvectors data structures
     eigenValues.resize(d_kPointWeights.size());
-    eigenValuesRRSplit.resize(d_kPointWeights.size());
 
     if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       d_densityMatDerFermiEnergy.resize((d_dftParamsPtr->spinPolarized + 1) *
@@ -858,8 +858,6 @@ namespace dftfe
       {
         eigenValues[kPoint].resize((d_dftParamsPtr->spinPolarized + 1) *
                                    d_numEigenValues);
-        eigenValuesRRSplit[kPoint].resize((d_dftParamsPtr->spinPolarized + 1) *
-                                          d_numEigenValuesRR);
       }
 
 
@@ -905,9 +903,7 @@ namespace dftfe
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
 
-    d_elpaScala->processGridELPASetup(d_numEigenValues,
-                                      d_numEigenValuesRR,
-                                      *d_dftParamsPtr);
+    d_elpaScala->processGridELPASetup(d_numEigenValues, *d_dftParamsPtr);
     MPI_Barrier(d_mpiCommParent);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
@@ -1254,7 +1250,9 @@ namespace dftfe
                                  d_excManagerPtr,
                                  atomLocations,
                                  d_numEigenValues,
-                                 d_dftParamsPtr->useSinglePrecCheby);
+                                 d_dftParamsPtr->useSinglePrecCheby,
+                                 (d_dftParamsPtr->isIonForce) ||
+                                   d_dftParamsPtr->isCellStress);
 
     if (d_dftParamsPtr->solverMode == "NSCF")
       {
@@ -1449,10 +1447,6 @@ namespace dftfe
         AssertThrow(d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND",
                     dealii::ExcMessage(
                       "LRDM preconditioner is not compatible with hubbard "));
-
-        AssertThrow(d_dftParamsPtr->useSinglePrecCheby == false,
-                    dealii::ExcMessage(
-                      "single prec in cheby is not compatible with hubbard "));
 
         init_hubbOp = MPI_Wtime() - init_hubbOp;
 
@@ -2163,12 +2157,13 @@ namespace dftfe
           dealii::ExcMessage(
             "DFT-FE Error: wfc block size must be exactly divisible by cheby wfc block size and also larger for Device run."));
 
-        if (d_numEigenValuesRR != d_numEigenValues)
-          AssertThrow(
-            (d_numEigenValuesRR % d_dftParamsPtr->wfcBlockSize == 0 ||
-             d_numEigenValuesRR / d_dftParamsPtr->wfcBlockSize == 0),
-            dealii::ExcMessage(
-              "DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for Device run."));
+
+        // AssertThrow(
+        //   (d_numEigenValuesRR % d_dftParamsPtr->wfcBlockSize == 0 ||
+        //    d_numEigenValuesRR / d_dftParamsPtr->wfcBlockSize == 0),
+        //   dealii::ExcMessage(
+        //     "DFT-FE Error: total number RR wavefunctions must be exactly
+        //     divisible by wfc block size for Device run."));
 
         // band group parallelization data structures
         const unsigned int numberBandGroups =
@@ -2827,8 +2822,7 @@ namespace dftfe
                     << std::endl;
           }
 
-        if (d_dftParamsPtr->computeEnergyEverySCF &&
-            d_numEigenValuesRR == d_numEigenValues)
+        if (d_dftParamsPtr->computeEnergyEverySCF)
           d_phiTotRhoIn = d_phiTotRhoOut;
         computing_timer.leave_subsection("density mixing");
 
@@ -3031,23 +3025,14 @@ namespace dftfe
             std::vector<std::vector<std::vector<double>>> eigenValuesSpins(
               2,
               std::vector<std::vector<double>>(
-                d_kPointWeights.size(),
-                std::vector<double>(
-                  (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                   scfConverged) ?
-                    d_numEigenValues :
-                    d_numEigenValuesRR)));
+                d_kPointWeights.size(), std::vector<double>(d_numEigenValues)));
 
             std::vector<std::vector<std::vector<double>>>
               residualNormWaveFunctionsAllkPointsSpins(
                 2,
-                std::vector<std::vector<double>>(
-                  d_kPointWeights.size(),
-                  std::vector<double>(
-                    (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                     scfConverged) ?
-                      d_numEigenValues :
-                      d_numEigenValuesRR)));
+                std::vector<std::vector<double>>(d_kPointWeights.size(),
+                                                 std::vector<double>(
+                                                   d_numEigenValues)));
 
             updateAuxDensityXCMatrix(d_densityInQuadValues,
                                      d_gradDensityInQuadValues,
@@ -3110,11 +3095,6 @@ namespace dftfe
                               true :
                               false,
                             0,
-                            (scfIter <
-                               d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                             scfConverged) ?
-                              false :
-                              true,
                             scfConverged ? false : true,
                             scfIter == 0);
 #endif
@@ -3132,11 +3112,6 @@ namespace dftfe
                                ->allowMultipleFilteringPassesAfterFirstScf) ?
                               true :
                               false,
-                            (scfIter <
-                               d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                             scfConverged) ?
-                              false :
-                              true,
                             scfConverged ? false : true,
                             scfIter == 0);
                       }
@@ -3148,15 +3123,9 @@ namespace dftfe
               for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                    ++kPoint)
                 {
-                  if (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                      scfConverged)
-                    for (unsigned int i = 0; i < d_numEigenValues; ++i)
-                      eigenValuesSpins[s][kPoint][i] =
-                        eigenValues[kPoint][d_numEigenValues * s + i];
-                  else
-                    for (unsigned int i = 0; i < d_numEigenValuesRR; ++i)
-                      eigenValuesSpins[s][kPoint][i] =
-                        eigenValuesRRSplit[kPoint][d_numEigenValuesRR * s + i];
+                  for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                    eigenValuesSpins[s][kPoint][i] =
+                      eigenValues[kPoint][d_numEigenValues * s + i];
                 }
             //
             // fermi energy
@@ -3251,10 +3220,6 @@ namespace dftfe
                                   [s][kPoint],
                                 true,
                                 0,
-                                (scfIter <
-                                 d_dftParamsPtr->spectrumSplitStartingScfIter) ?
-                                  false :
-                                  true,
                                 true,
                                 scfIter == 0);
 #endif
@@ -3269,10 +3234,6 @@ namespace dftfe
                                 residualNormWaveFunctionsAllkPointsSpins
                                   [s][kPoint],
                                 true,
-                                (scfIter <
-                                 d_dftParamsPtr->spectrumSplitStartingScfIter) ?
-                                  false :
-                                  true,
                                 true,
                                 scfIter == 0);
                           }
@@ -3283,18 +3244,9 @@ namespace dftfe
                            kPoint < d_kPointWeights.size();
                            ++kPoint)
                         {
-                          if (scfIter <
-                                d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                              scfConverged)
-                            for (unsigned int i = 0; i < d_numEigenValues; ++i)
-                              eigenValuesSpins[s][kPoint][i] =
-                                eigenValues[kPoint][d_numEigenValues * s + i];
-                          else
-                            for (unsigned int i = 0; i < d_numEigenValuesRR;
-                                 ++i)
-                              eigenValuesSpins[s][kPoint][i] =
-                                eigenValuesRRSplit[kPoint]
-                                                  [d_numEigenValuesRR * s + i];
+                          for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                            eigenValuesSpins[s][kPoint][i] =
+                              eigenValues[kPoint][d_numEigenValues * s + i];
                         }
                     //
                     if (d_dftParamsPtr->constraintMagnetization)
@@ -3334,10 +3286,8 @@ namespace dftfe
             for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                  ++kPoint)
               residualNormWaveFunctionsAllkPoints[kPoint].resize(
-                (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                 scfConverged) ?
-                  d_numEigenValues :
-                  d_numEigenValuesRR);
+                d_numEigenValues);
+
 
             updateAuxDensityXCMatrix(d_densityInQuadValues,
                                      d_gradDensityInQuadValues,
@@ -3394,11 +3344,6 @@ namespace dftfe
                           true :
                           false,
                         0,
-                        (scfIter <
-                           d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                         scfConverged) ?
-                          false :
-                          true,
                         scfConverged ? false : true,
                         scfIter == 0);
 #endif
@@ -3416,11 +3361,6 @@ namespace dftfe
                            ->allowMultipleFilteringPassesAfterFirstScf) ?
                           true :
                           false,
-                        (scfIter <
-                           d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                         scfConverged) ?
-                          false :
-                          true,
                         scfConverged ? false : true,
                         scfIter == 0);
                   }
@@ -3447,9 +3387,7 @@ namespace dftfe
                 //
                 double maxRes = computeMaximumHighestOccupiedStateResidualNorm(
                   residualNormWaveFunctionsAllkPoints,
-                  (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter) ?
-                    eigenValues :
-                    eigenValuesRRSplit,
+                  eigenValues,
                   fermiEnergy);
                 if (d_dftParamsPtr->verbosity >= 2)
                   pcout
@@ -3504,10 +3442,6 @@ namespace dftfe
                             residualNormWaveFunctionsAllkPoints[kPoint],
                             true,
                             0,
-                            (scfIter <
-                             d_dftParamsPtr->spectrumSplitStartingScfIter) ?
-                              false :
-                              true,
                             true,
                             scfIter == 0);
 
@@ -3522,10 +3456,6 @@ namespace dftfe
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPoints[kPoint],
                             true,
-                            (scfIter <
-                             d_dftParamsPtr->spectrumSplitStartingScfIter) ?
-                              false :
-                              true,
                             true,
                             scfIter == 0);
                       }
@@ -3538,10 +3468,7 @@ namespace dftfe
                     //
                     maxRes = computeMaximumHighestOccupiedStateResidualNorm(
                       residualNormWaveFunctionsAllkPoints,
-                      (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                       scfConverged) ?
-                        eigenValues :
-                        eigenValuesRRSplit,
+                      eigenValues,
                       fermiEnergy);
                     if (d_dftParamsPtr->verbosity >= 2)
                       pcout
@@ -3585,13 +3512,8 @@ namespace dftfe
           }
         else
           {
-            compute_rhoOut(
-              (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-               scfConverged) ?
-                false :
-                true,
-              scfConverged ||
-                (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
+            compute_rhoOut(scfConverged ||
+                           (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
           }
         computing_timer.leave_subsection("compute rho");
 
@@ -3612,8 +3534,7 @@ namespace dftfe
         //
         // phiTot with rhoOut
         //
-        if ((d_dftParamsPtr->computeEnergyEverySCF &&
-             d_numEigenValuesRR == d_numEigenValues) ||
+        if (d_dftParamsPtr->computeEnergyEverySCF ||
             d_dftParamsPtr->useEnergyResidualTolerance)
           {
             if (d_dftParamsPtr->verbosity >= 2)
@@ -3763,8 +3684,7 @@ namespace dftfe
                     << energyResidual << std::endl;
             computing_timer.leave_subsection("Energy residual computation");
           }
-        if (d_dftParamsPtr->computeEnergyEverySCF &&
-            d_numEigenValuesRR == d_numEigenValues)
+        if (d_dftParamsPtr->computeEnergyEverySCF)
           {
             d_dispersionCorr.computeDispresionCorrection(
               atomLocations, d_domainBoundingVectors);
@@ -3805,16 +3725,7 @@ namespace dftfe
             if (d_dftParamsPtr->verbosity == 1)
               pcout << "Total energy  : " << totalEnergy << std::endl;
           }
-        else
-          {
-            if (d_numEigenValuesRR != d_numEigenValues &&
-                d_dftParamsPtr->computeEnergyEverySCF &&
-                d_dftParamsPtr->verbosity >= 1)
-              pcout
-                << "DFT-FE Message: energy computation is not performed at the end of each scf iteration step\n"
-                << "if SPECTRUM SPLIT CORE EIGENSTATES is set to a non-zero value."
-                << std::endl;
-          }
+
 
         computeFractionalOccupancies();
 
@@ -3946,8 +3857,7 @@ namespace dftfe
             }
       }
 
-    if ((!d_dftParamsPtr->computeEnergyEverySCF ||
-         d_numEigenValuesRR != d_numEigenValues))
+    if ((!d_dftParamsPtr->computeEnergyEverySCF))
       {
         if (d_dftParamsPtr->verbosity >= 2)
           pcout
