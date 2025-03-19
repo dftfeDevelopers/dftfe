@@ -250,14 +250,57 @@ namespace dftfe
             << fermiEnergy << std::endl;
   }
 
-  /*
-  // compute fermi energy constrained magnetization
+
+  // compute fermi energy pure state
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    compute_fermienergy_constraintMagnetization(
+    compute_fermienergy_purestate(
+      const std::vector<std::vector<double>> &eigenValuesInput,
+       const double numElectronsInput)     
+  {
+    int    count = std::ceil(numElectronsInput /
+                          (2.0 - d_dftParamsPtr->spinPolarized));
+
+
+    std::vector<double> eigenValuesAllkPoints;
+    for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      {
+        for (int statesIter = 0; statesIter < eigenValuesInput[0].size();
+             ++statesIter)
+          {
+            eigenValuesAllkPoints.push_back(
+              eigenValuesInput[kPoint][statesIter]);
+          }
+      }
+
+    std::sort(eigenValuesAllkPoints.begin(), eigenValuesAllkPoints.end());
+
+    double fermiEnergyLocal =
+      count > 0 ? eigenValuesAllkPoints[count - 1] : -1.0e+15;
+    //
+    fermiEnergyUp =
+      dealii::Utilities::MPI::max(fermiEnergyLocal, interpoolcomm);
+    if (d_dftParamsPtr->verbosity >= 2)
+      {
+        pcout << " This is a pure state calculation "
+              << std::endl;
+        pcout
+          << "Fermi energy                                    : "
+          << fermiEnergy << std::endl;
+      }
+  }
+
+
+  // compute fermi energy constrained magnetization pure state
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::
+    compute_fermienergy_constraintMagnetization_purestate(
       const std::vector<std::vector<double>> &eigenValuesInput)
   {
     int countUp   = numElectronsUp;
@@ -299,7 +342,7 @@ namespace dftfe
     //
     if (d_dftParamsPtr->verbosity >= 2)
       {
-        pcout << " This is a constrained magnetization calculation "
+        pcout << " This is a pure state constrained magnetization calculation "
               << std::endl;
         pcout
           << "Fermi energy for spin up                                    : "
@@ -309,7 +352,6 @@ namespace dftfe
           << fermiEnergyDown << std::endl;
       }
   }
-*/
 
   // compute fermi energy constrained magnetization
   template <unsigned int              FEOrder,
@@ -364,7 +406,7 @@ namespace dftfe
 
 #ifdef USE_COMPLEX
     //
-    // compute Fermi-energy first by bisection method
+    // compute Fermi-energy up first by bisection method
     //
     // double initialGuessLeft =
     // dealii::Utilities::MPI::min(eigenValuesAllkPoints[0],interpoolcomm);
@@ -422,7 +464,7 @@ namespace dftfe
         else
           xRight = xBisected;
 
-        if (std::abs(yBisected) <= 1.0e-09 ||
+        if (std::abs(yBisected) <= 1.0e-10 ||
             iter == maxNumberFermiEnergySolveIterations - 1)
           {
             fe = xBisected;
@@ -484,7 +526,7 @@ namespace dftfe
     R = 1.0;
 #ifdef USE_COMPLEX
     //
-    // compute Fermi-energy first by bisection method
+    // compute Fermi-energy down first by bisection method
     //
     // double initialGuessLeft =
     // dealii::Utilities::MPI::min(eigenValuesAllkPoints[0],interpoolcomm);
@@ -540,7 +582,7 @@ namespace dftfe
         else
           xRight = xBisected;
 
-        if (std::abs(yBisected) <= 1.0e-09 ||
+        if (std::abs(yBisected) <= 1.0e-10 ||
             iter == maxNumberFermiEnergySolveIterations - 1)
           {
             fe = xBisected;

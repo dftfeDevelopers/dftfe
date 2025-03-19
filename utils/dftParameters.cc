@@ -898,6 +898,13 @@ namespace dftfe
           dealii::Patterns::Bool(),
           "[Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is FALSE");
 
+
+        prm.declare_entry(
+          "PURE STATE",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Explictly solves for a pure Kohn-Sham state instead of an ensemble Kohn-Sham state implemented using Fermi-Dirac smearing. If this parameter is set to true, it overrides the Fermi-Dirac smearing temperature. Default is FALSE");
+
         prm.declare_entry(
           "STARTING WFC",
           "RANDOM",
@@ -1319,6 +1326,7 @@ namespace dftfe
     timeReversal                = false;
     pseudoTestsFlag             = false;
     constraintMagnetization     = false;
+    zeroTempConstraintMagnetization = false;    
     writeDosFile                = false;
     writeLdosFile               = false;
     writePdosFile               = false;
@@ -1738,6 +1746,7 @@ namespace dftfe
       restaScreeningLength       = prm.get_double("RESTA SCREENING LENGTH");
       mixingMethod               = prm.get("MIXING METHOD");
       constraintMagnetization    = prm.get_bool("CONSTRAINT MAGNETIZATION");
+      pureState    = prm.get_bool("PURE STATE"); 
       startingWFCType            = prm.get("STARTING WFC");
       computeEnergyEverySCF      = prm.get_bool("COMPUTE ENERGY EACH ITER");
       useEnergyResidualTolerance = prm.get_bool("USE ENERGY RESIDUAL METRIC");

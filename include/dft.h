@@ -563,6 +563,14 @@ namespace dftfe
       const double                            numElectronsInput);
 
     /**
+     *@brief find HOMO eigenvalue for pure state
+     */
+    void
+    compute_fermienergy_purestate(
+      const std::vector<std::vector<double>> &eigenValuesInput,
+      const double numElectronsInput);   
+
+    /**
      *@brief Computes the kinetic energy
      */
     double
@@ -1203,6 +1211,15 @@ namespace dftfe
     compute_fermienergy_constraintMagnetization(
       const std::vector<std::vector<double>> &eigenValuesInput);
 
+
+    /**
+     *@brief Find spin-up and spin-down channel HOMO eigenvalues
+     */
+    void
+    compute_fermienergy_constraintMagnetization_purestate(
+      const std::vector<std::vector<double>> &eigenValuesInput);
+
+
     /**
      *@brief compute density of states and local density of states
      */
@@ -1296,8 +1313,8 @@ namespace dftfe
     /**
      * stores required data for Kohn-Sham problem
      */
-    unsigned int           numElectrons, numLevels;
-    double                 numElectronsUp, numElectronsDown;
+    unsigned int           numLevels;
+    double                 numElectrons, numElectronsUp, numElectronsDown;
     std::set<unsigned int> atomTypes;
 
     /// FIXME: eventually it should be a map of atomic number to struct-

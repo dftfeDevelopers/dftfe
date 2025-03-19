@@ -461,10 +461,20 @@ namespace dftfe
         //
         if (!(d_dftParamsPtr->writeBandsFile))
           {
-            if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
-            else
-              compute_fermienergy(eigenValues, numElectrons);
+              if (d_dftParamsPtr->constraintMagnetization)
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);      
+              }
+              else
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);                
+              }
           }
 
         unsigned int count = 1;
@@ -591,9 +601,19 @@ namespace dftfe
             if (!(d_dftParamsPtr->writeBandsFile))
               {
                 if (d_dftParamsPtr->constraintMagnetization)
-                  compute_fermienergy_constraintMagnetization(eigenValues);
+                {
+                  if (d_dftParamsPtr->pureState)
+                    compute_fermienergy_constraintMagnetization_purestate(eigenValues);
+                  else
+                    compute_fermienergy_constraintMagnetization(eigenValues);      
+                }
                 else
-                  compute_fermienergy(eigenValues, numElectrons);
+                {
+                  if (d_dftParamsPtr->pureState)
+                    compute_fermienergy_purestate(eigenValues, numElectrons);
+                  else
+                    compute_fermienergy(eigenValues, numElectrons);                
+                }
               }
 
             if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
@@ -723,10 +743,20 @@ namespace dftfe
         //
         if (!(d_dftParamsPtr->writeBandsFile))
           {
-            if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
-            else
-              compute_fermienergy(eigenValues, numElectrons);
+              if (d_dftParamsPtr->constraintMagnetization)
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);      
+              }
+              else
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);                
+              }
           }
 
         unsigned int count = 1;
@@ -823,9 +853,19 @@ namespace dftfe
             if (!(d_dftParamsPtr->writeBandsFile))
               {
                 if (d_dftParamsPtr->constraintMagnetization)
-                  compute_fermienergy_constraintMagnetization(eigenValues);
+                {
+                  if (d_dftParamsPtr->pureState)
+                    compute_fermienergy_constraintMagnetization_purestate(eigenValues);
+                  else
+                    compute_fermienergy_constraintMagnetization(eigenValues);      
+                }
                 else
-                  compute_fermienergy(eigenValues, numElectrons);
+                {
+                  if (d_dftParamsPtr->pureState)
+                    compute_fermienergy_purestate(eigenValues, numElectrons);
+                  else
+                    compute_fermienergy(eigenValues, numElectrons);                
+                }
               }
             //
             if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)

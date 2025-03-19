@@ -63,6 +63,8 @@ namespace dftfe
       writeLdosFile, writeBandsFile, writeLocalizationLengths, pinnedNodeForPBC,
       writePdosFile;
 
+    bool pureState;
+
     double netCharge;
 
     /** parameters for functional tests **/
