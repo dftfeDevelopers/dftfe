@@ -40,10 +40,10 @@ Checkpointing tria info and rho data in progress...
 ...checkpointing done.
 Checkpointing tria info and rho data in progress...
 ...checkpointing done.
-SCF iterations converged to the specified tolerance after: 18 iterations.
+Checkpointing tria info and rho data in progress...
+...checkpointing done.
+SCF iterations converged to the specified tolerance after: 21 iterations.
 
 Energy computations (Hartree) 
 -------------------
              Total energy:        -572.22938282
-Absolute magnetization: 0.000
-Net magnetization     : -0.000

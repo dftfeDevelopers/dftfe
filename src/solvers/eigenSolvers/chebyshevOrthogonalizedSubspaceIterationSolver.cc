@@ -146,7 +146,6 @@ namespace dftfe
       &                  BLASWrapperPtr,
     elpaScalaManager &   elpaScala,
     dataTypes::number *  eigenVectorsFlattened,
-    dataTypes::number *  eigenVectorsRotFracDensityFlattened,
     const unsigned int   totalNumberWaveFunctions,
     const unsigned int   localVectorSize,
     std::vector<double> &eigenValues,
@@ -245,6 +244,16 @@ namespace dftfe
     distributedCPUMultiVec<dataTypes::number>
       *eigenVectorsFlattenedArrayBlock2 =
         &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 1);
+    distributedCPUMultiVec<dataTypes::number>
+      *eigenVectorsFlattenedArrayBlock3 =
+        (d_dftParams.useReformulatedChFSI) ?
+          &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 2) :
+          NULL;
+    distributedCPUMultiVec<dataTypes::number>
+      *eigenVectorsFlattenedArrayBlock4 =
+        (d_dftParams.useReformulatedChFSI) ?
+          &operatorMatrix.getScratchFEMultivector(vectorsBlockSize, 3) :
+          NULL;
     distributedCPUMultiVec<dataTypes::numberFP32>
       *eigenVectorsFlattenedArrayBlockFP32 =
         d_dftParams.useSinglePrecCheby ?
@@ -286,6 +295,14 @@ namespace dftfe
                   &operatorMatrix.getScratchFEMultivector(BVec, 0);
                 eigenVectorsFlattenedArrayBlock2 =
                   &operatorMatrix.getScratchFEMultivector(BVec, 1);
+
+                if (d_dftParams.useReformulatedChFSI)
+                  {
+                    eigenVectorsFlattenedArrayBlock3 =
+                      &operatorMatrix.getScratchFEMultivector(BVec, 2);
+                    eigenVectorsFlattenedArrayBlock4 =
+                      &operatorMatrix.getScratchFEMultivector(BVec, 3);
+                  }
                 if (d_dftParams.useSinglePrecCheby)
                   {
                     eigenVectorsFlattenedArrayBlockFP32 =
@@ -311,7 +328,6 @@ namespace dftfe
               "Copy from full to block flattened array");
 
 
-
             //
             // call Chebyshev filtering function only for the current block to
             // be filtered and does in-place filtering
@@ -324,7 +340,7 @@ namespace dftfe
                     eigenValuesBlock[i] = eigenValues[jvec + i];
                   }
 
-                linearAlgebraOperations::chebyshevFilterSinglePrec(
+                linearAlgebraOperations::reformulatedChebyshevFilter(
                   BLASWrapperPtr,
                   operatorMatrix,
                   (*eigenVectorsFlattenedArrayBlock),
@@ -335,17 +351,45 @@ namespace dftfe
                   chebyshevOrder,
                   d_lowerBoundUnWantedSpectrum,
                   d_upperBoundUnWantedSpectrum,
-                  d_lowerBoundWantedSpectrum);
+                  d_lowerBoundWantedSpectrum,
+                  d_dftParams.approxOverlapMatrix);
               }
             else
-              linearAlgebraOperations::chebyshevFilter(
-                operatorMatrix,
-                *eigenVectorsFlattenedArrayBlock,
-                *eigenVectorsFlattenedArrayBlock2,
-                chebyshevOrder,
-                d_lowerBoundUnWantedSpectrum,
-                d_upperBoundUnWantedSpectrum,
-                d_lowerBoundWantedSpectrum);
+              {
+                if (d_dftParams.useReformulatedChFSI && !isFirstFilteringCall)
+                  {
+                    eigenValuesBlock.resize(BVec);
+                    for (unsigned int i = 0; i < BVec; i++)
+                      {
+                        eigenValuesBlock[i] = eigenValues[jvec + i];
+                      }
+                    linearAlgebraOperations::reformulatedChebyshevFilter(
+                      BLASWrapperPtr,
+                      operatorMatrix,
+                      *eigenVectorsFlattenedArrayBlock,
+                      *eigenVectorsFlattenedArrayBlock2,
+                      *eigenVectorsFlattenedArrayBlock3,
+                      *eigenVectorsFlattenedArrayBlock4,
+                      eigenValuesBlock,
+                      chebyshevOrder,
+                      d_lowerBoundUnWantedSpectrum,
+                      d_upperBoundUnWantedSpectrum,
+                      d_lowerBoundWantedSpectrum,
+                      d_dftParams.approxOverlapMatrix);
+                  }
+
+                else
+                  {
+                    linearAlgebraOperations::chebyshevFilter(
+                      operatorMatrix,
+                      *eigenVectorsFlattenedArrayBlock,
+                      *eigenVectorsFlattenedArrayBlock2,
+                      chebyshevOrder,
+                      d_lowerBoundUnWantedSpectrum,
+                      d_upperBoundUnWantedSpectrum,
+                      d_lowerBoundWantedSpectrum);
+                  }
+              }
 
             computing_timer.leave_subsection("Chebyshev filtering");
 
@@ -475,130 +519,86 @@ namespace dftfe
     computingTimerStandard.leave_subsection("Chebyshev filtering on CPU");
     if (d_dftParams.verbosity >= 4)
       pcout << "ChebyShev Filtering Done: " << std::endl;
-    //
-    // scale the eigenVectors (initial guess of single atom wavefunctions or
-    // previous guess) to convert into Lowden Orthonormalized FE basis multiply
-    // by M^{1/2}
-    chebyshevOrthogonalizedSubspaceIterationSolverInternal::
-      pointWiseScaleWithDiagonal(operatorMatrix.getSqrtMassVector().data(),
-                                 totalNumberWaveFunctions,
-                                 localVectorSize,
-                                 eigenVectorsFlattened);
-
 
     if (d_dftParams.orthogType.compare("CGS") == 0)
       {
         computing_timer.enter_subsection("Rayleigh-Ritz GEP");
-        if (eigenValues.size() != totalNumberWaveFunctions)
-          {
-            linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(
-              operatorMatrix,
-              elpaScala,
-              eigenVectorsFlattened,
-              eigenVectorsRotFracDensityFlattened,
-              totalNumberWaveFunctions,
-              localVectorSize,
-              totalNumberWaveFunctions - eigenValues.size(),
-              d_mpiCommParent,
-              interBandGroupComm,
-              mpiCommDomain,
-              useMixedPrec,
-              eigenValues,
-              d_dftParams);
-          }
-        else
-          {
-            linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
-                                                     elpaScala,
-                                                     eigenVectorsFlattened,
-                                                     totalNumberWaveFunctions,
-                                                     localVectorSize,
-                                                     d_mpiCommParent,
-                                                     interBandGroupComm,
-                                                     mpiCommDomain,
-                                                     eigenValues,
-                                                     useMixedPrec,
-                                                     d_dftParams);
-          }
+
+        {
+          linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
+                                                   BLASWrapperPtr,
+                                                   elpaScala,
+                                                   eigenVectorsFlattened,
+                                                   totalNumberWaveFunctions,
+                                                   localVectorSize,
+                                                   d_mpiCommParent,
+                                                   interBandGroupComm,
+                                                   mpiCommDomain,
+                                                   eigenValues,
+                                                   useMixedPrec,
+                                                   d_dftParams);
+        }
         computing_timer.leave_subsection("Rayleigh-Ritz GEP");
 
         computing_timer.enter_subsection("eigen vectors residuals opt");
-        if (eigenValues.size() != totalNumberWaveFunctions)
-          {
-            linearAlgebraOperations::computeEigenResidualNorm(
-              operatorMatrix,
-              eigenVectorsRotFracDensityFlattened,
-              eigenValues,
-              eigenValues.size(),
-              localVectorSize,
-              d_mpiCommParent,
-              mpiCommDomain,
-              interBandGroupComm,
-              residualNorms,
-              d_dftParams);
-          }
-        else
-          {
-            linearAlgebraOperations::computeEigenResidualNorm(
-              operatorMatrix,
-              eigenVectorsFlattened,
-              eigenValues,
-              totalNumberWaveFunctions,
-              localVectorSize,
-              d_mpiCommParent,
-              mpiCommDomain,
-              interBandGroupComm,
-              residualNorms,
-              d_dftParams);
-          }
+
+        {
+          linearAlgebraOperations::computeEigenResidualNorm(
+            operatorMatrix,
+            BLASWrapperPtr,
+            eigenVectorsFlattened,
+            eigenValues,
+            totalNumberWaveFunctions,
+            localVectorSize,
+            d_mpiCommParent,
+            mpiCommDomain,
+            interBandGroupComm,
+            residualNorms,
+            d_dftParams);
+        }
         computing_timer.leave_subsection("eigen vectors residuals opt");
       }
     else if (d_dftParams.orthogType.compare("GS") == 0)
       {
         computing_timer.enter_subsection("Gram-Schmidt Orthogn Opt");
+        BLASWrapperPtr->stridedBlockScale(
+          totalNumberWaveFunctions,
+          localVectorSize,
+          1.0,
+          operatorMatrix.getSqrtMassVector().data(),
+          eigenVectorsFlattened);
+
         linearAlgebraOperations::gramSchmidtOrthogonalization(
           eigenVectorsFlattened,
           totalNumberWaveFunctions,
           localVectorSize,
           mpiCommDomain);
+        BLASWrapperPtr->stridedBlockScale(
+          totalNumberWaveFunctions,
+          localVectorSize,
+          1.0,
+          operatorMatrix.getInverseSqrtMassVector().data(),
+          eigenVectorsFlattened);
         computing_timer.leave_subsection("Gram-Schmidt Orthogn Opt");
 
         if (d_dftParams.verbosity >= 4)
           pcout << "Orthogonalization Done: " << std::endl;
 
         computing_timer.enter_subsection("Rayleigh-Ritz proj Opt");
-
-        if (eigenValues.size() != totalNumberWaveFunctions)
-          {
-            linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(
-              operatorMatrix,
-              elpaScala,
-              eigenVectorsFlattened,
-              eigenVectorsRotFracDensityFlattened,
-              totalNumberWaveFunctions,
-              localVectorSize,
-              totalNumberWaveFunctions - eigenValues.size(),
-              d_mpiCommParent,
-              interBandGroupComm,
-              mpiCommDomain,
-              useMixedPrec,
-              eigenValues,
-              d_dftParams);
-          }
-        else
-          {
-            linearAlgebraOperations::rayleighRitz(operatorMatrix,
-                                                  elpaScala,
-                                                  eigenVectorsFlattened,
-                                                  totalNumberWaveFunctions,
-                                                  localVectorSize,
-                                                  d_mpiCommParent,
-                                                  interBandGroupComm,
-                                                  mpiCommDomain,
-                                                  eigenValues,
-                                                  d_dftParams,
-                                                  false);
-          }
+        {
+          linearAlgebraOperations::rayleighRitz(operatorMatrix,
+                                                BLASWrapperPtr,
+                                                elpaScala,
+                                                eigenVectorsFlattened,
+                                                totalNumberWaveFunctions,
+                                                localVectorSize,
+                                                d_mpiCommParent,
+                                                interBandGroupComm,
+                                                mpiCommDomain,
+                                                eigenValues,
+                                                d_dftParams,
+                                                false);
+        }
 
 
         computing_timer.leave_subsection("Rayleigh-Ritz proj Opt");
@@ -613,32 +613,18 @@ namespace dftfe
           {
             computing_timer.enter_subsection("eigen vectors residuals opt");
 
-            if (eigenValues.size() != totalNumberWaveFunctions)
-              {
-                linearAlgebraOperations::computeEigenResidualNorm(
-                  operatorMatrix,
-                  eigenVectorsRotFracDensityFlattened,
-                  eigenValues,
-                  eigenValues.size(),
-                  localVectorSize,
-                  d_mpiCommParent,
-                  mpiCommDomain,
-                  interBandGroupComm,
-                  residualNorms,
-                  d_dftParams);
-              }
-            else
-              linearAlgebraOperations::computeEigenResidualNorm(
-                operatorMatrix,
-                eigenVectorsFlattened,
-                eigenValues,
-                totalNumberWaveFunctions,
-                localVectorSize,
-                d_mpiCommParent,
-                mpiCommDomain,
-                interBandGroupComm,
-                residualNorms,
-                d_dftParams);
+            linearAlgebraOperations::computeEigenResidualNorm(
+              operatorMatrix,
+              BLASWrapperPtr,
+              eigenVectorsFlattened,
+              eigenValues,
+              totalNumberWaveFunctions,
+              localVectorSize,
+              d_mpiCommParent,
+              mpiCommDomain,
+              interBandGroupComm,
+              residualNorms,
+              d_dftParams);
             computing_timer.leave_subsection("eigen vectors residuals opt");
           }
       }
@@ -650,26 +636,6 @@ namespace dftfe
         pcout << std::endl;
       }
 
-    //
-    // scale the eigenVectors with M^{-1/2} to represent the wavefunctions in
-    // the usual FE basis
-    //
-    chebyshevOrthogonalizedSubspaceIterationSolverInternal::
-      pointWiseScaleWithDiagonal(
-        operatorMatrix.getInverseSqrtMassVector().data(),
-        totalNumberWaveFunctions,
-        localVectorSize,
-        eigenVectorsFlattened);
-
-    if (eigenValues.size() != totalNumberWaveFunctions)
-      {
-        chebyshevOrthogonalizedSubspaceIterationSolverInternal::
-          pointWiseScaleWithDiagonal(
-            operatorMatrix.getInverseSqrtMassVector().data(),
-            eigenValues.size(),
-            localVectorSize,
-            eigenVectorsRotFracDensityFlattened);
-      }
 
 
     if (d_dftParams.verbosity >= 4)

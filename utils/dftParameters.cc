@@ -972,23 +972,14 @@ namespace dftfe
             dealii::Patterns::Integer(0),
             "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-20 percent of N/2. If 5-20 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10. Default value of 0 automatically sets the number of Kohn-Sham wavefunctions close to 20 percent more than N/2. CAUTION: use more states when using higher electronic temperature.");
 
-          prm.declare_entry(
-            "SPECTRUM SPLIT CORE EIGENSTATES",
-            "0",
-            dealii::Patterns::Integer(0),
-            "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
 
-          prm.declare_entry("XTHX CORE EIGENSTATES",
+
+          prm.declare_entry("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR",
                             "0",
                             dealii::Patterns::Integer(0),
                             "[Advanced] For mixed precision optimization.");
 
 
-          prm.declare_entry(
-            "SPECTRUM SPLIT STARTING SCF ITER",
-            "0",
-            dealii::Patterns::Integer(0),
-            "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
           prm.declare_entry(
             "CHEBYSHEV POLYNOMIAL DEGREE",
@@ -1052,6 +1043,18 @@ namespace dftfe
             "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.");
 
           prm.declare_entry(
+            "USE APPROXIMATE OVERLAP MATRIX",
+            "true",
+            dealii::Patterns::Bool(),
+            "[Standard] Use approximate overlap matrix (diagonal for FE basis overlap).  Default setting is true.");
+
+          prm.declare_entry(
+            "USE RESIDUAL CHFSI",
+            "true",
+            dealii::Patterns::Bool(),
+            "[Advanced] Builds the Chebyshev filtered subspace in full precision based on a residual-ChFSI algorithm.");
+
+          prm.declare_entry(
             "SUBSPACE PROJ SHEP GPU",
             "true",
             dealii::Patterns::Bool(),
@@ -1065,17 +1068,18 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in subspace rotation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC CGS O",
+            "USE MIXED PREC XTOX",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in X^{T} Overlap matrix times X computation. Default setting is false.");
 
 
           prm.declare_entry(
-            "USE MIXED PREC XTHX SPECTRUM SPLIT",
+            "USE MIXED PREC XTHX",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0.  Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in X^{T} Hamiltonian matrix times X computation. Default setting is false.");
+
 
           prm.declare_entry(
             "USE MIXED PREC RR_SR",
@@ -1090,10 +1094,10 @@ namespace dftfe
             "[Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC COMMUN ONLY XTX XTHX",
+            "USE MIXED PREC COMMUN ONLY XTOX XTHX",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision communication only for XtX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.");
+            "[Advanced] Use mixed precision communication only for XtOX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.");
 
           prm.declare_entry(
             "USE SINGLE PREC CHEBY",
@@ -1376,18 +1380,18 @@ namespace dftfe
     scalapackBlockSize                             = 50;
     natoms                                         = 0;
     natomTypes                                     = 0;
-    numCoreWfcRR                                   = 0;
-    numCoreWfcXtHX                                 = 0;
+    numCoreWfcForMixedPrecRR                       = 0;
     reuseWfcGeoOpt                                 = false;
     reuseDensityGeoOpt                             = 0;
     mpiAllReduceMessageBlockSizeMB                 = 2.0;
     useSubspaceProjectedSHEPGPU                    = false;
     useMixedPrecCGS_SR                             = false;
-    useMixedPrecCGS_O                              = false;
-    useMixedPrecXTHXSpectrumSplit                  = false;
+    useMixedPrecXtOX                               = false;
+    useMixedPrecXtHX                               = false;
+    approxOverlapMatrix                            = true;
+    useReformulatedChFSI                           = false;
     useMixedPrecSubspaceRotRR                      = false;
-    useMixedPrecCommunOnlyXTHXCGSO                 = false;
-    spectrumSplitStartingScfIter                   = 0;
+    useMixedPrecCommunOnlyXtHXXtOX                 = false;
     useELPA                                        = false;
     constraintsParallelCheck                       = true;
     createConstraintsFromSerialDofhandler          = true;
@@ -1756,27 +1760,26 @@ namespace dftfe
       {
         numberEigenValues =
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-        numCoreWfcRR   = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
-        numCoreWfcXtHX = prm.get_integer("XTHX CORE EIGENSTATES");
-        spectrumSplitStartingScfIter =
-          prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
-        chebyshevOrder     = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-        useELPA            = prm.get_bool("USE ELPA");
-        orthogType         = prm.get("ORTHOGONALIZATION TYPE");
-        chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-        wfcBlockSize       = prm.get_integer("WFC BLOCK SIZE");
-        chebyWfcBlockSize  = prm.get_integer("CHEBY WFC BLOCK SIZE");
+        numCoreWfcForMixedPrecRR =
+          prm.get_integer("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR");
+        chebyshevOrder       = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+        useELPA              = prm.get_bool("USE ELPA");
+        approxOverlapMatrix  = prm.get_bool("USE APPROXIMATE OVERLAP MATRIX");
+        useReformulatedChFSI = prm.get_bool("USE RESIDUAL CHFSI");
+        orthogType           = prm.get("ORTHOGONALIZATION TYPE");
+        chebyshevTolerance   = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+        wfcBlockSize         = prm.get_integer("WFC BLOCK SIZE");
+        chebyWfcBlockSize    = prm.get_integer("CHEBY WFC BLOCK SIZE");
         subspaceRotDofsBlockSize =
           prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
-        scalapackParalProcs = prm.get_integer("SCALAPACKPROCS");
-        scalapackBlockSize  = prm.get_integer("SCALAPACK BLOCK SIZE");
-        useMixedPrecCGS_SR  = prm.get_bool("USE MIXED PREC CGS SR");
-        useMixedPrecCGS_O   = prm.get_bool("USE MIXED PREC CGS O");
-        useMixedPrecXTHXSpectrumSplit =
-          prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
+        scalapackParalProcs       = prm.get_integer("SCALAPACKPROCS");
+        scalapackBlockSize        = prm.get_integer("SCALAPACK BLOCK SIZE");
+        useMixedPrecCGS_SR        = prm.get_bool("USE MIXED PREC CGS SR");
+        useMixedPrecXtOX          = prm.get_bool("USE MIXED PREC XTOX");
+        useMixedPrecXtHX          = prm.get_bool("USE MIXED PREC XTHX");
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
-        useMixedPrecCommunOnlyXTHXCGSO =
-          prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
+        useMixedPrecCommunOnlyXtHXXtOX =
+          prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
         useSinglePrecCommunCheby = prm.get_bool("USE SINGLE PREC COMMUN CHEBY");
         useSinglePrecCheby       = prm.get_bool("USE SINGLE PREC CHEBY");
         tensorOpType             = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
@@ -2097,9 +2100,9 @@ namespace dftfe
 
     if (algoType == "FAST")
       {
-        useMixedPrecCGS_O                   = true;
+        useMixedPrecXtOX                    = true;
+        useMixedPrecXtHX                    = true;
         useMixedPrecCGS_SR                  = true;
-        useMixedPrecXTHXSpectrumSplit       = true;
         useSinglePrecCommunCheby            = true;
         reuseLanczosUpperBoundFromFirstCall = true;
       }
@@ -2139,7 +2142,7 @@ namespace dftfe
     if (verbosity >= 5)
       computeEnergyEverySCF = true;
 
-    if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-12)
+    if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-20)
       {
         if (restrictToOnePass)
           chebyshevTolerance = 1.0e+4;
@@ -2173,11 +2176,7 @@ namespace dftfe
         spinMixingEnhancementFactor = 1.0;
       }
 
-    if (numCoreWfcRR == 0)
-      spectrumSplitStartingScfIter = 10000;
 
-    if (numCoreWfcRR != 0)
-      useSinglePrecCheby = false;
 
     // checking if the XC type is compatible with
     // overlap compute communication cheby
@@ -2188,6 +2187,13 @@ namespace dftfe
     if (isHubbard || !isLocalXC)
       {
         overlapComputeCommunCheby = false;
+        if (verbosity >= 1 &&
+            dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+          {
+            std::cout
+              << "DFT-FE Warning: Hubbard cannot be used with OVERLAP COMPUTE COMMUN CHEBY = true. Setting OVERLAP COMPUTE COMMUN CHEBY to false"
+              << std::endl;
+          }
       }
   }
 

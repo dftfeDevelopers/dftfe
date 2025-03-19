@@ -66,7 +66,9 @@ namespace dftfe
       std::shared_ptr<AtomCenteredSphericalFunctionContainer>
                       atomCenteredSphericalFunctionContainer,
       const MPI_Comm &mpi_comm_parent,
-      const bool      memOptMode = false);
+      const bool      memOptMode               = false,
+      const bool      computeSphericalFnTimesX = true,
+      const bool      useGlobalCMatrix         = false);
 
     /**
      * @brief Resizes various internal data members and selects the kpoint of interest.
@@ -106,8 +108,43 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
       const unsigned int quadratureIndex);
+    /**
+     * @brief calls internal function: initialisePartitioner, initialiseKpoint and computeCMatrixEntries
+     * @param[in] updateSparsity flag on whether the sparstiy patten was
+     * updated, hence the partitioner is updated.
+     * @param[in] kPointWeights std::vector<double> of size number of kPoints
+     * @param[out] kPointCoordinates std::vector<double> of kPoint coordinates
+     * @param[in] basisOperationsPtr HOST FEBasisOperations shared_ptr required
+     * to indetify the element ids and quad points
+     * @param[in] BLASWrapperHostPtr CPU blasWrapperPtr, used for xcopy calls
+     * @param[in] quadratureIndex quadrature index for sampling the spherical
+     * function. Quadrature Index is used to reinit basisOperationsPtr
+     * @param[in] nonLocalOperatorSrc The source nonLocalOpertor from where the
+     * CMatrix and partitioner is copied. Generally, it is of higher precision.
+     */
+    template <typename ValueTypeSrc>
+    void
+    copyPartitionerKPointsAndComputeCMatrixEntries(
+      const bool                 updateSparsity,
+      const std::vector<double> &kPointWeights,
+      const std::vector<double> &kPointCoordinates,
+      std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+        basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                         BLASWrapperHostPtr,
+      const unsigned int quadratureIndex,
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
+        nonLocalOperatorSrc);
 #if defined(DFTFE_WITH_DEVICE)
     // for device specific initialise
     /**
@@ -207,7 +244,9 @@ namespace dftfe
 
     const std::vector<unsigned int> &
     getOwnedAtomIdsInCurrentProcessor() const;
-
+    /**
+     * @brief Computes C^{T}D^{-1}C at the global level for atomId. This is required in PAW
+     */
     void
     computeCconjtransCMatrix(
       const unsigned int atomId,
@@ -268,13 +307,23 @@ namespace dftfe
 
     /**
      * @brief computes the results of CconjtransX on the cells of interst specied by cellRange
-     * @param[in] X inpute cell level vector
+     * @param[in] X input cell level vector
      * @param[in] cellRange start and end element id in list of nonlocal
      * elements
      */
     void
     applyCconjtransOnX(const ValueType *                           X,
                        const std::pair<unsigned int, unsigned int> cellRange);
+
+
+    /**
+     * @brief computes the results of CconjtransX on nodal X vector
+     * @param[in] X input X nodal vector
+     * elements
+     */
+    void
+    applyCconjtransOnX(
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &X);
 
 
     // Returns the pointer of CTX stored in HOST memory for the atom Index in
@@ -285,13 +334,14 @@ namespace dftfe
      * current processor. NOTE!! One must be careful here
      */
     const ValueType *
-    getCconjtansXLocalDataStructure(const unsigned int iAtom);
+    getCconjtansXLocalDataStructure(const unsigned int iAtom) const;
+
     /**
-     * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and contraint nodes updated.
+     * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and constraint nodes updated.
      * @param[in] src input nodal vector on which operator acts on.
-     * @param[in] kPointIndex kPoint of interst for current operation
+     * @param[in] kPointIndex kPoint of interest for current operation
      * @param[in] couplingtype structure of coupling matrix
-     * @param[in] couplingMatrix entires of the coupling matrix V in
+     * @param[in] couplingMatrix entries of the coupling matrix V in
      * CVCconjtrans. Ensure the coupling matrix is padded
      * @param[out] sphericalFunctionKetTimesVectorParFlattened multivector to
      * store results of CconjtransX which is initiliased using
@@ -306,6 +356,7 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
         &        sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
+
 
     /**
      * @brief completes the action of CVCconjtranspose on nodal vector src. The src vector must have all ghost nodes and contraint nodes updated.
@@ -341,6 +392,18 @@ namespace dftfe
     applyCOnVCconjtransX(ValueType *                                 Xout,
                          const std::pair<unsigned int, unsigned int> cellRange);
 
+
+    /**
+     * @brief adds the result of CVCtX onto Xout for both CPU and GPU calls
+     * @param[out] Xout memoryStorage object of size
+     * cells*numberOfNodex*BlockSize. Typical case holds the results of H_{loc}X
+     * @param[in] cellRange start and end element id in list of nonlocal
+     * elements
+     */
+    void
+    applyCOnVCconjtransX(
+      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &Xout);
+
     std::vector<ValueType>
     getCmatrixEntries(int kPointIndex, unsigned int atomId, int iElem) const;
 
@@ -360,7 +423,71 @@ namespace dftfe
                           std::vector<ValueType> &      entriesPadded,
                           const CouplingStructure       couplingtype);
 
+    /**
+     * @brief Returns C matrix entries for chargeId and it compact support element Id.
+     */
+    const std::vector<ValueType> &
+    getCmatrixEntriesConjugate(const unsigned int chargeId,
+                               const unsigned int iElemComp) const;
+    /**
+     * @brief Returns C conj matrix entries for chargeId and it compact support element Id.
+     */
+    const std::vector<ValueType> &
+    getCmatrixEntriesTranspose(const unsigned int chargeId,
+                               const unsigned int iElemComp) const;
+    /**
+     * @brief Returns global C matrix of all atoms.
+     */
+    const std::vector<
+      std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
+    getGlobalCMatrix() const;
+
+
   protected:
+    /**
+     * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and constraint nodes updated.
+     * @param[in] src input nodal vector on which operator acts on.
+     * @param[in] kPointIndex kPoint of interest for current operation
+     * @param[in] couplingtype structure of coupling matrix
+     * @param[in] couplingMatrix entries of the coupling matrix V in
+     * CVCconjtrans. Ensure the coupling matrix is padded
+     * @param[out] sphericalFunctionKetTimesVectorParFlattened multivector to
+     * store results of CconjtransX which is initiliased using
+     * initialiseFlattenedVector call
+     */
+    void
+    applyVCconjtransOnXCellLevel(
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
+      const unsigned int                                         kPointIndex,
+      const CouplingStructure                                    couplingtype,
+      const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
+      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+        &        sphericalFunctionKetTimesVectorParFlattened,
+      const bool flagScaleInternalMatrix = false);
+
+    /**
+     * @brief completes the VCconjX on nodal vector src using global C matrix.
+     * The global C matrix mush have been computed before.
+     * The src vector must have all ghost nodes and constraint nodes updated.
+     * @param[in] src input nodal vector on which operator acts on.
+     * @param[in] kPointIndex kPoint of interest for current operation
+     * @param[in] couplingtype structure of coupling matrix
+     * @param[in] couplingMatrix entries of the coupling matrix V in
+     * CVCconjtrans. Ensure the coupling matrix is padded
+     * @param[out] sphericalFunctionKetTimesVectorParFlattened multivector to
+     * store results of CconjtransX which is initiliased using
+     * initialiseFlattenedVector call
+     */
+    void
+    applyVCconjtransOnXUsingGlobalC(
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
+      const unsigned int                                         kPointIndex,
+      const CouplingStructure                                    couplingtype,
+      const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
+      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+        &        sphericalFunctionKetTimesVectorParFlattened,
+      const bool flagScaleInternalMatrix = false);
+
     bool                d_AllReduceCompleted;
     std::vector<double> d_kPointWeights;
     std::vector<double> d_kPointCoordinates;
@@ -443,6 +570,8 @@ namespace dftfe
       d_maxSingleAtomContribution; // maximum number of nonlocal indexes across
                                    // all atoms of interset
     std::vector<unsigned int> d_numberCellsAccumNonLocalAtoms;
+    dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+                 d_iElemNonLocalToElemIndexMap;
     unsigned int d_numberNodesPerElement; // Access from BasisOperator WHile
                                           // filling CMatrixEntries
     unsigned int d_locallyOwnedCells;
@@ -453,6 +582,8 @@ namespace dftfe
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
       d_CMatrixEntriesTranspose;
+
+
 
   private:
     /**
@@ -487,6 +618,33 @@ namespace dftfe
         dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
       const unsigned int                  quadratureIndex);
 
+    template <typename ValueTypeSrc>
+    void
+    copyCMatrixEntries(
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
+        nonLocalOperatorSrc,
+      std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+                         basisOperationsPtr,
+      const unsigned int quadratureIndex);
+
+    template <typename ValueTypeSrc>
+    void
+    copyGlobalCMatrix(
+      const std::shared_ptr<
+        AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
+        nonLocalOperatorSrc,
+      std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+                         basisOperationsPtr,
+      const unsigned int quadratureIndex);
+
+
     std::map<
       unsigned int,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
@@ -496,6 +654,44 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
                               d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
     std::vector<unsigned int> d_nonlocalElemIdToCellIdVector;
+    bool                      d_computeSphericalFnTimesX;
+    bool                      d_useGlobalCMatrix;
+    std::vector<unsigned int> d_atomStartIndexGlobal;
+    unsigned int              d_totalNumSphericalFunctionsGlobal;
+
+    std::vector<
+      std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>>
+      d_CMatrixGlobal;
+
+    std::set<unsigned int>    d_setOfAtomicNumber;
+    std::vector<unsigned int> d_mapAtomIdToSpeciesIndex,
+      d_mapiAtomToSpeciesIndex;
+    std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>
+                              d_dotProductAtomicWaveInputWaveTemp;
+    std::vector<unsigned int> d_mapIAtomicNumToDotProd;
+    std::vector<unsigned int> d_mapiAtomToDotProd;
+
+    unsigned int d_totalLocallyOwnedNodes;
+
+    std::vector<unsigned int> d_mapiAtomTosphFuncWaveStart;
+    std::map<unsigned int, std::vector<unsigned int>> d_listOfiAtomInSpecies;
+
+    /**
+     * @brief computes Global Cmatrix on HOST.
+     * @param[in] basisOperationsPtr HOST FEBasisOperations shared_ptr required
+     * to indetify the element ids and quad points
+     * @param[in] BLASWrapperHostPtr HOST BLASWrapper
+     */
+    void
+    computeGlobalCMatrixVector(
+      std::shared_ptr<dftfe::basis::FEBasisOperations<
+        dataTypes::number,
+        double,
+        dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperHostPtr);
+
 #if defined(DFTFE_WITH_DEVICE)
     /**
      * @brief Copies the data from distributed Vector to Padded Memory storage object.

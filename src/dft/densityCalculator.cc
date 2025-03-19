@@ -31,9 +31,7 @@ namespace dftfe
   void
   computeRhoFromPSI(
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *XFrac,
     const unsigned int                      totalNumWaveFunctions,
-    const unsigned int                      Nfr,
     const std::vector<std::vector<double>> &eigenValues,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
@@ -56,8 +54,7 @@ namespace dftfe
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams,
-    const bool           spectrumSplit)
+    const dftParameters &dftParams)
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
@@ -173,6 +170,7 @@ namespace dftfe
                   (jvec + currentBlockSize) >
                     bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
+<<<<<<< HEAD
                   if (spectrumSplit)
                     {
                       partialOccupVecHost.setValue(kPointWeights[kPoint] *
@@ -216,18 +214,45 @@ namespace dftfe
                                iEigenVec < currentBlockSize;
                                ++iEigenVec)
                             {
+=======
+                  {
+                    if (dftParams.constraintMagnetization)
+                      {
+                        const double fermiEnergyConstraintMag =
+                          spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
+                        for (unsigned int iEigenVec = 0;
+                             iEigenVec < currentBlockSize;
+                             ++iEigenVec)
+                          {
+                            if (eigenValues[kPoint]
+                                           [totalNumWaveFunctions * spinIndex +
+                                            jvec + iEigenVec] >
+                                fermiEnergyConstraintMag)
+                              *(partialOccupVecHost.begin() + iEigenVec) = 0;
+                            else
+>>>>>>> 6b736322e9a916775f86952ffd0791cebcda19bc
                               *(partialOccupVecHost.begin() + iEigenVec) =
-                                dftUtils::getPartialOccupancy(
-                                  eigenValues[kPoint][totalNumWaveFunctions *
-                                                        spinIndex +
-                                                      jvec + iEigenVec],
-                                  fermiEnergy,
-                                  C_kb,
-                                  dftParams.TVal) *
                                 kPointWeights[kPoint] * spinPolarizedFactor;
-                            }
-                        }
-                    }
+                          }
+                      }
+                    else
+                      {
+                        for (unsigned int iEigenVec = 0;
+                             iEigenVec < currentBlockSize;
+                             ++iEigenVec)
+                          {
+                            *(partialOccupVecHost.begin() + iEigenVec) =
+                              dftUtils::getPartialOccupancy(
+                                eigenValues[kPoint]
+                                           [totalNumWaveFunctions * spinIndex +
+                                            jvec + iEigenVec],
+                                fermiEnergy,
+                                C_kb,
+                                dftParams.TVal) *
+                              kPointWeights[kPoint] * spinPolarizedFactor;
+                          }
+                      }
+                  }
 #if defined(DFTFE_WITH_DEVICE)
                   partialOccupVec.copyFrom(partialOccupVecHost);
 #endif
@@ -251,7 +276,6 @@ namespace dftfe
                                     (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock->data());
 #endif
-
 
                   basisOperationsPtr->reinit(currentBlockSize,
                                              cellsBlockSize,
@@ -304,6 +328,7 @@ namespace dftfe
                     }     // cells block loop
                 }
             }
+<<<<<<< HEAD
 
           if (spectrumSplit)
             for (unsigned int jvec = 0; jvec < Nfr; jvec += BVec)
@@ -446,6 +471,8 @@ namespace dftfe
                       }     // cells block loop
                   }
               } // spectrum split block
+=======
+>>>>>>> 6b736322e9a916775f86952ffd0791cebcda19bc
         }
 #if defined(DFTFE_WITH_DEVICE)
     rhoHost.resize(rho.size());
@@ -625,10 +652,7 @@ namespace dftfe
   computeRhoFromPSI(
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::DEVICE> *X,
-    const dftfe::utils::MemoryStorage<dataTypes::number,
-                                      dftfe::utils::MemorySpace::DEVICE> *XFrac,
     const unsigned int                      totalNumWaveFunctions,
-    const unsigned int                      Nfr,
     const std::vector<std::vector<double>> &eigenValues,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
@@ -654,18 +678,14 @@ namespace dftfe
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams,
-    const bool           spectrumSplit);
+    const dftParameters &dftParams);
 #endif
 
   template void
   computeRhoFromPSI(
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::HOST> *X,
-    const dftfe::utils::MemoryStorage<dataTypes::number,
-                                      dftfe::utils::MemorySpace::HOST> *XFrac,
     const unsigned int                      totalNumWaveFunctions,
-    const unsigned int                      Nfr,
     const std::vector<std::vector<double>> &eigenValues,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
@@ -691,6 +711,5 @@ namespace dftfe
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams,
-    const bool           spectrumSplit);
+    const dftParameters &dftParams);
 } // namespace dftfe

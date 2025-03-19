@@ -21,6 +21,7 @@
 #include <dftUtils.h>
 #include <linearAlgebraOperations.h>
 #include <linearAlgebraOperationsInternal.h>
+#include <BLASWrapper.h>
 #ifdef DFTFE_WITH_DEVICE
 #  include <DeviceAPICalls.h>
 #endif
@@ -192,13 +193,10 @@ namespace dftfe
                 elpa_set_integer(elpaHandle, "use_gpu_id", gpuID, &error);
                 AssertThrow(error == ELPA_OK,
                             dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-                if (!dftParams.reproducible_output)
-                  {
-                    error = elpa_setup_gpu(elpaHandle);
-                    AssertThrow(error == ELPA_OK,
-                                dealii::ExcMessage(
-                                  "DFT-FE Error: ELPA Error."));
-                  }
+
+                error = elpa_setup_gpu(elpaHandle);
+                AssertThrow(error == ELPA_OK,
+                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
               }
             else
               {
@@ -368,15 +366,17 @@ namespace dftfe
       void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<T> &                      mat,
-        const T                                          scalar)
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<T> &                              mat,
+        const T                                                  scalar)
       {
-        if (processGrid->is_process_active())
-          {
-            const unsigned int numberComponents = mat.local_m() * mat.local_n();
-            const unsigned int inc              = 1;
-            xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
-          }
+        // if (processGrid->is_process_active())
+        //   {
+        //     const unsigned int numberComponents = mat.local_m() *
+        //     mat.local_n(); const unsigned int inc              = 1;
+        //     xscal(&numberComponents, &scalar, &mat.local_el(0, 0), &inc);
+        //   }
       }
 
 
@@ -404,7 +404,10 @@ namespace dftfe
       template <typename T, typename TLowPrec>
       void
       fillParallelOverlapMatrixMixedPrec(
-        const T *          subspaceVectorsArray,
+        const T *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -497,36 +500,38 @@ namespace dftfe
 
                 const unsigned int D = N - ivec;
 
-                xgemm(&transA,
-                      &transB,
-                      &B,
-                      &B,
-                      &numLocalDofs,
-                      &scalarCoeffAlpha,
-                      subspaceVectorsArray + ivec,
-                      &N,
-                      subspaceVectorsArray + ivec,
-                      &N,
-                      &scalarCoeffBeta,
-                      &overlapMatrixBlockDoublePrec[0],
-                      &B);
+                BLASWrapperPtr->xgemm(transA,
+                                      transB,
+                                      B,
+                                      B,
+                                      numLocalDofs,
+                                      &scalarCoeffAlpha,
+                                      subspaceVectorsArray + ivec,
+                                      N,
+                                      subspaceVectorsArray + ivec,
+                                      N,
+                                      &scalarCoeffBeta,
+                                      &overlapMatrixBlockDoublePrec[0],
+                                      B);
 
                 const unsigned int DRem = D - B;
                 if (DRem != 0)
                   {
-                    xgemm(&transA,
-                          &transB,
-                          &DRem,
-                          &B,
-                          &numLocalDofs,
-                          &scalarCoeffAlphaLowPrec,
-                          &subspaceVectorsArrayLowPrec[0] + ivec + B,
-                          &N,
-                          &subspaceVectorsArrayLowPrec[0] + ivec,
-                          &N,
-                          &scalarCoeffBetaLowPrec,
-                          &overlapMatrixBlockLowPrec[0],
-                          &DRem);
+                    BLASWrapperPtr->xgemm(transA,
+                                          transB,
+                                          DRem,
+                                          B,
+                                          numLocalDofs,
+                                          &scalarCoeffAlphaLowPrec,
+                                          &subspaceVectorsArrayLowPrec[0] +
+                                            ivec + B,
+                                          N,
+                                          &subspaceVectorsArrayLowPrec[0] +
+                                            ivec,
+                                          N,
+                                          &scalarCoeffBetaLowPrec,
+                                          &overlapMatrixBlockLowPrec[0],
+                                          DRem);
                   }
 
                 MPI_Barrier(mpiComm);
@@ -595,7 +600,10 @@ namespace dftfe
       template <typename T>
       void
       fillParallelOverlapMatrix(
-        const T *          subspaceVectorsArray,
+        const T *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -676,19 +684,19 @@ namespace dftfe
                 const unsigned int D = N - ivec;
 
                 // Comptute local XTrunc^{T}*XcBlock.
-                xgemm(&transA,
-                      &transB,
-                      &D,
-                      &B,
-                      &numLocalDofs,
-                      &scalarCoeffAlpha,
-                      subspaceVectorsArray + ivec,
-                      &N,
-                      subspaceVectorsArray + ivec,
-                      &N,
-                      &scalarCoeffBeta,
-                      &overlapMatrixBlock[0],
-                      &D);
+                BLASWrapperPtr->xgemm(transA,
+                                      transB,
+                                      D,
+                                      B,
+                                      numLocalDofs,
+                                      &scalarCoeffAlpha,
+                                      subspaceVectorsArray + ivec,
+                                      N,
+                                      subspaceVectorsArray + ivec,
+                                      N,
+                                      &scalarCoeffBeta,
+                                      &overlapMatrixBlock[0],
+                                      D);
 
                 MPI_Barrier(mpiComm);
                 // Sum local XTrunc^{T}*XcBlock across domain decomposition
@@ -733,7 +741,10 @@ namespace dftfe
       template <typename T>
       void
       subspaceRotation(
-        T *                subspaceVectorsArray,
+        T *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -902,19 +913,19 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        xgemm(&transA,
-                              &transB,
-                              &BVec,
-                              &BDof,
-                              &D,
-                              &scalarCoeffAlpha,
-                              &rotationMatBlock[0],
-                              &BVec,
-                              subspaceVectorsArray + idof * N,
-                              &N,
-                              &scalarCoeffBeta,
-                              &rotatedVectorsMatBlock[0] + jvec,
-                              &N);
+                        BLASWrapperPtr->xgemm(transA,
+                                              transB,
+                                              BVec,
+                                              BDof,
+                                              D,
+                                              &scalarCoeffAlpha,
+                                              &rotationMatBlock[0],
+                                              BVec,
+                                              subspaceVectorsArray + idof * N,
+                                              N,
+                                              &scalarCoeffBeta,
+                                              &rotatedVectorsMatBlock[0] + jvec,
+                                              N);
                       }
 
                   } // band parallelization
@@ -1019,7 +1030,10 @@ namespace dftfe
       template <typename T>
       void
       subspaceRotationSpectrumSplit(
-        const T *          X,
+        const T *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         T *                Y,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
@@ -1154,19 +1168,19 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        xgemm(&transA,
-                              &transB,
-                              &BVec,
-                              &BDof,
-                              &N,
-                              &scalarCoeffAlpha,
-                              &rotationMatBlock[0],
-                              &BVec,
-                              X + idof * N,
-                              &N,
-                              &scalarCoeffBeta,
-                              &rotatedVectorsMatBlock[0] + jvec,
-                              &numberTopVectors);
+                        BLASWrapperPtr->xgemm(transA,
+                                              transB,
+                                              BVec,
+                                              BDof,
+                                              N,
+                                              &scalarCoeffAlpha,
+                                              &rotationMatBlock[0],
+                                              BVec,
+                                              X + idof * N,
+                                              N,
+                                              &scalarCoeffBeta,
+                                              &rotatedVectorsMatBlock[0] + jvec,
+                                              numberTopVectors);
                       }
 
                   } // band parallelization
@@ -1206,7 +1220,10 @@ namespace dftfe
       template <typename T, typename TLowPrec>
       void
       subspaceRotationSpectrumSplitMixedPrec(
-        const T *          X,
+        const T *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         T *                Y,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
@@ -1383,34 +1400,35 @@ namespace dftfe
                     if (BDof != 0)
                       {
                         // single precision
-                        xgemm(&transA,
-                              &transB,
-                              &BVec,
-                              &BDof,
-                              &Ncore,
-                              &scalarCoeffAlphaSinglePrec,
-                              &rotationMatCoreCompBlock[0],
-                              &BVec,
-                              &XSinglePrec[0] + idof * N,
-                              &N,
-                              &scalarCoeffBetaSinglePrec,
-                              &rotatedVectorsMatCoreContrBlockTemp[0],
-                              &BVec);
+                        BLASWrapperPtr->xgemm(
+                          transA,
+                          transB,
+                          BVec,
+                          BDof,
+                          Ncore,
+                          &scalarCoeffAlphaSinglePrec,
+                          &rotationMatCoreCompBlock[0],
+                          BVec,
+                          &XSinglePrec[0] + idof * N,
+                          N,
+                          &scalarCoeffBetaSinglePrec,
+                          &rotatedVectorsMatCoreContrBlockTemp[0],
+                          BVec);
 
                         // double precision
-                        xgemm(&transA,
-                              &transB,
-                              &BVec,
-                              &BDof,
-                              &numberTopVectors,
-                              &scalarCoeffAlpha,
-                              &rotationMatTopCompBlock[0],
-                              &BVec,
-                              X + idof * N + Ncore,
-                              &N,
-                              &scalarCoeffBeta,
-                              &rotatedVectorsMatBlock[0] + jvec,
-                              &numberTopVectors);
+                        BLASWrapperPtr->xgemm(transA,
+                                              transB,
+                                              BVec,
+                                              BDof,
+                                              numberTopVectors,
+                                              &scalarCoeffAlpha,
+                                              &rotationMatTopCompBlock[0],
+                                              BVec,
+                                              X + idof * N + Ncore,
+                                              N,
+                                              &scalarCoeffBeta,
+                                              &rotatedVectorsMatBlock[0] + jvec,
+                                              numberTopVectors);
 
                         for (unsigned int i = 0; i < BDof; ++i)
                           for (unsigned int j = 0; j < BVec; ++j)
@@ -1456,7 +1474,10 @@ namespace dftfe
       template <typename T, typename TLowPrec>
       void
       subspaceRotationMixedPrec(
-        T *                subspaceVectorsArray,
+        T *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -1670,19 +1691,20 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        xgemm(&transA,
-                              &transB,
-                              &BVec,
-                              &BDof,
-                              &D,
-                              &scalarCoeffAlpha,
-                              &rotationMatBlock[0],
-                              &BVec,
-                              &subspaceVectorsArraySinglePrec[0] + idof * N,
-                              &N,
-                              &scalarCoeffBeta,
-                              &rotatedVectorsMatBlockTemp[0],
-                              &BVec);
+                        BLASWrapperPtr->xgemm(
+                          transA,
+                          transB,
+                          BVec,
+                          BDof,
+                          D,
+                          &scalarCoeffAlpha,
+                          &rotationMatBlock[0],
+                          BVec,
+                          &subspaceVectorsArraySinglePrec[0] + idof * N,
+                          N,
+                          &scalarCoeffBeta,
+                          &rotatedVectorsMatBlockTemp[0],
+                          BVec);
 
                         for (unsigned int i = 0; i < BDof; ++i)
                           for (unsigned int j = 0; j < BVec; ++j)
@@ -1794,7 +1816,10 @@ namespace dftfe
       template <typename T, typename TLowPrec>
       void
       subspaceRotationCGSMixedPrec(
-        T *                subspaceVectorsArray,
+        T *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -2008,19 +2033,20 @@ namespace dftfe
 
                     if (BDof != 0)
                       {
-                        xgemm(&transA,
-                              &transB,
-                              &BVec,
-                              &BDof,
-                              &D,
-                              &scalarCoeffAlpha,
-                              &rotationMatBlock[0],
-                              &BVec,
-                              &subspaceVectorsArraySinglePrec[0] + idof * N,
-                              &N,
-                              &scalarCoeffBeta,
-                              &rotatedVectorsMatBlockTemp[0],
-                              &BVec);
+                        BLASWrapperPtr->xgemm(
+                          transA,
+                          transB,
+                          BVec,
+                          BDof,
+                          D,
+                          &scalarCoeffAlpha,
+                          &rotationMatBlock[0],
+                          BVec,
+                          &subspaceVectorsArraySinglePrec[0] + idof * N,
+                          N,
+                          &scalarCoeffBeta,
+                          &rotatedVectorsMatBlockTemp[0],
+                          BVec);
 
                         for (unsigned int i = 0; i < BDof; ++i)
                           for (unsigned int j = 0; j < BVec; ++j)
@@ -2147,7 +2173,10 @@ namespace dftfe
 
       template void
       fillParallelOverlapMatrix(
-        const double *                                   X,
+        const double *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                                              BLASWrapperPtr,
         const unsigned int                               XLocalSize,
         const unsigned int                               numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -2158,7 +2187,10 @@ namespace dftfe
 
       template void
       fillParallelOverlapMatrix(
-        const std::complex<double> *                     X,
+        const std::complex<double> *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                                              BLASWrapperPtr,
         const unsigned int                               XLocalSize,
         const unsigned int                               numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -2170,7 +2202,10 @@ namespace dftfe
 
       template void
       fillParallelOverlapMatrixMixedPrec<double, float>(
-        const double *                                   X,
+        const double *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                                              BLASWrapperPtr,
         const unsigned int                               XLocalSize,
         const unsigned int                               numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -2182,7 +2217,10 @@ namespace dftfe
       template void
       fillParallelOverlapMatrixMixedPrec<std::complex<double>,
                                          std::complex<float>>(
-        const std::complex<double> *                     X,
+        const std::complex<double> *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                                              BLASWrapperPtr,
         const unsigned int                               XLocalSize,
         const unsigned int                               numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -2193,7 +2231,10 @@ namespace dftfe
 
       template void
       subspaceRotation(
-        double *           subspaceVectorsArray,
+        double *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -2208,8 +2249,11 @@ namespace dftfe
       template void
       subspaceRotation(
         std::complex<double> *subspaceVectorsArray,
-        const unsigned int    subspaceVectorsArrayLocalSize,
-        const unsigned int    N,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
         const MPI_Comm &                                    interBandGroupComm,
         const MPI_Comm &                                    mpiComm,
@@ -2223,14 +2267,18 @@ namespace dftfe
       template void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<double> &                 mat,
-        const double                                     scalar);
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<double> &                         mat,
+        const double                                             scalar);
 
       template void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &   mat,
-        const std::complex<double>                       scalar);
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &           mat,
+        const std::complex<double>                               scalar);
 
       template void
       sumAcrossInterCommScaLAPACKMat(
@@ -2246,7 +2294,10 @@ namespace dftfe
 
       template void
       subspaceRotationSpectrumSplit(
-        const double *     X,
+        const double *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         double *           Y,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
@@ -2261,9 +2312,12 @@ namespace dftfe
       template void
       subspaceRotationSpectrumSplit(
         const std::complex<double> *X,
-        std::complex<double> *      Y,
-        const unsigned int          subspaceVectorsArrayLocalSize,
-        const unsigned int          N,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                   BLASWrapperPtr,
+        std::complex<double> *Y,
+        const unsigned int    subspaceVectorsArrayLocalSize,
+        const unsigned int    N,
         const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
         const unsigned int                                  numberTopVectors,
         const MPI_Comm &                                    interBandGroupComm,
@@ -2275,7 +2329,10 @@ namespace dftfe
 
       template void
       subspaceRotationSpectrumSplitMixedPrec<double, float>(
-        const double *     X,
+        const double *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         double *           Y,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
@@ -2291,9 +2348,12 @@ namespace dftfe
       subspaceRotationSpectrumSplitMixedPrec<std::complex<double>,
                                              std::complex<float>>(
         const std::complex<double> *X,
-        std::complex<double> *      Y,
-        const unsigned int          subspaceVectorsArrayLocalSize,
-        const unsigned int          N,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                   BLASWrapperPtr,
+        std::complex<double> *Y,
+        const unsigned int    subspaceVectorsArrayLocalSize,
+        const unsigned int    N,
         const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
         const unsigned int                                  numberTopVectors,
         const MPI_Comm &                                    interBandGroupComm,
@@ -2304,7 +2364,10 @@ namespace dftfe
 
       template void
       subspaceRotationMixedPrec<double, float>(
-        double *           subspaceVectorsArray,
+        double *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -2318,8 +2381,11 @@ namespace dftfe
       template void
       subspaceRotationMixedPrec<std::complex<double>, std::complex<float>>(
         std::complex<double> *subspaceVectorsArray,
-        const unsigned int    subspaceVectorsArrayLocalSize,
-        const unsigned int    N,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
         const MPI_Comm &                                    interBandGroupComm,
         const MPI_Comm &                                    mpiComm,
@@ -2330,7 +2396,10 @@ namespace dftfe
 
       template void
       subspaceRotationCGSMixedPrec<double, float>(
-        double *           subspaceVectorsArray,
+        double *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -2344,8 +2413,11 @@ namespace dftfe
       template void
       subspaceRotationCGSMixedPrec<std::complex<double>, std::complex<float>>(
         std::complex<double> *subspaceVectorsArray,
-        const unsigned int    subspaceVectorsArrayLocalSize,
-        const unsigned int    N,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
+        const unsigned int subspaceVectorsArrayLocalSize,
+        const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &   processGrid,
         const MPI_Comm &                                    interBandGroupComm,
         const MPI_Comm &                                    mpiComm,

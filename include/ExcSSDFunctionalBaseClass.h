@@ -113,6 +113,26 @@ namespace dftfe
       const unsigned int spinIndex) = 0;
 
     /*
+     * @brief The apply function that will be called in HXCheby() with single precision.
+     * The distribute() and updateGhostValues() for src
+     * has to be called before this function.
+     * Similarly for dst, accumulateLocallyOwned() should be called in HX()
+     * after this function is called. param[in] src The input vector param[out]
+     * dst The output vector param[in] inputVecSize The size of the input vector
+     * param[in] kPointIndex the k point for which the HX() is called
+     * param[in] spinIndex the spin index for which the HX() is called
+     */
+    virtual void
+    applyWaveFunctionDependentFuncDerWrtPsi(
+      const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+                                              memorySpace> &src,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &                dst,
+      const unsigned int inputVecSize,
+      const unsigned int kPointIndex,
+      const unsigned int spinIndex) = 0;
+
+    /*
      * @brief The function that updates the Wave function dependent part
      * of the Exc functional and its derivative wrt \psi
      */
