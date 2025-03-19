@@ -189,7 +189,7 @@ namespace dftfe
                               *(partialOccupVecHost.begin() + iEigenVec) =
                                 kPointWeights[kPoint] * spinPolarizedFactor;
                             */
-                           *(partialOccupVecHost.begin() + iEigenVec) =
+                            *(partialOccupVecHost.begin() + iEigenVec) =
                               dftUtils::getPartialOccupancy(
                                 eigenValues[kPoint]
                                            [totalNumWaveFunctions * spinIndex +
@@ -197,7 +197,7 @@ namespace dftfe
                                 fermiEnergyConstraintMag,
                                 C_kb,
                                 dftParams.TVal) *
-                              kPointWeights[kPoint] * spinPolarizedFactor;                            
+                              kPointWeights[kPoint] * spinPolarizedFactor;
                           }
                       }
                     else

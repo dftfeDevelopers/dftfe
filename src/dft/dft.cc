@@ -1335,27 +1335,28 @@ namespace dftfe
 
         if (d_dftParamsPtr->spinPolarized == 1 &&
             d_dftParamsPtr->constraintMagnetization)
-        {
-          // normalize rho mag
-          const double netMag =
-            totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
+          {
+            // normalize rho mag
+            const double netMag =
+              totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
 
-          double scalingFactor=1.0;
-          if (std::fabs(netMag)>1e-6)
-            scalingFactor = (d_dftParamsPtr->tot_magnetization*numElectrons) / netMag;
+            double scalingFactor = 1.0;
+            if (std::fabs(netMag) > 1e-6)
+              scalingFactor =
+                (d_dftParamsPtr->tot_magnetization * numElectrons) / netMag;
 
             d_densityInNodalValues[1] *= scalingFactor;
 
-          if (d_dftParamsPtr->verbosity >= 1)
-            {
-              pcout << "Net magnetization before Normalizing:  " << netMag
-                    << std::endl;
-              pcout << "Net magnetization after Normalizing: "
-                    << totalCharge(d_matrixFreeDataPRefined,
-                                   d_densityInNodalValues[1])
-                    << std::endl;
-            }
-        }
+            if (d_dftParamsPtr->verbosity >= 1)
+              {
+                pcout << "Net magnetization before Normalizing:  " << netMag
+                      << std::endl;
+                pcout << "Net magnetization after Normalizing: "
+                      << totalCharge(d_matrixFreeDataPRefined,
+                                     d_densityInNodalValues[1])
+                      << std::endl;
+              }
+          }
 
         for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
@@ -4328,7 +4329,7 @@ namespace dftfe
 
     // reset
     deformDomain(dealii::invert(deformationGradientPerturb2),
-                 true,
+                 false,
                  false,
                  d_dftParamsPtr->verbosity >= 4 ? true : false);
   }
