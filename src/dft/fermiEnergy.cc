@@ -256,13 +256,12 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    compute_fermienergy_purestate(
-      const std::vector<std::vector<double>> &eigenValuesInput,
-       const double numElectronsInput)     
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_fermienergy_purestate(
+    const std::vector<std::vector<double>> &eigenValuesInput,
+    const double                            numElectronsInput)
   {
-    int    count = std::ceil(numElectronsInput /
-                          (2.0 - d_dftParamsPtr->spinPolarized));
+    int count =
+      std::ceil(numElectronsInput / (2.0 - d_dftParamsPtr->spinPolarized));
 
 
     std::vector<double> eigenValuesAllkPoints;
@@ -285,11 +284,9 @@ namespace dftfe
       dealii::Utilities::MPI::max(fermiEnergyLocal, interpoolcomm);
     if (d_dftParamsPtr->verbosity >= 2)
       {
-        pcout << " This is a pure state calculation "
-              << std::endl;
-        pcout
-          << "Fermi energy                                    : "
-          << fermiEnergy << std::endl;
+        pcout << " This is a pure state calculation " << std::endl;
+        pcout << "Fermi energy                                    : "
+              << fermiEnergy << std::endl;
       }
   }
 

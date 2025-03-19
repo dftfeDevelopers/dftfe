@@ -180,55 +180,82 @@ namespace dftfe
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
                      ++spinIndex)
                   {
-                    if (dftParams.constraintMagnetization)
+                    if (dftParams.pureState)
                       {
-                        const double fermiEnergyConstraintMag =
-                          spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
-                        for (unsigned int iEigenVec = 0;
-                             iEigenVec < currentBlockSize;
-                             ++iEigenVec)
+                        if (dftParams.constraintMagnetization)
                           {
-                            /*
-                            if (eigenValues[kPoint]
-                                           [totalNumWaveFunctions * spinIndex +
-                                            jvec + iEigenVec] >
-                                fermiEnergyConstraintMag)
-                              *(partialOccupVecHost[spinIndex].begin() +
-                                iEigenVec) = 0;
-                            else
-                              *(partialOccupVecHost[spinIndex].begin() +
-                                iEigenVec) =
-                                kPointWeights[kPoint] * spinPolarizedFactor;
-                            */
-
-                            *(partialOccupVecHost[spinIndex].begin() +
-                              iEigenVec) =
-                              dftUtils::getPartialOccupancy(
-                                eigenValues[kPoint]
-                                           [totalNumWaveFunctions * spinIndex +
-                                            jvec + iEigenVec],
-                                fermiEnergyConstraintMag,
-                                C_kb,
-                                dftParams.TVal) *
-                              kPointWeights[kPoint] * spinPolarizedFactor;
+                            const double fermiEnergyConstraintMag =
+                              spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
+                            for (unsigned int iEigenVec = 0;
+                                 iEigenVec < currentBlockSize;
+                                 ++iEigenVec)
+                              {
+                                if (eigenValues[kPoint][totalNumWaveFunctions *
+                                                          spinIndex +
+                                                        jvec + iEigenVec] >
+                                    fermiEnergyConstraintMag)
+                                  *(partialOccupVecHost.begin() + iEigenVec) =
+                                    0;
+                                else
+                                  *(partialOccupVecHost.begin() + iEigenVec) =
+                                    kPointWeights[kPoint] * spinPolarizedFactor;
+                              }
+                          }
+                        else
+                          {
+                            for (unsigned int iEigenVec = 0;
+                                 iEigenVec < currentBlockSize;
+                                 ++iEigenVec)
+                              {
+                                if (eigenValues[kPoint][totalNumWaveFunctions *
+                                                          spinIndex +
+                                                        jvec + iEigenVec] >
+                                    fermiEnergy)
+                                  *(partialOccupVecHost.begin() + iEigenVec) =
+                                    0;
+                                else
+                                  *(partialOccupVecHost.begin() + iEigenVec) =
+                                    kPointWeights[kPoint] * spinPolarizedFactor;
+                              }
                           }
                       }
                     else
                       {
-                        for (unsigned int iEigenVec = 0;
-                             iEigenVec < currentBlockSize;
-                             ++iEigenVec)
+                        if (dftParams.constraintMagnetization)
                           {
-                            *(partialOccupVecHost[spinIndex].begin() +
-                              iEigenVec) =
-                              dftUtils::getPartialOccupancy(
-                                eigenValues[kPoint]
-                                           [totalNumWaveFunctions * spinIndex +
-                                            jvec + iEigenVec],
-                                fermiEnergy,
-                                C_kb,
-                                dftParams.TVal) *
-                              kPointWeights[kPoint] * spinPolarizedFactor;
+                            const double fermiEnergyConstraintMag =
+                              spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
+                            for (unsigned int iEigenVec = 0;
+                                 iEigenVec < currentBlockSize;
+                                 ++iEigenVec)
+                              {
+                                *(partialOccupVecHost.begin() + iEigenVec) =
+                                  dftUtils::getPartialOccupancy(
+                                    eigenValues[kPoint][totalNumWaveFunctions *
+                                                          spinIndex +
+                                                        jvec + iEigenVec],
+                                    fermiEnergyConstraintMag,
+                                    C_kb,
+                                    dftParams.TVal) *
+                                  kPointWeights[kPoint] * spinPolarizedFactor;
+                              }
+                          }
+                        else
+                          {
+                            for (unsigned int iEigenVec = 0;
+                                 iEigenVec < currentBlockSize;
+                                 ++iEigenVec)
+                              {
+                                *(partialOccupVecHost.begin() + iEigenVec) =
+                                  dftUtils::getPartialOccupancy(
+                                    eigenValues[kPoint][totalNumWaveFunctions *
+                                                          spinIndex +
+                                                        jvec + iEigenVec],
+                                    fermiEnergy,
+                                    C_kb,
+                                    dftParams.TVal) *
+                                  kPointWeights[kPoint] * spinPolarizedFactor;
+                              }
                           }
                       }
                   }

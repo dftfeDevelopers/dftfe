@@ -568,7 +568,7 @@ namespace dftfe
     void
     compute_fermienergy_purestate(
       const std::vector<std::vector<double>> &eigenValuesInput,
-      const double numElectronsInput);   
+      const double                            numElectronsInput);
 
     /**
      *@brief Computes the kinetic energy

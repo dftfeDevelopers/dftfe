@@ -3148,19 +3148,20 @@ namespace dftfe
             // fermi energy
             //
             if (d_dftParamsPtr->constraintMagnetization)
-            {
-              if (d_dftParamsPtr->pureState)              
-                compute_fermienergy_constraintMagnetization_purestate(eigenValues);
-              else
-                compute_fermienergy_constraintMagnetization(eigenValues);                
-            }
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
             else
-            {
-              if (d_dftParamsPtr->pureState)                     
-                compute_fermienergy_purestate(eigenValues, numElectrons);
-              else
-                compute_fermienergy(eigenValues, numElectrons);                
-            }
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
 
 
             unsigned int count = 1;
@@ -3278,19 +3279,22 @@ namespace dftfe
                         }
                     //
                     if (d_dftParamsPtr->constraintMagnetization)
-                    {
-                      if (d_dftParamsPtr->pureState)              
-                        compute_fermienergy_constraintMagnetization_purestate(eigenValues);
-                      else
-                        compute_fermienergy_constraintMagnetization(eigenValues);                
-                    }
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_constraintMagnetization_purestate(
+                            eigenValues);
+                        else
+                          compute_fermienergy_constraintMagnetization(
+                            eigenValues);
+                      }
                     else
-                    {
-                      if (d_dftParamsPtr->pureState)                     
-                        compute_fermienergy_purestate(eigenValues, numElectrons);
-                      else
-                        compute_fermienergy(eigenValues, numElectrons);                
-                    }
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_purestate(eigenValues,
+                                                        numElectrons);
+                        else
+                          compute_fermienergy(eigenValues, numElectrons);
+                      }
 
                     //
                     maxRes =
@@ -3410,19 +3414,20 @@ namespace dftfe
             // fermi energy
             //
             if (d_dftParamsPtr->constraintMagnetization)
-            {
-              if (d_dftParamsPtr->pureState)              
-                compute_fermienergy_constraintMagnetization_purestate(eigenValues);
-              else
-                compute_fermienergy_constraintMagnetization(eigenValues);                
-            }
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
             else
-            {
-              if (d_dftParamsPtr->pureState)                     
-                compute_fermienergy_purestate(eigenValues, numElectrons);
-              else
-                compute_fermienergy(eigenValues, numElectrons);                
-            }
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
 
             unsigned int count = 1;
 
@@ -3511,19 +3516,22 @@ namespace dftfe
 
                     //
                     if (d_dftParamsPtr->constraintMagnetization)
-                    {
-                      if (d_dftParamsPtr->pureState)              
-                        compute_fermienergy_constraintMagnetization_purestate(eigenValues);
-                      else
-                        compute_fermienergy_constraintMagnetization(eigenValues,numElectrons);                
-                    }
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_constraintMagnetization_purestate(
+                            eigenValues);
+                        else
+                          compute_fermienergy_constraintMagnetization(
+                            eigenValues, numElectrons);
+                      }
                     else
-                    {
-                      if (d_dftParamsPtr->pureState)                     
-                        compute_fermienergy_purestate(eigenValues, numElectrons);
-                      else
-                        compute_fermienergy(eigenValues, numElectrons);                
-                    }
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_purestate(eigenValues,
+                                                        numElectrons);
+                        else
+                          compute_fermienergy(eigenValues, numElectrons);
+                      }
 
                     //
                     maxRes = computeMaximumHighestOccupiedStateResidualNorm(
@@ -3848,14 +3856,18 @@ namespace dftfe
         pcout << "SCF iterations converged to the specified tolerance after: "
               << scfIter << " iterations." << std::endl;
         if (d_dftParamsPtr->verbosity >= 1)
-        {
-          if (d_dftParamsPtr->spinPolarized && d_dftParamsPtr->constraintMagnetization)
           {
-            pcout << "GS Fermi energy spin up: "<< fermiEnergyUp << std::endl;
-            pcout << "GS Fermi energy spin down: "<< fermiEnergyDown << std::endl;
+            if (d_dftParamsPtr->spinPolarized &&
+                d_dftParamsPtr->constraintMagnetization)
+              {
+                pcout << "GS Fermi energy spin up: " << fermiEnergyUp
+                      << std::endl;
+                pcout << "GS Fermi energy spin down: " << fermiEnergyDown
+                      << std::endl;
+              }
+            else
+              pcout << "GS Fermi energy spin up: " << fermiEnergy << std::endl;
           }
-          else
-            pcout << "GS Fermi energy spin up: "<< fermiEnergy << std::endl;          }
 
         if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {

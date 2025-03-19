@@ -461,19 +461,20 @@ namespace dftfe
         //
         if (!(d_dftParamsPtr->writeBandsFile))
           {
-              if (d_dftParamsPtr->constraintMagnetization)
+            if (d_dftParamsPtr->constraintMagnetization)
               {
                 if (d_dftParamsPtr->pureState)
-                  compute_fermienergy_constraintMagnetization_purestate(eigenValues);
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
                 else
-                  compute_fermienergy_constraintMagnetization(eigenValues);      
+                  compute_fermienergy_constraintMagnetization(eigenValues);
               }
-              else
+            else
               {
                 if (d_dftParamsPtr->pureState)
                   compute_fermienergy_purestate(eigenValues, numElectrons);
                 else
-                  compute_fermienergy(eigenValues, numElectrons);                
+                  compute_fermienergy(eigenValues, numElectrons);
               }
           }
 
@@ -601,19 +602,20 @@ namespace dftfe
             if (!(d_dftParamsPtr->writeBandsFile))
               {
                 if (d_dftParamsPtr->constraintMagnetization)
-                {
-                  if (d_dftParamsPtr->pureState)
-                    compute_fermienergy_constraintMagnetization_purestate(eigenValues);
-                  else
-                    compute_fermienergy_constraintMagnetization(eigenValues);      
-                }
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_constraintMagnetization_purestate(
+                        eigenValues);
+                    else
+                      compute_fermienergy_constraintMagnetization(eigenValues);
+                  }
                 else
-                {
-                  if (d_dftParamsPtr->pureState)
-                    compute_fermienergy_purestate(eigenValues, numElectrons);
-                  else
-                    compute_fermienergy(eigenValues, numElectrons);                
-                }
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_purestate(eigenValues, numElectrons);
+                    else
+                      compute_fermienergy(eigenValues, numElectrons);
+                  }
               }
 
             if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
@@ -743,19 +745,20 @@ namespace dftfe
         //
         if (!(d_dftParamsPtr->writeBandsFile))
           {
-              if (d_dftParamsPtr->constraintMagnetization)
+            if (d_dftParamsPtr->constraintMagnetization)
               {
                 if (d_dftParamsPtr->pureState)
-                  compute_fermienergy_constraintMagnetization_purestate(eigenValues);
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
                 else
-                  compute_fermienergy_constraintMagnetization(eigenValues);      
+                  compute_fermienergy_constraintMagnetization(eigenValues);
               }
-              else
+            else
               {
                 if (d_dftParamsPtr->pureState)
                   compute_fermienergy_purestate(eigenValues, numElectrons);
                 else
-                  compute_fermienergy(eigenValues, numElectrons);                
+                  compute_fermienergy(eigenValues, numElectrons);
               }
           }
 
@@ -853,19 +856,20 @@ namespace dftfe
             if (!(d_dftParamsPtr->writeBandsFile))
               {
                 if (d_dftParamsPtr->constraintMagnetization)
-                {
-                  if (d_dftParamsPtr->pureState)
-                    compute_fermienergy_constraintMagnetization_purestate(eigenValues);
-                  else
-                    compute_fermienergy_constraintMagnetization(eigenValues);      
-                }
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_constraintMagnetization_purestate(
+                        eigenValues);
+                    else
+                      compute_fermienergy_constraintMagnetization(eigenValues);
+                  }
                 else
-                {
-                  if (d_dftParamsPtr->pureState)
-                    compute_fermienergy_purestate(eigenValues, numElectrons);
-                  else
-                    compute_fermienergy(eigenValues, numElectrons);                
-                }
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_purestate(eigenValues, numElectrons);
+                    else
+                      compute_fermienergy(eigenValues, numElectrons);
+                  }
               }
             //
             if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
