@@ -743,9 +743,6 @@ namespace dftfe
     const expConfiningPotential &
     getConfiningPotential() const;
 
-    void
-    computeFractionalOccupancies();
-
     /**
      *@brief Returns the shared ptr to hubbard class
      */

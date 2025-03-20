@@ -1072,8 +1072,6 @@ namespace dftfe
                                                  d_domainBoundingVectors);
 
 
-    computeFractionalOccupancies();
-
     d_excManagerPtr->getExcSSDFunctionalObj()
       ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
                                                  d_kPointWeights);
