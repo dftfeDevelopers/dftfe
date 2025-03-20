@@ -324,6 +324,48 @@ namespace dftfe
                 !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
           }
+          else
+          {
+            d_basisOperationsPtrHost->clear();
+            dftfe::basis::UpdateFlags updateFlagsAll =
+              dftfe::basis::update_values | dftfe::basis::update_jxw |
+              dftfe::basis::update_inversejacobians |
+              dftfe::basis::update_gradients | dftfe::basis::update_quadpoints;
+            dftfe::basis::UpdateFlags updateFlagsGLL =
+              dftfe::basis::update_values | dftfe::basis::update_jxw;
+            if (d_dftParamsPtr->auxBasisTypeXC == "SlaterAE")
+              updateFlagsGLL = updateFlagsGLL | dftfe::basis::update_quadpoints;
+            dftfe::basis::UpdateFlags updateFlagsLPSP =
+              dftfe::basis::update_values | dftfe::basis::update_jxw;
+            dftfe::basis::UpdateFlags updateFlagsfeOrderPlusOne =
+              dftfe::basis::update_gradients;
+            if (std::is_same<dataTypes::number, std::complex<double>>::value ||
+                !d_dftParamsPtr->approxOverlapMatrix)
+              updateFlagsfeOrderPlusOne = updateFlagsfeOrderPlusOne |
+                                          dftfe::basis::update_values |
+                                          dftfe::basis::update_jxw;
+            dftfe::basis::UpdateFlags updateFlagssparsityPattern =
+              dftfe::basis::update_quadpoints;
+            std::vector<unsigned int> quadratureIndices{
+              d_densityQuadratureId,
+              d_nlpspQuadratureId,
+              d_gllQuadratureId,
+              d_lpspQuadratureId,
+              d_feOrderPlusOneQuadratureId,
+              d_sparsityPatternQuadratureId};
+            std::vector<dftfe::basis::UpdateFlags> updateFlags{
+              updateFlagsAll,
+              updateFlagsAll,
+              updateFlagsGLL,
+              updateFlagsLPSP,
+              updateFlagsfeOrderPlusOne,
+              updateFlagssparsityPattern};
+            d_basisOperationsPtrHost->init(matrix_free_data,
+                                           d_constraintsVector,
+                                           d_densityDofHandlerIndex,
+                                           quadratureIndices,
+                                           updateFlags);
+          }
       }
     if (!d_dftParamsPtr->useDevice && recomputeBasisData)
       {
