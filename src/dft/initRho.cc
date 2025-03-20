@@ -468,7 +468,7 @@ namespace dftfe
 
         normalizeRhoInQuadValues();
         if (d_dftParamsPtr->constraintMagnetization)
-          normalizeRhoMagInQuadValues();
+          normalizeRhoMagInInitalGuessQuadValues();
       }
     else
       {
@@ -905,7 +905,7 @@ namespace dftfe
 
         normalizeRhoInQuadValues();
         if (d_dftParamsPtr->constraintMagnetization)
-          normalizeRhoMagInQuadValues();
+          normalizeRhoMagInInitalGuessQuadValues();
       }
     //
     computingTimerStandard.leave_subsection("initialize density");
