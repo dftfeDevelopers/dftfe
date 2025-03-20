@@ -6030,10 +6030,7 @@ namespace dftfe
         auto blasWrapperMemSpace = getBLASWrapperMemSpace();
         computeAuxProjectedDensityMatrixFromPSI(eigenVectorsFlattenedMemSpace,
                                                 d_numEigenValues,
-                                                eigenValues_,
-                                                fermiEnergy_,
-                                                fermiEnergyUp_,
-                                                fermiEnergyDown_,
+                                                d_partialOccupancies,
                                                 basisOpMemSpace,
                                                 blasWrapperMemSpace,
                                                 d_densityDofHandlerIndex,

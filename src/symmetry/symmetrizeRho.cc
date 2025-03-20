@@ -367,81 +367,13 @@ namespace dftfe
                     for (unsigned int i = 0; i < (dftPtr->d_numEigenValues);
                          ++i)
                       {
-                        double partialOccupancyAlpha = 1.0;
-                        double partialOccupancyBeta  = 1.0;
-
-                        if (dftPtr->getParametersObject().pureState)
-                          {
-                            if (dftPtr->getParametersObject()
-                                  .constraintMagnetization)
-                              {
-                                partialOccupancyAlpha = 1.0,
-                                partialOccupancyBeta  = 1.0;
-                                if ((dftPtr->eigenValues)
-                                      [kPoint]
-                                      [i + dftPtr->getParametersObject()
-                                               .spinPolarized *
-                                             (dftPtr->d_numEigenValues)] >
-                                    (dftPtr->fermiEnergyDown))
-                                  partialOccupancyBeta = 0.0;
-                                if ((dftPtr->eigenValues)[kPoint][i] >
-                                    (dftPtr->fermiEnergyUp))
-                                  partialOccupancyAlpha = 0.0;
-                              }
-                            else
-                              {
-                                if ((dftPtr->eigenValues)
-                                      [kPoint]
-                                      [i + dftPtr->getParametersObject()
-                                               .spinPolarized *
-                                             (dftPtr->d_numEigenValues)] >
-                                    (dftPtr->fermiEnergy))
-                                  partialOccupancyBeta = 0.0;
-                                if ((dftPtr->eigenValues)[kPoint][i] >
-                                    (dftPtr->fermiEnergy))
-                                  partialOccupancyAlpha = 0.0;
-                              }
-                          }
-                        else
-                          {
-                            if (dftPtr->getParametersObject()
-                                  .constraintMagnetization)
-                              {
-                                double factor =
-                                  ((dftPtr->eigenValues)[kPoint][i] -
-                                   (dftPtr->fermiEnergyUp)) /
-                                  (C_kb * dftPtr->getParametersObject().TVal);
-                                partialOccupancyAlpha = getOccupancy(factor);
-                                //
-                                factor =
-                                  ((dftPtr->eigenValues)
-                                     [kPoint]
-                                     [i + dftPtr->getParametersObject()
-                                              .spinPolarized *
-                                            (dftPtr->d_numEigenValues)] -
-                                   (dftPtr->fermiEnergyDown)) /
-                                  (C_kb * dftPtr->getParametersObject().TVal);
-                                partialOccupancyBeta = getOccupancy(factor);
-                              }
-                            else
-                              {
-                                double factor =
-                                  ((dftPtr->eigenValues)[kPoint][i] -
-                                   (dftPtr->fermiEnergy)) /
-                                  (C_kb * dftPtr->getParametersObject().TVal);
-                                partialOccupancyAlpha = getOccupancy(factor);
-                                //
-                                factor =
-                                  ((dftPtr->eigenValues)
-                                     [kPoint]
-                                     [i + dftPtr->getParametersObject()
-                                              .spinPolarized *
-                                            (dftPtr->d_numEigenValues)] -
-                                   (dftPtr->fermiEnergy)) /
-                                  (C_kb * dftPtr->getParametersObject().TVal);
-                                partialOccupancyBeta = getOccupancy(factor);
-                              }
-                          }
+                        double partialOccupancyAlpha =
+                          (dftPtr->d_partialOccupancies)[kPoint][i];
+                        double partialOccupancyBeta =
+                          (dftPtr->d_partialOccupancies)
+                            [kPoint]
+                            [i + dftPtr->getParametersObject().spinPolarized *
+                                   (dftPtr->d_numEigenValues)];
                         //
                         fe_values.get_function_values(
                           (eigenVectors[(1 + dftPtr->getParametersObject()

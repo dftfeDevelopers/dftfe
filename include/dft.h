@@ -1663,9 +1663,10 @@ namespace dftfe
       d_constraintsRhoNodalInfo;
 
     /**
-     * data storage for Kohn-Sham wavefunctions
+     * data storage for Kohn-Sham eigenvalues and partial occupancies
      */
     std::vector<std::vector<double>> eigenValues;
+    std::vector<std::vector<double>> d_partialOccupancies;
 
     /**
      * data storage for the occupancy of Kohn-Sham wavefunctions

@@ -32,10 +32,7 @@ namespace dftfe
   computeRhoFromPSI(
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
     const unsigned int                      totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &eigenValues,
-    const double                            fermiEnergy,
-    const double                            fermiEnergyUp,
-    const double                            fermiEnergyDown,
+    const std::vector<std::vector<double>> &partialOccupancies,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
@@ -170,86 +167,14 @@ namespace dftfe
                   (jvec + currentBlockSize) >
                     bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  {
-                    if (dftParams.pureState)
-                      {
-                        if (dftParams.constraintMagnetization)
-                          {
-                            const double fermiEnergyConstraintMag =
-                              spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
-                            for (unsigned int iEigenVec = 0;
-                                 iEigenVec < currentBlockSize;
-                                 ++iEigenVec)
-                              {
-                                if (eigenValues[kPoint][totalNumWaveFunctions *
-                                                          spinIndex +
-                                                        jvec + iEigenVec] >
-                                    fermiEnergyConstraintMag)
-                                  *(partialOccupVecHost.begin() + iEigenVec) =
-                                    0;
-                                else
-                                  *(partialOccupVecHost.begin() + iEigenVec) =
-                                    kPointWeights[kPoint] * spinPolarizedFactor;
-                              }
-                          }
-                        else
-                          {
-                            for (unsigned int iEigenVec = 0;
-                                 iEigenVec < currentBlockSize;
-                                 ++iEigenVec)
-                              {
-                                if (eigenValues[kPoint][totalNumWaveFunctions *
-                                                          spinIndex +
-                                                        jvec + iEigenVec] >
-                                    fermiEnergy)
-                                  *(partialOccupVecHost.begin() + iEigenVec) =
-                                    0;
-                                else
-                                  *(partialOccupVecHost.begin() + iEigenVec) =
-                                    kPointWeights[kPoint] * spinPolarizedFactor;
-                              }
-                          }
-                      }
-                    else
-                      {
-                        if (dftParams.constraintMagnetization)
-                          {
-                            const double fermiEnergyConstraintMag =
-                              spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
-                            for (unsigned int iEigenVec = 0;
-                                 iEigenVec < currentBlockSize;
-                                 ++iEigenVec)
-                              {
-                                *(partialOccupVecHost.begin() + iEigenVec) =
-                                  dftUtils::getPartialOccupancy(
-                                    eigenValues[kPoint][totalNumWaveFunctions *
-                                                          spinIndex +
-                                                        jvec + iEigenVec],
-                                    fermiEnergyConstraintMag,
-                                    C_kb,
-                                    dftParams.TVal) *
-                                  kPointWeights[kPoint] * spinPolarizedFactor;
-                              }
-                          }
-                        else
-                          {
-                            for (unsigned int iEigenVec = 0;
-                                 iEigenVec < currentBlockSize;
-                                 ++iEigenVec)
-                              {
-                                *(partialOccupVecHost.begin() + iEigenVec) =
-                                  dftUtils::getPartialOccupancy(
-                                    eigenValues[kPoint][totalNumWaveFunctions *
-                                                          spinIndex +
-                                                        jvec + iEigenVec],
-                                    fermiEnergy,
-                                    C_kb,
-                                    dftParams.TVal) *
-                                  kPointWeights[kPoint] * spinPolarizedFactor;
-                              }
-                          }
-                      }
-                  }
+                  for (unsigned int iEigenVec = 0; iEigenVec < currentBlockSize;
+                       ++iEigenVec)
+                    *(partialOccupVecHost.begin() + iEigenVec) =
+                      partialOccupancies[kPoint]
+                                        [totalNumWaveFunctions * spinIndex +
+                                         jvec + iEigenVec] *
+                      kPointWeights[kPoint] * spinPolarizedFactor;
+
 #if defined(DFTFE_WITH_DEVICE)
                   partialOccupVec.copyFrom(partialOccupVecHost);
 #endif
@@ -538,10 +463,7 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::HOST> *X,
     const unsigned int                      totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &eigenValues,
-    const double                            fermiEnergy,
-    const double                            fermiEnergyUp,
-    const double                            fermiEnergyDown,
+    const std::vector<std::vector<double>> &partialOccupancies,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
