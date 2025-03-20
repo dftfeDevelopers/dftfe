@@ -324,7 +324,7 @@ namespace dftfe
                 !d_dftParamsPtr->approxOverlapMatrix);
             d_basisOperationsPtrHost->computeInverseSqrtMassVector(true, false);
           }
-          else
+        else
           {
             d_basisOperationsPtrHost->clear();
             dftfe::basis::UpdateFlags updateFlagsAll =

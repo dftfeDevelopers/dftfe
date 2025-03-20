@@ -1342,9 +1342,9 @@ namespace dftfe
 
             const double shift =
               (d_dftParamsPtr->tot_magnetization * numElectrons - shift) /
-              d_domainVolume;
+              numElectrons;
 
-            d_densityInNodalValues[1].add(shift);
+            d_densityInNodalValues[1].add(shift, d_densityInNodalValues[0]);
 
             if (d_dftParamsPtr->verbosity >= 1)
               {

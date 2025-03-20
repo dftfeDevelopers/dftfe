@@ -442,9 +442,9 @@ namespace dftfe
 
             const double shift =
               (d_dftParamsPtr->tot_magnetization * numElectrons - netMag) /
-              d_domainVolume;
+              numElectrons;
 
-            d_densityInNodalValues[1].add(shift);
+            d_densityInNodalValues[1].add(shift, d_densityInNodalValues[0]);
 
             if (d_dftParamsPtr->verbosity >= 3)
               {
@@ -1467,7 +1467,7 @@ namespace dftfe
 
     const double shift =
       (d_dftParamsPtr->tot_magnetization * numElectrons - netMag) /
-      d_domainVolume;
+      numElectrons;
 
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
@@ -1480,8 +1480,16 @@ namespace dftfe
     // shift rho mag
     for (unsigned int iCell = 0; iCell < nCells; ++iCell)
       for (unsigned int q = 0; q < n_q_points; ++q)
-        d_densityInQuadValues[1][iCell * n_q_points + q] += shift;
-
+        {
+          d_densityInQuadValues[1][iCell * n_q_points + q] +=
+            shift * d_densityInQuadValues[0][iCell * n_q_points + q];
+          if (isGradDensityDataDependent)
+            for (unsigned int idim = 0; idim < 3; ++idim)
+              d_gradDensityInQuadValues[1][3 * iCell * n_q_points + 3 * q +
+                                           idim] +=
+                shift * d_gradDensityInQuadValues[0][3 * iCell * n_q_points +
+                                                     3 * q + idim];
+        }
     double netMagAfterScaling =
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[1]);
 
