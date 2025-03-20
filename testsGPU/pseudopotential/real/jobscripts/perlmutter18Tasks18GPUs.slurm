@@ -10,12 +10,19 @@
 #SBATCH --gpus-per-node=3
 #SBATCH --gpu-bind=map_gpu:0*1,1*1,2*1,3*0
 
+module load gcc-native/12.3
+module load PrgEnv-gnu
+module load cudatoolkit
+module load cray-libsci
+module load cmake
+module load nccl
+
+
 SLURM_CPU_BIND='cores'
 OMP_NUM_THREADS=1
 MPICH_GPU_SUPPORT_ENABLED=1
 LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$WD/env2/lib
 LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$WD/env2/lib64
-module load nccl
 
 srun  ./dftfe Input_MD_0.prm > output_MD_0
 srun  ./dftfe Input_MD_1.prm > output_MD_1
