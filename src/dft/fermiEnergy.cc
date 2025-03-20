@@ -248,6 +248,21 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 2)
       pcout << "Fermi energy                                     : "
             << fermiEnergy << std::endl;
+
+
+    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      for (unsigned int spinIndex = 0;
+           spinIndex < (1 + d_dftParamsPtr->spinPolarized);
+           ++spinIndex)
+        for (unsigned int iEigenVec = 0; iEigenVec < d_numEigenValues;
+             ++iEigenVec)
+          d_partialOccupancies[kPoint][d_numEigenValues * spinIndex +
+                                       iEigenVec] =
+            dftUtils::getPartialOccupancy(
+              eigenValues[kPoint][d_numEigenValues * spinIndex + iEigenVec],
+              fermiEnergy,
+              C_kb,
+              d_dftParamsPtr->TVal);
   }
 
 
@@ -280,14 +295,29 @@ namespace dftfe
     double fermiEnergyLocal =
       count > 0 ? eigenValuesAllkPoints[count - 1] : -1.0e+15;
     //
-    fermiEnergyUp =
-      dealii::Utilities::MPI::max(fermiEnergyLocal, interpoolcomm);
+    fermiEnergy = dealii::Utilities::MPI::max(fermiEnergyLocal, interpoolcomm);
     if (d_dftParamsPtr->verbosity >= 2)
       {
         pcout << " This is a pure state calculation " << std::endl;
         pcout << "Fermi energy                                    : "
               << fermiEnergy << std::endl;
       }
+
+    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      for (unsigned int spinIndex = 0;
+           spinIndex < (1 + d_dftParamsPtr->spinPolarized);
+           ++spinIndex)
+        for (unsigned int iEigenVec = 0; iEigenVec < d_numEigenValues;
+             ++iEigenVec)
+          {
+            if (eigenValues[kPoint][d_numEigenValues * spinIndex + iEigenVec] >
+                fermiEnergy)
+              d_partialOccupancies[kPoint][d_numEigenValues * spinIndex +
+                                           iEigenVec] = 0.0;
+            else
+              d_partialOccupancies[kPoint][d_numEigenValues * spinIndex +
+                                           iEigenVec] = 1.0;
+          }
   }
 
 
@@ -348,6 +378,24 @@ namespace dftfe
           << "Fermi energy for spin down                                    : "
           << fermiEnergyDown << std::endl;
       }
+
+    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      for (unsigned int spinIndex = 0; spinIndex < 2; ++spinIndex)
+        {
+          const double fermiEnergySpinIndex =
+            spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
+          for (unsigned int iEigenVec = 0; iEigenVec < d_numEigenValues;
+               ++iEigenVec)
+            {
+              if (eigenValues[kPoint][d_numEigenValues * spinIndex +
+                                      iEigenVec] > fermiEnergySpinIndex)
+                d_partialOccupancies[kPoint][d_numEigenValues * spinIndex +
+                                             iEigenVec] = 0.0;
+              else
+                d_partialOccupancies[kPoint][d_numEigenValues * spinIndex +
+                                             iEigenVec] = 1.0;
+            }
+        }
   }
 
   // compute fermi energy constrained magnetization
@@ -650,6 +698,22 @@ namespace dftfe
           << "Fermi energy for spin down                                    : "
           << fermiEnergyDown << std::endl;
       }
+
+    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      for (unsigned int spinIndex = 0; spinIndex < 2; ++spinIndex)
+        {
+          const double fermiEnergySpinIndex =
+            spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
+          for (unsigned int iEigenVec = 0; iEigenVec < d_numEigenValues;
+               ++iEigenVec)
+            d_partialOccupancies[kPoint][d_numEigenValues * spinIndex +
+                                         iEigenVec] =
+              dftUtils::getPartialOccupancy(
+                eigenValues[kPoint][d_numEigenValues * spinIndex + iEigenVec],
+                fermiEnergySpinIndex,
+                C_kb,
+                d_dftParamsPtr->TVal);
+        }
   }
 #include "dft.inst.cc"
 
