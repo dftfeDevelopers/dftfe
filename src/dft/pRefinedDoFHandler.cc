@@ -439,17 +439,6 @@ namespace dftfe
                                                   quadratureIndices,
                                                   updateFlags);
           }
-        else
-          {
-            d_basisOperationsPtrElectroHost->clear();
-            std::vector<unsigned int>              quadratureIndices;
-            std::vector<dftfe::basis::UpdateFlags> updateFlags;
-            d_basisOperationsPtrElectroHost->init(d_matrixFreeDataPRefined,
-                                                  d_constraintsVectorElectro,
-                                                  d_baseDofHandlerIndexElectro,
-                                                  quadratureIndices,
-                                                  updateFlags);
-          }
       }
     else
       d_basisOperationsPtrElectroHost->reinitializeConstraints(
