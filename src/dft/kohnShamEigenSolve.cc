@@ -925,57 +925,25 @@ namespace dftfe
       const double                            fermiEnergy)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
-    if (d_dftParamsPtr->reproducible_output)
+    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
-        for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+        unsigned int highestOccupiedState = 0;
+
+        for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
           {
-            unsigned int highestOccupiedState = 0;
+            if (d_partialOccupancies[kPoint][i] > 1e-3)
+              highestOccupiedState = i;
+          }
 
-            for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size();
-                 i++)
-              {
-                const double factor =
-                  (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
-                  (C_kb * d_dftParamsPtr->TVal);
-                if (factor < 0)
-                  highestOccupiedState = i;
-              }
+        d_highestStateForResidualComputation = highestOccupiedState;
 
-            if (residualNormWaveFunctionsAllkPoints[kPoint]
-                                                   [highestOccupiedState] >
+        for (unsigned int i = 0; i <= d_highestStateForResidualComputation; i++)
+          {
+            if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
                 maxHighestOccupiedStateResNorm)
               {
                 maxHighestOccupiedStateResNorm =
-                  residualNormWaveFunctionsAllkPoints[kPoint]
-                                                     [highestOccupiedState];
-              }
-            d_highestStateForResidualComputation = highestOccupiedState;
-          }
-      }
-    else
-      {
-        for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
-          {
-            unsigned int highestOccupiedState = 0;
-
-            for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size();
-                 i++)
-              {
-                if (d_partialOccupancies[kPoint][i] > 1e-3)
-                  highestOccupiedState = i;
-              }
-
-            d_highestStateForResidualComputation = highestOccupiedState;
-
-            for (unsigned int i = 0; i <= d_highestStateForResidualComputation;
-                 i++)
-              {
-                if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
-                    maxHighestOccupiedStateResNorm)
-                  {
-                    maxHighestOccupiedStateResNorm =
-                      residualNormWaveFunctionsAllkPoints[kPoint][i];
-                  }
+                  residualNormWaveFunctionsAllkPoints[kPoint][i];
               }
           }
       }
