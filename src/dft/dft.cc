@@ -858,7 +858,7 @@ namespace dftfe
                                    d_numEigenValues);
       }
 
-
+    d_partialOccupancies = eigenValues;
 
     if (d_dftParamsPtr->isPseudopotential == true)
       {
@@ -3763,6 +3763,7 @@ namespace dftfe
               d_smearedChargeQuadratureIdElectro,
               d_lpspQuadratureIdElectro,
               eigenValues,
+              d_partialOccupancies,
               d_kPointWeights,
               fermiEnergy,
               d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
@@ -4059,6 +4060,7 @@ namespace dftfe
       d_smearedChargeQuadratureIdElectro,
       d_lpspQuadratureIdElectro,
       eigenValues,
+      d_partialOccupancies,
       d_kPointWeights,
       fermiEnergy,
       d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
@@ -4091,6 +4093,7 @@ namespace dftfe
 
     d_entropicEnergy =
       energyCalc.computeEntropicEnergy(eigenValues,
+                                       d_partialOccupancies,
                                        d_kPointWeights,
                                        fermiEnergy,
                                        fermiEnergyUp,
