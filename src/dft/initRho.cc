@@ -440,12 +440,11 @@ namespace dftfe
             const double netMag =
               totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
 
-            double scalingFactor = 1.0;
-            if (std::fabs(netMag) > 1e-6)
-              scalingFactor =
-                (d_dftParamsPtr->tot_magnetization * numElectrons) / netMag;
+            const double shift =
+              (d_dftParamsPtr->tot_magnetization * numElectrons - netMag) /
+              d_domainVolume;
 
-            d_densityInNodalValues[1] *= scalingFactor;
+            d_densityInNodalValues[1].add(shift);
 
             if (d_dftParamsPtr->verbosity >= 3)
               {
@@ -1465,10 +1464,10 @@ namespace dftfe
     const unsigned int nCells     = matrix_free_data.n_physical_cells();
     const double       netMag =
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[1]);
-    double scaling = 1.0;
 
-    if (std::fabs(netMag) > 1e-6)
-      scaling = (d_dftParamsPtr->tot_magnetization * numElectrons) / netMag;
+    const double shift =
+      (d_dftParamsPtr->tot_magnetization * numElectrons - netMag) /
+      d_domainVolume;
 
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
@@ -1478,18 +1477,11 @@ namespace dftfe
       pcout << "Initial net magnetization before normalization: " << netMag
             << std::endl;
 
-    // scaling rho
+    // shift rho mag
     for (unsigned int iCell = 0; iCell < nCells; ++iCell)
-      {
-        for (unsigned int q = 0; q < n_q_points; ++q)
-          {
-            d_densityInQuadValues[1][iCell * n_q_points + q] *= scaling;
-            if (isGradDensityDataDependent)
-              for (unsigned int idim = 0; idim < 3; ++idim)
-                d_gradDensityInQuadValues[1][3 * iCell * n_q_points + 3 * q +
-                                             idim] *= scaling;
-          }
-      }
+      for (unsigned int q = 0; q < n_q_points; ++q)
+        d_densityInQuadValues[1][iCell * n_q_points + q] += shift;
+
     double netMagAfterScaling =
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[1]);
 

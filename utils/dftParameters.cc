@@ -1179,7 +1179,7 @@ namespace dftfe
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.");
 
         prm.declare_entry("GPU MODE",
-                          "false",
+                          "true",
                           dealii::Patterns::Bool(),
                           "[Advanced] Toggle GPU MODE in Poisson solve.");
 
