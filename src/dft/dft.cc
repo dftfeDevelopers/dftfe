@@ -4392,7 +4392,7 @@ namespace dftfe
 
     // reset
     deformDomain(dealii::invert(deformationGradientPerturb2),
-                 true,
+                 false,
                  false,
                  d_dftParamsPtr->verbosity >= 4 ? true : false);
   }

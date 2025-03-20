@@ -43,7 +43,7 @@ namespace dftfe
     dofHandler.distribute_dofs(FE);
     dofHandlerEigen.distribute_dofs(FEEigen);
 
-    if (!vselfPerturbationUpdateForStress)
+    if (!vselfPerturbationUpdateForStress && !meshOnlyDeformed)
       {
         pcout << std::endl << "Finite element mesh information" << std::endl;
         pcout << "-------------------------------------------------"
