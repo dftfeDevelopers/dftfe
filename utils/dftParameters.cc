@@ -896,14 +896,14 @@ namespace dftfe
           "CONSTRAINT MAGNETIZATION",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is FALSE");
+          "[Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is false.");
 
 
         prm.declare_entry(
           "PURE STATE",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Explictly solves for a pure Kohn-Sham state instead of an ensemble Kohn-Sham state implemented using Fermi-Dirac smearing. If this parameter is set to true, it overrides the Fermi-Dirac smearing temperature. Default is FALSE");
+          "[Standard] Explictly solves for a pure Kohn-Sham state instead of an ensemble Kohn-Sham state implemented using Fermi-Dirac smearing. If this parameter is set to true, it overrides the Fermi-Dirac smearing temperature. Default is false.");
 
         prm.declare_entry(
           "STARTING WFC",

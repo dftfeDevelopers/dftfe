@@ -692,6 +692,23 @@
 
 
 {\it Possible values:} A floating point number $v$ such that $-1 \leq v \leq 1$
+\item {\it Parameter name:} {\tt USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG}
+\phantomsection\label{parameters:DFT functional parameters/USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG}
+\label{parameters:DFT_20functional_20parameters/USE_20ATOMIC_20MAGNETIZATION_20GUESS_20FOR_20CONSTRAINT_20MAG}
+
+
+\index[prmindex]{USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG}
+\index[prmindexfull]{DFT functional parameters!USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Use atomic magnetization initial guess from coordinates.inp when using constrained magnetization solve for a set TOTAL MAGNETIZATION. The default value of false sets the initial guess of spin density to be a scaling of the total atomic density. 
+
+
+{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 
@@ -1420,7 +1437,7 @@
 {\it Default:} 
 
 
-{\it Description:} [Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.
+{\it Description:} [Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. Parameter c scales the valence charge as (scaledAtomicValenceCharge= c * atomicValenceCharge). File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. In case both m and c are used, please use the scaled valence charge to set the value appropriately (m*scaledAtomicValenceCharge=atomicMagnetization). The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.
 
 
 {\it Possible values:} Any string
@@ -2538,7 +2555,24 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS\_up sumPDOS
 {\it Default:} false
 
 
-{\it Description:} [Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is FALSE
+{\it Description:} [Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt PURE STATE}
+\phantomsection\label{parameters:SCF parameters/PURE STATE}
+\label{parameters:SCF_20parameters/PURE_20STATE}
+
+
+\index[prmindex]{PURE STATE}
+\index[prmindexfull]{SCF parameters!PURE STATE}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Explictly solves for a pure Kohn-Sham state instead of an ensemble Kohn-Sham state implemented using Fermi-Dirac smearing. If this parameter is set to true, it overrides the Fermi-Dirac smearing temperature. Default is false.
 
 
 {\it Possible values:} A boolean value (true or false)
