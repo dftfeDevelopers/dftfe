@@ -297,12 +297,27 @@ namespace dftfe
                     {
                       if (spinPolarized == 0)
                         {
-                          const double partialOccupancy =
-                            dftUtils::getPartialOccupancy(
-                              eigenValues[kPoint][i], fermiEnergy, C_kb, TVal);
-                          bandEnergyLocal += 2.0 * partialOccupancy *
-                                             kPointWeights[kPoint] *
-                                             eigenValues[kPoint][i];
+                          if (dftParams.pureState)
+                            {
+                              double partialOccupancy = 1.0;
+                              if (eigenValues[kPoint][i] > fermiEnergy)
+                                partialOccupancy = 0.0;
+                              bandEnergyLocal += 2.0 * partialOccupancy *
+                                                 kPointWeights[kPoint] *
+                                                 eigenValues[kPoint][i];
+                            }
+                          else
+                            {
+                              const double partialOccupancy =
+                                dftUtils::getPartialOccupancy(
+                                  eigenValues[kPoint][i],
+                                  fermiEnergy,
+                                  C_kb,
+                                  TVal);
+                              bandEnergyLocal += 2.0 * partialOccupancy *
+                                                 kPointWeights[kPoint] *
+                                                 eigenValues[kPoint][i];
+                            }
                           //
 
                           if (verbosity > 1)
@@ -312,39 +327,63 @@ namespace dftfe
                         }
                       if (spinPolarized == 1)
                         {
-                          double partialOccupancy =
-                            dftUtils::getPartialOccupancy(
-                              eigenValues[kPoint][i], fermiEnergy, C_kb, TVal);
-                          double partialOccupancy2 =
-                            dftUtils::getPartialOccupancy(
-                              eigenValues[kPoint][i + numEigenValues],
-                              fermiEnergy,
-                              C_kb,
-                              TVal);
-
-                          if (dftParams.constraintMagnetization)
+                          if (dftParams.pureState)
                             {
-                              /*
-                              partialOccupancy = 1.0, partialOccupancy2 = 1.0;
-                              if (eigenValues[kPoint][i + numEigenValues] >
-                                  fermiEnergyDown)
-                                partialOccupancy2 = 0.0;
-                              if (eigenValues[kPoint][i] > fermiEnergyUp)
-                                partialOccupancy = 0.0;
-                              */
-                              double partialOccupancy =
-                                dftUtils::getPartialOccupancy(
-                                  eigenValues[kPoint][i],
-                                  fermiEnergyUp,
-                                  C_kb,
-                                  TVal);
-                              double partialOccupancy2 =
-                                dftUtils::getPartialOccupancy(
-                                  eigenValues[kPoint][i + numEigenValues],
-                                  fermiEnergyDown,
-                                  C_kb,
-                                  TVal);
+                              if (dftParams.constraintMagnetization)
+                                {
+                                  partialOccupancy  = 1.0,
+                                  partialOccupancy2 = 1.0;
+                                  if (eigenValues[kPoint][i + numEigenValues] >
+                                      fermiEnergyDown)
+                                    partialOccupancy2 = 0.0;
+                                  if (eigenValues[kPoint][i] > fermiEnergyUp)
+                                    partialOccupancy = 0.0;
+                                }
+                              else
+                                {
+                                  partialOccupancy  = 1.0,
+                                  partialOccupancy2 = 1.0;
+                                  if (eigenValues[kPoint][i + numEigenValues] >
+                                      fermiEnergy)
+                                    partialOccupancy2 = 0.0;
+                                  if (eigenValues[kPoint][i] > fermiEnergy)
+                                    partialOccupancy = 0.0;
+                                }
                             }
+                          else
+                            {
+                              if (dftParams.constraintMagnetization)
+                                {
+                                  double partialOccupancy =
+                                    dftUtils::getPartialOccupancy(
+                                      eigenValues[kPoint][i],
+                                      fermiEnergyUp,
+                                      C_kb,
+                                      TVal);
+                                  double partialOccupancy2 =
+                                    dftUtils::getPartialOccupancy(
+                                      eigenValues[kPoint][i + numEigenValues],
+                                      fermiEnergyDown,
+                                      C_kb,
+                                      TVal);
+                                }
+                              else
+                                {
+                                  double partialOccupancy =
+                                    dftUtils::getPartialOccupancy(
+                                      eigenValues[kPoint][i],
+                                      fermiEnergy,
+                                      C_kb,
+                                      TVal);
+                                  double partialOccupancy2 =
+                                    dftUtils::getPartialOccupancy(
+                                      eigenValues[kPoint][i + numEigenValues],
+                                      fermiEnergy,
+                                      C_kb,
+                                      TVal);
+                                }
+                            }
+
                           bandEnergyLocal += partialOccupancy *
                                              kPointWeights[kPoint] *
                                              eigenValues[kPoint][i];
@@ -1190,31 +1229,51 @@ namespace dftfe
         {
           if (isSpinPolarized)
             {
-              double partOccSpin0 = dftUtils::getPartialOccupancy(
-                eigenValues[kPoint][i], fermiEnergy, C_kb, temperature);
-              double partOccSpin1 = dftUtils::getPartialOccupancy(
-                eigenValues[kPoint][i + numEigenValues],
-                fermiEnergy,
-                C_kb,
-                temperature);
-
-              if (d_dftParams.constraintMagnetization)
+              if (d_dftParams.pureState)
                 {
-                  /*
-                  partOccSpin0 = 1.0, partOccSpin1 = 1.0;
-                  if (eigenValues[kPoint][i + numEigenValues] > fermiEnergyDown)
-                    partOccSpin1 = 0.0;
-                  if (eigenValues[kPoint][i] > fermiEnergyUp)
-                    partOccSpin0 = 0.0;
-                  */
-
-                  double partOccSpin0 = dftUtils::getPartialOccupancy(
-                    eigenValues[kPoint][i], fermiEnergyUp, C_kb, temperature);
-                  double partOccSpin1 = dftUtils::getPartialOccupancy(
-                    eigenValues[kPoint][i + numEigenValues],
-                    fermiEnergyDown,
-                    C_kb,
-                    temperature);
+                  if (d_dftParams.constraintMagnetization)
+                    {
+                      partOccSpin0 = 1.0, partOccSpin1 = 1.0;
+                      if (eigenValues[kPoint][i + numEigenValues] >
+                          fermiEnergyDown)
+                        partOccSpin1 = 0.0;
+                      if (eigenValues[kPoint][i] > fermiEnergyUp)
+                        partOccSpin0 = 0.0;
+                    }
+                  else
+                    {
+                      partOccSpin0 = 1.0, partOccSpin1 = 1.0;
+                      if (eigenValues[kPoint][i + numEigenValues] > fermiEnergy)
+                        partOccSpin1 = 0.0;
+                      if (eigenValues[kPoint][i] > fermiEnergy)
+                        partOccSpin0 = 0.0;
+                    }
+                }
+              else
+                {
+                  if (d_dftParams.constraintMagnetization)
+                    {
+                      double partOccSpin0 =
+                        dftUtils::getPartialOccupancy(eigenValues[kPoint][i],
+                                                      fermiEnergyUp,
+                                                      C_kb,
+                                                      temperature);
+                      double partOccSpin1 = dftUtils::getPartialOccupancy(
+                        eigenValues[kPoint][i + numEigenValues],
+                        fermiEnergyDown,
+                        C_kb,
+                        temperature);
+                    }
+                  else
+                    {
+                      double partOccSpin0 = dftUtils::getPartialOccupancy(
+                        eigenValues[kPoint][i], fermiEnergy, C_kb, temperature);
+                      double partOccSpin1 = dftUtils::getPartialOccupancy(
+                        eigenValues[kPoint][i + numEigenValues],
+                        fermiEnergy,
+                        C_kb,
+                        temperature);
+                    }
                 }
 
 
