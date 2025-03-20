@@ -1456,7 +1456,8 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::normalizeRhoMagInQuadValues()
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::
+    normalizeRhoMagInInitialGuessQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);

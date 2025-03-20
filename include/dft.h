@@ -1157,10 +1157,10 @@ namespace dftfe
 
     /**
      *@brief normalize input mag electron density to total magnetization
-     *for use in constraint magnetization case
+     *for use in constraint magnetization case (only for initial guess)
      */
     void
-    normalizeRhoMagInQuadValues();
+    normalizeRhoMagInInitialGuessQuadValues();
 
 
     /**

@@ -403,7 +403,7 @@ namespace dftfe
 
     if (recomputeBasisData)
       {
-        if (!vselfPerturbationUpdateForStress)
+        if (!vselfPerturbationUpdateForStress || true)
           {
             d_basisOperationsPtrElectroHost->clear();
             dftfe::basis::UpdateFlags updateFlagsAll =
