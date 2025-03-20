@@ -194,10 +194,11 @@ namespace dftfe
                                                           spinIndex +
                                                         jvec + iEigenVec] >
                                     fermiEnergyConstraintMag)
-                                  *(partialOccupVecHost.begin() + iEigenVec) =
-                                    0;
+                                  *(partialOccupVecHost[spinIndex].begin() +
+                                    iEigenVec) = 0;
                                 else
-                                  *(partialOccupVecHost.begin() + iEigenVec) =
+                                  *(partialOccupVecHost[spinIndex].begin() +
+                                    iEigenVec) =
                                     kPointWeights[kPoint] * spinPolarizedFactor;
                               }
                           }
@@ -211,10 +212,11 @@ namespace dftfe
                                                           spinIndex +
                                                         jvec + iEigenVec] >
                                     fermiEnergy)
-                                  *(partialOccupVecHost.begin() + iEigenVec) =
-                                    0;
+                                  *(partialOccupVecHost[spinIndex].begin() +
+                                    iEigenVec) = 0;
                                 else
-                                  *(partialOccupVecHost.begin() + iEigenVec) =
+                                  *(partialOccupVecHost[spinIndex].begin() +
+                                    iEigenVec) =
                                     kPointWeights[kPoint] * spinPolarizedFactor;
                               }
                           }
@@ -229,7 +231,8 @@ namespace dftfe
                                  iEigenVec < currentBlockSize;
                                  ++iEigenVec)
                               {
-                                *(partialOccupVecHost.begin() + iEigenVec) =
+                                *(partialOccupVecHost[spinIndex].begin() +
+                                  iEigenVec) =
                                   dftUtils::getPartialOccupancy(
                                     eigenValues[kPoint][totalNumWaveFunctions *
                                                           spinIndex +
@@ -246,7 +249,8 @@ namespace dftfe
                                  iEigenVec < currentBlockSize;
                                  ++iEigenVec)
                               {
-                                *(partialOccupVecHost.begin() + iEigenVec) =
+                                *(partialOccupVecHost[spinIndex].begin() +
+                                  iEigenVec) =
                                   dftUtils::getPartialOccupancy(
                                     eigenValues[kPoint][totalNumWaveFunctions *
                                                           spinIndex +

@@ -184,6 +184,9 @@ namespace dftfe
                   {
                     partialOccupancies[kPoint][numEigenVectors * spinIndex +
                                                iWave] = 1.0;
+                    const double eigenValue =
+                      dftPtr->eigenValues[kPoint]
+                                         [numEigenVectors * spinIndex + iWave];
                     if (spinIndex == 0)
                       {
                         if (eigenValue > dftPtr->fermiEnergyUp)
@@ -218,8 +221,9 @@ namespace dftfe
                     const double fermiEnergy = spinIndex == 0 ?
                                                  dftPtr->fermiEnergyUp :
                                                  dftPtr->fermiEnergyDown;
-                    dftPtr->eigenValues[kPoint]
-                                       [numEigenVectors * spinIndex + iWave];
+                    const double eigenValue =
+                      dftPtr->eigenValues[kPoint]
+                                         [numEigenVectors * spinIndex + iWave];
                     partialOccupancies[kPoint][numEigenVectors * spinIndex +
                                                iWave] =
                       dftUtils::getPartialOccupancy(eigenValue,

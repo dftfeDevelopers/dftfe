@@ -3522,7 +3522,7 @@ namespace dftfe
                             eigenValues);
                         else
                           compute_fermienergy_constraintMagnetization(
-                            eigenValues, numElectrons);
+                            eigenValues);
                       }
                     else
                       {
