@@ -212,7 +212,7 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 97336
 
 Setting initial guess for wavefunctions....
 =============================================================================================================================
-number of electrons: 1200
+number of electrons: 1.200000000000000000e+03
 number of eigen values: 720
 =============================================================================================================================
 

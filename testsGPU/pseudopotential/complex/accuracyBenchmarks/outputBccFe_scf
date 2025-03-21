@@ -1,6 +1,10 @@
 number of atoms: 2
 number of atoms types: 1
 Total number of k-points 8
+Found -620610624 GPUs
+MPI rank 0 uses GPU #0
+Found -620610624 GPUs
+MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 5.368001262539999985e+00 0.000000000000000000e+00
@@ -23,7 +27,7 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 29791
 
 Setting initial guess for wavefunctions....
 =============================================================================================================================
-number of electrons: 32
+number of electrons: 3.200000000000000000e+01
 number of eigen values: 36
 =============================================================================================================================
 
@@ -42,7 +46,7 @@ Checkpointing tria info and rho data in progress...
 ...checkpointing done.
 Checkpointing tria info and rho data in progress...
 ...checkpointing done.
-SCF iterations converged to the specified tolerance after: 38 iterations.
+SCF iterations converged to the specified tolerance after: 35 iterations.
 
 Energy computations (Hartree) 
 -------------------
