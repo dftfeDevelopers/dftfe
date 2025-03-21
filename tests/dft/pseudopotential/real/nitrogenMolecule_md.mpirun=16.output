@@ -2,7 +2,7 @@ number of atoms: 2
 number of atoms types: 1
 Z:7
 =============================================================================================================================
-number of electrons: 10
+number of electrons: 1.000000000000000000e+01
 number of eigen values: 10
 =============================================================================================================================
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
@@ -45,8 +45,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290839,0.000000,0.000000
-AtomId    1:  0.290839,0.000000,0.000000
+AtomId    0:  0.290838,0.000000,0.000000
+AtomId    1:  0.290838,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 0 ------------------ 
  Temperature from velocities: 300.00
@@ -104,7 +104,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78841761
+             Total energy:         -19.78841760
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
