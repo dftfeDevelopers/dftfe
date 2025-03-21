@@ -1,6 +1,10 @@
 number of atoms: 2
 number of atoms types: 1
 Total number of k-points 8
+Found -620610624 GPUs
+MPI rank 0 uses GPU #0
+Found -620610624 GPUs
+MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 5.368001262539999985e+00 0.000000000000000000e+00
@@ -23,7 +27,7 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 29791
 
 Setting initial guess for wavefunctions....
 =============================================================================================================================
-number of electrons: 32
+number of electrons: 3.200000000000000000e+01
 number of eigen values: 36
 =============================================================================================================================
 
@@ -34,7 +38,7 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 34 iterations.
+SCF iterations converged to the specified tolerance after: 29 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -72,7 +76,7 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 23 iterations.
+SCF iterations converged to the specified tolerance after: 21 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -87,9 +91,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000837
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 5.516725 -0.000000 0.000000
-v2 : 0.000000 5.516725 -0.000000
-v3 : -0.000000 -0.000000 5.516725
+v1 : 5.516751 -0.000000 0.000000
+v2 : -0.000000 5.516751 -0.000000
+v3 : -0.000000 0.000000 5.516751
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -110,24 +114,24 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 27 iterations.
+SCF iterations converged to the specified tolerance after: 28 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.18722290
+             Total energy:        -253.18722285
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.000088  0.000000  0.000000
-0.000000  0.000088  0.000000
-0.000000  0.000000  0.000088
+0.000087  0.000000  0.000000
+0.000000  0.000087  0.000000
+0.000000  0.000000  0.000087
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 5.534595 -0.000000 -0.000000
-v2 : 0.000000 5.534595 -0.000000
-v3 : -0.000000 -0.000000 5.534595
+v1 : 5.534600 -0.000000 0.000000
+v2 : -0.000000 5.534600 -0.000000
+v3 : -0.000000 0.000000 5.534600
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -148,11 +152,11 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 23 iterations.
+SCF iterations converged to the specified tolerance after: 25 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -253.18674745
+             Total energy:        -253.18674721
 Absolute magnetization: 7.250
 Net magnetization     : 7.250
 
