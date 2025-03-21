@@ -23,7 +23,7 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 2197
 
 Setting initial guess for wavefunctions....
 =============================================================================================================================
-number of electrons: 32
+number of electrons: 3.200000000000000000e+01
 number of eigen values: 36
 =============================================================================================================================
 
@@ -42,7 +42,7 @@ Checkpointing tria info and rho data in progress...
 ...checkpointing done.
 Checkpointing tria info and rho data in progress...
 ...checkpointing done.
-SCF iterations converged to the specified tolerance after: 34 iterations.
+SCF iterations converged to the specified tolerance after: 33 iterations.
 
 Energy computations (Hartree) 
 -------------------
