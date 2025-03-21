@@ -111,9 +111,10 @@ namespace dftfe
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
-        dftfe::ScaLAPACKMatrix<T> &                              mat,
-        const T                                                  scalar);
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                        BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<T> &mat,
+        const T                    scalar);
 
 
       /** @brief MPI_Bcast of ScaLAPACKMat across a given inter communicator from a given broadcast root.

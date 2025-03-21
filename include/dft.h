@@ -563,6 +563,14 @@ namespace dftfe
       const double                            numElectronsInput);
 
     /**
+     *@brief find HOMO eigenvalue for pure state
+     */
+    void
+    compute_fermienergy_purestate(
+      const std::vector<std::vector<double>> &eigenValuesInput,
+      const double                            numElectronsInput);
+
+    /**
      *@brief Computes the kinetic energy
      */
     double
@@ -734,9 +742,6 @@ namespace dftfe
 
     const expConfiningPotential &
     getConfiningPotential() const;
-
-    void
-    computeFractionalOccupancies();
 
     /**
      *@brief Returns the shared ptr to hubbard class
@@ -1148,7 +1153,15 @@ namespace dftfe
     normalizeRhoInQuadValues();
 
     /**
-     *@brief normalize the output electron density in each scf
+     *@brief normalize input mag electron density to total magnetization
+     *for use in constraint magnetization case (only for initial guess)
+     */
+    void
+    normalizeRhoMagInInitialGuessQuadValues();
+
+
+    /**
+     *@brief normalize the output total electron density in each scf
      */
     void
     normalizeRhoOutQuadValues();
@@ -1194,6 +1207,15 @@ namespace dftfe
     void
     compute_fermienergy_constraintMagnetization(
       const std::vector<std::vector<double>> &eigenValuesInput);
+
+
+    /**
+     *@brief Find spin-up and spin-down channel HOMO eigenvalues
+     */
+    void
+    compute_fermienergy_constraintMagnetization_purestate(
+      const std::vector<std::vector<double>> &eigenValuesInput);
+
 
     /**
      *@brief compute density of states and local density of states
@@ -1288,7 +1310,8 @@ namespace dftfe
     /**
      * stores required data for Kohn-Sham problem
      */
-    unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
+    unsigned int           numLevels;
+    double                 numElectrons, numElectronsUp, numElectronsDown;
     std::set<unsigned int> atomTypes;
 
     /// FIXME: eventually it should be a map of atomic number to struct-
@@ -1637,9 +1660,10 @@ namespace dftfe
       d_constraintsRhoNodalInfo;
 
     /**
-     * data storage for Kohn-Sham wavefunctions
+     * data storage for Kohn-Sham eigenvalues and partial occupancies
      */
     std::vector<std::vector<double>> eigenValues;
+    std::vector<std::vector<double>> d_partialOccupancies;
 
     /**
      * data storage for the occupancy of Kohn-Sham wavefunctions

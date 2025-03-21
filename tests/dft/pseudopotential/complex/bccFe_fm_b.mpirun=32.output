@@ -1,28 +1,29 @@
 number of atoms: 2
 number of atoms types: 1
-Z:13
+Z:26
 =============================================================================================================================
-number of electrons: 2.200000000000000000e+01
-number of eigen values: 16
+number of electrons: 3.200000000000000000e+01
+number of eigen values: 36
 =============================================================================================================================
+Total number of k-points 8
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 5.882191053999999752e+00 0.000000000000000000e+00 0.000000000000000000e+00
-v2 : -2.941095526999999876e+00 5.094126882677563195e+00 0.000000000000000000e+00
-v3 : 0.000000000000000000e+00 0.000000000000000000e+00 9.585777736000000715e+00
+v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 5.368001262539999985e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 5.368001262539999985e+00
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
-AtomId 1:  6.666666666666666297e-01 3.333333333333333148e-01 5.000000000000000000e-01
+AtomId 1:  5.000000000000000000e-01 5.000000000000000000e-01 5.000000000000000000e-01
 -----------------------------------------------------------------------------------------
-Number Image Charges  1263
+Number Image Charges  2107
 
 Finite element mesh information
 -------------------------------------------------
-FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
-FE interpolating polynomial order for electrostatics solve: 3
-FE interpolating polynomial order for nodal electron density computation: 5
-number of elements: 976
-number of degrees of freedom for the Kohn-Sham eigenvalue problem : 32917
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 4
+FE interpolating polynomial order for electrostatics solve: 4
+FE interpolating polynomial order for nodal electron density computation: 6
+number of elements: 216
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 15625
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
@@ -32,21 +33,23 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 19 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -138.81282039
+             Total energy:        -251.80281829
+Absolute magnetization: 4.000
+Net magnetization     : 4.000
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000000,0.000000,0.000140
-AtomId    1:  0.000117,0.000067,0.000154
+AtomId    0:  0.000000,0.000000,0.000000
+AtomId    1:  0.000000,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.003312  0.000052  0.000000
-0.000052  0.003252  0.000000
-0.000000  0.000000  0.002365
+0.070389  0.000000  0.000000
+0.000000  0.070389  0.000000
+0.000000  0.000000  0.070389
 ------------------------------------------------------------------------

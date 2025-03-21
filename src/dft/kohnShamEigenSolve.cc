@@ -614,6 +614,9 @@ namespace dftfe
           eigenValues[kPointIndex][spinType * d_numEigenValues + i];
       }
 
+    double fermiEnergyInput = fermiEnergy;
+    if (d_dftParamsPtr->constraintMagnetization)
+      fermiEnergyInput = spinType == 0 ? fermiEnergyUp : fermiEnergyDown;
 
     linearAlgebraOperations::densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
@@ -628,7 +631,7 @@ namespace dftfe
       kohnShamDFTEigenOperator.getMPICommunicatorDomain(),
       interBandGroupComm,
       eigenValuesTemp,
-      fermiEnergy,
+      fermiEnergyInput,
       d_densityMatDerFermiEnergy[(1 + d_dftParamsPtr->spinPolarized) *
                                    kPointIndex +
                                  spinType],
@@ -680,6 +683,11 @@ namespace dftfe
           eigenValues[kPointIndex][spinType * d_numEigenValues + i];
       }
 
+
+    double fermiEnergyInput = fermiEnergy;
+    if (d_dftParamsPtr->constraintMagnetization)
+      fermiEnergyInput = spinType == 0 ? fermiEnergyUp : fermiEnergyDown;
+
     subspaceIterationSolverDevice.densityMatrixEigenBasisFirstOrderResponse(
       kohnShamDFTEigenOperator,
       d_BLASWrapperPtr,
@@ -691,7 +699,7 @@ namespace dftfe
         matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_numEigenValues,
       eigenValuesTemp,
-      fermiEnergy,
+      fermiEnergyInput,
       d_densityMatDerFermiEnergy[(1 + d_dftParamsPtr->spinPolarized) *
                                    kPointIndex +
                                  spinType],
@@ -917,73 +925,25 @@ namespace dftfe
       const double                            fermiEnergy)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
-    if (d_dftParamsPtr->reproducible_output)
+    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
-        for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+        unsigned int highestOccupiedState = 0;
+
+        for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
           {
-            unsigned int highestOccupiedState = 0;
+            if (d_partialOccupancies[kPoint][i] > 1e-3)
+              highestOccupiedState = i;
+          }
 
-            for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size();
-                 i++)
-              {
-                const double factor =
-                  (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
-                  (C_kb * d_dftParamsPtr->TVal);
-                if (factor < 0)
-                  highestOccupiedState = i;
-              }
+        d_highestStateForResidualComputation = highestOccupiedState;
 
-            if (residualNormWaveFunctionsAllkPoints[kPoint]
-                                                   [highestOccupiedState] >
+        for (unsigned int i = 0; i <= d_highestStateForResidualComputation; i++)
+          {
+            if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
                 maxHighestOccupiedStateResNorm)
               {
                 maxHighestOccupiedStateResNorm =
-                  residualNormWaveFunctionsAllkPoints[kPoint]
-                                                     [highestOccupiedState];
-              }
-            d_highestStateForResidualComputation = highestOccupiedState;
-          }
-      }
-    else
-      {
-        for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
-          {
-            unsigned int highestOccupiedState = 0;
-
-            for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size();
-                 i++)
-              {
-                const double factor =
-                  (eigenValuesAllkPoints[kPoint][i] - fermiEnergy) /
-                  (C_kb * d_dftParamsPtr->TVal);
-                double functionValue;
-                if (factor <= 0.0)
-                  {
-                    double temp2 = 1.0 / (1.0 + exp(factor));
-                    functionValue =
-                      (2.0 - d_dftParamsPtr->spinPolarized) * temp2;
-                  }
-                else
-                  {
-                    double temp2  = 1.0 / (1.0 + exp(-factor));
-                    functionValue = (2.0 - d_dftParamsPtr->spinPolarized) *
-                                    exp(-factor) * temp2;
-                  }
-                if (functionValue > 1e-3)
-                  highestOccupiedState = i;
-              }
-
-            d_highestStateForResidualComputation = highestOccupiedState;
-
-            for (unsigned int i = 0; i <= d_highestStateForResidualComputation;
-                 i++)
-              {
-                if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
-                    maxHighestOccupiedStateResNorm)
-                  {
-                    maxHighestOccupiedStateResNorm =
-                      residualNormWaveFunctionsAllkPoints[kPoint][i];
-                  }
+                  residualNormWaveFunctionsAllkPoints[kPoint][i];
               }
           }
       }

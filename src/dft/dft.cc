@@ -763,17 +763,15 @@ namespace dftfe
 #endif
     if (d_dftParamsPtr->constraintMagnetization)
       {
-        numElectronsUp   = std::ceil(static_cast<double>(numElectrons) / 2.0);
-        numElectronsDown = numElectrons - numElectronsUp;
         //
-        int netMagnetization = std::round(static_cast<double>(numElectrons) *
-                                          d_dftParamsPtr->tot_magnetization);
-        //
-        while ((numElectronsUp - numElectronsDown) < std::abs(netMagnetization))
-          {
-            numElectronsDown -= 1;
-            numElectronsUp += 1;
-          }
+        const double netMagnetization =
+          static_cast<double>(numElectrons) * d_dftParamsPtr->tot_magnetization;
+
+        numElectronsUp =
+          0.5 * (static_cast<double>(numElectrons) + netMagnetization);
+        numElectronsDown =
+          0.5 * (static_cast<double>(numElectrons) - netMagnetization);
+
         //
         if (d_dftParamsPtr->verbosity >= 1)
           {
@@ -860,7 +858,7 @@ namespace dftfe
                                    d_numEigenValues);
       }
 
-
+    d_partialOccupancies = eigenValues;
 
     if (d_dftParamsPtr->isPseudopotential == true)
       {
@@ -1323,16 +1321,6 @@ namespace dftfe
           (d_excManagerPtr->getExcSSDFunctionalObj()
              ->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
-        interpolateDensityNodalDataToQuadratureDataGeneral(
-          d_basisOperationsPtrElectroHost,
-          d_densityDofHandlerIndexElectro,
-          d_densityQuadratureIdElectro,
-          d_densityInNodalValues[0],
-          d_densityInQuadValues[0],
-          d_gradDensityInQuadValues[0],
-          d_gradDensityInQuadValues[0],
-          isGradDensityDataDependent);
-
         if (d_dftParamsPtr->spinPolarized == 1)
           {
             d_densityInNodalValues[1] = 0;
@@ -1343,17 +1331,45 @@ namespace dftfe
                 d_densityInNodalValues[1].local_element(i) =
                   d_magInNodalValuesRead.local_element(i);
               }
-
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
-              d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-              d_densityInNodalValues[1],
-              d_densityInQuadValues[1],
-              d_gradDensityInQuadValues[1],
-              d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent);
           }
+
+        if (d_dftParamsPtr->spinPolarized == 1 &&
+            d_dftParamsPtr->constraintMagnetization)
+          {
+            // normalize rho mag
+            const double netMag =
+              totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
+
+            const double shift =
+              (d_dftParamsPtr->tot_magnetization * numElectrons - shift) /
+              numElectrons;
+
+            d_densityInNodalValues[1].add(shift, d_densityInNodalValues[0]);
+
+            if (d_dftParamsPtr->verbosity >= 1)
+              {
+                pcout << "Net magnetization before Normalizing:  " << netMag
+                      << std::endl;
+                pcout << "Net magnetization after Normalizing: "
+                      << totalCharge(d_matrixFreeDataPRefined,
+                                     d_densityInNodalValues[1])
+                      << std::endl;
+              }
+          }
+
+        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+             ++iComp)
+          interpolateDensityNodalDataToQuadratureDataGeneral(
+            d_basisOperationsPtrElectroHost,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_densityInNodalValues[iComp],
+            d_densityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            isGradDensityDataDependent);
+
+
         if ((d_dftParamsPtr->solverMode == "GEOOPT"))
           {
             d_densityOutNodalValues = d_densityInNodalValues;
@@ -3131,9 +3147,21 @@ namespace dftfe
             // fermi energy
             //
             if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
             else
-              compute_fermienergy(eigenValues, numElectrons);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
+
 
             unsigned int count = 1;
 
@@ -3250,9 +3278,23 @@ namespace dftfe
                         }
                     //
                     if (d_dftParamsPtr->constraintMagnetization)
-                      compute_fermienergy_constraintMagnetization(eigenValues);
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_constraintMagnetization_purestate(
+                            eigenValues);
+                        else
+                          compute_fermienergy_constraintMagnetization(
+                            eigenValues);
+                      }
                     else
-                      compute_fermienergy(eigenValues, numElectrons);
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_purestate(eigenValues,
+                                                        numElectrons);
+                        else
+                          compute_fermienergy(eigenValues, numElectrons);
+                      }
+
                     //
                     maxRes =
                       std::max(computeMaximumHighestOccupiedStateResidualNorm(
@@ -3371,9 +3413,20 @@ namespace dftfe
             // fermi energy
             //
             if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
             else
-              compute_fermienergy(eigenValues, numElectrons);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
 
             unsigned int count = 1;
 
@@ -3462,9 +3515,23 @@ namespace dftfe
 
                     //
                     if (d_dftParamsPtr->constraintMagnetization)
-                      compute_fermienergy_constraintMagnetization(eigenValues);
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_constraintMagnetization_purestate(
+                            eigenValues);
+                        else
+                          compute_fermienergy_constraintMagnetization(
+                            eigenValues);
+                      }
                     else
-                      compute_fermienergy(eigenValues, numElectrons);
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_purestate(eigenValues,
+                                                        numElectrons);
+                        else
+                          compute_fermienergy(eigenValues, numElectrons);
+                      }
+
                     //
                     maxRes = computeMaximumHighestOccupiedStateResidualNorm(
                       residualNormWaveFunctionsAllkPoints,
@@ -3696,6 +3763,7 @@ namespace dftfe
               d_smearedChargeQuadratureIdElectro,
               d_lpspQuadratureIdElectro,
               eigenValues,
+              d_partialOccupancies,
               d_kPointWeights,
               fermiEnergy,
               d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
@@ -3727,7 +3795,6 @@ namespace dftfe
           }
 
 
-        computeFractionalOccupancies();
 
         d_excManagerPtr->getExcSSDFunctionalObj()
           ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
@@ -3787,6 +3854,19 @@ namespace dftfe
       {
         pcout << "SCF iterations converged to the specified tolerance after: "
               << scfIter << " iterations." << std::endl;
+        if (d_dftParamsPtr->verbosity >= 1)
+          {
+            if (d_dftParamsPtr->spinPolarized &&
+                d_dftParamsPtr->constraintMagnetization)
+              {
+                pcout << "GS Fermi energy spin up: " << fermiEnergyUp
+                      << std::endl;
+                pcout << "GS Fermi energy spin down: " << fermiEnergyDown
+                      << std::endl;
+              }
+            else
+              pcout << "GS Fermi energy spin up: " << fermiEnergy << std::endl;
+          }
 
         if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
@@ -3979,6 +4059,7 @@ namespace dftfe
       d_smearedChargeQuadratureIdElectro,
       d_lpspQuadratureIdElectro,
       eigenValues,
+      d_partialOccupancies,
       d_kPointWeights,
       fermiEnergy,
       d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
@@ -4011,6 +4092,7 @@ namespace dftfe
 
     d_entropicEnergy =
       energyCalc.computeEntropicEnergy(eigenValues,
+                                       d_partialOccupancies,
                                        d_kPointWeights,
                                        fermiEnergy,
                                        fermiEnergyUp,
@@ -5270,58 +5352,6 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeFractionalOccupancies()
-  {
-    /*
-    double FE = d_dftParamsPtr->spinPolarized ?
-                  std::max(fermiEnergyDown, fermiEnergyUp) :
-                  fermiEnergy;
-*/
-    double FE = fermiEnergy;
-    // pcout<<" Fermi energy = "<<FE<<"\n";
-    int numkPoints = d_kPointWeights.size();
-    d_fracOccupancy.resize(numkPoints,
-                           std::vector<double>((1 +
-                                                d_dftParamsPtr->spinPolarized) *
-                                                 d_numEigenValues,
-                                               0.0));
-
-    for (unsigned int kPoint = 0; kPoint < numkPoints; ++kPoint)
-      if (d_dftParamsPtr->constraintMagnetization)
-        {
-          for (unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-            {
-              if (eigenValues[kPoint][iWave] > fermiEnergyUp)
-                d_fracOccupancy[kPoint][iWave] = 0.0;
-              else
-                d_fracOccupancy[kPoint][iWave] = 1.0;
-
-              if (eigenValues[kPoint][iWave + d_numEigenValues] >
-                  fermiEnergyDown)
-                d_fracOccupancy[kPoint][iWave + d_numEigenValues] = 0.0;
-              else
-                d_fracOccupancy[kPoint][iWave + d_numEigenValues] = 1.0;
-            }
-        }
-      else
-        {
-          for (unsigned int iWave = 0;
-               iWave < d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized);
-               ++iWave)
-            {
-              d_fracOccupancy[kPoint][iWave] = dftUtils::getPartialOccupancy(
-                eigenValues[kPoint][iWave], FE, C_kb, d_dftParamsPtr->TVal);
-              // pcout<<" iWave = "<<iWave<<" fracOcc =
-              // "<<d_fracOccupancy[kPoint][iWave]<<"\n";
-            }
-        }
-  }
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::setNumElectrons(
     unsigned int inputNumElectrons)
   {
@@ -5928,7 +5958,6 @@ namespace dftfe
 
         auxDensityMatrixXCPtr->projectDensityEnd(mpi_communicator);
 
-        computeFractionalOccupancies();
 
         std::shared_ptr<AuxDensityMatrixFE<memorySpace>>
           auxDensityMatrixXCFEPtr =
@@ -5941,7 +5970,7 @@ namespace dftfe
             "DFT-FE Error: unable to type cast the auxiliary matrix to FE."));
 
         auxDensityMatrixXCFEPtr->setDensityMatrixComponents(
-          eigenVectorsFlattenedMemSpace, d_fracOccupancy);
+          eigenVectorsFlattenedMemSpace, d_partialOccupancies);
       }
     else if (d_dftParamsPtr->auxBasisTypeXC == "SLATER")
       {
@@ -5950,10 +5979,7 @@ namespace dftfe
         auto blasWrapperMemSpace = getBLASWrapperMemSpace();
         computeAuxProjectedDensityMatrixFromPSI(eigenVectorsFlattenedMemSpace,
                                                 d_numEigenValues,
-                                                eigenValues_,
-                                                fermiEnergy_,
-                                                fermiEnergyUp_,
-                                                fermiEnergyDown_,
+                                                d_partialOccupancies,
                                                 basisOpMemSpace,
                                                 blasWrapperMemSpace,
                                                 d_densityDofHandlerIndex,

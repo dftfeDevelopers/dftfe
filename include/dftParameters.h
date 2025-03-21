@@ -56,10 +56,14 @@ namespace dftfe
       selfConsistentSolverEnergyTolerance, tot_magnetization,
       absLinearSolverToleranceHelmholtz, smearTval, intervalSize;
 
+    bool useAtomicMagnetizationGuessConstraintMag;
+
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
       writeLdosFile, writeBandsFile, writeLocalizationLengths, pinnedNodeForPBC,
       writePdosFile;
+
+    bool pureState;
 
     double netCharge;
 

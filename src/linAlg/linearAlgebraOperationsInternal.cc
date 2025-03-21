@@ -367,9 +367,10 @@ namespace dftfe
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
-        dftfe::ScaLAPACKMatrix<T> &                              mat,
-        const T                                                  scalar)
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                        BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<T> &mat,
+        const T                    scalar)
       {
         // if (processGrid->is_process_active())
         //   {
@@ -2268,17 +2269,19 @@ namespace dftfe
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
-        dftfe::ScaLAPACKMatrix<double> &                         mat,
-        const double                                             scalar);
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                             BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<double> &mat,
+        const double                    scalar);
 
       template void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const std::shared_ptr<
-          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtr,
-        dftfe::ScaLAPACKMatrix<std::complex<double>> &           mat,
-        const std::complex<double>                               scalar);
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                                           BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<std::complex<double>> &mat,
+        const std::complex<double>                    scalar);
 
       template void
       sumAcrossInterCommScaLAPACKMat(

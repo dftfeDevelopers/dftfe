@@ -177,33 +177,9 @@ namespace dftfe
          ++spinIndex)
       for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
         for (unsigned int iWave = 0; iWave < numEigenVectors; ++iWave)
-          {
-            const double eigenValue =
-              dftPtr->eigenValues[kPoint][numEigenVectors * spinIndex + iWave];
-            partialOccupancies[kPoint][numEigenVectors * spinIndex + iWave] =
-              dftUtils::getPartialOccupancy(eigenValue,
-                                            dftPtr->fermiEnergy,
-                                            C_kb,
-                                            d_dftParams.TVal);
-
-            if (d_dftParams.constraintMagnetization)
-              {
-                partialOccupancies[kPoint]
-                                  [numEigenVectors * spinIndex + iWave] = 1.0;
-                if (spinIndex == 0)
-                  {
-                    if (eigenValue > dftPtr->fermiEnergyUp)
-                      partialOccupancies[kPoint][numEigenVectors * spinIndex +
-                                                 iWave] = 0.0;
-                  }
-                else if (spinIndex == 1)
-                  {
-                    if (eigenValue > dftPtr->fermiEnergyDown)
-                      partialOccupancies[kPoint][numEigenVectors * spinIndex +
-                                                 iWave] = 0.0;
-                  }
-              }
-          }
+          partialOccupancies[kPoint][numEigenVectors * spinIndex + iWave] =
+            dftPtr->d_partialOccupancies[kPoint]
+                                        [numEigenVectors * spinIndex + iWave];
 
     MPI_Barrier(d_mpiCommParent);
     init_time = MPI_Wtime() - init_time;
