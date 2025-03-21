@@ -1949,9 +1949,9 @@ namespace dftfe
 
     if (verbosity >= 1 &&
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
-      if (constraintMagnetization)
+      if (pureState)
         std::cout
-          << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
+          << " WARNING: PURE STATE mode is ON. Integer occupations will be used no matter what temperature is provided at input"
           << std::endl;
 
     AssertThrow(
