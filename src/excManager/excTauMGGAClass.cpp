@@ -448,7 +448,6 @@ namespace dftfe
               pdecTauSpinDownValues;
           }
       }
-    // std::cout << "One XC calc is completed" << std::endl;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -457,6 +456,17 @@ namespace dftfe
     const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       &                                                                src,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+    const unsigned int inputVecSize,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
+  {}
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excTauMGGAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+      &                                                                    src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
     const unsigned int spinIndex)

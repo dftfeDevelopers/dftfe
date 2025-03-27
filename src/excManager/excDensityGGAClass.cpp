@@ -292,6 +292,17 @@ namespace dftfe
     const unsigned int spinIndex)
   {}
 
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  excDensityGGAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+      &                                                                    src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
+    const unsigned int inputVecSize,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
+  {}
+
 
   template <dftfe::utils::MemorySpace memorySpace>
   void

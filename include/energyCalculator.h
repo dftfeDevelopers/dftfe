@@ -99,6 +99,7 @@ namespace dftfe
 
     double
     localBandEnergy(const std::vector<std::vector<double>> &eigenValues,
+                    const std::vector<std::vector<double>> &partialOccupancies,
                     const std::vector<double> &             kPointWeights,
                     const double                            fermiEnergy,
                     const double                            fermiEnergyUp,
@@ -227,6 +228,7 @@ namespace dftfe
       const unsigned int                      smearedChargeQuadratureIDElectro,
       const unsigned int                      lpspQuadratureIDElectro,
       const std::vector<std::vector<double>> &eigenValues,
+      const std::vector<std::vector<double>> &partialOccupancies,
       const std::vector<double> &             kPointWeights,
       const double                            fermiEnergy,
       const double                            fermiEnergyUp,
@@ -352,14 +354,16 @@ namespace dftfe
       double &excCorrPotentialTimesRho);
 
     double
-    computeEntropicEnergy(const std::vector<std::vector<double>> &eigenValues,
-                          const std::vector<double> &             kPointWeights,
-                          const double                            fermiEnergy,
-                          const double                            fermiEnergyUp,
-                          const double fermiEnergyDown,
-                          const bool   isSpinPolarized,
-                          const bool   isConstraintMagnetization,
-                          const double temperature) const;
+    computeEntropicEnergy(
+      const std::vector<std::vector<double>> &eigenValues,
+      const std::vector<std::vector<double>> &partialOccupancies,
+      const std::vector<double> &             kPointWeights,
+      const double                            fermiEnergy,
+      const double                            fermiEnergyUp,
+      const double                            fermiEnergyDown,
+      const bool                              isSpinPolarized,
+      const bool                              isConstraintMagnetization,
+      const double                            temperature) const;
 
 
 

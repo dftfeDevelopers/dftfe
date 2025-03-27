@@ -17,8 +17,8 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.296487328892820257e+00 5.365505448996827145e-03 5.261733345322480888e-03
-AtomId 1:  1.296487640749363734e+00 -5.365505473837222511e-03 -5.261733373112462142e-03
+AtomId 0:  -1.296487490021431155e+00 5.365505453136515737e-03 5.261733344552399841e-03
+AtomId 1:  1.296487503372444339e+00 -5.365505479671766297e-03 -5.261733372974815304e-03
 -----------------------------------------------------------------------------------------
 Reading tria info and rho data from checkpoint in progress...
 ...Reading from checkpoint done.
@@ -42,7 +42,7 @@ Starting Temperature from Input 3.000000000000000000e+02
 RestartFlag: 1
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 4 iterations.
+SCF iterations converged to the specified tolerance after: 5 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -50,8 +50,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290496,0.001038,0.001018
-AtomId    1:  0.290492,0.001038,0.001018
+AtomId    0:  0.290494,0.001038,0.001018
+AtomId    1:  0.290494,0.001038,0.001018
 --------------------------------------------------------------------------------------------
 ---------------MDNVE() called------------------ 
 
@@ -98,7 +98,7 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -106,10 +106,10 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.287148,0.002070,0.002030
-AtomId    1:  0.287148,0.002070,0.002030
+AtomId    0:  0.287151,0.002070,0.002030
+AtomId    1:  0.287151,0.002070,0.002030
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 4 ------------------ 
- Temperature from velocities: 3511.56
+ Temperature from velocities: 3511.57
  Total Energy in Ha at timeIndex -19.78497
 ---MD run completed successfully---

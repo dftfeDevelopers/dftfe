@@ -108,14 +108,7 @@ namespace dftfe
        matrix_free_data.get_vector_partitioner()->locally_owned_size()) *
         (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
       dataTypes::number(0.0));
-    if (d_numEigenValuesRR != d_numEigenValues)
-      {
-        d_eigenVectorsRotFracDensityFlattenedHost.resize(
-          d_numEigenValuesRR *
-            matrix_free_data.get_vector_partitioner()->locally_owned_size() *
-            (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size(),
-          dataTypes::number(0.0));
-      }
+
 
     pcout << std::endl
           << "Setting initial guess for wavefunctions...." << std::endl;
@@ -150,11 +143,7 @@ namespace dftfe
           d_eigenVectorsDensityMatrixPrimeFlattenedDevice.resize(
             d_eigenVectorsFlattenedHost.size());
 
-        if (d_numEigenValuesRR != d_numEigenValues)
-          d_eigenVectorsRotFracFlattenedDevice.resize(
-            d_eigenVectorsRotFracDensityFlattenedHost.size());
-        else
-          d_eigenVectorsRotFracFlattenedDevice.resize(1);
+
 
         d_eigenVectorsFlattenedDevice.copyFrom(d_eigenVectorsFlattenedHost);
       }
@@ -177,28 +166,20 @@ namespace dftfe
           {
             if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
               {
-                computeInitTauFromPSI(
-                  &d_eigenVectorsFlattenedHost,
-                  &d_eigenVectorsRotFracDensityFlattenedHost,
-                  numElectrons,
-                  d_numEigenValues,
-                  d_numEigenValuesRR,
-                  eigenValues,
-                  fermiEnergy,
-                  fermiEnergyUp,
-                  fermiEnergyDown,
-                  d_basisOperationsPtrHost,
-                  d_BLASWrapperPtrHost,
-                  d_densityDofHandlerIndex,
-                  d_densityQuadratureId,
-                  d_kPointCoordinates,
-                  d_kPointWeights,
-                  d_tauInQuadValues,
-                  d_mpiCommParent,
-                  interpoolcomm,
-                  interBandGroupComm,
-                  *d_dftParamsPtr,
-                  false);
+                computeInitTauFromPSI(&d_eigenVectorsFlattenedHost,
+                                      numElectrons,
+                                      d_numEigenValues,
+                                      d_basisOperationsPtrHost,
+                                      d_BLASWrapperPtrHost,
+                                      d_densityDofHandlerIndex,
+                                      d_densityQuadratureId,
+                                      d_kPointCoordinates,
+                                      d_kPointWeights,
+                                      d_tauInQuadValues,
+                                      d_mpiCommParent,
+                                      interpoolcomm,
+                                      interBandGroupComm,
+                                      *d_dftParamsPtr);
               }
           }
 #ifdef DFTFE_WITH_DEVICE
@@ -206,14 +187,8 @@ namespace dftfe
           {
             MPI_Barrier(d_mpiCommParent);
             computeInitTauFromPSI(&d_eigenVectorsFlattenedDevice,
-                                  &d_eigenVectorsRotFracFlattenedDevice,
                                   numElectrons,
                                   d_numEigenValues,
-                                  d_numEigenValuesRR,
-                                  eigenValues,
-                                  fermiEnergy,
-                                  fermiEnergyUp,
-                                  fermiEnergyDown,
                                   d_basisOperationsPtrDevice,
                                   d_BLASWrapperPtr,
                                   d_densityDofHandlerIndex,
@@ -224,8 +199,7 @@ namespace dftfe
                                   d_mpiCommParent,
                                   interpoolcomm,
                                   interBandGroupComm,
-                                  *d_dftParamsPtr,
-                                  false);
+                                  *d_dftParamsPtr);
           }
 #endif
       }

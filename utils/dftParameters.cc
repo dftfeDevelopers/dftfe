@@ -240,7 +240,7 @@ namespace dftfe
           "ATOMIC COORDINATES FILE",
           "",
           dealii::Patterns::Anything(),
-          "[Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.");
+          "[Standard] Atomic-coordinates input file name. For a fully non-periodic domain, give Cartesian coordinates of the atoms (in a.u) with respect to the origin at the center of the domain. For periodic and semi-periodic domains, give fractional coordinates of atoms. File format (example for two atoms for a spin unpolarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 c2 (row2), where c1 and c2 are optional parameters representing partial charges to be used to set the initial guess of charge density. Parameter c scales the valence charge as (scaledAtomicValenceCharge= c * atomicValenceCharge). File format (example for two atoms for a spin-polarized calculation): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 m1 c1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 m2 c2 (row2), where m1 and m2 are the initial guess of magnetization (ranging from -1.0 to 1.0, with -1.0 representing all electrons of the atom having spin -0.5 and 1.0 representing all electrons of the atom having spin 0.5) to be used to set the initial guess of magnetization density. In case both m and c are used, please use the scaled valence charge to set the value appropriately (m*scaledAtomicValenceCharge=atomicMagnetization). The number of rows must be equal to NATOMS, and the number of unique atoms must be equal to NATOM TYPES.");
         prm.declare_entry(
           "ATOMIC DISP COORDINATES FILE",
           "",
@@ -735,7 +735,13 @@ namespace dftfe
           "TOTAL MAGNETIZATION",
           "0.0",
           dealii::Patterns::Double(-1.0, 1.0),
-          "[Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x Number of electrons) a.u. ");
+          "[Standard] Total magnetization to be used for constrained spin-polarized DFT calculations (must be between -1.0 and +1.0). Corresponding magnetization per simulation domain will be (TOTAL MAGNETIZATION x (Number of electrons+Net charge)) a.u. ");
+
+        prm.declare_entry(
+          "USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Use atomic magnetization initial guess from coordinates.inp when using constrained magnetization solve for a set TOTAL MAGNETIZATION. The default value of false sets the initial guess of spin density to be a scaling of the total atomic density.");
 
         prm.declare_entry(
           "PSP CUTOFF IMAGE CHARGES",
@@ -890,7 +896,14 @@ namespace dftfe
           "CONSTRAINT MAGNETIZATION",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is FALSE");
+          "[Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is false.");
+
+
+        prm.declare_entry(
+          "PURE STATE",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Explictly solves for a pure Kohn-Sham state instead of an ensemble Kohn-Sham state implemented using Fermi-Dirac smearing. If this parameter is set to true, it overrides the Fermi-Dirac smearing temperature. Default is false.");
 
         prm.declare_entry(
           "STARTING WFC",
@@ -966,23 +979,14 @@ namespace dftfe
             dealii::Patterns::Integer(0),
             "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-20 percent of N/2. If 5-20 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10. Default value of 0 automatically sets the number of Kohn-Sham wavefunctions close to 20 percent more than N/2. CAUTION: use more states when using higher electronic temperature.");
 
-          prm.declare_entry(
-            "SPECTRUM SPLIT CORE EIGENSTATES",
-            "0",
-            dealii::Patterns::Integer(0),
-            "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
 
-          prm.declare_entry("XTHX CORE EIGENSTATES",
+
+          prm.declare_entry("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR",
                             "0",
                             dealii::Patterns::Integer(0),
                             "[Advanced] For mixed precision optimization.");
 
 
-          prm.declare_entry(
-            "SPECTRUM SPLIT STARTING SCF ITER",
-            "0",
-            dealii::Patterns::Integer(0),
-            "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
           prm.declare_entry(
             "CHEBYSHEV POLYNOMIAL DEGREE",
@@ -1046,6 +1050,18 @@ namespace dftfe
             "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Cholesky-Gram-Schmidt orthogonalization.  Default setting is true.");
 
           prm.declare_entry(
+            "USE APPROXIMATE OVERLAP MATRIX",
+            "true",
+            dealii::Patterns::Bool(),
+            "[Standard] Use approximate overlap matrix (diagonal for FE basis overlap).  Default setting is true.");
+
+          prm.declare_entry(
+            "USE RESIDUAL CHFSI",
+            "true",
+            dealii::Patterns::Bool(),
+            "[Advanced] Builds the Chebyshev filtered subspace in full precision based on a residual-ChFSI algorithm.");
+
+          prm.declare_entry(
             "SUBSPACE PROJ SHEP GPU",
             "true",
             dealii::Patterns::Bool(),
@@ -1059,17 +1075,18 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in subspace rotation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC CGS O",
+            "USE MIXED PREC XTOX",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of CGS orthogonalization, if ORTHOGONALIZATION TYPE is set to CGS. Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in X^{T} Overlap matrix times X computation. Default setting is false.");
 
 
           prm.declare_entry(
-            "USE MIXED PREC XTHX SPECTRUM SPLIT",
+            "USE MIXED PREC XTHX",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0.  Default setting is false.");
+            "[Advanced] Use mixed precision arithmetic in X^{T} Hamiltonian matrix times X computation. Default setting is false.");
+
 
           prm.declare_entry(
             "USE MIXED PREC RR_SR",
@@ -1084,10 +1101,10 @@ namespace dftfe
             "[Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.");
 
           prm.declare_entry(
-            "USE MIXED PREC COMMUN ONLY XTX XTHX",
+            "USE MIXED PREC COMMUN ONLY XTOX XTHX",
             "false",
             dealii::Patterns::Bool(),
-            "[Advanced] Use mixed precision communication only for XtX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.");
+            "[Advanced] Use mixed precision communication only for XtOX and XtHX instead of mixed precision compute and communication. This setting has been found to be more optimal on certain architectures. Default setting is false.");
 
           prm.declare_entry(
             "USE SINGLE PREC CHEBY",
@@ -1162,7 +1179,7 @@ namespace dftfe
           "[Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.");
 
         prm.declare_entry("GPU MODE",
-                          "false",
+                          "true",
                           dealii::Patterns::Bool(),
                           "[Advanced] Toggle GPU MODE in Poisson solve.");
 
@@ -1285,20 +1302,21 @@ namespace dftfe
     npool                                      = 1;
     maxLinearSolverIterationsHelmholtz         = 1;
 
-    functionalTestName                = "";
-    radiusAtomBall                    = 0.0;
-    mixingParameter                   = 0.5;
-    spinMixingEnhancementFactor       = 4.0;
-    absLinearSolverTolerance          = 1e-10;
-    selfConsistentSolverTolerance     = 1e-10;
-    TVal                              = 500;
-    tot_magnetization                 = 0.0;
-    absLinearSolverToleranceHelmholtz = 1e-10;
-    chebyshevTolerance                = 1e-02;
-    mixingMethod                      = "";
-    optimizationMode                  = "";
-    ionOptSolver                      = "";
-    cellOptSolver                     = "";
+    functionalTestName                       = "";
+    radiusAtomBall                           = 0.0;
+    mixingParameter                          = 0.5;
+    spinMixingEnhancementFactor              = 4.0;
+    absLinearSolverTolerance                 = 1e-10;
+    selfConsistentSolverTolerance            = 1e-10;
+    TVal                                     = 500;
+    tot_magnetization                        = 0.0;
+    useAtomicMagnetizationGuessConstraintMag = false;
+    absLinearSolverToleranceHelmholtz        = 1e-10;
+    chebyshevTolerance                       = 1e-02;
+    mixingMethod                             = "";
+    optimizationMode                         = "";
+    ionOptSolver                             = "";
+    cellOptSolver                            = "";
 
     isPseudopotential           = false;
     periodicX                   = false;
@@ -1308,6 +1326,7 @@ namespace dftfe
     timeReversal                = false;
     pseudoTestsFlag             = false;
     constraintMagnetization     = false;
+    pureState                   = false;
     writeDosFile                = false;
     writeLdosFile               = false;
     writePdosFile               = false;
@@ -1369,18 +1388,18 @@ namespace dftfe
     scalapackBlockSize                             = 50;
     natoms                                         = 0;
     natomTypes                                     = 0;
-    numCoreWfcRR                                   = 0;
-    numCoreWfcXtHX                                 = 0;
+    numCoreWfcForMixedPrecRR                       = 0;
     reuseWfcGeoOpt                                 = false;
     reuseDensityGeoOpt                             = 0;
     mpiAllReduceMessageBlockSizeMB                 = 2.0;
     useSubspaceProjectedSHEPGPU                    = false;
     useMixedPrecCGS_SR                             = false;
-    useMixedPrecCGS_O                              = false;
-    useMixedPrecXTHXSpectrumSplit                  = false;
+    useMixedPrecXtOX                               = false;
+    useMixedPrecXtHX                               = false;
+    approxOverlapMatrix                            = true;
+    useReformulatedChFSI                           = false;
     useMixedPrecSubspaceRotRR                      = false;
-    useMixedPrecCommunOnlyXTHXCGSO                 = false;
-    spectrumSplitStartingScfIter                   = 0;
+    useMixedPrecCommunOnlyXtHXXtOX                 = false;
     useELPA                                        = false;
     constraintsParallelCheck                       = true;
     createConstraintsFromSerialDofhandler          = true;
@@ -1688,15 +1707,17 @@ namespace dftfe
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
       prm.leave_subsection();
-      isPseudopotential     = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-      pseudoTestsFlag       = prm.get_bool("PSEUDO TESTS FLAG");
-      pseudoPotentialFile   = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-      XCType                = prm.get("EXCHANGE CORRELATION TYPE");
-      spinPolarized         = prm.get_integer("SPIN POLARIZATION");
-      modelXCInputFile      = prm.get("MODEL XC INPUT FILE");
-      auxBasisTypeXC        = prm.get("AUX BASIS TYPE");
-      auxBasisDataXC        = prm.get("AUX BASIS DATA");
-      tot_magnetization     = prm.get_double("TOTAL MAGNETIZATION");
+      isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
+      pseudoPotentialFile = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
+      XCType              = prm.get("EXCHANGE CORRELATION TYPE");
+      spinPolarized       = prm.get_integer("SPIN POLARIZATION");
+      modelXCInputFile    = prm.get("MODEL XC INPUT FILE");
+      auxBasisTypeXC      = prm.get("AUX BASIS TYPE");
+      auxBasisDataXC      = prm.get("AUX BASIS DATA");
+      tot_magnetization   = prm.get_double("TOTAL MAGNETIZATION");
+      useAtomicMagnetizationGuessConstraintMag =
+        prm.get_bool("USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");
       netCharge             = prm.get_double("NET CHARGE");
 
@@ -1725,6 +1746,7 @@ namespace dftfe
       restaScreeningLength       = prm.get_double("RESTA SCREENING LENGTH");
       mixingMethod               = prm.get("MIXING METHOD");
       constraintMagnetization    = prm.get_bool("CONSTRAINT MAGNETIZATION");
+      pureState                  = prm.get_bool("PURE STATE");
       startingWFCType            = prm.get("STARTING WFC");
       computeEnergyEverySCF      = prm.get_bool("COMPUTE ENERGY EACH ITER");
       useEnergyResidualTolerance = prm.get_bool("USE ENERGY RESIDUAL METRIC");
@@ -1747,27 +1769,26 @@ namespace dftfe
       {
         numberEigenValues =
           prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-        numCoreWfcRR   = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
-        numCoreWfcXtHX = prm.get_integer("XTHX CORE EIGENSTATES");
-        spectrumSplitStartingScfIter =
-          prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
-        chebyshevOrder     = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-        useELPA            = prm.get_bool("USE ELPA");
-        orthogType         = prm.get("ORTHOGONALIZATION TYPE");
-        chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-        wfcBlockSize       = prm.get_integer("WFC BLOCK SIZE");
-        chebyWfcBlockSize  = prm.get_integer("CHEBY WFC BLOCK SIZE");
+        numCoreWfcForMixedPrecRR =
+          prm.get_integer("NUMBER OF CORE EIGEN STATES FOR MIXED PREC RR");
+        chebyshevOrder       = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+        useELPA              = prm.get_bool("USE ELPA");
+        approxOverlapMatrix  = prm.get_bool("USE APPROXIMATE OVERLAP MATRIX");
+        useReformulatedChFSI = prm.get_bool("USE RESIDUAL CHFSI");
+        orthogType           = prm.get("ORTHOGONALIZATION TYPE");
+        chebyshevTolerance   = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+        wfcBlockSize         = prm.get_integer("WFC BLOCK SIZE");
+        chebyWfcBlockSize    = prm.get_integer("CHEBY WFC BLOCK SIZE");
         subspaceRotDofsBlockSize =
           prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
-        scalapackParalProcs = prm.get_integer("SCALAPACKPROCS");
-        scalapackBlockSize  = prm.get_integer("SCALAPACK BLOCK SIZE");
-        useMixedPrecCGS_SR  = prm.get_bool("USE MIXED PREC CGS SR");
-        useMixedPrecCGS_O   = prm.get_bool("USE MIXED PREC CGS O");
-        useMixedPrecXTHXSpectrumSplit =
-          prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
+        scalapackParalProcs       = prm.get_integer("SCALAPACKPROCS");
+        scalapackBlockSize        = prm.get_integer("SCALAPACK BLOCK SIZE");
+        useMixedPrecCGS_SR        = prm.get_bool("USE MIXED PREC CGS SR");
+        useMixedPrecXtOX          = prm.get_bool("USE MIXED PREC XTOX");
+        useMixedPrecXtHX          = prm.get_bool("USE MIXED PREC XTHX");
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
-        useMixedPrecCommunOnlyXTHXCGSO =
-          prm.get_bool("USE MIXED PREC COMMUN ONLY XTX XTHX");
+        useMixedPrecCommunOnlyXtHXXtOX =
+          prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
         useSinglePrecCommunCheby = prm.get_bool("USE SINGLE PREC COMMUN CHEBY");
         useSinglePrecCheby       = prm.get_bool("USE SINGLE PREC CHEBY");
         tensorOpType             = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
@@ -1928,16 +1949,10 @@ namespace dftfe
 
     if (verbosity >= 1 &&
         dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
-      if (constraintMagnetization)
+      if (pureState)
         std::cout
-          << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input"
+          << " WARNING: PURE STATE mode is ON. Integer occupations will be used no matter what temperature is provided at input"
           << std::endl;
-
-    if (spinPolarized == 1 && mixingMethod == "LOW_RANK_DIELECM_PRECOND")
-      AssertThrow(
-        !constraintMagnetization,
-        dealii::ExcMessage(
-          "DFT-FE Error: CONSTRAINT MAGNETIZATION for LRD Preconditioner is not yet supported."));
 
     AssertThrow(
       natoms != 0,
@@ -2085,9 +2100,9 @@ namespace dftfe
 
     if (algoType == "FAST")
       {
-        useMixedPrecCGS_O                   = true;
+        useMixedPrecXtOX                    = true;
+        useMixedPrecXtHX                    = true;
         useMixedPrecCGS_SR                  = true;
-        useMixedPrecXTHXSpectrumSplit       = true;
         useSinglePrecCommunCheby            = true;
         reuseLanczosUpperBoundFromFirstCall = true;
       }
@@ -2127,7 +2142,7 @@ namespace dftfe
     if (verbosity >= 5)
       computeEnergyEverySCF = true;
 
-    if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-12)
+    if (std::fabs(chebyshevTolerance - 0.0) < 1.0e-20)
       {
         if (restrictToOnePass)
           chebyshevTolerance = 1.0e+4;
@@ -2161,11 +2176,7 @@ namespace dftfe
         spinMixingEnhancementFactor = 1.0;
       }
 
-    if (numCoreWfcRR == 0)
-      spectrumSplitStartingScfIter = 10000;
 
-    if (numCoreWfcRR != 0)
-      useSinglePrecCheby = false;
 
     // checking if the XC type is compatible with
     // overlap compute communication cheby
@@ -2176,6 +2187,13 @@ namespace dftfe
     if (isHubbard || !isLocalXC)
       {
         overlapComputeCommunCheby = false;
+        if (verbosity >= 1 &&
+            dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
+          {
+            std::cout
+              << "DFT-FE Warning: Hubbard cannot be used with OVERLAP COMPUTE COMMUN CHEBY = true. Setting OVERLAP COMPUTE COMMUN CHEBY to false"
+              << std::endl;
+          }
       }
   }
 

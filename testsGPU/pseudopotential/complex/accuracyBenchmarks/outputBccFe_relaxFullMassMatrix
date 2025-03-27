@@ -1,0 +1,168 @@
+number of atoms: 2
+number of atoms types: 1
+Total number of k-points 8
+Found -620610624 GPUs
+MPI rank 0 uses GPU #0
+Found -620610624 GPUs
+MPI rank 0 uses GPU #0
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 5.368001262539999985e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 5.368001262539999985e+00
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  5.000000000000000000e-01 5.000000000000000000e-01 5.000000000000000000e-01
+-----------------------------------------------------------------------------------------
+Number Image Charges  2107
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 5
+FE interpolating polynomial order for electrostatics solve: 5
+FE interpolating polynomial order for nodal electron density computation: 7
+number of elements: 216
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 29791
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+=============================================================================================================================
+number of electrons: 3.200000000000000000e+01
+number of eigen values: 36
+=============================================================================================================================
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 36 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:        -253.17183463
+Absolute magnetization: 7.250
+Net magnetization     : 7.250
+
+Absolute value of cell stress (Hartree/Bohr^3)
+------------------------------------------------------------------------
+0.000856  0.000000  0.000000
+0.000000  0.000856  0.000000
+0.000000  0.000000  0.000856
+------------------------------------------------------------------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 5.372598 -0.000000 -0.000000
+v2 : -0.000000 5.372598 -0.000000
+v3 : -0.000000 -0.000000 5.372598
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000 0.000000 0.000000
+AtomId 1:  0.500000 0.500000 0.500000
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 5
+FE interpolating polynomial order for electrostatics solve: 5
+FE interpolating polynomial order for nodal electron density computation: 7
+number of elements: 216
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 29791
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 18 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:        -253.17214788
+Absolute magnetization: 7.250
+Net magnetization     : 7.250
+
+Absolute value of cell stress (Hartree/Bohr^3)
+------------------------------------------------------------------------
+0.000828  0.000000  0.000000
+0.000000  0.000828  0.000000
+0.000000  0.000000  0.000828
+------------------------------------------------------------------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 5.514870 -0.000000 0.000000
+v2 : -0.000000 5.514870 -0.000000
+v3 : -0.000000 -0.000000 5.514870
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000 0.000000 0.000000
+AtomId 1:  0.500000 0.500000 0.500000
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 5
+FE interpolating polynomial order for electrostatics solve: 5
+FE interpolating polynomial order for nodal electron density computation: 7
+number of elements: 216
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 29791
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 28 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:        -253.18712402
+Absolute magnetization: 7.250
+Net magnetization     : 7.250
+
+Absolute value of cell stress (Hartree/Bohr^3)
+------------------------------------------------------------------------
+0.000086  0.000000  0.000000
+0.000000  0.000086  0.000000
+0.000000  0.000000  0.000086
+------------------------------------------------------------------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 5.532231 -0.000000 0.000000
+v2 : -0.000000 5.532231 -0.000000
+v3 : -0.000000 0.000000 5.532231
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000 0.000000 0.000000
+AtomId 1:  0.500000 0.500000 0.500000
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 5
+FE interpolating polynomial order for electrostatics solve: 5
+FE interpolating polynomial order for nodal electron density computation: 7
+number of elements: 216
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 29791
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 23 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:        -253.18676381
+Absolute magnetization: 7.250
+Net magnetization     : 7.250
+
+Absolute value of cell stress (Hartree/Bohr^3)
+------------------------------------------------------------------------
+0.000011  0.000000  0.000000
+0.000000  0.000011  0.000000
+0.000000  0.000000  0.000011
+------------------------------------------------------------------------

@@ -2,7 +2,7 @@ number of atoms: 2
 number of atoms types: 1
 Z:7
 =============================================================================================================================
-number of electrons: 10
+number of electrons: 1.000000000000000000e+01
 number of eigen values: 8
 =============================================================================================================================
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
@@ -36,4 +36,4 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 Energy computations (Hartree) 
 -------------------
              Total energy:         -19.66693754
-kinetic energy: 12.19500374
+kinetic energy: 12.19500378

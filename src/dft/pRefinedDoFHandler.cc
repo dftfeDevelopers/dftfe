@@ -415,7 +415,8 @@ namespace dftfe
               dftfe::basis::update_values | dftfe::basis::update_jxw;
 
             dftfe::basis::UpdateFlags updateFlagsLPSP =
-              dftfe::basis::update_values | dftfe::basis::update_jxw;
+              dftfe::basis::update_values | dftfe::basis::update_jxw |
+              dftfe::basis::update_quadpoints;
 
             dftfe::basis::UpdateFlags updateFlagsphiTotAX =
               d_dftParamsPtr->useDevice && FEOrder != FEOrderElectro ?
@@ -432,17 +433,6 @@ namespace dftfe
               updateFlagsLPSP,
               dftfe::basis::update_quadpoints,
               updateFlagsphiTotAX};
-            d_basisOperationsPtrElectroHost->init(d_matrixFreeDataPRefined,
-                                                  d_constraintsVectorElectro,
-                                                  d_baseDofHandlerIndexElectro,
-                                                  quadratureIndices,
-                                                  updateFlags);
-          }
-        else
-          {
-            d_basisOperationsPtrElectroHost->clear();
-            std::vector<unsigned int>              quadratureIndices;
-            std::vector<dftfe::basis::UpdateFlags> updateFlags;
             d_basisOperationsPtrElectroHost->init(d_matrixFreeDataPRefined,
                                                   d_constraintsVectorElectro,
                                                   d_baseDofHandlerIndexElectro,

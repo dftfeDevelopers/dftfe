@@ -28,10 +28,10 @@ namespace dftfe
       ValueType2 *                  overlapMatrixBlockSP,
       dftfe::utils::deviceStream_t &streamDataMove);
 
-    template <typename ValueType>
+    template <typename ValueType1, typename ValueType2>
     void
-    computeDiagQTimesX(const ValueType *  diagValues,
-                       ValueType *        X,
+    computeDiagQTimesX(const ValueType1 * diagValues,
+                       ValueType2 *       X,
                        const unsigned int N,
                        const unsigned int M);
 
@@ -45,6 +45,17 @@ namespace dftfe
                           const ValueType *  X,
                           const ValueType *  Y,
                           double *           r);
+
+    template <typename ValueType>
+    void
+    computeGeneralisedResidualDevice(const unsigned int numVectors,
+                                     const unsigned int numDofs,
+                                     const unsigned int N,
+                                     const unsigned int startingVecId,
+                                     const ValueType *  X,
+                                     double *           residualSqDevice);
+
+
     template <typename ValueType>
     void
     setZero(const unsigned int BVec,

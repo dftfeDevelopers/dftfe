@@ -97,9 +97,7 @@ class Plotters:
         '''
 
         with open(filesPath+"fermiEnergy.out") as f:
-            for line in f:
-                if (len(line) != 0):
-                    self.eFermi = float(line.strip()) # in Ha
+            self.eFermi = float(f.readline().strip()) # in Ha
 
         if self.isPeriodic:
             self.ionPosVecType = "Direct"

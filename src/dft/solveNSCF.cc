@@ -430,7 +430,6 @@ namespace dftfe
                         true,
                         0,
                         false,
-                        false,
                         true);
 #endif
                     if constexpr (dftfe::utils::MemorySpace::HOST ==
@@ -443,7 +442,6 @@ namespace dftfe
                         d_subspaceIterationSolver,
                         residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
-                        false,
                         false,
                         true);
                   }
@@ -465,9 +463,20 @@ namespace dftfe
         if (!(d_dftParamsPtr->writeBandsFile))
           {
             if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
             else
-              compute_fermienergy(eigenValues, numElectrons);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
           }
 
         unsigned int count = 1;
@@ -566,7 +575,6 @@ namespace dftfe
                         true,
                         0,
                         false,
-                        false,
                         true);
 #endif
                     if constexpr (dftfe::utils::MemorySpace::HOST ==
@@ -579,7 +587,6 @@ namespace dftfe
                         d_subspaceIterationSolver,
                         residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
-                        false,
                         false,
                         true);
                   }
@@ -596,9 +603,20 @@ namespace dftfe
             if (!(d_dftParamsPtr->writeBandsFile))
               {
                 if (d_dftParamsPtr->constraintMagnetization)
-                  compute_fermienergy_constraintMagnetization(eigenValues);
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_constraintMagnetization_purestate(
+                        eigenValues);
+                    else
+                      compute_fermienergy_constraintMagnetization(eigenValues);
+                  }
                 else
-                  compute_fermienergy(eigenValues, numElectrons);
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_purestate(eigenValues, numElectrons);
+                    else
+                      compute_fermienergy(eigenValues, numElectrons);
+                  }
               }
 
             if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
@@ -707,7 +725,6 @@ namespace dftfe
                     true,
                     0,
                     false,
-                    false,
                     true);
 #endif
                 if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
@@ -720,7 +737,6 @@ namespace dftfe
                     residualNormWaveFunctionsAllkPoints[kPoint],
                     true,
                     false,
-                    false,
                     true);
               }
           }
@@ -732,9 +748,20 @@ namespace dftfe
         if (!(d_dftParamsPtr->writeBandsFile))
           {
             if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
             else
-              compute_fermienergy(eigenValues, numElectrons);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
           }
 
         unsigned int count = 1;
@@ -810,7 +837,6 @@ namespace dftfe
                     residualNormWaveFunctionsAllkPoints[kPoint],
                     true,
                     0,
-                    false,
                     true,
                     true);
 
@@ -824,7 +850,6 @@ namespace dftfe
                     d_subspaceIterationSolver,
                     residualNormWaveFunctionsAllkPoints[kPoint],
                     true,
-                    false,
                     true,
                     true);
               }
@@ -833,9 +858,20 @@ namespace dftfe
             if (!(d_dftParamsPtr->writeBandsFile))
               {
                 if (d_dftParamsPtr->constraintMagnetization)
-                  compute_fermienergy_constraintMagnetization(eigenValues);
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_constraintMagnetization_purestate(
+                        eigenValues);
+                    else
+                      compute_fermienergy_constraintMagnetization(eigenValues);
+                  }
                 else
-                  compute_fermienergy(eigenValues, numElectrons);
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_purestate(eigenValues, numElectrons);
+                    else
+                      compute_fermienergy(eigenValues, numElectrons);
+                  }
               }
             //
             if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
@@ -887,7 +923,7 @@ namespace dftfe
       }
     computing_timer.enter_subsection("compute rho");
 
-    compute_rhoOut(false, true);
+    compute_rhoOut(true);
 
     computing_timer.leave_subsection("compute rho");
 
@@ -1039,8 +1075,6 @@ namespace dftfe
                                                  d_domainBoundingVectors);
 
 
-    computeFractionalOccupancies();
-
     d_excManagerPtr->getExcSSDFunctionalObj()
       ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
                                                  d_kPointWeights);
@@ -1057,6 +1091,7 @@ namespace dftfe
       d_smearedChargeQuadratureIdElectro,
       d_lpspQuadratureIdElectro,
       eigenValues,
+      d_partialOccupancies,
       d_kPointWeights,
       fermiEnergy,
       d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
@@ -1094,6 +1129,7 @@ namespace dftfe
 
     d_entropicEnergy =
       energyCalc.computeEntropicEnergy(eigenValues,
+                                       d_partialOccupancies,
                                        d_kPointWeights,
                                        fermiEnergy,
                                        fermiEnergyUp,
