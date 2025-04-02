@@ -26,6 +26,7 @@
 #include "molecularDynamicsClass.h"
 #include "nudgedElasticBandClass.h"
 #include "geometryOptimizationClass.h"
+#include <git_info.h>
 
 #include <dftUtils.h>
 
@@ -160,6 +161,33 @@ main(int argc, char *argv[])
       std::cout
         << "=========================================================================================================="
         << std::endl;
+      std::cout << "DFT-FE branch: " << GIT_BRANCH << " commit: " << GIT_COMMIT
+                << std::endl;
+      std::cout << "compiled ";
+#  ifdef DFTFE_WITH_DEVICE
+      std::cout << "with GPU support, ";
+#    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+      std::cout << "using CUDA, ";
+#    elif DFTFE_WITH_DEVICE_LANG_HIP
+      std::cout << "using HIP, ";
+#    endif
+#    if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+      std::cout << "with device-aware MPI support, ";
+#    endif
+#    if defined(DFTFE_WITH_CUDA_NCCL)
+      std::cout << "with NCCL support, ";
+#    endif
+#    if defined(DFTFE_WITH_HIP_RCCL)
+      std::cout << "with RCCL support, ";
+#    endif
+#  else
+      std::cout << "without GPU support, ";
+#  endif
+#  ifdef DFTFE_WITH_HIGHERQUAD_PSP
+      std::cout << "and with HIGHERQUAD_PSP" << std::endl;
+#  else
+      std::cout << "and without HIGHERQUAD_PSP" << std::endl;
+#  endif
 
       runParams.print_parameters();
     }

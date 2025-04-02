@@ -42,6 +42,29 @@ set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+# Retrieve the current Git commit hash
+execute_process(
+    COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Retrieve the current Git branch name
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Configure the header file with the retrieved Git information
+configure_file(
+    ${CMAKE_SOURCE_DIR}/include/git_info.h.in
+    ${CMAKE_SOURCE_DIR}/include/git_info.h
+    @ONLY
+)
+
 
 if(ENABLE_MPI)
   find_package(MPI REQUIRED)

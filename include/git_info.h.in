@@ -1,0 +1,3 @@
+// git_info.h.in
+#define GIT_COMMIT "@GIT_COMMIT@"
+#define GIT_BRANCH "@GIT_BRANCH@"
