@@ -3248,262 +3248,143 @@ namespace dftfe
                                   }
 
 #ifdef DFTFE_WITH_DEVICE
-                            if constexpr (dftfe::utils::MemorySpace::DEVICE ==
-                                          memorySpace)
-                              kohnShamEigenSpaceCompute(
-                                s,
-                                kPoint,
-                                kohnShamDFTEigenOperator,
-                                *d_elpaScala,
-                                d_subspaceIterationSolverDevice,
-                                residualNormWaveFunctionsAllkPointsSpins
-                                  [s][kPoint],
-                                true,
-                                0,
-                                true,
-                                scfIter == 0);
+                                if constexpr (dftfe::utils::MemorySpace::
+                                                DEVICE == memorySpace)
+                                  kohnShamEigenSpaceCompute(
+                                    s,
+                                    kPoint,
+                                    kohnShamDFTEigenOperator,
+                                    *d_elpaScala,
+                                    d_subspaceIterationSolverDevice,
+                                    residualNormWaveFunctionsAllkPointsSpins
+                                      [s][kPoint],
+                                    true,
+                                    0,
+                                    true,
+                                    scfIter == 0);
 #endif
-                            if constexpr (dftfe::utils::MemorySpace::HOST ==
-                                          memorySpace)
-                              kohnShamEigenSpaceCompute(
-                                s,
-                                kPoint,
-                                kohnShamDFTEigenOperator,
-                                *d_elpaScala,
-                                d_subspaceIterationSolver,
-                                residualNormWaveFunctionsAllkPointsSpins
-                                  [s][kPoint],
-                                true,
-                                true,
-                                scfIter == 0);
+                                if constexpr (dftfe::utils::MemorySpace::HOST ==
+                                              memorySpace)
+                                  kohnShamEigenSpaceCompute(
+                                    s,
+                                    kPoint,
+                                    kohnShamDFTEigenOperator,
+                                    *d_elpaScala,
+                                    d_subspaceIterationSolver,
+                                    residualNormWaveFunctionsAllkPointsSpins
+                                      [s][kPoint],
+                                    true,
+                                    true,
+                                    scfIter == 0);
+                              }
                           }
-                      }
 
-                    for (unsigned int s = 0; s < 2; ++s)
-                      for (unsigned int kPoint = 0;
-                           kPoint < d_kPointWeights.size();
-                           ++kPoint)
-                        {
-                          for (unsigned int i = 0; i < d_numEigenValues; ++i)
-                            eigenValuesSpins[s][kPoint][i] =
-                              eigenValues[kPoint][d_numEigenValues * s + i];
-                        }
-                    //
-                    if (d_dftParamsPtr->constraintMagnetization)
-                      {
-                        if (d_dftParamsPtr->pureState)
-                          compute_fermienergy_constraintMagnetization_purestate(
-                            eigenValues);
+                        for (unsigned int s = 0; s < 2; ++s)
+                          for (unsigned int kPoint = 0;
+                               kPoint < d_kPointWeights.size();
+                               ++kPoint)
+                            {
+                              for (unsigned int i = 0; i < d_numEigenValues;
+                                   ++i)
+                                eigenValuesSpins[s][kPoint][i] =
+                                  eigenValues[kPoint][d_numEigenValues * s + i];
+                            }
+                        //
+                        if (d_dftParamsPtr->constraintMagnetization)
+                          {
+                            if (d_dftParamsPtr->pureState)
+                              compute_fermienergy_constraintMagnetization_purestate(
+                                eigenValues);
+                            else
+                              compute_fermienergy_constraintMagnetization(
+                                eigenValues);
+                          }
                         else
-                          compute_fermienergy_constraintMagnetization(
-                            eigenValues);
-                      }
-                    else
-                      {
-                        if (d_dftParamsPtr->pureState)
-                          compute_fermienergy_purestate(eigenValues,
-                                                        numElectrons);
-                        else
-                          compute_fermienergy(eigenValues, numElectrons);
-                      }
+                          {
+                            if (d_dftParamsPtr->pureState)
+                              compute_fermienergy_purestate(eigenValues,
+                                                            numElectrons);
+                            else
+                              compute_fermienergy(eigenValues, numElectrons);
+                          }
 
-                    //
-                    maxRes =
-                      std::max(computeMaximumHighestOccupiedStateResidualNorm(
-                                 residualNormWaveFunctionsAllkPointsSpins[0],
-                                 eigenValuesSpins[0],
-                                 fermiEnergy,
-                                 maxResidualsAllkPoints[0]),
-                               computeMaximumHighestOccupiedStateResidualNorm(
-                                 residualNormWaveFunctionsAllkPointsSpins[1],
-                                 eigenValuesSpins[1],
-                                 fermiEnergy,
-                                 maxResidualsAllkPoints[1]));
-                    if (d_dftParamsPtr->verbosity >= 2)
-                      pcout
-                        << "Maximum residual norm among all states with occupation number greater than 1e-3: "
-                        << maxRes << std::endl;
-                    count++;
+                        //
+                        maxRes = std::max(
+                          computeMaximumHighestOccupiedStateResidualNorm(
+                            residualNormWaveFunctionsAllkPointsSpins[0],
+                            eigenValuesSpins[0],
+                            fermiEnergy,
+                            maxResidualsAllkPoints[0]),
+                          computeMaximumHighestOccupiedStateResidualNorm(
+                            residualNormWaveFunctionsAllkPointsSpins[1],
+                            eigenValuesSpins[1],
+                            fermiEnergy,
+                            maxResidualsAllkPoints[1]));
+                        if (d_dftParamsPtr->verbosity >= 2)
+                          pcout
+                            << "Maximum residual norm among all states with occupation number greater than 1e-3: "
+                            << maxRes << std::endl;
+                        count++;
+                      }
                   }
-              }
 
-            if (d_dftParamsPtr->verbosity >= 1)
-              {
-                pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
-              }
-
-            numberChebyshevSolvePasses = count;
-          }
-        else
-          {
-            std::vector<std::vector<double>>
-              residualNormWaveFunctionsAllkPoints;
-            residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
-            for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-                 ++kPoint)
-              residualNormWaveFunctionsAllkPoints[kPoint].resize(
-                d_numEigenValues);
-
-
-            updateAuxDensityXCMatrix(d_densityInQuadValues,
-                                     d_gradDensityInQuadValues,
-                                     d_rhoCore,
-                                     d_gradRhoCore,
-                                     getEigenVectors(),
-                                     eigenValues,
-                                     fermiEnergy,
-                                     fermiEnergyUp,
-                                     fermiEnergyDown,
-                                     d_auxDensityMatrixXCInPtr);
-
-            computing_timer.enter_subsection("VEff Computation");
-            kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
-                                                 d_phiInQuadValues);
-            computing_timer.leave_subsection("VEff Computation");
-
-
-            for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-                 ++kPoint)
-              {
-                kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
-
-
-                computing_timer.enter_subsection(
-                  "Hamiltonian Matrix Computation");
-                kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
-                computing_timer.leave_subsection(
-                  "Hamiltonian Matrix Computation");
-
-
-                for (unsigned int j = 0; j < 1; ++j)
+                if (d_dftParamsPtr->verbosity >= 1)
                   {
-                    if (d_dftParamsPtr->verbosity >= 2)
-                      {
-                        pcout << "Beginning Chebyshev filter pass " << j + 1
-                              << std::endl;
-                      }
-
-
-#ifdef DFTFE_WITH_DEVICE
-                    if constexpr (dftfe::utils::MemorySpace::DEVICE ==
-                                  memorySpace)
-                      kohnShamEigenSpaceCompute(
-                        0,
-                        kPoint,
-                        kohnShamDFTEigenOperator,
-                        *d_elpaScala,
-                        d_subspaceIterationSolverDevice,
-                        residualNormWaveFunctionsAllkPoints[kPoint],
-                        (scfIter == 0 ||
-                         d_dftParamsPtr
-                           ->allowMultipleFilteringPassesAfterFirstScf) ?
-                          true :
-                          false,
-                        0,
-                        scfConverged ? false : true,
-                        scfIter == 0);
-#endif
-                    if constexpr (dftfe::utils::MemorySpace::HOST ==
-                                  memorySpace)
-                      kohnShamEigenSpaceCompute(
-                        0,
-                        kPoint,
-                        kohnShamDFTEigenOperator,
-                        *d_elpaScala,
-                        d_subspaceIterationSolver,
-                        residualNormWaveFunctionsAllkPoints[kPoint],
-                        (scfIter == 0 ||
-                         d_dftParamsPtr
-                           ->allowMultipleFilteringPassesAfterFirstScf) ?
-                          true :
-                          false,
-                        scfConverged ? false : true,
-                        scfIter == 0);
+                    pcout << "Fermi Energy computed: " << fermiEnergy
+                          << std::endl;
                   }
-              }
 
-
-            //
-            // fermi energy
-            //
-            if (d_dftParamsPtr->constraintMagnetization)
-              {
-                if (d_dftParamsPtr->pureState)
-                  compute_fermienergy_constraintMagnetization_purestate(
-                    eigenValues);
-                else
-                  compute_fermienergy_constraintMagnetization(eigenValues);
+                numberChebyshevSolvePasses = count;
               }
             else
               {
-                if (d_dftParamsPtr->pureState)
-                  compute_fermienergy_purestate(eigenValues, numElectrons);
-                else
-                  compute_fermienergy(eigenValues, numElectrons);
-              }
+                std::vector<std::vector<double>>
+                  residualNormWaveFunctionsAllkPoints;
+                residualNormWaveFunctionsAllkPoints.resize(
+                  d_kPointWeights.size());
+                for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
+                     ++kPoint)
+                  residualNormWaveFunctionsAllkPoints[kPoint].resize(
+                    d_numEigenValues);
 
-            unsigned int count = 1;
 
-            if (!scfConverged &&
-                (scfIter == 0 ||
-                 d_dftParamsPtr->allowMultipleFilteringPassesAfterFirstScf))
-              {
-                //
-                // maximum of the residual norm of the state closest to and
-                // below the Fermi level among all k points
-                //
-                std::vector<double> maxResidualsAllkPoints;
-                double maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-                  residualNormWaveFunctionsAllkPoints,
-                  eigenValues,
-                  fermiEnergy,
-                  maxResidualsAllkPoints);
-                if (d_dftParamsPtr->verbosity >= 2)
-                  pcout
-                    << "Maximum residual norm among all states with occupation number greater than 1e-3: "
-                    << maxRes << std::endl;
+                updateAuxDensityXCMatrix(d_densityInQuadValues,
+                                         d_gradDensityInQuadValues,
+                                         d_rhoCore,
+                                         d_gradRhoCore,
+                                         getEigenVectors(),
+                                         eigenValues,
+                                         fermiEnergy,
+                                         fermiEnergyUp,
+                                         fermiEnergyDown,
+                                         d_auxDensityMatrixXCInPtr);
 
-                // if the residual norm is greater than
-                // adaptiveChebysevFilterPassesTol (a heuristic value)
-                // do more passes of chebysev filter till the check passes.
-                // This improves the scf convergence performance.
+                computing_timer.enter_subsection("VEff Computation");
+                kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
+                                                     d_phiInQuadValues);
+                computing_timer.leave_subsection("VEff Computation");
 
-                const double filterPassTol =
-                  (scfIter == 0 && isRestartGroundStateCalcFromChk) ?
-                    1.0e-8 :
-                    ((scfIter == 0 &&
-                      adaptiveChebysevFilterPassesTol > firstScfChebyTol) ?
-                       firstScfChebyTol :
-                       adaptiveChebysevFilterPassesTol);
-                while (maxRes > filterPassTol && count < 100)
+
+                for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
+                     ++kPoint)
                   {
-                    for (unsigned int kPoint = 0;
-                         kPoint < d_kPointWeights.size();
-                         ++kPoint)
-                      {
-                        if (d_dftParamsPtr->verbosity >= 4)
-                          pcout
-                            << "Maximum residual norm of the state closest to and below Fermi level for kpoint "
-                            << kPoint << ":" << maxResidualsAllkPoints[kPoint]
-                            << std::endl;
-                        if (maxResidualsAllkPoints[kPoint] > filterPassTol)
-                          {
-                            if (d_dftParamsPtr->verbosity >= 2)
-                              pcout << "Beginning Chebyshev filter pass "
-                                    << 1 + count << std::endl;
+                    kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
 
-                            kohnShamDFTEigenOperator.reinitkPointSpinIndex(
-                              kPoint, 0);
-                            if (d_dftParamsPtr->memOptMode &&
-                                d_kPointWeights.size() > 0)
-                              {
-                                computing_timer.enter_subsection(
-                                  "Hamiltonian Matrix Computation");
-                                kohnShamDFTEigenOperator
-                                  .computeCellHamiltonianMatrix();
-                                computing_timer.leave_subsection(
-                                  "Hamiltonian Matrix Computation");
-                              }
+
+                    computing_timer.enter_subsection(
+                      "Hamiltonian Matrix Computation");
+                    kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
+                    computing_timer.leave_subsection(
+                      "Hamiltonian Matrix Computation");
+
+
+                    for (unsigned int j = 0; j < 1; ++j)
+                      {
+                        if (d_dftParamsPtr->verbosity >= 2)
+                          {
+                            pcout << "Beginning Chebyshev filter pass " << j + 1
+                                  << std::endl;
+                          }
 
 
 #ifdef DFTFE_WITH_DEVICE
@@ -3516,11 +3397,14 @@ namespace dftfe
                             *d_elpaScala,
                             d_subspaceIterationSolverDevice,
                             residualNormWaveFunctionsAllkPoints[kPoint],
-                            true,
+                            (scfIter == 0 ||
+                             d_dftParamsPtr
+                               ->allowMultipleFilteringPassesAfterFirstScf) ?
+                              true :
+                              false,
                             0,
-                            true,
+                            scfConverged ? false : true,
                             scfIter == 0);
-
 #endif
                         if constexpr (dftfe::utils::MemorySpace::HOST ==
                                       memorySpace)
@@ -3531,195 +3415,689 @@ namespace dftfe
                             *d_elpaScala,
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPoints[kPoint],
-                            true,
-                            true,
+                            (scfIter == 0 ||
+                             d_dftParamsPtr
+                               ->allowMultipleFilteringPassesAfterFirstScf) ?
+                              true :
+                              false,
+                            scfConverged ? false : true,
                             scfIter == 0);
                       }
+                  }
 
-                    //
-                    if (d_dftParamsPtr->constraintMagnetization)
-                      {
-                        if (d_dftParamsPtr->pureState)
-                          compute_fermienergy_constraintMagnetization_purestate(
-                            eigenValues);
-                        else
-                          compute_fermienergy_constraintMagnetization(
-                            eigenValues);
-                      }
+
+                //
+                // fermi energy
+                //
+                if (d_dftParamsPtr->constraintMagnetization)
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_constraintMagnetization_purestate(
+                        eigenValues);
                     else
-                      {
-                        if (d_dftParamsPtr->pureState)
-                          compute_fermienergy_purestate(eigenValues,
-                                                        numElectrons);
-                        else
-                          compute_fermienergy(eigenValues, numElectrons);
-                      }
+                      compute_fermienergy_constraintMagnetization(eigenValues);
+                  }
+                else
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_purestate(eigenValues, numElectrons);
+                    else
+                      compute_fermienergy(eigenValues, numElectrons);
+                  }
 
+                unsigned int count = 1;
+
+                if (!scfConverged &&
+                    (scfIter == 0 ||
+                     d_dftParamsPtr->allowMultipleFilteringPassesAfterFirstScf))
+                  {
                     //
-                    maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-                      residualNormWaveFunctionsAllkPoints,
-                      eigenValues,
-                      fermiEnergy,
-                      maxResidualsAllkPoints);
+                    // maximum of the residual norm of the state closest to and
+                    // below the Fermi level among all k points
+                    //
+                    std::vector<double> maxResidualsAllkPoints;
+                    double              maxRes =
+                      computeMaximumHighestOccupiedStateResidualNorm(
+                        residualNormWaveFunctionsAllkPoints,
+                        eigenValues,
+                        fermiEnergy,
+                        maxResidualsAllkPoints);
                     if (d_dftParamsPtr->verbosity >= 2)
                       pcout
                         << "Maximum residual norm among all states with occupation number greater than 1e-3: "
                         << maxRes << std::endl;
 
-                    count++;
+                    // if the residual norm is greater than
+                    // adaptiveChebysevFilterPassesTol (a heuristic value)
+                    // do more passes of chebysev filter till the check passes.
+                    // This improves the scf convergence performance.
+
+                    const double filterPassTol =
+                      (scfIter == 0 && isRestartGroundStateCalcFromChk) ?
+                        1.0e-8 :
+                        ((scfIter == 0 &&
+                          adaptiveChebysevFilterPassesTol > firstScfChebyTol) ?
+                           firstScfChebyTol :
+                           adaptiveChebysevFilterPassesTol);
+                    while (maxRes > filterPassTol && count < 100)
+                      {
+                        for (unsigned int kPoint = 0;
+                             kPoint < d_kPointWeights.size();
+                             ++kPoint)
+                          {
+                            if (d_dftParamsPtr->verbosity >= 4)
+                              pcout
+                                << "Maximum residual norm of the state closest to and below Fermi level for kpoint "
+                                << kPoint << ":"
+                                << maxResidualsAllkPoints[kPoint] << std::endl;
+                            if (maxResidualsAllkPoints[kPoint] > filterPassTol)
+                              {
+                                if (d_dftParamsPtr->verbosity >= 2)
+                                  pcout << "Beginning Chebyshev filter pass "
+                                        << 1 + count << std::endl;
+
+                                kohnShamDFTEigenOperator.reinitkPointSpinIndex(
+                                  kPoint, 0);
+                                if (d_dftParamsPtr->memOptMode &&
+                                    d_kPointWeights.size() > 0)
+                                  {
+                                    computing_timer.enter_subsection(
+                                      "Hamiltonian Matrix Computation");
+                                    kohnShamDFTEigenOperator
+                                      .computeCellHamiltonianMatrix();
+                                    computing_timer.leave_subsection(
+                                      "Hamiltonian Matrix Computation");
+                                  }
+
+
+#ifdef DFTFE_WITH_DEVICE
+                                if constexpr (dftfe::utils::MemorySpace::
+                                                DEVICE == memorySpace)
+                                  kohnShamEigenSpaceCompute(
+                                    0,
+                                    kPoint,
+                                    kohnShamDFTEigenOperator,
+                                    *d_elpaScala,
+                                    d_subspaceIterationSolverDevice,
+                                    residualNormWaveFunctionsAllkPoints[kPoint],
+                                    true,
+                                    0,
+                                    true,
+                                    scfIter == 0);
+
+#endif
+                                if constexpr (dftfe::utils::MemorySpace::HOST ==
+                                              memorySpace)
+                                  kohnShamEigenSpaceCompute(
+                                    0,
+                                    kPoint,
+                                    kohnShamDFTEigenOperator,
+                                    *d_elpaScala,
+                                    d_subspaceIterationSolver,
+                                    residualNormWaveFunctionsAllkPoints[kPoint],
+                                    true,
+                                    true,
+                                    scfIter == 0);
+                              }
+
+                            //
+                            if (d_dftParamsPtr->constraintMagnetization)
+                              {
+                                if (d_dftParamsPtr->pureState)
+                                  compute_fermienergy_constraintMagnetization_purestate(
+                                    eigenValues);
+                                else
+                                  compute_fermienergy_constraintMagnetization(
+                                    eigenValues);
+                              }
+                            else
+                              {
+                                if (d_dftParamsPtr->pureState)
+                                  compute_fermienergy_purestate(eigenValues,
+                                                                numElectrons);
+                                else
+                                  compute_fermienergy(eigenValues,
+                                                      numElectrons);
+                              }
+
+                            //
+                            maxRes =
+                              computeMaximumHighestOccupiedStateResidualNorm(
+                                residualNormWaveFunctionsAllkPoints,
+                                eigenValues,
+                                fermiEnergy,
+                                maxResidualsAllkPoints);
+                            if (d_dftParamsPtr->verbosity >= 2)
+                              pcout
+                                << "Maximum residual norm among all states with occupation number greater than 1e-3: "
+                                << maxRes << std::endl;
+
+                            count++;
+                          }
+                      }
+
+                    numberChebyshevSolvePasses = count;
+
+                    if (d_dftParamsPtr->verbosity >= 1)
+                      {
+                        pcout << "Fermi Energy computed: " << fermiEnergy
+                              << std::endl;
+                      }
+                  }
+                computing_timer.enter_subsection("compute rho");
+                if (d_dftParamsPtr->useSymm)
+                  {
+#ifdef USE_COMPLEX
+                    symmetryPtr->computeLocalrhoOut();
+                    symmetryPtr->computeAndSymmetrize_rhoOut();
+
+                    l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                            d_constraintsRhoNodal,
+                                            d_densityDofHandlerIndexElectro,
+                                            d_densityQuadratureIdElectro,
+                                            d_densityOutQuadValues[0],
+                                            d_densityOutNodalValues[0]);
+
+                    interpolateDensityNodalDataToQuadratureDataLpsp(
+                      d_basisOperationsPtrElectroHost,
+                      d_densityDofHandlerIndexElectro,
+                      d_lpspQuadratureIdElectro,
+                      d_densityOutNodalValues[0],
+                      d_densityTotalOutValuesLpspQuad,
+                      d_gradDensityTotalOutValuesLpspQuad,
+                      true);
+#endif
+                  }
+                else
+                  {
+                    compute_rhoOut(
+                      scfConverged ||
+                      (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
+                  }
+                computing_timer.leave_subsection("compute rho");
+
+                //
+                // compute integral rhoOut
+                //
+                const double integralRhoValue =
+                  totalCharge(d_dofHandlerPRefined, d_densityOutQuadValues[0]);
+
+                if (d_dftParamsPtr->verbosity >= 2)
+                  {
+                    pcout << std::endl
+                          << "number of electrons: " << integralRhoValue
+                          << std::endl;
+                  }
+                if (d_dftParamsPtr->verbosity > 0 &&
+                    d_dftParamsPtr->spinPolarized == 1)
+                  totalMagnetization(d_densityOutQuadValues[1]);
+
+                //
+                // phiTot with rhoOut
+                //
+                if (d_dftParamsPtr->computeEnergyEverySCF ||
+                    d_dftParamsPtr->useEnergyResidualTolerance)
+                  {
+                    if (d_dftParamsPtr->verbosity >= 2)
+                      pcout
+                        << std::endl
+                        << "Poisson solve for total electrostatic potential (rhoOut+b): ";
+
+                    computing_timer.enter_subsection("phiTot solve");
+
+                    if (d_dftParamsPtr->multipoleBoundaryConditions)
+                      {
+                        computing_timer.enter_subsection(
+                          "Update inhomogenous BC");
+                        computeMultipoleMoments(d_basisOperationsPtrElectroHost,
+                                                d_densityQuadratureIdElectro,
+                                                d_densityOutQuadValues[0],
+                                                &d_bQuadValuesAllAtoms);
+                        updatePRefinedConstraints();
+                        computing_timer.leave_subsection(
+                          "Update inhomogenous BC");
+                      }
+
+                    dftfe::utils::MemoryStorage<double,
+                                                dftfe::utils::MemorySpace::HOST>
+                      densityOutQuadValuesCopy = d_densityOutQuadValues[0];
+                    if (std::abs(d_dftParamsPtr->netCharge) > 1e-12 and
+                        (d_dftParamsPtr->periodicX ||
+                         d_dftParamsPtr->periodicY ||
+                         d_dftParamsPtr->periodicZ))
+                      {
+                        double *tempvec = densityOutQuadValuesCopy.data();
+                        for (unsigned int iquad = 0;
+                             iquad < densityOutQuadValuesCopy.size();
+                             iquad++)
+                          tempvec[iquad] +=
+                            -d_dftParamsPtr->netCharge / d_domainVolume;
+                      }
+
+                    if (d_dftParamsPtr->useDevice and
+                        d_dftParamsPtr->poissonGPU and
+                        d_dftParamsPtr->floatingNuclearCharges and
+                        not d_dftParamsPtr->pinnedNodeForPBC)
+                      {
+#ifdef DFTFE_WITH_DEVICE
+                        d_phiTotalSolverProblemDevice.reinit(
+                          d_basisOperationsPtrElectroHost,
+                          d_phiTotRhoOut,
+                          *d_constraintsVectorElectro
+                            [d_phiTotDofHandlerIndexElectro],
+                          d_phiTotDofHandlerIndexElectro,
+                          d_densityQuadratureIdElectro,
+                          d_phiTotAXQuadratureIdElectro,
+                          d_atomNodeIdToChargeMap,
+                          d_bQuadValuesAllAtoms,
+                          d_smearedChargeQuadratureIdElectro,
+                          densityOutQuadValuesCopy,
+                          d_BLASWrapperPtr,
+                          false,
+                          false,
+                          d_dftParamsPtr->smearedNuclearCharges,
+                          true,
+                          false,
+                          0,
+                          false,
+                          true,
+                          d_dftParamsPtr->multipoleBoundaryConditions);
+
+                        CGSolverDevice.solve(
+                          d_phiTotalSolverProblemDevice,
+                          d_dftParamsPtr->absLinearSolverTolerance,
+                          d_dftParamsPtr->maxLinearSolverIterations,
+                          d_dftParamsPtr->verbosity);
+#endif
+                      }
+                    else
+                      {
+                        d_phiTotalSolverProblem.reinit(
+                          d_basisOperationsPtrElectroHost,
+                          d_phiTotRhoOut,
+                          *d_constraintsVectorElectro
+                            [d_phiTotDofHandlerIndexElectro],
+                          d_phiTotDofHandlerIndexElectro,
+                          d_densityQuadratureIdElectro,
+                          d_phiTotAXQuadratureIdElectro,
+                          d_atomNodeIdToChargeMap,
+                          d_bQuadValuesAllAtoms,
+                          d_smearedChargeQuadratureIdElectro,
+                          densityOutQuadValuesCopy,
+                          false,
+                          false,
+                          d_dftParamsPtr->smearedNuclearCharges,
+                          true,
+                          false,
+                          0,
+                          false,
+                          true,
+                          d_dftParamsPtr->multipoleBoundaryConditions);
+
+                        CGSolver.solve(
+                          d_phiTotalSolverProblem,
+                          d_dftParamsPtr->absLinearSolverTolerance,
+                          d_dftParamsPtr->maxLinearSolverIterations,
+                          d_dftParamsPtr->verbosity);
+                      }
+
+                    interpolateElectroNodalDataToQuadratureDataGeneral(
+                      d_basisOperationsPtrElectroHost,
+                      d_phiTotDofHandlerIndexElectro,
+                      d_densityQuadratureIdElectro,
+                      d_phiTotRhoOut,
+                      d_phiOutQuadValues,
+                      dummy);
+                    computing_timer.leave_subsection("phiTot solve");
+                  }
+
+                updateAuxDensityXCMatrix(d_densityOutQuadValues,
+                                         d_gradDensityOutQuadValues,
+                                         d_rhoCore,
+                                         d_gradRhoCore,
+                                         getEigenVectors(),
+                                         eigenValues,
+                                         fermiEnergy,
+                                         fermiEnergyUp,
+                                         fermiEnergyDown,
+                                         d_auxDensityMatrixXCOutPtr);
+
+                if (d_dftParamsPtr->useEnergyResidualTolerance)
+                  {
+                    computing_timer.enter_subsection(
+                      "Energy residual computation");
+                    energyResidual = energyCalc.computeEnergyResidual(
+                      d_basisOperationsPtrHost,
+                      d_basisOperationsPtrElectroHost,
+                      d_densityQuadratureId,
+                      d_densityQuadratureIdElectro,
+                      d_smearedChargeQuadratureIdElectro,
+                      d_lpspQuadratureIdElectro,
+                      d_excManagerPtr,
+                      d_phiInQuadValues,
+                      d_phiOutQuadValues,
+                      d_phiTotRhoIn,
+                      d_phiTotRhoOut,
+                      d_densityInQuadValues,
+                      d_densityOutQuadValues,
+                      d_gradDensityInQuadValues,
+                      d_gradDensityOutQuadValues,
+                      d_auxDensityMatrixXCInPtr,
+                      d_auxDensityMatrixXCOutPtr,
+                      d_bQuadValuesAllAtoms,
+                      d_bCellNonTrivialAtomIds,
+                      d_localVselfs,
+                      d_atomNodeIdToChargeMap,
+                      d_dftParamsPtr->smearedNuclearCharges);
+                    if (d_dftParamsPtr->verbosity >= 1)
+                      pcout << "Energy residual  : " << energyResidual
+                            << std::endl;
+                    if (d_dftParamsPtr->reproducible_output)
+                      pcout << "Energy residual  : " << std::setprecision(4)
+                            << energyResidual << std::endl;
+                    computing_timer.leave_subsection(
+                      "Energy residual computation");
+                  }
+                if (d_dftParamsPtr->computeEnergyEverySCF)
+                  {
+                    d_dispersionCorr.computeDispresionCorrection(
+                      atomLocations, d_domainBoundingVectors);
+                    const double totalEnergy = energyCalc.computeEnergy(
+                      d_basisOperationsPtrHost,
+                      d_basisOperationsPtrElectroHost,
+                      d_densityQuadratureId,
+                      d_densityQuadratureIdElectro,
+                      d_smearedChargeQuadratureIdElectro,
+                      d_lpspQuadratureIdElectro,
+                      eigenValues,
+                      d_partialOccupancies,
+                      d_kPointWeights,
+                      fermiEnergy,
+                      d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy :
+                                                           fermiEnergyUp,
+                      d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy :
+                                                           fermiEnergyDown,
+                      d_excManagerPtr,
+                      d_dispersionCorr,
+                      d_phiInQuadValues,
+                      d_phiOutQuadValues,
+                      d_phiTotRhoOut,
+                      d_densityInQuadValues,
+                      d_densityOutQuadValues,
+                      d_gradDensityOutQuadValues,
+                      d_densityTotalOutValuesLpspQuad,
+                      d_auxDensityMatrixXCInPtr,
+                      d_auxDensityMatrixXCOutPtr,
+                      d_bQuadValuesAllAtoms,
+                      d_bCellNonTrivialAtomIds,
+                      d_localVselfs,
+                      d_pseudoVLoc,
+                      d_atomNodeIdToChargeMap,
+                      atomLocations.size(),
+                      lowerBoundKindex,
+                      0,
+                      d_dftParamsPtr->verbosity >= 0 ? true : false,
+                      d_dftParamsPtr->smearedNuclearCharges);
+                    if (d_dftParamsPtr->verbosity == 1)
+                      pcout << "Total energy  : " << totalEnergy << std::endl;
+                  }
+
+
+
+                d_excManagerPtr->getExcSSDFunctionalObj()
+                  ->updateWaveFunctionDependentFuncDerWrtPsi(
+                    d_auxDensityMatrixXCOutPtr, d_kPointWeights);
+
+
+                d_excManagerPtr->getExcSSDFunctionalObj()
+                  ->computeWaveFunctionDependentExcEnergy(
+                    d_auxDensityMatrixXCOutPtr, d_kPointWeights);
+
+                if (d_dftParamsPtr->verbosity >= 1)
+                  pcout
+                    << "***********************Self-Consistent-Field Iteration: "
+                    << std::setw(2) << scfIter + 1
+                    << " complete**********************" << std::endl;
+
+                local_timer.stop();
+                if (d_dftParamsPtr->verbosity >= 1)
+                  pcout << "Wall time for the above scf iteration: "
+                        << local_timer.wall_time() << " seconds\n"
+                        << "Number of Chebyshev filtered subspace iterations: "
+                        << numberChebyshevSolvePasses << std::endl
+                        << std::endl;
+                //
+                scfIter++;
+
+                if (d_dftParamsPtr->saveRhoData && scfIter % 10 == 0 &&
+                    d_dftParamsPtr->solverMode == "GS")
+                  {
+                    saveTriaInfoAndRhoNodalData();
+                    if (d_useHubbard)
+                      {
+                        d_hubbardClassPtr->writeHubbOccToFile();
+                      }
                   }
               }
 
-            numberChebyshevSolvePasses = count;
-
-            if (d_dftParamsPtr->verbosity >= 1)
+            if (d_dftParamsPtr->saveRhoData &&
+                !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
               {
-                pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
-              }
-          }
-        computing_timer.enter_subsection("compute rho");
-        if (d_dftParamsPtr->useSymm)
-          {
-#ifdef USE_COMPLEX
-            symmetryPtr->computeLocalrhoOut();
-            symmetryPtr->computeAndSymmetrize_rhoOut();
-
-            l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
-                                    d_constraintsRhoNodal,
-                                    d_densityDofHandlerIndexElectro,
-                                    d_densityQuadratureIdElectro,
-                                    d_densityOutQuadValues[0],
-                                    d_densityOutNodalValues[0]);
-
-            interpolateDensityNodalDataToQuadratureDataLpsp(
-              d_basisOperationsPtrElectroHost,
-              d_densityDofHandlerIndexElectro,
-              d_lpspQuadratureIdElectro,
-              d_densityOutNodalValues[0],
-              d_densityTotalOutValuesLpspQuad,
-              d_gradDensityTotalOutValuesLpspQuad,
-              true);
-#endif
-          }
-        else
-          {
-            compute_rhoOut(scfConverged ||
-                           (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
-          }
-        computing_timer.leave_subsection("compute rho");
-
-        //
-        // compute integral rhoOut
-        //
-        const double integralRhoValue =
-          totalCharge(d_dofHandlerPRefined, d_densityOutQuadValues[0]);
-
-        if (d_dftParamsPtr->verbosity >= 2)
-          {
-            pcout << std::endl
-                  << "number of electrons: " << integralRhoValue << std::endl;
-          }
-        if (d_dftParamsPtr->verbosity > 0 && d_dftParamsPtr->spinPolarized == 1)
-          totalMagnetization(d_densityOutQuadValues[1]);
-
-        //
-        // phiTot with rhoOut
-        //
-        if (d_dftParamsPtr->computeEnergyEverySCF ||
-            d_dftParamsPtr->useEnergyResidualTolerance)
-          {
-            if (d_dftParamsPtr->verbosity >= 2)
-              pcout
-                << std::endl
-                << "Poisson solve for total electrostatic potential (rhoOut+b): ";
-
-            computing_timer.enter_subsection("phiTot solve");
-
-            if (d_dftParamsPtr->multipoleBoundaryConditions)
-              {
-                computing_timer.enter_subsection("Update inhomogenous BC");
-                computeMultipoleMoments(d_basisOperationsPtrElectroHost,
-                                        d_densityQuadratureIdElectro,
-                                        d_densityOutQuadValues[0],
-                                        &d_bQuadValuesAllAtoms);
-                updatePRefinedConstraints();
-                computing_timer.leave_subsection("Update inhomogenous BC");
+                saveTriaInfoAndRhoNodalData();
+                if (d_useHubbard)
+                  {
+                    d_hubbardClassPtr->writeHubbOccToFile();
+                  }
               }
 
-            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-              densityOutQuadValuesCopy = d_densityOutQuadValues[0];
-            if (std::abs(d_dftParamsPtr->netCharge) > 1e-12 and
-                (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
-                 d_dftParamsPtr->periodicZ))
-              {
-                double *tempvec = densityOutQuadValuesCopy.data();
-                for (unsigned int iquad = 0;
-                     iquad < densityOutQuadValuesCopy.size();
-                     iquad++)
-                  tempvec[iquad] += -d_dftParamsPtr->netCharge / d_domainVolume;
-              }
 
-            if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
-                d_dftParamsPtr->floatingNuclearCharges and
-                not d_dftParamsPtr->pinnedNodeForPBC)
-              {
-#ifdef DFTFE_WITH_DEVICE
-                d_phiTotalSolverProblemDevice.reinit(
-                  d_basisOperationsPtrElectroHost,
-                  d_phiTotRhoOut,
-                  *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-                  d_phiTotDofHandlerIndexElectro,
-                  d_densityQuadratureIdElectro,
-                  d_phiTotAXQuadratureIdElectro,
-                  d_atomNodeIdToChargeMap,
-                  d_bQuadValuesAllAtoms,
-                  d_smearedChargeQuadratureIdElectro,
-                  densityOutQuadValuesCopy,
-                  d_BLASWrapperPtr,
-                  false,
-                  false,
-                  d_dftParamsPtr->smearedNuclearCharges,
-                  true,
-                  false,
-                  0,
-                  false,
-                  true,
-                  d_dftParamsPtr->multipoleBoundaryConditions);
 
-                CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
-                                     d_dftParamsPtr->absLinearSolverTolerance,
-                                     d_dftParamsPtr->maxLinearSolverIterations,
-                                     d_dftParamsPtr->verbosity);
-#endif
+            if (scfIter == d_dftParamsPtr->numSCFIterations)
+              {
+                if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) ==
+                    0)
+                  std::cout
+                    << "DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "
+                    << scfIter << " iterations." << std::endl;
               }
             else
               {
-                d_phiTotalSolverProblem.reinit(
-                  d_basisOperationsPtrElectroHost,
-                  d_phiTotRhoOut,
-                  *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-                  d_phiTotDofHandlerIndexElectro,
-                  d_densityQuadratureIdElectro,
-                  d_phiTotAXQuadratureIdElectro,
-                  d_atomNodeIdToChargeMap,
-                  d_bQuadValuesAllAtoms,
-                  d_smearedChargeQuadratureIdElectro,
-                  densityOutQuadValuesCopy,
-                  false,
-                  false,
-                  d_dftParamsPtr->smearedNuclearCharges,
-                  true,
-                  false,
-                  0,
-                  false,
-                  true,
-                  d_dftParamsPtr->multipoleBoundaryConditions);
+                pcout
+                  << "SCF iterations converged to the specified tolerance after: "
+                  << scfIter << " iterations." << std::endl;
+                if (d_dftParamsPtr->verbosity >= 1)
+                  {
+                    if (d_dftParamsPtr->spinPolarized &&
+                        d_dftParamsPtr->constraintMagnetization)
+                      {
+                        pcout << "GS Fermi energy spin up: " << fermiEnergyUp
+                              << std::endl;
+                        pcout
+                          << "GS Fermi energy spin down: " << fermiEnergyDown
+                          << std::endl;
+                      }
+                    else
+                      pcout << "GS Fermi energy spin up: " << fermiEnergy
+                            << std::endl;
+                  }
 
-                CGSolver.solve(d_phiTotalSolverProblem,
-                               d_dftParamsPtr->absLinearSolverTolerance,
-                               d_dftParamsPtr->maxLinearSolverIterations,
-                               d_dftParamsPtr->verbosity);
+                if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) ==
+                    0)
+                  {
+                    if (d_dftParamsPtr->solverMode == "GS" &&
+                        d_dftParamsPtr->saveRhoData)
+                      {
+                        FILE *fermiFile;
+                        fermiFile = fopen("fermiEnergy.out", "w");
+                        if (d_dftParamsPtr->spinPolarized)
+                          {
+                            fprintf(fermiFile,
+                                    "%.14g\n%.14g\n%.14g\n ",
+                                    fermiEnergy,
+                                    fermiEnergyUp,
+                                    fermiEnergyDown);
+                          }
+                        else
+                          {
+                            fprintf(fermiFile, "%.14g\n", fermiEnergy);
+                          }
+                        fclose(fermiFile);
+                      }
+                  }
               }
+
+            updateAuxDensityXCMatrix(d_densityOutQuadValues,
+                                     d_gradDensityOutQuadValues,
+                                     d_rhoCore,
+                                     d_gradRhoCore,
+                                     getEigenVectors(),
+                                     eigenValues,
+                                     fermiEnergy,
+                                     fermiEnergyUp,
+                                     fermiEnergyDown,
+                                     d_auxDensityMatrixXCOutPtr);
+
+            const unsigned int numberBandGroups =
+              dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+            const unsigned int localVectorSize =
+              matrix_free_data.get_vector_partitioner()->locally_owned_size();
+            if (numberBandGroups > 1 && !d_dftParamsPtr->useDevice)
+              {
+                MPI_Barrier(interBandGroupComm);
+                const unsigned int blockSize =
+                  d_dftParamsPtr->mpiAllReduceMessageBlockSizeMB * 1e+6 /
+                  sizeof(dataTypes::number);
+                for (unsigned int kPoint = 0;
+                     kPoint < (1 + d_dftParamsPtr->spinPolarized) *
+                                d_kPointWeights.size();
+                     ++kPoint)
+                  for (unsigned int i = 0;
+                       i < d_numEigenValues * localVectorSize;
+                       i += blockSize)
+                    {
+                      const unsigned int currentBlockSize =
+                        std::min(blockSize,
+                                 d_numEigenValues * localVectorSize - i);
+                      MPI_Allreduce(
+                        MPI_IN_PLACE,
+                        &d_eigenVectorsFlattenedHost[kPoint * d_numEigenValues *
+                                                     localVectorSize] +
+                          i,
+                        currentBlockSize,
+                        dataTypes::mpi_type_id(
+                          &d_eigenVectorsFlattenedHost[kPoint *
+                                                       d_numEigenValues *
+                                                       localVectorSize]),
+                        MPI_SUM,
+                        interBandGroupComm);
+                    }
+              }
+
+            if ((!d_dftParamsPtr->computeEnergyEverySCF))
+              {
+                if (d_dftParamsPtr->verbosity >= 2)
+                  pcout
+                    << std::endl
+                    << "Poisson solve for total electrostatic potential (rhoOut+b): ";
+
+                computing_timer.enter_subsection("phiTot solve");
+
+                if (d_dftParamsPtr->multipoleBoundaryConditions)
+                  {
+                    computing_timer.enter_subsection("Update inhomogenous BC");
+                    computeMultipoleMoments(d_basisOperationsPtrElectroHost,
+                                            d_densityQuadratureIdElectro,
+                                            d_densityOutQuadValues[0],
+                                            &d_bQuadValuesAllAtoms);
+                    updatePRefinedConstraints();
+                    computing_timer.leave_subsection("Update inhomogenous BC");
+                  }
+
+                dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+                  densityOutQuadValuesCopy = d_densityOutQuadValues[0];
+                if (std::abs(d_dftParamsPtr->netCharge) > 1e-12 and
+                    (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+                     d_dftParamsPtr->periodicZ))
+                  {
+                    double *tempvec = densityOutQuadValuesCopy.data();
+                    for (unsigned int iquad = 0;
+                         iquad < densityOutQuadValuesCopy.size();
+                         iquad++)
+                      tempvec[iquad] +=
+                        -d_dftParamsPtr->netCharge / d_domainVolume;
+                  }
+
+                if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
+                    d_dftParamsPtr->floatingNuclearCharges and
+                    not d_dftParamsPtr->pinnedNodeForPBC)
+                  {
+#ifdef DFTFE_WITH_DEVICE
+                    d_phiTotalSolverProblemDevice.reinit(
+                      d_basisOperationsPtrElectroHost,
+                      d_phiTotRhoOut,
+                      *d_constraintsVectorElectro
+                        [d_phiTotDofHandlerIndexElectro],
+                      d_phiTotDofHandlerIndexElectro,
+                      d_densityQuadratureIdElectro,
+                      d_phiTotAXQuadratureIdElectro,
+                      d_atomNodeIdToChargeMap,
+                      d_bQuadValuesAllAtoms,
+                      d_smearedChargeQuadratureIdElectro,
+                      densityOutQuadValuesCopy,
+                      d_BLASWrapperPtr,
+                      false,
+                      false,
+                      d_dftParamsPtr->smearedNuclearCharges,
+                      true,
+                      false,
+                      0,
+                      false,
+                      true,
+                      d_dftParamsPtr->multipoleBoundaryConditions);
+
+                    CGSolverDevice.solve(
+                      d_phiTotalSolverProblemDevice,
+                      d_dftParamsPtr->absLinearSolverTolerance,
+                      d_dftParamsPtr->maxLinearSolverIterations,
+                      d_dftParamsPtr->verbosity);
+#endif
+                  }
+                else
+                  {
+                    d_phiTotalSolverProblem.reinit(
+                      d_basisOperationsPtrElectroHost,
+                      d_phiTotRhoOut,
+                      *d_constraintsVectorElectro
+                        [d_phiTotDofHandlerIndexElectro],
+                      d_phiTotDofHandlerIndexElectro,
+                      d_densityQuadratureIdElectro,
+                      d_phiTotAXQuadratureIdElectro,
+                      d_atomNodeIdToChargeMap,
+                      d_bQuadValuesAllAtoms,
+                      d_smearedChargeQuadratureIdElectro,
+                      densityOutQuadValuesCopy,
+                      false,
+                      false,
+                      d_dftParamsPtr->smearedNuclearCharges,
+                      true,
+                      false,
+                      0,
+                      false,
+                      true,
+                      d_dftParamsPtr->multipoleBoundaryConditions);
+
+                    CGSolver.solve(d_phiTotalSolverProblem,
+                                   d_dftParamsPtr->absLinearSolverTolerance,
+                                   d_dftParamsPtr->maxLinearSolverIterations,
+                                   d_dftParamsPtr->verbosity);
+                  }
+
+                computing_timer.leave_subsection("phiTot solve");
+              }
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              dummy;
 
             interpolateElectroNodalDataToQuadratureDataGeneral(
               d_basisOperationsPtrElectroHost,
@@ -3728,55 +4106,12 @@ namespace dftfe
               d_phiTotRhoOut,
               d_phiOutQuadValues,
               dummy);
-            computing_timer.leave_subsection("phiTot solve");
-          }
 
-        updateAuxDensityXCMatrix(d_densityOutQuadValues,
-                                 d_gradDensityOutQuadValues,
-                                 d_rhoCore,
-                                 d_gradRhoCore,
-                                 getEigenVectors(),
-                                 eigenValues,
-                                 fermiEnergy,
-                                 fermiEnergyUp,
-                                 fermiEnergyDown,
-                                 d_auxDensityMatrixXCOutPtr);
 
-        if (d_dftParamsPtr->useEnergyResidualTolerance)
-          {
-            computing_timer.enter_subsection("Energy residual computation");
-            energyResidual = energyCalc.computeEnergyResidual(
-              d_basisOperationsPtrHost,
-              d_basisOperationsPtrElectroHost,
-              d_densityQuadratureId,
-              d_densityQuadratureIdElectro,
-              d_smearedChargeQuadratureIdElectro,
-              d_lpspQuadratureIdElectro,
-              d_excManagerPtr,
-              d_phiInQuadValues,
-              d_phiOutQuadValues,
-              d_phiTotRhoIn,
-              d_phiTotRhoOut,
-              d_densityInQuadValues,
-              d_densityOutQuadValues,
-              d_gradDensityInQuadValues,
-              d_gradDensityOutQuadValues,
-              d_auxDensityMatrixXCInPtr,
-              d_auxDensityMatrixXCOutPtr,
-              d_bQuadValuesAllAtoms,
-              d_bCellNonTrivialAtomIds,
-              d_localVselfs,
-              d_atomNodeIdToChargeMap,
-              d_dftParamsPtr->smearedNuclearCharges);
-            if (d_dftParamsPtr->verbosity >= 1)
-              pcout << "Energy residual  : " << energyResidual << std::endl;
-            if (d_dftParamsPtr->reproducible_output)
-              pcout << "Energy residual  : " << std::setprecision(4)
-                    << energyResidual << std::endl;
-            computing_timer.leave_subsection("Energy residual computation");
-          }
-        if (d_dftParamsPtr->computeEnergyEverySCF)
-          {
+            //
+            // compute and print ground state energy or energy after max scf
+            // iterations
+            //
             d_dispersionCorr.computeDispresionCorrection(
               atomLocations, d_domainBoundingVectors);
             const double totalEnergy = energyCalc.computeEnergy(
@@ -3811,2213 +4146,2006 @@ namespace dftfe
               d_atomNodeIdToChargeMap,
               atomLocations.size(),
               lowerBoundKindex,
-              0,
+              1,
               d_dftParamsPtr->verbosity >= 0 ? true : false,
               d_dftParamsPtr->smearedNuclearCharges);
-            if (d_dftParamsPtr->verbosity == 1)
-              pcout << "Total energy  : " << totalEnergy << std::endl;
-          }
+
+            d_groundStateEnergy = totalEnergy;
+
+            MPI_Barrier(interpoolcomm);
+
+            d_entropicEnergy = energyCalc.computeEntropicEnergy(
+              eigenValues,
+              d_partialOccupancies,
+              d_kPointWeights,
+              fermiEnergy,
+              fermiEnergyUp,
+              fermiEnergyDown,
+              d_dftParamsPtr->spinPolarized == 1,
+              d_dftParamsPtr->constraintMagnetization,
+              d_dftParamsPtr->TVal);
+
+            if (d_dftParamsPtr->verbosity >= 1)
+              pcout << "Total entropic energy: " << d_entropicEnergy
+                    << std::endl;
 
 
+            d_freeEnergy = d_groundStateEnergy - d_entropicEnergy;
 
-        d_excManagerPtr->getExcSSDFunctionalObj()
-          ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
-                                                     d_kPointWeights);
-
-
-        d_excManagerPtr->getExcSSDFunctionalObj()
-          ->computeWaveFunctionDependentExcEnergy(d_auxDensityMatrixXCOutPtr,
-                                                  d_kPointWeights);
-
-        if (d_dftParamsPtr->verbosity >= 1)
-          pcout << "***********************Self-Consistent-Field Iteration: "
-                << std::setw(2) << scfIter + 1
-                << " complete**********************" << std::endl;
-
-        local_timer.stop();
-        if (d_dftParamsPtr->verbosity >= 1)
-          pcout << "Wall time for the above scf iteration: "
-                << local_timer.wall_time() << " seconds\n"
-                << "Number of Chebyshev filtered subspace iterations: "
-                << numberChebyshevSolvePasses << std::endl
-                << std::endl;
-        //
-        scfIter++;
-
-        if (d_dftParamsPtr->saveRhoData && scfIter % 10 == 0 &&
-            d_dftParamsPtr->solverMode == "GS")
-          {
-            saveTriaInfoAndRhoNodalData();
-            if (d_useHubbard)
+            if (d_dftParamsPtr->verbosity >= 1)
               {
-                d_hubbardClassPtr->writeHubbOccToFile();
-              }
-          }
-      }
-
-    if (d_dftParamsPtr->saveRhoData &&
-        !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
-      {
-        saveTriaInfoAndRhoNodalData();
-        if (d_useHubbard)
-          {
-            d_hubbardClassPtr->writeHubbOccToFile();
-          }
-      }
-
-
-
-    if (scfIter == d_dftParamsPtr->numSCFIterations)
-      {
-        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          std::cout
-            << "DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "
-            << scfIter << " iterations." << std::endl;
-      }
-    else
-      {
-        pcout << "SCF iterations converged to the specified tolerance after: "
-              << scfIter << " iterations." << std::endl;
-        if (d_dftParamsPtr->verbosity >= 1)
-          {
-            if (d_dftParamsPtr->spinPolarized &&
-                d_dftParamsPtr->constraintMagnetization)
-              {
-                pcout << "GS Fermi energy spin up: " << fermiEnergyUp
-                      << std::endl;
-                pcout << "GS Fermi energy spin down: " << fermiEnergyDown
-                      << std::endl;
-              }
-            else
-              pcout << "GS Fermi energy spin up: " << fermiEnergy << std::endl;
-          }
-
-        if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-          {
-            if (d_dftParamsPtr->solverMode == "GS" &&
-                d_dftParamsPtr->saveRhoData)
-              {
-                FILE *fermiFile;
-                fermiFile = fopen("fermiEnergy.out", "w");
-                if (d_dftParamsPtr->spinPolarized)
+                if ((d_excManagerPtr->getExcSSDFunctionalObj()
+                       ->getExcFamilyType() == ExcFamilyType::DFTPlusU) ||
+                    (d_excManagerPtr->getExcSSDFunctionalObj()
+                       ->getExcFamilyType() == ExcFamilyType::HYBRID) ||
+                    (d_excManagerPtr->getExcSSDFunctionalObj()
+                       ->getExcFamilyType() == ExcFamilyType::MGGA))
                   {
-                    fprintf(fermiFile,
-                            "%.14g\n%.14g\n%.14g\n ",
-                            fermiEnergy,
-                            fermiEnergyUp,
-                            fermiEnergyDown);
+                    pcout
+                      << " Non local part of Exc energy = "
+                      << d_excManagerPtr->getExcSSDFunctionalObj()
+                           ->getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi()
+                      << "\n";
+                  }
+              }
+            if (d_dftParamsPtr->verbosity >= 1)
+              pcout << "Total free energy: " << d_freeEnergy << std::endl;
+
+            if (d_dftParamsPtr->verbosity >= 0 &&
+                d_dftParamsPtr->spinPolarized == 1)
+              totalMagnetization(d_densityOutQuadValues[1]);
+
+            // This step is required for interpolating rho from current mesh to
+            // the new mesh in case of atomic relaxation
+            // computeNodalRhoFromQuadData();
+
+            computing_timer.leave_subsection("scf solve");
+            computingTimerStandard.leave_subsection("Total scf solve");
+
+
+#ifdef DFTFE_WITH_DEVICE
+            if (d_dftParamsPtr->useDevice &&
+                (d_dftParamsPtr->writeWfcSolutionFields ||
+                 d_dftParamsPtr->writeLdosFile ||
+                 d_dftParamsPtr->writePdosFile))
+              d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
+#endif
+
+
+            if (d_dftParamsPtr->isIonForce)
+              {
+                if (d_dftParamsPtr->selfConsistentSolverTolerance > 1e-4 &&
+                    d_dftParamsPtr->verbosity >= 1)
+                  pcout
+                    << "DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "
+                    << d_dftParamsPtr->selfConsistentSolverTolerance
+                    << ", recommended to use TOLERANCE below 1e-4."
+                    << std::endl;
+
+                if (computeForces)
+                  {
+                    computing_timer.enter_subsection("Ion force computation");
+                    computingTimerStandard.enter_subsection(
+                      "Ion force computation");
+                    forcePtr->computeAtomsForces(
+                      matrix_free_data,
+                      d_dispersionCorr,
+                      d_eigenDofHandlerIndex,
+                      d_smearedChargeQuadratureIdElectro,
+                      d_lpspQuadratureIdElectro,
+                      d_matrixFreeDataPRefined,
+                      d_phiTotDofHandlerIndexElectro,
+                      d_phiTotRhoOut,
+                      d_densityOutQuadValues,
+                      d_gradDensityOutQuadValues,
+                      d_densityTotalOutValuesLpspQuad,
+                      d_gradDensityTotalOutValuesLpspQuad,
+                      d_rhoCore,
+                      d_gradRhoCore,
+                      d_hessianRhoCore,
+                      d_gradRhoCoreAtoms,
+                      d_hessianRhoCoreAtoms,
+                      d_pseudoVLoc,
+                      d_pseudoVLocAtoms,
+                      d_constraintsPRefined,
+                      d_vselfBinsManager);
+                    if (d_dftParamsPtr->verbosity >= 0)
+                      forcePtr->printAtomsForces();
+                    computingTimerStandard.leave_subsection(
+                      "Ion force computation");
+                    computing_timer.leave_subsection("Ion force computation");
+                  }
+              }
+
+            if (d_dftParamsPtr->isCellStress)
+              {
+                if (d_dftParamsPtr->selfConsistentSolverTolerance > 1e-4 &&
+                    d_dftParamsPtr->verbosity >= 1)
+                  pcout
+                    << "DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "
+                    << d_dftParamsPtr->selfConsistentSolverTolerance
+                    << ", recommended to use TOLERANCE below 1e-4."
+                    << std::endl;
+
+                if (computestress)
+                  {
+                    computing_timer.enter_subsection("Cell stress computation");
+                    computingTimerStandard.enter_subsection(
+                      "Cell stress computation");
+                    computeStress();
+                    computingTimerStandard.leave_subsection(
+                      "Cell stress computation");
+                    computing_timer.leave_subsection("Cell stress computation");
+                  }
+              }
+            return std::make_tuple(scfConverged, norm);
+          } // namespace dftfe
+
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::computeStress()
+        {
+          KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
+            *d_kohnShamDFTOperatorPtr;
+
+          if (d_dftParamsPtr->isPseudopotential ||
+              d_dftParamsPtr->smearedNuclearCharges)
+            {
+              computeVselfFieldGateauxDerFD();
+            }
+
+          forcePtr->computeStress(matrix_free_data,
+                                  d_dispersionCorr,
+                                  d_eigenDofHandlerIndex,
+                                  d_smearedChargeQuadratureIdElectro,
+                                  d_lpspQuadratureIdElectro,
+                                  d_matrixFreeDataPRefined,
+                                  d_phiTotDofHandlerIndexElectro,
+                                  d_phiTotRhoOut,
+                                  d_densityOutQuadValues,
+                                  d_gradDensityOutQuadValues,
+                                  d_densityTotalOutValuesLpspQuad,
+                                  d_gradDensityTotalOutValuesLpspQuad,
+                                  d_pseudoVLoc,
+                                  d_pseudoVLocAtoms,
+                                  d_rhoCore,
+                                  d_gradRhoCore,
+                                  d_hessianRhoCore,
+                                  d_gradRhoCoreAtoms,
+                                  d_hessianRhoCoreAtoms,
+                                  d_constraintsPRefined,
+                                  d_vselfBinsManager);
+          if (d_dftParamsPtr->verbosity >= 0)
+            forcePtr->printStress();
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          computeVselfFieldGateauxDerFD()
+        {
+          d_vselfFieldGateauxDerStrainFDBins.clear();
+          d_vselfFieldGateauxDerStrainFDBins.resize(
+            (d_vselfBinsManager.getVselfFieldBins()).size() * 6);
+
+          dealii::Tensor<2, 3, double> identityTensor;
+          dealii::Tensor<2, 3, double> deformationGradientPerturb1;
+          dealii::Tensor<2, 3, double> deformationGradientPerturb2;
+
+          // initialize to indentity tensors
+          for (unsigned int idim = 0; idim < 3; idim++)
+            for (unsigned int jdim = 0; jdim < 3; jdim++)
+              {
+                if (idim == jdim)
+                  {
+                    identityTensor[idim][jdim]              = 1.0;
+                    deformationGradientPerturb1[idim][jdim] = 1.0;
+                    deformationGradientPerturb2[idim][jdim] = 1.0;
                   }
                 else
                   {
-                    fprintf(fermiFile, "%.14g\n", fermiEnergy);
+                    identityTensor[idim][jdim]              = 0.0;
+                    deformationGradientPerturb1[idim][jdim] = 0.0;
+                    deformationGradientPerturb2[idim][jdim] = 0.0;
                   }
-                fclose(fermiFile);
               }
-          }
-      }
 
-    updateAuxDensityXCMatrix(d_densityOutQuadValues,
-                             d_gradDensityOutQuadValues,
-                             d_rhoCore,
-                             d_gradRhoCore,
-                             getEigenVectors(),
-                             eigenValues,
-                             fermiEnergy,
-                             fermiEnergyUp,
-                             fermiEnergyDown,
-                             d_auxDensityMatrixXCOutPtr);
-
-    const unsigned int numberBandGroups =
-      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-
-    const unsigned int localVectorSize =
-      matrix_free_data.get_vector_partitioner()->locally_owned_size();
-    if (numberBandGroups > 1 && !d_dftParamsPtr->useDevice)
-      {
-        MPI_Barrier(interBandGroupComm);
-        const unsigned int blockSize =
-          d_dftParamsPtr->mpiAllReduceMessageBlockSizeMB * 1e+6 /
-          sizeof(dataTypes::number);
-        for (unsigned int kPoint = 0;
-             kPoint <
-             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-             ++kPoint)
-          for (unsigned int i = 0; i < d_numEigenValues * localVectorSize;
-               i += blockSize)
-            {
-              const unsigned int currentBlockSize =
-                std::min(blockSize, d_numEigenValues * localVectorSize - i);
-              MPI_Allreduce(
-                MPI_IN_PLACE,
-                &d_eigenVectorsFlattenedHost[kPoint * d_numEigenValues *
-                                             localVectorSize] +
-                  i,
-                currentBlockSize,
-                dataTypes::mpi_type_id(
-                  &d_eigenVectorsFlattenedHost[kPoint * d_numEigenValues *
-                                               localVectorSize]),
-                MPI_SUM,
-                interBandGroupComm);
-            }
-      }
-
-    if ((!d_dftParamsPtr->computeEnergyEverySCF))
-      {
-        if (d_dftParamsPtr->verbosity >= 2)
-          pcout
-            << std::endl
-            << "Poisson solve for total electrostatic potential (rhoOut+b): ";
-
-        computing_timer.enter_subsection("phiTot solve");
-
-        if (d_dftParamsPtr->multipoleBoundaryConditions)
-          {
-            computing_timer.enter_subsection("Update inhomogenous BC");
-            computeMultipoleMoments(d_basisOperationsPtrElectroHost,
-                                    d_densityQuadratureIdElectro,
-                                    d_densityOutQuadValues[0],
-                                    &d_bQuadValuesAllAtoms);
-            updatePRefinedConstraints();
-            computing_timer.leave_subsection("Update inhomogenous BC");
-          }
-
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-          densityOutQuadValuesCopy = d_densityOutQuadValues[0];
-        if (std::abs(d_dftParamsPtr->netCharge) > 1e-12 and
-            (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
-             d_dftParamsPtr->periodicZ))
-          {
-            double *tempvec = densityOutQuadValuesCopy.data();
-            for (unsigned int iquad = 0;
-                 iquad < densityOutQuadValuesCopy.size();
-                 iquad++)
-              tempvec[iquad] += -d_dftParamsPtr->netCharge / d_domainVolume;
-          }
-
-        if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
-            d_dftParamsPtr->floatingNuclearCharges and
-            not d_dftParamsPtr->pinnedNodeForPBC)
-          {
-#ifdef DFTFE_WITH_DEVICE
-            d_phiTotalSolverProblemDevice.reinit(
-              d_basisOperationsPtrElectroHost,
-              d_phiTotRhoOut,
-              *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-              d_phiTotDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-              d_phiTotAXQuadratureIdElectro,
-              d_atomNodeIdToChargeMap,
-              d_bQuadValuesAllAtoms,
-              d_smearedChargeQuadratureIdElectro,
-              densityOutQuadValuesCopy,
-              d_BLASWrapperPtr,
-              false,
-              false,
-              d_dftParamsPtr->smearedNuclearCharges,
-              true,
-              false,
-              0,
-              false,
-              true,
-              d_dftParamsPtr->multipoleBoundaryConditions);
-
-            CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
-                                 d_dftParamsPtr->absLinearSolverTolerance,
-                                 d_dftParamsPtr->maxLinearSolverIterations,
-                                 d_dftParamsPtr->verbosity);
-#endif
-          }
-        else
-          {
-            d_phiTotalSolverProblem.reinit(
-              d_basisOperationsPtrElectroHost,
-              d_phiTotRhoOut,
-              *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-              d_phiTotDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-              d_phiTotAXQuadratureIdElectro,
-              d_atomNodeIdToChargeMap,
-              d_bQuadValuesAllAtoms,
-              d_smearedChargeQuadratureIdElectro,
-              densityOutQuadValuesCopy,
-              false,
-              false,
-              d_dftParamsPtr->smearedNuclearCharges,
-              true,
-              false,
-              0,
-              false,
-              true,
-              d_dftParamsPtr->multipoleBoundaryConditions);
-
-            CGSolver.solve(d_phiTotalSolverProblem,
-                           d_dftParamsPtr->absLinearSolverTolerance,
-                           d_dftParamsPtr->maxLinearSolverIterations,
-                           d_dftParamsPtr->verbosity);
-          }
-
-        computing_timer.leave_subsection("phiTot solve");
-      }
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
-
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotRhoOut,
-      d_phiOutQuadValues,
-      dummy);
-
-
-    //
-    // compute and print ground state energy or energy after max scf
-    // iterations
-    //
-    d_dispersionCorr.computeDispresionCorrection(atomLocations,
-                                                 d_domainBoundingVectors);
-    const double totalEnergy = energyCalc.computeEnergy(
-      d_basisOperationsPtrHost,
-      d_basisOperationsPtrElectroHost,
-      d_densityQuadratureId,
-      d_densityQuadratureIdElectro,
-      d_smearedChargeQuadratureIdElectro,
-      d_lpspQuadratureIdElectro,
-      eigenValues,
-      d_partialOccupancies,
-      d_kPointWeights,
-      fermiEnergy,
-      d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
-      d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyDown,
-      d_excManagerPtr,
-      d_dispersionCorr,
-      d_phiInQuadValues,
-      d_phiOutQuadValues,
-      d_phiTotRhoOut,
-      d_densityInQuadValues,
-      d_densityOutQuadValues,
-      d_gradDensityOutQuadValues,
-      d_densityTotalOutValuesLpspQuad,
-      d_auxDensityMatrixXCInPtr,
-      d_auxDensityMatrixXCOutPtr,
-      d_bQuadValuesAllAtoms,
-      d_bCellNonTrivialAtomIds,
-      d_localVselfs,
-      d_pseudoVLoc,
-      d_atomNodeIdToChargeMap,
-      atomLocations.size(),
-      lowerBoundKindex,
-      1,
-      d_dftParamsPtr->verbosity >= 0 ? true : false,
-      d_dftParamsPtr->smearedNuclearCharges);
-
-    d_groundStateEnergy = totalEnergy;
-
-    MPI_Barrier(interpoolcomm);
-
-    d_entropicEnergy =
-      energyCalc.computeEntropicEnergy(eigenValues,
-                                       d_partialOccupancies,
-                                       d_kPointWeights,
-                                       fermiEnergy,
-                                       fermiEnergyUp,
-                                       fermiEnergyDown,
-                                       d_dftParamsPtr->spinPolarized == 1,
-                                       d_dftParamsPtr->constraintMagnetization,
-                                       d_dftParamsPtr->TVal);
-
-    if (d_dftParamsPtr->verbosity >= 1)
-      pcout << "Total entropic energy: " << d_entropicEnergy << std::endl;
-
-
-    d_freeEnergy = d_groundStateEnergy - d_entropicEnergy;
-
-    if (d_dftParamsPtr->verbosity >= 1)
-      {
-        if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-             ExcFamilyType::DFTPlusU) ||
-            (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-             ExcFamilyType::HYBRID) ||
-            (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-             ExcFamilyType::MGGA))
-          {
-            pcout << " Non local part of Exc energy = "
-                  << d_excManagerPtr->getExcSSDFunctionalObj()
-                       ->getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi()
-                  << "\n";
-          }
-      }
-    if (d_dftParamsPtr->verbosity >= 1)
-      pcout << "Total free energy: " << d_freeEnergy << std::endl;
-
-    if (d_dftParamsPtr->verbosity >= 0 && d_dftParamsPtr->spinPolarized == 1)
-      totalMagnetization(d_densityOutQuadValues[1]);
-
-    // This step is required for interpolating rho from current mesh to the
-    // new mesh in case of atomic relaxation
-    // computeNodalRhoFromQuadData();
-
-    computing_timer.leave_subsection("scf solve");
-    computingTimerStandard.leave_subsection("Total scf solve");
-
-
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice &&
-        (d_dftParamsPtr->writeWfcSolutionFields ||
-         d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
-      d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
-#endif
-
-
-    if (d_dftParamsPtr->isIonForce)
-      {
-        if (d_dftParamsPtr->selfConsistentSolverTolerance > 1e-4 &&
-            d_dftParamsPtr->verbosity >= 1)
-          pcout
-            << "DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "
-            << d_dftParamsPtr->selfConsistentSolverTolerance
-            << ", recommended to use TOLERANCE below 1e-4." << std::endl;
-
-        if (computeForces)
-          {
-            computing_timer.enter_subsection("Ion force computation");
-            computingTimerStandard.enter_subsection("Ion force computation");
-            forcePtr->computeAtomsForces(matrix_free_data,
-                                         d_dispersionCorr,
-                                         d_eigenDofHandlerIndex,
-                                         d_smearedChargeQuadratureIdElectro,
-                                         d_lpspQuadratureIdElectro,
-                                         d_matrixFreeDataPRefined,
-                                         d_phiTotDofHandlerIndexElectro,
-                                         d_phiTotRhoOut,
-                                         d_densityOutQuadValues,
-                                         d_gradDensityOutQuadValues,
-                                         d_densityTotalOutValuesLpspQuad,
-                                         d_gradDensityTotalOutValuesLpspQuad,
-                                         d_rhoCore,
-                                         d_gradRhoCore,
-                                         d_hessianRhoCore,
-                                         d_gradRhoCoreAtoms,
-                                         d_hessianRhoCoreAtoms,
-                                         d_pseudoVLoc,
-                                         d_pseudoVLocAtoms,
-                                         d_constraintsPRefined,
-                                         d_vselfBinsManager);
-            if (d_dftParamsPtr->verbosity >= 0)
-              forcePtr->printAtomsForces();
-            computingTimerStandard.leave_subsection("Ion force computation");
-            computing_timer.leave_subsection("Ion force computation");
-          }
-      }
-
-    if (d_dftParamsPtr->isCellStress)
-      {
-        if (d_dftParamsPtr->selfConsistentSolverTolerance > 1e-4 &&
-            d_dftParamsPtr->verbosity >= 1)
-          pcout
-            << "DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "
-            << d_dftParamsPtr->selfConsistentSolverTolerance
-            << ", recommended to use TOLERANCE below 1e-4." << std::endl;
-
-        if (computestress)
-          {
-            computing_timer.enter_subsection("Cell stress computation");
-            computingTimerStandard.enter_subsection("Cell stress computation");
-            computeStress();
-            computingTimerStandard.leave_subsection("Cell stress computation");
-            computing_timer.leave_subsection("Cell stress computation");
-          }
-      }
-    return std::make_tuple(scfConverged, norm);
-  } // namespace dftfe
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeStress()
-  {
-    KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
-      *d_kohnShamDFTOperatorPtr;
-
-    if (d_dftParamsPtr->isPseudopotential ||
-        d_dftParamsPtr->smearedNuclearCharges)
-      {
-        computeVselfFieldGateauxDerFD();
-      }
-
-    forcePtr->computeStress(matrix_free_data,
-                            d_dispersionCorr,
-                            d_eigenDofHandlerIndex,
-                            d_smearedChargeQuadratureIdElectro,
-                            d_lpspQuadratureIdElectro,
-                            d_matrixFreeDataPRefined,
-                            d_phiTotDofHandlerIndexElectro,
-                            d_phiTotRhoOut,
-                            d_densityOutQuadValues,
-                            d_gradDensityOutQuadValues,
-                            d_densityTotalOutValuesLpspQuad,
-                            d_gradDensityTotalOutValuesLpspQuad,
-                            d_pseudoVLoc,
-                            d_pseudoVLocAtoms,
-                            d_rhoCore,
-                            d_gradRhoCore,
-                            d_hessianRhoCore,
-                            d_gradRhoCoreAtoms,
-                            d_hessianRhoCoreAtoms,
-                            d_constraintsPRefined,
-                            d_vselfBinsManager);
-    if (d_dftParamsPtr->verbosity >= 0)
-      forcePtr->printStress();
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeVselfFieldGateauxDerFD()
-  {
-    d_vselfFieldGateauxDerStrainFDBins.clear();
-    d_vselfFieldGateauxDerStrainFDBins.resize(
-      (d_vselfBinsManager.getVselfFieldBins()).size() * 6);
-
-    dealii::Tensor<2, 3, double> identityTensor;
-    dealii::Tensor<2, 3, double> deformationGradientPerturb1;
-    dealii::Tensor<2, 3, double> deformationGradientPerturb2;
-
-    // initialize to indentity tensors
-    for (unsigned int idim = 0; idim < 3; idim++)
-      for (unsigned int jdim = 0; jdim < 3; jdim++)
-        {
-          if (idim == jdim)
-            {
-              identityTensor[idim][jdim]              = 1.0;
-              deformationGradientPerturb1[idim][jdim] = 1.0;
-              deformationGradientPerturb2[idim][jdim] = 1.0;
-            }
-          else
-            {
-              identityTensor[idim][jdim]              = 0.0;
-              deformationGradientPerturb1[idim][jdim] = 0.0;
-              deformationGradientPerturb2[idim][jdim] = 0.0;
-            }
-        }
-
-    const double fdparam          = 1e-5;
-    unsigned int flattenedIdCount = 0;
-    for (unsigned int idim = 0; idim < 3; ++idim)
-      for (unsigned int jdim = 0; jdim <= idim; jdim++)
-        {
-          deformationGradientPerturb1 = identityTensor;
-          if (idim == jdim)
-            {
-              deformationGradientPerturb1[idim][jdim] = 1.0 + fdparam;
-            }
-          else
-            {
-              deformationGradientPerturb1[idim][jdim] = fdparam;
-              deformationGradientPerturb1[jdim][idim] = fdparam;
-            }
-
-          deformDomain(deformationGradientPerturb1 *
-                         dealii::invert(deformationGradientPerturb2),
-                       true,
-                       false,
-                       d_dftParamsPtr->verbosity >= 4 ? true : false);
-
-          computing_timer.enter_subsection(
-            "Nuclear self-potential perturbation solve");
-
-          d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
-            d_basisOperationsPtrElectroHost,
-            d_baseDofHandlerIndexElectro,
-            d_phiTotAXQuadratureIdElectro,
-            d_binsStartDofHandlerIndexElectro,
-#ifdef DFTFE_WITH_DEVICE
-            FEOrder == FEOrderElectro ?
-              d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
-              d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
-            d_BLASWrapperPtr,
-#endif
-            d_constraintsPRefined,
-            d_imagePositionsTrunc,
-            d_imageIdsTrunc,
-            d_imageChargesTrunc,
-            d_smearedChargeWidths,
-            d_smearedChargeQuadratureIdElectro,
-            d_dftParamsPtr->smearedNuclearCharges);
-
-          computing_timer.leave_subsection(
-            "Nuclear self-potential perturbation solve");
-
-          for (unsigned int ibin = 0;
-               ibin < d_vselfBinsManager.getVselfFieldBins().size();
-               ibin++)
-            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] =
-              (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
-
-          deformationGradientPerturb2 = identityTensor;
-          if (idim == jdim)
-            {
-              deformationGradientPerturb2[idim][jdim] = 1.0 - fdparam;
-            }
-          else
-            {
-              deformationGradientPerturb2[idim][jdim] = -fdparam;
-              deformationGradientPerturb2[jdim][idim] = -fdparam;
-            }
-
-          deformDomain(deformationGradientPerturb2 *
-                         dealii::invert(deformationGradientPerturb1),
-                       true,
-                       false,
-                       d_dftParamsPtr->verbosity >= 4 ? true : false);
-
-          computing_timer.enter_subsection(
-            "Nuclear self-potential perturbation solve");
-
-          d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
-            d_basisOperationsPtrElectroHost,
-            d_baseDofHandlerIndexElectro,
-            d_phiTotAXQuadratureIdElectro,
-            d_binsStartDofHandlerIndexElectro,
-#ifdef DFTFE_WITH_DEVICE
-            FEOrder == FEOrderElectro ?
-              d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
-              d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
-            d_BLASWrapperPtr,
-#endif
-            d_constraintsPRefined,
-            d_imagePositionsTrunc,
-            d_imageIdsTrunc,
-            d_imageChargesTrunc,
-            d_smearedChargeWidths,
-            d_smearedChargeQuadratureIdElectro,
-            d_dftParamsPtr->smearedNuclearCharges);
-
-          computing_timer.leave_subsection(
-            "Nuclear self-potential perturbation solve");
-
-          for (unsigned int ibin = 0;
-               ibin < d_vselfBinsManager.getVselfFieldBins().size();
-               ibin++)
-            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] -=
-              (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
-
-          const double fac =
-            (idim == jdim) ? (1.0 / 2.0 / fdparam) : (1.0 / 4.0 / fdparam);
-          for (unsigned int ibin = 0;
-               ibin < d_vselfBinsManager.getVselfFieldBins().size();
-               ibin++)
-            d_vselfFieldGateauxDerStrainFDBins[6 * ibin + flattenedIdCount] *=
-              fac;
-
-          flattenedIdCount++;
-        }
-
-    // reset
-    deformDomain(dealii::invert(deformationGradientPerturb2),
-                 true,
-                 false,
-                 d_dftParamsPtr->verbosity >= 4 ? true : false);
-  }
-
-  // Output wfc
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::outputWfc(
-    const std::string outputFileName)
-  {
-    //
-    // identify the index which is close to Fermi Energy
-    //
-    int indexFermiEnergy = -1.0;
-    for (int spinType = 0; spinType < 1 + d_dftParamsPtr->spinPolarized;
-         ++spinType)
-      {
-        for (int i = 0; i < d_numEigenValues; ++i)
-          {
-            if (eigenValues[0][spinType * d_numEigenValues + i] >= fermiEnergy)
+          const double fdparam          = 1e-5;
+          unsigned int flattenedIdCount = 0;
+          for (unsigned int idim = 0; idim < 3; ++idim)
+            for (unsigned int jdim = 0; jdim <= idim; jdim++)
               {
-                if (i > indexFermiEnergy)
+                deformationGradientPerturb1 = identityTensor;
+                if (idim == jdim)
                   {
-                    indexFermiEnergy = i;
-                    break;
+                    deformationGradientPerturb1[idim][jdim] = 1.0 + fdparam;
                   }
-              }
-          }
-      }
-
-    //
-    // create a range of wavefunctions to output the wavefunction files
-    //
-    int startingRange = 0;
-    int endingRange   = d_numEigenValues;
-
-    /*
-    int startingRange = indexFermiEnergy - 4;
-    int endingRange   = indexFermiEnergy + 4;
-
-    int startingRangeSpin = startingRange;
-
-    for (int spinType = 0; spinType < 1 + d_dftParamsPtr->spinPolarized;
-         ++spinType)
-      {
-        for (int i = indexFermiEnergy - 5; i > 0; --i)
-          {
-            if (std::abs(eigenValues[0][spinType * d_numEigenValues +
-                                        (indexFermiEnergy - 4)] -
-                         eigenValues[0][spinType * d_numEigenValues + i]) <=
-                5e-04)
-              {
-                if (spinType == 0)
-                  startingRange -= 1;
                 else
-                  startingRangeSpin -= 1;
+                  {
+                    deformationGradientPerturb1[idim][jdim] = fdparam;
+                    deformationGradientPerturb1[jdim][idim] = fdparam;
+                  }
+
+                deformDomain(deformationGradientPerturb1 *
+                               dealii::invert(deformationGradientPerturb2),
+                             true,
+                             false,
+                             d_dftParamsPtr->verbosity >= 4 ? true : false);
+
+                computing_timer.enter_subsection(
+                  "Nuclear self-potential perturbation solve");
+
+                d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
+                  d_basisOperationsPtrElectroHost,
+                  d_baseDofHandlerIndexElectro,
+                  d_phiTotAXQuadratureIdElectro,
+                  d_binsStartDofHandlerIndexElectro,
+#ifdef DFTFE_WITH_DEVICE
+                  FEOrder == FEOrderElectro ?
+                    d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
+                    d_basisOperationsPtrElectroDevice
+                      ->cellStiffnessMatrixBasisData(),
+                  d_BLASWrapperPtr,
+#endif
+                  d_constraintsPRefined,
+                  d_imagePositionsTrunc,
+                  d_imageIdsTrunc,
+                  d_imageChargesTrunc,
+                  d_smearedChargeWidths,
+                  d_smearedChargeQuadratureIdElectro,
+                  d_dftParamsPtr->smearedNuclearCharges);
+
+                computing_timer.leave_subsection(
+                  "Nuclear self-potential perturbation solve");
+
+                for (unsigned int ibin = 0;
+                     ibin < d_vselfBinsManager.getVselfFieldBins().size();
+                     ibin++)
+                  d_vselfFieldGateauxDerStrainFDBins[6 * ibin +
+                                                     flattenedIdCount] =
+                    (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
+
+                deformationGradientPerturb2 = identityTensor;
+                if (idim == jdim)
+                  {
+                    deformationGradientPerturb2[idim][jdim] = 1.0 - fdparam;
+                  }
+                else
+                  {
+                    deformationGradientPerturb2[idim][jdim] = -fdparam;
+                    deformationGradientPerturb2[jdim][idim] = -fdparam;
+                  }
+
+                deformDomain(deformationGradientPerturb2 *
+                               dealii::invert(deformationGradientPerturb1),
+                             true,
+                             false,
+                             d_dftParamsPtr->verbosity >= 4 ? true : false);
+
+                computing_timer.enter_subsection(
+                  "Nuclear self-potential perturbation solve");
+
+                d_vselfBinsManager.solveVselfInBinsPerturbedDomain(
+                  d_basisOperationsPtrElectroHost,
+                  d_baseDofHandlerIndexElectro,
+                  d_phiTotAXQuadratureIdElectro,
+                  d_binsStartDofHandlerIndexElectro,
+#ifdef DFTFE_WITH_DEVICE
+                  FEOrder == FEOrderElectro ?
+                    d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
+                    d_basisOperationsPtrElectroDevice
+                      ->cellStiffnessMatrixBasisData(),
+                  d_BLASWrapperPtr,
+#endif
+                  d_constraintsPRefined,
+                  d_imagePositionsTrunc,
+                  d_imageIdsTrunc,
+                  d_imageChargesTrunc,
+                  d_smearedChargeWidths,
+                  d_smearedChargeQuadratureIdElectro,
+                  d_dftParamsPtr->smearedNuclearCharges);
+
+                computing_timer.leave_subsection(
+                  "Nuclear self-potential perturbation solve");
+
+                for (unsigned int ibin = 0;
+                     ibin < d_vselfBinsManager.getVselfFieldBins().size();
+                     ibin++)
+                  d_vselfFieldGateauxDerStrainFDBins[6 * ibin +
+                                                     flattenedIdCount] -=
+                    (d_vselfBinsManager.getPerturbedVselfFieldBins())[ibin];
+
+                const double fac = (idim == jdim) ? (1.0 / 2.0 / fdparam) :
+                                                    (1.0 / 4.0 / fdparam);
+                for (unsigned int ibin = 0;
+                     ibin < d_vselfBinsManager.getVselfFieldBins().size();
+                     ibin++)
+                  d_vselfFieldGateauxDerStrainFDBins[6 * ibin +
+                                                     flattenedIdCount] *= fac;
+
+                flattenedIdCount++;
               }
-          }
-      }
+
+          // reset
+          deformDomain(dealii::invert(deformationGradientPerturb2),
+                       true,
+                       false,
+                       d_dftParamsPtr->verbosity >= 4 ? true : false);
+        }
+
+        // Output wfc
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::outputWfc(
+          const std::string outputFileName)
+        {
+          //
+          // identify the index which is close to Fermi Energy
+          //
+          int indexFermiEnergy = -1.0;
+          for (int spinType = 0; spinType < 1 + d_dftParamsPtr->spinPolarized;
+               ++spinType)
+            {
+              for (int i = 0; i < d_numEigenValues; ++i)
+                {
+                  if (eigenValues[0][spinType * d_numEigenValues + i] >=
+                      fermiEnergy)
+                    {
+                      if (i > indexFermiEnergy)
+                        {
+                          indexFermiEnergy = i;
+                          break;
+                        }
+                    }
+                }
+            }
+
+          //
+          // create a range of wavefunctions to output the wavefunction files
+          //
+          int startingRange = 0;
+          int endingRange   = d_numEigenValues;
+
+          /*
+          int startingRange = indexFermiEnergy - 4;
+          int endingRange   = indexFermiEnergy + 4;
+
+          int startingRangeSpin = startingRange;
+
+          for (int spinType = 0; spinType < 1 + d_dftParamsPtr->spinPolarized;
+               ++spinType)
+            {
+              for (int i = indexFermiEnergy - 5; i > 0; --i)
+                {
+                  if (std::abs(eigenValues[0][spinType * d_numEigenValues +
+                                              (indexFermiEnergy - 4)] -
+                               eigenValues[0][spinType * d_numEigenValues + i])
+          <= 5e-04)
+                    {
+                      if (spinType == 0)
+                        startingRange -= 1;
+                      else
+                        startingRangeSpin -= 1;
+                    }
+                }
+            }
 
 
-    if (startingRangeSpin < startingRange)
-      startingRange = startingRangeSpin;
-    */
-    int numStatesOutput = (endingRange - startingRange) + 1;
+          if (startingRangeSpin < startingRange)
+            startingRange = startingRangeSpin;
+          */
+          int numStatesOutput = (endingRange - startingRange) + 1;
 
 
-    dealii::DataOut<3> data_outEigen;
-    data_outEigen.attach_dof_handler(dofHandlerEigen);
+          dealii::DataOut<3> data_outEigen;
+          data_outEigen.attach_dof_handler(dofHandlerEigen);
 
-    std::vector<distributedCPUVec<double>> tempVec(1);
-    tempVec[0].reinit(d_tempEigenVec);
+          std::vector<distributedCPUVec<double>> tempVec(1);
+          tempVec[0].reinit(d_tempEigenVec);
 
-    std::vector<distributedCPUVec<double>> visualizeWaveFunctions(
-      d_kPointWeights.size() * (1 + d_dftParamsPtr->spinPolarized) *
-      numStatesOutput);
+          std::vector<distributedCPUVec<double>> visualizeWaveFunctions(
+            d_kPointWeights.size() * (1 + d_dftParamsPtr->spinPolarized) *
+            numStatesOutput);
 
-    unsigned int count = 0;
-    for (unsigned int s = 0; s < 1 + d_dftParamsPtr->spinPolarized; ++s)
-      for (unsigned int k = 0; k < d_kPointWeights.size(); ++k)
-        for (unsigned int i = startingRange; i < endingRange; ++i)
-          {
+          unsigned int count = 0;
+          for (unsigned int s = 0; s < 1 + d_dftParamsPtr->spinPolarized; ++s)
+            for (unsigned int k = 0; k < d_kPointWeights.size(); ++k)
+              for (unsigned int i = startingRange; i < endingRange; ++i)
+                {
 #ifdef USE_COMPLEX
-            vectorTools::copyFlattenedSTLVecToSingleCompVec(
-              d_eigenVectorsFlattenedHost.data() +
-                (k * (1 + d_dftParamsPtr->spinPolarized) + s) *
-                  d_numEigenValues *
-                  matrix_free_data.get_vector_partitioner()
-                    ->locally_owned_size(),
-              d_numEigenValues,
-              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-              std::make_pair(i, i + 1),
-              localProc_dof_indicesReal,
-              localProc_dof_indicesImag,
-              tempVec);
+                  vectorTools::copyFlattenedSTLVecToSingleCompVec(
+                    d_eigenVectorsFlattenedHost.data() +
+                      (k * (1 + d_dftParamsPtr->spinPolarized) + s) *
+                        d_numEigenValues *
+                        matrix_free_data.get_vector_partitioner()
+                          ->locally_owned_size(),
+                    d_numEigenValues,
+                    matrix_free_data.get_vector_partitioner()
+                      ->locally_owned_size(),
+                    std::make_pair(i, i + 1),
+                    localProc_dof_indicesReal,
+                    localProc_dof_indicesImag,
+                    tempVec);
 #else
-            vectorTools::copyFlattenedSTLVecToSingleCompVec(
-              d_eigenVectorsFlattenedHost.data() +
-                (k * (1 + d_dftParamsPtr->spinPolarized) + s) *
-                  d_numEigenValues *
-                  matrix_free_data.get_vector_partitioner()
-                    ->locally_owned_size(),
-              d_numEigenValues,
-              matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-              std::make_pair(i, i + 1),
-              tempVec);
+                  vectorTools::copyFlattenedSTLVecToSingleCompVec(
+                    d_eigenVectorsFlattenedHost.data() +
+                      (k * (1 + d_dftParamsPtr->spinPolarized) + s) *
+                        d_numEigenValues *
+                        matrix_free_data.get_vector_partitioner()
+                          ->locally_owned_size(),
+                    d_numEigenValues,
+                    matrix_free_data.get_vector_partitioner()
+                      ->locally_owned_size(),
+                    std::make_pair(i, i + 1),
+                    tempVec);
 #endif
-            tempVec[0].update_ghost_values();
-            constraintsNoneEigenDataInfo.distribute(tempVec[0]);
-            visualizeWaveFunctions[count] = tempVec[0];
-
-            if (d_dftParamsPtr->spinPolarized == 1)
-              data_outEigen.add_data_vector(visualizeWaveFunctions[count],
-                                            "wfc_spin" + std::to_string(s) +
-                                              "_kpoint" + std::to_string(k) +
-                                              "_" + std::to_string(i));
-            else
-              data_outEigen.add_data_vector(visualizeWaveFunctions[count],
-                                            "wfc_kpoint" + std::to_string(k) +
-                                              "_" + std::to_string(i));
-
-            count += 1;
-          }
-
-    data_outEigen.set_flags(dealii::DataOutBase::VtkFlags(
-      std::numeric_limits<double>::min(),
-      std::numeric_limits<unsigned int>::min(),
-      true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
-    data_outEigen.build_patches(FEOrder);
-
-    std::string tempFolder = "waveFunctionOutputFolder";
-    mkdir(tempFolder.c_str(), ACCESSPERMS);
-
-    dftUtils::writeDataVTUParallelLowestPoolId(dofHandlerEigen,
-                                               data_outEigen,
-                                               d_mpiCommParent,
-                                               mpi_communicator,
-                                               interpoolcomm,
-                                               interBandGroupComm,
-                                               tempFolder,
-                                               outputFileName);
-    //"wfcOutput_"+std::to_string(k)+"_"+std::to_string(i));
-  }
-
-
-  // Output density
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::outputDensity()
-  {
-    //
-    // compute nodal electron-density from quad data
-    //
-    distributedCPUVec<double> rhoNodalField;
-    d_matrixFreeDataPRefined.initialize_dof_vector(
-      rhoNodalField, d_densityDofHandlerIndexElectro);
-    rhoNodalField = 0;
-    l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
-                            d_constraintsRhoNodal,
-                            d_densityDofHandlerIndexElectro,
-                            d_densityQuadratureIdElectro,
-                            d_densityOutQuadValues[0],
-                            rhoNodalField);
-
-    d_constraintsRhoNodal.distribute(rhoNodalField);
-    rhoNodalField.update_ghost_values();
-
-    distributedCPUVec<double> magNodalField;
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        magNodalField.reinit(rhoNodalField);
-        magNodalField = 0;
-        l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
-                                d_constraintsRhoNodal,
-                                d_densityDofHandlerIndexElectro,
-                                d_densityQuadratureIdElectro,
-                                d_densityOutQuadValues[1],
-                                magNodalField);
-
-        d_constraintsRhoNodal.distribute(magNodalField);
-        magNodalField.update_ghost_values();
-      }
-
-    //
-    // only generate output for electron-density
-    //
-    dealii::DataOut<3> dataOutRho;
-    dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
-    dataOutRho.add_data_vector(rhoNodalField, std::string("chargeDensity"));
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        dataOutRho.add_data_vector(magNodalField, std::string("magDensity"));
-      }
-    dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
-      std::numeric_limits<double>::min(),
-      std::numeric_limits<unsigned int>::min(),
-      true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
-    dataOutRho.build_patches(FEOrder);
-
-    std::string tempFolder = "densityOutputFolder";
-    mkdir(tempFolder.c_str(), ACCESSPERMS);
-
-    dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
-                                               dataOutRho,
-                                               d_mpiCommParent,
-                                               mpi_communicator,
-                                               interpoolcomm,
-                                               interBandGroupComm,
-                                               tempFolder,
-                                               "densityOutput");
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::writeBands()
-  {
-    int                 numkPoints = d_kPointWeights.size();
-    std::vector<double> eigenValuesFlattened;
-    //
-    for (unsigned int kPoint = 0; kPoint < numkPoints; ++kPoint)
-      for (unsigned int iWave = 0;
-           iWave < d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized);
-           ++iWave)
-        eigenValuesFlattened.push_back(eigenValues[kPoint][iWave]);
-    //
-    //
-    //
-    int totkPoints = dealii::Utilities::MPI::sum(numkPoints, interpoolcomm);
-    std::vector<int> numkPointsArray(d_dftParamsPtr->npool),
-      mpi_offsets(d_dftParamsPtr->npool, 0);
-    std::vector<double> eigenValuesFlattenedGlobal(
-      totkPoints * d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized), 0.0);
-    //
-    MPI_Gather(&numkPoints,
-               1,
-               MPI_INT,
-               &(numkPointsArray[0]),
-               1,
-               MPI_INT,
-               0,
-               interpoolcomm);
-    //
-    numkPointsArray[0] = d_numEigenValues *
-                         (1 + d_dftParamsPtr->spinPolarized) *
-                         numkPointsArray[0];
-    for (unsigned int ipool = 1; ipool < d_dftParamsPtr->npool; ++ipool)
-      {
-        numkPointsArray[ipool] = d_numEigenValues *
-                                 (1 + d_dftParamsPtr->spinPolarized) *
-                                 numkPointsArray[ipool];
-        mpi_offsets[ipool] =
-          mpi_offsets[ipool - 1] + numkPointsArray[ipool - 1];
-      }
-    //
-    MPI_Gatherv(&(eigenValuesFlattened[0]),
-                numkPoints * d_numEigenValues *
-                  (1 + d_dftParamsPtr->spinPolarized),
-                MPI_DOUBLE,
-                &(eigenValuesFlattenedGlobal[0]),
-                &(numkPointsArray[0]),
-                &(mpi_offsets[0]),
-                MPI_DOUBLE,
-                0,
-                interpoolcomm);
-    //
-    if (d_dftParamsPtr->reproducible_output && d_dftParamsPtr->verbosity == 0)
-      {
-        pcout << "Writing Bands File..." << std::endl;
-        pcout << "K-Point   WaveNo.  ";
-        if (d_dftParamsPtr->spinPolarized)
-          pcout << "SpinUpEigenValue          SpinDownEigenValue" << std::endl;
-        else
-          pcout << "EigenValue" << std::endl;
-      }
-
-    std::ifstream file("fermiEnergy.out");
-    std::string   line;
-
-    if (file.is_open())
-      {
-        if (d_dftParamsPtr->constraintMagnetization)
-          {
-            std::vector<double> temp;
-            while (getline(file, line))
-              {
-                if (!line.empty())
-                  {
-                    std::istringstream iss(line);
-                    double             temp1;
-                    while (iss >> temp1)
-                      {
-                        temp.push_back(temp1);
-                      }
-                  }
-              }
-            fermiEnergy     = temp[0];
-            fermiEnergyUp   = temp[1];
-            fermiEnergyDown = temp[2];
-          }
-        else
-          {
-            getline(file, line);
-            std::istringstream iss(line);
-            iss >> fermiEnergy;
-          }
-      }
-    else
-      {
-        pcout << "Unable to open file fermiEnergy.out. Check if it is present.";
-      }
-    double FE = fermiEnergy;
-    pcout << "Fermi Energy: " << FE << std::endl;
-    unsigned int        maxeigenIndex = d_numEigenValues;
-    std::vector<double> occupationVector(totkPoints *
-                                           (1 + d_dftParamsPtr->spinPolarized),
-                                         0.0);
-
-    for (int iWave = 1; iWave < d_numEigenValues; iWave++)
-      {
-        double maxOcc = -1.0;
-        for (unsigned int kPoint = 0; kPoint < totkPoints; ++kPoint)
-          {
-            if (d_dftParamsPtr->spinPolarized)
-              {
-                occupationVector[2 * kPoint] = dftUtils::getPartialOccupancy(
-                  eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
-                                             iWave],
-                  FE,
-                  C_kb,
-                  d_dftParamsPtr->TVal);
-                occupationVector[2 * kPoint + 1] =
-                  dftUtils::getPartialOccupancy(
-                    eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
-                                                 d_numEigenValues +
-                                               iWave],
-                    FE,
-                    C_kb,
-                    d_dftParamsPtr->TVal);
-                maxOcc = std::max(maxOcc,
-                                  std::max(occupationVector[2 * kPoint + 1],
-                                           occupationVector[2 * kPoint]));
-              }
-            else
-              {
-                occupationVector[kPoint] = dftUtils::getPartialOccupancy(
-                  eigenValuesFlattenedGlobal[kPoint * d_numEigenValues + iWave],
-                  FE,
-                  C_kb,
-                  d_dftParamsPtr->TVal);
-                maxOcc = std::max(maxOcc, occupationVector[kPoint]);
-              }
-          }
-
-        if (maxOcc < 1E-5)
-          {
-            maxeigenIndex = iWave;
-            break;
-          }
-      }
-
-    unsigned int numberEigenValues =
-      d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0 ?
-        std::min(d_numEigenValues, maxeigenIndex + 10) :
-        d_dftParamsPtr->highestStateOfInterestForChebFiltering;
-    if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
-      {
-        FILE *pFile;
-        pFile = fopen("bands.out", "w");
-        fprintf(pFile, "%d %d \n", totkPoints, numberEigenValues);
-        for (unsigned int kPoint = 0; kPoint < totkPoints; ++kPoint)
-          {
-            for (unsigned int iWave = 0; iWave < numberEigenValues; ++iWave)
-              {
-                if (d_dftParamsPtr->spinPolarized)
-                  {
-                    double occupancyUp = dftUtils::getPartialOccupancy(
-                      eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
-                                                 iWave],
-                      FE,
-                      C_kb,
-                      d_dftParamsPtr->TVal);
-
-                    double occupancyDown = dftUtils::getPartialOccupancy(
-                      eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
-                                                   d_numEigenValues +
-                                                 iWave],
-                      FE,
-                      C_kb,
-                      d_dftParamsPtr->TVal);
-
-                    fprintf(
-                      pFile,
-                      "%d  %d   %.14g   %.14g   %.14g   %.14g\n",
-                      kPoint,
-                      iWave,
-                      eigenValuesFlattenedGlobal[2 * kPoint * d_numEigenValues +
-                                                 iWave],
-                      eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
-                                                   d_numEigenValues +
-                                                 iWave],
-                      occupancyUp,
-                      occupancyDown);
-                    if (d_dftParamsPtr->reproducible_output &&
-                        d_dftParamsPtr->verbosity == 0)
-                      {
-                        double eigenUpTrunc =
-                          std::floor(
-                            1000000000 *
-                            (eigenValuesFlattenedGlobal
-                               [2 * kPoint * d_numEigenValues + iWave])) /
-                          1000000000.0;
-                        double eigenDownTrunc =
-                          std::floor(
-                            1000000000 *
-                            (eigenValuesFlattenedGlobal
-                               [(2 * kPoint + 1) * d_numEigenValues + iWave])) /
-                          1000000000.0;
-                        double occupancyUpTrunc =
-                          std::floor(1000000000 * (occupancyUp)) / 1000000000.0;
-                        double occupancyDownTrunc =
-                          std::floor(1000000000 * (occupancyDown)) /
-                          1000000000.0;
-                        pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(8) << eigenUpTrunc << "  "
-                              << eigenDownTrunc << "  " << occupancyUpTrunc
-                              << "  " << occupancyDownTrunc << std::endl;
-                      }
-                  }
-                else
-                  {
-                    double occupancy = dftUtils::getPartialOccupancy(
-                      eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
-                                                 iWave],
-                      FE,
-                      C_kb,
-                      d_dftParamsPtr->TVal);
-                    fprintf(
-                      pFile,
-                      "%d  %d %.14g %.14g\n",
-                      kPoint,
-                      iWave,
-                      eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
-                                                 iWave],
-                      occupancy);
-                    if (d_dftParamsPtr->reproducible_output &&
-                        d_dftParamsPtr->verbosity == 0)
-                      {
-                        double eigenTrunc =
-                          std::floor(1000000000 *
-                                     (eigenValuesFlattenedGlobal
-                                        [kPoint * d_numEigenValues + iWave])) /
-                          1000000000.0;
-                        double occupancyTrunc =
-                          std::floor(1000000000 * (occupancy)) / 1000000000.0;
-                        pcout << kPoint << "  " << iWave << "  " << std::fixed
-                              << std::setprecision(8) << eigenTrunc << " "
-                              << occupancyTrunc << std::endl;
-                      }
-                  }
-              }
-          }
-      }
-    MPI_Barrier(d_mpiCommParent);
-    //
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomLocationsCart() const
-  {
-    return atomLocations;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getImageAtomLocationsCart()
-    const
-  {
-    return d_imagePositionsTrunc;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<int> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getImageAtomIDs() const
-  {
-    return d_imageIdsTrunc;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomLocationsFrac() const
-  {
-    return atomLocationsFractional;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getCell() const
-  {
-    return d_domainBoundingVectors;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getCellVolume() const
-  {
-    return d_domainVolume;
-  }
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::set<unsigned int> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomTypes() const
-  {
-    return atomTypes;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getForceonAtoms() const
-  {
-    return (forcePtr->getAtomsForces());
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const dealii::Tensor<2, 3, double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getCellStress() const
-  {
-    return (forcePtr->getStress());
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  dftParameters &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getParametersObject() const
-  {
-    return (*d_dftParamsPtr);
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getInternalEnergy() const
-  {
-    return d_groundStateEnergy;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getEntropicEnergy() const
-  {
-    return d_entropicEnergy;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getFreeEnergy() const
-  {
-    return d_freeEnergy;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const distributedCPUVec<double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getRhoNodalOut() const
-  {
-    return d_densityOutNodalValues[0];
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const distributedCPUVec<double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getRhoNodalSplitOut() const
-  {
-    return d_rhoOutNodalValuesSplit;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getTotalChargeforRhoSplit()
-  {
-    double temp =
-      (-totalCharge(d_matrixFreeDataPRefined, d_rhoOutNodalValuesSplit) /
-       d_domainVolume);
-    return (temp);
-  }
-
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::resetRhoNodalIn(
-    distributedCPUVec<double> &OutDensity)
-  {
-    d_densityOutNodalValues[0] = OutDensity;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::resetRhoNodalSplitIn(
-    distributedCPUVec<double> &OutDensity)
-  {
-    d_rhoOutNodalValuesSplit = OutDensity;
-  }
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::writeGSElectronDensity(
-    const std::string Path) const
-  {
-    const unsigned int poolId =
-      dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-    const unsigned int bandGroupId =
-      dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-
-    if (poolId == 0 && bandGroupId == 0)
-      {
-        std::vector<std::shared_ptr<dftUtils::CompositeData>> data(0);
-
-        const dealii::Quadrature<3> &quadrature_formula =
-          matrix_free_data.get_quadrature(d_densityQuadratureId);
-        dealii::FEValues<3> fe_values(FE,
-                                      quadrature_formula,
-                                      dealii::update_quadrature_points |
-                                        dealii::update_JxW_values);
-        const unsigned int  n_q_points = quadrature_formula.size();
-
-        const unsigned int totalLocallyOwnedCells =
-          d_basisOperationsPtrHost->nCells();
-
-        const unsigned int totalQuadPoints =
-          totalLocallyOwnedCells * n_q_points;
-
-        std::vector<unsigned int> numberOfPointsInEachProc;
-        numberOfPointsInEachProc.resize(n_mpi_processes);
-        std::fill(numberOfPointsInEachProc.begin(),
-                  numberOfPointsInEachProc.end(),
-                  0);
-
-        numberOfPointsInEachProc[this_mpi_process] = totalQuadPoints;
-
-
-        MPI_Allreduce(MPI_IN_PLACE,
-                      &numberOfPointsInEachProc[0],
-                      n_mpi_processes,
-                      dataTypes::mpi_type_id(&numberOfPointsInEachProc[0]),
-                      MPI_SUM,
-                      mpi_communicator);
-
-        unsigned int quadIdStartIndex = 0;
-
-        for (unsigned int iProc = 0; iProc < this_mpi_process; iProc++)
-          {
-            quadIdStartIndex += numberOfPointsInEachProc[iProc];
-          }
-
-
-
-        // loop over elements
-        typename dealii::DoFHandler<3>::active_cell_iterator
-          cell = dofHandler.begin_active(),
-          endc = dofHandler.end();
-        for (; cell != endc; ++cell)
-          {
-            if (cell->is_locally_owned())
-              {
-                fe_values.reinit(cell);
-                const unsigned int cellIndex =
-                  d_basisOperationsPtrHost->cellIndex(cell->id());
-                const double *rhoValues =
-                  d_densityOutQuadValues[0].data() + cellIndex * n_q_points;
-                const double *magValues =
-                  d_dftParamsPtr->spinPolarized == 1 ?
-                    d_densityOutQuadValues[1].data() + cellIndex * n_q_points :
-                    NULL;
-
-                for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-                  {
-                    std::vector<double> quadVals(0);
-
-                    const dealii::Point<3> &quadPoint =
-                      fe_values.quadrature_point(q_point);
-                    const double jxw = fe_values.JxW(q_point);
-
-                    quadVals.push_back(quadIdStartIndex +
-                                       cellIndex * n_q_points + q_point);
-                    quadVals.push_back(quadPoint[0]);
-                    quadVals.push_back(quadPoint[1]);
-                    quadVals.push_back(quadPoint[2]);
-                    quadVals.push_back(jxw);
-
-                    if (d_dftParamsPtr->spinPolarized == 1)
-                      {
-                        quadVals.push_back(rhoValues[q_point]);
-                        quadVals.push_back(magValues[q_point]);
-                      }
-                    else
-                      {
-                        quadVals.push_back(rhoValues[q_point]);
-                      }
-
-                    data.push_back(
-                      std::make_shared<dftUtils::QuadDataCompositeWrite>(
-                        quadVals));
-                  }
-              }
-          }
-
-        std::vector<dftUtils::CompositeData *> dataRawPtrs(data.size());
-        for (unsigned int i = 0; i < data.size(); ++i)
-          dataRawPtrs[i] = data[i].get();
-        dftUtils::MPIWriteOnFile().writeData(dataRawPtrs,
-                                             Path,
-                                             mpi_communicator);
-      }
-  }
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::writeMesh()
-  {
-    //
-    // compute nodal electron-density from quad data
-    //
-    distributedCPUVec<double> rhoNodalField;
-    d_matrixFreeDataPRefined.initialize_dof_vector(
-      rhoNodalField, d_densityDofHandlerIndexElectro);
-    rhoNodalField = 0;
-    l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
-                            d_constraintsRhoNodal,
-                            d_densityDofHandlerIndexElectro,
-                            d_densityQuadratureIdElectro,
-                            d_densityInQuadValues[0],
-                            rhoNodalField);
-
-    //
-    // only generate output for electron-density
-    //
-    dealii::DataOut<3> dataOutRho;
-    dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
-    dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
-    dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
-      std::numeric_limits<double>::min(),
-      std::numeric_limits<unsigned int>::min(),
-      true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
-    dataOutRho.build_patches(FEOrder);
-
-    std::string tempFolder = "meshOutputFolder";
-    mkdir(tempFolder.c_str(), ACCESSPERMS);
-
-    dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
-                                               dataOutRho,
-                                               d_mpiCommParent,
-                                               mpi_communicator,
-                                               interpoolcomm,
-                                               interBandGroupComm,
-                                               tempFolder,
-                                               "intialDensityOutput");
-
-
-
-    if (d_dftParamsPtr->verbosity >= 1)
-      pcout
-        << std::endl
-        << "------------------DFT-FE mesh file creation completed---------------------------"
-        << std::endl;
-  }
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeResidualQuadData(
-    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &outValues,
-    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &inValues,
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &residualValues,
-    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &        JxW,
-    const bool computeNorm)
-  {
-    std::transform(outValues.begin(),
-                   outValues.end(),
-                   inValues.begin(),
-                   residualValues.begin(),
-                   std::minus<>{});
-    double normValue = 0.0;
-    if (computeNorm)
-      {
-        for (unsigned int iQuad = 0; iQuad < residualValues.size(); ++iQuad)
-          normValue +=
-            residualValues[iQuad] * residualValues[iQuad] * JxW[iQuad];
-        MPI_Allreduce(
-          MPI_IN_PLACE, &normValue, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
-      }
-    return std::sqrt(normValue);
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeResidualNodalData(
-    const distributedCPUVec<double> &outValues,
-    const distributedCPUVec<double> &inValues,
-    distributedCPUVec<double> &      residualValues)
-  {
-    residualValues.reinit(inValues);
-
-    residualValues = 0.0;
-
-    // compute residual = rhoOut - rhoIn
-    residualValues.add(1.0, outValues, -1.0, inValues);
-
-    // compute l2 norm of the field residual
-    double normValue = rhofieldl2Norm(d_matrixFreeDataPRefined,
-                                      residualValues,
+                  tempVec[0].update_ghost_values();
+                  constraintsNoneEigenDataInfo.distribute(tempVec[0]);
+                  visualizeWaveFunctions[count] = tempVec[0];
+
+                  if (d_dftParamsPtr->spinPolarized == 1)
+                    data_outEigen.add_data_vector(
+                      visualizeWaveFunctions[count],
+                      "wfc_spin" + std::to_string(s) + "_kpoint" +
+                        std::to_string(k) + "_" + std::to_string(i));
+                  else
+                    data_outEigen.add_data_vector(visualizeWaveFunctions[count],
+                                                  "wfc_kpoint" +
+                                                    std::to_string(k) + "_" +
+                                                    std::to_string(i));
+
+                  count += 1;
+                }
+
+          data_outEigen.set_flags(dealii::DataOutBase::VtkFlags(
+            std::numeric_limits<double>::min(),
+            std::numeric_limits<unsigned int>::min(),
+            true,
+            dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+              best_speed, // This flag is version dependent for dealII 9.5.0 it
+                          // is
+                          // dealii::DataOutBase::CompressionLevel::best_speed
+            true));       // higher order cells set to true
+          data_outEigen.build_patches(FEOrder);
+
+          std::string tempFolder = "waveFunctionOutputFolder";
+          mkdir(tempFolder.c_str(), ACCESSPERMS);
+
+          dftUtils::writeDataVTUParallelLowestPoolId(dofHandlerEigen,
+                                                     data_outEigen,
+                                                     d_mpiCommParent,
+                                                     mpi_communicator,
+                                                     interpoolcomm,
+                                                     interBandGroupComm,
+                                                     tempFolder,
+                                                     outputFileName);
+          //"wfcOutput_"+std::to_string(k)+"_"+std::to_string(i));
+        }
+
+
+        // Output density
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::outputDensity()
+        {
+          //
+          // compute nodal electron-density from quad data
+          //
+          distributedCPUVec<double> rhoNodalField;
+          d_matrixFreeDataPRefined.initialize_dof_vector(
+            rhoNodalField, d_densityDofHandlerIndexElectro);
+          rhoNodalField = 0;
+          l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                  d_constraintsRhoNodal,
+                                  d_densityDofHandlerIndexElectro,
+                                  d_densityQuadratureIdElectro,
+                                  d_densityOutQuadValues[0],
+                                  rhoNodalField);
+
+          d_constraintsRhoNodal.distribute(rhoNodalField);
+          rhoNodalField.update_ghost_values();
+
+          distributedCPUVec<double> magNodalField;
+          if (d_dftParamsPtr->spinPolarized == 1)
+            {
+              magNodalField.reinit(rhoNodalField);
+              magNodalField = 0;
+              l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                      d_constraintsRhoNodal,
                                       d_densityDofHandlerIndexElectro,
-                                      d_densityQuadratureIdElectro);
-    return normValue;
-  }
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    determineAtomsOfInterstPseudopotential(
-      const std::vector<std::vector<double>> &atomCoordinates)
-  {
-    d_atomLocationsInterestPseudopotential.clear();
-    d_atomIdPseudopotentialInterestToGlobalId.clear();
-    unsigned atomIdPseudo = 0;
-    // pcout<<"Atoms of interest: "<<std::endl;
-    for (unsigned int iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
-      {
-        if (true)
-          {
-            d_atomLocationsInterestPseudopotential.push_back(
-              atomCoordinates[iAtom]);
-            d_atomIdPseudopotentialInterestToGlobalId[atomIdPseudo] = iAtom;
-            // pcout<<iAtom<<" "<<atomIdPseudo<<" ";
-            // for(int i = 0; i <
-            // d_atomLocationsInterestPseudopotential[atomIdPseudo].size(); i++)
-            //   pcout<<d_atomLocationsInterestPseudopotential[atomIdPseudo][i]<<"
-            //   ";
-            // pcout<<std::endl;
-            atomIdPseudo++;
-          }
-      }
-  }
+                                      d_densityQuadratureIdElectro,
+                                      d_densityOutQuadValues[1],
+                                      magNodalField);
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::HOST> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenVectorsHost() const
-  {
-    return d_eigenVectorsFlattenedHost;
-  }
+              d_constraintsRhoNodal.distribute(magNodalField);
+              magNodalField.update_ghost_values();
+            }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenVectors() const
-  {
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
-      return d_eigenVectorsFlattenedHost;
+          //
+          // only generate output for electron-density
+          //
+          dealii::DataOut<3> dataOutRho;
+          dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
+          dataOutRho.add_data_vector(rhoNodalField,
+                                     std::string("chargeDensity"));
+          if (d_dftParamsPtr->spinPolarized == 1)
+            {
+              dataOutRho.add_data_vector(magNodalField,
+                                         std::string("magDensity"));
+            }
+          dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
+            std::numeric_limits<double>::min(),
+            std::numeric_limits<unsigned int>::min(),
+            true,
+            dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+              best_speed, // This flag is version dependent for dealII 9.5.0 it
+                          // is
+                          // dealii::DataOutBase::CompressionLevel::best_speed
+            true));       // higher order cells set to true
+          dataOutRho.build_patches(FEOrder);
+
+          std::string tempFolder = "densityOutputFolder";
+          mkdir(tempFolder.c_str(), ACCESSPERMS);
+
+          dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
+                                                     dataOutRho,
+                                                     d_mpiCommParent,
+                                                     mpi_communicator,
+                                                     interpoolcomm,
+                                                     interBandGroupComm,
+                                                     tempFolder,
+                                                     "densityOutput");
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::writeBands()
+        {
+          int                 numkPoints = d_kPointWeights.size();
+          std::vector<double> eigenValuesFlattened;
+          //
+          for (unsigned int kPoint = 0; kPoint < numkPoints; ++kPoint)
+            for (unsigned int iWave = 0;
+                 iWave < d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized);
+                 ++iWave)
+              eigenValuesFlattened.push_back(eigenValues[kPoint][iWave]);
+          //
+          //
+          //
+          int totkPoints =
+            dealii::Utilities::MPI::sum(numkPoints, interpoolcomm);
+          std::vector<int> numkPointsArray(d_dftParamsPtr->npool),
+            mpi_offsets(d_dftParamsPtr->npool, 0);
+          std::vector<double> eigenValuesFlattenedGlobal(
+            totkPoints * d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized),
+            0.0);
+          //
+          MPI_Gather(&numkPoints,
+                     1,
+                     MPI_INT,
+                     &(numkPointsArray[0]),
+                     1,
+                     MPI_INT,
+                     0,
+                     interpoolcomm);
+          //
+          numkPointsArray[0] = d_numEigenValues *
+                               (1 + d_dftParamsPtr->spinPolarized) *
+                               numkPointsArray[0];
+          for (unsigned int ipool = 1; ipool < d_dftParamsPtr->npool; ++ipool)
+            {
+              numkPointsArray[ipool] = d_numEigenValues *
+                                       (1 + d_dftParamsPtr->spinPolarized) *
+                                       numkPointsArray[ipool];
+              mpi_offsets[ipool] =
+                mpi_offsets[ipool - 1] + numkPointsArray[ipool - 1];
+            }
+          //
+          MPI_Gatherv(&(eigenValuesFlattened[0]),
+                      numkPoints * d_numEigenValues *
+                        (1 + d_dftParamsPtr->spinPolarized),
+                      MPI_DOUBLE,
+                      &(eigenValuesFlattenedGlobal[0]),
+                      &(numkPointsArray[0]),
+                      &(mpi_offsets[0]),
+                      MPI_DOUBLE,
+                      0,
+                      interpoolcomm);
+          //
+          if (d_dftParamsPtr->reproducible_output &&
+              d_dftParamsPtr->verbosity == 0)
+            {
+              pcout << "Writing Bands File..." << std::endl;
+              pcout << "K-Point   WaveNo.  ";
+              if (d_dftParamsPtr->spinPolarized)
+                pcout << "SpinUpEigenValue          SpinDownEigenValue"
+                      << std::endl;
+              else
+                pcout << "EigenValue" << std::endl;
+            }
+
+          std::ifstream file("fermiEnergy.out");
+          std::string   line;
+
+          if (file.is_open())
+            {
+              if (d_dftParamsPtr->constraintMagnetization)
+                {
+                  std::vector<double> temp;
+                  while (getline(file, line))
+                    {
+                      if (!line.empty())
+                        {
+                          std::istringstream iss(line);
+                          double             temp1;
+                          while (iss >> temp1)
+                            {
+                              temp.push_back(temp1);
+                            }
+                        }
+                    }
+                  fermiEnergy     = temp[0];
+                  fermiEnergyUp   = temp[1];
+                  fermiEnergyDown = temp[2];
+                }
+              else
+                {
+                  getline(file, line);
+                  std::istringstream iss(line);
+                  iss >> fermiEnergy;
+                }
+            }
+          else
+            {
+              pcout
+                << "Unable to open file fermiEnergy.out. Check if it is present.";
+            }
+          double FE = fermiEnergy;
+          pcout << "Fermi Energy: " << FE << std::endl;
+          unsigned int        maxeigenIndex = d_numEigenValues;
+          std::vector<double> occupationVector(
+            totkPoints * (1 + d_dftParamsPtr->spinPolarized), 0.0);
+
+          for (int iWave = 1; iWave < d_numEigenValues; iWave++)
+            {
+              double maxOcc = -1.0;
+              for (unsigned int kPoint = 0; kPoint < totkPoints; ++kPoint)
+                {
+                  if (d_dftParamsPtr->spinPolarized)
+                    {
+                      occupationVector[2 * kPoint] =
+                        dftUtils::getPartialOccupancy(
+                          eigenValuesFlattenedGlobal[2 * kPoint *
+                                                       d_numEigenValues +
+                                                     iWave],
+                          FE,
+                          C_kb,
+                          d_dftParamsPtr->TVal);
+                      occupationVector[2 * kPoint + 1] =
+                        dftUtils::getPartialOccupancy(
+                          eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
+                                                       d_numEigenValues +
+                                                     iWave],
+                          FE,
+                          C_kb,
+                          d_dftParamsPtr->TVal);
+                      maxOcc =
+                        std::max(maxOcc,
+                                 std::max(occupationVector[2 * kPoint + 1],
+                                          occupationVector[2 * kPoint]));
+                    }
+                  else
+                    {
+                      occupationVector[kPoint] = dftUtils::getPartialOccupancy(
+                        eigenValuesFlattenedGlobal[kPoint * d_numEigenValues +
+                                                   iWave],
+                        FE,
+                        C_kb,
+                        d_dftParamsPtr->TVal);
+                      maxOcc = std::max(maxOcc, occupationVector[kPoint]);
+                    }
+                }
+
+              if (maxOcc < 1E-5)
+                {
+                  maxeigenIndex = iWave;
+                  break;
+                }
+            }
+
+          unsigned int numberEigenValues =
+            d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0 ?
+              std::min(d_numEigenValues, maxeigenIndex + 10) :
+              d_dftParamsPtr->highestStateOfInterestForChebFiltering;
+          if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
+            {
+              FILE *pFile;
+              pFile = fopen("bands.out", "w");
+              fprintf(pFile, "%d %d \n", totkPoints, numberEigenValues);
+              for (unsigned int kPoint = 0; kPoint < totkPoints; ++kPoint)
+                {
+                  for (unsigned int iWave = 0; iWave < numberEigenValues;
+                       ++iWave)
+                    {
+                      if (d_dftParamsPtr->spinPolarized)
+                        {
+                          double occupancyUp = dftUtils::getPartialOccupancy(
+                            eigenValuesFlattenedGlobal[2 * kPoint *
+                                                         d_numEigenValues +
+                                                       iWave],
+                            FE,
+                            C_kb,
+                            d_dftParamsPtr->TVal);
+
+                          double occupancyDown = dftUtils::getPartialOccupancy(
+                            eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
+                                                         d_numEigenValues +
+                                                       iWave],
+                            FE,
+                            C_kb,
+                            d_dftParamsPtr->TVal);
+
+                          fprintf(
+                            pFile,
+                            "%d  %d   %.14g   %.14g   %.14g   %.14g\n",
+                            kPoint,
+                            iWave,
+                            eigenValuesFlattenedGlobal[2 * kPoint *
+                                                         d_numEigenValues +
+                                                       iWave],
+                            eigenValuesFlattenedGlobal[(2 * kPoint + 1) *
+                                                         d_numEigenValues +
+                                                       iWave],
+                            occupancyUp,
+                            occupancyDown);
+                          if (d_dftParamsPtr->reproducible_output &&
+                              d_dftParamsPtr->verbosity == 0)
+                            {
+                              double eigenUpTrunc =
+                                std::floor(
+                                  1000000000 *
+                                  (eigenValuesFlattenedGlobal
+                                     [2 * kPoint * d_numEigenValues + iWave])) /
+                                1000000000.0;
+                              double eigenDownTrunc =
+                                std::floor(
+                                  1000000000 *
+                                  (eigenValuesFlattenedGlobal
+                                     [(2 * kPoint + 1) * d_numEigenValues +
+                                      iWave])) /
+                                1000000000.0;
+                              double occupancyUpTrunc =
+                                std::floor(1000000000 * (occupancyUp)) /
+                                1000000000.0;
+                              double occupancyDownTrunc =
+                                std::floor(1000000000 * (occupancyDown)) /
+                                1000000000.0;
+                              pcout << kPoint << "  " << iWave << "  "
+                                    << std::fixed << std::setprecision(8)
+                                    << eigenUpTrunc << "  " << eigenDownTrunc
+                                    << "  " << occupancyUpTrunc << "  "
+                                    << occupancyDownTrunc << std::endl;
+                            }
+                        }
+                      else
+                        {
+                          double occupancy = dftUtils::getPartialOccupancy(
+                            eigenValuesFlattenedGlobal[kPoint *
+                                                         d_numEigenValues +
+                                                       iWave],
+                            FE,
+                            C_kb,
+                            d_dftParamsPtr->TVal);
+                          fprintf(pFile,
+                                  "%d  %d %.14g %.14g\n",
+                                  kPoint,
+                                  iWave,
+                                  eigenValuesFlattenedGlobal
+                                    [kPoint * d_numEigenValues + iWave],
+                                  occupancy);
+                          if (d_dftParamsPtr->reproducible_output &&
+                              d_dftParamsPtr->verbosity == 0)
+                            {
+                              double eigenTrunc =
+                                std::floor(
+                                  1000000000 *
+                                  (eigenValuesFlattenedGlobal
+                                     [kPoint * d_numEigenValues + iWave])) /
+                                1000000000.0;
+                              double occupancyTrunc =
+                                std::floor(1000000000 * (occupancy)) /
+                                1000000000.0;
+                              pcout << kPoint << "  " << iWave << "  "
+                                    << std::fixed << std::setprecision(8)
+                                    << eigenTrunc << " " << occupancyTrunc
+                                    << std::endl;
+                            }
+                        }
+                    }
+                }
+            }
+          MPI_Barrier(d_mpiCommParent);
+          //
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<std::vector<double>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomLocationsCart()
+          const
+        {
+          return atomLocations;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<std::vector<double>>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::
+            getImageAtomLocationsCart() const
+        {
+          return d_imagePositionsTrunc;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<int> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getImageAtomIDs() const
+        {
+          return d_imageIdsTrunc;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<std::vector<double>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomLocationsFrac()
+          const
+        {
+          return atomLocationsFractional;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<std::vector<double>>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getCell() const
+        {
+          return d_domainBoundingVectors;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double dftClass<FEOrder, FEOrderElectro, memorySpace>::getCellVolume()
+          const
+        {
+          return d_domainVolume;
+        }
+
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::set<unsigned int>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomTypes() const
+        {
+          return atomTypes;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<double> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getForceonAtoms() const
+        {
+          return (forcePtr->getAtomsForces());
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const dealii::Tensor<2, 3, double>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getCellStress() const
+        {
+          return (forcePtr->getStress());
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        dftParameters &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getParametersObject()
+          const
+        {
+          return (*d_dftParamsPtr);
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getInternalEnergy()
+          const
+        {
+          return d_groundStateEnergy;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getEntropicEnergy()
+          const
+        {
+          return d_entropicEnergy;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double dftClass<FEOrder, FEOrderElectro, memorySpace>::getFreeEnergy()
+          const
+        {
+          return d_freeEnergy;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const distributedCPUVec<double> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getRhoNodalOut() const
+        {
+          return d_densityOutNodalValues[0];
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const distributedCPUVec<double>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getRhoNodalSplitOut()
+            const
+        {
+          return d_rhoOutNodalValuesSplit;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getTotalChargeforRhoSplit()
+        {
+          double temp =
+            (-totalCharge(d_matrixFreeDataPRefined, d_rhoOutNodalValuesSplit) /
+             d_domainVolume);
+          return (temp);
+        }
+
+
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::resetRhoNodalIn(
+          distributedCPUVec<double> & OutDensity)
+        {
+          d_densityOutNodalValues[0] = OutDensity;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::resetRhoNodalSplitIn(
+          distributedCPUVec<double> & OutDensity)
+        {
+          d_rhoOutNodalValuesSplit = OutDensity;
+        }
+
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::writeGSElectronDensity(
+          const std::string Path) const
+        {
+          const unsigned int poolId =
+            dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+          const unsigned int bandGroupId =
+            dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+
+          if (poolId == 0 && bandGroupId == 0)
+            {
+              std::vector<std::shared_ptr<dftUtils::CompositeData>> data(0);
+
+              const dealii::Quadrature<3> &quadrature_formula =
+                matrix_free_data.get_quadrature(d_densityQuadratureId);
+              dealii::FEValues<3> fe_values(FE,
+                                            quadrature_formula,
+                                            dealii::update_quadrature_points |
+                                              dealii::update_JxW_values);
+              const unsigned int  n_q_points = quadrature_formula.size();
+
+              const unsigned int totalLocallyOwnedCells =
+                d_basisOperationsPtrHost->nCells();
+
+              const unsigned int totalQuadPoints =
+                totalLocallyOwnedCells * n_q_points;
+
+              std::vector<unsigned int> numberOfPointsInEachProc;
+              numberOfPointsInEachProc.resize(n_mpi_processes);
+              std::fill(numberOfPointsInEachProc.begin(),
+                        numberOfPointsInEachProc.end(),
+                        0);
+
+              numberOfPointsInEachProc[this_mpi_process] = totalQuadPoints;
+
+
+              MPI_Allreduce(MPI_IN_PLACE,
+                            &numberOfPointsInEachProc[0],
+                            n_mpi_processes,
+                            dataTypes::mpi_type_id(
+                              &numberOfPointsInEachProc[0]),
+                            MPI_SUM,
+                            mpi_communicator);
+
+              unsigned int quadIdStartIndex = 0;
+
+              for (unsigned int iProc = 0; iProc < this_mpi_process; iProc++)
+                {
+                  quadIdStartIndex += numberOfPointsInEachProc[iProc];
+                }
+
+
+
+              // loop over elements
+              typename dealii::DoFHandler<3>::active_cell_iterator
+                cell = dofHandler.begin_active(),
+                endc = dofHandler.end();
+              for (; cell != endc; ++cell)
+                {
+                  if (cell->is_locally_owned())
+                    {
+                      fe_values.reinit(cell);
+                      const unsigned int cellIndex =
+                        d_basisOperationsPtrHost->cellIndex(cell->id());
+                      const double *rhoValues =
+                        d_densityOutQuadValues[0].data() +
+                        cellIndex * n_q_points;
+                      const double *magValues =
+                        d_dftParamsPtr->spinPolarized == 1 ?
+                          d_densityOutQuadValues[1].data() +
+                            cellIndex * n_q_points :
+                          NULL;
+
+                      for (unsigned int q_point = 0; q_point < n_q_points;
+                           ++q_point)
+                        {
+                          std::vector<double> quadVals(0);
+
+                          const dealii::Point<3> &quadPoint =
+                            fe_values.quadrature_point(q_point);
+                          const double jxw = fe_values.JxW(q_point);
+
+                          quadVals.push_back(quadIdStartIndex +
+                                             cellIndex * n_q_points + q_point);
+                          quadVals.push_back(quadPoint[0]);
+                          quadVals.push_back(quadPoint[1]);
+                          quadVals.push_back(quadPoint[2]);
+                          quadVals.push_back(jxw);
+
+                          if (d_dftParamsPtr->spinPolarized == 1)
+                            {
+                              quadVals.push_back(rhoValues[q_point]);
+                              quadVals.push_back(magValues[q_point]);
+                            }
+                          else
+                            {
+                              quadVals.push_back(rhoValues[q_point]);
+                            }
+
+                          data.push_back(
+                            std::make_shared<dftUtils::QuadDataCompositeWrite>(
+                              quadVals));
+                        }
+                    }
+                }
+
+              std::vector<dftUtils::CompositeData *> dataRawPtrs(data.size());
+              for (unsigned int i = 0; i < data.size(); ++i)
+                dataRawPtrs[i] = data[i].get();
+              dftUtils::MPIWriteOnFile().writeData(dataRawPtrs,
+                                                   Path,
+                                                   mpi_communicator);
+            }
+        }
+
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::writeMesh()
+        {
+          //
+          // compute nodal electron-density from quad data
+          //
+          distributedCPUVec<double> rhoNodalField;
+          d_matrixFreeDataPRefined.initialize_dof_vector(
+            rhoNodalField, d_densityDofHandlerIndexElectro);
+          rhoNodalField = 0;
+          l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                  d_constraintsRhoNodal,
+                                  d_densityDofHandlerIndexElectro,
+                                  d_densityQuadratureIdElectro,
+                                  d_densityInQuadValues[0],
+                                  rhoNodalField);
+
+          //
+          // only generate output for electron-density
+          //
+          dealii::DataOut<3> dataOutRho;
+          dataOutRho.attach_dof_handler(d_dofHandlerRhoNodal);
+          dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
+          dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
+            std::numeric_limits<double>::min(),
+            std::numeric_limits<unsigned int>::min(),
+            true,
+            dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
+              best_speed, // This flag is version dependent for dealII 9.5.0 it
+                          // is
+                          // dealii::DataOutBase::CompressionLevel::best_speed
+            true));       // higher order cells set to true
+          dataOutRho.build_patches(FEOrder);
+
+          std::string tempFolder = "meshOutputFolder";
+          mkdir(tempFolder.c_str(), ACCESSPERMS);
+
+          dftUtils::writeDataVTUParallelLowestPoolId(d_dofHandlerRhoNodal,
+                                                     dataOutRho,
+                                                     d_mpiCommParent,
+                                                     mpi_communicator,
+                                                     interpoolcomm,
+                                                     interBandGroupComm,
+                                                     tempFolder,
+                                                     "intialDensityOutput");
+
+
+
+          if (d_dftParamsPtr->verbosity >= 1)
+            pcout
+              << std::endl
+              << "------------------DFT-FE mesh file creation completed---------------------------"
+              << std::endl;
+        }
+
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::computeResidualQuadData(
+          const dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+            &outValues,
+          const dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+            &inValues,
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+            &residualValues,
+          const dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+            &        JxW,
+          const bool computeNorm)
+        {
+          std::transform(outValues.begin(),
+                         outValues.end(),
+                         inValues.begin(),
+                         residualValues.begin(),
+                         std::minus<>{});
+          double normValue = 0.0;
+          if (computeNorm)
+            {
+              for (unsigned int iQuad = 0; iQuad < residualValues.size();
+                   ++iQuad)
+                normValue +=
+                  residualValues[iQuad] * residualValues[iQuad] * JxW[iQuad];
+              MPI_Allreduce(MPI_IN_PLACE,
+                            &normValue,
+                            1,
+                            MPI_DOUBLE,
+                            MPI_SUM,
+                            mpi_communicator);
+            }
+          return std::sqrt(normValue);
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          computeResidualNodalData(const distributedCPUVec<double> &outValues,
+                                   const distributedCPUVec<double> &inValues,
+                                   distributedCPUVec<double> &residualValues)
+        {
+          residualValues.reinit(inValues);
+
+          residualValues = 0.0;
+
+          // compute residual = rhoOut - rhoIn
+          residualValues.add(1.0, outValues, -1.0, inValues);
+
+          // compute l2 norm of the field residual
+          double normValue = rhofieldl2Norm(d_matrixFreeDataPRefined,
+                                            residualValues,
+                                            d_densityDofHandlerIndexElectro,
+                                            d_densityQuadratureIdElectro);
+          return normValue;
+        }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          determineAtomsOfInterstPseudopotential(
+            const std::vector<std::vector<double>> &atomCoordinates)
+        {
+          d_atomLocationsInterestPseudopotential.clear();
+          d_atomIdPseudopotentialInterestToGlobalId.clear();
+          unsigned atomIdPseudo = 0;
+          // pcout<<"Atoms of interest: "<<std::endl;
+          for (unsigned int iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
+            {
+              if (true)
+                {
+                  d_atomLocationsInterestPseudopotential.push_back(
+                    atomCoordinates[iAtom]);
+                  d_atomIdPseudopotentialInterestToGlobalId[atomIdPseudo] =
+                    iAtom;
+                  // pcout<<iAtom<<" "<<atomIdPseudo<<" ";
+                  // for(int i = 0; i <
+                  // d_atomLocationsInterestPseudopotential[atomIdPseudo].size();
+                  // i++)
+                  //   pcout<<d_atomLocationsInterestPseudopotential[atomIdPseudo][i]<<"
+                  //   ";
+                  // pcout<<std::endl;
+                  atomIdPseudo++;
+                }
+            }
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const dftfe::utils::MemoryStorage<dataTypes::number,
+                                          dftfe::utils::MemorySpace::HOST>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenVectorsHost()
+            const
+        {
+          return d_eigenVectorsFlattenedHost;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenVectors() const
+        {
+          if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+            return d_eigenVectorsFlattenedHost;
 #ifdef DFTFE_WITH_DEVICE
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-      return d_eigenVectorsFlattenedDevice;
+          if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+            return d_eigenVectorsFlattenedDevice;
 #endif
-  }
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getFermiEnergy() const
-  {
-    return fermiEnergy;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double dftClass<FEOrder, FEOrderElectro, memorySpace>::getFermiEnergy()
+          const
+        {
+          return fermiEnergy;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getNumElectrons() const
-  {
-    return numElectrons;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        double dftClass<FEOrder, FEOrderElectro, memorySpace>::getNumElectrons()
+          const
+        {
+          return numElectrons;
+        }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::setNumElectrons(
-    unsigned int inputNumElectrons)
-  {
-    this->numElectrons = inputNumElectrons;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::setNumElectrons(
+          unsigned int inputNumElectrons)
+        {
+          this->numElectrons = inputNumElectrons;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenValues() const
-  {
-    return eigenValues;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<std::vector<double>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenValues() const
+        {
+          return eigenValues;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  elpaScalaManager *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getElpaScalaManager() const
-  {
-    return d_elpaScala;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        elpaScalaManager *
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getElpaScalaManager()
+          const
+        {
+          return d_elpaScala;
+        }
 
 #ifdef DFTFE_WITH_DEVICE
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  chebyshevOrthogonalizedSubspaceIterationSolverDevice *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    getSubspaceIterationSolverDevice()
-  {
-    return &d_subspaceIterationSolverDevice;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        chebyshevOrthogonalizedSubspaceIterationSolverDevice *
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getSubspaceIterationSolverDevice()
+        {
+          return &d_subspaceIterationSolverDevice;
+        }
 
 #endif
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  chebyshevOrthogonalizedSubspaceIterationSolver *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    getSubspaceIterationSolverHost()
-  {
-    return &d_subspaceIterationSolver;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        chebyshevOrthogonalizedSubspaceIterationSolver *
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getSubspaceIterationSolverHost()
+        {
+          return &d_subspaceIterationSolver;
+        }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  KohnShamHamiltonianOperator<memorySpace> *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getOperatorClass()
-  {
-    return d_kohnShamDFTOperatorPtr;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        KohnShamHamiltonianOperator<memorySpace>
+          *dftClass<FEOrder, FEOrderElectro, memorySpace>::getOperatorClass()
+        {
+          return d_kohnShamDFTOperatorPtr;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  unsigned int
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityDofHandlerIndex()
-  {
-    return d_densityDofHandlerIndex;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        unsigned int dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getDensityDofHandlerIndex()
+        {
+          return d_densityDofHandlerIndex;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  unsigned int
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityQuadratureId()
-  {
-    return d_densityQuadratureId;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        unsigned int
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityQuadratureId()
+        {
+          return d_densityQuadratureId;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getKPointWeights() const
-  {
-    return d_kPointWeights;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<double> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getKPointWeights() const
+        {
+          return d_kPointWeights;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  unsigned int
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getNumEigenValues() const
-  {
-    return d_numEigenValues;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        unsigned int
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getNumEigenValues()
+          const
+        {
+          return d_numEigenValues;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  triangulationManager *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getTriangulationManager()
-  {
-    return &d_mesh;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        triangulationManager *dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getTriangulationManager()
+        {
+          return &d_mesh;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  dealii::AffineConstraints<double> *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityConstraint()
-  {
-    return &constraintsNone;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        dealii::AffineConstraints<double> *
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityConstraint()
+        {
+          return &constraintsNone;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const dealii::MatrixFree<3, double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getMatrixFreeDataElectro()
-    const
-  {
-    return d_matrixFreeDataPRefined;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const dealii::MatrixFree<3, double>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::
+            getMatrixFreeDataElectro() const
+        {
+          return d_matrixFreeDataPRefined;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  unsigned int
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getElectroDofHandlerIndex()
-    const
-  {
-    return d_phiTotDofHandlerIndexElectro;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        unsigned int dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getElectroDofHandlerIndex() const
+        {
+          return d_phiTotDofHandlerIndexElectro;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  unsigned int
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getElectroQuadratureRhsId()
-    const
-  {
-    return d_densityQuadratureIdElectro;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        unsigned int dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getElectroQuadratureRhsId() const
+        {
+          return d_densityQuadratureIdElectro;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  unsigned int
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getElectroQuadratureAxId()
-    const
-  {
-    return d_phiTotAXQuadratureIdElectro;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        unsigned int dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getElectroQuadratureAxId() const
+        {
+          return d_phiTotAXQuadratureIdElectro;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::shared_ptr<
-    dftfe::basis::FEBasisOperations<dataTypes::number,
-                                    double,
-                                    dftfe::utils::MemorySpace::HOST>>
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getBasisOperationsHost()
-  {
-    return d_basisOperationsPtrHost;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::shared_ptr<
+          dftfe::basis::FEBasisOperations<dataTypes::number,
+                                          double,
+                                          dftfe::utils::MemorySpace::HOST>>
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getBasisOperationsHost()
+        {
+          return d_basisOperationsPtrHost;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
 
-  std::shared_ptr<
-    dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getBasisOperationsMemSpace()
-  {
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
-      return d_basisOperationsPtrHost;
+        std::shared_ptr<dftfe::basis::FEBasisOperations<dataTypes::number,
+                                                        double,
+                                                        memorySpace>>
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getBasisOperationsMemSpace()
+        {
+          if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+            return d_basisOperationsPtrHost;
 #ifdef DFTFE_WITH_DEVICE
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-      return d_basisOperationsPtrDevice;
+          if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+            return d_basisOperationsPtrDevice;
 #endif
-  }
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::shared_ptr<
-    dftfe::basis::
-      FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    getBasisOperationsElectroHost()
-  {
-    return d_basisOperationsPtrElectroHost;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::shared_ptr<
+          dftfe::basis::
+            FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getBasisOperationsElectroHost()
+        {
+          return d_basisOperationsPtrElectroHost;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::shared_ptr<dftfe::basis::FEBasisOperations<double, double, memorySpace>>
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    getBasisOperationsElectroMemSpace()
-  {
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
-      return d_basisOperationsPtrElectroHost;
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::shared_ptr<
+          dftfe::basis::FEBasisOperations<double, double, memorySpace>>
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getBasisOperationsElectroMemSpace()
+        {
+          if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+            return d_basisOperationsPtrElectroHost;
 #ifdef DFTFE_WITH_DEVICE
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-      return d_basisOperationsPtrElectroDevice;
+          if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+            return d_basisOperationsPtrElectroDevice;
 #endif
-  }
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getBLASWrapperMemSpace()
-  {
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
-      return d_BLASWrapperPtrHost;
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getBLASWrapperMemSpace()
+        {
+          if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+            return d_BLASWrapperPtrHost;
 #ifdef DFTFE_WITH_DEVICE
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-      return d_BLASWrapperPtr;
+          if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+            return d_BLASWrapperPtr;
 #endif
-  }
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::shared_ptr<
-    dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getBLASWrapperHost()
-  {
-    return d_BLASWrapperPtrHost;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getBLASWrapperHost()
+        {
+          return d_BLASWrapperPtrHost;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::vector<
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityInValues()
-  {
-    return d_densityInQuadValues;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityInValues()
+        {
+          return d_densityInQuadValues;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::vector<
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityOutValues()
-  {
-    return d_densityOutQuadValues;
-  }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityOutValues()
+        {
+          return d_densityOutQuadValues;
+        }
 
-  /// map of atom node number and atomic weight
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::map<dealii::types::global_dof_index, double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomNodeToChargeMap()
-  {
-    return d_atomNodeIdToChargeMap;
-  }
+        /// map of atom node number and atomic weight
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::map<dealii::types::global_dof_index, double> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomNodeToChargeMap()
+        {
+          return d_atomNodeIdToChargeMap;
+        }
 
-  /// non-intersecting smeared charges of all atoms at quad points
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::map<dealii::CellId, std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getBQuadValuesAllAtoms()
-  {
-    return d_bQuadValuesAllAtoms;
-  }
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  unsigned int
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    getSmearedChargeQuadratureIdElectro()
-  {
-    return d_smearedChargeQuadratureIdElectro;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const dealii::AffineConstraints<double> *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getConstraintsVectorElectro()
-  {
-    return d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro];
-  }
+        /// non-intersecting smeared charges of all atoms at quad points
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::map<dealii::CellId, std::vector<double>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getBQuadValuesAllAtoms()
+        {
+          return d_bQuadValuesAllAtoms;
+        }
 
 
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        unsigned int dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getSmearedChargeQuadratureIdElectro()
+        {
+          return d_smearedChargeQuadratureIdElectro;
+        }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const MPI_Comm &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getMPIDomain() const
-  {
-    return mpi_communicator;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const MPI_Comm &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getMPIParent() const
-  {
-    return d_mpiCommParent;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const MPI_Comm &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getMPIInterPool() const
-  {
-    return interpoolcomm;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const MPI_Comm &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getMPIInterBand() const
-  {
-    return interBandGroupComm;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const expConfiningPotential &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getConfiningPotential() const
-  {
-    return d_expConfiningPot;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getNearestAtomDistance() const
-  {
-    return d_nearestAtomDistances;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::vector<std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getLocalVselfs() const
-  {
-    return d_localVselfs;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::map<dealii::CellId, std::vector<unsigned int>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getbCellNonTrivialAtomIds()
-    const
-  {
-    return d_bCellNonTrivialAtomIds;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  std::shared_ptr<hubbard<dataTypes::number, memorySpace>>
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getHubbardClassPtr()
-  {
-    return d_hubbardClassPtr;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  bool
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::isHubbardCorrectionsUsed()
-  {
-    return d_useHubbard;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  const std::map<dealii::CellId, std::vector<double>> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getPseudoVLoc() const
-  {
-    return d_pseudoVLoc;
-  }
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::updateAuxDensityXCMatrix(
-    const std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &densityQuadValues,
-    const std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                                                  gradDensityQuadValues,
-    const std::map<dealii::CellId, std::vector<double>> &rhoCore,
-    const std::map<dealii::CellId, std::vector<double>> &gradRhoCore,
-    const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      &                                     eigenVectorsFlattenedMemSpace,
-    const std::vector<std::vector<double>> &eigenValues_,
-    const double                            fermiEnergy_,
-    const double                            fermiEnergyUp_,
-    const double                            fermiEnergyDown_,
-    std::shared_ptr<AuxDensityMatrix<memorySpace>> auxDensityMatrixXCPtr)
-  {
-    bool isGradDensityDataDependent =
-      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
-       densityFamilyType::GGA);
-
-    const bool isGGA = isGradDensityDataDependent;
-    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
-    const unsigned int totalLocallyOwnedCells =
-      d_basisOperationsPtrHost->nCells();
-    const unsigned int nQuadsPerCell =
-      d_basisOperationsPtrHost->nQuadsPerCell();
-    const unsigned int spinPolarizedFactor = 1 + d_dftParamsPtr->spinPolarized;
-
-    if (d_dftParamsPtr->auxBasisTypeXC == "FE")
-      {
-        std::unordered_map<std::string, std::vector<double>>
-                             densityProjectionInputs;
-        std::vector<double> &densityValsForXC =
-          densityProjectionInputs["densityFunc"];
-        densityValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell, 0);
-
-        if (spinPolarizedFactor == 1)
-          {
-            for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                 ++iCell)
-              {
-                const double *cellRhoValues =
-                  densityQuadValues[0].data() + iCell * nQuadsPerCell;
-
-                for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                  densityValsForXC[iCell * nQuadsPerCell + iQuad] =
-                    cellRhoValues[iQuad] / 2.0;
-
-                for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                  densityValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
-                                   iCell * nQuadsPerCell + iQuad] =
-                    cellRhoValues[iQuad] / 2.0;
-              }
-          }
-        else if (spinPolarizedFactor == 2)
-          {
-            for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                 ++iCell)
-              {
-                const double *cellRhoValues =
-                  densityQuadValues[0].data() + iCell * nQuadsPerCell;
-                const double *cellMagValues =
-                  densityQuadValues[1].data() + iCell * nQuadsPerCell;
-
-                for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                  densityValsForXC[iCell * nQuadsPerCell + iQuad] =
-                    cellRhoValues[iQuad] / 2.0 + cellMagValues[iQuad] / 2.0;
-
-                for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                  densityValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
-                                   iCell * nQuadsPerCell + iQuad] =
-                    cellRhoValues[iQuad] / 2.0 - cellMagValues[iQuad] / 2.0;
-              }
-          }
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const dealii::AffineConstraints<double>
+          *dftClass<FEOrder, FEOrderElectro, memorySpace>::
+            getConstraintsVectorElectro()
+        {
+          return d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro];
+        }
 
 
 
-        if (d_dftParamsPtr->nonLinearCoreCorrection)
-          {
-            for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                 ++iCell)
-              {
-                const std::vector<double> &tempRhoCore =
-                  rhoCore.find(d_basisOperationsPtrHost->cellID(iCell))->second;
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const MPI_Comm &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getMPIDomain() const
+        {
+          return mpi_communicator;
+        }
 
-                for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                  densityValsForXC[iCell * nQuadsPerCell + iQuad] +=
-                    tempRhoCore[iQuad] / 2.0;
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const MPI_Comm &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getMPIParent() const
+        {
+          return d_mpiCommParent;
+        }
 
-                for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                  densityValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
-                                   iCell * nQuadsPerCell + iQuad] +=
-                    tempRhoCore[iQuad] / 2.0;
-              }
-          }
-        if (isGGA)
-          {
-            std::vector<double> &gradDensityValsForXC =
-              densityProjectionInputs["gradDensityFunc"];
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const MPI_Comm &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getMPIInterPool() const
+        {
+          return interpoolcomm;
+        }
 
-            gradDensityValsForXC.resize(2 * totalLocallyOwnedCells *
-                                          nQuadsPerCell * 3,
-                                        0);
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const MPI_Comm &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getMPIInterBand() const
+        {
+          return interBandGroupComm;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const expConfiningPotential &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getConfiningPotential()
+          const
+        {
+          return d_expConfiningPot;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<double> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getNearestAtomDistance()
+          const
+        {
+          return d_nearestAtomDistances;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::vector<std::vector<double>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getLocalVselfs() const
+        {
+          return d_localVselfs;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::map<dealii::CellId, std::vector<unsigned int>>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::
+            getbCellNonTrivialAtomIds() const
+        {
+          return d_bCellNonTrivialAtomIds;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        std::shared_ptr<hubbard<dataTypes::number, memorySpace>>
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getHubbardClassPtr()
+        {
+          return d_hubbardClassPtr;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        bool dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          isHubbardCorrectionsUsed()
+        {
+          return d_useHubbard;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        const std::map<dealii::CellId, std::vector<double>>
+          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getPseudoVLoc() const
+        {
+          return d_pseudoVLoc;
+        }
+
+        template <unsigned int              FEOrder,
+                  unsigned int              FEOrderElectro,
+                  dftfe::utils::MemorySpace memorySpace>
+        void dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          updateAuxDensityXCMatrix(
+            const std::vector<
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>>
+              &densityQuadValues,
+            const std::vector<
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>>
+              &gradDensityQuadValues,
+            const std::map<dealii::CellId, std::vector<double>> &rhoCore,
+            const std::map<dealii::CellId, std::vector<double>> &gradRhoCore,
+            const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+              &eigenVectorsFlattenedMemSpace,
+            const std::vector<std::vector<double>> &eigenValues_,
+            const double                            fermiEnergy_,
+            const double                            fermiEnergyUp_,
+            const double                            fermiEnergyDown_,
+            std::shared_ptr<AuxDensityMatrix<memorySpace>>
+              auxDensityMatrixXCPtr)
+        {
+          bool isGradDensityDataDependent =
+            (d_excManagerPtr->getExcSSDFunctionalObj()
+               ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+
+          const bool isGGA = isGradDensityDataDependent;
+          d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
+          const unsigned int totalLocallyOwnedCells =
+            d_basisOperationsPtrHost->nCells();
+          const unsigned int nQuadsPerCell =
+            d_basisOperationsPtrHost->nQuadsPerCell();
+          const unsigned int spinPolarizedFactor =
+            1 + d_dftParamsPtr->spinPolarized;
+
+          if (d_dftParamsPtr->auxBasisTypeXC == "FE")
+            {
+              std::unordered_map<std::string, std::vector<double>>
+                                   densityProjectionInputs;
+              std::vector<double> &densityValsForXC =
+                densityProjectionInputs["densityFunc"];
+              densityValsForXC.resize(2 * totalLocallyOwnedCells *
+                                        nQuadsPerCell,
+                                      0);
+
+              if (spinPolarizedFactor == 1)
+                {
+                  for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
+                       ++iCell)
+                    {
+                      const double *cellRhoValues =
+                        densityQuadValues[0].data() + iCell * nQuadsPerCell;
+
+                      for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                           ++iQuad)
+                        densityValsForXC[iCell * nQuadsPerCell + iQuad] =
+                          cellRhoValues[iQuad] / 2.0;
+
+                      for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                           ++iQuad)
+                        densityValsForXC[totalLocallyOwnedCells *
+                                           nQuadsPerCell +
+                                         iCell * nQuadsPerCell + iQuad] =
+                          cellRhoValues[iQuad] / 2.0;
+                    }
+                }
+              else if (spinPolarizedFactor == 2)
+                {
+                  for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
+                       ++iCell)
+                    {
+                      const double *cellRhoValues =
+                        densityQuadValues[0].data() + iCell * nQuadsPerCell;
+                      const double *cellMagValues =
+                        densityQuadValues[1].data() + iCell * nQuadsPerCell;
+
+                      for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                           ++iQuad)
+                        densityValsForXC[iCell * nQuadsPerCell + iQuad] =
+                          cellRhoValues[iQuad] / 2.0 +
+                          cellMagValues[iQuad] / 2.0;
+
+                      for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                           ++iQuad)
+                        densityValsForXC[totalLocallyOwnedCells *
+                                           nQuadsPerCell +
+                                         iCell * nQuadsPerCell + iQuad] =
+                          cellRhoValues[iQuad] / 2.0 -
+                          cellMagValues[iQuad] / 2.0;
+                    }
+                }
 
 
-            if (spinPolarizedFactor == 1)
-              {
-                for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                     ++iCell)
-                  {
-                    const double *cellGradRhoValues =
-                      gradDensityQuadValues[0].data() +
-                      iCell * nQuadsPerCell * 3;
 
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        gradDensityValsForXC[iCell * nQuadsPerCell * 3 +
-                                             iQuad * 3 + idim] =
-                          cellGradRhoValues[3 * iQuad + idim] / 2.0;
+              if (d_dftParamsPtr->nonLinearCoreCorrection)
+                {
+                  for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
+                       ++iCell)
+                    {
+                      const std::vector<double> &tempRhoCore =
+                        rhoCore.find(d_basisOperationsPtrHost->cellID(iCell))
+                          ->second;
 
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        gradDensityValsForXC[totalLocallyOwnedCells *
-                                               nQuadsPerCell * 3 +
-                                             iCell * nQuadsPerCell * 3 +
-                                             iQuad * 3 + idim] =
-                          cellGradRhoValues[3 * iQuad + idim] / 2.0;
-                  }
-              }
-            else if (spinPolarizedFactor == 2)
-              {
-                for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                     ++iCell)
-                  {
-                    const double *cellGradRhoValues =
-                      gradDensityQuadValues[0].data() +
-                      iCell * nQuadsPerCell * 3;
-                    const double *cellGradMagValues =
-                      gradDensityQuadValues[1].data() +
-                      iCell * nQuadsPerCell * 3;
+                      for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                           ++iQuad)
+                        densityValsForXC[iCell * nQuadsPerCell + iQuad] +=
+                          tempRhoCore[iQuad] / 2.0;
+
+                      for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                           ++iQuad)
+                        densityValsForXC[totalLocallyOwnedCells *
+                                           nQuadsPerCell +
+                                         iCell * nQuadsPerCell + iQuad] +=
+                          tempRhoCore[iQuad] / 2.0;
+                    }
+                }
+              if (isGGA)
+                {
+                  std::vector<double> &gradDensityValsForXC =
+                    densityProjectionInputs["gradDensityFunc"];
+
+                  gradDensityValsForXC.resize(2 * totalLocallyOwnedCells *
+                                                nQuadsPerCell * 3,
+                                              0);
 
 
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        gradDensityValsForXC[iCell * nQuadsPerCell * 3 +
-                                             iQuad * 3 + idim] =
-                          cellGradRhoValues[3 * iQuad + idim] / 2.0 +
-                          cellGradMagValues[3 * iQuad + idim] / 2.0;
+                  if (spinPolarizedFactor == 1)
+                    {
+                      for (unsigned int iCell = 0;
+                           iCell < totalLocallyOwnedCells;
+                           ++iCell)
+                        {
+                          const double *cellGradRhoValues =
+                            gradDensityQuadValues[0].data() +
+                            iCell * nQuadsPerCell * 3;
 
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        gradDensityValsForXC[totalLocallyOwnedCells *
-                                               nQuadsPerCell * 3 +
-                                             iCell * nQuadsPerCell * 3 +
-                                             iQuad * 3 + idim] =
-                          cellGradRhoValues[3 * iQuad + idim] / 2.0 -
-                          cellGradMagValues[3 * iQuad + idim] / 2.0;
-                  }
-              }
+                          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                               ++iQuad)
+                            for (unsigned int idim = 0; idim < 3; ++idim)
+                              gradDensityValsForXC[iCell * nQuadsPerCell * 3 +
+                                                   iQuad * 3 + idim] =
+                                cellGradRhoValues[3 * iQuad + idim] / 2.0;
 
-
-            if (d_dftParamsPtr->nonLinearCoreCorrection)
-              {
-                for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
-                     ++iCell)
-                  {
-                    const std::vector<double> &tempGradRhoCore =
-                      gradRhoCore.find(d_basisOperationsPtrHost->cellID(iCell))
-                        ->second;
-
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        gradDensityValsForXC[iCell * nQuadsPerCell * 3 +
-                                             iQuad * 3 + idim] +=
-                          tempGradRhoCore[3 * iQuad + idim] / 2.0;
-
-                    for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-                      for (unsigned int idim = 0; idim < 3; ++idim)
-                        gradDensityValsForXC[totalLocallyOwnedCells *
-                                               nQuadsPerCell * 3 +
-                                             iCell * nQuadsPerCell * 3 +
-                                             iQuad * 3 + idim] +=
-                          tempGradRhoCore[3 * iQuad + idim] / 2.0;
-                  }
-              }
-          }
-
-        auto quadPoints = d_basisOperationsPtrHost->quadPoints();
-
-        auto                 quadWeights = d_basisOperationsPtrHost->JxW();
-        std::vector<double> &quadPointsStdVec =
-          densityProjectionInputs["quadpts"];
-        quadPointsStdVec.resize(quadPoints.size());
-        std::vector<double> &quadWeightsStdVec =
-          densityProjectionInputs["quadWt"];
-        quadWeightsStdVec.resize(quadWeights.size());
-        for (unsigned int iQuad = 0; iQuad < quadWeightsStdVec.size(); ++iQuad)
-          {
-            for (unsigned int idim = 0; idim < 3; ++idim)
-              quadPointsStdVec[3 * iQuad + idim] = quadPoints[3 * iQuad + idim];
-            quadWeightsStdVec[iQuad] = std::real(quadWeights[iQuad]);
-          }
+                          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                               ++iQuad)
+                            for (unsigned int idim = 0; idim < 3; ++idim)
+                              gradDensityValsForXC[totalLocallyOwnedCells *
+                                                     nQuadsPerCell * 3 +
+                                                   iCell * nQuadsPerCell * 3 +
+                                                   iQuad * 3 + idim] =
+                                cellGradRhoValues[3 * iQuad + idim] / 2.0;
+                        }
+                    }
+                  else if (spinPolarizedFactor == 2)
+                    {
+                      for (unsigned int iCell = 0;
+                           iCell < totalLocallyOwnedCells;
+                           ++iCell)
+                        {
+                          const double *cellGradRhoValues =
+                            gradDensityQuadValues[0].data() +
+                            iCell * nQuadsPerCell * 3;
+                          const double *cellGradMagValues =
+                            gradDensityQuadValues[1].data() +
+                            iCell * nQuadsPerCell * 3;
 
 
-        auxDensityMatrixXCPtr->projectDensityStart(densityProjectionInputs);
+                          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                               ++iQuad)
+                            for (unsigned int idim = 0; idim < 3; ++idim)
+                              gradDensityValsForXC[iCell * nQuadsPerCell * 3 +
+                                                   iQuad * 3 + idim] =
+                                cellGradRhoValues[3 * iQuad + idim] / 2.0 +
+                                cellGradMagValues[3 * iQuad + idim] / 2.0;
 
-        auxDensityMatrixXCPtr->projectDensityEnd(mpi_communicator);
+                          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                               ++iQuad)
+                            for (unsigned int idim = 0; idim < 3; ++idim)
+                              gradDensityValsForXC[totalLocallyOwnedCells *
+                                                     nQuadsPerCell * 3 +
+                                                   iCell * nQuadsPerCell * 3 +
+                                                   iQuad * 3 + idim] =
+                                cellGradRhoValues[3 * iQuad + idim] / 2.0 -
+                                cellGradMagValues[3 * iQuad + idim] / 2.0;
+                        }
+                    }
 
 
-        std::shared_ptr<AuxDensityMatrixFE<memorySpace>>
-          auxDensityMatrixXCFEPtr =
-            std::dynamic_pointer_cast<AuxDensityMatrixFE<memorySpace>>(
-              auxDensityMatrixXCPtr);
+                  if (d_dftParamsPtr->nonLinearCoreCorrection)
+                    {
+                      for (unsigned int iCell = 0;
+                           iCell < totalLocallyOwnedCells;
+                           ++iCell)
+                        {
+                          const std::vector<double> &tempGradRhoCore =
+                            gradRhoCore
+                              .find(d_basisOperationsPtrHost->cellID(iCell))
+                              ->second;
 
-        Assert(
-          auxDensityMatrixXCFEPtr != nullptr,
-          dealii::ExcMessage(
-            "DFT-FE Error: unable to type cast the auxiliary matrix to FE."));
+                          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                               ++iQuad)
+                            for (unsigned int idim = 0; idim < 3; ++idim)
+                              gradDensityValsForXC[iCell * nQuadsPerCell * 3 +
+                                                   iQuad * 3 + idim] +=
+                                tempGradRhoCore[3 * iQuad + idim] / 2.0;
 
-        auxDensityMatrixXCFEPtr->setDensityMatrixComponents(
-          eigenVectorsFlattenedMemSpace, d_partialOccupancies);
-      }
-    else if (d_dftParamsPtr->auxBasisTypeXC == "SLATER")
-      {
+                          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell;
+                               ++iQuad)
+                            for (unsigned int idim = 0; idim < 3; ++idim)
+                              gradDensityValsForXC[totalLocallyOwnedCells *
+                                                     nQuadsPerCell * 3 +
+                                                   iCell * nQuadsPerCell * 3 +
+                                                   iQuad * 3 + idim] +=
+                                tempGradRhoCore[3 * iQuad + idim] / 2.0;
+                        }
+                    }
+                }
+
+              auto quadPoints = d_basisOperationsPtrHost->quadPoints();
+
+              auto quadWeights = d_basisOperationsPtrHost->JxW();
+              std::vector<double> &quadPointsStdVec =
+                densityProjectionInputs["quadpts"];
+              quadPointsStdVec.resize(quadPoints.size());
+              std::vector<double> &quadWeightsStdVec =
+                densityProjectionInputs["quadWt"];
+              quadWeightsStdVec.resize(quadWeights.size());
+              for (unsigned int iQuad = 0; iQuad < quadWeightsStdVec.size();
+                   ++iQuad)
+                {
+                  for (unsigned int idim = 0; idim < 3; ++idim)
+                    quadPointsStdVec[3 * iQuad + idim] =
+                      quadPoints[3 * iQuad + idim];
+                  quadWeightsStdVec[iQuad] = std::real(quadWeights[iQuad]);
+                }
+
+
+              auxDensityMatrixXCPtr->projectDensityStart(
+                densityProjectionInputs);
+
+              auxDensityMatrixXCPtr->projectDensityEnd(mpi_communicator);
+
+
+              std::shared_ptr<AuxDensityMatrixFE<memorySpace>>
+                auxDensityMatrixXCFEPtr =
+                  std::dynamic_pointer_cast<AuxDensityMatrixFE<memorySpace>>(
+                    auxDensityMatrixXCPtr);
+
+              Assert(
+                auxDensityMatrixXCFEPtr != nullptr,
+                dealii::ExcMessage(
+                  "DFT-FE Error: unable to type cast the auxiliary matrix to FE."));
+
+              auxDensityMatrixXCFEPtr->setDensityMatrixComponents(
+                eigenVectorsFlattenedMemSpace, d_partialOccupancies);
+            }
+          else if (d_dftParamsPtr->auxBasisTypeXC == "SLATER")
+            {
 #ifndef USE_COMPLEX
-        auto basisOpMemSpace     = getBasisOperationsMemSpace();
-        auto blasWrapperMemSpace = getBLASWrapperMemSpace();
-        computeAuxProjectedDensityMatrixFromPSI(eigenVectorsFlattenedMemSpace,
-                                                d_numEigenValues,
-                                                d_partialOccupancies,
-                                                basisOpMemSpace,
-                                                blasWrapperMemSpace,
-                                                d_densityDofHandlerIndex,
-                                                d_gllQuadratureId,
-                                                d_kPointWeights,
-                                                *auxDensityMatrixXCPtr,
-                                                d_mpiCommParent,
-                                                mpi_communicator,
-                                                interpoolcomm,
-                                                interBandGroupComm,
-                                                *d_dftParamsPtr);
+              auto basisOpMemSpace     = getBasisOperationsMemSpace();
+              auto blasWrapperMemSpace = getBLASWrapperMemSpace();
+              computeAuxProjectedDensityMatrixFromPSI(
+                eigenVectorsFlattenedMemSpace,
+                d_numEigenValues,
+                d_partialOccupancies,
+                basisOpMemSpace,
+                blasWrapperMemSpace,
+                d_densityDofHandlerIndex,
+                d_gllQuadratureId,
+                d_kPointWeights,
+                *auxDensityMatrixXCPtr,
+                d_mpiCommParent,
+                mpi_communicator,
+                interpoolcomm,
+                interBandGroupComm,
+                *d_dftParamsPtr);
 #endif
-      }
-  }
+            }
+        }
 
 #include "dft.inst.cc"
-} // namespace dftfe
+      } // namespace dftfe
