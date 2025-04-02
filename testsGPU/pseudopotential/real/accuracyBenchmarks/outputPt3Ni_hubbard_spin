@@ -23,7 +23,7 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 35326
 
 Setting initial guess for wavefunctions....
 =============================================================================================================================
-number of electrons: 72
+number of electrons: 7.200000000000000000e+01
 number of eigen values: 80
 =============================================================================================================================
 
@@ -34,18 +34,18 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 45 iterations.
+SCF iterations converged to the specified tolerance after: 42 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -533.25604283
+             Total energy:        -533.25604282
 Absolute magnetization: 2.059
 Net magnetization     : -1.988
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000637,0.000637,0.000637
-AtomId    1:  0.299654,0.299654,0.009106
-AtomId    2:  0.009106,0.299654,0.299654
-AtomId    3:  0.299654,0.009106,0.299654
+AtomId    0:  0.000639,0.000639,0.000639
+AtomId    1:  0.299654,0.299654,0.009109
+AtomId    2:  0.009109,0.299654,0.299654
+AtomId    3:  0.299654,0.009109,0.299654
 --------------------------------------------------------------------------------------------

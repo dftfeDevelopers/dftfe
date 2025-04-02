@@ -177,11 +177,12 @@ namespace dftfe
           }
       }
 
-    for (unsigned int iCell = 0; iCell < d_basisOperationsPtrHost->nCells();
+    for (unsigned int iCell = 0;
+         iCell < d_basisOperationsPtrElectroHost->nCells();
          ++iCell)
       {
         std::vector<double> &pseudoVLoc =
-          _pseudoValues[d_basisOperationsPtrHost->cellID(iCell)];
+          _pseudoValues[d_basisOperationsPtrElectroHost->cellID(iCell)];
         pseudoVLoc.resize(n_q_points, 0.0);
       }
 
@@ -321,7 +322,7 @@ namespace dftfe
     if (numMacroCells > 0)
       dftUtils::createKpointParallelizationIndices(
         interpoolcomm, numMacroCells, kptGroupLowHighPlusOneIndicesStep2);
-    d_basisOperationsPtrHost->reinit(0, 0, lpspQuadratureId);
+    d_basisOperationsPtrElectroHost->reinit(0, 0, lpspQuadratureId);
 #pragma omp parallel for num_threads(d_nOMPThreads)
     for (unsigned int macrocell = 0;
          macrocell < _matrix_free_data.n_cell_batches();
@@ -349,10 +350,10 @@ namespace dftfe
 
                 std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
                 unsigned int         cellIndex =
-                  d_basisOperationsPtrHost->cellIndex(subCellId);
+                  d_basisOperationsPtrElectroHost->cellIndex(subCellId);
                 double        value, distanceToAtom, distanceToAtomInv;
                 const double *quadPointPtr =
-                  d_basisOperationsPtrHost->quadPoints().data() +
+                  d_basisOperationsPtrElectroHost->quadPoints().data() +
                   cellIndex * n_q_points * 3;
 
                 // loop over quad points
@@ -476,32 +477,34 @@ namespace dftfe
     if (numMacroCells > 0 && numberKptGroups > 1)
       {
         std::vector<double> tempPseudoValuesFlattened(
-          d_basisOperationsPtrHost->nCells() * n_q_points, 0.0);
+          d_basisOperationsPtrElectroHost->nCells() * n_q_points, 0.0);
 
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < d_basisOperationsPtrHost->nCells();
+        for (unsigned int iCell = 0;
+             iCell < d_basisOperationsPtrElectroHost->nCells();
              ++iCell)
           {
             std::vector<double> &pseudoVLoc =
-              _pseudoValues[d_basisOperationsPtrHost->cellID(iCell)];
+              _pseudoValues[d_basisOperationsPtrElectroHost->cellID(iCell)];
             for (unsigned int q = 0; q < n_q_points; ++q)
               tempPseudoValuesFlattened[iCell * n_q_points + q] = pseudoVLoc[q];
           }
 
         MPI_Allreduce(MPI_IN_PLACE,
                       &tempPseudoValuesFlattened[0],
-                      d_basisOperationsPtrHost->nCells() * n_q_points,
+                      d_basisOperationsPtrElectroHost->nCells() * n_q_points,
                       MPI_DOUBLE,
                       MPI_SUM,
                       interpoolcomm);
         MPI_Barrier(interpoolcomm);
 
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < d_basisOperationsPtrHost->nCells();
+        for (unsigned int iCell = 0;
+             iCell < d_basisOperationsPtrElectroHost->nCells();
              ++iCell)
           {
             std::vector<double> &pseudoVLoc =
-              _pseudoValues[d_basisOperationsPtrHost->cellID(iCell)];
+              _pseudoValues[d_basisOperationsPtrElectroHost->cellID(iCell)];
             for (unsigned int q = 0; q < n_q_points; ++q)
               pseudoVLoc[q] = tempPseudoValuesFlattened[iCell * n_q_points + q];
           }
@@ -519,15 +522,16 @@ namespace dftfe
 
     std::vector<int> kptGroupLowHighPlusOneIndicesStep3;
 
-    if (d_basisOperationsPtrHost->nCells() > 0)
+    if (d_basisOperationsPtrElectroHost->nCells() > 0)
       dftUtils::createKpointParallelizationIndices(
         interpoolcomm,
-        d_basisOperationsPtrHost->nCells(),
+        d_basisOperationsPtrElectroHost->nCells(),
         kptGroupLowHighPlusOneIndicesStep3);
 
     std::vector<double> pseudoVLocAtom(n_q_points);
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoVLocAtom)
-    for (unsigned int iCell = 0; iCell < d_basisOperationsPtrHost->nCells();
+    for (unsigned int iCell = 0;
+         iCell < d_basisOperationsPtrElectroHost->nCells();
          ++iCell)
       {
         if ((iCell <
@@ -540,7 +544,7 @@ namespace dftfe
             int              atomicNumber;
             double           atomCharge;
             const double *   quadPointPtr =
-              d_basisOperationsPtrHost->quadPoints().data() +
+              d_basisOperationsPtrElectroHost->quadPoints().data() +
               iCell * n_q_points * 3;
 
             // loop over atoms
@@ -619,14 +623,15 @@ namespace dftfe
                 if (isPseudoDataInCell)
                   {
 #pragma omp critical(pseudovalsatoms)
-                    _pseudoValuesAtoms[iAtom][d_basisOperationsPtrHost->cellID(
-                      iCell)] = pseudoVLocAtom;
+                    _pseudoValuesAtoms[iAtom][d_basisOperationsPtrElectroHost
+                                                ->cellID(iCell)] =
+                      pseudoVLocAtom;
                   }
               } // loop over atoms
           }     // kpt paral loop
       }         // cell loop
 
-    if (d_basisOperationsPtrHost->nCells() > 0 && numberKptGroups > 1)
+    if (d_basisOperationsPtrElectroHost->nCells() > 0 && numberKptGroups > 1)
       {
         // arranged as iAtom, elemid, and quad data
         std::vector<double> sendData;
@@ -639,10 +644,11 @@ namespace dftfe
             if (_pseudoValuesAtoms.find(iAtom) != _pseudoValuesAtoms.end())
               {
                 for (unsigned int iCell = 0;
-                     iCell < d_basisOperationsPtrHost->nCells();
+                     iCell < d_basisOperationsPtrElectroHost->nCells();
                      ++iCell)
                   {
-                    auto cellid = d_basisOperationsPtrHost->cellID(iCell);
+                    auto cellid =
+                      d_basisOperationsPtrElectroHost->cellID(iCell);
                     if (_pseudoValuesAtoms[iAtom].find(cellid) !=
                         _pseudoValuesAtoms[iAtom].end())
                       {
@@ -716,7 +722,7 @@ namespace dftfe
             if (iatom != -1)
               {
                 const dealii::CellId writeCellId =
-                  d_basisOperationsPtrHost->cellID(elementId);
+                  d_basisOperationsPtrElectroHost->cellID(elementId);
                 if (_pseudoValuesAtoms[iatom].find(writeCellId) ==
                     _pseudoValuesAtoms[iatom].end())
                   {

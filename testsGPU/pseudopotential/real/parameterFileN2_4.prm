@@ -56,7 +56,6 @@ subsection SCF parameters
   subsection Eigen-solver parameters
       set CHEBYSHEV POLYNOMIAL DEGREE=15
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
-      set SPECTRUM SPLIT CORE EIGENSTATES=4
       set SUBSPACE ROT DOFS BLOCK SIZE        = 2000
       set WFC BLOCK SIZE=2
       set CHEBY WFC BLOCK SIZE=2

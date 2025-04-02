@@ -20,72 +20,24 @@
 #include <dftParameters.h>
 #include <linearAlgebraOperationsDevice.h>
 #include <linearAlgebraOperationsInternal.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceKernelLauncherConstants.h>
+#include "linearAlgebraOperationsDeviceKernels.h"
 
 
 namespace dftfe
 {
   namespace linearAlgebraOperationsDevice
   {
-    namespace
-    {
-      __global__ void
-      setZeroKernel(const unsigned int BVec,
-                    const unsigned int M,
-                    const unsigned int N,
-                    double *           yVec,
-                    const unsigned int startingXVecId)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerBVec =
-          (BVec + blockDim.x - 1) / blockDim.x;
-        const unsigned int gangBlockId = blockIdx.x / numGangsPerBVec;
-        const unsigned int localThreadId =
-          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-            localThreadId < BVec)
-          {
-            *(yVec + gangBlockId * N + startingXVecId + localThreadId) = 0.0;
-          }
-      }
-
-
-      __global__ void
-      setZeroKernel(const unsigned int                 BVec,
-                    const unsigned int                 M,
-                    const unsigned int                 N,
-                    dftfe::utils::deviceDoubleComplex *yVec,
-                    const unsigned int                 startingXVecId)
-      {
-        const unsigned int globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numGangsPerBVec =
-          (BVec + blockDim.x - 1) / blockDim.x;
-        const unsigned int gangBlockId = blockIdx.x / numGangsPerBVec;
-        const unsigned int localThreadId =
-          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-            localThreadId < BVec)
-          {
-            *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-              dftfe::utils::makeComplex(0.0, 0.0);
-          }
-      }
-    } // namespace
-
     void
     pseudoGramSchmidtOrthogonalization(
-      elpaScalaManager &       elpaScala,
-      dataTypes::number *      X,
-      const unsigned int       M,
-      const unsigned int       N,
-      const MPI_Comm &         mpiCommParent,
-      const MPI_Comm &         mpiCommDomain,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      elpaScalaManager &                                   elpaScala,
+      dataTypes::number *                                  X,
+      distributedDeviceVec<dataTypes::number> &            Xb,
+      distributedDeviceVec<dataTypes::number> &            HXb,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
+      const MPI_Comm &                                     mpiCommParent,
+      const MPI_Comm &                                     mpiCommDomain,
       utils::DeviceCCLWrapper &devicecclMpiCommDomain,
       const MPI_Comm &         interBandGroupComm,
       std::shared_ptr<
@@ -113,7 +65,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
             computing_timer.enter_subsection("SConj=X^{T}XConj Mixed Prec");
           else
             computing_timer.enter_subsection("SConj=X^{T}XConj");
@@ -132,16 +84,20 @@ namespace dftfe
 
       // SConj=X^{T}*XConj with X^{T} stored in the column
       // major format
-      if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+      if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
         {
           if (dftParams.overlapComputeCommunOrthoRR)
             {
-              if (dftParams.useMixedPrecCommunOnlyXTHXCGSO)
+              if (dftParams.useMixedPrecCommunOnlyXtHXXtOX)
                 linearAlgebraOperationsDevice::
                   fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
+                    operatorMatrix,
                     X,
+                    Xb,
+                    HXb,
                     M,
                     N,
+                    dftParams.numCoreWfcForMixedPrecRR,
                     BLASWrapperPtr,
                     mpiCommDomain,
                     devicecclMpiCommDomain,
@@ -152,9 +108,13 @@ namespace dftfe
               else
                 linearAlgebraOperationsDevice::
                   fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
+                    operatorMatrix,
                     X,
+                    Xb,
+                    HXb,
                     M,
                     N,
+                    dftParams.numCoreWfcForMixedPrecRR,
                     BLASWrapperPtr,
                     mpiCommDomain,
                     devicecclMpiCommDomain,
@@ -165,23 +125,31 @@ namespace dftfe
             }
           else
             linearAlgebraOperationsDevice::
-              fillParallelOverlapMatMixedPrecScalapack(X,
-                                                       M,
-                                                       N,
-                                                       BLASWrapperPtr,
-                                                       mpiCommDomain,
-                                                       devicecclMpiCommDomain,
-                                                       interBandGroupComm,
-                                                       processGrid,
-                                                       overlapMatPar,
-                                                       dftParams);
+              fillParallelOverlapMatMixedPrecScalapack(
+                operatorMatrix,
+                X,
+                Xb,
+                HXb,
+                M,
+                N,
+                dftParams.numCoreWfcForMixedPrecRR,
+                BLASWrapperPtr,
+                mpiCommDomain,
+                devicecclMpiCommDomain,
+                interBandGroupComm,
+                processGrid,
+                overlapMatPar,
+                dftParams);
         }
       else
         {
           if (dftParams.overlapComputeCommunOrthoRR)
             linearAlgebraOperationsDevice::
               fillParallelOverlapMatScalapackAsyncComputeCommun(
+                operatorMatrix,
                 X,
+                Xb,
+                HXb,
                 M,
                 N,
                 BLASWrapperPtr,
@@ -193,7 +161,10 @@ namespace dftfe
                 dftParams);
           else
             linearAlgebraOperationsDevice::fillParallelOverlapMatScalapack(
+              operatorMatrix,
               X,
+              Xb,
+              HXb,
               M,
               N,
               BLASWrapperPtr,
@@ -208,7 +179,7 @@ namespace dftfe
       if (dftParams.deviceFineGrainedTimings)
         {
           dftfe::utils::deviceSynchronize();
-          if (dftParams.useMixedPrecCGS_O && useMixedPrecOverall)
+          if (dftParams.useMixedPrecXtOX && useMixedPrecOverall)
             computing_timer.leave_subsection("SConj=X^{T}XConj Mixed Prec");
           else
             computing_timer.leave_subsection("SConj=X^{T}XConj");
@@ -396,30 +367,7 @@ namespace dftfe
                 {
                   // set to zero wavefunctions which are not inside a given band
                   // paral group
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-                  setZeroKernel<<<(BVec +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                                  dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-                    BVec,
-                    M,
-                    N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(X),
-                    jvec);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-                  hipLaunchKernelGGL(
-                    setZeroKernel,
-                    (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                    0,
-                    0,
-                    BVec,
-                    M,
-                    N,
-                    dftfe::utils::makeDataTypeDeviceCompatible(X),
-                    jvec);
-#endif
+                  setZero(BVec, M, N, X, jvec);
                 }
             }
 

@@ -595,9 +595,10 @@ namespace dftfe
       {
         if (d_dftParamsPtr->TVal < 1000)
           {
-            d_dftParamsPtr->numCoreWfcRR = 0.8 * numElectrons / 2.0;
-            pcout << " Setting SPECTRUM SPLIT CORE EIGENSTATES to be "
-                  << d_dftParamsPtr->numCoreWfcRR << std::endl;
+            d_dftParamsPtr->numCoreWfcForMixedPrecRR = 0.8 * numElectrons / 2.0;
+            pcout << " Setting MIXED PREC CORE EIGENSTATES to be "
+                  << d_dftParamsPtr->numCoreWfcForMixedPrecRR
+                  << std::endl; //@Kartick check if this is okay
           }
       }
 
@@ -738,10 +739,11 @@ namespace dftfe
           }
 
         if (d_dftParamsPtr->algoType == "FAST")
-          d_dftParamsPtr->numCoreWfcRR =
-            std::floor(d_dftParamsPtr->numCoreWfcRR /
+          d_dftParamsPtr->numCoreWfcForMixedPrecRR =
+            std::floor(d_dftParamsPtr->numCoreWfcForMixedPrecRR /
                        d_dftParamsPtr->wfcBlockSize) *
-            d_dftParamsPtr->wfcBlockSize;
+            d_dftParamsPtr
+              ->numCoreWfcForMixedPrecRR; //@Kartick check if this is okay
 
         if (d_dftParamsPtr->verbosity >= 1)
           {
@@ -754,24 +756,22 @@ namespace dftfe
                   << d_dftParamsPtr->wfcBlockSize << std::endl;
             if (d_dftParamsPtr->algoType == "FAST")
               pcout
-                << " Setting SPECTRUM SPLIT CORE EIGENSTATES for Device run to be "
-                << d_dftParamsPtr->numCoreWfcRR << std::endl;
+                << " Setting CORE EIGENSTATES for MIXED PRECISION STRATEGY on  Device run to be "
+                << d_dftParamsPtr->numCoreWfcForMixedPrecRR << std::endl;
           }
       }
 #endif
     if (d_dftParamsPtr->constraintMagnetization)
       {
-        numElectronsUp   = std::ceil(static_cast<double>(numElectrons) / 2.0);
-        numElectronsDown = numElectrons - numElectronsUp;
         //
-        int netMagnetization = std::round(static_cast<double>(numElectrons) *
-                                          d_dftParamsPtr->tot_magnetization);
-        //
-        while ((numElectronsUp - numElectronsDown) < std::abs(netMagnetization))
-          {
-            numElectronsDown -= 1;
-            numElectronsUp += 1;
-          }
+        const double netMagnetization =
+          static_cast<double>(numElectrons) * d_dftParamsPtr->tot_magnetization;
+
+        numElectronsUp =
+          0.5 * (static_cast<double>(numElectrons) + netMagnetization);
+        numElectronsDown =
+          0.5 * (static_cast<double>(numElectrons) - netMagnetization);
+
         //
         if (d_dftParamsPtr->verbosity >= 1)
           {
@@ -809,10 +809,9 @@ namespace dftfe
       determineOrbitalFilling();
 
     AssertThrow(
-      d_dftParamsPtr->numCoreWfcRR <= d_numEigenValues,
+      d_dftParamsPtr->numCoreWfcForMixedPrecRR <= d_numEigenValues,
       dealii::ExcMessage(
-        "DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES should be less than the total number of wavefunctions."));
-    d_numEigenValuesRR = d_numEigenValues - d_dftParamsPtr->numCoreWfcRR;
+        "DFT-FE Error: Incorrect input value used- CORE EIGENSTATES should be less than the total number of wavefunctions."));
 
 #ifdef USE_COMPLEX
     if (d_dftParamsPtr->solverMode == "NSCF")
@@ -835,7 +834,6 @@ namespace dftfe
 
     // set size of eigenvalues and eigenvectors data structures
     eigenValues.resize(d_kPointWeights.size());
-    eigenValuesRRSplit.resize(d_kPointWeights.size());
 
     if (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       d_densityMatDerFermiEnergy.resize((d_dftParamsPtr->spinPolarized + 1) *
@@ -858,11 +856,9 @@ namespace dftfe
       {
         eigenValues[kPoint].resize((d_dftParamsPtr->spinPolarized + 1) *
                                    d_numEigenValues);
-        eigenValuesRRSplit[kPoint].resize((d_dftParamsPtr->spinPolarized + 1) *
-                                          d_numEigenValuesRR);
       }
 
-
+    d_partialOccupancies = eigenValues;
 
     if (d_dftParamsPtr->isPseudopotential == true)
       {
@@ -905,9 +901,7 @@ namespace dftfe
           << "Atleast one atom has pseudopotential with nonlinear core correction"
           << std::endl;
 
-    d_elpaScala->processGridELPASetup(d_numEigenValues,
-                                      d_numEigenValuesRR,
-                                      *d_dftParamsPtr);
+    d_elpaScala->processGridELPASetup(d_numEigenValues, *d_dftParamsPtr);
     MPI_Barrier(d_mpiCommParent);
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
@@ -1254,7 +1248,9 @@ namespace dftfe
                                  d_excManagerPtr,
                                  atomLocations,
                                  d_numEigenValues,
-                                 d_dftParamsPtr->useSinglePrecCheby);
+                                 d_dftParamsPtr->useSinglePrecCheby,
+                                 (d_dftParamsPtr->isIonForce) ||
+                                   d_dftParamsPtr->isCellStress);
 
     if (d_dftParamsPtr->solverMode == "NSCF")
       {
@@ -1325,16 +1321,6 @@ namespace dftfe
           (d_excManagerPtr->getExcSSDFunctionalObj()
              ->getDensityBasedFamilyType() == densityFamilyType::GGA);
 
-        interpolateDensityNodalDataToQuadratureDataGeneral(
-          d_basisOperationsPtrElectroHost,
-          d_densityDofHandlerIndexElectro,
-          d_densityQuadratureIdElectro,
-          d_densityInNodalValues[0],
-          d_densityInQuadValues[0],
-          d_gradDensityInQuadValues[0],
-          d_gradDensityInQuadValues[0],
-          isGradDensityDataDependent);
-
         if (d_dftParamsPtr->spinPolarized == 1)
           {
             d_densityInNodalValues[1] = 0;
@@ -1345,17 +1331,45 @@ namespace dftfe
                 d_densityInNodalValues[1].local_element(i) =
                   d_magInNodalValuesRead.local_element(i);
               }
-
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
-              d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro,
-              d_densityInNodalValues[1],
-              d_densityInQuadValues[1],
-              d_gradDensityInQuadValues[1],
-              d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent);
           }
+
+        if (d_dftParamsPtr->spinPolarized == 1 &&
+            d_dftParamsPtr->constraintMagnetization)
+          {
+            // normalize rho mag
+            const double netMag =
+              totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
+
+            const double shift =
+              (d_dftParamsPtr->tot_magnetization * numElectrons - shift) /
+              numElectrons;
+
+            d_densityInNodalValues[1].add(shift, d_densityInNodalValues[0]);
+
+            if (d_dftParamsPtr->verbosity >= 1)
+              {
+                pcout << "Net magnetization before Normalizing:  " << netMag
+                      << std::endl;
+                pcout << "Net magnetization after Normalizing: "
+                      << totalCharge(d_matrixFreeDataPRefined,
+                                     d_densityInNodalValues[1])
+                      << std::endl;
+              }
+          }
+
+        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+             ++iComp)
+          interpolateDensityNodalDataToQuadratureDataGeneral(
+            d_basisOperationsPtrElectroHost,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_densityInNodalValues[iComp],
+            d_densityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            isGradDensityDataDependent);
+
+
         if ((d_dftParamsPtr->solverMode == "GEOOPT"))
           {
             d_densityOutNodalValues = d_densityInNodalValues;
@@ -1449,10 +1463,6 @@ namespace dftfe
         AssertThrow(d_dftParamsPtr->mixingMethod != "LOW_RANK_DIELECM_PRECOND",
                     dealii::ExcMessage(
                       "LRDM preconditioner is not compatible with hubbard "));
-
-        AssertThrow(d_dftParamsPtr->useSinglePrecCheby == false,
-                    dealii::ExcMessage(
-                      "single prec in cheby is not compatible with hubbard "));
 
         init_hubbOp = MPI_Wtime() - init_hubbOp;
 
@@ -2163,12 +2173,13 @@ namespace dftfe
           dealii::ExcMessage(
             "DFT-FE Error: wfc block size must be exactly divisible by cheby wfc block size and also larger for Device run."));
 
-        if (d_numEigenValuesRR != d_numEigenValues)
-          AssertThrow(
-            (d_numEigenValuesRR % d_dftParamsPtr->wfcBlockSize == 0 ||
-             d_numEigenValuesRR / d_dftParamsPtr->wfcBlockSize == 0),
-            dealii::ExcMessage(
-              "DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for Device run."));
+
+        // AssertThrow(
+        //   (d_numEigenValuesRR % d_dftParamsPtr->wfcBlockSize == 0 ||
+        //    d_numEigenValuesRR / d_dftParamsPtr->wfcBlockSize == 0),
+        //   dealii::ExcMessage(
+        //     "DFT-FE Error: total number RR wavefunctions must be exactly
+        //     divisible by wfc block size for Device run."));
 
         // band group parallelization data structures
         const unsigned int numberBandGroups =
@@ -2827,8 +2838,7 @@ namespace dftfe
                     << std::endl;
           }
 
-        if (d_dftParamsPtr->computeEnergyEverySCF &&
-            d_numEigenValuesRR == d_numEigenValues)
+        if (d_dftParamsPtr->computeEnergyEverySCF)
           d_phiTotRhoIn = d_phiTotRhoOut;
         computing_timer.leave_subsection("density mixing");
 
@@ -3031,23 +3041,14 @@ namespace dftfe
             std::vector<std::vector<std::vector<double>>> eigenValuesSpins(
               2,
               std::vector<std::vector<double>>(
-                d_kPointWeights.size(),
-                std::vector<double>(
-                  (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                   scfConverged) ?
-                    d_numEigenValues :
-                    d_numEigenValuesRR)));
+                d_kPointWeights.size(), std::vector<double>(d_numEigenValues)));
 
             std::vector<std::vector<std::vector<double>>>
               residualNormWaveFunctionsAllkPointsSpins(
                 2,
-                std::vector<std::vector<double>>(
-                  d_kPointWeights.size(),
-                  std::vector<double>(
-                    (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                     scfConverged) ?
-                      d_numEigenValues :
-                      d_numEigenValuesRR)));
+                std::vector<std::vector<double>>(d_kPointWeights.size(),
+                                                 std::vector<double>(
+                                                   d_numEigenValues)));
 
             updateAuxDensityXCMatrix(d_densityInQuadValues,
                                      d_gradDensityInQuadValues,
@@ -3110,11 +3111,6 @@ namespace dftfe
                               true :
                               false,
                             0,
-                            (scfIter <
-                               d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                             scfConverged) ?
-                              false :
-                              true,
                             scfConverged ? false : true,
                             scfIter == 0);
 #endif
@@ -3132,11 +3128,6 @@ namespace dftfe
                                ->allowMultipleFilteringPassesAfterFirstScf) ?
                               true :
                               false,
-                            (scfIter <
-                               d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                             scfConverged) ?
-                              false :
-                              true,
                             scfConverged ? false : true,
                             scfIter == 0);
                       }
@@ -3148,23 +3139,29 @@ namespace dftfe
               for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                    ++kPoint)
                 {
-                  if (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                      scfConverged)
-                    for (unsigned int i = 0; i < d_numEigenValues; ++i)
-                      eigenValuesSpins[s][kPoint][i] =
-                        eigenValues[kPoint][d_numEigenValues * s + i];
-                  else
-                    for (unsigned int i = 0; i < d_numEigenValuesRR; ++i)
-                      eigenValuesSpins[s][kPoint][i] =
-                        eigenValuesRRSplit[kPoint][d_numEigenValuesRR * s + i];
+                  for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                    eigenValuesSpins[s][kPoint][i] =
+                      eigenValues[kPoint][d_numEigenValues * s + i];
                 }
             //
             // fermi energy
             //
             if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
             else
-              compute_fermienergy(eigenValues, numElectrons);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
+
 
             unsigned int count = 1;
 
@@ -3251,45 +3248,34 @@ namespace dftfe
                                   }
 
 #ifdef DFTFE_WITH_DEVICE
-                                if constexpr (dftfe::utils::MemorySpace::
-                                                DEVICE == memorySpace)
-                                  kohnShamEigenSpaceCompute(
-                                    s,
-                                    kPoint,
-                                    kohnShamDFTEigenOperator,
-                                    *d_elpaScala,
-                                    d_subspaceIterationSolverDevice,
-                                    residualNormWaveFunctionsAllkPointsSpins
-                                      [s][kPoint],
-                                    true,
-                                    0,
-                                    (scfIter <
-                                     d_dftParamsPtr
-                                       ->spectrumSplitStartingScfIter) ?
-                                      false :
-                                      true,
-                                    true,
-                                    scfIter == 0);
+                            if constexpr (dftfe::utils::MemorySpace::DEVICE ==
+                                          memorySpace)
+                              kohnShamEigenSpaceCompute(
+                                s,
+                                kPoint,
+                                kohnShamDFTEigenOperator,
+                                *d_elpaScala,
+                                d_subspaceIterationSolverDevice,
+                                residualNormWaveFunctionsAllkPointsSpins
+                                  [s][kPoint],
+                                true,
+                                0,
+                                true,
+                                scfIter == 0);
 #endif
-                                if constexpr (dftfe::utils::MemorySpace::HOST ==
-                                              memorySpace)
-                                  kohnShamEigenSpaceCompute(
-                                    s,
-                                    kPoint,
-                                    kohnShamDFTEigenOperator,
-                                    *d_elpaScala,
-                                    d_subspaceIterationSolver,
-                                    residualNormWaveFunctionsAllkPointsSpins
-                                      [s][kPoint],
-                                    true,
-                                    (scfIter <
-                                     d_dftParamsPtr
-                                       ->spectrumSplitStartingScfIter) ?
-                                      false :
-                                      true,
-                                    true,
-                                    scfIter == 0);
-                              }
+                            if constexpr (dftfe::utils::MemorySpace::HOST ==
+                                          memorySpace)
+                              kohnShamEigenSpaceCompute(
+                                s,
+                                kPoint,
+                                kohnShamDFTEigenOperator,
+                                *d_elpaScala,
+                                d_subspaceIterationSolver,
+                                residualNormWaveFunctionsAllkPointsSpins
+                                  [s][kPoint],
+                                true,
+                                true,
+                                scfIter == 0);
                           }
                       }
 
@@ -3298,24 +3284,29 @@ namespace dftfe
                            kPoint < d_kPointWeights.size();
                            ++kPoint)
                         {
-                          if (scfIter <
-                                d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                              scfConverged)
-                            for (unsigned int i = 0; i < d_numEigenValues; ++i)
-                              eigenValuesSpins[s][kPoint][i] =
-                                eigenValues[kPoint][d_numEigenValues * s + i];
-                          else
-                            for (unsigned int i = 0; i < d_numEigenValuesRR;
-                                 ++i)
-                              eigenValuesSpins[s][kPoint][i] =
-                                eigenValuesRRSplit[kPoint]
-                                                  [d_numEigenValuesRR * s + i];
+                          for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                            eigenValuesSpins[s][kPoint][i] =
+                              eigenValues[kPoint][d_numEigenValues * s + i];
                         }
                     //
                     if (d_dftParamsPtr->constraintMagnetization)
-                      compute_fermienergy_constraintMagnetization(eigenValues);
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_constraintMagnetization_purestate(
+                            eigenValues);
+                        else
+                          compute_fermienergy_constraintMagnetization(
+                            eigenValues);
+                      }
                     else
-                      compute_fermienergy(eigenValues, numElectrons);
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_purestate(eigenValues,
+                                                        numElectrons);
+                        else
+                          compute_fermienergy(eigenValues, numElectrons);
+                      }
+
                     //
                     maxRes =
                       std::max(computeMaximumHighestOccupiedStateResidualNorm(
@@ -3351,10 +3342,8 @@ namespace dftfe
             for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                  ++kPoint)
               residualNormWaveFunctionsAllkPoints[kPoint].resize(
-                (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                 scfConverged) ?
-                  d_numEigenValues :
-                  d_numEigenValuesRR);
+                d_numEigenValues);
+
 
             updateAuxDensityXCMatrix(d_densityInQuadValues,
                                      d_gradDensityInQuadValues,
@@ -3411,11 +3400,6 @@ namespace dftfe
                           true :
                           false,
                         0,
-                        (scfIter <
-                           d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                         scfConverged) ?
-                          false :
-                          true,
                         scfConverged ? false : true,
                         scfIter == 0);
 #endif
@@ -3433,11 +3417,6 @@ namespace dftfe
                            ->allowMultipleFilteringPassesAfterFirstScf) ?
                           true :
                           false,
-                        (scfIter <
-                           d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                         scfConverged) ?
-                          false :
-                          true,
                         scfConverged ? false : true,
                         scfIter == 0);
                   }
@@ -3448,9 +3427,20 @@ namespace dftfe
             // fermi energy
             //
             if (d_dftParamsPtr->constraintMagnetization)
-              compute_fermienergy_constraintMagnetization(eigenValues);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
             else
-              compute_fermienergy(eigenValues, numElectrons);
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
 
             unsigned int count = 1;
 
@@ -3465,9 +3455,7 @@ namespace dftfe
                 std::vector<double> maxResidualsAllkPoints;
                 double maxRes = computeMaximumHighestOccupiedStateResidualNorm(
                   residualNormWaveFunctionsAllkPoints,
-                  (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter) ?
-                    eigenValues :
-                    eigenValuesRRSplit,
+                  eigenValues,
                   fermiEnergy,
                   maxResidualsAllkPoints);
                 if (d_dftParamsPtr->verbosity >= 2)
@@ -3519,55 +3507,58 @@ namespace dftfe
 
 
 #ifdef DFTFE_WITH_DEVICE
-                            if constexpr (dftfe::utils::MemorySpace::DEVICE ==
-                                          memorySpace)
-                              kohnShamEigenSpaceCompute(
-                                0,
-                                kPoint,
-                                kohnShamDFTEigenOperator,
-                                *d_elpaScala,
-                                d_subspaceIterationSolverDevice,
-                                residualNormWaveFunctionsAllkPoints[kPoint],
-                                true,
-                                0,
-                                (scfIter <
-                                 d_dftParamsPtr->spectrumSplitStartingScfIter) ?
-                                  false :
-                                  true,
-                                true,
-                                scfIter == 0);
+                        if constexpr (dftfe::utils::MemorySpace::DEVICE ==
+                                      memorySpace)
+                          kohnShamEigenSpaceCompute(
+                            0,
+                            kPoint,
+                            kohnShamDFTEigenOperator,
+                            *d_elpaScala,
+                            d_subspaceIterationSolverDevice,
+                            residualNormWaveFunctionsAllkPoints[kPoint],
+                            true,
+                            0,
+                            true,
+                            scfIter == 0);
 
 #endif
-                            if constexpr (dftfe::utils::MemorySpace::HOST ==
-                                          memorySpace)
-                              kohnShamEigenSpaceCompute(
-                                0,
-                                kPoint,
-                                kohnShamDFTEigenOperator,
-                                *d_elpaScala,
-                                d_subspaceIterationSolver,
-                                residualNormWaveFunctionsAllkPoints[kPoint],
-                                true,
-                                (scfIter <
-                                 d_dftParamsPtr->spectrumSplitStartingScfIter) ?
-                                  false :
-                                  true,
-                                true,
-                                scfIter == 0);
-                          }
+                        if constexpr (dftfe::utils::MemorySpace::HOST ==
+                                      memorySpace)
+                          kohnShamEigenSpaceCompute(
+                            0,
+                            kPoint,
+                            kohnShamDFTEigenOperator,
+                            *d_elpaScala,
+                            d_subspaceIterationSolver,
+                            residualNormWaveFunctionsAllkPoints[kPoint],
+                            true,
+                            true,
+                            scfIter == 0);
                       }
+
                     //
                     if (d_dftParamsPtr->constraintMagnetization)
-                      compute_fermienergy_constraintMagnetization(eigenValues);
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_constraintMagnetization_purestate(
+                            eigenValues);
+                        else
+                          compute_fermienergy_constraintMagnetization(
+                            eigenValues);
+                      }
                     else
-                      compute_fermienergy(eigenValues, numElectrons);
+                      {
+                        if (d_dftParamsPtr->pureState)
+                          compute_fermienergy_purestate(eigenValues,
+                                                        numElectrons);
+                        else
+                          compute_fermienergy(eigenValues, numElectrons);
+                      }
+
                     //
                     maxRes = computeMaximumHighestOccupiedStateResidualNorm(
                       residualNormWaveFunctionsAllkPoints,
-                      (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-                       scfConverged) ?
-                        eigenValues :
-                        eigenValuesRRSplit,
+                      eigenValues,
                       fermiEnergy,
                       maxResidualsAllkPoints);
                     if (d_dftParamsPtr->verbosity >= 2)
@@ -3612,13 +3603,8 @@ namespace dftfe
           }
         else
           {
-            compute_rhoOut(
-              (scfIter < d_dftParamsPtr->spectrumSplitStartingScfIter ||
-               scfConverged) ?
-                false :
-                true,
-              scfConverged ||
-                (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
+            compute_rhoOut(scfConverged ||
+                           (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
           }
         computing_timer.leave_subsection("compute rho");
 
@@ -3639,8 +3625,7 @@ namespace dftfe
         //
         // phiTot with rhoOut
         //
-        if ((d_dftParamsPtr->computeEnergyEverySCF &&
-             d_numEigenValuesRR == d_numEigenValues) ||
+        if (d_dftParamsPtr->computeEnergyEverySCF ||
             d_dftParamsPtr->useEnergyResidualTolerance)
           {
             if (d_dftParamsPtr->verbosity >= 2)
@@ -3790,8 +3775,7 @@ namespace dftfe
                     << energyResidual << std::endl;
             computing_timer.leave_subsection("Energy residual computation");
           }
-        if (d_dftParamsPtr->computeEnergyEverySCF &&
-            d_numEigenValuesRR == d_numEigenValues)
+        if (d_dftParamsPtr->computeEnergyEverySCF)
           {
             d_dispersionCorr.computeDispresionCorrection(
               atomLocations, d_domainBoundingVectors);
@@ -3803,6 +3787,7 @@ namespace dftfe
               d_smearedChargeQuadratureIdElectro,
               d_lpspQuadratureIdElectro,
               eigenValues,
+              d_partialOccupancies,
               d_kPointWeights,
               fermiEnergy,
               d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
@@ -3832,18 +3817,8 @@ namespace dftfe
             if (d_dftParamsPtr->verbosity == 1)
               pcout << "Total energy  : " << totalEnergy << std::endl;
           }
-        else
-          {
-            if (d_numEigenValuesRR != d_numEigenValues &&
-                d_dftParamsPtr->computeEnergyEverySCF &&
-                d_dftParamsPtr->verbosity >= 1)
-              pcout
-                << "DFT-FE Message: energy computation is not performed at the end of each scf iteration step\n"
-                << "if SPECTRUM SPLIT CORE EIGENSTATES is set to a non-zero value."
-                << std::endl;
-          }
 
-        computeFractionalOccupancies();
+
 
         d_excManagerPtr->getExcSSDFunctionalObj()
           ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
@@ -3903,6 +3878,19 @@ namespace dftfe
       {
         pcout << "SCF iterations converged to the specified tolerance after: "
               << scfIter << " iterations." << std::endl;
+        if (d_dftParamsPtr->verbosity >= 1)
+          {
+            if (d_dftParamsPtr->spinPolarized &&
+                d_dftParamsPtr->constraintMagnetization)
+              {
+                pcout << "GS Fermi energy spin up: " << fermiEnergyUp
+                      << std::endl;
+                pcout << "GS Fermi energy spin down: " << fermiEnergyDown
+                      << std::endl;
+              }
+            else
+              pcout << "GS Fermi energy spin up: " << fermiEnergy << std::endl;
+          }
 
         if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
@@ -3973,8 +3961,7 @@ namespace dftfe
             }
       }
 
-    if ((!d_dftParamsPtr->computeEnergyEverySCF ||
-         d_numEigenValuesRR != d_numEigenValues))
+    if ((!d_dftParamsPtr->computeEnergyEverySCF))
       {
         if (d_dftParamsPtr->verbosity >= 2)
           pcout
@@ -4096,6 +4083,7 @@ namespace dftfe
       d_smearedChargeQuadratureIdElectro,
       d_lpspQuadratureIdElectro,
       eigenValues,
+      d_partialOccupancies,
       d_kPointWeights,
       fermiEnergy,
       d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
@@ -4128,6 +4116,7 @@ namespace dftfe
 
     d_entropicEnergy =
       energyCalc.computeEntropicEnergy(eigenValues,
+                                       d_partialOccupancies,
                                        d_kPointWeights,
                                        fermiEnergy,
                                        fermiEnergyUp,
@@ -4602,6 +4591,9 @@ namespace dftfe
                             d_densityOutQuadValues[0],
                             rhoNodalField);
 
+    d_constraintsRhoNodal.distribute(rhoNodalField);
+    rhoNodalField.update_ghost_values();
+
     distributedCPUVec<double> magNodalField;
     if (d_dftParamsPtr->spinPolarized == 1)
       {
@@ -4613,6 +4605,9 @@ namespace dftfe
                                 d_densityQuadratureIdElectro,
                                 d_densityOutQuadValues[1],
                                 magNodalField);
+
+        d_constraintsRhoNodal.distribute(magNodalField);
+        magNodalField.update_ghost_values();
       }
 
     //
@@ -5381,58 +5376,6 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeFractionalOccupancies()
-  {
-    /*
-    double FE = d_dftParamsPtr->spinPolarized ?
-                  std::max(fermiEnergyDown, fermiEnergyUp) :
-                  fermiEnergy;
-*/
-    double FE = fermiEnergy;
-    // pcout<<" Fermi energy = "<<FE<<"\n";
-    int numkPoints = d_kPointWeights.size();
-    d_fracOccupancy.resize(numkPoints,
-                           std::vector<double>((1 +
-                                                d_dftParamsPtr->spinPolarized) *
-                                                 d_numEigenValues,
-                                               0.0));
-
-    for (unsigned int kPoint = 0; kPoint < numkPoints; ++kPoint)
-      if (d_dftParamsPtr->constraintMagnetization)
-        {
-          for (unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-            {
-              if (eigenValues[kPoint][iWave] > fermiEnergyUp)
-                d_fracOccupancy[kPoint][iWave] = 0.0;
-              else
-                d_fracOccupancy[kPoint][iWave] = 1.0;
-
-              if (eigenValues[kPoint][iWave + d_numEigenValues] >
-                  fermiEnergyDown)
-                d_fracOccupancy[kPoint][iWave + d_numEigenValues] = 0.0;
-              else
-                d_fracOccupancy[kPoint][iWave + d_numEigenValues] = 1.0;
-            }
-        }
-      else
-        {
-          for (unsigned int iWave = 0;
-               iWave < d_numEigenValues * (1 + d_dftParamsPtr->spinPolarized);
-               ++iWave)
-            {
-              d_fracOccupancy[kPoint][iWave] = dftUtils::getPartialOccupancy(
-                eigenValues[kPoint][iWave], FE, C_kb, d_dftParamsPtr->TVal);
-              // pcout<<" iWave = "<<iWave<<" fracOcc =
-              // "<<d_fracOccupancy[kPoint][iWave]<<"\n";
-            }
-        }
-  }
-
-
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::setNumElectrons(
     unsigned int inputNumElectrons)
   {
@@ -6039,7 +5982,6 @@ namespace dftfe
 
         auxDensityMatrixXCPtr->projectDensityEnd(mpi_communicator);
 
-        computeFractionalOccupancies();
 
         std::shared_ptr<AuxDensityMatrixFE<memorySpace>>
           auxDensityMatrixXCFEPtr =
@@ -6052,7 +5994,7 @@ namespace dftfe
             "DFT-FE Error: unable to type cast the auxiliary matrix to FE."));
 
         auxDensityMatrixXCFEPtr->setDensityMatrixComponents(
-          eigenVectorsFlattenedMemSpace, d_fracOccupancy);
+          eigenVectorsFlattenedMemSpace, d_partialOccupancies);
       }
     else if (d_dftParamsPtr->auxBasisTypeXC == "SLATER")
       {
@@ -6061,10 +6003,7 @@ namespace dftfe
         auto blasWrapperMemSpace = getBLASWrapperMemSpace();
         computeAuxProjectedDensityMatrixFromPSI(eigenVectorsFlattenedMemSpace,
                                                 d_numEigenValues,
-                                                eigenValues_,
-                                                fermiEnergy_,
-                                                fermiEnergyUp_,
-                                                fermiEnergyDown_,
+                                                d_partialOccupancies,
                                                 basisOpMemSpace,
                                                 blasWrapperMemSpace,
                                                 d_densityDofHandlerIndex,

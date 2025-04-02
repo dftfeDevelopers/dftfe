@@ -1,0 +1,83 @@
+set SOLVER MODE = GEOOPT
+set USE GPU   = true
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = bccFe_coordinates.inp          
+  set DOMAIN VECTORS FILE = bccFe_domainVectors.inp 
+  subsection Optimization
+    set STRESS TOL            = 2e-5
+    set OPTIMIZATION MODE     = CELL
+    set CELL CONSTRAINT TYPE  = 1
+  end 
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Brillouin zone k point sampling options
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 0
+    set SAMPLING SHIFT 2  = 0
+    set SAMPLING SHIFT 3  = 0
+  end
+end
+
+subsection DFT functional parameters
+  set SPIN POLARIZATION               = 1
+end
+
+subsection Parallelization
+  set NPKPT                    = 2
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 5
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 1.0
+    set ATOM BALL RADIUS = 4.0
+  end
+end
+
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true  
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo_bccFe.inp
+  set PSEUDO TESTS FLAG        = true
+end
+
+subsection SCF parameters
+  set TOLERANCE                       = 1e-8
+  set MIXING METHOD                   = ANDERSON_WITH_KERKER
+  set MIXING PARAMETER                = 0.1
+  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
+  set KERKER MIXING PARAMETER         = 0.5
+  subsection Eigen-solver parameters
+    set USE APPROXIMATE OVERLAP MATRIX                       = false
+    set CHEBYSHEV FILTER TOLERANCE=1e-5
+  end  
+end
+
+subsection GPU
+  set AUTO GPU BLOCK SIZES         = true
+  set FINE GRAINED GPU TIMINGS     = true
+  set USE ELPA GPU KERNEL          = true
+  set USE GPUDIRECT MPI ALL REDUCE = true
+end
+
+subsection Poisson problem parameters
+  set GPU MODE           = false
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+end

@@ -22,6 +22,7 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <hipblas.h>
+#include <hip/hip_version.h>
 #ifdef DFTFE_WITH_DEVICE_AMD
 #  include <rocblas.h>
 #endif
@@ -66,7 +67,43 @@ namespace dftfe
       return reinterpret_cast<const double *>(a);
     }
 
+#if ROCM_VERSION >= 50701
+    inline hipDoubleComplex
+    makeDataTypeHipBlasCompatible(std::complex<double> a)
+    {
+      return hipDoubleComplex(a.real(), a.imag());
+    }
 
+    inline hipComplex
+    makeDataTypeHipBlasCompatible(std::complex<float> a)
+    {
+      return hipComplex(a.real(), a.imag());
+    }
+
+    inline hipComplex *
+    makeDataTypeHipBlasCompatible(std::complex<float> *a)
+    {
+      return reinterpret_cast<hipComplex *>(a);
+    }
+
+    inline const hipComplex *
+    makeDataTypeHipBlasCompatible(const std::complex<float> *a)
+    {
+      return reinterpret_cast<const hipComplex *>(a);
+    }
+
+    inline hipDoubleComplex *
+    makeDataTypeHipBlasCompatible(std::complex<double> *a)
+    {
+      return reinterpret_cast<hipDoubleComplex *>(a);
+    }
+
+    inline const hipDoubleComplex *
+    makeDataTypeHipBlasCompatible(const std::complex<double> *a)
+    {
+      return reinterpret_cast<const hipDoubleComplex *>(a);
+    }
+#else
     inline hipblasDoubleComplex
     makeDataTypeHipBlasCompatible(std::complex<double> a)
     {
@@ -102,6 +139,7 @@ namespace dftfe
     {
       return reinterpret_cast<const hipblasDoubleComplex *>(a);
     }
+#endif
   } // namespace utils
 
   namespace linearAlgebra
@@ -138,13 +176,15 @@ namespace dftfe
         ValueType2 *                       valueType2Arr,
         const dftfe::utils::deviceStream_t streamId)
     {
-      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+      hipLaunchKernelGGL(
+        copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        streamId>>>(size,
-                    dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
-                    dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
+        streamId,
+        size,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
 
 
@@ -229,19 +269,19 @@ namespace dftfe
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transA == 'T')
+      else if (transA == 'T' || transA == 'C')
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemm ");
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transB == 'T')
+      else if (transB == 'T' || transB == 'C')
         transb = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemm ");
         }
 
       dftfe::utils::deviceBlasStatus_t status = hipblasSgemm(d_deviceBlasHandle,
@@ -286,7 +326,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemm ");
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
@@ -296,7 +336,7 @@ namespace dftfe
         transb = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transB in gemm ");
         }
 
       dftfe::utils::deviceBlasStatus_t status =
@@ -336,21 +376,21 @@ namespace dftfe
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transA == 'T')
+      else if (transA == 'T' || transA == 'C')
         transa = dftfe::utils::DEVICEBLAS_OP_T;
 
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemm ");
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transB == 'T')
+      else if (transB == 'T' || transB == 'C')
         transb = dftfe::utils::DEVICEBLAS_OP_T;
 
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transB in gemm ");
         }
       dftfe::utils::deviceBlasStatus_t status = hipblasDgemm(d_deviceBlasHandle,
                                                              transa,
@@ -394,7 +434,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemm ");
         }
       if (transB == 'N')
         transb = dftfe::utils::DEVICEBLAS_OP_N;
@@ -404,7 +444,7 @@ namespace dftfe
         transb = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transB in gemm ");
         }
 
 
@@ -443,11 +483,11 @@ namespace dftfe
       dftfe::utils::deviceBlasOperation_t transa;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transA == 'T')
+      else if (transA == 'T' || transA == 'C')
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemm ");
         }
       dftfe::utils::deviceBlasStatus_t status = hipblasDgemv(d_deviceBlasHandle,
                                                              transa,
@@ -482,11 +522,11 @@ namespace dftfe
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
-      else if (transA == 'T')
+      else if (transA == 'T' || transA == 'C')
         transa = dftfe::utils::DEVICEBLAS_OP_T;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemm ");
         }
 
       dftfe::utils::deviceBlasStatus_t status = hipblasSgemv(d_deviceBlasHandle,
@@ -527,7 +567,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemv ");
         }
 
       dftfe::utils::deviceBlasStatus_t status =
@@ -569,7 +609,7 @@ namespace dftfe
         transa = dftfe::utils::DEVICEBLAS_OP_C;
       else
         {
-          // Assert Statement
+          throw std::invalid_argument("Incorrect transA in gemv ");
         }
 
       dftfe::utils::deviceBlasStatus_t status =
@@ -705,6 +745,59 @@ namespace dftfe
                          dftfe::utils::makeDataTypeDeviceCompatible(C));
     }
 
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType1 *     addFromVec,
+      const ValueType2 *     scalingVector,
+      const ValueType2       a,
+      ValueType1 *           addToVec) const
+    {
+      hipLaunchKernelGGL(stridedBlockAxpyDeviceKernel,
+                         (contiguousBlockSize * numContiguousBlocks) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE +
+                           1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         contiguousBlockSize,
+                         numContiguousBlocks,
+                         dftfe::utils::makeDataTypeDeviceCompatible(a),
+                         dftfe::utils::makeDataTypeDeviceCompatible(
+                           scalingVector),
+                         dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+                         dftfe::utils::makeDataTypeDeviceCompatible(addToVec));
+    }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const ValueType1 *     addFromVec,
+      const ValueType2 *     scalingVector,
+      const ValueType2       a,
+      const ValueType2       b,
+      ValueType1 *           addToVec) const
+    {
+      hipLaunchKernelGGL(stridedBlockAxpByDeviceKernel,
+                         (contiguousBlockSize * numContiguousBlocks) /
+                             dftfe::utils::DEVICE_BLOCK_SIZE +
+                           1,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         contiguousBlockSize,
+                         numContiguousBlocks,
+                         dftfe::utils::makeDataTypeDeviceCompatible(a),
+                         dftfe::utils::makeDataTypeDeviceCompatible(b),
+                         dftfe::utils::makeDataTypeDeviceCompatible(
+                           scalingVector),
+                         dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+                         dftfe::utils::makeDataTypeDeviceCompatible(addToVec));
+    }
 
     template <typename ValueType>
     void
@@ -756,7 +849,28 @@ namespace dftfe
                          addToVecStartingContiguousBlockIds);
     }
 
-
+    template <typename ValueType1, typename ValueType2, typename ValueType3>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const ValueType1               a,
+      const ValueType2 *             addFromVec,
+      ValueType3 *                   addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
+    {
+      axpyStridedBlockAtomicAddDeviceKernel<<<
+        (contiguousBlockSize * numContiguousBlocks) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        contiguousBlockSize,
+        numContiguousBlocks,
+        dftfe::utils::makeDataTypeDeviceCompatible(a),
+        dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
+        dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
+        addToVecStartingContiguousBlockIds);
+    }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
@@ -1433,15 +1547,42 @@ namespace dftfe
                                        const ValueType1 *     valueType1Arr,
                                        ValueType2 *           valueType2Arr)
     {
-      copyValueType1ArrToValueType2ArrDeviceKernel<<<
+      hipLaunchKernelGGL(
+        copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        d_streamId>>>(size,
-                      dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
-                      dftfe::utils::makeDataTypeDeviceCompatible(
-                        valueType2Arr));
+        d_streamId,
+        size,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
+        const dftfe::size_type B,
+        const dftfe::size_type DRem,
+        const dftfe::size_type D,
+        const ValueType1 *     valueType1SrcArray,
+        ValueType1 *           valueType1DstArray,
+        ValueType2 *           valueType2DstArray)
+    {
+      const dftfe::size_type size = D * B;
+      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel<<<
+        size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        d_streamId>>>(
+        B,
+        DRem,
+        D,
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1SrcArray),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType1DstArray),
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2DstArray));
+    }
+
 
     template <typename ValueType1, typename ValueType2>
     void
@@ -1858,6 +1999,27 @@ namespace dftfe
                     dataTypes::mpi_type_id(&result[0]),
                     MPI_SUM,
                     mpi_communicator);
+    }
+
+    template <typename ValueType1, typename ValueType2>
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
+      const dftfe::size_type numberofVectors,
+      const dftfe::size_type sizeOfVector,
+      ValueType1 *           X,
+      ValueType2 *           D)
+    {
+      hipLaunchKernelGGL(computeRightDiagonalScaleKernel,
+                         (numberofVectors +
+                          (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                           dftfe::utils::DEVICE_BLOCK_SIZE * sizeOfVector,
+                         dftfe::utils::DEVICE_BLOCK_SIZE,
+                         0,
+                         0,
+                         dftfe::utils::makeDataTypeDeviceCompatible(D),
+                         dftfe::utils::makeDataTypeDeviceCompatible(X),
+                         numberofVectors,
+                         sizeOfVector);
     }
 
 #include "./BLASWrapperDevice.inst.cc"

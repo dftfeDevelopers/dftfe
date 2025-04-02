@@ -292,11 +292,7 @@ namespace dftfe
      */
     unsigned int d_numEigenValues;
     unsigned int d_highestStateForResidualComputation;
-    /**
-     * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
-     * after spectrum splitting.
-     */
-    unsigned int d_numEigenValuesRR;
+
 
     /**
      * @brief Number of random wavefunctions
@@ -534,9 +530,8 @@ namespace dftfe
       chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
       std::vector<double> &                           residualNormWaveFunctions,
       const bool                                      computeResidual,
-      const bool                                      isSpectrumSplit = false,
-      const bool                                      useMixedPrec    = false,
-      const bool                                      isFirstScf      = false);
+      const bool                                      useMixedPrec = false,
+      const bool                                      isFirstScf   = false);
 
 
 #ifdef DFTFE_WITH_DEVICE
@@ -555,7 +550,6 @@ namespace dftfe
       std::vector<double> &residualNormWaveFunctions,
       const bool           computeResidual,
       const unsigned int   numberRayleighRitzAvoidancePasses = 0,
-      const bool           isSpectrumSplit                   = false,
       const bool           useMixedPrec                      = false,
       const bool           isFirstScf                        = false);
 #endif
@@ -565,6 +559,14 @@ namespace dftfe
      */
     void
     compute_fermienergy(
+      const std::vector<std::vector<double>> &eigenValuesInput,
+      const double                            numElectronsInput);
+
+    /**
+     *@brief find HOMO eigenvalue for pure state
+     */
+    void
+    compute_fermienergy_purestate(
       const std::vector<std::vector<double>> &eigenValuesInput,
       const double                            numElectronsInput);
 
@@ -740,9 +742,6 @@ namespace dftfe
 
     const expConfiningPotential &
     getConfiningPotential() const;
-
-    void
-    computeFractionalOccupancies();
 
     /**
      *@brief Returns the shared ptr to hubbard class
@@ -1024,7 +1023,7 @@ namespace dftfe
      *@brief computes density nodal data from wavefunctions
      */
     void
-    computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting);
+    computeRhoNodalFromPSI();
 
 
     void
@@ -1154,7 +1153,15 @@ namespace dftfe
     normalizeRhoInQuadValues();
 
     /**
-     *@brief normalize the output electron density in each scf
+     *@brief normalize input mag electron density to total magnetization
+     *for use in constraint magnetization case (only for initial guess)
+     */
+    void
+    normalizeRhoMagInInitialGuessQuadValues();
+
+
+    /**
+     *@brief normalize the output total electron density in each scf
      */
     void
     normalizeRhoOutQuadValues();
@@ -1169,8 +1176,7 @@ namespace dftfe
      *@brief Computes output electron-density from wavefunctions
      */
     void
-    compute_rhoOut(const bool isConsiderSpectrumSplitting,
-                   const bool isGroundState = false);
+    compute_rhoOut(const bool isGroundState = false);
 
     /**
      *@brief Mixing schemes for mixing electron-density
@@ -1201,6 +1207,15 @@ namespace dftfe
     void
     compute_fermienergy_constraintMagnetization(
       const std::vector<std::vector<double>> &eigenValuesInput);
+
+
+    /**
+     *@brief Find spin-up and spin-down channel HOMO eigenvalues
+     */
+    void
+    compute_fermienergy_constraintMagnetization_purestate(
+      const std::vector<std::vector<double>> &eigenValuesInput);
+
 
     /**
      *@brief compute density of states and local density of states
@@ -1295,7 +1310,8 @@ namespace dftfe
     /**
      * stores required data for Kohn-Sham problem
      */
-    unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
+    unsigned int           numLevels;
+    double                 numElectrons, numElectronsUp, numElectronsDown;
     std::set<unsigned int> atomTypes;
 
     /// FIXME: eventually it should be a map of atomic number to struct-
@@ -1644,9 +1660,10 @@ namespace dftfe
       d_constraintsRhoNodalInfo;
 
     /**
-     * data storage for Kohn-Sham wavefunctions
+     * data storage for Kohn-Sham eigenvalues and partial occupancies
      */
     std::vector<std::vector<double>> eigenValues;
+    std::vector<std::vector<double>> d_partialOccupancies;
 
     /**
      * data storage for the occupancy of Kohn-Sham wavefunctions
@@ -1654,9 +1671,6 @@ namespace dftfe
     std::vector<std::vector<double>> d_fracOccupancy;
 
     std::vector<std::vector<double>> d_densityMatDerFermiEnergy;
-
-    /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
-    std::vector<std::vector<double>> eigenValuesRRSplit;
 
     /**
      * The indexing of d_eigenVectorsFlattenedHost and
@@ -1670,9 +1684,6 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::HOST>
-      d_eigenVectorsRotFracDensityFlattenedHost;
-    dftfe::utils::MemoryStorage<dataTypes::number,
-                                dftfe::utils::MemorySpace::HOST>
       d_eigenVectorsDensityMatrixPrimeHost;
 
     /// device eigenvectors
@@ -1680,9 +1691,6 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsFlattenedDevice;
-    dftfe::utils::MemoryStorage<dataTypes::number,
-                                dftfe::utils::MemorySpace::DEVICE>
-      d_eigenVectorsRotFracFlattenedDevice;
     dftfe::utils::MemoryStorage<dataTypes::number,
                                 dftfe::utils::MemorySpace::DEVICE>
       d_eigenVectorsDensityMatrixPrimeFlattenedDevice;

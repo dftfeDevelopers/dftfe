@@ -81,6 +81,45 @@ namespace dftfe
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     virtual void
+    HXWithLowdinOrthonormalisedInput(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarHX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
+
+    virtual void
+    overlapMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarOX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const bool useApproximateMatrixEntries = true) = 0;
+
+    virtual void
+    overlapInverseMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarOinvX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+        &dst) = 0;
+
+    virtual void
+    overlapInverseMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &          src,
+      const double scalarOinvX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+        &dst) = 0;
+
+
+
+    virtual void
     HXCheby(
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
       const double scalarHX,

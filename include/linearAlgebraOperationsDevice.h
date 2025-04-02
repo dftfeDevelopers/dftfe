@@ -94,38 +94,35 @@ namespace dftfe
       const double                                                          a,
       const double                                                          b,
       const double                                                          a0);
-
+    template <typename T1, typename T2>
     void
-    chebyshevFilterOverlapComputeCommunicationSinglePrec(
+    reformulatedChebyshevFilterOverlapComputeCommunication(
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                                  BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE> &X1,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE> &Y1,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE> &X2,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number,
-                                        dftfe::utils::MemorySpace::DEVICE> &Y2,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                        dftfe::utils::MemorySpace::DEVICE>
+      dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
+        &X1,
+      dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
+        &Y1,
+      dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
+        &X2,
+      dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
+        &Y2,
+      dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &X1_SP,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                        dftfe::utils::MemorySpace::DEVICE>
+      dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &Y1_SP,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                        dftfe::utils::MemorySpace::DEVICE>
+      dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &X2_SP,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                        dftfe::utils::MemorySpace::DEVICE>
+      dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &                 Y2_SP,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,
       const double        b,
-      const double        a0);
+      const double        a0,
+      const bool          approxOverlapMatrix);
 
     /** @brief Computes Sc=X^{T}*Xc.
      *
@@ -133,9 +130,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapack(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -154,9 +154,12 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -175,9 +178,13 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -194,9 +201,13 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -213,9 +224,13 @@ namespace dftfe
      */
     void
     fillParallelOverlapMatMixedPrecScalapack(
-      const dataTypes::number *X,
-      const unsigned int       M,
-      const unsigned int       N,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      const dataTypes::number *                            X,
+      distributedDeviceVec<dataTypes::number> &            XBlock,
+      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
+      const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &                                              BLASWrapperPtr,
@@ -232,12 +247,15 @@ namespace dftfe
      */
     void
     pseudoGramSchmidtOrthogonalization(
-      elpaScalaManager &       elpaScala,
-      dataTypes::number *      X,
-      const unsigned int       M,
-      const unsigned int       N,
-      const MPI_Comm &         mpiCommParent,
-      const MPI_Comm &         mpiCommDomain,
+      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
+      elpaScalaManager &                                   elpaScala,
+      dataTypes::number *                                  X,
+      distributedDeviceVec<dataTypes::number> &            Xb,
+      distributedDeviceVec<dataTypes::number> &            HXb,
+      const unsigned int                                   M,
+      const unsigned int                                   N,
+      const MPI_Comm &                                     mpiCommParent,
+      const MPI_Comm &                                     mpiCommDomain,
       utils::DeviceCCLWrapper &devicecclMpiCommDomain,
       const MPI_Comm &         interBandGroupComm,
       std::shared_ptr<
@@ -264,22 +282,6 @@ namespace dftfe
       const bool isRotationMatLowerTria = false);
 
 
-    void
-    subspaceRotationSpectrumSplitScalapack(
-      const dataTypes::number *X,
-      dataTypes::number *      XFrac,
-      const unsigned int       M,
-      const unsigned int       N,
-      const unsigned int       Nfr,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
-      const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
-      const dftParameters &                            dftParams,
-      const bool rotationMatTranspose = false);
 
     void
     subspaceRotationCGSMixedPrecScalapack(
@@ -355,27 +357,6 @@ namespace dftfe
       const dftParameters &dftParams,
       const bool           useMixedPrecOverall = false);
 
-    void
-    rayleighRitzGEPSpectrumSplitDirect(
-      operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      elpaScalaManager &                                   elpaScala,
-      dataTypes::number *                                  X,
-      dataTypes::number *                                  XFrac,
-      distributedDeviceVec<dataTypes::number> &            Xb,
-      distributedDeviceVec<dataTypes::number> &            HXb,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
-      const MPI_Comm &                                     mpiCommParent,
-      const MPI_Comm &                                     mpiCommDomain,
-      utils::DeviceCCLWrapper &devicecclMpiCommDomain,
-      const MPI_Comm &         interBandGroupComm,
-      std::vector<double> &    eigenValues,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                  BLASWrapperPtr,
-      const dftParameters &dftParams,
-      const bool           useMixedPrecOverall = false);
 
 
     void

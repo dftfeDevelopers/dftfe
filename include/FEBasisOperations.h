@@ -647,6 +647,13 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
       cellInverseMassVectorBasisData() const;
 
+      /**
+       * @brief Cell level inverse  diagonal mass matrix in ValueTypeBasisData
+       */
+      const dftfe::utils::MemoryStorage<
+        typename dftfe::dataTypes::singlePrecType<ValueTypeBasisData>::type,
+        memorySpace> &
+      cellInverseMassVectorBasisDataSinglePrec() const;
 
       /**
        * @brief Cell level sqrt diagonal mass matrix in ValueTypeBasisData
@@ -672,6 +679,14 @@ namespace dftfe
        */
       const dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &
       inverseMassVectorBasisData() const;
+
+      /**
+       * @brief Inverse diagonal mass matrix in ValueTypeBasisData
+       */
+      const dftfe::utils::MemoryStorage<
+        typename dftfe::dataTypes::singlePrecType<ValueTypeBasisData>::type,
+        memorySpace> &
+      inverseMassVectorBasisDataSinglePrec() const;
 
       /**
        * @brief sqrt diagonal mass matrix in ValueTypeBasisData
@@ -722,6 +737,13 @@ namespace dftfe
        */
       dealii::CellId
       cellID(const unsigned int iElem) const;
+      /**
+       * @brief returns the deal.ii cell_iterator corresponing to given cell Index.
+       * @param[in] iElem cell Index
+       */
+
+      dealii::DoFHandler<3>::active_cell_iterator
+      getCellIterator(const unsigned int iElem) const;
 
       /**
        * @brief returns the cell index corresponding to given deal.ii cellID.
@@ -740,6 +762,18 @@ namespace dftfe
         const unsigned int blocksize,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &multiVector) const;
+
+      /**
+       * @brief Creates a multivector.
+       * @param[in] blocksize Number of vectors in the multivector.
+       * @param[out] multiVector the created multivector.
+       */
+      void
+      createMultiVectorSinglePrec(
+        const unsigned int blocksize,
+        dftfe::linearAlgebra::MultiVector<
+          typename dftfe::dataTypes::singlePrecType<ValueTypeBasisCoeff>::type,
+          memorySpace> &multiVector) const;
 
       /**
        * @brief Creates scratch multivectors.
@@ -829,8 +863,10 @@ namespace dftfe
                                            dftfe::utils::MemorySpace::HOST>>
         d_quadPoints;
       dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-                                             d_flattenedCellDofIndexToProcessDofIndexMap;
-      std::vector<dealii::CellId>            d_cellIndexToCellIdMap;
+                                  d_flattenedCellDofIndexToProcessDofIndexMap;
+      std::vector<dealii::CellId> d_cellIndexToCellIdMap;
+      std::vector<dealii::DoFHandler<3>::active_cell_iterator>
+                                             d_cellIndexToCellIteratorMap;
       std::map<dealii::CellId, unsigned int> d_cellIdToCellIndexMap;
       std::map<unsigned int,
                dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>>
@@ -883,6 +919,11 @@ namespace dftfe
         d_cellMassMatrixCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
         d_cellInverseMassVectorBasisType;
+
+      dftfe::utils::MemoryStorage<
+        typename dftfe::dataTypes::singlePrecType<ValueTypeBasisData>::type,
+        memorySpace>
+        d_cellInverseMassVectorBasisTypeSinglePrec;
       dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
         d_cellInverseMassVectorCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
@@ -903,6 +944,10 @@ namespace dftfe
         d_massVectorCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
         d_inverseMassVectorBasisType;
+      dftfe::utils::MemoryStorage<
+        typename dftfe::dataTypes::singlePrecType<ValueTypeBasisData>::type,
+        memorySpace>
+        d_inverseMassVectorBasisTypeSinglePrec;
       dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
         d_inverseMassVectorCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>

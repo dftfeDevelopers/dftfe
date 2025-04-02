@@ -84,7 +84,33 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         dftfe::utils::copyValue(valueType2Arr + index, valueType1Arr[index]);
     }
-
+    template <typename ValueType1, typename ValueType2>
+    __global__ void
+    copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel(
+      const dftfe::size_type B,
+      const dftfe::size_type DRem,
+      const dftfe::size_type D,
+      const ValueType1 *     valueType1SrcArray,
+      ValueType1 *           valueType1DstArray,
+      ValueType2 *           valueType2DstArray)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type size = B * D;
+      for (dftfe::size_type index = globalThreadId; index < size;
+           index += blockDim.x * gridDim.x)
+        {
+          const unsigned int ibdof = index / D;
+          const unsigned int ivec  = index % D;
+          if (ivec < B)
+            dftfe::utils::copyValue(valueType1DstArray + ibdof * B + ivec,
+                                    valueType1SrcArray[index]);
+          else
+            dftfe::utils::copyValue(valueType2DstArray + (ibdof - B) +
+                                      (ivec - B) * B,
+                                    valueType1SrcArray[index]);
+        }
+    }
 
     template <typename ValueType1, typename ValueType2>
     __global__ void
@@ -522,6 +548,33 @@ namespace dftfe
 
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double                   a,
+      const double *                 addFromVec,
+      double *                       addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex      = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          const double     coeff           = a;
+          atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                              intraBlockIndex],
+                    dftfe::utils::mult(addFromVec[index], coeff));
+        }
+    }
+
+
+    __global__ void
+    axpyStridedBlockAtomicAddDeviceKernel(
       const dftfe::size_type                   contiguousBlockSize,
       const dftfe::size_type                   numContiguousBlocks,
       const double                             a,
@@ -541,6 +594,37 @@ namespace dftfe
           dftfe::size_type blockIndex      = index / contiguousBlockSize;
           dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
           const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                               intraBlockIndex]
+                        .x),
+                    dftfe::utils::mult(addFromVec[index].x, coeff));
+          atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                               intraBlockIndex]
+                        .y),
+                    dftfe::utils::mult(addFromVec[index].y, coeff));
+        }
+    }
+
+    __global__ void
+    axpyStridedBlockAtomicAddDeviceKernel(
+      const dftfe::size_type                   contiguousBlockSize,
+      const dftfe::size_type                   numContiguousBlocks,
+      const double                             a,
+      const dftfe::utils::deviceDoubleComplex *addFromVec,
+      dftfe::utils::deviceDoubleComplex *      addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex      = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          const double     coeff           = a;
           atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
                                intraBlockIndex]
                         .x),
@@ -581,6 +665,32 @@ namespace dftfe
 
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double                   a,
+      const float *                  addFromVec,
+      double *                       addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex      = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          const double     coeff           = a;
+          atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                              intraBlockIndex],
+                    dftfe::utils::mult(addFromVec[index], coeff));
+        }
+    }
+
+    __global__ void
+    axpyStridedBlockAtomicAddDeviceKernel(
       const dftfe::size_type                  contiguousBlockSize,
       const dftfe::size_type                  numContiguousBlocks,
       const double                            a,
@@ -610,7 +720,36 @@ namespace dftfe
                     dftfe::utils::mult(addFromVec[index].y, coeff));
         }
     }
+    __global__ void
+    axpyStridedBlockAtomicAddDeviceKernel(
+      const dftfe::size_type                  contiguousBlockSize,
+      const dftfe::size_type                  numContiguousBlocks,
+      const double                            a,
+      const dftfe::utils::deviceFloatComplex *addFromVec,
+      dftfe::utils::deviceDoubleComplex *     addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
 
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex      = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          const double     coeff           = a;
+          atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                               intraBlockIndex]
+                        .x),
+                    dftfe::utils::mult(addFromVec[index].x, coeff));
+          atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                               intraBlockIndex]
+                        .y),
+                    dftfe::utils::mult(addFromVec[index].y, coeff));
+        }
+    }
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
       const dftfe::size_type         contiguousBlockSize,
@@ -632,6 +771,31 @@ namespace dftfe
           dftfe::size_type blockIndex      = index / contiguousBlockSize;
           dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
           const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                              intraBlockIndex],
+                    dftfe::utils::mult(addFromVec[index], coeff));
+        }
+    }
+    __global__ void
+    axpyStridedBlockAtomicAddDeviceKernel(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double                   a,
+      const float *                  addFromVec,
+      float *                        addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex      = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          const double     coeff           = a;
           atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
                               intraBlockIndex],
                     dftfe::utils::mult(addFromVec[index], coeff));
@@ -659,6 +823,37 @@ namespace dftfe
           dftfe::size_type blockIndex      = index / contiguousBlockSize;
           dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
           const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                               intraBlockIndex]
+                        .x),
+                    dftfe::utils::mult(addFromVec[index].x, coeff));
+          atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                               intraBlockIndex]
+                        .y),
+                    dftfe::utils::mult(addFromVec[index].y, coeff));
+        }
+    }
+
+    __global__ void
+    axpyStridedBlockAtomicAddDeviceKernel(
+      const dftfe::size_type                  contiguousBlockSize,
+      const dftfe::size_type                  numContiguousBlocks,
+      const double                            a,
+      const dftfe::utils::deviceFloatComplex *addFromVec,
+      dftfe::utils::deviceFloatComplex *      addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex      = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          const double     coeff           = a;
           atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
                                intraBlockIndex]
                         .x),
@@ -699,6 +894,32 @@ namespace dftfe
 
     __global__ void
     axpyStridedBlockAtomicAddDeviceKernel(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const float                    a,
+      const float *                  addFromVec,
+      float *                        addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex      = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          const double     coeff           = a;
+          atomicAdd(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                              intraBlockIndex],
+                    dftfe::utils::mult(addFromVec[index], coeff));
+        }
+    }
+
+    __global__ void
+    axpyStridedBlockAtomicAddDeviceKernel(
       const dftfe::size_type                  contiguousBlockSize,
       const dftfe::size_type                  numContiguousBlocks,
       const float                             a,
@@ -718,6 +939,37 @@ namespace dftfe
           dftfe::size_type blockIndex      = index / contiguousBlockSize;
           dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
           const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                               intraBlockIndex]
+                        .x),
+                    dftfe::utils::mult(addFromVec[index].x, coeff));
+          atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                               intraBlockIndex]
+                        .y),
+                    dftfe::utils::mult(addFromVec[index].y, coeff));
+        }
+    }
+
+    __global__ void
+    axpyStridedBlockAtomicAddDeviceKernel(
+      const dftfe::size_type                  contiguousBlockSize,
+      const dftfe::size_type                  numContiguousBlocks,
+      const float                             a,
+      const dftfe::utils::deviceFloatComplex *addFromVec,
+      dftfe::utils::deviceFloatComplex *      addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex      = index / contiguousBlockSize;
+          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          const double     coeff           = a;
           atomicAdd(&(addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
                                intraBlockIndex]
                         .x),
@@ -927,6 +1179,172 @@ namespace dftfe
             dftfe::utils::add(A[index], dftfe::utils::mult(B[index], alphaD)));
         }
     }
+
+    template <typename ValueType1, typename ValueType2>
+    __global__ void
+    stridedBlockAxpyDeviceKernel(const dftfe::size_type contiguousBlockSize,
+                                 const dftfe::size_type numContiguousBlocks,
+                                 const ValueType2       a,
+                                 const ValueType2 *     s,
+                                 const ValueType1 *     addFromVec,
+                                 ValueType1 *           addToVec)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex = index / contiguousBlockSize;
+          const ValueType2 coeff      = dftfe::utils::mult(a, s[blockIndex]);
+          addToVec[index] =
+            dftfe::utils::add(addToVec[index],
+                              dftfe::utils::mult(addFromVec[index], coeff));
+        }
+    }
+
+    template <typename ValueType1, typename ValueType2>
+    __global__ void
+    stridedBlockAxpByDeviceKernel(const dftfe::size_type contiguousBlockSize,
+                                  const dftfe::size_type numContiguousBlocks,
+                                  const ValueType2       a,
+                                  const ValueType2       b,
+                                  const ValueType2 *     s,
+                                  const ValueType1 *     addFromVec,
+                                  ValueType1 *           addToVec)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex = index / contiguousBlockSize;
+          const ValueType2 coeff      = dftfe::utils::mult(a, s[blockIndex]);
+          addToVec[index] =
+            dftfe::utils::add(dftfe::utils::mult(addToVec[index], b),
+                              dftfe::utils::mult(addFromVec[index], coeff));
+        }
+    }
+
+    template <>
+    __global__ void
+    stridedBlockAxpyDeviceKernel(
+      const dftfe::size_type                  contiguousBlockSize,
+      const dftfe::size_type                  numContiguousBlocks,
+      const double                            a,
+      const double *                          s,
+      const dftfe::utils::deviceFloatComplex *addFromVec,
+      dftfe::utils::deviceFloatComplex *      addToVec)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex = index / contiguousBlockSize;
+          const double     coeff      = dftfe::utils::mult(a, s[blockIndex]);
+          addToVec[index].x =
+            dftfe::utils::add(addToVec[index].x,
+                              dftfe::utils::mult(addFromVec[index].x, coeff));
+          addToVec[index].y =
+            dftfe::utils::add(addToVec[index].y,
+                              dftfe::utils::mult(addFromVec[index].y, coeff));
+        }
+    }
+    template <>
+    __global__ void
+    stridedBlockAxpByDeviceKernel(
+      const dftfe::size_type                  contiguousBlockSize,
+      const dftfe::size_type                  numContiguousBlocks,
+      const double                            a,
+      const double                            b,
+      const double *                          s,
+      const dftfe::utils::deviceFloatComplex *addFromVec,
+      dftfe::utils::deviceFloatComplex *      addToVec)
+    {
+      const dftfe::size_type globalThreadId =
+        blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::size_type numberEntries =
+        numContiguousBlocks * contiguousBlockSize;
+
+      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          dftfe::size_type blockIndex = index / contiguousBlockSize;
+          const double     coeff      = dftfe::utils::mult(a, s[blockIndex]);
+          addToVec[index].x =
+            dftfe::utils::add(dftfe::utils::mult(addToVec[index].x, b),
+                              dftfe::utils::mult(addFromVec[index].x, coeff));
+          addToVec[index].y =
+            dftfe::utils::add(dftfe::utils::mult(addToVec[index].y, b),
+                              dftfe::utils::mult(addFromVec[index].y, coeff));
+        }
+    }
+
+
+
+    __global__ void
+    computeRightDiagonalScaleKernel(const double *     diagValues,
+                                    double *           X,
+                                    const unsigned int N,
+                                    const unsigned int M)
+    {
+      const unsigned int numEntries = N * M;
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+           i += blockDim.x * gridDim.x)
+        {
+          const unsigned int idof = i / N;
+          const unsigned int ivec = i % N;
+
+          *(X + N * idof + ivec) = *(X + N * idof + ivec) * diagValues[ivec];
+        }
+    }
+
+    __global__ void
+    computeRightDiagonalScaleKernel(const double *diagValues,
+                                    dftfe::utils::deviceDoubleComplex *X,
+                                    const unsigned int                 N,
+                                    const unsigned int                 M)
+    {
+      const unsigned int numEntries = N * M;
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+           i += blockDim.x * gridDim.x)
+        {
+          const unsigned int idof = i / N;
+          const unsigned int ivec = i % N;
+
+          *(X + N * idof + ivec) =
+            dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
+        }
+    }
+
+    __global__ void
+    computeRightDiagonalScaleKernel(
+      const dftfe::utils::deviceDoubleComplex *diagValues,
+      dftfe::utils::deviceDoubleComplex *      X,
+      const unsigned int                       N,
+      const unsigned int                       M)
+    {
+      const unsigned int numEntries = N * M;
+      for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
+           i += blockDim.x * gridDim.x)
+        {
+          const unsigned int idof = i / N;
+          const unsigned int ivec = i % N;
+
+          *(X + N * idof + ivec) =
+            dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
+        }
+    }
+
 
 
   } // namespace

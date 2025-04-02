@@ -177,8 +177,8 @@ namespace dftfe
 
           pcout << std::endl << "Energy computations (Hartree) " << std::endl;
           pcout << "-------------------" << std::endl;
-          if (dftParams.useMixedPrecCGS_O || dftParams.useMixedPrecCGS_SR ||
-              dftParams.useSinglePrecCommunCheby)
+          if (dftParams.useMixedPrecXtOX || dftParams.useMixedPrecCGS_SR ||
+              dftParams.useMixedPrecXtHX || dftParams.useSinglePrecCommunCheby)
             pcout << std::setw(25) << "Total energy"
                   << ": " << std::fixed << std::setprecision(6) << std::setw(20)
                   << totalEnergyTrunc << std::endl;
@@ -261,6 +261,7 @@ namespace dftfe
 
     double
     localBandEnergy(const std::vector<std::vector<double>> &eigenValues,
+                    const std::vector<std::vector<double>> &partialOccupancies,
                     const std::vector<double> &             kPointWeights,
                     const double                            fermiEnergy,
                     const double                            fermiEnergyUp,
@@ -297,53 +298,36 @@ namespace dftfe
                     {
                       if (spinPolarized == 0)
                         {
-                          const double partialOccupancy =
-                            dftUtils::getPartialOccupancy(
-                              eigenValues[kPoint][i], fermiEnergy, C_kb, TVal);
-                          bandEnergyLocal += 2.0 * partialOccupancy *
-                                             kPointWeights[kPoint] *
-                                             eigenValues[kPoint][i];
+                          bandEnergyLocal +=
+                            2.0 * partialOccupancies[kPoint][i] *
+                            kPointWeights[kPoint] * eigenValues[kPoint][i];
                           //
 
                           if (verbosity > 1)
                             scout << i << " : " << eigenValues[kPoint][i]
-                                  << "       " << partialOccupancy << std::endl;
+                                  << "       " << partialOccupancies[kPoint][i]
+                                  << std::endl;
                           //
                         }
                       if (spinPolarized == 1)
                         {
-                          double partialOccupancy =
-                            dftUtils::getPartialOccupancy(
-                              eigenValues[kPoint][i], fermiEnergy, C_kb, TVal);
-                          double partialOccupancy2 =
-                            dftUtils::getPartialOccupancy(
-                              eigenValues[kPoint][i + numEigenValues],
-                              fermiEnergy,
-                              C_kb,
-                              TVal);
-
-                          if (dftParams.constraintMagnetization)
-                            {
-                              partialOccupancy = 1.0, partialOccupancy2 = 1.0;
-                              if (eigenValues[kPoint][i + numEigenValues] >
-                                  fermiEnergyDown)
-                                partialOccupancy2 = 0.0;
-                              if (eigenValues[kPoint][i] > fermiEnergyUp)
-                                partialOccupancy = 0.0;
-                            }
-                          bandEnergyLocal += partialOccupancy *
+                          bandEnergyLocal += partialOccupancies[kPoint][i] *
                                              kPointWeights[kPoint] *
                                              eigenValues[kPoint][i];
                           bandEnergyLocal +=
-                            partialOccupancy2 * kPointWeights[kPoint] *
+                            partialOccupancies[kPoint][i + numEigenValues] *
+                            kPointWeights[kPoint] *
                             eigenValues[kPoint][i + numEigenValues];
                           //
                           if (verbosity > 1)
-                            scout << i << " : " << eigenValues[kPoint][i]
-                                  << "       "
-                                  << eigenValues[kPoint][i + numEigenValues]
-                                  << "       " << partialOccupancy << "       "
-                                  << partialOccupancy2 << std::endl;
+                            scout
+                              << i << " : " << eigenValues[kPoint][i]
+                              << "       "
+                              << eigenValues[kPoint][i + numEigenValues]
+                              << "       " << partialOccupancies[kPoint][i]
+                              << "       "
+                              << partialOccupancies[kPoint][i + numEigenValues]
+                              << std::endl;
                         }
                     } // eigen state
                   //
@@ -571,6 +555,7 @@ namespace dftfe
     const unsigned int                      smearedChargeQuadratureIDElectro,
     const unsigned int                      lpspQuadratureIDElectro,
     const std::vector<std::vector<double>> &eigenValues,
+    const std::vector<std::vector<double>> &partialOccupancies,
     const std::vector<double> &             kPointWeights,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
@@ -615,6 +600,7 @@ namespace dftfe
       (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0));
     const double bandEnergy = dealii::Utilities::MPI::sum(
       internalEnergy::localBandEnergy(eigenValues,
+                                      partialOccupancies,
                                       kPointWeights,
                                       fermiEnergy,
                                       fermiEnergyUp,
@@ -1158,6 +1144,7 @@ namespace dftfe
   double
   energyCalculator<memorySpace>::computeEntropicEnergy(
     const std::vector<std::vector<double>> &eigenValues,
+    const std::vector<std::vector<double>> &partialOccupancies,
     const std::vector<double> &             kPointWeights,
     const double                            fermiEnergy,
     const double                            fermiEnergyUp,
@@ -1176,23 +1163,9 @@ namespace dftfe
         {
           if (isSpinPolarized)
             {
-              double partOccSpin0 = dftUtils::getPartialOccupancy(
-                eigenValues[kPoint][i], fermiEnergy, C_kb, temperature);
-              double partOccSpin1 = dftUtils::getPartialOccupancy(
-                eigenValues[kPoint][i + numEigenValues],
-                fermiEnergy,
-                C_kb,
-                temperature);
-
-              if (d_dftParams.constraintMagnetization)
-                {
-                  partOccSpin0 = 1.0, partOccSpin1 = 1.0;
-                  if (eigenValues[kPoint][i + numEigenValues] > fermiEnergyDown)
-                    partOccSpin1 = 0.0;
-                  if (eigenValues[kPoint][i] > fermiEnergyUp)
-                    partOccSpin0 = 0.0;
-                }
-
+              double partOccSpin0 = partialOccupancies[kPoint][i];
+              double partOccSpin1 =
+                partialOccupancies[kPoint][i + numEigenValues];
 
               double fTimeslogfSpin0, oneminusfTimeslogoneminusfSpin0;
 
@@ -1230,8 +1203,9 @@ namespace dftfe
             }
           else
             {
-              const double partialOccupancy = dftUtils::getPartialOccupancy(
-                eigenValues[kPoint][i], fermiEnergy, C_kb, temperature);
+              double partialOccupancy = partialOccupancies[kPoint][i];
+
+
               double fTimeslogf, oneminusfTimeslogoneminusf;
 
               if (std::abs(partialOccupancy - 1.0) <= 1e-07 ||

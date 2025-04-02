@@ -240,6 +240,17 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
+  excDensityLDAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
+    const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+      &                                                                    src,
+    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
+    const unsigned int inputVecSize,
+    const unsigned int kPointIndex,
+    const unsigned int spinIndex)
+  {}
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
   excDensityLDAClass<memorySpace>::updateWaveFunctionDependentFuncDerWrtPsi(
     const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
     const std::vector<double> &                           kPointWeights)

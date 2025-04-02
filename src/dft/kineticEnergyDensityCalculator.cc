@@ -25,10 +25,7 @@
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
 #include <linearAlgebraOperationsDevice.h>
-#include <DeviceAPICalls.h>
-#include <DeviceDataTypeOverloads.h>
-#include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
+#include "densityCalculatorDeviceKernels.h"
 
 
 namespace dftfe
@@ -39,10 +36,7 @@ namespace dftfe
     const dftfe::linearAlgebra::BLASWrapper<memorySpace> &      BLASWrapperPtr,
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
     const unsigned int                      totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &eigenValues,
-    const double                            fermiEnergy,
-    const double                            fermiEnergyUp,
-    const double                            fermiEnergyDown,
+    const std::vector<std::vector<double>> &partialOccupancies,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &                        basisOperationsPtr,
@@ -183,44 +177,14 @@ namespace dftfe
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
                      ++spinIndex)
                   {
-                    if (dftParams.constraintMagnetization)
-                      {
-                        const double fermiEnergyConstraintMag =
-                          spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
-                        for (unsigned int iEigenVec = 0;
-                             iEigenVec < currentBlockSize;
-                             ++iEigenVec)
-                          {
-                            if (eigenValues[kPoint]
-                                           [totalNumWaveFunctions * spinIndex +
-                                            jvec + iEigenVec] >
-                                fermiEnergyConstraintMag)
-                              *(partialOccupVecHost[spinIndex].begin() +
-                                iEigenVec) = 0;
-                            else
-                              *(partialOccupVecHost[spinIndex].begin() +
-                                iEigenVec) =
-                                kPointWeights[kPoint] * spinPolarizedFactor;
-                          }
-                      }
-                    else
-                      {
-                        for (unsigned int iEigenVec = 0;
-                             iEigenVec < currentBlockSize;
-                             ++iEigenVec)
-                          {
-                            *(partialOccupVecHost[spinIndex].begin() +
-                              iEigenVec) =
-                              dftUtils::getPartialOccupancy(
-                                eigenValues[kPoint]
-                                           [totalNumWaveFunctions * spinIndex +
-                                            jvec + iEigenVec],
-                                fermiEnergy,
-                                C_kb,
-                                dftParams.TVal) *
-                              kPointWeights[kPoint] * spinPolarizedFactor;
-                          }
-                      }
+                    for (unsigned int iEigenVec = 0;
+                         iEigenVec < currentBlockSize;
+                         ++iEigenVec)
+                      *(partialOccupVecHost[spinIndex].begin() + iEigenVec) =
+                        partialOccupancies[kPoint]
+                                          [totalNumWaveFunctions * spinIndex +
+                                           jvec + iEigenVec] *
+                        kPointWeights[kPoint] * spinPolarizedFactor;
                   }
 #if defined(DFTFE_WITH_DEVICE)
                 for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
@@ -291,12 +255,12 @@ namespace dftfe
                              ++spinIndex)
                           computeKineticEnergyDensityFromInterpolatedValues(
                             BLASWrapperPtr,
-                            basisOperationsPtr,
                             std::pair<unsigned int, unsigned int>(
                               startingCellId,
                               startingCellId + currentCellsBlockSize),
                             std::pair<unsigned int, unsigned int>(
                               jvec, jvec + currentBlockSize),
+                            numQuadPoints,
                             partialOccupVec[spinIndex].data(),
                             &kcoord[0],
                             wfcQuadPointData[spinIndex].data(),
@@ -384,13 +348,10 @@ namespace dftfe
   void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>
-      &BLASWrapperPtr,
-    std::shared_ptr<
-      dftfe::basis::
-        FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
-      &                                         basisOperationsPtr,
+      &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     double *                                    kcoord,
     NumberType *                                wfcQuadPointData,
@@ -401,8 +362,6 @@ namespace dftfe
   {
     const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
     const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    const unsigned int nQuadsPerCell    = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells           = basisOperationsPtr->nCells();
     const double       kcoordSq =
       kcoord[0] * kcoord[0] + kcoord[1] * kcoord[1] + kcoord[2] * kcoord[2];
     for (unsigned int iCell = cellRange.first; iCell < cellRange.second;
@@ -504,10 +463,7 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::DEVICE> *X,
     const unsigned int                      totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &eigenValues,
-    const double                            fermiEnergy,
-    const double                            fermiEnergyUp,
-    const double                            fermiEnergyDown,
+    const std::vector<std::vector<double>> &partialOccupancies,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
@@ -532,10 +488,7 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::HOST> *X,
     const unsigned int                      totalNumWaveFunctions,
-    const std::vector<std::vector<double>> &eigenValues,
-    const double                            fermiEnergy,
-    const double                            fermiEnergyUp,
-    const double                            fermiEnergyDown,
+    const std::vector<std::vector<double>> &partialOccupancies,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,

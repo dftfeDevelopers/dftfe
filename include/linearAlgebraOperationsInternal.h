@@ -22,9 +22,10 @@
 #include "process_grid.h"
 #include "scalapackWrapper.h"
 #include "dftParameters.h"
-
+#include <BLASWrapper.h>
 #include <elpa/elpa.h>
 #include <unordered_map>
+#include <dftUtils.h>
 namespace dftfe
 {
   namespace linearAlgebraOperations
@@ -109,8 +110,11 @@ namespace dftfe
       void
       scaleScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        dftfe::ScaLAPACKMatrix<T> &                      mat,
-        const T                                          scalar);
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                        BLASWrapperPtr,
+        dftfe::ScaLAPACKMatrix<T> &mat,
+        const T                    scalar);
 
 
       /** @brief MPI_Bcast of ScaLAPACKMat across a given inter communicator from a given broadcast root.
@@ -137,7 +141,10 @@ namespace dftfe
       template <typename T>
       void
       fillParallelOverlapMatrix(
-        const T *                                        X,
+        const T *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                                              BLASWrapperPtr,
         const unsigned int                               XLocalSize,
         const unsigned int                               numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -159,7 +166,10 @@ namespace dftfe
       template <typename T, typename TLowPrec>
       void
       fillParallelOverlapMatrixMixedPrec(
-        const T *                                        X,
+        const T *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                                              BLASWrapperPtr,
         const unsigned int                               XLocalSize,
         const unsigned int                               numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -181,7 +191,10 @@ namespace dftfe
       template <typename T>
       void
       subspaceRotation(
-        T *                subspaceVectorsArray,
+        T *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -205,7 +218,10 @@ namespace dftfe
       template <typename T, typename TLowPrec>
       void
       subspaceRotationMixedPrec(
-        T *                subspaceVectorsArray,
+        T *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
@@ -234,7 +250,10 @@ namespace dftfe
       template <typename T>
       void
       subspaceRotationSpectrumSplit(
-        const T *          X,
+        const T *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         T *                Y,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
@@ -263,7 +282,10 @@ namespace dftfe
       template <typename T, typename TLowPrec>
       void
       subspaceRotationSpectrumSplitMixedPrec(
-        const T *          X,
+        const T *X,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         T *                Y,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
@@ -288,7 +310,10 @@ namespace dftfe
       template <typename T, typename TLowPrec>
       void
       subspaceRotationCGSMixedPrec(
-        T *                subspaceVectorsArray,
+        T *subspaceVectorsArray,
+        const std::shared_ptr<
+          dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+          &                BLASWrapperPtr,
         const unsigned int subspaceVectorsArrayLocalSize,
         const unsigned int N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,

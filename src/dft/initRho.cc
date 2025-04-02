@@ -404,7 +404,8 @@ namespace dftfe
             isGradDensityDataDependent);
 
         if (d_dftParamsPtr->spinPolarized == 1 &&
-            d_dftParamsPtr->constraintMagnetization)
+            d_dftParamsPtr->constraintMagnetization &&
+            !d_dftParamsPtr->useAtomicMagnetizationGuessConstraintMag)
           {
 #pragma omp parallel for num_threads(d_nOMPThreads)
             for (unsigned int dof = 0; dof < numberDofs; ++dof)
@@ -431,8 +432,43 @@ namespace dftfe
               d_gradDensityInQuadValues[1],
               isGradDensityDataDependent);
           }
+        else if (d_dftParamsPtr->spinPolarized == 1 &&
+                 d_dftParamsPtr->constraintMagnetization &&
+                 d_dftParamsPtr->useAtomicMagnetizationGuessConstraintMag)
+          {
+            // normalize rho mag
+            const double netMag =
+              totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
+
+            const double shift =
+              (d_dftParamsPtr->tot_magnetization * numElectrons - netMag) /
+              numElectrons;
+
+            d_densityInNodalValues[1].add(shift, d_densityInNodalValues[0]);
+
+            if (d_dftParamsPtr->verbosity >= 3)
+              {
+                pcout << "Net magnetization before Normalizing:  " << netMag
+                      << std::endl;
+                pcout << "Net magnetization after Normalizing: "
+                      << totalCharge(d_matrixFreeDataPRefined,
+                                     d_densityInNodalValues[1])
+                      << std::endl;
+              }
+            interpolateDensityNodalDataToQuadratureDataGeneral(
+              d_basisOperationsPtrElectroHost,
+              d_densityDofHandlerIndexElectro,
+              d_densityQuadratureIdElectro,
+              d_densityInNodalValues[1],
+              d_densityInQuadValues[1],
+              d_gradDensityInQuadValues[1],
+              d_gradDensityInQuadValues[1],
+              isGradDensityDataDependent);
+          }
 
         normalizeRhoInQuadValues();
+        if (d_dftParamsPtr->constraintMagnetization)
+          normalizeRhoMagInInitialGuessQuadValues();
       }
     else
       {
@@ -586,7 +622,9 @@ namespace dftfe
                 rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
                 if (d_dftParamsPtr->spinPolarized == 1)
                   {
-                    if (d_dftParamsPtr->constraintMagnetization)
+                    if (d_dftParamsPtr->constraintMagnetization &&
+                        !d_dftParamsPtr
+                           ->useAtomicMagnetizationGuessConstraintMag)
                       magInValuesPtr[q] = (d_dftParamsPtr->tot_magnetization) *
                                           (std::abs(rhoValueAtQuadPt));
                     else
@@ -837,7 +875,9 @@ namespace dftfe
                       signRho * gradRhoZValueAtQuadPt;
                     if (d_dftParamsPtr->spinPolarized == 1)
                       {
-                        if (d_dftParamsPtr->constraintMagnetization)
+                        if (d_dftParamsPtr->constraintMagnetization &&
+                            !d_dftParamsPtr
+                               ->useAtomicMagnetizationGuessConstraintMag)
                           {
                             gradMagInValuesPtr[3 * q + 0] =
                               d_dftParamsPtr->tot_magnetization *
@@ -864,6 +904,8 @@ namespace dftfe
           }
 
         normalizeRhoInQuadValues();
+        if (d_dftParamsPtr->constraintMagnetization)
+          normalizeRhoMagInInitialGuessQuadValues();
       }
     //
     computingTimerStandard.leave_subsection("initialize density");
@@ -1402,8 +1444,61 @@ namespace dftfe
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[0]);
 
     if (d_dftParamsPtr->verbosity >= 1)
-      pcout << "Initial total charge: " << chargeAfterScaling << std::endl;
+      pcout << "Initial total charge after normalization: "
+            << chargeAfterScaling << std::endl;
   }
+
+
+  //
+  // Normalize rho mag
+  //
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::
+    normalizeRhoMagInInitialGuessQuadValues()
+  {
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    const unsigned int n_q_points = quadrature_formula.size();
+    const unsigned int nCells     = matrix_free_data.n_physical_cells();
+    const double       netMag =
+      totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[1]);
+
+    const double shift =
+      (d_dftParamsPtr->tot_magnetization * numElectrons - netMag) /
+      numElectrons;
+
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout << "Initial net magnetization before normalization: " << netMag
+            << std::endl;
+
+    // shift rho mag
+    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+      for (unsigned int q = 0; q < n_q_points; ++q)
+        {
+          d_densityInQuadValues[1][iCell * n_q_points + q] +=
+            shift * d_densityInQuadValues[0][iCell * n_q_points + q];
+          if (isGradDensityDataDependent)
+            for (unsigned int idim = 0; idim < 3; ++idim)
+              d_gradDensityInQuadValues[1][3 * iCell * n_q_points + 3 * q +
+                                           idim] +=
+                shift * d_gradDensityInQuadValues[0][3 * iCell * n_q_points +
+                                                     3 * q + idim];
+        }
+    double netMagAfterScaling =
+      totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[1]);
+
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout << "Initial Net magnetization after normalization: "
+            << netMagAfterScaling << std::endl;
+  }
+
 
   //
   // Normalize rho

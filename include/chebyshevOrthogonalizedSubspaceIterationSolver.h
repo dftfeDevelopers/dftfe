@@ -70,7 +70,6 @@ namespace dftfe
             &                  BLASWrapperPtr,
           elpaScalaManager &   elpaScala,
           dataTypes::number *  eigenVectorsFlattened,
-          dataTypes::number *  eigenVectorsRotFracDensityFlattened,
           const unsigned int   totalNumberWaveFunctions,
           const unsigned int   localVectorSize,
           std::vector<double> &eigenValues,

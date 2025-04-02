@@ -21,20 +21,15 @@
 #include <headers.h>
 #include "dftParameters.h"
 #include "FEBasisOperations.h"
-
+#include "densityCalculatorDeviceKernels.h"
 namespace dftfe
 {
   template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
   void
   computeRhoFromPSI(
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *XFrac,
     const unsigned int                      totalNumWaveFunctions,
-    const unsigned int                      Nfr,
-    const std::vector<std::vector<double>> &eigenValues,
-    const double                            fermiEnergy,
-    const double                            fermiEnergyUp,
-    const double                            fermiEnergyDown,
+    const std::vector<std::vector<double>> &partialOccupancies,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
@@ -53,21 +48,17 @@ namespace dftfe
     const MPI_Comm &     mpiCommParent,
     const MPI_Comm &     interpoolcomm,
     const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams,
-    const bool           spectrumSplit);
+    const dftParameters &dftParams);
 
   template <typename NumberType>
   void
   computeRhoGradRhoFromInterpolatedValues(
-    std::shared_ptr<
-      dftfe::basis::
-        FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
-      &basisOperationsPtr,
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
       &                                         BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
     double *                                    partialOccupVec,
     NumberType *                                wfcQuadPointData,
     NumberType *                                gradWfcQuadPointData,
@@ -76,30 +67,6 @@ namespace dftfe
     double *                                    rho,
     double *                                    gradRho,
     const bool                                  isEvaluateGradRho);
-
-#if defined(DFTFE_WITH_DEVICE)
-  template <typename NumberType>
-  void
-  computeRhoGradRhoFromInterpolatedValues(
-    std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType,
-                                      double,
-                                      dftfe::utils::MemorySpace::DEVICE>>
-      &basisOperationsPtr,
-    std::shared_ptr<
-      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                         BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    double *                                    partialOccupVec,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                gradWfcQuadPointData,
-    double *                                    rhoCellsWfcContributions,
-    double *                                    gradRhoCellsWfcContributions,
-    double *                                    rho,
-    double *                                    gradRho,
-    const bool                                  isEvaluateGradRho);
-#endif
 
 } // namespace dftfe
 #endif
