@@ -1,18 +1,18 @@
 #!/bin/bash
-## ---------------------------------------------------------------------
+## ------------------------------------------------------------------------
 ##
-## Copyright (C) 2018 by the deal.II authors
+## SPDX-License-Identifier: LGPL-2.1-or-later
+## Copyright (C) 2018 - 2023 by the deal.II authors
 ##
 ## This file is part of the deal.II library.
 ##
-## The deal.II library is free software; you can use it, redistribute
-## it, and/or modify it under the terms of the GNU Lesser General
-## Public License as published by the Free Software Foundation; either
-## version 2.1 of the License, or (at your option) any later version.
-## The full text of the license can be found in the file LICENSE.md at
-## the top level directory of deal.II.
+## Part of the source code is dual licensed under Apache-2.0 WITH
+## LLVM-exception OR LGPL-2.1-or-later. Detailed license information
+## governing the source code and code contributions can be found in
+## LICENSE.md and CONTRIBUTING.md at the top level directory of deal.II.
 ##
-## This file is adapted by Sambit Das for use with DFT-FE code
+## ------------------------------------------------------------------------
+## This file is adapted by Sambit Das and Nikhil Kodali for use with DFT-FE code
 ## -------------------------------------------------------------------------------------
 
 #
@@ -30,14 +30,13 @@ set -u
 
 PRG="$(cd "$(dirname "$0")" && pwd)/programs"
 
-CLANG_PATH="${PRG}/clang-6"
+VERSION="16"
+RELEASE_DATE="2023-06-10"
+LLVM_COMMIT="7cbf1a2591520c2491aa35339f227775f4d3adf6"
 
-RELEASE_DATE="2018-04-06"
-RELEASE_BRANCH="release_60"
-LLVM_REPOSITORY="https://github.com/llvm-mirror/llvm"
-CLANG_REPOSITORY="https://github.com/llvm-mirror/clang"
-LLVM_COMMIT="1a0dddf879aadfcfea409b3c0a9aa3c9da306945"
-CLANG_COMMIT="d5f48a217f404c3462537527f4169bb45eed3904"
+CLANG_PATH="${PRG}/clang-${VERSION}"
+RELEASE_BRANCH="release/${VERSION}.x"
+LLVM_REPOSITORY="https://github.com/llvm/llvm-project"
 
 if [ ! -d "${PRG}" ]
 then
@@ -51,7 +50,7 @@ then
     exit 1
 fi
 
-echo "Downloading and compiling clang-format-6."
+echo "Downloading and compiling clang-format-${VERSION}."
 mkdir -p "${CLANG_PATH}/bin"
 
 tmpdir="${TMPDIR:-/tmp}/dealiiclang${RANDOM}${RANDOM}"
@@ -81,23 +80,11 @@ else
 fi
 git reset --hard "${LLVM_COMMIT}"
 
-git init tools/clang
-cd tools/clang
-git remote add origin "${CLANG_REPOSITORY}"
-if [ "$GIT_SHALLOW_SINCE_AVAILABLE" = true ]; then
-  git fetch --shallow-since="${RELEASE_DATE}" origin "${RELEASE_BRANCH}"
-else
-  git fetch --depth=1 origin "${RELEASE_BRANCH}"
-  i=1;
-  while ! git cat-file -e ${CLANG_COMMIT} 2> /dev/null; do
-    git fetch --depth=$((i+=10)) origin "${RELEASE_BRANCH}";
-  done
-fi
-git reset --hard "${CLANG_COMMIT}"
+# move clang directory into right place for the build system
+mv clang llvm/tools
 
-cd ../../
-mkdir build
-cd build
+mkdir llvm/build
+cd llvm/build
 
 case "${OSTYPE}" in
   darwin*)

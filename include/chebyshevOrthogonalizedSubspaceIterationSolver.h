@@ -46,8 +46,8 @@ namespace dftfe
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      */
     chebyshevOrthogonalizedSubspaceIterationSolver(
-      const MPI_Comm &     mpi_comm_parent,
-      const MPI_Comm &     mpi_comm_domain,
+      const MPI_Comm      &mpi_comm_parent,
+      const MPI_Comm      &mpi_comm_domain,
       double               lowerBoundWantedSpectrum,
       double               lowerBoundUnWantedSpectrum,
       double               upperBoundUnWantedSpectrum,
@@ -67,15 +67,15 @@ namespace dftfe
     solve(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
           std::shared_ptr<
             dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-            &                  BLASWrapperPtr,
-          elpaScalaManager &   elpaScala,
-          dataTypes::number *  eigenVectorsFlattened,
+                              &BLASWrapperPtr,
+          elpaScalaManager    &elpaScala,
+          dataTypes::number   *eigenVectorsFlattened,
           const unsigned int   totalNumberWaveFunctions,
           const unsigned int   localVectorSize,
           std::vector<double> &eigenValues,
           std::vector<double> &residuals,
-          const MPI_Comm &     interBandGroupComm,
-          const MPI_Comm &     mpiCommDomain,
+          const MPI_Comm      &interBandGroupComm,
+          const MPI_Comm      &mpiCommDomain,
           const bool           isFirstFilteringCall,
           const bool           computeResidual,
           const bool           useMixedPrec = false,
@@ -86,9 +86,9 @@ namespace dftfe
      */
     void
     solve(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-          std::vector<distributedCPUVec<double>> &           eigenVectors,
-          std::vector<double> &                              eigenValues,
-          std::vector<double> &                              residuals);
+          std::vector<distributedCPUVec<double>>            &eigenVectors,
+          std::vector<double>                               &eigenValues,
+          std::vector<double>                               &residuals);
 
     /**
      * @brief reinit spectrum bounds

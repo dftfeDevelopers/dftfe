@@ -122,16 +122,16 @@ namespace dftfe
       const unsigned int                      sparsityPatternQuadratureId,
       const unsigned int                      numberWaveFunctions,
       const unsigned int                      numSpins,
-      const dftParameters &                   dftParam,
-      const std::string &                     scratchFolderName,
+      const dftParameters                    &dftParam,
+      const std::string                      &scratchFolderName,
       const bool                              singlePrecNonLocalOperator,
       const bool                              updateNonlocalSparsity,
       const std::vector<std::vector<double>> &atomLocations,
       const std::vector<std::vector<double>> &atomLocationsFrac,
-      const std::vector<int> &                imageIds,
+      const std::vector<int>                 &imageIds,
       const std::vector<std::vector<double>> &imagePositions,
-      const std::vector<double> &             kPointCoordinates,
-      const std::vector<double> &             kPointWeights,
+      const std::vector<double>              &kPointCoordinates,
+      const std::vector<double>              &kPointWeights,
       const std::vector<std::vector<double>> &domainBoundaries);
 
     /*
@@ -165,7 +165,7 @@ namespace dftfe
     void
     applyPotentialDueToHubbardCorrection(
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &      dst,
+      dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>       &dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
       const unsigned int spinIndex);
@@ -177,7 +177,7 @@ namespace dftfe
         memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<
         typename dftfe::dataTypes::singlePrecType<ValueType>::type,
-        memorySpace> &   dst,
+        memorySpace>    &dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
       const unsigned int spinIndex);
@@ -295,7 +295,7 @@ namespace dftfe
 
     void
     readHubbardInput(const std::vector<std::vector<double>> &atomLocations,
-                     const std::vector<int> &                imageIds,
+                     const std::vector<int>                 &imageIds,
                      const std::vector<std::vector<double>> &imagePositions);
 
 
@@ -332,7 +332,7 @@ namespace dftfe
 
     std::vector<double>              d_kPointWeights;
     std::vector<std::vector<double>> d_domainBoundaries;
-    const dftParameters *            d_dftParamsPtr;
+    const dftParameters             *d_dftParamsPtr;
     std::vector<double>              d_kPointCoordinates;
 
     unsigned int d_numKPoints;

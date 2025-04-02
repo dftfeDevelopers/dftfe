@@ -207,7 +207,7 @@ namespace dftfe
 
     d_atomIdToNonTrivialSphericalFnCellStartIndex.clear();
     std::map<unsigned int, std::vector<unsigned int>>
-                              globalAtomIdToNonTrivialSphericalFnsCellStartIndex;
+      globalAtomIdToNonTrivialSphericalFnsCellStartIndex;
     std::vector<unsigned int> accumTemp(numCells, 0);
     // Loop over atoms to determine sizes of various vectors for forces
     for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
@@ -1923,7 +1923,7 @@ namespace dftfe
     const CouplingStructure                                    couplingtype,
     const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-      &                sphericalFunctionKetTimesVectorParFlattened,
+                      &sphericalFunctionKetTimesVectorParFlattened,
     const bool         flagCopyResultsToMatrix,
     const unsigned int kPointIndex)
   {
@@ -2144,7 +2144,7 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
     applyAllReduceOnCconjtransX(
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
+                &sphericalFunctionKetTimesVectorParFlattened,
       const bool skipComm)
   {
     if (d_totalNonLocalEntries > 0)
@@ -2214,7 +2214,7 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCconjtransOnX(
-    const ValueType *                           X,
+    const ValueType                            *X,
     const std::pair<unsigned int, unsigned int> cellRange)
   {
     Assert(
@@ -2500,7 +2500,7 @@ namespace dftfe
     const CouplingStructure                                    couplingtype,
     const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-      &        sphericalFunctionKetTimesVectorParFlattened,
+              &sphericalFunctionKetTimesVectorParFlattened,
     const bool flagScaleInternalMatrix)
   {
     if (!d_useGlobalCMatrix)
@@ -2534,7 +2534,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
+                &sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix)
   {
     if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
@@ -2646,7 +2646,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
+                &sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix)
   {
     initialiseOperatorActionOnX(kPointIndex);
@@ -2663,7 +2663,7 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::applyCOnVCconjtransX(
-    ValueType *                                 Xout,
+    ValueType                                  *Xout,
     const std::pair<unsigned int, unsigned int> cellRange)
   {
     Assert(
@@ -3071,7 +3071,7 @@ namespace dftfe
     d_atomIdToNonTrivialSphericalFnCellStartIndex.clear();
 
     std::map<unsigned int, std::vector<unsigned int>>
-                              globalAtomIdToNonTrivialSphericalFnsCellStartIndex;
+      globalAtomIdToNonTrivialSphericalFnsCellStartIndex;
     std::vector<unsigned int> accumTemp(numCells, 0);
     // Loop over atoms to determine sizes of various vectors for forces
     for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
@@ -3622,7 +3622,7 @@ namespace dftfe
 
     d_atomIdToNonTrivialSphericalFnCellStartIndex.clear();
     std::map<unsigned int, std::vector<unsigned int>>
-                              globalAtomIdToNonTrivialSphericalFnsCellStartIndex;
+      globalAtomIdToNonTrivialSphericalFnsCellStartIndex;
     std::vector<unsigned int> accumTemp(numCells, 0);
     // Loop over atoms to determine sizes of various vectors for forces
     for (unsigned int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
@@ -4149,7 +4149,7 @@ namespace dftfe
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::paddingCouplingMatrix(
     const std::vector<ValueType> &entries,
-    std::vector<ValueType> &      entriesPadded,
+    std::vector<ValueType>       &entriesPadded,
     const CouplingStructure       couplingtype)
   {
     entriesPadded.clear();

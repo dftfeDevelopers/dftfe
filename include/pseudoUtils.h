@@ -34,9 +34,9 @@ namespace dftfe
     // some inline functions
     inline void
     exchangeLocalList(const std::vector<unsigned int> &masterNodeIdList,
-                      std::vector<unsigned int> &      globalMasterNodeIdList,
+                      std::vector<unsigned int>       &globalMasterNodeIdList,
                       unsigned int                     numMeshPartitions,
-                      const MPI_Comm &                 mpi_communicator)
+                      const MPI_Comm                  &mpi_communicator)
     {
       int numberMasterNodesOnLocalProc = masterNodeIdList.size();
 
@@ -84,7 +84,7 @@ namespace dftfe
     inline void
     exchangeNumberingMap(std::map<int, int> &localMap,
                          unsigned int        numMeshPartitions,
-                         const MPI_Comm &    mpi_communicator)
+                         const MPI_Comm     &mpi_communicator)
 
     {
       std::map<int, int>::iterator iter;
@@ -146,7 +146,7 @@ namespace dftfe
 
     inline void
     getRadialFunctionVal(const double                       radialCoordinate,
-                         double &                           splineVal,
+                         double                            &splineVal,
                          const alglib::spline1dinterpolant *spline)
     {
       splineVal = alglib::spline1dcalc(*spline, radialCoordinate);
@@ -158,7 +158,7 @@ namespace dftfe
                             const double phi,
                             const int    l,
                             const int    m,
-                            double &     sphericalHarmonicVal)
+                            double      &sphericalHarmonicVal)
     {
       if (m < 0)
         sphericalHarmonicVal =

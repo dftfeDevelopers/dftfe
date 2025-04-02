@@ -46,16 +46,16 @@ namespace dftfe
       reshapeFromNonAffineLayoutDevice(const dftfe::size_type numVecs,
                                        const dftfe::size_type numQuads,
                                        const dftfe::size_type numCells,
-                                       const ValueType *      copyFromVec,
-                                       ValueType *            copyToVec);
+                                       const ValueType       *copyFromVec,
+                                       ValueType             *copyToVec);
 
       template <typename ValueType>
       void
       reshapeFromNonAffineLayoutHost(const dftfe::size_type numVecs,
                                      const dftfe::size_type numQuads,
                                      const dftfe::size_type numCells,
-                                     const ValueType *      copyFromVec,
-                                     ValueType *            copyToVec);
+                                     const ValueType       *copyFromVec,
+                                     ValueType             *copyToVec);
 
       /**
        * @brief rehsape gradient data to [iCell * 3 * d_nQuadsPerCell * d_nVectors + iQuad * 3 * d_nVectors + iDim * d_nVectors + iVec] from [iCell * 3 * d_nQuadsPerCell * d_nVectors + iDim *
@@ -71,16 +71,16 @@ namespace dftfe
       reshapeToNonAffineLayoutDevice(const dftfe::size_type numVecs,
                                      const dftfe::size_type numQuads,
                                      const dftfe::size_type numCells,
-                                     const ValueType *      copyFromVec,
-                                     ValueType *            copyToVec);
+                                     const ValueType       *copyFromVec,
+                                     ValueType             *copyToVec);
 
       template <typename ValueType>
       void
       reshapeToNonAffineLayoutHost(const dftfe::size_type numVecs,
                                    const dftfe::size_type numQuads,
                                    const dftfe::size_type numCells,
-                                   const ValueType *      copyFromVec,
-                                   ValueType *            copyToVec);
+                                   const ValueType       *copyFromVec,
+                                   ValueType             *copyToVec);
 
     } // namespace FEBasisOperationsKernelsInternal
   }   // namespace basis

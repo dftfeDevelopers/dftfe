@@ -31,7 +31,7 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
-    const dealii::DoFHandler<3> &                        dofHandlerOfField,
+    const dealii::DoFHandler<3>                         &dofHandlerOfField,
     const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues)
   {
     double                       normValue = 0.0;
@@ -109,7 +109,7 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
-    const dealii::DoFHandler<3> &    dofHandlerOfField,
+    const dealii::DoFHandler<3>     &dofHandlerOfField,
     const distributedCPUVec<double> &rhoNodalField)
   {
     double                       normValue = 0.0;
@@ -150,7 +150,7 @@ namespace dftfe
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
-    const distributedCPUVec<double> &    nodalField)
+    const distributedCPUVec<double>     &nodalField)
   {
     dealii::FEEvaluation<
       3,
@@ -264,7 +264,7 @@ namespace dftfe
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::rhofieldl2Norm(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
-    const distributedCPUVec<double> &    nodalField,
+    const distributedCPUVec<double>     &nodalField,
     const unsigned int                   dofHandlerId,
     const unsigned int                   quadratureId)
 
@@ -275,7 +275,7 @@ namespace dftfe
       C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
       1,
       double>
-                                    fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
+      fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
     const unsigned int numQuadPoints = fe_evalField.n_q_points;
@@ -320,8 +320,8 @@ namespace dftfe
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::rhofieldInnerProduct(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
-    const distributedCPUVec<double> &    nodalField1,
-    const distributedCPUVec<double> &    nodalField2,
+    const distributedCPUVec<double>     &nodalField1,
+    const distributedCPUVec<double>     &nodalField2,
     const unsigned int                   dofHandlerId,
     const unsigned int                   quadratureId)
 
@@ -332,7 +332,7 @@ namespace dftfe
       C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
       1,
       double>
-                                    fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
+      fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
     dealii::VectorizedArray<double> valueVectorized =
       dealii::make_vectorized_array(0.0);
     const unsigned int numQuadPoints = fe_evalField.n_q_points;
@@ -395,10 +395,10 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                basisOperationsPtr,
+                      &basisOperationsPtr,
     const unsigned int densityQuadratureId,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                                                  rhoQuadValues,
+                                                        &rhoQuadValues,
     const std::map<dealii::CellId, std::vector<double>> *bQuadValues)
   {
     basisOperationsPtr->reinit(0, 0, densityQuadratureId, false);
@@ -411,77 +411,77 @@ namespace dftfe
       dealii::Point<3, dealii::VectorizedArray<double>>)>>
       momentsAtQuadPoints;
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) { return i; });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return i * q[0];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return i * q[1];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return i * q[2];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return i * (3.0 * q[0] * q[0] - q.norm_square());
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return 3.0 * i * q[0] * q[1];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return 3.0 * i * q[0] * q[2];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return 3.0 * i * q[1] * q[0];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return i * (3.0 * q[1] * q[1] - q.norm_square());
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return 3.0 * i * q[1] * q[2];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return 3.0 * i * q[2] * q[0];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return 3.0 * i * q[2] * q[1];
       });
 
     momentsAtQuadPoints.push_back(
-      [](dealii::VectorizedArray<double> &                 i,
+      [](dealii::VectorizedArray<double>                  &i,
          dealii::Point<3, dealii::VectorizedArray<double>> q) {
         return i * (3.0 * q[2] * q[2] - q.norm_square());
       });

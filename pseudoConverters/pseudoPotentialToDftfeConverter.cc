@@ -689,9 +689,9 @@ namespace dftfe
     pseudoPotentialToDftfeParser(const std::string file_path_in,
                                  const std::string file_path_out,
                                  const int         verbosity,
-                                 unsigned int &    nlccFlag,
-                                 unsigned int &    socFlag,
-                                 unsigned int &    pawFlag)
+                                 unsigned int     &nlccFlag,
+                                 unsigned int     &socFlag,
+                                 unsigned int     &pawFlag)
     {
       xmltoSummaryFile(file_path_in, file_path_out);
       xmltoProjectorFile(file_path_in, file_path_out);

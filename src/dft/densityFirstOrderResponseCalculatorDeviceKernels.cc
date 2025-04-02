@@ -29,10 +29,10 @@ namespace dftfe
       const unsigned int numVectors,
       const unsigned int numCells,
       const unsigned int nQuadsPerCell,
-      const double *     wfc,
-      const double *     wfcPrime,
-      double *           rhoResponseHamCellsWfcContributions,
-      double *           rhoResponseFermiEnergyCellsWfcContributions)
+      const double      *wfc,
+      const double      *wfcPrime,
+      double            *rhoResponseHamCellsWfcContributions,
+      double            *rhoResponseFermiEnergyCellsWfcContributions)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
@@ -79,14 +79,14 @@ namespace dftfe
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    onesVec,
-    double *                                    partialOccupPrimeVec,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                wfcPrimeQuadPointData,
+    double                                     *onesVec,
+    double                                     *partialOccupPrimeVec,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *wfcPrimeQuadPointData,
     double *rhoResponseHamCellsWfcContributions,
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,
@@ -157,14 +157,14 @@ namespace dftfe
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    onesVec,
-    double *                                    partialOccupVec,
-    dataTypes::number *                         wfcQuadPointData,
-    dataTypes::number *                         wfcPrimeQuadPointData,
+    double                                     *onesVec,
+    double                                     *partialOccupVec,
+    dataTypes::number                          *wfcQuadPointData,
+    dataTypes::number                          *wfcPrimeQuadPointData,
     double *rhoResponseHamCellsWfcContributions,
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,

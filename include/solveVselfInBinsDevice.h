@@ -33,19 +33,19 @@ namespace dftfe
         &cellGradNIGradNJIntergralDevice,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                      BLASWrapperPtr,
-      const dealii::MatrixFree<3, double> &    matrixFreeData,
+                                              &BLASWrapperPtr,
+      const dealii::MatrixFree<3, double>     &matrixFreeData,
       const unsigned int                       mfDofHandlerIndex,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
-      const double *                           rhsFlattenedH,
-      const double *                           diagonalAH,
-      const double *                           inhomoIdsColoredVecFlattenedH,
+      const double                            *rhsFlattenedH,
+      const double                            *diagonalAH,
+      const double                            *inhomoIdsColoredVecFlattenedH,
       const unsigned int                       localSize,
       const unsigned int                       ghostSize,
       const unsigned int                       numberBins,
-      const MPI_Comm &                         mpiCommParent,
-      const MPI_Comm &                         mpiCommDomain,
-      double *                                 xH,
+      const MPI_Comm                          &mpiCommParent,
+      const MPI_Comm                          &mpiCommDomain,
+      double                                  *xH,
       const int                                verbosity,
       const unsigned int                       maxLinearSolverIterations,
       const double                             absLinearSolverTolerance,
@@ -57,7 +57,7 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &BLASWrapperPtr,
       dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
-        &           constraintsMatrixDataInfoDevice,
+                   &constraintsMatrixDataInfoDevice,
       const double *bD,
       const double *diagonalAD,
       const dftfe::utils::MemoryStorage<double,
@@ -68,7 +68,7 @@ namespace dftfe
         &inhomoIdsColoredVecFlattenedD,
       const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &                           cellLocalProcIndexIdMapD,
+                                   &cellLocalProcIndexIdMapD,
       const unsigned int            localSize,
       const unsigned int            ghostSize,
       const unsigned int            numberBins,
@@ -77,8 +77,8 @@ namespace dftfe
       const int                     debugLevel,
       const unsigned int            maxIter,
       const double                  absTol,
-      const MPI_Comm &              mpiCommParent,
-      const MPI_Comm &              mpiCommDomain,
+      const MPI_Comm               &mpiCommParent,
+      const MPI_Comm               &mpiCommDomain,
       distributedDeviceVec<double> &x);
   } // namespace poissonDevice
 } // namespace dftfe

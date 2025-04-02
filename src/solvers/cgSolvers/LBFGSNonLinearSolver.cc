@@ -31,7 +31,7 @@ namespace dftfe
     const unsigned int maxNumberIterations,
     const int          maxNumPastSteps,
     const unsigned int debugLevel,
-    const MPI_Comm &   mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_parent,
     const bool         isCurvatureOnlyLineSearchStoppingCondition)
     : nonLinearSolver(debugLevel, maxNumberIterations)
     , d_maxStepLength(maxUpdate)
@@ -591,7 +591,7 @@ namespace dftfe
   //
   bool
   LBFGSNonLinearSolver::updateSolution(const std::vector<double> &step,
-                                       nonlinearSolverProblem &   problem)
+                                       nonlinearSolverProblem    &problem)
   {
     std::vector<double> incrementVector;
 

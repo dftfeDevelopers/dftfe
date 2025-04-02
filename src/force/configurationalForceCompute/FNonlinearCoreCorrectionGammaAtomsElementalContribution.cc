@@ -37,7 +37,7 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
@@ -145,7 +145,7 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<
@@ -264,7 +264,7 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
@@ -282,7 +282,7 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &        hessianRhoCoreAtoms,
+                &hessianRhoCoreAtoms,
       const bool isXCGGA)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;

@@ -77,9 +77,9 @@ namespace dftfe
 
     template <typename T>
     void
-    OptimizedIndexSet<T>::getPosition(const T &  index,
+    OptimizedIndexSet<T>::getPosition(const T   &index,
                                       size_type &pos,
-                                      bool &     found) const
+                                      bool      &found) const
     {
       found = false;
       /*

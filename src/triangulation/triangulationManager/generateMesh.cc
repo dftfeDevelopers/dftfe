@@ -27,9 +27,9 @@ namespace dftfe
     void
     checkTriangulationEqualityAcrossProcessorPools(
       const dealii::parallel::distributed::Triangulation<3>
-        &                parallelTriangulation,
+                        &parallelTriangulation,
       const unsigned int numLocallyOwnedCells,
-      const MPI_Comm &   interpool_comm)
+      const MPI_Comm    &interpool_comm)
     {
       const unsigned int numberGlobalCellsParallelMinPools =
         dealii::Utilities::MPI::min(
@@ -55,13 +55,13 @@ namespace dftfe
 
     void
     computeMeshMetrics(const dealii::parallel::distributed::Triangulation<3>
-                         &                               parallelTriangulation,
-                       const std::string &               printCommand,
+                                                        &parallelTriangulation,
+                       const std::string                &printCommand,
                        const dealii::ConditionalOStream &pcout,
-                       const MPI_Comm &                  mpi_comm,
-                       const MPI_Comm &                  interpool_comm1,
-                       const MPI_Comm &                  interpool_comm2,
-                       const dftParameters &             dftParams)
+                       const MPI_Comm                   &mpi_comm,
+                       const MPI_Comm                   &interpool_comm1,
+                       const MPI_Comm                   &interpool_comm2,
+                       const dftParameters              &dftParams)
 
     {
       //
@@ -107,9 +107,9 @@ namespace dftfe
 
     void
     computeLocalFiniteElementError(
-      const dealii::DoFHandler<3> &                         dofHandler,
+      const dealii::DoFHandler<3>                          &dofHandler,
       const std::vector<const distributedCPUVec<double> *> &eigenVectorsArray,
-      std::vector<double> &                                 errorInEachCell,
+      std::vector<double>                                  &errorInEachCell,
       const unsigned int                                    FEOrder)
     {
       typename dealii::DoFHandler<3>::active_cell_iterator cell, endc;
@@ -185,7 +185,8 @@ namespace dftfe
 
   } // namespace internal
 
-  void triangulationManager::generateCoarseMesh(
+  void
+  triangulationManager::generateCoarseMesh(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation)
   {
     //
@@ -345,9 +346,10 @@ namespace dftfe
             << parallelTriangulation.n_global_active_cells() << std::endl;
   }
 
-  bool triangulationManager::refinementAlgorithmA(
+  bool
+  triangulationManager::refinementAlgorithmA(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-    std::vector<unsigned int> &             locallyOwnedCellsRefineFlags,
+    std::vector<unsigned int>              &locallyOwnedCellsRefineFlags,
     std::map<dealii::CellId, unsigned int> &cellIdToCellRefineFlagMapLocal,
     const bool                              smoothenCellsOnPeriodicBoundary,
     const double                            smootheningFactor)
@@ -632,9 +634,10 @@ namespace dftfe
   // internal function which sets refinement flags to have consistent refinement
   // across periodic boundary
   //
-  bool triangulationManager::consistentPeriodicBoundaryRefinement(
+  bool
+  triangulationManager::consistentPeriodicBoundaryRefinement(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-    std::vector<unsigned int> &             locallyOwnedCellsRefineFlags,
+    std::vector<unsigned int>              &locallyOwnedCellsRefineFlags,
     std::map<dealii::CellId, unsigned int> &cellIdToCellRefineFlagMapLocal)
   {
     locallyOwnedCellsRefineFlags.clear();
@@ -699,7 +702,8 @@ namespace dftfe
   //
   // check that triangulation has consistent refinement across periodic boundary
   //
-  bool triangulationManager::checkPeriodicSurfaceRefinementConsistency(
+  bool
+  triangulationManager::checkPeriodicSurfaceRefinementConsistency(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation)
   {
     typename dealii::parallel::distributed::Triangulation<
@@ -734,7 +738,8 @@ namespace dftfe
   // check that FEOrder=1 dofHandler using the triangulation has parallel
   // consistent combined hanging node and periodic constraints
   //
-  bool triangulationManager::checkConstraintsConsistency(
+  bool
+  triangulationManager::checkConstraintsConsistency(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation)
   {
     dealii::FESystem<3> FE(
@@ -828,9 +833,9 @@ namespace dftfe
   //
   void
   triangulationManager::generateAutomaticMeshApriori(
-    const dealii::DoFHandler<3> &                    dofHandler,
+    const dealii::DoFHandler<3>                     &dofHandler,
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-    const std::vector<distributedCPUVec<double>> &   eigenVectorsArrayIn,
+    const std::vector<distributedCPUVec<double>>    &eigenVectorsArrayIn,
     const unsigned int                               FEOrder)
   {
     double topfrac    = d_dftParams.topfrac;
@@ -921,7 +926,8 @@ namespace dftfe
   }
 
 
-  void triangulationManager::generateMesh(
+  void
+  triangulationManager::generateMesh(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
     dealii::parallel::distributed::Triangulation<3> &serialTriangulation,
     std::vector<std::vector<bool>> &parallelTriaCurrentRefinement,
@@ -1501,11 +1507,11 @@ namespace dftfe
   void
   triangulationManager::refineSerialMesh(
     const std::map<dealii::CellId, unsigned int>
-      &             cellIdToCellRefineFlagMapLocal,
+                   &cellIdToCellRefineFlagMapLocal,
     const MPI_Comm &mpi_comm,
     dealii::parallel::distributed::Triangulation<3> &serialTriangulation,
     const dealii::parallel::distributed::Triangulation<3>
-      &                parallelTriangulation,
+                      &parallelTriangulation,
     std::vector<bool> &serialTriaCurrentRefinement)
 
   {

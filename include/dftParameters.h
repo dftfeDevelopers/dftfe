@@ -222,7 +222,7 @@ namespace dftfe
      */
     void
     parse_parameters(const std::string &parameter_file,
-                     const MPI_Comm &   mpi_comm_parent,
+                     const MPI_Comm    &mpi_comm_parent,
                      const bool         printParams      = false,
                      const std::string  mode             = "GS",
                      const std::string  restartFilesPath = ".",

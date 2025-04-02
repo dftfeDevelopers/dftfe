@@ -30,7 +30,7 @@ namespace dftfe
   geometryOptimizationClass::geometryOptimizationClass(
     const std::string parameter_file,
     const std::string restartFilesPath,
-    const MPI_Comm &  mpi_comm_parent,
+    const MPI_Comm   &mpi_comm_parent,
     const bool        restart,
     const int         verbosity,
     const bool        useDevice)
@@ -153,9 +153,9 @@ namespace dftfe
                       std::to_string(d_cycle) +
                       (d_status == 0 ? "/ionRelax/step" : "/cellRelax/step") +
                       std::to_string(lastSavedStep);
-        coordinatesFile = isPeriodic ?
-                            restartPath + "/atomsFracCoordCurrent.chk" :
-                            restartPath + "/atomsCartCoordCurrent.chk";
+        coordinatesFile   = isPeriodic ?
+                              restartPath + "/atomsFracCoordCurrent.chk" :
+                              restartPath + "/atomsCartCoordCurrent.chk";
         domainVectorsFile = restartPath + "/domainBoundingVectorsCurrent.chk";
         if (!restartFilesFound)
           {

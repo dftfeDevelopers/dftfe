@@ -46,7 +46,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
-//#include <stdafx.h>
+// #include <stdafx.h>
 #include <boost/math/distributions/normal.hpp>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -83,12 +83,12 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   dftClass<FEOrder, FEOrderElectro, memorySpace>::dftClass(
-    const MPI_Comm &   mpi_comm_parent,
-    const MPI_Comm &   mpi_comm_domain,
-    const MPI_Comm &   _interpoolcomm,
-    const MPI_Comm &   _interBandGroupComm,
+    const MPI_Comm    &mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_domain,
+    const MPI_Comm    &_interpoolcomm,
+    const MPI_Comm    &_interBandGroupComm,
     const std::string &scratchFolderName,
-    dftParameters &    dftParams)
+    dftParameters     &dftParams)
     : FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder + 1)), 1)
     ,
 #ifdef USE_COMPLEX
@@ -283,7 +283,7 @@ namespace dftfe
   {
     void
     convertToCellCenteredCartesianCoordinates(
-      std::vector<std::vector<double>> &      atomLocations,
+      std::vector<std::vector<double>>       &atomLocations,
       const std::vector<std::vector<double>> &latticeVectors)
     {
       std::vector<double> cartX(atomLocations.size(), 0.0);
@@ -4987,9 +4987,9 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const std::vector<std::vector<double>>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::
-            getImageAtomLocationsCart() const
+        const std::vector<std::vector<double>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getImageAtomLocationsCart() const
         {
           return d_imagePositionsTrunc;
         }
@@ -5016,8 +5016,8 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const std::vector<std::vector<double>>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getCell() const
+        const std::vector<std::vector<double>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getCell() const
         {
           return d_domainBoundingVectors;
         }
@@ -5035,8 +5035,8 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const std::set<unsigned int>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomTypes() const
+        const std::set<unsigned int> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getAtomTypes() const
         {
           return atomTypes;
         }
@@ -5053,8 +5053,8 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const dealii::Tensor<2, 3, double>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getCellStress() const
+        const dealii::Tensor<2, 3, double> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getCellStress() const
         {
           return (forcePtr->getStress());
         }
@@ -5110,9 +5110,9 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const distributedCPUVec<double>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getRhoNodalSplitOut()
-            const
+        const distributedCPUVec<double> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getRhoNodalSplitOut()
+          const
         {
           return d_rhoOutNodalValuesSplit;
         }
@@ -5343,7 +5343,7 @@ namespace dftfe
             &residualValues,
           const dftfe::utils::MemoryStorage<double,
                                             dftfe::utils::MemorySpace::HOST>
-            &        JxW,
+                    &JxW,
           const bool computeNorm)
         {
           std::transform(outValues.begin(),
@@ -5425,9 +5425,9 @@ namespace dftfe
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
         const dftfe::utils::MemoryStorage<dataTypes::number,
-                                          dftfe::utils::MemorySpace::HOST>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenVectorsHost()
-            const
+                                          dftfe::utils::MemorySpace::HOST> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getEigenVectorsHost()
+          const
         {
           return d_eigenVectorsFlattenedHost;
         }
@@ -5521,8 +5521,8 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        KohnShamHamiltonianOperator<memorySpace>
-          *dftClass<FEOrder, FEOrderElectro, memorySpace>::getOperatorClass()
+        KohnShamHamiltonianOperator<memorySpace> *
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getOperatorClass()
         {
           return d_kohnShamDFTOperatorPtr;
         }
@@ -5585,9 +5585,9 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const dealii::MatrixFree<3, double>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::
-            getMatrixFreeDataElectro() const
+        const dealii::MatrixFree<3, double> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getMatrixFreeDataElectro() const
         {
           return d_matrixFreeDataPRefined;
         }
@@ -5704,9 +5704,9 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        std::vector<
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityInValues()
+        std::vector<dftfe::utils::
+                      MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityInValues()
         {
           return d_densityInQuadValues;
         }
@@ -5714,9 +5714,9 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        std::vector<
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityOutValues()
+        std::vector<dftfe::utils::
+                      MemoryStorage<double, dftfe::utils::MemorySpace::HOST>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getDensityOutValues()
         {
           return d_densityOutQuadValues;
         }
@@ -5754,9 +5754,9 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const dealii::AffineConstraints<double>
-          *dftClass<FEOrder, FEOrderElectro, memorySpace>::
-            getConstraintsVectorElectro()
+        const dealii::AffineConstraints<double> *
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getConstraintsVectorElectro()
         {
           return d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro];
         }
@@ -5831,9 +5831,9 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const std::map<dealii::CellId, std::vector<unsigned int>>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::
-            getbCellNonTrivialAtomIds() const
+        const std::map<dealii::CellId, std::vector<unsigned int>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::
+          getbCellNonTrivialAtomIds() const
         {
           return d_bCellNonTrivialAtomIds;
         }
@@ -5859,8 +5859,8 @@ namespace dftfe
         template <unsigned int              FEOrder,
                   unsigned int              FEOrderElectro,
                   dftfe::utils::MemorySpace memorySpace>
-        const std::map<dealii::CellId, std::vector<double>>
-          &dftClass<FEOrder, FEOrderElectro, memorySpace>::getPseudoVLoc() const
+        const std::map<dealii::CellId, std::vector<double>> &
+        dftClass<FEOrder, FEOrderElectro, memorySpace>::getPseudoVLoc() const
         {
           return d_pseudoVLoc;
         }

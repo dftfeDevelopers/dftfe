@@ -131,12 +131,12 @@ namespace dftfe
 
     void
     excSpinPolarized(
-      const double *                       rho,
-      const double *                       sigma,
-      const double *                       laprho,
+      const double                        *rho,
+      const double                        *sigma,
+      const double                        *laprho,
       const unsigned int                   numPoints,
-      double *                             exc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol,
       const double                         sThreshold)
@@ -213,13 +213,13 @@ namespace dftfe
 
     void
     dexcSpinPolarized(
-      const double *                       rho,
-      const double *                       sigma,
-      const double *                       laprho,
+      const double                        *rho,
+      const double                        *sigma,
+      const double                        *laprho,
       const unsigned int                   numPoints,
-      double *                             exc,
-      double *                             dexc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      double                              *dexc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol,
       const double                         sThreshold)
@@ -290,7 +290,7 @@ namespace dftfe
       auto excTensor   = model->forward(input).toTensor();
       auto grad_output = torch::ones_like(excTensor);
       auto vxcTensor   = torch::autograd::grad({excTensor},
-                                             {rhoTensor},
+                                               {rhoTensor},
                                              /*grad_outputs=*/{grad_output},
                                              /*create_graph=*/true)[0];
       for (unsigned int i = 0; i < numPoints; ++i)
@@ -361,11 +361,11 @@ namespace dftfe
   }
 
   void
-  NNLLMGGA::evaluateexc(const double *     rho,
-                        const double *     sigma,
-                        const double *     laprho,
+  NNLLMGGA::evaluateexc(const double      *rho,
+                        const double      *sigma,
+                        const double      *laprho,
                         const unsigned int numPoints,
-                        double *           exc)
+                        double            *exc)
   {
     if (!d_isSpinPolarized)
       throw std::runtime_error("Spin unpolarized NN is yet to be implemented.");
@@ -382,12 +382,12 @@ namespace dftfe
   }
 
   void
-  NNLLMGGA::evaluatevxc(const double *     rho,
-                        const double *     sigma,
-                        const double *     laprho,
+  NNLLMGGA::evaluatevxc(const double      *rho,
+                        const double      *sigma,
+                        const double      *laprho,
                         const unsigned int numPoints,
-                        double *           exc,
-                        double *           dexc)
+                        double            *exc,
+                        double            *dexc)
   {
     if (!d_isSpinPolarized)
       throw std::runtime_error("Spin unpolarized NN is yet to be implemented.");

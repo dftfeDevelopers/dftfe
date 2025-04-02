@@ -11,8 +11,8 @@ namespace dftfe
     void
     addSubspaceRotatedBlockToX(const unsigned int            BDof,
                                const unsigned int            BVec,
-                               const ValueType1 *            rotatedXBlockSP,
-                               ValueType2 *                  X,
+                               const ValueType1             *rotatedXBlockSP,
+                               ValueType2                   *X,
                                const unsigned int            startingDofId,
                                const unsigned int            startingVecId,
                                const unsigned int            N,
@@ -23,15 +23,15 @@ namespace dftfe
     copyFromOverlapMatBlockToDPSPBlocks(
       const unsigned int            B,
       const unsigned int            D,
-      const ValueType1 *            overlapMatrixBlock,
-      ValueType1 *                  overlapMatrixBlockDP,
-      ValueType2 *                  overlapMatrixBlockSP,
+      const ValueType1             *overlapMatrixBlock,
+      ValueType1                   *overlapMatrixBlockDP,
+      ValueType2                   *overlapMatrixBlockSP,
       dftfe::utils::deviceStream_t &streamDataMove);
 
     template <typename ValueType1, typename ValueType2>
     void
-    computeDiagQTimesX(const ValueType1 * diagValues,
-                       ValueType2 *       X,
+    computeDiagQTimesX(const ValueType1  *diagValues,
+                       ValueType2        *X,
                        const unsigned int N,
                        const unsigned int M);
 
@@ -41,10 +41,10 @@ namespace dftfe
                           const unsigned int numDofs,
                           const unsigned int N,
                           const unsigned int startingVecId,
-                          const double *     eigenValues,
-                          const ValueType *  X,
-                          const ValueType *  Y,
-                          double *           r);
+                          const double      *eigenValues,
+                          const ValueType   *X,
+                          const ValueType   *Y,
+                          double            *r);
 
     template <typename ValueType>
     void
@@ -52,8 +52,8 @@ namespace dftfe
                                      const unsigned int numDofs,
                                      const unsigned int N,
                                      const unsigned int startingVecId,
-                                     const ValueType *  X,
-                                     double *           residualSqDevice);
+                                     const ValueType   *X,
+                                     double            *residualSqDevice);
 
 
     template <typename ValueType>
@@ -61,7 +61,7 @@ namespace dftfe
     setZero(const unsigned int BVec,
             const unsigned int M,
             const unsigned int N,
-            ValueType *        yVec,
+            ValueType         *yVec,
             const unsigned int startingXVecId);
 
   } // namespace linearAlgebraOperationsDevice

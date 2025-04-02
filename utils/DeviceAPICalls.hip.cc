@@ -205,7 +205,7 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceMemcpyD2H_2D(void *      dst,
+    deviceMemcpyD2H_2D(void       *dst,
                        std::size_t dpitch,
                        const void *src,
                        std::size_t spitch,
@@ -220,7 +220,7 @@ namespace dftfe
 
 
     deviceError_t
-    deviceMemcpyD2D_2D(void *      dst,
+    deviceMemcpyD2D_2D(void       *dst,
                        std::size_t dpitch,
                        const void *src,
                        std::size_t spitch,
@@ -234,7 +234,7 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceMemcpyH2D_2D(void *      dst,
+    deviceMemcpyH2D_2D(void       *dst,
                        std::size_t dpitch,
                        const void *src,
                        std::size_t spitch,
@@ -256,8 +256,8 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceMemcpyAsyncD2H(void *         dst,
-                         const void *   src,
+    deviceMemcpyAsyncD2H(void          *dst,
+                         const void    *src,
                          std::size_t    count,
                          deviceStream_t stream)
     {
@@ -268,8 +268,8 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceMemcpyAsyncD2D(void *         dst,
-                         const void *   src,
+    deviceMemcpyAsyncD2D(void          *dst,
+                         const void    *src,
                          std::size_t    count,
                          deviceStream_t stream)
     {
@@ -280,8 +280,8 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceMemcpyAsyncH2D(void *         dst,
-                         const void *   src,
+    deviceMemcpyAsyncH2D(void          *dst,
+                         const void    *src,
                          std::size_t    count,
                          deviceStream_t stream)
     {

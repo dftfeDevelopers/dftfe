@@ -116,16 +116,16 @@ namespace dftfe
     const unsigned int                      sparsityPatternQuadratureId,
     const unsigned int                      numberWaveFunctions,
     const unsigned int                      numSpins,
-    const dftParameters &                   dftParam,
-    const std::string &                     scratchFolderName,
+    const dftParameters                    &dftParam,
+    const std::string                      &scratchFolderName,
     const bool                              singlePrecNonLocalOperator,
     const bool                              updateNonlocalSparsity,
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<std::vector<double>> &atomLocationsFrac,
-    const std::vector<int> &                imageIds,
+    const std::vector<int>                 &imageIds,
     const std::vector<std::vector<double>> &imagePositions,
-    const std::vector<double> &             kPointCoordinates,
-    const std::vector<double> &             kPointWeights,
+    const std::vector<double>              &kPointCoordinates,
+    const std::vector<double>              &kPointWeights,
     const std::vector<std::vector<double>> &domainBoundaries)
   {
     MPI_Barrier(d_mpi_comm_parent);
@@ -153,7 +153,7 @@ namespace dftfe
     d_cellsBlockSizeApply = memorySpace == dftfe::utils::MemorySpace::HOST ?
                               1 :
                               d_BasisOperatorMemPtr->nCells();
-    d_numSpins = numSpins;
+    d_numSpins            = numSpins;
 
     // Read the hubbard input data.
     readHubbardInput(atomLocations, imageIds, imagePositions);
@@ -532,7 +532,7 @@ namespace dftfe
   void
   hubbard<ValueType, memorySpace>::computeOccupationMatrix(
     const dftfe::utils::MemoryStorage<ValueType, memorySpace> *X,
-    const std::vector<std::vector<double>> &                   orbitalOccupancy)
+    const std::vector<std::vector<double>>                    &orbitalOccupancy)
   {
     unsigned int numLocalAtomsInProc =
       d_nonLocalOperator->getTotalAtomInCurrentProcessor();
@@ -1136,7 +1136,7 @@ namespace dftfe
   void
   hubbard<ValueType, memorySpace>::readHubbardInput(
     const std::vector<std::vector<double>> &atomLocations,
-    const std::vector<int> &                imageIds,
+    const std::vector<int>                 &imageIds,
     const std::vector<std::vector<double>> &imagePositions)
   {
     std::ifstream hubbardInputFile(d_dftParamsPtr->hubbardFileName);
@@ -1307,7 +1307,7 @@ namespace dftfe
   void
   hubbard<ValueType, memorySpace>::applyPotentialDueToHubbardCorrection(
     const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &      dst,
+    dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>       &dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
     const unsigned int spinIndex)
@@ -1332,7 +1332,7 @@ namespace dftfe
       memorySpace> &src,
     dftfe::linearAlgebra::MultiVector<
       typename dataTypes::singlePrecType<ValueType>::type,
-      memorySpace> &   dst,
+      memorySpace>    &dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
     const unsigned int spinIndex)

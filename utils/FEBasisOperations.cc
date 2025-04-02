@@ -107,13 +107,13 @@ namespace dftfe
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
     void
-      FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
-        init(dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
-             std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
-               &                              constraintsVector,
-             const unsigned int &             dofHandlerID,
-             const std::vector<unsigned int> &quadratureID,
-             const std::vector<UpdateFlags>   updateFlags)
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      init(dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
+           std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
+                                           &constraintsVector,
+           const unsigned int              &dofHandlerID,
+           const std::vector<unsigned int> &quadratureID,
+           const std::vector<UpdateFlags>   updateFlags)
     {
       d_matrixFreeDataPtr = &matrixFreeData;
       d_constraintsVector = &constraintsVector;

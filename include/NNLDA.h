@@ -18,15 +18,15 @@ namespace dftfe
     void
     evaluateexc(const double *rho, const unsigned int numPoints, double *exc);
     void
-    evaluatevxc(const double *     rho,
+    evaluatevxc(const double      *rho,
                 const unsigned int numPoints,
-                double *           exc,
-                double *           vxc);
+                double            *exc,
+                double            *vxc);
 
   private:
     std::string                          d_modelFilename;
     std::string                          d_ptcFilename;
-    torch::jit::script::Module *         d_model;
+    torch::jit::script::Module          *d_model;
     const bool                           d_isSpinPolarized;
     double                               d_rhoTol;
     const excDensityPositivityCheckTypes d_densityPositivityCheckType;

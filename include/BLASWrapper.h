@@ -43,16 +43,16 @@ namespace dftfe
       template <typename ValueType>
       void
       hadamardProduct(const unsigned int m,
-                      const ValueType *  X,
-                      const ValueType *  Y,
-                      ValueType *        output) const;
+                      const ValueType   *X,
+                      const ValueType   *Y,
+                      ValueType         *output) const;
 
       template <typename ValueType>
       void
       hadamardProductWithConj(const unsigned int m,
-                              const ValueType *  X,
-                              const ValueType *  Y,
-                              ValueType *        output) const;
+                              const ValueType   *X,
+                              const ValueType   *Y,
+                              ValueType         *output) const;
 
       // Real-Single Precision GEMM
       void
@@ -61,13 +61,13 @@ namespace dftfe
             const unsigned int m,
             const unsigned int n,
             const unsigned int k,
-            const float *      alpha,
-            const float *      A,
+            const float       *alpha,
+            const float       *A,
             const unsigned int lda,
-            const float *      B,
+            const float       *B,
             const unsigned int ldb,
-            const float *      beta,
-            float *            C,
+            const float       *beta,
+            float             *C,
             const unsigned int ldc) const;
       // Complex-Single Precision GEMM
       void
@@ -82,7 +82,7 @@ namespace dftfe
             const std::complex<float> *B,
             const unsigned int         ldb,
             const std::complex<float> *beta,
-            std::complex<float> *      C,
+            std::complex<float>       *C,
             const unsigned int         ldc) const;
 
       // Real-double precison GEMM
@@ -92,13 +92,13 @@ namespace dftfe
             const unsigned int m,
             const unsigned int n,
             const unsigned int k,
-            const double *     alpha,
-            const double *     A,
+            const double      *alpha,
+            const double      *A,
             const unsigned int lda,
-            const double *     B,
+            const double      *B,
             const unsigned int ldb,
-            const double *     beta,
-            double *           C,
+            const double      *beta,
+            double            *C,
             const unsigned int ldc) const;
 
 
@@ -115,33 +115,33 @@ namespace dftfe
             const std::complex<double> *B,
             const unsigned int          ldb,
             const std::complex<double> *beta,
-            std::complex<double> *      C,
+            std::complex<double>       *C,
             const unsigned int          ldc) const;
 
       void
       xgemv(const char         transA,
             const unsigned int m,
             const unsigned int n,
-            const double *     alpha,
-            const double *     A,
+            const double      *alpha,
+            const double      *A,
             const unsigned int lda,
-            const double *     x,
+            const double      *x,
             const unsigned int incx,
-            const double *     beta,
-            double *           y,
+            const double      *beta,
+            double            *y,
             const unsigned int incy) const;
 
       void
       xgemv(const char         transA,
             const unsigned int m,
             const unsigned int n,
-            const float *      alpha,
-            const float *      A,
+            const float       *alpha,
+            const float       *A,
             const unsigned int lda,
-            const float *      x,
+            const float       *x,
             const unsigned int incx,
-            const float *      beta,
-            float *            y,
+            const float       *beta,
+            float             *y,
             const unsigned int incy) const;
 
       void
@@ -154,7 +154,7 @@ namespace dftfe
             const std::complex<double> *x,
             const unsigned int          incx,
             const std::complex<double> *beta,
-            std::complex<double> *      y,
+            std::complex<double>       *y,
             const unsigned int          incy) const;
 
       void
@@ -167,13 +167,13 @@ namespace dftfe
             const std::complex<float> *x,
             const unsigned int         incx,
             const std::complex<float> *beta,
-            std::complex<float> *      y,
+            std::complex<float>       *y,
             const unsigned int         incy) const;
 
 
       template <typename ValueType1, typename ValueType2>
       void
-      xscal(ValueType1 *           x,
+      xscal(ValueType1            *x,
             const ValueType2       alpha,
             const dftfe::size_type n) const;
 
@@ -190,9 +190,9 @@ namespace dftfe
       void
       addVecOverContinuousIndex(const dftfe::size_type numContiguousBlocks,
                                 const dftfe::size_type contiguousBlockSize,
-                                const ValueType *      input1,
-                                const ValueType *      input2,
-                                ValueType *            output);
+                                const ValueType       *input1,
+                                const ValueType       *input2,
+                                ValueType             *output);
 
       // Real-Float scaling of Real-vector
 
@@ -200,10 +200,10 @@ namespace dftfe
       // Real double Norm2
       void
       xnrm2(const unsigned int n,
-            const double *     x,
+            const double      *x,
             const unsigned int incx,
-            const MPI_Comm &   mpi_communicator,
-            double *           result) const;
+            const MPI_Comm    &mpi_communicator,
+            double            *result) const;
 
 
       // Comples double Norm2
@@ -211,25 +211,25 @@ namespace dftfe
       xnrm2(const unsigned int          n,
             const std::complex<double> *x,
             const unsigned int          incx,
-            const MPI_Comm &            mpi_communicator,
-            double *                    result) const;
+            const MPI_Comm             &mpi_communicator,
+            double                     *result) const;
       // Real dot product
       void
       xdot(const unsigned int N,
-           const double *     X,
+           const double      *X,
            const unsigned int INCX,
-           const double *     Y,
+           const double      *Y,
            const unsigned int INCY,
-           double *           result) const;
+           double            *result) const;
       // Real dot proeuct with all Reduce call
       void
       xdot(const unsigned int N,
-           const double *     X,
+           const double      *X,
            const unsigned int INCX,
-           const double *     Y,
+           const double      *Y,
            const unsigned int INCY,
-           const MPI_Comm &   mpi_communicator,
-           double *           result) const;
+           const MPI_Comm    &mpi_communicator,
+           double            *result) const;
 
       // Complex dot product
       void
@@ -238,7 +238,7 @@ namespace dftfe
            const unsigned int          INCX,
            const std::complex<double> *Y,
            const unsigned int          INCY,
-           std::complex<double> *      result) const;
+           std::complex<double>       *result) const;
 
       // Complex dot proeuct with all Reduce call
       void
@@ -247,8 +247,8 @@ namespace dftfe
            const unsigned int          INCX,
            const std::complex<double> *Y,
            const unsigned int          INCY,
-           const MPI_Comm &            mpi_communicator,
-           std::complex<double> *      result) const;
+           const MPI_Comm             &mpi_communicator,
+           std::complex<double>       *result) const;
 
 
       // MultiVector Real dot product
@@ -256,34 +256,34 @@ namespace dftfe
       void
       MultiVectorXDot(const unsigned int contiguousBlockSize,
                       const unsigned int numContiguousBlocks,
-                      const ValueType *  X,
-                      const ValueType *  Y,
-                      const ValueType *  onesVec,
-                      ValueType *        tempVector,
-                      ValueType *        tempResults,
-                      ValueType *        result) const;
+                      const ValueType   *X,
+                      const ValueType   *Y,
+                      const ValueType   *onesVec,
+                      ValueType         *tempVector,
+                      ValueType         *tempResults,
+                      ValueType         *result) const;
 
       // MultiVector Real dot product with all Reduce call
       template <typename ValueType>
       void
       MultiVectorXDot(const unsigned int contiguousBlockSize,
                       const unsigned int numContiguousBlocks,
-                      const ValueType *  X,
-                      const ValueType *  Y,
-                      const ValueType *  onesVec,
-                      ValueType *        tempVector,
-                      ValueType *        tempResults,
-                      const MPI_Comm &   mpi_communicator,
-                      ValueType *        result) const;
+                      const ValueType   *X,
+                      const ValueType   *Y,
+                      const ValueType   *onesVec,
+                      ValueType         *tempVector,
+                      ValueType         *tempResults,
+                      const MPI_Comm    &mpi_communicator,
+                      ValueType         *result) const;
 
 
       // Real double Ax+y
       void
       xaxpy(const unsigned int n,
-            const double *     alpha,
-            const double *     x,
+            const double      *alpha,
+            const double      *x,
             const unsigned int incx,
-            double *           y,
+            double            *y,
             const unsigned int incy) const;
 
       // Complex double Ax+y
@@ -292,16 +292,16 @@ namespace dftfe
             const std::complex<double> *alpha,
             const std::complex<double> *x,
             const unsigned int          incx,
-            std::complex<double> *      y,
+            std::complex<double>       *y,
             const unsigned int          incy) const;
 
       // Real float Ax+y
       void
       xaxpy(const unsigned int n,
-            const float *      alpha,
-            const float *      x,
+            const float       *alpha,
+            const float       *x,
             const unsigned int incx,
-            float *            y,
+            float             *y,
             const unsigned int incy) const;
 
       // Complex double Ax+y
@@ -310,15 +310,15 @@ namespace dftfe
             const std::complex<float> *alpha,
             const std::complex<float> *x,
             const unsigned int         incx,
-            std::complex<float> *      y,
+            std::complex<float>       *y,
             const unsigned int         incy) const;
 
       // Real copy of double data
       void
       xcopy(const unsigned int n,
-            const double *     x,
+            const double      *x,
             const unsigned int incx,
-            double *           y,
+            double            *y,
             const unsigned int incy) const;
 
       // Complex double copy of data
@@ -326,15 +326,15 @@ namespace dftfe
       xcopy(const unsigned int          n,
             const std::complex<double> *x,
             const unsigned int          incx,
-            std::complex<double> *      y,
+            std::complex<double>       *y,
             const unsigned int          incy) const;
 
       // Real copy of float data
       void
       xcopy(const unsigned int n,
-            const float *      x,
+            const float       *x,
             const unsigned int incx,
-            float *            y,
+            float             *y,
             const unsigned int incy) const;
 
       // Complex float copy of data
@@ -342,20 +342,20 @@ namespace dftfe
       xcopy(const unsigned int         n,
             const std::complex<float> *x,
             const unsigned int         incx,
-            std::complex<float> *      y,
+            std::complex<float>       *y,
             const unsigned int         incy) const;
 
       // Real double symmetric matrix-vector product
       void
       xsymv(const char         UPLO,
             const unsigned int N,
-            const double *     alpha,
-            const double *     A,
+            const double      *alpha,
+            const double      *A,
             const unsigned int LDA,
-            const double *     X,
+            const double      *X,
             const unsigned int INCX,
-            const double *     beta,
-            double *           C,
+            const double      *beta,
+            double            *C,
             const unsigned int INCY) const;
 
       void
@@ -364,13 +364,13 @@ namespace dftfe
                    const unsigned int m,
                    const unsigned int n,
                    const unsigned int k,
-                   const double *     alpha,
-                   const double *     A[],
+                   const double      *alpha,
+                   const double      *A[],
                    const unsigned int lda,
-                   const double *     B[],
+                   const double      *B[],
                    const unsigned int ldb,
-                   const double *     beta,
-                   double *           C[],
+                   const double      *beta,
+                   double            *C[],
                    const unsigned int ldc,
                    const int          batchCount) const;
 
@@ -386,7 +386,7 @@ namespace dftfe
                    const std::complex<double> *B[],
                    const unsigned int          ldb,
                    const std::complex<double> *beta,
-                   std::complex<double> *      C[],
+                   std::complex<double>       *C[],
                    const unsigned int          ldc,
                    const int                   batchCount) const;
 
@@ -397,13 +397,13 @@ namespace dftfe
                    const unsigned int m,
                    const unsigned int n,
                    const unsigned int k,
-                   const float *      alpha,
-                   const float *      A[],
+                   const float       *alpha,
+                   const float       *A[],
                    const unsigned int lda,
-                   const float *      B[],
+                   const float       *B[],
                    const unsigned int ldb,
-                   const float *      beta,
-                   float *            C[],
+                   const float       *beta,
+                   float             *C[],
                    const unsigned int ldc,
                    const int          batchCount) const;
 
@@ -419,7 +419,7 @@ namespace dftfe
                    const std::complex<float> *B[],
                    const unsigned int         ldb,
                    const std::complex<float> *beta,
-                   std::complex<float> *      C[],
+                   std::complex<float>       *C[],
                    const unsigned int         ldc,
                    const int                  batchCount) const;
 
@@ -430,15 +430,15 @@ namespace dftfe
                           const unsigned int m,
                           const unsigned int n,
                           const unsigned int k,
-                          const double *     alpha,
-                          const double *     A,
+                          const double      *alpha,
+                          const double      *A,
                           const unsigned int lda,
                           long long int      strideA,
-                          const double *     B,
+                          const double      *B,
                           const unsigned int ldb,
                           long long int      strideB,
-                          const double *     beta,
-                          double *           C,
+                          const double      *beta,
+                          double            *C,
                           const unsigned int ldc,
                           long long int      strideC,
                           const int          batchCount) const;
@@ -457,7 +457,7 @@ namespace dftfe
                           const unsigned int          ldb,
                           long long int               strideB,
                           const std::complex<double> *beta,
-                          std::complex<double> *      C,
+                          std::complex<double>       *C,
                           const unsigned int          ldc,
                           long long int               strideC,
                           const int                   batchCount) const;
@@ -476,7 +476,7 @@ namespace dftfe
                           const unsigned int         ldb,
                           long long int              strideB,
                           const std::complex<float> *beta,
-                          std::complex<float> *      C,
+                          std::complex<float>       *C,
                           const unsigned int         ldc,
                           long long int              strideC,
                           const int                  batchCount) const;
@@ -487,15 +487,15 @@ namespace dftfe
                           const unsigned int m,
                           const unsigned int n,
                           const unsigned int k,
-                          const float *      alpha,
-                          const float *      A,
+                          const float       *alpha,
+                          const float       *A,
                           const unsigned int lda,
                           long long int      strideA,
-                          const float *      B,
+                          const float       *B,
                           const unsigned int ldb,
                           long long int      strideB,
-                          const float *      beta,
-                          float *            C,
+                          const float       *beta,
+                          float             *C,
                           const unsigned int ldc,
                           long long int      strideC,
                           const int          batchCount) const;
@@ -504,22 +504,22 @@ namespace dftfe
       void
       copyComplexArrToRealArrs(const dftfe::size_type  size,
                                const ValueTypeComplex *complexArr,
-                               ValueTypeReal *         realArr,
-                               ValueTypeReal *         imagArr);
+                               ValueTypeReal          *realArr,
+                               ValueTypeReal          *imagArr);
 
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
       copyRealArrsToComplexArr(const dftfe::size_type size,
-                               const ValueTypeReal *  realArr,
-                               const ValueTypeReal *  imagArr,
-                               ValueTypeComplex *     complexArr);
+                               const ValueTypeReal   *realArr,
+                               const ValueTypeReal   *imagArr,
+                               ValueTypeComplex      *complexArr);
 
       template <typename ValueType1, typename ValueType2>
       void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const ValueType1 *     valueType1Arr,
-                                       ValueType2 *           valueType2Arr);
+                                       const ValueType1      *valueType1Arr,
+                                       ValueType2            *valueType2Arr);
 
 
       template <typename ValueType1, typename ValueType2>
@@ -527,8 +527,8 @@ namespace dftfe
       stridedCopyToBlock(
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
-        const ValueType1 *             copyFromVec,
-        ValueType2 *                   copyToVecBlock,
+        const ValueType1              *copyFromVec,
+        ValueType2                    *copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
 
@@ -538,8 +538,8 @@ namespace dftfe
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
         const dftfe::size_type         startingVecId,
-        const ValueType1 *             copyFromVec,
-        ValueType2 *                   copyToVecBlock,
+        const ValueType1              *copyFromVec,
+        ValueType2                    *copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
       template <typename ValueType1, typename ValueType2>
@@ -547,8 +547,8 @@ namespace dftfe
       stridedCopyFromBlock(
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
-        const ValueType1 *             copyFromVecBlock,
-        ValueType2 *                   copyToVec,
+        const ValueType1              *copyFromVecBlock,
+        ValueType2                    *copyToVec,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
       template <typename ValueType1, typename ValueType2>
@@ -557,8 +557,8 @@ namespace dftfe
                                        const dftfe::size_type blockSizeFrom,
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
-                                       const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec) const;
+                                       const ValueType1      *copyFromVec,
+                                       ValueType2            *copyToVec) const;
 
 
       template <typename ValueType1, typename ValueType2>
@@ -569,8 +569,8 @@ namespace dftfe
                                 const dftfe::size_type numBlocks,
                                 const dftfe::size_type startingToId,
                                 const dftfe::size_type startingFromId,
-                                const ValueType1 *     copyFromVec,
-                                ValueType2 *           copyToVec);
+                                const ValueType1      *copyFromVec,
+                                ValueType2            *copyToVec);
 
 
       template <typename ValueType1, typename ValueType2>
@@ -579,35 +579,35 @@ namespace dftfe
                                          const dftfe::size_type blockSizeFrom,
                                          const dftfe::size_type numBlocks,
                                          const dftfe::size_type startingId,
-                                         const ValueType1 *     copyFromVec,
-                                         ValueType2 *           copyToVec);
+                                         const ValueType1      *copyFromVec,
+                                         ValueType2            *copyToVec);
 
       template <typename ValueType1, typename ValueType2>
       void
       stridedBlockAxpy(const dftfe::size_type contiguousBlockSize,
                        const dftfe::size_type numContiguousBlocks,
-                       const ValueType1 *     addFromVec,
-                       const ValueType2 *     scalingVector,
+                       const ValueType1      *addFromVec,
+                       const ValueType2      *scalingVector,
                        const ValueType2       a,
-                       ValueType1 *           addToVec) const;
+                       ValueType1            *addToVec) const;
 
 
       template <typename ValueType1, typename ValueType2>
       void
       stridedBlockAxpBy(const dftfe::size_type contiguousBlockSize,
                         const dftfe::size_type numContiguousBlocks,
-                        const ValueType1 *     addFromVec,
-                        const ValueType2 *     scalingVector,
+                        const ValueType1      *addFromVec,
+                        const ValueType2      *scalingVector,
                         const ValueType2       a,
                         const ValueType2       b,
-                        ValueType1 *           addToVec) const;
+                        ValueType1            *addToVec) const;
       template <typename ValueType1, typename ValueType2>
       void
       axpby(const unsigned int n,
             const ValueType2   alpha,
-            const ValueType1 * x,
+            const ValueType1  *x,
             const ValueType2   beta,
-            ValueType1 *       y) const;
+            ValueType1        *y) const;
       template <typename ValueType0,
                 typename ValueType1,
                 typename ValueType2,
@@ -617,17 +617,17 @@ namespace dftfe
       ApaBD(const unsigned int m,
             const unsigned int n,
             const ValueType0   alpha,
-            const ValueType1 * A,
-            const ValueType2 * B,
-            const ValueType3 * D,
-            ValueType4 *       C) const;
+            const ValueType1  *A,
+            const ValueType2  *B,
+            const ValueType3  *D,
+            ValueType4        *C) const;
 
       template <typename ValueType>
       void
       axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
                                 const dftfe::size_type numContiguousBlocks,
-                                const ValueType *      addFromVec,
-                                ValueType *            addToVec,
+                                const ValueType       *addFromVec,
+                                ValueType             *addToVec,
                                 const dftfe::global_size_type
                                   *addToVecStartingContiguousBlockIds) const;
 
@@ -636,9 +636,9 @@ namespace dftfe
       axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
                                 const dftfe::size_type numContiguousBlocks,
                                 const ValueType1       a,
-                                const ValueType1 *     s,
-                                const ValueType2 *     addFromVec,
-                                ValueType3 *           addToVec,
+                                const ValueType1      *s,
+                                const ValueType2      *addFromVec,
+                                ValueType3            *addToVec,
                                 const dftfe::global_size_type
                                   *addToVecStartingContiguousBlockIds) const;
       template <typename ValueType1, typename ValueType2, typename ValueType3>
@@ -646,8 +646,8 @@ namespace dftfe
       axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
                                 const dftfe::size_type numContiguousBlocks,
                                 const ValueType1       a,
-                                const ValueType2 *     addFromVec,
-                                ValueType3 *           addToVec,
+                                const ValueType2      *addFromVec,
+                                ValueType3            *addToVec,
                                 const dftfe::global_size_type
                                   *addToVecStartingContiguousBlockIds) const;
 
@@ -656,8 +656,8 @@ namespace dftfe
       stridedBlockScale(const dftfe::size_type contiguousBlockSize,
                         const dftfe::size_type numContiguousBlocks,
                         const ValueType1       a,
-                        const ValueType1 *     s,
-                        ValueType2 *           x);
+                        const ValueType1      *s,
+                        ValueType2            *x);
 
       template <typename ValueType1, typename ValueType2>
       void
@@ -665,21 +665,21 @@ namespace dftfe
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
         const ValueType1               a,
-        const ValueType1 *             s,
-        const ValueType2 *             copyFromVec,
-        ValueType2 *                   copyToVecBlock,
+        const ValueType1              *s,
+        const ValueType2              *copyFromVec,
+        ValueType2                    *copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
       void
-      add(double *               y,
-          const double *         x,
+      add(double                *y,
+          const double          *x,
           const double           alpha,
           const dftfe::size_type size);
 
       template <typename ValueType>
       void
-      sadd(ValueType *            y,
-           ValueType *            x,
+      sadd(ValueType             *y,
+           ValueType             *x,
            const ValueType        beta,
            const dftfe::size_type size);
 
@@ -687,35 +687,35 @@ namespace dftfe
       void
       stridedBlockScaleColumnWise(const dftfe::size_type contiguousBlockSize,
                                   const dftfe::size_type numContiguousBlocks,
-                                  const ValueType *      beta,
-                                  ValueType *            x);
+                                  const ValueType       *beta,
+                                  ValueType             *x);
 
       template <typename ValueType>
       void
       stridedBlockScaleAndAddColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const ValueType *      x,
-        const ValueType *      beta,
-        ValueType *            y);
+        const ValueType       *x,
+        const ValueType       *beta,
+        ValueType             *y);
 
       template <typename ValueType>
       void
       stridedBlockScaleAndAddTwoVecColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const ValueType *      x,
-        const ValueType *      alpha,
-        const ValueType *      y,
-        const ValueType *      beta,
-        ValueType *            z);
+        const ValueType       *x,
+        const ValueType       *alpha,
+        const ValueType       *y,
+        const ValueType       *beta,
+        ValueType             *z);
 
       template <typename ValueType1, typename ValueType2>
       void
       rightDiagonalScale(const dftfe::size_type numberofVectors,
                          const dftfe::size_type sizeOfVector,
-                         ValueType1 *           X,
-                         ValueType2 *           D);
+                         ValueType1            *X,
+                         ValueType2            *D);
 
     private:
     };
@@ -739,23 +739,23 @@ namespace dftfe
       static void
       copyValueType1ArrToValueType2ArrDeviceCall(
         const dftfe::size_type             size,
-        const ValueType1 *                 valueType1Arr,
-        ValueType2 *                       valueType2Arr,
+        const ValueType1                  *valueType1Arr,
+        ValueType2                        *valueType2Arr,
         const dftfe::utils::deviceStream_t streamId = 0);
 
       template <typename ValueType>
       void
       hadamardProduct(const unsigned int m,
-                      const ValueType *  X,
-                      const ValueType *  Y,
-                      ValueType *        output) const;
+                      const ValueType   *X,
+                      const ValueType   *Y,
+                      ValueType         *output) const;
 
       template <typename ValueType>
       void
       hadamardProductWithConj(const unsigned int m,
-                              const ValueType *  X,
-                              const ValueType *  Y,
-                              ValueType *        output) const;
+                              const ValueType   *X,
+                              const ValueType   *Y,
+                              ValueType         *output) const;
 
       // Real-Single Precision GEMM
       void
@@ -764,13 +764,13 @@ namespace dftfe
             const unsigned int m,
             const unsigned int n,
             const unsigned int k,
-            const float *      alpha,
-            const float *      A,
+            const float       *alpha,
+            const float       *A,
             const unsigned int lda,
-            const float *      B,
+            const float       *B,
             const unsigned int ldb,
-            const float *      beta,
-            float *            C,
+            const float       *beta,
+            float             *C,
             const unsigned int ldc) const;
       // Complex-Single Precision GEMM
       void
@@ -785,7 +785,7 @@ namespace dftfe
             const std::complex<float> *B,
             const unsigned int         ldb,
             const std::complex<float> *beta,
-            std::complex<float> *      C,
+            std::complex<float>       *C,
             const unsigned int         ldc) const;
 
       // Real-double precison GEMM
@@ -795,13 +795,13 @@ namespace dftfe
             const unsigned int m,
             const unsigned int n,
             const unsigned int k,
-            const double *     alpha,
-            const double *     A,
+            const double      *alpha,
+            const double      *A,
             const unsigned int lda,
-            const double *     B,
+            const double      *B,
             const unsigned int ldb,
-            const double *     beta,
-            double *           C,
+            const double      *beta,
+            double            *C,
             const unsigned int ldc) const;
 
 
@@ -818,7 +818,7 @@ namespace dftfe
             const std::complex<double> *B,
             const unsigned int          ldb,
             const std::complex<double> *beta,
-            std::complex<double> *      C,
+            std::complex<double>       *C,
             const unsigned int          ldc) const;
 
 
@@ -826,26 +826,26 @@ namespace dftfe
       xgemv(const char         transA,
             const unsigned int m,
             const unsigned int n,
-            const double *     alpha,
-            const double *     A,
+            const double      *alpha,
+            const double      *A,
             const unsigned int lda,
-            const double *     x,
+            const double      *x,
             const unsigned int incx,
-            const double *     beta,
-            double *           y,
+            const double      *beta,
+            double            *y,
             const unsigned int incy) const;
 
       void
       xgemv(const char         transA,
             const unsigned int m,
             const unsigned int n,
-            const float *      alpha,
-            const float *      A,
+            const float       *alpha,
+            const float       *A,
             const unsigned int lda,
-            const float *      x,
+            const float       *x,
             const unsigned int incx,
-            const float *      beta,
-            float *            y,
+            const float       *beta,
+            float             *y,
             const unsigned int incy) const;
 
       void
@@ -858,7 +858,7 @@ namespace dftfe
             const std::complex<double> *x,
             const unsigned int          incx,
             const std::complex<double> *beta,
-            std::complex<double> *      y,
+            std::complex<double>       *y,
             const unsigned int          incy) const;
 
       void
@@ -871,22 +871,22 @@ namespace dftfe
             const std::complex<float> *x,
             const unsigned int         incx,
             const std::complex<float> *beta,
-            std::complex<float> *      y,
+            std::complex<float>       *y,
             const unsigned int         incy) const;
 
       template <typename ValueType>
       void
       addVecOverContinuousIndex(const dftfe::size_type numContiguousBlocks,
                                 const dftfe::size_type contiguousBlockSize,
-                                const ValueType *      input1,
-                                const ValueType *      input2,
-                                ValueType *            output);
+                                const ValueType       *input1,
+                                const ValueType       *input2,
+                                ValueType             *output);
 
 
 
       template <typename ValueType1, typename ValueType2>
       void
-      xscal(ValueType1 *           x,
+      xscal(ValueType1            *x,
             const ValueType2       alpha,
             const dftfe::size_type n) const;
 
@@ -895,10 +895,10 @@ namespace dftfe
       // Real double Norm2
       void
       xnrm2(const unsigned int n,
-            const double *     x,
+            const double      *x,
             const unsigned int incx,
-            const MPI_Comm &   mpi_communicator,
-            double *           result) const;
+            const MPI_Comm    &mpi_communicator,
+            double            *result) const;
 
 
       // Complex double Norm2
@@ -906,28 +906,28 @@ namespace dftfe
       xnrm2(const unsigned int          n,
             const std::complex<double> *x,
             const unsigned int          incx,
-            const MPI_Comm &            mpi_communicator,
-            double *                    result) const;
+            const MPI_Comm             &mpi_communicator,
+            double                     *result) const;
 
       // Real dot product
       void
       xdot(const unsigned int N,
-           const double *     X,
+           const double      *X,
            const unsigned int INCX,
-           const double *     Y,
+           const double      *Y,
            const unsigned int INCY,
-           double *           result) const;
+           double            *result) const;
 
       //
       // Real dot product
       void
       xdot(const unsigned int N,
-           const double *     X,
+           const double      *X,
            const unsigned int INCX,
-           const double *     Y,
+           const double      *Y,
            const unsigned int INCY,
-           const MPI_Comm &   mpi_communicator,
-           double *           result) const;
+           const MPI_Comm    &mpi_communicator,
+           double            *result) const;
 
       // Complex dot product
       void
@@ -936,7 +936,7 @@ namespace dftfe
            const unsigned int          INCX,
            const std::complex<double> *Y,
            const unsigned int          INCY,
-           std::complex<double> *      result) const;
+           std::complex<double>       *result) const;
 
       // Complex dot product
       void
@@ -945,40 +945,40 @@ namespace dftfe
            const unsigned int          INCX,
            const std::complex<double> *Y,
            const unsigned int          INCY,
-           const MPI_Comm &            mpi_communicator,
-           std::complex<double> *      result) const;
+           const MPI_Comm             &mpi_communicator,
+           std::complex<double>       *result) const;
 
 
       template <typename ValueType>
       void
       MultiVectorXDot(const unsigned int contiguousBlockSize,
                       const unsigned int numContiguousBlocks,
-                      const ValueType *  X,
-                      const ValueType *  Y,
-                      const ValueType *  onesVec,
-                      ValueType *        tempVector,
-                      ValueType *        tempResults,
-                      ValueType *        result) const;
+                      const ValueType   *X,
+                      const ValueType   *Y,
+                      const ValueType   *onesVec,
+                      ValueType         *tempVector,
+                      ValueType         *tempResults,
+                      ValueType         *result) const;
 
       template <typename ValueType>
       void
       MultiVectorXDot(const unsigned int contiguousBlockSize,
                       const unsigned int numContiguousBlocks,
-                      const ValueType *  X,
-                      const ValueType *  Y,
-                      const ValueType *  onesVec,
-                      ValueType *        tempVector,
-                      ValueType *        tempResults,
-                      const MPI_Comm &   mpi_communicator,
-                      ValueType *        result) const;
+                      const ValueType   *X,
+                      const ValueType   *Y,
+                      const ValueType   *onesVec,
+                      ValueType         *tempVector,
+                      ValueType         *tempResults,
+                      const MPI_Comm    &mpi_communicator,
+                      ValueType         *result) const;
 
       // Real double Ax+y
       void
       xaxpy(const unsigned int n,
-            const double *     alpha,
-            const double *     x,
+            const double      *alpha,
+            const double      *x,
             const unsigned int incx,
-            double *           y,
+            double            *y,
             const unsigned int incy) const;
 
       // Complex double Ax+y
@@ -987,15 +987,15 @@ namespace dftfe
             const std::complex<double> *alpha,
             const std::complex<double> *x,
             const unsigned int          incx,
-            std::complex<double> *      y,
+            std::complex<double>       *y,
             const unsigned int          incy) const;
 
       // Real copy of double data
       void
       xcopy(const unsigned int n,
-            const double *     x,
+            const double      *x,
             const unsigned int incx,
-            double *           y,
+            double            *y,
             const unsigned int incy) const;
 
       // Complex double copy of data
@@ -1003,15 +1003,15 @@ namespace dftfe
       xcopy(const unsigned int          n,
             const std::complex<double> *x,
             const unsigned int          incx,
-            std::complex<double> *      y,
+            std::complex<double>       *y,
             const unsigned int          incy) const;
 
       // Real copy of float data
       void
       xcopy(const unsigned int n,
-            const float *      x,
+            const float       *x,
             const unsigned int incx,
-            float *            y,
+            float             *y,
             const unsigned int incy) const;
 
       // Complex float copy of data
@@ -1019,20 +1019,20 @@ namespace dftfe
       xcopy(const unsigned int         n,
             const std::complex<float> *x,
             const unsigned int         incx,
-            std::complex<float> *      y,
+            std::complex<float>       *y,
             const unsigned int         incy) const;
 
       // Real double symmetric matrix-vector product
       void
       xsymv(const char         UPLO,
             const unsigned int N,
-            const double *     alpha,
-            const double *     A,
+            const double      *alpha,
+            const double      *A,
             const unsigned int LDA,
-            const double *     X,
+            const double      *X,
             const unsigned int INCX,
-            const double *     beta,
-            double *           C,
+            const double      *beta,
+            double            *C,
             const unsigned int INCY) const;
 
       void
@@ -1041,13 +1041,13 @@ namespace dftfe
                    const unsigned int m,
                    const unsigned int n,
                    const unsigned int k,
-                   const double *     alpha,
-                   const double *     A[],
+                   const double      *alpha,
+                   const double      *A[],
                    const unsigned int lda,
-                   const double *     B[],
+                   const double      *B[],
                    const unsigned int ldb,
-                   const double *     beta,
-                   double *           C[],
+                   const double      *beta,
+                   double            *C[],
                    const unsigned int ldc,
                    const int          batchCount) const;
 
@@ -1063,7 +1063,7 @@ namespace dftfe
                    const std::complex<double> *B[],
                    const unsigned int          ldb,
                    const std::complex<double> *beta,
-                   std::complex<double> *      C[],
+                   std::complex<double>       *C[],
                    const unsigned int          ldc,
                    const int                   batchCount) const;
 
@@ -1073,13 +1073,13 @@ namespace dftfe
                    const unsigned int m,
                    const unsigned int n,
                    const unsigned int k,
-                   const float *      alpha,
-                   const float *      A[],
+                   const float       *alpha,
+                   const float       *A[],
                    const unsigned int lda,
-                   const float *      B[],
+                   const float       *B[],
                    const unsigned int ldb,
-                   const float *      beta,
-                   float *            C[],
+                   const float       *beta,
+                   float             *C[],
                    const unsigned int ldc,
                    const int          batchCount) const;
 
@@ -1095,7 +1095,7 @@ namespace dftfe
                    const std::complex<float> *B[],
                    const unsigned int         ldb,
                    const std::complex<float> *beta,
-                   std::complex<float> *      C[],
+                   std::complex<float>       *C[],
                    const unsigned int         ldc,
                    const int                  batchCount) const;
 
@@ -1105,15 +1105,15 @@ namespace dftfe
                           const unsigned int m,
                           const unsigned int n,
                           const unsigned int k,
-                          const double *     alpha,
-                          const double *     A,
+                          const double      *alpha,
+                          const double      *A,
                           const unsigned int lda,
                           long long int      strideA,
-                          const double *     B,
+                          const double      *B,
                           const unsigned int ldb,
                           long long int      strideB,
-                          const double *     beta,
-                          double *           C,
+                          const double      *beta,
+                          double            *C,
                           const unsigned int ldc,
                           long long int      strideC,
                           const int          batchCount) const;
@@ -1132,7 +1132,7 @@ namespace dftfe
                           const unsigned int          ldb,
                           long long int               strideB,
                           const std::complex<double> *beta,
-                          std::complex<double> *      C,
+                          std::complex<double>       *C,
                           const unsigned int          ldc,
                           long long int               strideC,
                           const int                   batchCount) const;
@@ -1151,7 +1151,7 @@ namespace dftfe
                           const unsigned int         ldb,
                           long long int              strideB,
                           const std::complex<float> *beta,
-                          std::complex<float> *      C,
+                          std::complex<float>       *C,
                           const unsigned int         ldc,
                           long long int              strideC,
                           const int                  batchCount) const;
@@ -1162,15 +1162,15 @@ namespace dftfe
                           const unsigned int m,
                           const unsigned int n,
                           const unsigned int k,
-                          const float *      alpha,
-                          const float *      A,
+                          const float       *alpha,
+                          const float       *A,
                           const unsigned int lda,
                           long long int      strideA,
-                          const float *      B,
+                          const float       *B,
                           const unsigned int ldb,
                           long long int      strideB,
-                          const float *      beta,
-                          float *            C,
+                          const float       *beta,
+                          float             *C,
                           const unsigned int ldc,
                           long long int      strideC,
                           const int          batchCount) const;
@@ -1179,22 +1179,22 @@ namespace dftfe
       void
       copyComplexArrToRealArrs(const dftfe::size_type  size,
                                const ValueTypeComplex *complexArr,
-                               ValueTypeReal *         realArr,
-                               ValueTypeReal *         imagArr);
+                               ValueTypeReal          *realArr,
+                               ValueTypeReal          *imagArr);
 
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
       copyRealArrsToComplexArr(const dftfe::size_type size,
-                               const ValueTypeReal *  realArr,
-                               const ValueTypeReal *  imagArr,
-                               ValueTypeComplex *     complexArr);
+                               const ValueTypeReal   *realArr,
+                               const ValueTypeReal   *imagArr,
+                               ValueTypeComplex      *complexArr);
 
       template <typename ValueType1, typename ValueType2>
       void
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const ValueType1 *     valueType1Arr,
-                                       ValueType2 *           valueType2Arr);
+                                       const ValueType1      *valueType1Arr,
+                                       ValueType2            *valueType2Arr);
 
 
       template <typename ValueType1, typename ValueType2>
@@ -1202,8 +1202,8 @@ namespace dftfe
       stridedCopyToBlock(
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
-        const ValueType1 *             copyFromVec,
-        ValueType2 *                   copyToVecBlock,
+        const ValueType1              *copyFromVec,
+        ValueType2                    *copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
       template <typename ValueType1, typename ValueType2>
@@ -1212,8 +1212,8 @@ namespace dftfe
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
         const dftfe::size_type         startingVecId,
-        const ValueType1 *             copyFromVec,
-        ValueType2 *                   copyToVecBlock,
+        const ValueType1              *copyFromVec,
+        ValueType2                    *copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
 
@@ -1222,8 +1222,8 @@ namespace dftfe
       stridedCopyFromBlock(
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
-        const ValueType1 *             copyFromVecBlock,
-        ValueType2 *                   copyToVec,
+        const ValueType1              *copyFromVecBlock,
+        ValueType2                    *copyToVec,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
       template <typename ValueType1, typename ValueType2>
@@ -1232,8 +1232,8 @@ namespace dftfe
                                        const dftfe::size_type blockSizeFrom,
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
-                                       const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec) const;
+                                       const ValueType1      *copyFromVec,
+                                       ValueType2            *copyToVec) const;
 
 
       template <typename ValueType1, typename ValueType2>
@@ -1244,8 +1244,8 @@ namespace dftfe
                                 const dftfe::size_type numBlocks,
                                 const dftfe::size_type startingToId,
                                 const dftfe::size_type startingFromId,
-                                const ValueType1 *     copyFromVec,
-                                ValueType2 *           copyToVec);
+                                const ValueType1      *copyFromVec,
+                                ValueType2            *copyToVec);
 
 
       template <typename ValueType1, typename ValueType2>
@@ -1254,33 +1254,33 @@ namespace dftfe
                                          const dftfe::size_type blockSizeFrom,
                                          const dftfe::size_type numBlocks,
                                          const dftfe::size_type startingId,
-                                         const ValueType1 *     copyFromVec,
-                                         ValueType2 *           copyToVec);
+                                         const ValueType1      *copyFromVec,
+                                         ValueType2            *copyToVec);
       template <typename ValueType1, typename ValueType2>
       void
       axpby(const unsigned int n,
             const ValueType2   alpha,
-            const ValueType1 * x,
+            const ValueType1  *x,
             const ValueType2   beta,
-            ValueType1 *       y) const;
+            ValueType1        *y) const;
 
       template <typename ValueType1, typename ValueType2>
       void
       stridedBlockAxpy(const dftfe::size_type contiguousBlockSize,
                        const dftfe::size_type numContiguousBlocks,
-                       const ValueType1 *     addFromVec,
-                       const ValueType2 *     scalingVector,
+                       const ValueType1      *addFromVec,
+                       const ValueType2      *scalingVector,
                        const ValueType2       a,
-                       ValueType1 *           addToVec) const;
+                       ValueType1            *addToVec) const;
       template <typename ValueType1, typename ValueType2>
       void
       stridedBlockAxpBy(const dftfe::size_type contiguousBlockSize,
                         const dftfe::size_type numContiguousBlocks,
-                        const ValueType1 *     addFromVec,
-                        const ValueType2 *     scalingVector,
+                        const ValueType1      *addFromVec,
+                        const ValueType2      *scalingVector,
                         const ValueType2       a,
                         const ValueType2       b,
-                        ValueType1 *           addToVec) const;
+                        ValueType1            *addToVec) const;
 
       template <typename ValueType0,
                 typename ValueType1,
@@ -1291,18 +1291,18 @@ namespace dftfe
       ApaBD(const unsigned int m,
             const unsigned int n,
             const ValueType0   alpha,
-            const ValueType1 * A,
-            const ValueType2 * B,
-            const ValueType3 * D,
-            ValueType4 *       C) const;
+            const ValueType1  *A,
+            const ValueType2  *B,
+            const ValueType3  *D,
+            ValueType4        *C) const;
 
 
       template <typename ValueType>
       void
       axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
                                 const dftfe::size_type numContiguousBlocks,
-                                const ValueType *      addFromVec,
-                                ValueType *            addToVec,
+                                const ValueType       *addFromVec,
+                                ValueType             *addToVec,
                                 const dftfe::global_size_type
                                   *addToVecStartingContiguousBlockIds) const;
 
@@ -1311,9 +1311,9 @@ namespace dftfe
       axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
                                 const dftfe::size_type numContiguousBlocks,
                                 const ValueType1       a,
-                                const ValueType1 *     s,
-                                const ValueType2 *     addFromVec,
-                                ValueType3 *           addToVec,
+                                const ValueType1      *s,
+                                const ValueType2      *addFromVec,
+                                ValueType3            *addToVec,
                                 const dftfe::global_size_type
                                   *addToVecStartingContiguousBlockIds) const;
       template <typename ValueType1, typename ValueType2, typename ValueType3>
@@ -1321,8 +1321,8 @@ namespace dftfe
       axpyStridedBlockAtomicAdd(const dftfe::size_type contiguousBlockSize,
                                 const dftfe::size_type numContiguousBlocks,
                                 const ValueType1       a,
-                                const ValueType2 *     addFromVec,
-                                ValueType3 *           addToVec,
+                                const ValueType2      *addFromVec,
+                                ValueType3            *addToVec,
                                 const dftfe::global_size_type
                                   *addToVecStartingContiguousBlockIds) const;
 
@@ -1331,29 +1331,29 @@ namespace dftfe
       stridedBlockScale(const dftfe::size_type contiguousBlockSize,
                         const dftfe::size_type numContiguousBlocks,
                         const ValueType1       a,
-                        const ValueType1 *     s,
-                        ValueType2 *           x);
+                        const ValueType1      *s,
+                        ValueType2            *x);
       template <typename ValueType1, typename ValueType2>
       void
       stridedBlockScaleCopy(
         const dftfe::size_type         contiguousBlockSize,
         const dftfe::size_type         numContiguousBlocks,
         const ValueType1               a,
-        const ValueType1 *             s,
-        const ValueType2 *             copyFromVec,
-        ValueType2 *                   copyToVecBlock,
+        const ValueType1              *s,
+        const ValueType2              *copyFromVec,
+        ValueType2                    *copyToVecBlock,
         const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
       void
-      add(double *               y,
-          const double *         x,
+      add(double                *y,
+          const double          *x,
           const double           alpha,
           const dftfe::size_type size);
 
       template <typename ValueType>
       void
-      sadd(ValueType *            y,
-           ValueType *            x,
+      sadd(ValueType             *y,
+           ValueType             *x,
            const ValueType        beta,
            const dftfe::size_type size);
 
@@ -1361,35 +1361,35 @@ namespace dftfe
       void
       stridedBlockScaleColumnWise(const dftfe::size_type contiguousBlockSize,
                                   const dftfe::size_type numContiguousBlocks,
-                                  const ValueType *      beta,
-                                  ValueType *            x);
+                                  const ValueType       *beta,
+                                  ValueType             *x);
 
       template <typename ValueType>
       void
       stridedBlockScaleAndAddColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const ValueType *      x,
-        const ValueType *      beta,
-        ValueType *            y);
+        const ValueType       *x,
+        const ValueType       *beta,
+        ValueType             *y);
 
       template <typename ValueType>
       void
       stridedBlockScaleAndAddTwoVecColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const ValueType *      x,
-        const ValueType *      alpha,
-        const ValueType *      y,
-        const ValueType *      beta,
-        ValueType *            z);
+        const ValueType       *x,
+        const ValueType       *alpha,
+        const ValueType       *y,
+        const ValueType       *beta,
+        ValueType             *z);
 
       template <typename ValueType1, typename ValueType2>
       void
       rightDiagonalScale(const dftfe::size_type numberofVectors,
                          const dftfe::size_type sizeOfVector,
-                         ValueType1 *           X,
-                         ValueType2 *           D);
+                         ValueType1            *X,
+                         ValueType2            *D);
 
       dftfe::utils::deviceBlasHandle_t &
       getDeviceBlasHandle();
@@ -1401,9 +1401,9 @@ namespace dftfe
         const dftfe::size_type B,
         const dftfe::size_type DRem,
         const dftfe::size_type D,
-        const ValueType1 *     valueType1SrcArray,
-        ValueType1 *           valueType1DstArray,
-        ValueType2 *           valueType2DstArray);
+        const ValueType1      *valueType1SrcArray,
+        ValueType1            *valueType1DstArray,
+        ValueType2            *valueType2DstArray);
 
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dftfe::utils::deviceBlasStatus_t

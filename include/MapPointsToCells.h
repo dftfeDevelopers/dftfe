@@ -67,11 +67,11 @@ namespace dftfe
        */
       void
       init(std::vector<std::shared_ptr<const Cell<dim>>> srcCells,
-           const std::vector<std::vector<double>> &      targetPts,
-           std::vector<std::vector<double>> &   mapCellsToRealCoordinates,
+           const std::vector<std::vector<double>>       &targetPts,
+           std::vector<std::vector<double>>    &mapCellsToRealCoordinates,
            std::vector<std::vector<size_type>> &mapCellLocalToProcLocal,
            std::pair<global_size_type, global_size_type> &locallyOwnedRange,
-           std::vector<global_size_type> &                ghostGlobalIds,
+           std::vector<global_size_type>                 &ghostGlobalIds,
            const double                                   paramCoordsTol);
 
 

@@ -62,8 +62,8 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                                      basisOperationsPtr,
-      distributedCPUVec<double> &              x,
+                                              &basisOperationsPtr,
+      distributedCPUVec<double>               &x,
       const dealii::AffineConstraints<double> &constraintMatrix,
       const unsigned int                       matrixFreeVectorComponent,
       const unsigned int matrixFreeQuadratureComponentRhsDensity,
@@ -72,7 +72,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
       const unsigned int smearedChargeQuadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                rhoValues,
+                        &rhoValues,
       const bool         isComputeDiagonalA               = true,
       const bool         isComputeMeanValueConstraints    = false,
       const bool         smearedNuclearCharges            = false,
@@ -112,7 +112,7 @@ namespace dftfe
      *
      */
     void
-    precondition_Jacobi(distributedCPUVec<double> &      dst,
+    precondition_Jacobi(distributedCPUVec<double>       &dst,
                         const distributedCPUVec<double> &src,
                         const double                     omega) const;
 
@@ -127,13 +127,13 @@ namespace dftfe
     /// preconditioning
     void
     subscribe(std::atomic<bool> *const validity,
-              const std::string &      identifier = "") const {};
+              const std::string       &identifier = "") const {};
 
     /// function needed by dealii to mimic SparseMatrix for Jacobi
     /// preconditioning
     void
     unsubscribe(std::atomic<bool> *const validity,
-                const std::string &      identifier = "") const {};
+                const std::string       &identifier = "") const {};
 
     /// function needed by dealii to mimic SparseMatrix
     bool
@@ -148,9 +148,9 @@ namespace dftfe
      *
      */
     void
-    AX(const dealii::MatrixFree<3, double> &        matrixFreeData,
-       distributedCPUVec<double> &                  dst,
-       const distributedCPUVec<double> &            src,
+    AX(const dealii::MatrixFree<3, double>         &matrixFreeData,
+       distributedCPUVec<double>                   &dst,
+       const distributedCPUVec<double>             &src,
        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
 

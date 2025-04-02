@@ -33,7 +33,7 @@ namespace dftfe
     void
     readFile(const unsigned int                numColumns,
              std::vector<std::vector<double>> &data,
-             const std::string &               fileName)
+             const std::string                &fileName)
     {
       std::vector<double> rowData(numColumns, 0.0);
       std::ifstream       readFile(fileName.c_str());
@@ -73,7 +73,7 @@ namespace dftfe
 
     void
     readFile(std::vector<std::vector<double>> &data,
-             const std::string &               fileName)
+             const std::string                &fileName)
     {
       std::ifstream readFileForColumnCount(fileName.c_str());
       std::string   line;
@@ -128,7 +128,7 @@ namespace dftfe
     int
     readPsiFile(const unsigned int                numColumns,
                 std::vector<std::vector<double>> &data,
-                const std::string &               fileName)
+                const std::string                &fileName)
     {
       std::vector<double> rowData(numColumns, 0.0);
       std::ifstream       readFile(fileName.c_str());
@@ -171,9 +171,9 @@ namespace dftfe
 
     void
     readRelaxationFlagsFile(const unsigned int                numColumns,
-                            std::vector<std::vector<int>> &   data,
+                            std::vector<std::vector<int>>    &data,
                             std::vector<std::vector<double>> &forceData,
-                            const std::string &               fileName)
+                            const std::string                &fileName)
     {
       std::vector<int>    rowData(3, 0);
       std::vector<double> rowForceData(3, 0.0);
@@ -291,8 +291,8 @@ namespace dftfe
 
     void
     writeDataIntoFile(const std::vector<std::vector<double>> &data,
-                      const std::string &                     fileName,
-                      const MPI_Comm &                        mpi_comm_parent)
+                      const std::string                      &fileName,
+                      const MPI_Comm                         &mpi_comm_parent)
     {
       if (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
         {
@@ -322,7 +322,7 @@ namespace dftfe
 
     void
     writeDataIntoFile(const std::vector<std::vector<double>> &data,
-                      const std::string &                     fileName)
+                      const std::string                      &fileName)
     {
       if (std::ifstream(fileName))
         moveFile(fileName, fileName + ".old");

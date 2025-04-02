@@ -1489,7 +1489,7 @@ namespace dftfe
 
   void
   dftParameters::parse_parameters(const std::string &parameter_file,
-                                  const MPI_Comm &   mpi_comm_parent,
+                                  const MPI_Comm    &mpi_comm_parent,
                                   const bool         printParams,
                                   const std::string  mode,
                                   const std::string  restartFilesPath,

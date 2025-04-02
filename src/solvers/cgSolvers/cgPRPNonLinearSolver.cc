@@ -28,7 +28,7 @@ namespace dftfe
   cgPRPNonLinearSolver::cgPRPNonLinearSolver(
     const unsigned int maxNumberIterations,
     const unsigned int debugLevel,
-    const MPI_Comm &   mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_parent,
     const double       lineSearchTolerance,
     const unsigned int lineSearchMaxIterations,
     const double       lineSearchDampingParameter,
@@ -355,7 +355,7 @@ namespace dftfe
   bool
   cgPRPNonLinearSolver::updateSolution(const double               alpha,
                                        const std::vector<double> &direction,
-                                       nonlinearSolverProblem &   problem)
+                                       nonlinearSolverProblem    &problem)
   {
     std::vector<double> incrementVector;
 

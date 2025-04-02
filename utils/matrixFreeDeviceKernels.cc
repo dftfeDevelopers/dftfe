@@ -4,11 +4,11 @@ namespace dftfe
 {
   template <typename Type, int M, int N, int K, int dim>
   __global__ void
-  computeAXKernelPoisson(Type *      V,
+  computeAXKernelPoisson(Type       *V,
                          const Type *U,
                          const Type *P,
                          const Type *J,
-                         const int * map)
+                         const int  *map)
   {
     // V = AU
     // gridDim.x = cells;
@@ -399,11 +399,11 @@ namespace dftfe
 
   template <typename Type, int M, int N, int K, int dim>
   __global__ void
-  computeAXKernelHelmholtz(Type *      V,
+  computeAXKernelHelmholtz(Type       *V,
                            const Type *U,
                            const Type *P,
                            const Type *J,
-                           const int * map,
+                           const int  *map,
                            const Type  coeffHelmholtz)
   {
     // V = AU
@@ -810,11 +810,11 @@ namespace dftfe
     const int   blocks,
     const int   threads,
     const int   smem,
-    Type *      V,
+    Type       *V,
     const Type *U,
     const Type *P,
     const Type *J,
-    const int * map)
+    const int  *map)
   {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     computeAXKernelPoisson<double, M, N, K, dim>
@@ -841,11 +841,11 @@ namespace dftfe
     const int   blocks,
     const int   threads,
     const int   smem,
-    Type *      V,
+    Type       *V,
     const Type *U,
     const Type *P,
     const Type *J,
-    const int * map,
+    const int  *map,
     const Type  coeffHelmholtz)
   {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA

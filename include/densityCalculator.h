@@ -34,7 +34,7 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      &                        BLASWrapperPtr,
+                              &BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
@@ -43,11 +43,11 @@ namespace dftfe
       &densityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  gradDensityValues,
+                        &gradDensityValues,
     const bool           isEvaluateGradRho,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
     const dftParameters &dftParams);
 
   template <typename NumberType>
@@ -55,17 +55,17 @@ namespace dftfe
   computeRhoGradRhoFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    partialOccupVec,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                gradWfcQuadPointData,
-    double *                                    rhoCellsWfcContributions,
-    double *                                    gradRhoCellsWfcContributions,
-    double *                                    rho,
-    double *                                    gradRho,
+    double                                     *partialOccupVec,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *gradWfcQuadPointData,
+    double                                     *rhoCellsWfcContributions,
+    double                                     *gradRhoCellsWfcContributions,
+    double                                     *rho,
+    double                                     *gradRho,
     const bool                                  isEvaluateGradRho);
 
 } // namespace dftfe

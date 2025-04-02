@@ -31,7 +31,7 @@ namespace dftfe
     {
       MPIRequestersNBX::MPIRequestersNBX(
         const std::vector<size_type> &targetIDs,
-        const MPI_Comm &              comm)
+        const MPI_Comm               &comm)
         : d_targetIDs(targetIDs)
         , d_comm(comm)
         , d_recvBuffers(0)

@@ -34,8 +34,8 @@ namespace dftfe
            dftfe::basis::FEBasisOperations<dataTypes::number,
                                            double,
                                            dftfe::utils::MemorySpace::HOST>>
-           &                                     feBasisOp,
-         const dftParameters &                   dftParams,
+                                                &feBasisOp,
+         const dftParameters                    &dftParams,
          const std::vector<std::vector<double>> &atomLocations);
 
 

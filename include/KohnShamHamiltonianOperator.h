@@ -49,12 +49,12 @@ namespace dftfe
       std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
                                                oncvClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
-      dftParameters *                          dftParamsPtr,
+      dftParameters                           *dftParamsPtr,
       const unsigned int                       densityQuadratureID,
       const unsigned int                       lpspQuadratureID,
       const unsigned int                       feOrderPlusOneQuadratureID,
-      const MPI_Comm &                         mpi_comm_parent,
-      const MPI_Comm &                         mpi_comm_domain);
+      const MPI_Comm                          &mpi_comm_parent,
+      const MPI_Comm                          &mpi_comm_domain);
 
     void
     init(const std::vector<double> &kPointCoordinates,
@@ -103,7 +103,7 @@ namespace dftfe
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         auxDensityXCRepresentationPtr,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                phiValues,
+                        &phiValues,
       const unsigned int spinIndex = 0);
 
     /**
@@ -115,7 +115,7 @@ namespace dftfe
     setVEff(
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &                vKS_quadValues,
+                        &vKS_quadValues,
       const unsigned int spinIndex);
 
     void
@@ -134,7 +134,7 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradRhoPrimeValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                phiPrimeValues,
+                        &phiPrimeValues,
       const unsigned int spinIndex);
 
     /**
@@ -250,7 +250,7 @@ namespace dftfe
     void
     overlapInverseMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-        &          src,
+                  &src,
       const double scalarOinvX,
       const double scalarY,
       const double scalarX,
@@ -348,7 +348,7 @@ namespace dftfe
     std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
                                              d_oncvClassPtr;
     std::shared_ptr<excManager<memorySpace>> d_excManagerPtr;
-    dftParameters *                          d_dftParamsPtr;
+    dftParameters                           *d_dftParamsPtr;
 
     std::vector<dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>>
       d_cellHamiltonianMatrix;

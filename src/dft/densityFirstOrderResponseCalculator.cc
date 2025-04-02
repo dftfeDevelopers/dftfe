@@ -37,7 +37,7 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      &                        BLASWrapperPtr,
+                              &BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
@@ -46,10 +46,10 @@ namespace dftfe
       &rhoResponseValuesHam,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  rhoResponseValuesFermiEnergy,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
+                        &rhoResponseValuesFermiEnergy,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
     const dftParameters &dftParams)
   {
     int this_process;
@@ -406,14 +406,14 @@ namespace dftfe
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    onesVec,
-    double *                                    partialOccupVecPrime,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                wfcPrimeQuadPointData,
+    double                                     *onesVec,
+    double                                     *partialOccupVecPrime,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *wfcPrimeQuadPointData,
     double *rhoResponseHamCellsWfcContributions,
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,
@@ -451,7 +451,7 @@ namespace dftfe
                                       dftfe::utils::MemorySpace::DEVICE> &X,
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::DEVICE>
-      &                                     XPrime,
+                                           &XPrime,
     const unsigned int                      totalNumWaveFunctions,
     const std::vector<std::vector<double>> &densityMatDerFermiEnergy,
     std::shared_ptr<
@@ -461,7 +461,7 @@ namespace dftfe
       &basisOperationsPtr,
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                        BLASWrapperPtr,
+                              &BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
@@ -470,10 +470,10 @@ namespace dftfe
       &rhoResponseValuesHam,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  rhoResponseValuesFermiEnergy,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
+                        &rhoResponseValuesFermiEnergy,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
     const dftParameters &dftParams);
 #endif
 
@@ -492,7 +492,7 @@ namespace dftfe
       &basisOperationsPtr,
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-      &                        BLASWrapperPtr,
+                              &BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
@@ -501,9 +501,9 @@ namespace dftfe
       &rhoResponseValuesHam,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  rhoResponseValuesFermiEnergy,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
+                        &rhoResponseValuesFermiEnergy,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
     const dftParameters &dftParams);
 } // namespace dftfe

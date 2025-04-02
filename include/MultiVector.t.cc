@@ -140,8 +140,8 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-      const std::vector<global_size_type> &               ghostIndices,
-      const MPI_Comm &                                    mpiComm,
+      const std::vector<global_size_type>                &ghostIndices,
+      const MPI_Comm                                     &mpiComm,
       const size_type                                     numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
@@ -188,7 +188,7 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-      const MPI_Comm &                                    mpiComm,
+      const MPI_Comm                                     &mpiComm,
       const size_type                                     numVectors,
       const ValueType initVal /* = utils::Types<ValueType>::zero*/)
     {
@@ -241,7 +241,7 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MultiVector<ValueType, memorySpace>::MultiVector(
       const global_size_type globalSize,
-      const MPI_Comm &       mpiComm,
+      const MPI_Comm        &mpiComm,
       const size_type        numVectors,
       const ValueType        initVal /* = utils::Types<ValueType>::zero*/)
     {
@@ -684,7 +684,7 @@ namespace dftfe
     template <typename ValueBaseType>
     void
     MultiVector<ValueType, memorySpace>::add(const ValueBaseType *valVec,
-                                             const MultiVector &  u)
+                                             const MultiVector   &u)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -699,7 +699,7 @@ namespace dftfe
     template <typename ValueBaseType>
     void
     MultiVector<ValueType, memorySpace>::add(const ValueBaseType val,
-                                             const MultiVector & u)
+                                             const MultiVector  &u)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -717,7 +717,7 @@ namespace dftfe
     MultiVector<ValueType, memorySpace>::addAndScale(
       const ValueBaseType1 valScale,
       const ValueBaseType2 valAdd,
-      const MultiVector &  u)
+      const MultiVector   &u)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -737,7 +737,7 @@ namespace dftfe
     MultiVector<ValueType, memorySpace>::scaleAndAdd(
       const ValueBaseType1 valScale,
       const ValueBaseType2 valAdd,
-      const MultiVector &  u)
+      const MultiVector   &u)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -768,7 +768,7 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     void
     MultiVector<ValueType, memorySpace>::dot(const MultiVector &u,
-                                             ValueType *        dotVec)
+                                             ValueType         *dotVec)
     {
       dftfe::utils::throwException<dftfe::utils::InvalidArgument>(
         memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -820,7 +820,7 @@ namespace dftfe
     void
     createMultiVectorFromDealiiPartitioner(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                                  partitioner,
+                                          &partitioner,
       const size_type                      numVectors,
       MultiVector<ValueType, memorySpace> &multiVector)
     {

@@ -61,7 +61,7 @@ namespace dftfe
       void
       initialize(
         const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-          &                                      partitioner,
+                                                &partitioner,
         const dealii::AffineConstraints<double> &constraintMatrixData);
 
       /**
@@ -189,7 +189,7 @@ namespace dftfe
       void
       initialize(
         const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-          &                                      partitioner,
+                                                &partitioner,
         const dealii::AffineConstraints<double> &constraintMatrixData,
         const bool                               useInhomogeneties = true);
 

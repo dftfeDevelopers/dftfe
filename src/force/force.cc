@@ -43,16 +43,16 @@ namespace dftfe
   namespace internalForce
   {
     void
-    initUnmoved(const dealii::Triangulation<3, 3> &     triangulation,
-                const dealii::Triangulation<3, 3> &     serialTriangulation,
+    initUnmoved(const dealii::Triangulation<3, 3>      &triangulation,
+                const dealii::Triangulation<3, 3>      &serialTriangulation,
                 const std::vector<std::vector<double>> &domainBoundingVectors,
-                const MPI_Comm &                        mpi_comm_parent,
-                const MPI_Comm &                        mpi_comm,
-                const dftParameters &                   dftParams,
-                dealii::DoFHandler<3> &                 dofHandlerForce,
-                dealii::FESystem<3> &                   FEForce,
-                dealii::AffineConstraints<double> &     constraintsForce,
-                dealii::IndexSet &                      locally_owned_dofsForce,
+                const MPI_Comm                         &mpi_comm_parent,
+                const MPI_Comm                         &mpi_comm,
+                const dftParameters                    &dftParams,
+                dealii::DoFHandler<3>                  &dofHandlerForce,
+                dealii::FESystem<3>                    &FEForce,
+                dealii::AffineConstraints<double>      &constraintsForce,
+                dealii::IndexSet                       &locally_owned_dofsForce,
                 dealii::IndexSet &locally_relevant_dofsForce)
     {
       dofHandlerForce.clear();
@@ -155,9 +155,9 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   forceClass<FEOrder, FEOrderElectro, memorySpace>::forceClass(
     dftClass<FEOrder, FEOrderElectro, memorySpace> *_dftPtr,
-    const MPI_Comm &                                mpi_comm_parent,
-    const MPI_Comm &                                mpi_comm_domain,
-    const dftParameters &                           dftParams)
+    const MPI_Comm                                 &mpi_comm_parent,
+    const MPI_Comm                                 &mpi_comm_domain,
+    const dftParameters                            &dftParams)
     : dftPtr(_dftPtr)
     , FEForce(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)), 3)
     , d_mpiCommParent(mpi_comm_parent)
@@ -178,8 +178,8 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::initUnmoved(
-    const dealii::Triangulation<3, 3> &     triangulation,
-    const dealii::Triangulation<3, 3> &     serialTriangulation,
+    const dealii::Triangulation<3, 3>      &triangulation,
+    const dealii::Triangulation<3, 3>      &serialTriangulation,
     const std::vector<std::vector<double>> &domainBoundingVectors,
     const bool                              isElectrostaticsMesh)
   {
@@ -219,7 +219,7 @@ namespace dftfe
   forceClass<FEOrder, FEOrderElectro, memorySpace>::initMoved(
     std::vector<const dealii::DoFHandler<3> *> &dofHandlerVectorMatrixFree,
     std::vector<const dealii::AffineConstraints<double> *>
-      &        constraintsVectorMatrixFree,
+              &constraintsVectorMatrixFree,
     const bool isElectrostaticsMesh)
   {
     if (isElectrostaticsMesh)
@@ -281,13 +281,13 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::computeAtomsForces(
     const dealii::MatrixFree<3, double> &matrixFreeData,
-    const dispersionCorrection &         dispersionCorr,
+    const dispersionCorrection          &dispersionCorr,
     const unsigned int                   eigenDofHandlerIndex,
     const unsigned int                   smearedChargeQuadratureId,
     const unsigned int                   lpspQuadratureIdElectro,
     const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
     const unsigned int                   phiTotDofHandlerIndexElectro,
-    const distributedCPUVec<double> &    phiTotRhoOutElectro,
+    const distributedCPUVec<double>     &phiTotRhoOutElectro,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &rhoOutValues,
@@ -304,10 +304,10 @@ namespace dftfe
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
-      &                                                  hessianRhoCoreAtoms,
+                                                        &hessianRhoCoreAtoms,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
-      &                                      pseudoVLocAtomsElectro,
+                                            &pseudoVLocAtomsElectro,
     const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
     const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
@@ -464,7 +464,7 @@ namespace dftfe
       const unsigned int                   lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,
@@ -483,11 +483,11 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                                  hessianRhoCoreAtoms,
+                                                          &hessianRhoCoreAtoms,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtomsElectro,
+                                                      &pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     configForceLinFEInit(matrixFreeData, matrixFreeDataElectro);

@@ -23,8 +23,8 @@
 
 namespace dftfe
 {
-  MixingScheme::MixingScheme(const MPI_Comm &   mpi_comm_parent,
-                             const MPI_Comm &   mpi_comm_domain,
+  MixingScheme::MixingScheme(const MPI_Comm    &mpi_comm_parent,
+                             const MPI_Comm    &mpi_comm_domain,
                              const unsigned int verbosity)
     : d_mpi_comm_domain(mpi_comm_domain)
     , d_mpi_comm_parent(mpi_comm_parent)
@@ -38,7 +38,7 @@ namespace dftfe
   MixingScheme::addMixingVariable(
     const mixingVariable mixingVariableList,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &          weightDotProducts,
+                &weightDotProducts,
     const bool   performMPIReduce,
     const double mixingValue,
     const bool   adaptMixingValue)
@@ -83,7 +83,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &residualHist,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                  weightDotProducts,
+                        &weightDotProducts,
     const bool           isPerformMixing,
     const bool           isMPIAllReduce,
     std::vector<double> &A,
@@ -283,7 +283,7 @@ namespace dftfe
   // Fucntions to add to the history
   void
   MixingScheme::addVariableToInHist(const mixingVariable mixingVariableName,
-                                    const double *       inputVariableToInHist,
+                                    const double        *inputVariableToInHist,
                                     const unsigned int   length)
   {
     d_variableHistoryIn[mixingVariableName].push_back(
@@ -297,7 +297,7 @@ namespace dftfe
   void
   MixingScheme::addVariableToResidualHist(
     const mixingVariable mixingVariableName,
-    const double *       inputVariableToResidualHist,
+    const double        *inputVariableToResidualHist,
     const unsigned int   length)
   {
     d_variableHistoryResidual[mixingVariableName].push_back(
@@ -311,7 +311,7 @@ namespace dftfe
   // Computes the new variable after mixing.
   void
   MixingScheme::mixVariable(mixingVariable     mixingVariableName,
-                            double *           outputVariable,
+                            double            *outputVariable,
                             const unsigned int lenVar)
   {
     unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;
@@ -346,7 +346,7 @@ namespace dftfe
 
   void
   MixingScheme::getOptimizedResidual(mixingVariable     mixingVariableName,
-                                     double *           outputVariable,
+                                     double            *outputVariable,
                                      const unsigned int lenVar)
   {
     unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;
@@ -374,8 +374,8 @@ namespace dftfe
 
   void
   MixingScheme::mixPreconditionedResidual(mixingVariable     mixingVariableName,
-                                          double *           inputVariable,
-                                          double *           outputVariable,
+                                          double            *inputVariable,
+                                          double            *outputVariable,
                                           const unsigned int lenVar)
   {
     unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;

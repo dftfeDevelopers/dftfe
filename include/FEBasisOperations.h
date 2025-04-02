@@ -62,7 +62,8 @@ namespace dftfe
     }
 
 
-    inline UpdateFlags operator&(const UpdateFlags f1, const UpdateFlags f2)
+    inline UpdateFlags
+    operator&(const UpdateFlags f1, const UpdateFlags f2)
     {
       return static_cast<UpdateFlags>(static_cast<unsigned int>(f1) &
                                       static_cast<unsigned int>(f2));
@@ -129,12 +130,12 @@ namespace dftfe
        * MatrixFree object.
        */
       void
-        init(dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
-             std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
-               &                              constraintsVector,
-             const unsigned int &             dofHandlerID,
-             const std::vector<unsigned int> &quadratureID,
-             const std::vector<UpdateFlags>   updateFlags);
+      init(dealii::MatrixFree<3, ValueTypeBasisData> &matrixFreeData,
+           std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
+                                           &constraintsVector,
+           const unsigned int              &dofHandlerID,
+           const std::vector<unsigned int> &quadratureID,
+           const std::vector<UpdateFlags>   updateFlags);
 
       /**
        * @brief fills required data structures from another FEBasisOperations object
@@ -853,7 +854,7 @@ namespace dftfe
       std::vector<dftUtils::constraintMatrixInfo<memorySpace>> d_constraintInfo;
       unsigned int                                             d_nOMPThreads;
       std::vector<const dealii::AffineConstraints<ValueTypeBasisData> *>
-        *                                              d_constraintsVector;
+                                                      *d_constraintsVector;
       const dealii::MatrixFree<3, ValueTypeBasisData> *d_matrixFreeDataPtr;
       dftfe::utils::MemoryStorage<dftfe::global_size_type,
                                   dftfe::utils::MemorySpace::HOST>
@@ -1070,7 +1071,7 @@ namespace dftfe
       void
       extractToCellNodalData(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &                  nodalData,
+                            &nodalData,
         ValueTypeBasisCoeff *cellNodalDataPtr) const;
       // FIXME Untested function
       /**
@@ -1101,8 +1102,8 @@ namespace dftfe
       interpolateKernel(
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                 memorySpace> &nodalData,
-        ValueTypeBasisCoeff *                                 quadratureValues,
-        ValueTypeBasisCoeff *                       quadratureGradients,
+        ValueTypeBasisCoeff                                  *quadratureValues,
+        ValueTypeBasisCoeff                        *quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
       /**
@@ -1119,9 +1120,9 @@ namespace dftfe
        */
       void
       interpolateKernel(
-        const ValueTypeBasisCoeff *                 nodalData,
-        ValueTypeBasisCoeff *                       quadratureValues,
-        ValueTypeBasisCoeff *                       quadratureGradients,
+        const ValueTypeBasisCoeff                  *nodalData,
+        ValueTypeBasisCoeff                        *quadratureValues,
+        ValueTypeBasisCoeff                        *quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
       // FIXME Untested function
@@ -1143,7 +1144,7 @@ namespace dftfe
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &nodalData,
         dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-          &                                         mapQuadIdToProcId,
+                                                   &mapQuadIdToProcId,
         const std::pair<unsigned int, unsigned int> cellRange) const;
 
 
@@ -1160,7 +1161,7 @@ namespace dftfe
       extractToCellNodalDataKernel(
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                 memorySpace> &nodalData,
-        ValueTypeBasisCoeff *                                 cellNodalDataPtr,
+        ValueTypeBasisCoeff                                  *cellNodalDataPtr,
         const std::pair<unsigned int, unsigned int>           cellRange) const;
 
       // FIXME Untested function
@@ -1176,7 +1177,7 @@ namespace dftfe
       accumulateFromCellNodalDataKernel(
         const ValueTypeBasisCoeff *cellNodalDataPtr,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &                                         nodalData,
+                                                   &nodalData,
         const std::pair<unsigned int, unsigned int> cellRange) const;
     };
   } // end of namespace basis

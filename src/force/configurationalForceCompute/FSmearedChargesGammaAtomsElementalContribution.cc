@@ -31,7 +31,7 @@ namespace dftfe
     FPhiTotSmearedChargesGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
         &forceContributionSmearedChargesGammaAtoms,
-      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<
@@ -103,12 +103,12 @@ namespace dftfe
     FVselfSmearedChargesGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
         &forceContributionSmearedChargesGammaAtoms,
-      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-        &                              gradVselfBinQuads,
+                                      &gradVselfBinQuads,
       const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>

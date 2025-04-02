@@ -27,13 +27,13 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::computeStress(
     const dealii::MatrixFree<3, double> &matrixFreeData,
-    const dispersionCorrection &         dispersionCorr,
+    const dispersionCorrection          &dispersionCorr,
     const unsigned int                   eigenDofHandlerIndex,
     const unsigned int                   smearedChargeQuadratureId,
     const unsigned int                   lpspQuadratureIdElectro,
     const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
     const unsigned int                   phiTotDofHandlerIndexElectro,
-    const distributedCPUVec<double> &    phiTotRhoOutElectro,
+    const distributedCPUVec<double>     &phiTotRhoOutElectro,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &rhoOutValues,
@@ -46,14 +46,14 @@ namespace dftfe
       &gradRhoTotalOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
-      &                                                  pseudoVLocAtomsElectro,
+                                                        &pseudoVLocAtomsElectro,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
     const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
-      &                                      hessianRhoCoreAtoms,
+                                            &hessianRhoCoreAtoms,
     const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
     const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {

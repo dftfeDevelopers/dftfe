@@ -32,7 +32,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &gradRhoPrimeValues,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                phiPrimeValues,
+                      &phiPrimeValues,
     const unsigned int spinIndex)
   {
     bool isIntegrationByPartsGradDensityDependenceVxc =

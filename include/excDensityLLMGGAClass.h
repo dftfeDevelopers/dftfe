@@ -26,7 +26,7 @@ namespace dftfe
     void
     computeRhoTauDependentXCData(
       AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    quadPoints,
+      const std::vector<double>     &quadPoints,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
         &xDataOut,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -40,7 +40,7 @@ namespace dftfe
     void
     applyWaveFunctionDependentFuncDerWrtPsi(
       const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-        &                                                                src,
+                                                                        &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
@@ -61,7 +61,7 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
                                               memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-        &                dst,
+                        &dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
       const unsigned int spinIndex) override;
@@ -85,7 +85,7 @@ namespace dftfe
     reinitKPointDependentVariables(unsigned int kPointIndex) override;
 
   private:
-    NNLLMGGA *                    d_NNLLMGGAPtr;
+    NNLLMGGA                     *d_NNLLMGGAPtr;
     std::shared_ptr<xc_func_type> d_funcXPtr;
     std::shared_ptr<xc_func_type> d_funcCPtr;
     std::vector<double>           d_spacingFDStencil;

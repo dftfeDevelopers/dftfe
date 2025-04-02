@@ -40,10 +40,10 @@ namespace dftfe
      * @brief Constructor
      *
      */
-    dispersionCorrection(const MPI_Comm &     mpi_comm_parent,
-                         const MPI_Comm &     mpi_comm_domain,
-                         const MPI_Comm &     interpool_comm,
-                         const MPI_Comm &     interBandGroupComm,
+    dispersionCorrection(const MPI_Comm      &mpi_comm_parent,
+                         const MPI_Comm      &mpi_comm_domain,
+                         const MPI_Comm      &interpool_comm,
+                         const MPI_Comm      &interBandGroupComm,
                          const dftParameters &dftParams);
 
     /**

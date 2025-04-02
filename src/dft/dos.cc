@@ -32,12 +32,12 @@ namespace dftfe
     unsigned int  n,
     unsigned int  l,
     unsigned int &fileReadFlag,
-    double &      wfcInitTruncation,
+    double       &wfcInitTruncation,
     std::map<unsigned int,
              std::map<unsigned int,
                       std::map<unsigned int, alglib::spline1dinterpolant>>>
-      &                  radValues,
-    const MPI_Comm &     mpiCommParent,
+                        &radValues,
+    const MPI_Comm      &mpiCommParent,
     const dftParameters &dftParams)
   {
     if (radValues[Z][n].count(l) > 0)
@@ -147,7 +147,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_tdos(
     const std::vector<std::vector<double>> &eigenValuesInput,
-    const std::string &                     dosFileName)
+    const std::string                      &dosFileName)
   {
     computing_timer.enter_subsection("DOS computation");
 
@@ -366,7 +366,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_ldos(
     const std::vector<std::vector<double>> &eigenValuesInput,
-    const std::string &                     ldosFileName)
+    const std::string                      &ldosFileName)
   {
     computing_timer.enter_subsection("LDOS computation");
     //

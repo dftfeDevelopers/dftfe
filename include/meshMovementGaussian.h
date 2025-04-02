@@ -34,8 +34,8 @@ namespace dftfe
      *  @param mpi_comm_parent parent mpi communicator
      *  @param mpi_comm_domain mpi communicator for domain decomposition
      */
-    meshMovementGaussianClass(const MPI_Comm &     mpi_comm_parent,
-                              const MPI_Comm &     mpi_comm_domaim,
+    meshMovementGaussianClass(const MPI_Comm      &mpi_comm_parent,
+                              const MPI_Comm      &mpi_comm_domaim,
                               const dftParameters &dftParams);
 
     /** @brief Moves the triangulation corresponding to Gaussians attached to control points
@@ -54,7 +54,7 @@ namespace dftfe
     std::pair<bool, double>
     moveMesh(const std::vector<dealii::Point<3>> &controlPointLocations,
              const std::vector<dealii::Tensor<1, 3, double>>
-               &                        controlPointDisplacements,
+                                       &controlPointDisplacements,
              const std::vector<double> &gaussianWidthParameter,
              const std::vector<double> &flatTopWidthParameter,
              const bool                 moveSubdivided = false);
@@ -67,7 +67,7 @@ namespace dftfe
                     const std::vector<dealii::Tensor<1, 3, double>>
                       &controlPointDisplacements1,
                     const std::vector<dealii::Tensor<1, 3, double>>
-                      &                        controlPointDisplacements2,
+                                              &controlPointDisplacements2,
                     const std::vector<double> &controllingParameter1,
                     const std::vector<double> &controllingParameter2,
                     const std::vector<double> &flatTopWidthParameter,
@@ -85,7 +85,7 @@ namespace dftfe
     void
     computeIncrement(const std::vector<dealii::Point<3>> &controlPointLocations,
                      const std::vector<dealii::Tensor<1, 3, double>>
-                       &                        controlPointDisplacements,
+                                               &controlPointDisplacements,
                      const std::vector<double> &gaussianWidthParameter,
                      const std::vector<double> &flatTopWidthParameter);
 
@@ -96,7 +96,7 @@ namespace dftfe
       const std::vector<dealii::Tensor<1, 3, double>>
         &controlPointDisplacements1,
       const std::vector<dealii::Tensor<1, 3, double>>
-        &                        controlPointDisplacements2,
+                                &controlPointDisplacements2,
       const std::vector<double> &gaussianWidthParameter1,
       const std::vector<double> &gaussianWidthParameter2,
       const std::vector<double> &flatTopWidthParameter);

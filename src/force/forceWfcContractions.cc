@@ -44,7 +44,7 @@ namespace dftfe
         std::shared_ptr<dftfe::basis::FEBasisOperations<dataTypes::number,
                                                         double,
                                                         memorySpace>>
-          &                basisOperationsPtr,
+                          &basisOperationsPtr,
         const unsigned int nlpspQuadratureId,
         const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
           &BLASWrapperPtr,
@@ -92,7 +92,7 @@ namespace dftfe
         std::shared_ptr<dftfe::basis::FEBasisOperations<dataTypes::number,
                                                         double,
                                                         memorySpace>>
-          &                basisOperationsPtr,
+                          &basisOperationsPtr,
         const unsigned int densityQuadratureId,
         const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
           &BLASWrapperPtr,
@@ -102,7 +102,7 @@ namespace dftfe
         const unsigned int                                      numQuads,
         const dftfe::utils::MemoryStorage<double, memorySpace> &eigenValues,
         const dftfe::utils::MemoryStorage<double, memorySpace>
-          &          partialOccupancies,
+                    &partialOccupancies,
         const double kcoordx,
         const double kcoordy,
         const double kcoordz,
@@ -115,7 +115,7 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, memorySpace>
           &eshelbyTensorContributions,
         dftfe::utils::MemoryStorage<double, memorySpace>
-          &        eshelbyTensorQuadValues,
+                  &eshelbyTensorQuadValues,
         const bool isFloatingChargeForces,
         const bool addEk)
       {
@@ -320,12 +320,12 @@ namespace dftfe
         const dftfe::utils::MemoryStorage<double, memorySpace>
           &partialOccupancies,
         const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-          &                      onesVecNLP,
+                                &onesVecNLP,
         const dataTypes::number *projectorKetTimesVectorParFlattened,
         const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
           &nonTrivialIdToElemIdMap,
         const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
-          &                projecterKetTimesFlattenedVectorLocalIds,
+                          &projecterKetTimesFlattenedVectorLocalIds,
         const unsigned int numCells,
         const unsigned int numQuadsNLP,
         const unsigned int numPsi,
@@ -522,7 +522,7 @@ namespace dftfe
         std::shared_ptr<dftfe::basis::FEBasisOperations<dataTypes::number,
                                                         double,
                                                         memorySpace>>
-          &                basisOperationsPtr,
+                          &basisOperationsPtr,
         const unsigned int densityQuadratureId,
         const unsigned int nlpspQuadratureId,
         const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
@@ -538,11 +538,11 @@ namespace dftfe
         dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
           &projectorKetTimesVector,
         dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-          &                      projectorKetTimesVectorHubbard,
+                                &projectorKetTimesVectorHubbard,
         const dataTypes::number *X,
         const dftfe::utils::MemoryStorage<double, memorySpace> &eigenValues,
         const dftfe::utils::MemoryStorage<double, memorySpace>
-          &          partialOccupancies,
+                    &partialOccupancies,
         const double kcoordx,
         const double kcoordy,
         const double kcoordz,
@@ -556,7 +556,7 @@ namespace dftfe
         const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
           &nonTrivialIdToElemIdMapHubbard,
         const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
-          &                projecterKetTimesFlattenedVectorLocalIdsHubbard,
+                          &projecterKetTimesFlattenedVectorLocalIdsHubbard,
         const unsigned int startingVecId,
         const unsigned int N,
         const unsigned int numPsi,
@@ -602,7 +602,7 @@ namespace dftfe
         dataTypes::number *
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
         dataTypes::number *
-                           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTempHubbard,
+          projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTempHubbard,
         const unsigned int cellsBlockSize,
         const unsigned int innerBlockSizeEnlp,
         const bool         isPsp,
@@ -799,7 +799,7 @@ namespace dftfe
     wfcContractionsForceKernelsAllH(
       std::shared_ptr<
         dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
-        &                basisOperationsPtr,
+                        &basisOperationsPtr,
       const unsigned int densityQuadratureId,
       const unsigned int nlpspQuadratureId,
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
@@ -808,18 +808,18 @@ namespace dftfe
                                                                oncvClassPtr,
       std::shared_ptr<hubbard<dataTypes::number, memorySpace>> hubbardClassPtr,
       const bool                                               useHubbard,
-      const dataTypes::number *                                X,
+      const dataTypes::number                                 *X,
       const unsigned int                      spinPolarizedFlag,
       const unsigned int                      spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
       const std::vector<std::vector<double>> &partialOccupanciesH,
-      const std::vector<double> &             kPointCoordinates,
+      const std::vector<double>              &kPointCoordinates,
       const unsigned int                      MLoc,
       const unsigned int                      N,
       const unsigned int                      numCells,
       const unsigned int                      numQuads,
       const unsigned int                      numQuadsNLP,
-      double *                                eshelbyTensorQuadValuesH,
+      double                                 *eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
       dataTypes::number *
@@ -830,8 +830,8 @@ namespace dftfe
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHHubbard,
 #endif
-      const MPI_Comm &     mpiCommParent,
-      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm      &mpiCommParent,
+      const MPI_Comm      &interBandGroupComm,
       const bool           isPsp,
       const bool           isFloatingChargeForces,
       const bool           addEk,
@@ -894,7 +894,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> psiQuadsFlat(
         cellsBlockSize * numQuads * blockSize, dataTypes::number(0.0));
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-                                                                  gradPsiQuadsFlat(cellsBlockSize * numQuads * blockSize * 3,
+        gradPsiQuadsFlat(cellsBlockSize * numQuads * blockSize * 3,
                          dataTypes::number(0.0));
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> psiQuadsNLP(
         numCells * numQuadsNLP * blockSize, dataTypes::number(0.0));
@@ -1264,7 +1264,7 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::DEVICE>>
-        &                basisOperationsPtr,
+                        &basisOperationsPtr,
       const unsigned int densityQuadratureId,
       const unsigned int nlpspQuadratureId,
       const std::shared_ptr<
@@ -1277,18 +1277,18 @@ namespace dftfe
         hubbard<dataTypes::number, dftfe::utils::MemorySpace::DEVICE>>
                                               hubbardClassPtr,
       const bool                              useHubbard,
-      const dataTypes::number *               X,
+      const dataTypes::number                *X,
       const unsigned int                      spinPolarizedFlag,
       const unsigned int                      spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
       const std::vector<std::vector<double>> &partialOccupanciesH,
-      const std::vector<double> &             kPointCoordinates,
+      const std::vector<double>              &kPointCoordinates,
       const unsigned int                      MLoc,
       const unsigned int                      N,
       const unsigned int                      numCells,
       const unsigned int                      numQuads,
       const unsigned int                      numQuadsNLP,
-      double *                                eshelbyTensorQuadValuesH,
+      double                                 *eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
       dataTypes::number *
@@ -1299,8 +1299,8 @@ namespace dftfe
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHHubbard,
 #  endif
-      const MPI_Comm &     mpiCommParent,
-      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm      &mpiCommParent,
+      const MPI_Comm      &interBandGroupComm,
       const bool           isPsp,
       const bool           isFloatingChargeForces,
       const bool           addEk,
@@ -1313,7 +1313,7 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-        &                basisOperationsPtr,
+                        &basisOperationsPtr,
       const unsigned int densityQuadratureId,
       const unsigned int nlpspQuadratureId,
       const std::shared_ptr<
@@ -1325,18 +1325,18 @@ namespace dftfe
       std::shared_ptr<hubbard<dataTypes::number,
                               dftfe::utils::MemorySpace::HOST>> hubbardClassPtr,
       const bool                                                useHubbard,
-      const dataTypes::number *                                 X,
+      const dataTypes::number                                  *X,
       const unsigned int                      spinPolarizedFlag,
       const unsigned int                      spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
       const std::vector<std::vector<double>> &partialOccupanciesH,
-      const std::vector<double> &             kPointCoordinates,
+      const std::vector<double>              &kPointCoordinates,
       const unsigned int                      MLoc,
       const unsigned int                      N,
       const unsigned int                      numCells,
       const unsigned int                      numQuads,
       const unsigned int                      numQuadsNLP,
-      double *                                eshelbyTensorQuadValuesH,
+      double                                 *eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
       dataTypes::number *
@@ -1347,8 +1347,8 @@ namespace dftfe
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedHHubbard,
 #endif
-      const MPI_Comm &     mpiCommParent,
-      const MPI_Comm &     interBandGroupComm,
+      const MPI_Comm      &mpiCommParent,
+      const MPI_Comm      &interBandGroupComm,
       const bool           isPsp,
       const bool           isFloatingChargeForces,
       const bool           addEk,

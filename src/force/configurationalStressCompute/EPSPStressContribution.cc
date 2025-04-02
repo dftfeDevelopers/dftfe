@@ -26,25 +26,24 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
-    forceClass<FEOrder, FEOrderElectro, memorySpace>::addEPSPStressContribution(
-      dealii::FEValues<3> &                feValues,
-      dealii::FEFaceValues<3> &            feFaceValues,
-      dealii::FEEvaluation<3,
-                           1,
-                           C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                           3> &            forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   phiTotDofHandlerIndexElectro,
-      const unsigned int                   cell,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>> &rhoQuads,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtoms,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
-      const std::vector<std::map<dealii::CellId, unsigned int>>
-        &cellsVselfBallsClosestAtomIdDofHandler)
+  forceClass<FEOrder, FEOrderElectro, memorySpace>::addEPSPStressContribution(
+    dealii::FEValues<3>                 &feValues,
+    dealii::FEFaceValues<3>             &feFaceValues,
+    dealii::FEEvaluation<3,
+                         1,
+                         C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
+                         3>             &forceEval,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const unsigned int                   phiTotDofHandlerIndexElectro,
+    const unsigned int                   cell,
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &rhoQuads,
+    const dealii::AlignedVector<
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
+    const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
+                                                    &pseudoVLocAtoms,
+    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
+    const std::vector<std::map<dealii::CellId, unsigned int>>
+      &cellsVselfBallsClosestAtomIdDofHandler)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
     for (unsigned int idim = 0; idim < 3; idim++)
@@ -85,7 +84,7 @@ namespace dftfe
     dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
       totalContribution(numQuadPoints, zeroTensor2);
     dealii::AlignedVector<dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
-                                               vselfFDStrainQuads(numQuadPoints, zeroTensor2);
+      vselfFDStrainQuads(numQuadPoints, zeroTensor2);
     std::vector<std::vector<dealii::Point<3>>> quadPointsSubCells(
       numSubCells, std::vector<dealii::Point<3>>(numQuadPoints));
 

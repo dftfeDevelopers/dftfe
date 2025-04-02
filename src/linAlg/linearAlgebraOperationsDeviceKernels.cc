@@ -10,8 +10,8 @@ namespace dftfe
       __global__ void
       addSubspaceRotatedBlockToXKernel(const unsigned int BDof,
                                        const unsigned int BVec,
-                                       const float *      rotatedXBlockSP,
-                                       double *           X,
+                                       const float       *rotatedXBlockSP,
+                                       double            *X,
                                        const unsigned int startingDofId,
                                        const unsigned int startingVecId,
                                        const unsigned int N)
@@ -33,7 +33,7 @@ namespace dftfe
         const unsigned int                      BDof,
         const unsigned int                      BVec,
         const dftfe::utils::deviceFloatComplex *rotatedXBlockSP,
-        dftfe::utils::deviceDoubleComplex *     X,
+        dftfe::utils::deviceDoubleComplex      *X,
         const unsigned int                      startingDofId,
         const unsigned int                      startingVecId,
         const unsigned int                      N)
@@ -57,9 +57,9 @@ namespace dftfe
       copyFromOverlapMatBlockToDPSPBlocksKernel(
         const unsigned int B,
         const unsigned int D,
-        const double *     overlapMatrixBlock,
-        double *           overlapMatrixBlockDP,
-        float *            overlapMatrixBlockSP)
+        const double      *overlapMatrixBlock,
+        double            *overlapMatrixBlockDP,
+        float             *overlapMatrixBlockSP)
       {
         const unsigned int numEntries = B * D;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
@@ -82,8 +82,8 @@ namespace dftfe
         const unsigned int                       B,
         const unsigned int                       D,
         const dftfe::utils::deviceDoubleComplex *overlapMatrixBlock,
-        dftfe::utils::deviceDoubleComplex *      overlapMatrixBlockDP,
-        dftfe::utils::deviceFloatComplex *       overlapMatrixBlockSP)
+        dftfe::utils::deviceDoubleComplex       *overlapMatrixBlockDP,
+        dftfe::utils::deviceFloatComplex        *overlapMatrixBlockSP)
       {
         const unsigned int numEntries = B * D;
         for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < numEntries;
@@ -103,8 +103,8 @@ namespace dftfe
       }
 
       __global__ void
-      computeDiagQTimesXKernel(const double *     diagValues,
-                               double *           X,
+      computeDiagQTimesXKernel(const double      *diagValues,
+                               double            *X,
                                const unsigned int N,
                                const unsigned int M)
       {
@@ -123,7 +123,7 @@ namespace dftfe
       __global__ void
       computeDiagQTimesXKernel(
         const dftfe::utils::deviceDoubleComplex *diagValues,
-        dftfe::utils::deviceDoubleComplex *      X,
+        dftfe::utils::deviceDoubleComplex       *X,
         const unsigned int                       N,
         const unsigned int                       M)
       {
@@ -141,7 +141,7 @@ namespace dftfe
 
 
       __global__ void
-      computeDiagQTimesXKernel(const double *                     diagValues,
+      computeDiagQTimesXKernel(const double                      *diagValues,
                                dftfe::utils::deviceDoubleComplex *X,
                                const unsigned int                 N,
                                const unsigned int                 M)
@@ -164,10 +164,10 @@ namespace dftfe
                                   const unsigned int numDofs,
                                   const unsigned int N,
                                   const unsigned int startingVecId,
-                                  const double *     eigenValues,
-                                  const double *     x,
-                                  const double *     y,
-                                  double *           r)
+                                  const double      *eigenValues,
+                                  const double      *x,
+                                  const double      *y,
+                                  double            *r)
       {
         for (int i = blockIdx.x * blockDim.x + threadIdx.x;
              i < numVectors * numDofs;
@@ -187,10 +187,10 @@ namespace dftfe
                                   const unsigned int numDofs,
                                   const unsigned int N,
                                   const unsigned int startingVecId,
-                                  const double *     eigenValues,
+                                  const double      *eigenValues,
                                   const dftfe::utils::deviceDoubleComplex *X,
                                   const dftfe::utils::deviceDoubleComplex *Y,
-                                  double *                                 r)
+                                  double                                  *r)
       {
         for (int i = blockIdx.x * blockDim.x + threadIdx.x;
              i < numVectors * numDofs;
@@ -212,7 +212,7 @@ namespace dftfe
       setZeroKernel(const unsigned int BVec,
                     const unsigned int M,
                     const unsigned int N,
-                    double *           yVec,
+                    double            *yVec,
                     const unsigned int startingXVecId)
       {
         const unsigned int globalThreadId =
@@ -262,8 +262,8 @@ namespace dftfe
                                              const unsigned int numDofs,
                                              const unsigned int N,
                                              const unsigned int startingVecId,
-                                             const double *     y,
-                                             double *           r)
+                                             const double      *y,
+                                             double            *r)
       {
         for (int i = blockIdx.x * blockDim.x + threadIdx.x;
              i < numVectors * numDofs;
@@ -283,7 +283,7 @@ namespace dftfe
         const unsigned int                       N,
         const unsigned int                       startingVecId,
         const dftfe::utils::deviceDoubleComplex *Y,
-        double *                                 r)
+        double                                  *r)
       {
         for (int i = blockIdx.x * blockDim.x + threadIdx.x;
              i < numVectors * numDofs;
@@ -303,8 +303,8 @@ namespace dftfe
     void
     addSubspaceRotatedBlockToX(const unsigned int            BDof,
                                const unsigned int            BVec,
-                               const ValueType1 *            rotatedXBlockSP,
-                               ValueType2 *                  X,
+                               const ValueType1             *rotatedXBlockSP,
+                               ValueType2                   *X,
                                const unsigned int            startingDofId,
                                const unsigned int            startingVecId,
                                const unsigned int            N,
@@ -346,9 +346,9 @@ namespace dftfe
     copyFromOverlapMatBlockToDPSPBlocks(
       const unsigned int            B,
       const unsigned int            D,
-      const ValueType1 *            overlapMatrixBlock,
-      ValueType1 *                  overlapMatrixBlockDP,
-      ValueType2 *                  overlapMatrixBlockSP,
+      const ValueType1             *overlapMatrixBlock,
+      ValueType1                   *overlapMatrixBlockDP,
+      ValueType2                   *overlapMatrixBlockSP,
       dftfe::utils::deviceStream_t &streamDataMove)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -380,8 +380,8 @@ namespace dftfe
     }
     template <typename ValueType1, typename ValueType2>
     void
-    computeDiagQTimesX(const ValueType1 * diagValues,
-                       ValueType2 *       X,
+    computeDiagQTimesX(const ValueType1  *diagValues,
+                       ValueType2        *X,
                        const unsigned int N,
                        const unsigned int M)
     {
@@ -414,10 +414,10 @@ namespace dftfe
                           const unsigned int numDofs,
                           const unsigned int N,
                           const unsigned int startingVecId,
-                          const double *     eigenValues,
-                          const ValueType *  X,
-                          const ValueType *  Y,
-                          double *           r)
+                          const double      *eigenValues,
+                          const ValueType   *X,
+                          const ValueType   *Y,
+                          double            *r)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       computeResidualDeviceKernel<<<(numVectors +
@@ -456,8 +456,8 @@ namespace dftfe
                                      const unsigned int numDofs,
                                      const unsigned int N,
                                      const unsigned int startingVecId,
-                                     const ValueType *  X,
-                                     double *           residualSqDevice)
+                                     const ValueType   *X,
+                                     double            *residualSqDevice)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       computeResidualDeviceKernelGeneralised<<<
@@ -493,7 +493,7 @@ namespace dftfe
     setZero(const unsigned int BVec,
             const unsigned int M,
             const unsigned int N,
-            ValueType *        yVec,
+            ValueType         *yVec,
             const unsigned int startingXVecId)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -524,8 +524,8 @@ namespace dftfe
     template void
     addSubspaceRotatedBlockToX(const unsigned int            BDof,
                                const unsigned int            BVec,
-                               const float *                 rotatedXBlockSP,
-                               double *                      X,
+                               const float                  *rotatedXBlockSP,
+                               double                       *X,
                                const unsigned int            startingDofId,
                                const unsigned int            startingVecId,
                                const unsigned int            N,
@@ -533,8 +533,8 @@ namespace dftfe
     template void
     addSubspaceRotatedBlockToX(const unsigned int            BDof,
                                const unsigned int            BVec,
-                               const std::complex<float> *   rotatedXBlockSP,
-                               std::complex<double> *        X,
+                               const std::complex<float>    *rotatedXBlockSP,
+                               std::complex<double>         *X,
                                const unsigned int            startingDofId,
                                const unsigned int            startingVecId,
                                const unsigned int            N,
@@ -543,32 +543,32 @@ namespace dftfe
     copyFromOverlapMatBlockToDPSPBlocks(
       const unsigned int            B,
       const unsigned int            D,
-      const double *                overlapMatrixBlock,
-      double *                      overlapMatrixBlockDP,
-      float *                       overlapMatrixBlockSP,
+      const double                 *overlapMatrixBlock,
+      double                       *overlapMatrixBlockDP,
+      float                        *overlapMatrixBlockSP,
       dftfe::utils::deviceStream_t &streamDataMove);
     template void
     copyFromOverlapMatBlockToDPSPBlocks(
       const unsigned int            B,
       const unsigned int            D,
-      const std::complex<double> *  overlapMatrixBlock,
-      std::complex<double> *        overlapMatrixBlockDP,
-      std::complex<float> *         overlapMatrixBlockSP,
+      const std::complex<double>   *overlapMatrixBlock,
+      std::complex<double>         *overlapMatrixBlockDP,
+      std::complex<float>          *overlapMatrixBlockSP,
       dftfe::utils::deviceStream_t &streamDataMove);
 
     template void
-    computeDiagQTimesX(const double *     diagValues,
-                       double *           X,
+    computeDiagQTimesX(const double      *diagValues,
+                       double            *X,
                        const unsigned int N,
                        const unsigned int M);
     template void
     computeDiagQTimesX(const std::complex<double> *diagValues,
-                       std::complex<double> *      X,
+                       std::complex<double>       *X,
                        const unsigned int          N,
                        const unsigned int          M);
 
     template void
-    computeDiagQTimesX(const double *        diagValues,
+    computeDiagQTimesX(const double         *diagValues,
                        std::complex<double> *X,
                        const unsigned int    N,
                        const unsigned int    M);
@@ -578,27 +578,27 @@ namespace dftfe
                           const unsigned int numDofs,
                           const unsigned int N,
                           const unsigned int startingVecId,
-                          const double *     eigenValues,
-                          const double *     X,
-                          const double *     Y,
-                          double *           r);
+                          const double      *eigenValues,
+                          const double      *X,
+                          const double      *Y,
+                          double            *r);
     template void
     computeResidualDevice(const unsigned int          numVectors,
                           const unsigned int          numDofs,
                           const unsigned int          N,
                           const unsigned int          startingVecId,
-                          const double *              eigenValues,
+                          const double               *eigenValues,
                           const std::complex<double> *X,
                           const std::complex<double> *Y,
-                          double *                    r);
+                          double                     *r);
 
     template void
     computeGeneralisedResidualDevice(const unsigned int numVectors,
                                      const unsigned int numDofs,
                                      const unsigned int N,
                                      const unsigned int startingVecId,
-                                     const double *     X,
-                                     double *           residualSqDevice);
+                                     const double      *X,
+                                     double            *residualSqDevice);
 
     template void
     computeGeneralisedResidualDevice(const unsigned int          numVectors,
@@ -612,7 +612,7 @@ namespace dftfe
     setZero(const unsigned int BVec,
             const unsigned int M,
             const unsigned int N,
-            double *           yVec,
+            double            *yVec,
             const unsigned int startingXVecId);
     template void
     setZero(const unsigned int    BVec,

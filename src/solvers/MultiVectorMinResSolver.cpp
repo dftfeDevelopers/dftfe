@@ -177,7 +177,7 @@ namespace dftfe
       beta1Host[i] = std::sqrt(beta1Host[i]) + rhsNormTolForZero;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-    epsHost(blockSize, std::numeric_limits<double>::epsilon());
+      epsHost(blockSize, std::numeric_limits<double>::epsilon());
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       oldbHost(blockSize, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -193,7 +193,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       phiHost(blockSize, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                                                                         phibarHost(beta1Host);
+      phibarHost(beta1Host);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> csHost(
       blockSize, -1.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> snHost(
@@ -219,7 +219,7 @@ namespace dftfe
 
     bool hasAllConverged = false;
     dftfe::utils::MemoryStorage<bool, dftfe::utils::MemorySpace::HOST>
-                                                                         hasConvergedHost(blockSize, false);
+      hasConvergedHost(blockSize, false);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> sHost(
       blockSize, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -597,7 +597,7 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
       &xMemSpace,
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
-      &                NDBCVec,
+                      &NDBCVec,
     unsigned int       locallyOwned,
     unsigned int       blockSize,
     const double       absTolerance,
@@ -617,7 +617,7 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::DEVICE>
       &xMemSpace,
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::DEVICE>
-      &                NDBCVec,
+                      &NDBCVec,
     unsigned int       locallyOwned,
     unsigned int       blockSize,
     const double       absTolerance,

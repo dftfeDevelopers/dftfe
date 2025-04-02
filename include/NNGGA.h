@@ -15,21 +15,21 @@ namespace dftfe
             excDensityPositivityCheckTypes::MAKE_POSITIVE);
     ~NNGGA();
     void
-    evaluateexc(const double *     rho,
-                const double *     sigma,
+    evaluateexc(const double      *rho,
+                const double      *sigma,
                 const unsigned int numPoints,
-                double *           exc);
+                double            *exc);
     void
-    evaluatevxc(const double *     rho,
-                const double *     sigma,
+    evaluatevxc(const double      *rho,
+                const double      *sigma,
                 const unsigned int numPoints,
-                double *           exc,
-                double *           dexc);
+                double            *exc,
+                double            *dexc);
 
   private:
     std::string                          d_modelFilename;
     std::string                          d_ptcFilename;
-    torch::jit::script::Module *         d_model;
+    torch::jit::script::Module          *d_model;
     const bool                           d_isSpinPolarized;
     double                               d_rhoTol;
     double                               d_sThreshold;

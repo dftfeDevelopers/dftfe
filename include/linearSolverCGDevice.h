@@ -48,8 +48,8 @@ namespace dftfe
      * @param type enum specifying the choice of the linear solver
      */
     linearSolverCGDevice(
-      const MPI_Comm & mpi_comm_parent,
-      const MPI_Comm & mpi_comm_domain,
+      const MPI_Comm  &mpi_comm_parent,
+      const MPI_Comm  &mpi_comm_domain,
       const solverType type,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>

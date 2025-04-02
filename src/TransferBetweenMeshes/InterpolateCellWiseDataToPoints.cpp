@@ -51,9 +51,9 @@ namespace dftfe
         std::shared_ptr<InterpolateFromCellToLocalPoints<memorySpace>>>
                                               interpolateLocalObj,
       const std::vector<std::vector<double>> &targetPts,
-      const std::vector<unsigned int> &       numDofsPerElem,
+      const std::vector<unsigned int>        &numDofsPerElem,
       const unsigned int                      verbosity,
-      const MPI_Comm &                        mpiComm)
+      const MPI_Comm                         &mpiComm)
     : d_mapPoints(verbosity, mpiComm)
     , d_mpiComm(mpiComm)
   {
@@ -376,7 +376,7 @@ namespace dftfe
     interpolateSrcDataToTargetPoints(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                         BLASWrapperPtr,
+                                 &BLASWrapperPtr,
       const distributedCPUVec<T> &inputVec,
       const unsigned int          numberOfVectors,
       const dftfe::utils::MemoryStorage<dftfe::global_size_type,
@@ -384,7 +384,7 @@ namespace dftfe
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T,
                                   dftfe::utils::MemorySpace::HOST>
-        &                outputData, // this is not std::vector
+                        &outputData, // this is not std::vector
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,
@@ -460,14 +460,14 @@ namespace dftfe
   InterpolateCellWiseDataToPoints<T, memorySpace>::
     interpolateSrcDataToTargetPoints(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                      BLASWrapperPtr,
+                                                              &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<T, memorySpace> &inputVec,
       const unsigned int                                       numberOfVectors,
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T,
                                   memorySpace>
-        &                outputData, // this is not std::vector
+                        &outputData, // this is not std::vector
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,

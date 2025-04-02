@@ -46,7 +46,7 @@ namespace dftfe
   void
   ExcDFTPlusU<ValueType, memorySpace>::computeRhoTauDependentXCData(
     AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-    const std::vector<double> &    quadPoints,
+    const std::vector<double>     &quadPoints,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &xDataOut,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -74,7 +74,7 @@ namespace dftfe
   void
   ExcDFTPlusU<ValueType, memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
     const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      &                                                                src,
+                                                                      &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
@@ -92,7 +92,7 @@ namespace dftfe
       memorySpace> &src,
     dftfe::linearAlgebra::MultiVector<
       typename dataTypes::singlePrecType<ValueType>::type,
-      memorySpace> &   dst,
+      memorySpace>    &dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
     const unsigned int spinIndex)
@@ -106,7 +106,7 @@ namespace dftfe
   void
   ExcDFTPlusU<ValueType, memorySpace>::updateWaveFunctionDependentFuncDerWrtPsi(
     const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
-    const std::vector<double> &                           kPointWeights)
+    const std::vector<double>                            &kPointWeights)
   {
     std::shared_ptr<AuxDensityMatrixFE<memorySpace>> auxDensityMatrixFEPtr =
       std::dynamic_pointer_cast<AuxDensityMatrixFE<memorySpace>>(
@@ -121,7 +121,7 @@ namespace dftfe
   void
   ExcDFTPlusU<ValueType, memorySpace>::computeWaveFunctionDependentExcEnergy(
     const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
-    const std::vector<double> &                           kPointWeights)
+    const std::vector<double>                            &kPointWeights)
   {
     d_hubbardClassPtr->computeEnergyFromOccupationMatrix();
   }
@@ -165,16 +165,16 @@ namespace dftfe
     const unsigned int                      sparsityPatternQuadratureId,
     const unsigned int                      numberWaveFunctions,
     const unsigned int                      numSpins,
-    const dftParameters &                   dftParam,
-    const std::string &                     scratchFolderName,
+    const dftParameters                    &dftParam,
+    const std::string                      &scratchFolderName,
     const bool                              singlePrecNonLocalOperator,
     const bool                              updateNonlocalSparsity,
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<std::vector<double>> &atomLocationsFrac,
-    const std::vector<int> &                imageIds,
+    const std::vector<int>                 &imageIds,
     const std::vector<std::vector<double>> &imagePositions,
-    std::vector<double> &                   kPointCoordinates,
-    const std::vector<double> &             kPointWeights,
+    std::vector<double>                    &kPointCoordinates,
+    const std::vector<double>              &kPointWeights,
     const std::vector<std::vector<double>> &domainBoundaries)
   {
     d_hubbardClassPtr = std::make_shared<hubbard<ValueType, memorySpace>>(

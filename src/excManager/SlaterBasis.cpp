@@ -194,7 +194,7 @@ namespace dftfe
 
     void
     getSlaterPrimitivesFromBasisFile(
-      const std::string &             basisName,
+      const std::string              &basisName,
       std::vector<SlaterPrimitive *> &slaterPrimitivesPtr)
     {
       /*
@@ -708,7 +708,7 @@ namespace dftfe
 
     for (unsigned int i = 0; i < natoms; ++i)
       {
-        const std::string &        atomSymbol = d_atomSymbolsAndCoords[i].first;
+        const std::string         &atomSymbol = d_atomSymbolsAndCoords[i].first;
         const std::vector<double> &atomCenter =
           d_atomSymbolsAndCoords[i].second;
         unsigned int nprimitives =
@@ -744,7 +744,7 @@ namespace dftfe
                              const std::vector<double> &x) const
   {
     const SlaterBasisInfo &info      = d_slaterBasisInfo[basisId];
-    const double *         x0        = info.center;
+    const double          *x0        = info.center;
     const SlaterPrimitive *sp        = info.sp;
     const double           alpha     = sp->alpha;
     const int              n         = sp->n;
@@ -771,7 +771,7 @@ namespace dftfe
                                 const std::vector<double> &x) const
   {
     const SlaterBasisInfo &info      = d_slaterBasisInfo[basisId];
-    const double *         x0        = info.center;
+    const double          *x0        = info.center;
     const SlaterPrimitive *sp        = info.sp;
     const double           alpha     = sp->alpha;
     const int              n         = sp->n;
@@ -801,7 +801,7 @@ namespace dftfe
                                  const std::vector<double> &x) const
   {
     const SlaterBasisInfo &info      = d_slaterBasisInfo[basisId];
-    const double *         x0        = info.center;
+    const double          *x0        = info.center;
     const SlaterPrimitive *sp        = info.sp;
     const double           alpha     = sp->alpha;
     const int              n         = sp->n;

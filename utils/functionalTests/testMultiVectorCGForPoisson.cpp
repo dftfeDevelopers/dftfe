@@ -33,20 +33,20 @@ namespace functionalTest
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                            basisOperationsPtr,
+                                  &basisOperationsPtr,
     dealii::MatrixFree<3, double> &matrixFreeData,
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                             BLASWrapperPtr,
     std::vector<const dealii::AffineConstraints<double> *> &constraintMatrixVec,
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                inputVec,
+                      &inputVec,
     const unsigned int matrixFreeVectorComponent,
     const unsigned int matrixFreeQuadratureComponentRhsDensity,
     const unsigned int matrixFreeQuadratureComponentAX,
     const unsigned int verbosity,
-    const MPI_Comm &   mpi_comm_parent,
-    const MPI_Comm &   mpi_comm_domain)
+    const MPI_Comm    &mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_domain)
   {
     dftfe::MultiVectorMinResSolver linearSolver(mpi_comm_parent,
                                                 mpi_comm_domain);

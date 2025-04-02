@@ -14,21 +14,21 @@ namespace dftfe
     computeAXDevicePoisson(const int   blocks,
                            const int   threads,
                            const int   smem,
-                           Type *      V,
+                           Type       *V,
                            const Type *U,
                            const Type *P,
                            const Type *J,
-                           const int * map);
+                           const int  *map);
 
     static void
     computeAXDeviceHelmholtz(const int   blocks,
                              const int   threads,
                              const int   smem,
-                             Type *      V,
+                             Type       *V,
                              const Type *U,
                              const Type *P,
                              const Type *J,
-                             const int * map,
+                             const int  *map,
                              const Type  coeffHelmholtz);
 
     static void

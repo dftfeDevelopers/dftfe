@@ -28,7 +28,7 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::locateAtomCoreNodesForce(
     const dealii::DoFHandler<3> &dofHandlerForce,
-    const dealii::IndexSet &     locally_owned_dofsForce,
+    const dealii::IndexSet      &locally_owned_dofsForce,
     std::map<std::pair<unsigned int, unsigned int>, unsigned int>
       &atomsForceDofs)
   {

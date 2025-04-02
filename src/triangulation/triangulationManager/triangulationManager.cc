@@ -37,10 +37,10 @@ namespace dftfe
   // constructor
   //
   triangulationManager::triangulationManager(
-    const MPI_Comm &     mpi_comm_parent,
-    const MPI_Comm &     mpi_comm_domain,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interbandgroup_comm,
+    const MPI_Comm      &mpi_comm_parent,
+    const MPI_Comm      &mpi_comm_domain,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interbandgroup_comm,
     const unsigned int   FEOrder,
     const dftParameters &dftParams)
     : d_parallelTriangulationUnmoved(mpi_comm_domain)
@@ -76,8 +76,8 @@ namespace dftfe
   triangulationManager::generateSerialUnmovedAndParallelMovedUnmovedMesh(
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<std::vector<double>> &imageAtomLocations,
-    const std::vector<int> &                imageIds,
-    const std::vector<double> &             nearestAtomDistances,
+    const std::vector<int>                 &imageIds,
+    const std::vector<double>              &nearestAtomDistances,
     const std::vector<std::vector<double>> &domainBoundingVectors,
     const bool                              generateSerialTria)
   {
@@ -165,8 +165,8 @@ namespace dftfe
   triangulationManager::generateCoarseMeshesForRestart(
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<std::vector<double>> &imageAtomLocations,
-    const std::vector<int> &                imageIds,
-    const std::vector<double> &             nearestAtomDistances,
+    const std::vector<int>                 &imageIds,
+    const std::vector<double>              &nearestAtomDistances,
     const std::vector<std::vector<double>> &domainBoundingVectors,
     const bool                              generateSerialTria)
   {
@@ -224,7 +224,8 @@ namespace dftfe
   }
 
   // reset MeshB to MeshA
-  void triangulationManager::resetMesh(
+  void
+  triangulationManager::resetMesh(
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulationA,
     dealii::parallel::distributed::Triangulation<3> &parallelTriangulationB)
   {

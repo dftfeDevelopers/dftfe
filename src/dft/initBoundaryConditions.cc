@@ -379,8 +379,8 @@ namespace dftfe
                  !d_dftParamsPtr->useSinglePrecCheby) ?
                 8 :
                 4 :
-                (d_dftParamsPtr->useReformulatedChFSI &&
-                 !d_dftParamsPtr->useSinglePrecCheby) ?
+              (d_dftParamsPtr->useReformulatedChFSI &&
+               !d_dftParamsPtr->useSinglePrecCheby) ?
                 4 :
                 2);
             if (d_dftParamsPtr->useSinglePrecCheby)
@@ -443,8 +443,8 @@ namespace dftfe
              !d_dftParamsPtr->useSinglePrecCheby) ?
             8 :
             4 :
-            (d_dftParamsPtr->useReformulatedChFSI &&
-             !d_dftParamsPtr->useSinglePrecCheby) ?
+          (d_dftParamsPtr->useReformulatedChFSI &&
+           !d_dftParamsPtr->useSinglePrecCheby) ?
             4 :
             2);
         if (d_dftParamsPtr->useSinglePrecCheby)

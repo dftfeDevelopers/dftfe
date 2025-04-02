@@ -35,7 +35,7 @@ namespace dftfe
       void
       assignValueToBoostPoint(
         boost::geometry::model::point<double, dim, BG::cs::cartesian> &p,
-        const std::vector<double> &                                    vec)
+        const std::vector<double>                                     &vec)
       {
         throwException(
           false,
@@ -46,7 +46,7 @@ namespace dftfe
       void
       assignValueToBoostPoint<3>(
         boost::geometry::model::point<double, 3, BG::cs::cartesian> &p,
-        const std::vector<double> &                                  vec)
+        const std::vector<double>                                   &vec)
       {
         boost::geometry::assign_values(p, vec[0], vec[1], vec[2]);
       }
@@ -55,7 +55,7 @@ namespace dftfe
       void
       assignValueToBoostPoint<2>(
         boost::geometry::model::point<double, 2, BG::cs::cartesian> &p,
-        const std::vector<double> &                                  vec)
+        const std::vector<double>                                   &vec)
       {
         boost::geometry::assign_values(p, vec[0], vec[1]);
       }
@@ -64,7 +64,7 @@ namespace dftfe
       void
       assignValueToBoostPoint<1>(
         boost::geometry::model::point<double, 1, BG::cs::cartesian> &p,
-        const std::vector<double> &                                  vec)
+        const std::vector<double>                                   &vec)
       {
         p.set<0>(vec[0]);
       }

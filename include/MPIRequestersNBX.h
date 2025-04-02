@@ -162,7 +162,7 @@ namespace dftfe
 
       public:
         MPIRequestersNBX(const std::vector<size_type> &targetIDs,
-                         const MPI_Comm &              comm);
+                         const MPI_Comm               &comm);
         //
         // default Constructor for serial (without MPI) compilation
         //

@@ -30,21 +30,21 @@ namespace dftfe
       // lapack Ax=b
       //
       void
-      dgesv_(int *   N,
-             int *   NRHS,
+      dgesv_(int    *N,
+             int    *NRHS,
              double *A,
-             int *   LDA,
-             int *   IPIV,
+             int    *LDA,
+             int    *IPIV,
              double *B,
-             int *   LDB,
-             int *   INFO);
+             int    *LDB,
+             int    *INFO);
     }
 
 
     std::vector<double>
     getFractionalCoordinates(const std::vector<double> &latticeVectors,
-                             const dealii::Point<3> &   point,
-                             const dealii::Point<3> &   corner)
+                             const dealii::Point<3>    &point,
+                             const dealii::Point<3>    &corner)
     {
       //
       // recenter vertex about corner
@@ -87,8 +87,8 @@ namespace dftfe
   //
   // constructor
   //
-  meshMovementClass::meshMovementClass(const MPI_Comm &     mpi_comm_parent,
-                                       const MPI_Comm &     mpi_comm_domain,
+  meshMovementClass::meshMovementClass(const MPI_Comm      &mpi_comm_parent,
+                                       const MPI_Comm      &mpi_comm_domain,
                                        const dftParameters &dftParams)
     : FEMoveMesh(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)), 3)
     , d_mpiCommParent(mpi_comm_parent)
@@ -100,9 +100,10 @@ namespace dftfe
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
-  void meshMovementClass::init(
-    dealii::Triangulation<3, 3> &           triangulation,
-    dealii::Triangulation<3, 3> &           serialTriangulation,
+  void
+  meshMovementClass::init(
+    dealii::Triangulation<3, 3>            &triangulation,
+    dealii::Triangulation<3, 3>            &serialTriangulation,
     const std::vector<std::vector<double>> &domainBoundingVectors)
   {
     d_domainBoundingVectors = domainBoundingVectors;
@@ -453,7 +454,7 @@ namespace dftfe
   void
   meshMovementClass::findClosestVerticesToDestinationPoints(
     const std::vector<dealii::Point<3>> &destinationPoints,
-    std::vector<dealii::Point<3>> &      closestTriaVertexToDestPointsLocation,
+    std::vector<dealii::Point<3>>       &closestTriaVertexToDestPointsLocation,
     std::vector<dealii::Tensor<1, 3, double>>
       &dispClosestTriaVerticesToDestPoints)
   {

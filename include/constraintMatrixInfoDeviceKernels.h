@@ -14,42 +14,42 @@ namespace dftfe
     void
     distributeDevice(
       const unsigned int  contiguousBlockSize,
-      ValueType *         xVec,
+      ValueType          *xVec,
       const unsigned int *constraintLocalRowIdsUnflattened,
       const unsigned int  numConstraints,
       const unsigned int *constraintRowSizes,
       const unsigned int *constraintRowSizesAccumulated,
       const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-      const double *      constraintColumnValuesAllRowsUnflattened,
-      const double *      inhomogenities);
+      const double       *constraintColumnValuesAllRowsUnflattened,
+      const double       *inhomogenities);
 
     template <typename ValueType>
     void
     distributeSlaveToMasterAtomicAddDevice(
       const unsigned int  contiguousBlockSize,
-      ValueType *         xVec,
+      ValueType          *xVec,
       const unsigned int *constraintLocalRowIdsUnflattened,
       const unsigned int  numConstraints,
       const unsigned int *constraintRowSizes,
       const unsigned int *constraintRowSizesAccumulated,
       const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-      const double *      constraintColumnValuesAllRowsUnflattened);
+      const double       *constraintColumnValuesAllRowsUnflattened);
 
     template <typename ValueType>
     void
     setzeroDevice(const unsigned int  contiguousBlockSize,
-                  ValueType *         xVec,
+                  ValueType          *xVec,
                   const unsigned int *constraintLocalRowIdsUnflattened,
                   const unsigned int  numConstraints);
     void
     scaleConstraintsDevice(
-      const double *      xVec,
+      const double       *xVec,
       const unsigned int *constraintLocalRowIdsUnflattened,
       const unsigned int  numConstraints,
       const unsigned int *constraintRowSizes,
       const unsigned int *constraintRowSizesAccumulated,
       const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-      double *            constraintColumnValuesAllRowsUnflattened);
+      double             *constraintColumnValuesAllRowsUnflattened);
   } // namespace dftUtils
 } // namespace dftfe
 #endif

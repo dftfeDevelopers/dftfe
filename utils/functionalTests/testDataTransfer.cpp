@@ -216,16 +216,16 @@ namespace functionalTest
   testTransferFromParentToChildIncompatiblePartitioning(
     const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
       dftfe::utils::MemorySpace::HOST>>     BLASWrapperPtr,
-    const MPI_Comm &                        mpi_comm_parent,
-    const MPI_Comm &                        mpi_comm_domain,
-    const MPI_Comm &                        interpoolcomm,
-    const MPI_Comm &                        interbandgroup_comm,
+    const MPI_Comm                         &mpi_comm_parent,
+    const MPI_Comm                         &mpi_comm_domain,
+    const MPI_Comm                         &interpoolcomm,
+    const MPI_Comm                         &interbandgroup_comm,
     const unsigned int                      FEOrder,
-    const dftfe::dftParameters &            dftParams,
+    const dftfe::dftParameters             &dftParams,
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<std::vector<double>> &imageAtomLocations,
-    const std::vector<int> &                imageIds,
-    const std::vector<double> &             nearestAtomDistances,
+    const std::vector<int>                 &imageIds,
+    const std::vector<double>              &nearestAtomDistances,
     const std::vector<std::vector<double>> &domainBoundingVectors,
     const bool                              generateSerialTria,
     const bool                              generateElectrostaticsTria)

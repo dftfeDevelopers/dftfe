@@ -66,10 +66,10 @@ namespace dftfe
 
     void
     excSpinUnpolarized(
-      const double *                       rho,
+      const double                        *rho,
       const unsigned int                   numPoints,
-      double *                             exc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol)
     {
@@ -116,10 +116,10 @@ namespace dftfe
 
     void
     excSpinPolarized(
-      const double *                       rho,
+      const double                        *rho,
       const unsigned int                   numPoints,
-      double *                             exc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol)
     {
@@ -166,11 +166,11 @@ namespace dftfe
 
     void
     vxcSpinUnpolarized(
-      const double *                       rho,
+      const double                        *rho,
       const unsigned int                   numPoints,
-      double *                             exc,
-      double *                             vxc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      double                              *vxc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol)
     {
@@ -212,7 +212,7 @@ namespace dftfe
       auto excTensor   = model->forward(input).toTensor();
       auto grad_output = torch::ones_like(excTensor);
       auto vxcTensor   = torch::autograd::grad({excTensor},
-                                             {rhoTensor},
+                                               {rhoTensor},
                                              /*grad_outputs=*/{grad_output},
                                              /*create_graph=*/true)[0];
       for (unsigned int i = 0; i < numPoints; ++i)
@@ -225,11 +225,11 @@ namespace dftfe
 
     void
     vxcSpinPolarized(
-      const double *                       rho,
+      const double                        *rho,
       const unsigned int                   numPoints,
-      double *                             exc,
-      double *                             vxc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      double                              *vxc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol)
     {
@@ -271,7 +271,7 @@ namespace dftfe
       auto excTensor   = model->forward(input).toTensor();
       auto grad_output = torch::ones_like(excTensor);
       auto vxcTensor   = torch::autograd::grad({excTensor},
-                                             {rhoTensor},
+                                               {rhoTensor},
                                              /*grad_outputs=*/{grad_output},
                                              /*create_graph=*/true)[0];
       for (unsigned int i = 0; i < numPoints; ++i)
@@ -326,9 +326,9 @@ namespace dftfe
   }
 
   void
-  NNLDA::evaluateexc(const double *     rho,
+  NNLDA::evaluateexc(const double      *rho,
                      const unsigned int numPoints,
-                     double *           exc)
+                     double            *exc)
   {
     if (!d_isSpinPolarized)
       excSpinUnpolarized(
@@ -355,10 +355,10 @@ namespace dftfe
   }
 
   void
-  NNLDA::evaluatevxc(const double *     rho,
+  NNLDA::evaluatevxc(const double      *rho,
                      const unsigned int numPoints,
-                     double *           exc,
-                     double *           vxc)
+                     double            *exc,
+                     double            *vxc)
   {
     if (!d_isSpinPolarized)
       vxcSpinUnpolarized(rho,

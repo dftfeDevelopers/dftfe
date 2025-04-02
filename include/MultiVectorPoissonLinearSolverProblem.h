@@ -87,7 +87,7 @@ namespace dftfe
      */
     void
     precondition_Jacobi(
-      dftfe::linearAlgebra::MultiVector<double, memorySpace> &      dst,
+      dftfe::linearAlgebra::MultiVector<double, memorySpace>       &dst,
       const dftfe::linearAlgebra::MultiVector<double, memorySpace> &src,
       const double omega) const override;
 
@@ -98,7 +98,7 @@ namespace dftfe
      */
     void
     precondition_JacobiSqrt(
-      dftfe::linearAlgebra::MultiVector<double, memorySpace> &      dst,
+      dftfe::linearAlgebra::MultiVector<double, memorySpace>       &dst,
       const dftfe::linearAlgebra::MultiVector<double, memorySpace> &src,
       const double omega) const override;
 

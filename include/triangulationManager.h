@@ -48,10 +48,10 @@ namespace dftfe
      * @param interpool_comm mpi interpool communicator over k points
      * @param interBandGroupComm mpi interpool communicator over band groups
      */
-    triangulationManager(const MPI_Comm &     mpi_comm_parent,
-                         const MPI_Comm &     mpi_comm_domain,
-                         const MPI_Comm &     interpoolcomm,
-                         const MPI_Comm &     interBandGroupComm,
+    triangulationManager(const MPI_Comm      &mpi_comm_parent,
+                         const MPI_Comm      &mpi_comm_domain,
+                         const MPI_Comm      &interpoolcomm,
+                         const MPI_Comm      &interBandGroupComm,
                          const unsigned int   FEOrder,
                          const dftParameters &dftParams);
 
@@ -75,8 +75,8 @@ namespace dftfe
     generateSerialUnmovedAndParallelMovedUnmovedMesh(
       const std::vector<std::vector<double>> &atomLocations,
       const std::vector<std::vector<double>> &imageAtomLocations,
-      const std::vector<int> &                imageIds,
-      const std::vector<double> &             nearestAtomDistances,
+      const std::vector<int>                 &imageIds,
+      const std::vector<double>              &nearestAtomDistances,
       const std::vector<std::vector<double>> &domainBoundingVectors,
       const bool                              generateSerialTria);
 
@@ -96,8 +96,8 @@ namespace dftfe
     generateCoarseMeshesForRestart(
       const std::vector<std::vector<double>> &atomLocations,
       const std::vector<std::vector<double>> &imageAtomLocations,
-      const std::vector<int> &                imageIds,
-      const std::vector<double> &             nearestAtomDistances,
+      const std::vector<int>                 &imageIds,
+      const std::vector<double>              &nearestAtomDistances,
       const std::vector<std::vector<double>> &domainBoundingVectors,
       const bool                              generateSerialTria);
 
@@ -112,9 +112,9 @@ namespace dftfe
      */
     void
     generateAutomaticMeshApriori(
-      const dealii::DoFHandler<3> &                    dofHandler,
+      const dealii::DoFHandler<3>                     &dofHandler,
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-      const std::vector<distributedCPUVec<double>> &   eigenVectorsArrayIn,
+      const std::vector<distributedCPUVec<double>>    &eigenVectorsArrayIn,
       const unsigned int                               FEOrder);
 
 
@@ -143,7 +143,8 @@ namespace dftfe
      * @brief resets the vertices of meshB moved to vertices of meshA.
      *
      */
-    void resetMesh(
+    void
+    resetMesh(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulationA,
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulationB);
 
@@ -176,8 +177,8 @@ namespace dftfe
       const unsigned int                                    feOrder,
       const unsigned int                                    nComponents,
       const std::vector<const distributedCPUVec<double> *> &solutionVectors,
-      const MPI_Comm &                                      interpoolComm,
-      const MPI_Comm &                                      interBandGroupComm);
+      const MPI_Comm                                       &interpoolComm,
+      const MPI_Comm                                       &interBandGroupComm);
 
     /**
      * @brief de-serialize the triangulations and the associated solution vectors
@@ -201,7 +202,8 @@ namespace dftfe
      * @brief internal function which generates a parallel and serial mesh using a adaptive refinement strategy.
      *
      */
-    void generateMesh(
+    void
+    generateMesh(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
       dealii::parallel::distributed::Triangulation<3> &serialTriangulation,
       std::vector<std::vector<bool>> &parallelTriaCurrentRefinement,
@@ -215,7 +217,8 @@ namespace dftfe
      * restarts.
      *
      */
-    void generateCoarseMesh(
+    void
+    generateCoarseMesh(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation);
 
     /**
@@ -223,9 +226,10 @@ namespace dftfe
      *
      * @return bool boolean flag is any local cell has refinement flag set
      */
-    bool refinementAlgorithmA(
+    bool
+    refinementAlgorithmA(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-      std::vector<unsigned int> &             locallyOwnedCellsRefineFlags,
+      std::vector<unsigned int>              &locallyOwnedCellsRefineFlags,
       std::map<dealii::CellId, unsigned int> &cellIdToCellRefineFlagMapLocal,
       const bool   smoothenCellsOnPeriodicBoundary = false,
       const double smootheningFactor               = 2.0);
@@ -236,9 +240,10 @@ namespace dftfe
      *
      * @return bool boolean flag is any local cell has refinement flag set
      */
-    bool consistentPeriodicBoundaryRefinement(
+    bool
+    consistentPeriodicBoundaryRefinement(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation,
-      std::vector<unsigned int> &             locallyOwnedCellsRefineFlags,
+      std::vector<unsigned int>              &locallyOwnedCellsRefineFlags,
       std::map<dealii::CellId, unsigned int> &cellIdToCellRefineFlagMapLocal);
 
     /**
@@ -246,7 +251,8 @@ namespace dftfe
      * for ghost cells
      *
      */
-    bool checkPeriodicSurfaceRefinementConsistency(
+    bool
+    checkPeriodicSurfaceRefinementConsistency(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation);
 
 
@@ -255,7 +261,8 @@ namespace dftfe
      * combined hanging node and periodic constraints
      *
      */
-    bool checkConstraintsConsistency(
+    bool
+    checkConstraintsConsistency(
       dealii::parallel::distributed::Triangulation<3> &parallelTriangulation);
 
 
@@ -267,11 +274,11 @@ namespace dftfe
     void
     refineSerialMesh(
       const std::map<dealii::CellId, unsigned int>
-        &             cellIdToCellRefineFlagMapLocal,
+                     &cellIdToCellRefineFlagMapLocal,
       const MPI_Comm &mpi_comm,
       dealii::parallel::distributed::Triangulation<3> &serialTriangulation,
       const dealii::parallel::distributed::Triangulation<3>
-        &                parallelTriangulation,
+                        &parallelTriangulation,
       std::vector<bool> &serialTriaCurrentRefinement);
 
     /**

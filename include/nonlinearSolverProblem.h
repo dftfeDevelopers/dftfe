@@ -72,7 +72,7 @@ namespace dftfe
      * @param gradient STL vector for gradient values.
      */
     virtual void
-    precondition(std::vector<double> &      s,
+    precondition(std::vector<double>       &s,
                  const std::vector<double> &gradient) = 0;
 
     /**

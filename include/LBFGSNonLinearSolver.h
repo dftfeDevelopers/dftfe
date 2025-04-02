@@ -50,7 +50,7 @@ namespace dftfe
       const unsigned int maxNumberIterations,
       const int          maxNumPastSteps,
       const unsigned int debugLevel,
-      const MPI_Comm &   mpi_comm_parent,
+      const MPI_Comm    &mpi_comm_parent,
       const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
@@ -145,7 +145,7 @@ namespace dftfe
      */
     bool
     updateSolution(const std::vector<double> &step,
-                   nonlinearSolverProblem &   problem);
+                   nonlinearSolverProblem    &problem);
 
     /**
      * @brief Load LBFGS solver state from checkpoint file.

@@ -36,23 +36,23 @@ namespace dftfe
       void
       copyComplexArrToRealArrsDevice(const dftfe::size_type  size,
                                      const ValueTypeComplex *complexArr,
-                                     ValueTypeReal *         realArr,
-                                     ValueTypeReal *         imagArr);
+                                     ValueTypeReal          *realArr,
+                                     ValueTypeReal          *imagArr);
 
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
       copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                     const ValueTypeReal *  realArr,
-                                     const ValueTypeReal *  imagArr,
-                                     ValueTypeComplex *     complexArr);
+                                     const ValueTypeReal   *realArr,
+                                     const ValueTypeReal   *imagArr,
+                                     ValueTypeComplex      *complexArr);
 
 
 
       template <typename ValueType>
       void
-      sadd(ValueType *            y,
-           ValueType *            x,
+      sadd(ValueType             *y,
+           ValueType             *x,
            const ValueType        beta,
            const dftfe::size_type size);
 
@@ -67,12 +67,12 @@ namespace dftfe
         const dftfe::size_type numDofsPerElem,
         const dftfe::size_type numQuadPoints,
         const dftfe::size_type numVecs,
-        const ValueType2 *     parentShapeFunc,
-        const ValueType1 *     mapPointToCellIndex,
-        const ValueType1 *     mapPointToProcLocal,
-        const ValueType1 *     mapPointToShapeFuncIndex,
-        const ValueType2 *     parentNodalValues,
-        ValueType2 *           quadValues);
+        const ValueType2      *parentShapeFunc,
+        const ValueType1      *mapPointToCellIndex,
+        const ValueType1      *mapPointToProcLocal,
+        const ValueType1      *mapPointToShapeFuncIndex,
+        const ValueType2      *parentNodalValues,
+        ValueType2            *quadValues);
 
     } // namespace deviceKernelsGeneric
   }   // namespace utils

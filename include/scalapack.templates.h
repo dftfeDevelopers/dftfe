@@ -75,7 +75,7 @@ namespace dftfe
      * https://www.ibm.com/support/knowledgecenter/en/SSNR5K_4.2.0/com.ibm.cluster.pessl.v4r2.pssl100.doc/am6gr_dbint.htm
      */
     void
-    Cblacs_gridinit(int *       context,
+    Cblacs_gridinit(int        *context,
                     const char *order,
                     int         grid_height,
                     int         grid_width);
@@ -173,12 +173,12 @@ namespace dftfe
      * Compute complex conjugate
      */
     void
-    pzlacgv_(const int *           N,
+    pzlacgv_(const int            *N,
              std::complex<double> *A,
-             const int *           IA,
-             const int *           JA,
-             const int *           DESCA,
-             const int *           INCX);
+             const int            *IA,
+             const int            *JA,
+             const int            *DESCA,
+             const int            *INCX);
 
     /**
      * Compute the Cholesky factorization of an N-by-N real
@@ -190,28 +190,28 @@ namespace dftfe
      */
     void
     pdpotrf_(const char *UPLO,
-             const int * N,
-             double *    A,
-             const int * IA,
-             const int * JA,
-             const int * DESCA,
-             int *       INFO);
+             const int  *N,
+             double     *A,
+             const int  *IA,
+             const int  *JA,
+             const int  *DESCA,
+             int        *INFO);
     void
     pspotrf_(const char *UPLO,
-             const int * N,
-             float *     A,
-             const int * IA,
-             const int * JA,
-             const int * DESCA,
-             int *       INFO);
+             const int  *N,
+             float      *A,
+             const int  *IA,
+             const int  *JA,
+             const int  *DESCA,
+             int        *INFO);
     void
-    pzpotrf_(const char *          UPLO,
-             const int *           N,
+    pzpotrf_(const char           *UPLO,
+             const int            *N,
              std::complex<double> *A,
-             const int *           IA,
-             const int *           JA,
-             const int *           DESCA,
-             int *                 INFO);
+             const int            *IA,
+             const int            *JA,
+             const int            *DESCA,
+             int                  *INFO);
 
     /**
      * Computes an LU factorization of a general distributed matrix sub( A )
@@ -223,30 +223,30 @@ namespace dftfe
     void
     pdgetrf_(const int *m,
              const int *n,
-             double *   A,
+             double    *A,
              const int *IA,
              const int *JA,
              const int *DESCA,
-             int *      ipiv,
-             int *      INFO);
+             int       *ipiv,
+             int       *INFO);
     void
     psgetrf_(const int *m,
              const int *n,
-             float *    A,
+             float     *A,
              const int *IA,
              const int *JA,
              const int *DESCA,
-             int *      ipiv,
-             int *      INFO);
+             int       *ipiv,
+             int       *INFO);
     void
-    pzgetrf_(const int *           m,
-             const int *           n,
+    pzgetrf_(const int            *m,
+             const int            *n,
              std::complex<double> *A,
-             const int *           IA,
-             const int *           JA,
-             const int *           DESCA,
-             int *                 ipiv,
-             int *                 INFO);
+             const int            *IA,
+             const int            *JA,
+             const int            *DESCA,
+             int                  *ipiv,
+             int                  *INFO);
     /**
      * Compute the inverse of a real symmetric positive definite
      * distributed matrix sub( A ) = A(IA:IA+N-1,JA:JA+N-1) using the
@@ -259,28 +259,28 @@ namespace dftfe
      */
     void
     pdpotri_(const char *UPLO,
-             const int * N,
-             double *    A,
-             const int * IA,
-             const int * JA,
-             const int * DESCA,
-             int *       INFO);
+             const int  *N,
+             double     *A,
+             const int  *IA,
+             const int  *JA,
+             const int  *DESCA,
+             int        *INFO);
     void
     pspotri_(const char *UPLO,
-             const int * N,
-             float *     A,
-             const int * IA,
-             const int * JA,
-             const int * DESCA,
-             int *       INFO);
+             const int  *N,
+             float      *A,
+             const int  *IA,
+             const int  *JA,
+             const int  *DESCA,
+             int        *INFO);
     void
-    pzpotri_(const char *          UPLO,
-             const int *           N,
+    pzpotri_(const char           *UPLO,
+             const int            *N,
              std::complex<double> *A,
-             const int *           IA,
-             const int *           JA,
-             const int *           DESCA,
-             int *                 INFO);
+             const int            *IA,
+             const int            *JA,
+             const int            *DESCA,
+             int                  *INFO);
 
     /**
      * PDGETRI computes the inverse of a distributed matrix using the LU
@@ -293,40 +293,40 @@ namespace dftfe
      */
     void
     pdgetri_(const int *N,
-             double *   A,
+             double    *A,
              const int *IA,
              const int *JA,
              const int *DESCA,
              const int *ipiv,
-             double *   work,
-             int *      lwork,
-             int *      iwork,
-             int *      liwork,
-             int *      info);
+             double    *work,
+             int       *lwork,
+             int       *iwork,
+             int       *liwork,
+             int       *info);
     void
     psgetri_(const int *N,
-             float *    A,
+             float     *A,
              const int *IA,
              const int *JA,
              const int *DESCA,
              const int *ipiv,
-             float *    work,
-             int *      lwork,
-             int *      iwork,
-             int *      liwork,
-             int *      info);
+             float     *work,
+             int       *lwork,
+             int       *iwork,
+             int       *liwork,
+             int       *info);
     void
-    pzgetri_(const int *           N,
+    pzgetri_(const int            *N,
              std::complex<double> *A,
-             const int *           IA,
-             const int *           JA,
-             const int *           DESCA,
-             const int *           ipiv,
+             const int            *IA,
+             const int            *JA,
+             const int            *DESCA,
+             const int            *ipiv,
              std::complex<double> *work,
-             int *                 lwork,
-             int *                 iwork,
-             int *                 liwork,
-             int *                 info);
+             int                  *lwork,
+             int                  *iwork,
+             int                  *liwork,
+             int                  *info);
 
     /**
      * PDTRTRI computes the inverse of a upper or lower triangular
@@ -339,31 +339,31 @@ namespace dftfe
     void
     pdtrtri_(const char *UPLO,
              const char *DIAG,
-             const int * N,
-             double *    A,
-             const int * IA,
-             const int * JA,
-             const int * DESCA,
-             int *       INFO);
+             const int  *N,
+             double     *A,
+             const int  *IA,
+             const int  *JA,
+             const int  *DESCA,
+             int        *INFO);
     void
     pstrtri_(const char *UPLO,
              const char *DIAG,
-             const int * N,
-             float *     A,
-             const int * IA,
-             const int * JA,
-             const int * DESCA,
-             int *       INFO);
+             const int  *N,
+             float      *A,
+             const int  *IA,
+             const int  *JA,
+             const int  *DESCA,
+             int        *INFO);
 
     void
-    pztrtri_(const char *          UPLO,
-             const char *          DIAG,
-             const int *           N,
+    pztrtri_(const char           *UPLO,
+             const char           *DIAG,
+             const int            *N,
              std::complex<double> *A,
-             const int *           IA,
-             const int *           JA,
-             const int *           DESCA,
-             int *                 INFO);
+             const int            *IA,
+             const int            *JA,
+             const int            *DESCA,
+             int                  *INFO);
 
     /**
      * Estimate the reciprocal of the condition number (in the
@@ -375,33 +375,33 @@ namespace dftfe
      * https://software.intel.com/en-us/mkl-developer-reference-fortran-pocon
      */
     void
-    pdpocon_(const char *  uplo,
-             const int *   N,
+    pdpocon_(const char   *uplo,
+             const int    *N,
              const double *A,
-             const int *   IA,
-             const int *   JA,
-             const int *   DESCA,
+             const int    *IA,
+             const int    *JA,
+             const int    *DESCA,
              const double *ANORM,
-             double *      RCOND,
-             double *      WORK,
-             const int *   LWORK,
-             int *         IWORK,
-             const int *   LIWORK,
-             int *         INFO);
+             double       *RCOND,
+             double       *WORK,
+             const int    *LWORK,
+             int          *IWORK,
+             const int    *LIWORK,
+             int          *INFO);
     void
-    pspocon_(const char * uplo,
-             const int *  N,
+    pspocon_(const char  *uplo,
+             const int   *N,
              const float *A,
-             const int *  IA,
-             const int *  JA,
-             const int *  DESCA,
+             const int   *IA,
+             const int   *JA,
+             const int   *DESCA,
              const float *ANORM,
-             float *      RCOND,
-             float *      WORK,
-             const int *  LWORK,
-             int *        IWORK,
-             const int *  LIWORK,
-             int *        INFO);
+             float       *RCOND,
+             float       *WORK,
+             const int   *LWORK,
+             int         *IWORK,
+             const int   *LIWORK,
+             int         *INFO);
 
     /**
      * Norm of a real symmetric matrix
@@ -410,23 +410,23 @@ namespace dftfe
      * https://www.ibm.com/support/knowledgecenter/SSNR5K_4.2.0/com.ibm.cluster.pessl.v4r2.pssl100.doc/am6gr_pdlansy.htm#pdlansy
      */
     double
-    pdlansy_(const char *  norm,
-             const char *  uplo,
-             const int *   N,
+    pdlansy_(const char   *norm,
+             const char   *uplo,
+             const int    *N,
              const double *A,
-             const int *   IA,
-             const int *   JA,
-             const int *   DESCA,
-             double *      work);
+             const int    *IA,
+             const int    *JA,
+             const int    *DESCA,
+             double       *work);
     float
-    pslansy_(const char * norm,
-             const char * uplo,
-             const int *  N,
+    pslansy_(const char  *norm,
+             const char  *uplo,
+             const int   *N,
              const float *A,
-             const int *  IA,
-             const int *  JA,
-             const int *  DESCA,
-             float *      work);
+             const int   *IA,
+             const int   *JA,
+             const int   *DESCA,
+             float       *work);
 
     /**
      * Compute the Least Common Multiple (LCM) of two positive integers @p M and @p N.
@@ -450,7 +450,7 @@ namespace dftfe
      * Initialize the descriptor vector with the 8 input arguments
      */
     void
-    descinit_(int *      desc,
+    descinit_(int       *desc,
               const int *m,
               const int *n,
               const int *mb,
@@ -459,7 +459,7 @@ namespace dftfe
               const int *icsrc,
               const int *ictxt,
               const int *lld,
-              int *      info);
+              int       *info);
 
     /**
      * Compute the global index of a distributed matrix entry
@@ -489,29 +489,29 @@ namespace dftfe
     void
     pdgesv_(const int *n,
             const int *nrhs,
-            double *   A,
+            double    *A,
             const int *ia,
             const int *ja,
             const int *desca,
-            int *      ipiv,
-            double *   B,
+            int       *ipiv,
+            double    *B,
             const int *ib,
             const int *jb,
             const int *descb,
-            int *      info);
+            int       *info);
     void
     psgesv_(const int *n,
             const int *nrhs,
-            float *    A,
+            float     *A,
             const int *ia,
             const int *ja,
             const int *desca,
-            int *      ipiv,
-            float *    B,
+            int       *ipiv,
+            float     *B,
             const int *ib,
             const int *jb,
             const int *descb,
-            int *      info);
+            int       *info);
 
     /**
      * Perform one of the matrix-matrix operations:
@@ -528,89 +528,89 @@ namespace dftfe
      * $op(X) = X$ or $op(X) = X^T$.
      */
     void
-    pdgemm_(const char *  transa,
-            const char *  transb,
-            const int *   m,
-            const int *   n,
-            const int *   k,
+    pdgemm_(const char   *transa,
+            const char   *transb,
+            const int    *m,
+            const int    *n,
+            const int    *k,
             const double *alpha,
             const double *A,
-            const int *   IA,
-            const int *   JA,
-            const int *   DESCA,
+            const int    *IA,
+            const int    *JA,
+            const int    *DESCA,
             const double *B,
-            const int *   IB,
-            const int *   JB,
-            const int *   DESCB,
+            const int    *IB,
+            const int    *JB,
+            const int    *DESCB,
             const double *beta,
-            double *      C,
-            const int *   IC,
-            const int *   JC,
-            const int *   DESCC);
+            double       *C,
+            const int    *IC,
+            const int    *JC,
+            const int    *DESCC);
     void
-    psgemm_(const char * transa,
-            const char * transb,
-            const int *  m,
-            const int *  n,
-            const int *  k,
+    psgemm_(const char  *transa,
+            const char  *transb,
+            const int   *m,
+            const int   *n,
+            const int   *k,
             const float *alpha,
             const float *A,
-            const int *  IA,
-            const int *  JA,
-            const int *  DESCA,
+            const int   *IA,
+            const int   *JA,
+            const int   *DESCA,
             const float *B,
-            const int *  IB,
-            const int *  JB,
-            const int *  DESCB,
+            const int   *IB,
+            const int   *JB,
+            const int   *DESCB,
             const float *beta,
-            float *      C,
-            const int *  IC,
-            const int *  JC,
-            const int *  DESCC);
+            float       *C,
+            const int   *IC,
+            const int   *JC,
+            const int   *DESCC);
 
     void
-    pzgemm_(const char *                transa,
-            const char *                transb,
-            const int *                 m,
-            const int *                 n,
-            const int *                 k,
+    pzgemm_(const char                 *transa,
+            const char                 *transb,
+            const int                  *m,
+            const int                  *n,
+            const int                  *k,
             const std::complex<double> *alpha,
             const std::complex<double> *A,
-            const int *                 IA,
-            const int *                 JA,
-            const int *                 DESCA,
+            const int                  *IA,
+            const int                  *JA,
+            const int                  *DESCA,
             const std::complex<double> *B,
-            const int *                 IB,
-            const int *                 JB,
-            const int *                 DESCB,
+            const int                  *IB,
+            const int                  *JB,
+            const int                  *DESCB,
             const std::complex<double> *beta,
-            std::complex<double> *      C,
-            const int *                 IC,
-            const int *                 JC,
-            const int *                 DESCC);
+            std::complex<double>       *C,
+            const int                  *IC,
+            const int                  *JC,
+            const int                  *DESCC);
 
     /**
      * Return the value of the one norm, or the Frobenius norm, or the infinity
      * norm, or the element of largest absolute value of a distributed matrix
      */
     double
-    pdlange_(char const *  norm,
-             const int *   m,
-             const int *   n,
+    pdlange_(char const   *norm,
+             const int    *m,
+             const int    *n,
              const double *A,
-             const int *   ia,
-             const int *   ja,
-             const int *   desca,
-             double *      work);
+             const int    *ia,
+             const int    *ja,
+             const int    *desca,
+             double       *work);
     float
-    pslange_(const char * norm,
-             const int *  m,
-             const int *  n,
+    pslange_(const char  *norm,
+             const int   *m,
+             const int   *n,
              const float *A,
-             const int *  ia,
-             const int *  ja,
-             const int *  desca,
-             float *      work);
+             const int   *ia,
+             const int   *ja,
+             const int   *desca,
+             float       *work);
 
     /**
      * Compute the process coordinate which possesses the entry of a
@@ -637,51 +637,51 @@ namespace dftfe
     void
     pdsyev_(const char *jobz,
             const char *uplo,
-            const int * m,
-            double *    A,
-            const int * ia,
-            const int * ja,
-            int *       desca,
-            double *    w,
-            double *    z,
-            const int * iz,
-            const int * jz,
-            int *       descz,
-            double *    work,
-            const int * lwork,
-            int *       info);
+            const int  *m,
+            double     *A,
+            const int  *ia,
+            const int  *ja,
+            int        *desca,
+            double     *w,
+            double     *z,
+            const int  *iz,
+            const int  *jz,
+            int        *descz,
+            double     *work,
+            const int  *lwork,
+            int        *info);
     void
     pssyev_(const char *jobz,
             const char *uplo,
-            const int * m,
-            float *     A,
-            const int * ia,
-            const int * ja,
-            int *       desca,
-            float *     w,
-            float *     z,
-            const int * iz,
-            const int * jz,
-            int *       descz,
-            float *     work,
-            const int * lwork,
-            int *       info);
+            const int  *m,
+            float      *A,
+            const int  *ia,
+            const int  *ja,
+            int        *desca,
+            float      *w,
+            float      *z,
+            const int  *iz,
+            const int  *jz,
+            int        *descz,
+            float      *work,
+            const int  *lwork,
+            int        *info);
     void
-    pzheev_(const char *          jobz,
-            const char *          uplo,
-            const int *           m,
+    pzheev_(const char           *jobz,
+            const char           *uplo,
+            const int            *m,
             std::complex<double> *A,
-            const int *           ia,
-            const int *           ja,
-            int *                 desca,
-            double *              w,
+            const int            *ia,
+            const int            *ja,
+            int                  *desca,
+            double               *w,
             std::complex<double> *z,
-            const int *           iz,
-            const int *           jz,
-            int *                 descz,
+            const int            *iz,
+            const int            *jz,
+            int                  *descz,
             std::complex<double> *work,
-            const int *           lwork,
-            int *                 info);
+            const int            *lwork,
+            int                  *info);
 
     /**
      * Copy all or a part of a distributed matrix A to another distributed
@@ -691,29 +691,29 @@ namespace dftfe
      * $B(ib:ib+m-1, jb:jb+n-1)$.
      */
     void
-    pdlacpy_(const char *  uplo,
-             const int *   m,
-             const int *   n,
+    pdlacpy_(const char   *uplo,
+             const int    *m,
+             const int    *n,
              const double *A,
-             const int *   ia,
-             const int *   ja,
-             const int *   desca,
-             double *      B,
-             const int *   ib,
-             const int *   jb,
-             const int *   descb);
+             const int    *ia,
+             const int    *ja,
+             const int    *desca,
+             double       *B,
+             const int    *ib,
+             const int    *jb,
+             const int    *descb);
     void
-    pslacpy_(const char * uplo,
-             const int *  m,
-             const int *  n,
+    pslacpy_(const char  *uplo,
+             const int   *m,
+             const int   *n,
              const float *A,
-             const int *  ia,
-             const int *  ja,
-             const int *  desca,
-             float *      B,
-             const int *  ib,
-             const int *  jb,
-             const int *  descb);
+             const int   *ia,
+             const int   *ja,
+             const int   *desca,
+             float       *B,
+             const int   *ib,
+             const int   *jb,
+             const int   *descb);
 
     /**
      * Copies the content of a general rectangular distributed matrix @p A to another distributed matrix @p B
@@ -724,29 +724,29 @@ namespace dftfe
      * context A and B
      */
     void
-    pdgemr2d_(const int *   m,
-              const int *   n,
+    pdgemr2d_(const int    *m,
+              const int    *n,
               const double *A,
-              const int *   ia,
-              const int *   ja,
-              const int *   desca,
-              double *      B,
-              const int *   ib,
-              const int *   jb,
-              const int *   descb,
-              const int *   ictxt);
+              const int    *ia,
+              const int    *ja,
+              const int    *desca,
+              double       *B,
+              const int    *ib,
+              const int    *jb,
+              const int    *descb,
+              const int    *ictxt);
     void
-    psgemr2d_(const int *  m,
-              const int *  n,
+    psgemr2d_(const int   *m,
+              const int   *n,
               const float *A,
-              const int *  ia,
-              const int *  ja,
-              const int *  desca,
-              float *      B,
-              const int *  ib,
-              const int *  jb,
-              const int *  descb,
-              const int *  ictxt);
+              const int   *ia,
+              const int   *ja,
+              const int   *desca,
+              float       *B,
+              const int   *ib,
+              const int   *jb,
+              const int   *descb,
+              const int   *ictxt);
 
     /**
      * helper routines determining machine precision
@@ -764,95 +764,95 @@ namespace dftfe
      *  eigenvalues.
      */
     void
-    pdsyevx_(const char *  jobz,
-             const char *  range,
-             const char *  uplo,
-             const int *   n,
-             double *      A,
-             const int *   ia,
-             const int *   ja,
-             const int *   desca,
+    pdsyevx_(const char   *jobz,
+             const char   *range,
+             const char   *uplo,
+             const int    *n,
+             double       *A,
+             const int    *ia,
+             const int    *ja,
+             const int    *desca,
              const double *VL,
              const double *VU,
-             const int *   il,
-             const int *   iu,
+             const int    *il,
+             const int    *iu,
              const double *abstol,
-             const int *   m,
-             const int *   nz,
-             double *      w,
-             double *      orfac,
-             double *      Z,
-             const int *   iz,
-             const int *   jz,
-             const int *   descz,
-             double *      work,
-             int *         lwork,
-             int *         iwork,
-             int *         liwork,
-             int *         ifail,
-             int *         iclustr,
-             double *      gap,
-             int *         info);
+             const int    *m,
+             const int    *nz,
+             double       *w,
+             double       *orfac,
+             double       *Z,
+             const int    *iz,
+             const int    *jz,
+             const int    *descz,
+             double       *work,
+             int          *lwork,
+             int          *iwork,
+             int          *liwork,
+             int          *ifail,
+             int          *iclustr,
+             double       *gap,
+             int          *info);
     void
-    pssyevx_(const char * jobz,
-             const char * range,
-             const char * uplo,
-             const int *  n,
-             float *      A,
-             const int *  ia,
-             const int *  ja,
-             const int *  desca,
+    pssyevx_(const char  *jobz,
+             const char  *range,
+             const char  *uplo,
+             const int   *n,
+             float       *A,
+             const int   *ia,
+             const int   *ja,
+             const int   *desca,
              const float *VL,
              const float *VU,
-             const int *  il,
-             const int *  iu,
+             const int   *il,
+             const int   *iu,
              const float *abstol,
-             const int *  m,
-             const int *  nz,
-             float *      w,
-             float *      orfac,
-             float *      Z,
-             const int *  iz,
-             const int *  jz,
-             const int *  descz,
-             float *      work,
-             int *        lwork,
-             int *        iwork,
-             int *        liwork,
-             int *        ifail,
-             int *        iclustr,
-             float *      gap,
-             int *        info);
+             const int   *m,
+             const int   *nz,
+             float       *w,
+             float       *orfac,
+             float       *Z,
+             const int   *iz,
+             const int   *jz,
+             const int   *descz,
+             float       *work,
+             int         *lwork,
+             int         *iwork,
+             int         *liwork,
+             int         *ifail,
+             int         *iclustr,
+             float       *gap,
+             int         *info);
     void
-    pzheevx_(const char *          jobz,
-             const char *          range,
-             const char *          uplo,
-             const int *           n,
+    pzheevx_(const char           *jobz,
+             const char           *range,
+             const char           *uplo,
+             const int            *n,
              std::complex<double> *A,
-             const int *           ia,
-             const int *           ja,
-             const int *           desca,
-             const double *        VL,
-             const double *        VU,
-             const int *           il,
-             const int *           iu,
-             const double *        abstol,
-             const int *           m,
-             const int *           nz,
-             double *              w,
-             double *              orfac,
+             const int            *ia,
+             const int            *ja,
+             const int            *desca,
+             const double         *VL,
+             const double         *VU,
+             const int            *il,
+             const int            *iu,
+             const double         *abstol,
+             const int            *m,
+             const int            *nz,
+             double               *w,
+             double               *orfac,
              std::complex<double> *Z,
-             const int *           iz,
-             const int *           jz,
-             const int *           descz,
+             const int            *iz,
+             const int            *jz,
+             const int            *descz,
              std::complex<double> *work,
-             int *                 lwork,
-             int *                 iwork,
-             int *                 liwork,
-             int *                 ifail,
-             int *                 iclustr,
-             double *              gap,
-             int *                 info);
+             int                  *lwork,
+             int                  *iwork,
+             int                  *liwork,
+             int                  *ifail,
+             int                  *iclustr,
+             double               *gap,
+             int                  *info);
 
     /*
      * PDGESVD computes the singular value decomposition (SVD) of an
@@ -862,45 +862,45 @@ namespace dftfe
     void
     pdgesvd_(const char *jobu,
              const char *jobvt,
-             const int * m,
-             const int * n,
-             double *    A,
-             const int * ia,
-             const int * ja,
-             const int * desca,
-             double *    S,
-             double *    U,
-             const int * iu,
-             const int * ju,
-             const int * descu,
-             double *    VT,
-             const int * ivt,
-             const int * jvt,
-             const int * descvt,
-             double *    work,
-             int *       lwork,
-             int *       info);
+             const int  *m,
+             const int  *n,
+             double     *A,
+             const int  *ia,
+             const int  *ja,
+             const int  *desca,
+             double     *S,
+             double     *U,
+             const int  *iu,
+             const int  *ju,
+             const int  *descu,
+             double     *VT,
+             const int  *ivt,
+             const int  *jvt,
+             const int  *descvt,
+             double     *work,
+             int        *lwork,
+             int        *info);
     void
     psgesvd_(const char *jobu,
              const char *jobvt,
-             const int * m,
-             const int * n,
-             float *     A,
-             const int * ia,
-             const int * ja,
-             const int * desca,
-             float *     S,
-             float *     U,
-             const int * iu,
-             const int * ju,
-             const int * descu,
-             float *     VT,
-             const int * ivt,
-             const int * jvt,
-             const int * descvt,
-             float *     work,
-             int *       lwork,
-             int *       info);
+             const int  *m,
+             const int  *n,
+             float      *A,
+             const int  *ia,
+             const int  *ja,
+             const int  *desca,
+             float      *S,
+             float      *U,
+             const int  *iu,
+             const int  *ju,
+             const int  *descu,
+             float      *VT,
+             const int  *ivt,
+             const int  *jvt,
+             const int  *descvt,
+             float      *work,
+             int        *lwork,
+             int        *info);
 
     /*
      * P_GELS solves overdetermined or underdetermined real linear
@@ -909,36 +909,36 @@ namespace dftfe
      */
     void
     pdgels_(const char *trans,
-            const int * m,
-            const int * n,
-            const int * nrhs,
-            double *    A,
-            const int * ia,
-            const int * ja,
-            const int * desca,
-            double *    B,
-            const int * ib,
-            const int * jb,
-            const int * descb,
-            double *    work,
-            int *       lwork,
-            int *       info);
+            const int  *m,
+            const int  *n,
+            const int  *nrhs,
+            double     *A,
+            const int  *ia,
+            const int  *ja,
+            const int  *desca,
+            double     *B,
+            const int  *ib,
+            const int  *jb,
+            const int  *descb,
+            double     *work,
+            int        *lwork,
+            int        *info);
     void
     psgels_(const char *trans,
-            const int * m,
-            const int * n,
-            const int * nrhs,
-            float *     A,
-            const int * ia,
-            const int * ja,
-            const int * desca,
-            float *     B,
-            const int * ib,
-            const int * jb,
-            const int * descb,
-            float *     work,
-            int *       lwork,
-            int *       info);
+            const int  *m,
+            const int  *n,
+            const int  *nrhs,
+            float      *A,
+            const int  *ia,
+            const int  *ja,
+            const int  *desca,
+            float      *B,
+            const int  *ib,
+            const int  *jb,
+            const int  *descb,
+            float      *work,
+            int        *lwork,
+            int        *info);
 
     /*
      * Perform matrix sum:
@@ -948,78 +948,78 @@ namespace dftfe
      * where $op(A)$ denotes either $op(A) = A$ or $op(A)=A^T$.
      */
     void
-    pdgeadd_(const char *  transa,
-             const int *   m,
-             const int *   n,
+    pdgeadd_(const char   *transa,
+             const int    *m,
+             const int    *n,
              const double *alpha,
              const double *A,
-             const int *   IA,
-             const int *   JA,
-             const int *   DESCA,
+             const int    *IA,
+             const int    *JA,
+             const int    *DESCA,
              const double *beta,
-             double *      C,
-             const int *   IC,
-             const int *   JC,
-             const int *   DESCC);
+             double       *C,
+             const int    *IC,
+             const int    *JC,
+             const int    *DESCC);
     void
-    psgeadd_(const char * transa,
-             const int *  m,
-             const int *  n,
+    psgeadd_(const char  *transa,
+             const int   *m,
+             const int   *n,
              const float *alpha,
              const float *A,
-             const int *  IA,
-             const int *  JA,
-             const int *  DESCA,
+             const int   *IA,
+             const int   *JA,
+             const int   *DESCA,
              const float *beta,
-             float *      C,
-             const int *  IC,
-             const int *  JC,
-             const int *  DESCC);
+             float       *C,
+             const int   *IC,
+             const int   *JC,
+             const int   *DESCC);
     void
-    pzgeadd_(const char *                transa,
-             const int *                 m,
-             const int *                 n,
+    pzgeadd_(const char                 *transa,
+             const int                  *m,
+             const int                  *n,
              const std::complex<double> *alpha,
              const std::complex<double> *A,
-             const int *                 IA,
-             const int *                 JA,
-             const int *                 DESCA,
+             const int                  *IA,
+             const int                  *JA,
+             const int                  *DESCA,
              const std::complex<double> *beta,
-             std::complex<double> *      C,
-             const int *                 IC,
-             const int *                 JC,
-             const int *                 DESCC);
+             std::complex<double>       *C,
+             const int                  *IC,
+             const int                  *JC,
+             const int                  *DESCC);
 
     /**
      * Routine to transpose a matrix:
      * C = beta C + alpha A^T
      */
     void
-    pdtran_(const int *   m,
-            const int *   n,
+    pdtran_(const int    *m,
+            const int    *n,
             const double *alpha,
             const double *A,
-            const int *   IA,
-            const int *   JA,
-            const int *   DESCA,
+            const int    *IA,
+            const int    *JA,
+            const int    *DESCA,
             const double *beta,
-            double *      C,
-            const int *   IC,
-            const int *   JC,
-            const int *   DESCC);
+            double       *C,
+            const int    *IC,
+            const int    *JC,
+            const int    *DESCC);
     void
-    pstran_(const int *  m,
-            const int *  n,
+    pstran_(const int   *m,
+            const int   *n,
             const float *alpha,
             const float *A,
-            const int *  IA,
-            const int *  JA,
-            const int *  DESCA,
+            const int   *IA,
+            const int   *JA,
+            const int   *DESCA,
             const float *beta,
-            float *      C,
-            const int *  IC,
-            const int *  JC,
-            const int *  DESCC);
+            float       *C,
+            const int   *IC,
+            const int   *JC,
+            const int   *DESCC);
 
     /**
      *  psyevr computes selected eigenvalues and, optionally, eigenvectors
@@ -1028,80 +1028,80 @@ namespace dftfe
      * values or a range of indices for the desired eigenvalues.
      */
     void
-    pdsyevr_(const char *  jobz,
-             const char *  range,
-             const char *  uplo,
-             const int *   n,
-             double *      A,
-             const int *   IA,
-             const int *   JA,
-             const int *   DESCA,
+    pdsyevr_(const char   *jobz,
+             const char   *range,
+             const char   *uplo,
+             const int    *n,
+             double       *A,
+             const int    *IA,
+             const int    *JA,
+             const int    *DESCA,
              const double *VL,
              const double *VU,
-             const int *   IL,
-             const int *   IU,
-             int *         m,
-             int *         nz,
-             double *      w,
-             double *      Z,
-             const int *   IZ,
-             const int *   JZ,
-             const int *   DESCZ,
-             double *      work,
-             int *         lwork,
-             int *         iwork,
-             int *         liwork,
-             int *         info);
+             const int    *IL,
+             const int    *IU,
+             int          *m,
+             int          *nz,
+             double       *w,
+             double       *Z,
+             const int    *IZ,
+             const int    *JZ,
+             const int    *DESCZ,
+             double       *work,
+             int          *lwork,
+             int          *iwork,
+             int          *liwork,
+             int          *info);
     void
-    pssyevr_(const char * jobz,
-             const char * range,
-             const char * uplo,
-             const int *  n,
-             float *      A,
-             const int *  IA,
-             const int *  JA,
-             const int *  DESCA,
+    pssyevr_(const char  *jobz,
+             const char  *range,
+             const char  *uplo,
+             const int   *n,
+             float       *A,
+             const int   *IA,
+             const int   *JA,
+             const int   *DESCA,
              const float *VL,
              const float *VU,
-             const int *  IL,
-             const int *  IU,
-             int *        m,
-             int *        nz,
-             float *      w,
-             float *      Z,
-             const int *  IZ,
-             const int *  JZ,
-             const int *  DESCZ,
-             float *      work,
-             int *        lwork,
-             int *        iwork,
-             int *        liwork,
-             int *        info);
+             const int   *IL,
+             const int   *IU,
+             int         *m,
+             int         *nz,
+             float       *w,
+             float       *Z,
+             const int   *IZ,
+             const int   *JZ,
+             const int   *DESCZ,
+             float       *work,
+             int         *lwork,
+             int         *iwork,
+             int         *liwork,
+             int         *info);
     void
-    pzheevr_(const char *          jobz,
-             const char *          range,
-             const char *          uplo,
-             const int *           n,
+    pzheevr_(const char           *jobz,
+             const char           *range,
+             const char           *uplo,
+             const int            *n,
              std::complex<double> *A,
-             const int *           IA,
-             const int *           JA,
-             const int *           DESCA,
-             const double *        VL,
-             const double *        VU,
-             const int *           IL,
-             const int *           IU,
-             int *                 m,
-             int *                 nz,
-             double *              w,
+             const int            *IA,
+             const int            *JA,
+             const int            *DESCA,
+             const double         *VL,
+             const double         *VU,
+             const int            *IL,
+             const int            *IU,
+             int                  *m,
+             int                  *nz,
+             double               *w,
              std::complex<double> *Z,
-             const int *           IZ,
-             const int *           JZ,
-             const int *           DESCZ,
+             const int            *IZ,
+             const int            *JZ,
+             const int            *DESCZ,
              std::complex<double> *work,
-             int *                 lwork,
-             int *                 iwork,
-             int *                 liwork,
-             int *                 info);
+             int                  *lwork,
+             int                  *iwork,
+             int                  *liwork,
+             int                  *info);
   }
 
 
@@ -1163,7 +1163,7 @@ namespace dftfe
 
   inline void
   pplacgv(const int *N,
-          double *   A,
+          double    *A,
           const int *IA,
           const int *JA,
           const int *DESCA,
@@ -1171,12 +1171,12 @@ namespace dftfe
   {}
 
   inline void
-  pplacgv(const int *           N,
+  pplacgv(const int            *N,
           std::complex<double> *A,
-          const int *           IA,
-          const int *           JA,
-          const int *           DESCA,
-          const int *           INCX)
+          const int            *IA,
+          const int            *JA,
+          const int            *DESCA,
+          const int            *INCX)
   {
     pzlacgv_(N, A, IA, JA, DESCA, INCX);
   }
@@ -1196,36 +1196,36 @@ namespace dftfe
 
   inline void
   ppotrf(const char *UPLO,
-         const int * N,
-         double *    A,
-         const int * IA,
-         const int * JA,
-         const int * DESCA,
-         int *       INFO)
+         const int  *N,
+         double     *A,
+         const int  *IA,
+         const int  *JA,
+         const int  *DESCA,
+         int        *INFO)
   {
     pdpotrf_(UPLO, N, A, IA, JA, DESCA, INFO);
   }
 
   inline void
   ppotrf(const char *UPLO,
-         const int * N,
-         float *     A,
-         const int * IA,
-         const int * JA,
-         const int * DESCA,
-         int *       INFO)
+         const int  *N,
+         float      *A,
+         const int  *IA,
+         const int  *JA,
+         const int  *DESCA,
+         int        *INFO)
   {
     pspotrf_(UPLO, N, A, IA, JA, DESCA, INFO);
   }
 
   inline void
-  ppotrf(const char *          UPLO,
-         const int *           N,
+  ppotrf(const char           *UPLO,
+         const int            *N,
          std::complex<double> *A,
-         const int *           IA,
-         const int *           JA,
-         const int *           DESCA,
-         int *                 INFO)
+         const int            *IA,
+         const int            *JA,
+         const int            *DESCA,
+         int                  *INFO)
   {
     pzpotrf_(UPLO, N, A, IA, JA, DESCA, INFO);
   }
@@ -1247,12 +1247,12 @@ namespace dftfe
   inline void
   pgetrf(const int *m,
          const int *n,
-         double *   A,
+         double    *A,
          const int *IA,
          const int *JA,
          const int *DESCA,
-         int *      ipiv,
-         int *      INFO)
+         int       *ipiv,
+         int       *INFO)
   {
     pdgetrf_(m, n, A, IA, JA, DESCA, ipiv, INFO);
   }
@@ -1260,25 +1260,25 @@ namespace dftfe
   inline void
   pgetrf(const int *m,
          const int *n,
-         float *    A,
+         float     *A,
          const int *IA,
          const int *JA,
          const int *DESCA,
-         int *      ipiv,
-         int *      INFO)
+         int       *ipiv,
+         int       *INFO)
   {
     psgetrf_(m, n, A, IA, JA, DESCA, ipiv, INFO);
   }
 
   inline void
-  pgetrf(const int *           m,
-         const int *           n,
+  pgetrf(const int            *m,
+         const int            *n,
          std::complex<double> *A,
-         const int *           IA,
-         const int *           JA,
-         const int *           DESCA,
-         int *                 ipiv,
-         int *                 INFO)
+         const int            *IA,
+         const int            *JA,
+         const int            *DESCA,
+         int                  *ipiv,
+         int                  *INFO)
   {
     pzgetrf_(m, n, A, IA, JA, DESCA, ipiv, INFO);
   }
@@ -1298,36 +1298,36 @@ namespace dftfe
 
   inline void
   ppotri(const char *UPLO,
-         const int * N,
-         double *    A,
-         const int * IA,
-         const int * JA,
-         const int * DESCA,
-         int *       INFO)
+         const int  *N,
+         double     *A,
+         const int  *IA,
+         const int  *JA,
+         const int  *DESCA,
+         int        *INFO)
   {
     pdpotri_(UPLO, N, A, IA, JA, DESCA, INFO);
   }
 
   inline void
   ppotri(const char *UPLO,
-         const int * N,
-         float *     A,
-         const int * IA,
-         const int * JA,
-         const int * DESCA,
-         int *       INFO)
+         const int  *N,
+         float      *A,
+         const int  *IA,
+         const int  *JA,
+         const int  *DESCA,
+         int        *INFO)
   {
     pspotri_(UPLO, N, A, IA, JA, DESCA, INFO);
   }
 
   inline void
-  ppotri(const char *          UPLO,
-         const int *           N,
+  ppotri(const char           *UPLO,
+         const int            *N,
          std::complex<double> *A,
-         const int *           IA,
-         const int *           JA,
-         const int *           DESCA,
-         int *                 INFO)
+         const int            *IA,
+         const int            *JA,
+         const int            *DESCA,
+         int                  *INFO)
   {
     pzpotri_(UPLO, N, A, IA, JA, DESCA, INFO);
   }
@@ -1351,48 +1351,48 @@ namespace dftfe
 
   inline void
   pgetri(const int *N,
-         double *   A,
+         double    *A,
          const int *IA,
          const int *JA,
          const int *DESCA,
          const int *ipiv,
-         double *   work,
-         int *      lwork,
-         int *      iwork,
-         int *      liwork,
-         int *      info)
+         double    *work,
+         int       *lwork,
+         int       *iwork,
+         int       *liwork,
+         int       *info)
   {
     pdgetri_(N, A, IA, JA, DESCA, ipiv, work, lwork, iwork, liwork, info);
   }
 
   inline void
   pgetri(const int *N,
-         float *    A,
+         float     *A,
          const int *IA,
          const int *JA,
          const int *DESCA,
          const int *ipiv,
-         float *    work,
-         int *      lwork,
-         int *      iwork,
-         int *      liwork,
-         int *      info)
+         float     *work,
+         int       *lwork,
+         int       *iwork,
+         int       *liwork,
+         int       *info)
   {
     psgetri_(N, A, IA, JA, DESCA, ipiv, work, lwork, iwork, liwork, info);
   }
 
   inline void
-  pgetri(const int *           N,
+  pgetri(const int            *N,
          std::complex<double> *A,
-         const int *           IA,
-         const int *           JA,
-         const int *           DESCA,
-         const int *           ipiv,
+         const int            *IA,
+         const int            *JA,
+         const int            *DESCA,
+         const int            *ipiv,
          std::complex<double> *work,
-         int *                 lwork,
-         int *                 iwork,
-         int *                 liwork,
-         int *                 info)
+         int                  *lwork,
+         int                  *iwork,
+         int                  *liwork,
+         int                  *info)
   {
     pzgetri_(N, A, IA, JA, DESCA, ipiv, work, lwork, iwork, liwork, info);
   }
@@ -1416,12 +1416,12 @@ namespace dftfe
   inline void
   ptrtri(const char *UPLO,
          const char *DIAG,
-         const int * N,
-         double *    A,
-         const int * IA,
-         const int * JA,
-         const int * DESCA,
-         int *       INFO)
+         const int  *N,
+         double     *A,
+         const int  *IA,
+         const int  *JA,
+         const int  *DESCA,
+         int        *INFO)
   {
     pdtrtri_(UPLO, DIAG, N, A, IA, JA, DESCA, INFO);
   }
@@ -1429,25 +1429,25 @@ namespace dftfe
   inline void
   ptrtri(const char *UPLO,
          const char *DIAG,
-         const int * N,
-         float *     A,
-         const int * IA,
-         const int * JA,
-         const int * DESCA,
-         int *       INFO)
+         const int  *N,
+         float      *A,
+         const int  *IA,
+         const int  *JA,
+         const int  *DESCA,
+         int        *INFO)
   {
     pstrtri_(UPLO, DIAG, N, A, IA, JA, DESCA, INFO);
   }
 
   inline void
-  ptrtri(const char *          UPLO,
-         const char *          DIAG,
-         const int *           N,
+  ptrtri(const char           *UPLO,
+         const char           *DIAG,
+         const int            *N,
          std::complex<double> *A,
-         const int *           IA,
-         const int *           JA,
-         const int *           DESCA,
-         int *                 INFO)
+         const int            *IA,
+         const int            *JA,
+         const int            *DESCA,
+         int                  *INFO)
   {
     pztrtri_(UPLO, DIAG, N, A, IA, JA, DESCA, INFO);
   }
@@ -1472,19 +1472,19 @@ namespace dftfe
   }
 
   inline void
-  ppocon(const char *  uplo,
-         const int *   N,
+  ppocon(const char   *uplo,
+         const int    *N,
          const double *A,
-         const int *   IA,
-         const int *   JA,
-         const int *   DESCA,
+         const int    *IA,
+         const int    *JA,
+         const int    *DESCA,
          const double *ANORM,
-         double *      RCOND,
-         double *      WORK,
-         const int *   LWORK,
-         int *         IWORK,
-         const int *   LIWORK,
-         int *         INFO)
+         double       *RCOND,
+         double       *WORK,
+         const int    *LWORK,
+         int          *IWORK,
+         const int    *LIWORK,
+         int          *INFO)
   {
     pdpocon_(uplo,
              N,
@@ -1502,19 +1502,19 @@ namespace dftfe
   }
 
   inline void
-  ppocon(const char * uplo,
-         const int *  N,
+  ppocon(const char  *uplo,
+         const int   *N,
          const float *A,
-         const int *  IA,
-         const int *  JA,
-         const int *  DESCA,
+         const int   *IA,
+         const int   *JA,
+         const int   *DESCA,
          const float *ANORM,
-         float *      RCOND,
-         float *      WORK,
-         const int *  LWORK,
-         int *        IWORK,
-         const int *  LIWORK,
-         int *        INFO)
+         float       *RCOND,
+         float       *WORK,
+         const int   *LWORK,
+         int         *IWORK,
+         const int   *LIWORK,
+         int         *INFO)
   {
     pspocon_(uplo,
              N,
@@ -1547,27 +1547,27 @@ namespace dftfe
   }
 
   inline double
-  plansy(const char *  norm,
-         const char *  uplo,
-         const int *   N,
+  plansy(const char   *norm,
+         const char   *uplo,
+         const int    *N,
          const double *A,
-         const int *   IA,
-         const int *   JA,
-         const int *   DESCA,
-         double *      work)
+         const int    *IA,
+         const int    *JA,
+         const int    *DESCA,
+         double       *work)
   {
     return pdlansy_(norm, uplo, N, A, IA, JA, DESCA, work);
   }
 
   inline float
-  plansy(const char * norm,
-         const char * uplo,
-         const int *  N,
+  plansy(const char  *norm,
+         const char  *uplo,
+         const int   *N,
          const float *A,
-         const int *  IA,
-         const int *  JA,
-         const int *  DESCA,
-         float *      work)
+         const int   *IA,
+         const int   *JA,
+         const int   *DESCA,
+         float       *work)
   {
     return pslansy_(norm, uplo, N, A, IA, JA, DESCA, work);
   }
@@ -1594,16 +1594,16 @@ namespace dftfe
   inline void
   pgesv(const int *n,
         const int *nrhs,
-        double *   A,
+        double    *A,
         const int *ia,
         const int *ja,
         const int *desca,
-        int *      ipiv,
-        double *   B,
+        int       *ipiv,
+        double    *B,
         const int *ib,
         const int *jb,
         const int *descb,
-        int *      info)
+        int       *info)
   {
     pdgesv_(n, nrhs, A, ia, ja, desca, ipiv, B, ib, jb, descb, info);
   }
@@ -1611,16 +1611,16 @@ namespace dftfe
   inline void
   pgesv(const int *n,
         const int *nrhs,
-        float *    A,
+        float     *A,
         const int *ia,
         const int *ja,
         const int *desca,
-        int *      ipiv,
-        float *    B,
+        int       *ipiv,
+        float     *B,
         const int *ib,
         const int *jb,
         const int *descb,
-        int *      info)
+        int       *info)
   {
     psgesv_(n, nrhs, A, ia, ja, desca, ipiv, B, ib, jb, descb, info);
   }
@@ -1652,25 +1652,25 @@ namespace dftfe
   }
 
   inline void
-  pgemm(const char *  transa,
-        const char *  transb,
-        const int *   m,
-        const int *   n,
-        const int *   k,
+  pgemm(const char   *transa,
+        const char   *transb,
+        const int    *m,
+        const int    *n,
+        const int    *k,
         const double *alpha,
         const double *A,
-        const int *   IA,
-        const int *   JA,
-        const int *   DESCA,
+        const int    *IA,
+        const int    *JA,
+        const int    *DESCA,
         const double *B,
-        const int *   IB,
-        const int *   JB,
-        const int *   DESCB,
+        const int    *IB,
+        const int    *JB,
+        const int    *DESCB,
         const double *beta,
-        double *      C,
-        const int *   IC,
-        const int *   JC,
-        const int *   DESCC)
+        double       *C,
+        const int    *IC,
+        const int    *JC,
+        const int    *DESCC)
   {
     pdgemm_(transa,
             transb,
@@ -1694,25 +1694,25 @@ namespace dftfe
   }
 
   inline void
-  pgemm(const char * transa,
-        const char * transb,
-        const int *  m,
-        const int *  n,
-        const int *  k,
+  pgemm(const char  *transa,
+        const char  *transb,
+        const int   *m,
+        const int   *n,
+        const int   *k,
         const float *alpha,
         const float *A,
-        const int *  IA,
-        const int *  JA,
-        const int *  DESCA,
+        const int   *IA,
+        const int   *JA,
+        const int   *DESCA,
         const float *B,
-        const int *  IB,
-        const int *  JB,
-        const int *  DESCB,
+        const int   *IB,
+        const int   *JB,
+        const int   *DESCB,
         const float *beta,
-        float *      C,
-        const int *  IC,
-        const int *  JC,
-        const int *  DESCC)
+        float       *C,
+        const int   *IC,
+        const int   *JC,
+        const int   *DESCC)
   {
     psgemm_(transa,
             transb,
@@ -1737,25 +1737,25 @@ namespace dftfe
 
 
   inline void
-  pgemm(const char *                transa,
-        const char *                transb,
-        const int *                 m,
-        const int *                 n,
-        const int *                 k,
+  pgemm(const char                 *transa,
+        const char                 *transb,
+        const int                  *m,
+        const int                  *n,
+        const int                  *k,
         const std::complex<double> *alpha,
         const std::complex<double> *A,
-        const int *                 IA,
-        const int *                 JA,
-        const int *                 DESCA,
+        const int                  *IA,
+        const int                  *JA,
+        const int                  *DESCA,
         const std::complex<double> *B,
-        const int *                 IB,
-        const int *                 JB,
-        const int *                 DESCB,
+        const int                  *IB,
+        const int                  *JB,
+        const int                  *DESCB,
         const std::complex<double> *beta,
-        std::complex<double> *      C,
-        const int *                 IC,
-        const int *                 JC,
-        const int *                 DESCC)
+        std::complex<double>       *C,
+        const int                  *IC,
+        const int                  *JC,
+        const int                  *DESCC)
   {
     pzgemm_(transa,
             transb,
@@ -1793,27 +1793,27 @@ namespace dftfe
   }
 
   inline double
-  plange(const char *  norm,
-         const int *   m,
-         const int *   n,
+  plange(const char   *norm,
+         const int    *m,
+         const int    *n,
          const double *A,
-         const int *   ia,
-         const int *   ja,
-         const int *   desca,
-         double *      work)
+         const int    *ia,
+         const int    *ja,
+         const int    *desca,
+         double       *work)
   {
     return pdlange_(norm, m, n, A, ia, ja, desca, work);
   }
 
   inline float
-  plange(const char * norm,
-         const int *  m,
-         const int *  n,
+  plange(const char  *norm,
+         const int   *m,
+         const int   *n,
          const float *A,
-         const int *  ia,
-         const int *  ja,
-         const int *  desca,
-         float *      work)
+         const int   *ia,
+         const int   *ja,
+         const int   *desca,
+         float       *work)
   {
     return pslange_(norm, m, n, A, ia, ja, desca, work);
   }
@@ -1843,19 +1843,19 @@ namespace dftfe
   inline void
   psyev(const char *jobz,
         const char *uplo,
-        const int * m,
-        double *    A,
-        const int * ia,
-        const int * ja,
-        int *       desca,
-        double *    w,
-        double *    z,
-        const int * iz,
-        const int * jz,
-        int *       descz,
-        double *    work,
-        const int * lwork,
-        int *       info)
+        const int  *m,
+        double     *A,
+        const int  *ia,
+        const int  *ja,
+        int        *desca,
+        double     *w,
+        double     *z,
+        const int  *iz,
+        const int  *jz,
+        int        *descz,
+        double     *work,
+        const int  *lwork,
+        int        *info)
   {
     pdsyev_(
       jobz, uplo, m, A, ia, ja, desca, w, z, iz, jz, descz, work, lwork, info);
@@ -1864,40 +1864,40 @@ namespace dftfe
   inline void
   psyev(const char *jobz,
         const char *uplo,
-        const int * m,
-        float *     A,
-        const int * ia,
-        const int * ja,
-        int *       desca,
-        float *     w,
-        float *     z,
-        const int * iz,
-        const int * jz,
-        int *       descz,
-        float *     work,
-        const int * lwork,
-        int *       info)
+        const int  *m,
+        float      *A,
+        const int  *ia,
+        const int  *ja,
+        int        *desca,
+        float      *w,
+        float      *z,
+        const int  *iz,
+        const int  *jz,
+        int        *descz,
+        float      *work,
+        const int  *lwork,
+        int        *info)
   {
     pssyev_(
       jobz, uplo, m, A, ia, ja, desca, w, z, iz, jz, descz, work, lwork, info);
   }
 
   inline void
-  psyev(const char *          jobz,
-        const char *          uplo,
-        const int *           m,
+  psyev(const char           *jobz,
+        const char           *uplo,
+        const int            *m,
         std::complex<double> *A,
-        const int *           ia,
-        const int *           ja,
-        int *                 desca,
-        double *              w,
+        const int            *ia,
+        const int            *ja,
+        int                  *desca,
+        double               *w,
         std::complex<double> *z,
-        const int *           iz,
-        const int *           jz,
-        int *                 descz,
+        const int            *iz,
+        const int            *jz,
+        int                  *descz,
         std::complex<double> *work,
-        const int *           lwork,
-        int *                 info)
+        const int            *lwork,
+        int                  *info)
   {
     pzheev_(
       jobz, uplo, m, A, ia, ja, desca, w, z, iz, jz, descz, work, lwork, info);
@@ -1921,33 +1921,33 @@ namespace dftfe
   }
 
   inline void
-  placpy(const char *  uplo,
-         const int *   m,
-         const int *   n,
+  placpy(const char   *uplo,
+         const int    *m,
+         const int    *n,
          const double *A,
-         const int *   ia,
-         const int *   ja,
-         const int *   desca,
-         double *      B,
-         const int *   ib,
-         const int *   jb,
-         const int *   descb)
+         const int    *ia,
+         const int    *ja,
+         const int    *desca,
+         double       *B,
+         const int    *ib,
+         const int    *jb,
+         const int    *descb)
   {
     pdlacpy_(uplo, m, n, A, ia, ja, desca, B, ib, jb, descb);
   }
 
   inline void
-  placpy(const char * uplo,
-         const int *  m,
-         const int *  n,
+  placpy(const char  *uplo,
+         const int   *m,
+         const int   *n,
          const float *A,
-         const int *  ia,
-         const int *  ja,
-         const int *  desca,
-         float *      B,
-         const int *  ib,
-         const int *  jb,
-         const int *  descb)
+         const int   *ia,
+         const int   *ja,
+         const int   *desca,
+         float       *B,
+         const int   *ib,
+         const int   *jb,
+         const int   *descb)
   {
     pslacpy_(uplo, m, n, A, ia, ja, desca, B, ib, jb, descb);
   }
@@ -1971,33 +1971,33 @@ namespace dftfe
   }
 
   inline void
-  pgemr2d(const int *   m,
-          const int *   n,
+  pgemr2d(const int    *m,
+          const int    *n,
           const double *A,
-          const int *   ia,
-          const int *   ja,
-          const int *   desca,
-          double *      B,
-          const int *   ib,
-          const int *   jb,
-          const int *   descb,
-          const int *   ictxt)
+          const int    *ia,
+          const int    *ja,
+          const int    *desca,
+          double       *B,
+          const int    *ib,
+          const int    *jb,
+          const int    *descb,
+          const int    *ictxt)
   {
     pdgemr2d_(m, n, A, ia, ja, desca, B, ib, jb, descb, ictxt);
   }
 
   inline void
-  pgemr2d(const int *  m,
-          const int *  n,
+  pgemr2d(const int   *m,
+          const int   *n,
           const float *A,
-          const int *  ia,
-          const int *  ja,
-          const int *  desca,
-          float *      B,
-          const int *  ib,
-          const int *  jb,
-          const int *  descb,
-          const int *  ictxt)
+          const int   *ia,
+          const int   *ja,
+          const int   *desca,
+          float       *B,
+          const int   *ib,
+          const int   *jb,
+          const int   *descb,
+          const int   *ictxt)
   {
     psgemr2d_(m, n, A, ia, ja, desca, B, ib, jb, descb, ictxt);
   }
@@ -2062,32 +2062,32 @@ namespace dftfe
   psyevx(const char *jobz,
          const char *range,
          const char *uplo,
-         const int * n,
-         double *    A,
-         const int * ia,
-         const int * ja,
-         const int * desca,
-         double *    VL,
-         double *    VU,
-         const int * il,
-         const int * iu,
-         double *    abstol,
-         const int * m,
-         const int * nz,
-         double *    w,
-         double *    orfac,
-         double *    Z,
-         const int * iz,
-         const int * jz,
-         const int * descz,
-         double *    work,
-         int *       lwork,
-         int *       iwork,
-         int *       liwork,
-         int *       ifail,
-         int *       iclustr,
-         double *    gap,
-         int *       info)
+         const int  *n,
+         double     *A,
+         const int  *ia,
+         const int  *ja,
+         const int  *desca,
+         double     *VL,
+         double     *VU,
+         const int  *il,
+         const int  *iu,
+         double     *abstol,
+         const int  *m,
+         const int  *nz,
+         double     *w,
+         double     *orfac,
+         double     *Z,
+         const int  *iz,
+         const int  *jz,
+         const int  *descz,
+         double     *work,
+         int        *lwork,
+         int        *iwork,
+         int        *liwork,
+         int        *ifail,
+         int        *iclustr,
+         double     *gap,
+         int        *info)
   {
     pdsyevx_(jobz,
              range,
@@ -2124,32 +2124,32 @@ namespace dftfe
   psyevx(const char *jobz,
          const char *range,
          const char *uplo,
-         const int * n,
-         float *     A,
-         const int * ia,
-         const int * ja,
-         const int * desca,
-         float *     VL,
-         float *     VU,
-         const int * il,
-         const int * iu,
-         float *     abstol,
-         const int * m,
-         const int * nz,
-         float *     w,
-         float *     orfac,
-         float *     Z,
-         const int * iz,
-         const int * jz,
-         const int * descz,
-         float *     work,
-         int *       lwork,
-         int *       iwork,
-         int *       liwork,
-         int *       ifail,
-         int *       iclustr,
-         float *     gap,
-         int *       info)
+         const int  *n,
+         float      *A,
+         const int  *ia,
+         const int  *ja,
+         const int  *desca,
+         float      *VL,
+         float      *VU,
+         const int  *il,
+         const int  *iu,
+         float      *abstol,
+         const int  *m,
+         const int  *nz,
+         float      *w,
+         float      *orfac,
+         float      *Z,
+         const int  *iz,
+         const int  *jz,
+         const int  *descz,
+         float      *work,
+         int        *lwork,
+         int        *iwork,
+         int        *liwork,
+         int        *ifail,
+         int        *iclustr,
+         float      *gap,
+         int        *info)
   {
     pssyevx_(jobz,
              range,
@@ -2183,35 +2183,35 @@ namespace dftfe
   }
 
   inline void
-  psyevx(const char *          jobz,
-         const char *          range,
-         const char *          uplo,
-         const int *           n,
+  psyevx(const char           *jobz,
+         const char           *range,
+         const char           *uplo,
+         const int            *n,
          std::complex<double> *A,
-         const int *           ia,
-         const int *           ja,
-         const int *           desca,
-         double *              VL,
-         double *              VU,
-         const int *           il,
-         const int *           iu,
-         double *              abstol,
-         const int *           m,
-         const int *           nz,
-         double *              w,
-         double *              orfac,
+         const int            *ia,
+         const int            *ja,
+         const int            *desca,
+         double               *VL,
+         double               *VU,
+         const int            *il,
+         const int            *iu,
+         double               *abstol,
+         const int            *m,
+         const int            *nz,
+         double               *w,
+         double               *orfac,
          std::complex<double> *Z,
-         const int *           iz,
-         const int *           jz,
-         const int *           descz,
+         const int            *iz,
+         const int            *jz,
+         const int            *descz,
          std::complex<double> *work,
-         int *                 lwork,
-         int *                 iwork,
-         int *                 liwork,
-         int *                 ifail,
-         int *                 iclustr,
-         double *              gap,
-         int *                 info)
+         int                  *lwork,
+         int                  *iwork,
+         int                  *liwork,
+         int                  *ifail,
+         int                  *iclustr,
+         double               *gap,
+         int                  *info)
   {
     pzheevx_(jobz,
              range,
@@ -2273,24 +2273,24 @@ namespace dftfe
   inline void
   pgesvd(const char *jobu,
          const char *jobvt,
-         const int * m,
-         const int * n,
-         double *    A,
-         const int * ia,
-         const int * ja,
-         const int * desca,
-         double *    S,
-         double *    U,
-         const int * iu,
-         const int * ju,
-         const int * descu,
-         double *    VT,
-         const int * ivt,
-         const int * jvt,
-         const int * descvt,
-         double *    work,
-         int *       lwork,
-         int *       info)
+         const int  *m,
+         const int  *n,
+         double     *A,
+         const int  *ia,
+         const int  *ja,
+         const int  *desca,
+         double     *S,
+         double     *U,
+         const int  *iu,
+         const int  *ju,
+         const int  *descu,
+         double     *VT,
+         const int  *ivt,
+         const int  *jvt,
+         const int  *descvt,
+         double     *work,
+         int        *lwork,
+         int        *info)
   {
     pdgesvd_(jobu,
              jobvt,
@@ -2317,24 +2317,24 @@ namespace dftfe
   inline void
   pgesvd(const char *jobu,
          const char *jobvt,
-         const int * m,
-         const int * n,
-         float *     A,
-         const int * ia,
-         const int * ja,
-         const int * desca,
-         float *     S,
-         float *     U,
-         const int * iu,
-         const int * ju,
-         const int * descu,
-         float *     VT,
-         const int * ivt,
-         const int * jvt,
-         const int * descvt,
-         float *     work,
-         int *       lwork,
-         int *       info)
+         const int  *m,
+         const int  *n,
+         float      *A,
+         const int  *ia,
+         const int  *ja,
+         const int  *desca,
+         float      *S,
+         float      *U,
+         const int  *iu,
+         const int  *ju,
+         const int  *descu,
+         float      *VT,
+         const int  *ivt,
+         const int  *jvt,
+         const int  *descvt,
+         float      *work,
+         int        *lwork,
+         int        *info)
   {
     psgesvd_(jobu,
              jobvt,
@@ -2382,20 +2382,20 @@ namespace dftfe
 
   inline void
   pgels(const char *trans,
-        const int * m,
-        const int * n,
-        const int * nrhs,
-        double *    A,
-        const int * ia,
-        const int * ja,
-        const int * desca,
-        double *    B,
-        const int * ib,
-        const int * jb,
-        const int * descb,
-        double *    work,
-        int *       lwork,
-        int *       info)
+        const int  *m,
+        const int  *n,
+        const int  *nrhs,
+        double     *A,
+        const int  *ia,
+        const int  *ja,
+        const int  *desca,
+        double     *B,
+        const int  *ib,
+        const int  *jb,
+        const int  *descb,
+        double     *work,
+        int        *lwork,
+        int        *info)
   {
     pdgels_(
       trans, m, n, nrhs, A, ia, ja, desca, B, ib, jb, descb, work, lwork, info);
@@ -2403,20 +2403,20 @@ namespace dftfe
 
   inline void
   pgels(const char *trans,
-        const int * m,
-        const int * n,
-        const int * nrhs,
-        float *     A,
-        const int * ia,
-        const int * ja,
-        const int * desca,
-        float *     B,
-        const int * ib,
-        const int * jb,
-        const int * descb,
-        float *     work,
-        int *       lwork,
-        int *       info)
+        const int  *m,
+        const int  *n,
+        const int  *nrhs,
+        float      *A,
+        const int  *ia,
+        const int  *ja,
+        const int  *desca,
+        float      *B,
+        const int  *ib,
+        const int  *jb,
+        const int  *descb,
+        float      *work,
+        int        *lwork,
+        int        *info)
   {
     psgels_(
       trans, m, n, nrhs, A, ia, ja, desca, B, ib, jb, descb, work, lwork, info);
@@ -2443,55 +2443,55 @@ namespace dftfe
   }
 
   inline void
-  pgeadd(const char *  transa,
-         const int *   m,
-         const int *   n,
+  pgeadd(const char   *transa,
+         const int    *m,
+         const int    *n,
          const double *alpha,
          const double *A,
-         const int *   IA,
-         const int *   JA,
-         const int *   DESCA,
+         const int    *IA,
+         const int    *JA,
+         const int    *DESCA,
          const double *beta,
-         double *      C,
-         const int *   IC,
-         const int *   JC,
-         const int *   DESCC)
+         double       *C,
+         const int    *IC,
+         const int    *JC,
+         const int    *DESCC)
   {
     pdgeadd_(transa, m, n, alpha, A, IA, JA, DESCA, beta, C, IC, JC, DESCC);
   }
 
   inline void
-  pgeadd(const char * transa,
-         const int *  m,
-         const int *  n,
+  pgeadd(const char  *transa,
+         const int   *m,
+         const int   *n,
          const float *alpha,
          const float *A,
-         const int *  IA,
-         const int *  JA,
-         const int *  DESCA,
+         const int   *IA,
+         const int   *JA,
+         const int   *DESCA,
          const float *beta,
-         float *      C,
-         const int *  IC,
-         const int *  JC,
-         const int *  DESCC)
+         float       *C,
+         const int   *IC,
+         const int   *JC,
+         const int   *DESCC)
   {
     psgeadd_(transa, m, n, alpha, A, IA, JA, DESCA, beta, C, IC, JC, DESCC);
   }
 
   inline void
-  pgeadd(const char *                transa,
-         const int *                 m,
-         const int *                 n,
+  pgeadd(const char                 *transa,
+         const int                  *m,
+         const int                  *n,
          const std::complex<double> *alpha,
          const std::complex<double> *A,
-         const int *                 IA,
-         const int *                 JA,
-         const int *                 DESCA,
+         const int                  *IA,
+         const int                  *JA,
+         const int                  *DESCA,
          const std::complex<double> *beta,
-         std::complex<double> *      C,
-         const int *                 IC,
-         const int *                 JC,
-         const int *                 DESCC)
+         std::complex<double>       *C,
+         const int                  *IC,
+         const int                  *JC,
+         const int                  *DESCC)
   {
     pzgeadd_(transa, m, n, alpha, A, IA, JA, DESCA, beta, C, IC, JC, DESCC);
   }
@@ -2515,35 +2515,35 @@ namespace dftfe
   }
 
   inline void
-  ptran(const int *   m,
-        const int *   n,
+  ptran(const int    *m,
+        const int    *n,
         const double *alpha,
         const double *A,
-        const int *   IA,
-        const int *   JA,
-        const int *   DESCA,
+        const int    *IA,
+        const int    *JA,
+        const int    *DESCA,
         const double *beta,
-        double *      C,
-        const int *   IC,
-        const int *   JC,
-        const int *   DESCC)
+        double       *C,
+        const int    *IC,
+        const int    *JC,
+        const int    *DESCC)
   {
     pdtran_(m, n, alpha, A, IA, JA, DESCA, beta, C, IC, JC, DESCC);
   }
 
   inline void
-  ptran(const int *  m,
-        const int *  n,
+  ptran(const int   *m,
+        const int   *n,
         const float *alpha,
         const float *A,
-        const int *  IA,
-        const int *  JA,
-        const int *  DESCA,
+        const int   *IA,
+        const int   *JA,
+        const int   *DESCA,
         const float *beta,
-        float *      C,
-        const int *  IC,
-        const int *  JC,
-        const int *  DESCC)
+        float       *C,
+        const int   *IC,
+        const int   *JC,
+        const int   *DESCC)
   {
     pstran_(m, n, alpha, A, IA, JA, DESCA, beta, C, IC, JC, DESCC);
   }
@@ -2580,30 +2580,30 @@ namespace dftfe
   }
 
   inline void
-  psyevr(const char *  jobz,
-         const char *  range,
-         const char *  uplo,
-         const int *   n,
-         double *      A,
-         const int *   IA,
-         const int *   JA,
-         const int *   DESCA,
+  psyevr(const char   *jobz,
+         const char   *range,
+         const char   *uplo,
+         const int    *n,
+         double       *A,
+         const int    *IA,
+         const int    *JA,
+         const int    *DESCA,
          const double *VL,
          const double *VU,
-         const int *   IL,
-         const int *   IU,
-         int *         m,
-         int *         nz,
-         double *      w,
-         double *      Z,
-         const int *   IZ,
-         const int *   JZ,
-         const int *   DESCZ,
-         double *      work,
-         int *         lwork,
-         int *         iwork,
-         int *         liwork,
-         int *         info)
+         const int    *IL,
+         const int    *IU,
+         int          *m,
+         int          *nz,
+         double       *w,
+         double       *Z,
+         const int    *IZ,
+         const int    *JZ,
+         const int    *DESCZ,
+         double       *work,
+         int          *lwork,
+         int          *iwork,
+         int          *liwork,
+         int          *info)
   {
     /*
      * Netlib ScaLAPACK performs floating point tests (e.g. divide-by-zero)
@@ -2647,30 +2647,30 @@ namespace dftfe
   }
 
   inline void
-  psyevr(const char * jobz,
-         const char * range,
-         const char * uplo,
-         const int *  n,
-         float *      A,
-         const int *  IA,
-         const int *  JA,
-         const int *  DESCA,
+  psyevr(const char  *jobz,
+         const char  *range,
+         const char  *uplo,
+         const int   *n,
+         float       *A,
+         const int   *IA,
+         const int   *JA,
+         const int   *DESCA,
          const float *VL,
          const float *VU,
-         const int *  IL,
-         const int *  IU,
-         int *        m,
-         int *        nz,
-         float *      w,
-         float *      Z,
-         const int *  IZ,
-         const int *  JZ,
-         const int *  DESCZ,
-         float *      work,
-         int *        lwork,
-         int *        iwork,
-         int *        liwork,
-         int *        info)
+         const int   *IL,
+         const int   *IU,
+         int         *m,
+         int         *nz,
+         float       *w,
+         float       *Z,
+         const int   *IZ,
+         const int   *JZ,
+         const int   *DESCZ,
+         float       *work,
+         int         *lwork,
+         int         *iwork,
+         int         *liwork,
+         int         *info)
   {
     /*
      * Netlib ScaLAPACK performs floating point tests (e.g. divide-by-zero)
@@ -2714,30 +2714,30 @@ namespace dftfe
   }
 
   inline void
-  psyevr(const char *          jobz,
-         const char *          range,
-         const char *          uplo,
-         const int *           n,
+  psyevr(const char           *jobz,
+         const char           *range,
+         const char           *uplo,
+         const int            *n,
          std::complex<double> *A,
-         const int *           IA,
-         const int *           JA,
-         const int *           DESCA,
-         const double *        VL,
-         const double *        VU,
-         const int *           IL,
-         const int *           IU,
-         int *                 m,
-         int *                 nz,
-         double *              w,
+         const int            *IA,
+         const int            *JA,
+         const int            *DESCA,
+         const double         *VL,
+         const double         *VU,
+         const int            *IL,
+         const int            *IU,
+         int                  *m,
+         int                  *nz,
+         double               *w,
          std::complex<double> *Z,
-         const int *           IZ,
-         const int *           JZ,
-         const int *           DESCZ,
+         const int            *IZ,
+         const int            *JZ,
+         const int            *DESCZ,
          std::complex<double> *work,
-         int *                 lwork,
-         int *                 iwork,
-         int *                 liwork,
-         int *                 info)
+         int                  *lwork,
+         int                  *iwork,
+         int                  *liwork,
+         int                  *info)
   {
     /*
      * Netlib ScaLAPACK performs floating point tests (e.g. divide-by-zero)

@@ -291,7 +291,7 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
       &x,
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
-      &                NDBCVec,
+                      &NDBCVec,
     unsigned int       locallyOwned,
     unsigned int       blockSize,
     const double       absTolerance,

@@ -66,8 +66,8 @@ namespace dftfe
   //
   chebyshevOrthogonalizedSubspaceIterationSolverDevice::
     chebyshevOrthogonalizedSubspaceIterationSolverDevice(
-      const MPI_Comm &     mpi_comm_parent,
-      const MPI_Comm &     mpi_comm_domain,
+      const MPI_Comm      &mpi_comm_parent,
+      const MPI_Comm      &mpi_comm_domain,
       double               lowerBoundWantedSpectrum,
       double               lowerBoundUnWantedSpectrum,
       double               upperBoundUnWantedSpectrum,
@@ -111,15 +111,15 @@ namespace dftfe
     operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                      BLASWrapperPtr,
-    elpaScalaManager &       elpaScala,
-    dataTypes::number *      eigenVectorsFlattenedDevice,
+                            &BLASWrapperPtr,
+    elpaScalaManager        &elpaScala,
+    dataTypes::number       *eigenVectorsFlattenedDevice,
     const unsigned int       flattenedSize,
     const unsigned int       totalNumberWaveFunctions,
-    std::vector<double> &    eigenValues,
-    std::vector<double> &    residualNorms,
+    std::vector<double>     &eigenValues,
+    std::vector<double>     &residualNorms,
     utils::DeviceCCLWrapper &devicecclMpiCommDomain,
-    const MPI_Comm &         interBandGroupComm,
+    const MPI_Comm          &interBandGroupComm,
     const bool               isFirstFilteringCall,
     const bool               computeResidual,
     const bool               useMixedPrecOverall,
@@ -917,16 +917,16 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                        BLASWrapperPtr,
-      dataTypes::number *        eigenVectorsFlattenedDevice,
+                                &BLASWrapperPtr,
+      dataTypes::number         *eigenVectorsFlattenedDevice,
       const unsigned int         flattenedSize,
       const unsigned int         totalNumberWaveFunctions,
       const std::vector<double> &eigenValues,
       const double               fermiEnergy,
-      std::vector<double> &      densityMatDerFermiEnergy,
-      utils::DeviceCCLWrapper &  devicecclMpiCommDomain,
-      const MPI_Comm &           interBandGroupComm,
-      dftfe::elpaScalaManager &  elpaScala)
+      std::vector<double>       &densityMatDerFermiEnergy,
+      utils::DeviceCCLWrapper   &devicecclMpiCommDomain,
+      const MPI_Comm            &interBandGroupComm,
+      dftfe::elpaScalaManager   &elpaScala)
   {
     dealii::TimerOutput computingTimerStandard(
       operatorMatrix.getMPICommunicatorDomain(),

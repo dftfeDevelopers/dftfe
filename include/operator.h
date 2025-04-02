@@ -110,7 +110,7 @@ namespace dftfe
     virtual void
     overlapInverseMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-        &          src,
+                  &src,
       const double scalarOinvX,
       const double scalarY,
       const double scalarX,

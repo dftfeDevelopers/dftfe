@@ -73,7 +73,7 @@ namespace dftfe
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       extractToCellNodalData(
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &                  nodalData,
+                            &nodalData,
         ValueTypeBasisCoeff *cellNodalDataPtr) const
     {
       extractToCellNodalDataKernel(
@@ -105,8 +105,8 @@ namespace dftfe
       interpolateKernel(
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                 memorySpace> &nodalValues,
-        ValueTypeBasisCoeff *                                 quadratureValues,
-        ValueTypeBasisCoeff *                       quadratureGradients,
+        ValueTypeBasisCoeff                                  *quadratureValues,
+        ValueTypeBasisCoeff                        *quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
       for (unsigned int iCell = cellRange.first; iCell < cellRange.second;
@@ -139,9 +139,9 @@ namespace dftfe
     void
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       interpolateKernel(
-        const ValueTypeBasisCoeff *                 cellNodalValues,
-        ValueTypeBasisCoeff *                       quadratureValues,
-        ValueTypeBasisCoeff *                       quadratureGradients,
+        const ValueTypeBasisCoeff                  *cellNodalValues,
+        ValueTypeBasisCoeff                        *quadratureValues,
+        ValueTypeBasisCoeff                        *quadratureGradients,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
       const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
@@ -276,7 +276,7 @@ namespace dftfe
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
           &nodalData,
         dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-          &                                         mapQuadIdToProcId,
+                                                   &mapQuadIdToProcId,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
       const ValueTypeBasisCoeff scalarCoeffAlpha = ValueTypeBasisCoeff(1.0),
@@ -436,7 +436,7 @@ namespace dftfe
       extractToCellNodalDataKernel(
         const dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff,
                                                 memorySpace> &nodalData,
-        ValueTypeBasisCoeff *                                 cellNodalDataPtr,
+        ValueTypeBasisCoeff                                  *cellNodalDataPtr,
         const std::pair<unsigned int, unsigned int>           cellRange) const
     {
       d_BLASWrapperPtr->stridedCopyToBlock(
@@ -456,7 +456,7 @@ namespace dftfe
       accumulateFromCellNodalDataKernel(
         const ValueTypeBasisCoeff *cellNodalDataPtr,
         dftfe::linearAlgebra::MultiVector<ValueTypeBasisCoeff, memorySpace>
-          &                                         nodalData,
+                                                   &nodalData,
         const std::pair<unsigned int, unsigned int> cellRange) const
     {
       d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(

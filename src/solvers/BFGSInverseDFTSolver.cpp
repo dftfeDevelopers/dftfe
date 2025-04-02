@@ -37,7 +37,7 @@ namespace dftfe
     //
     void
     vecAdd(const distributedCPUVec<double> &x,
-           distributedCPUVec<double> &      y,
+           distributedCPUVec<double>       &y,
            const double                     a,
            const double                     b)
     {
@@ -88,7 +88,7 @@ namespace dftfe
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::
     inverseJacobianTimesVec(
       const distributedCPUVec<double> &g,
-      distributedCPUVec<double> &      z,
+      distributedCPUVec<double>       &z,
       const unsigned int               component,
       InverseDFTSolverFunction<FEOrder, FEOrderElectro, memorySpace>
         &iDFTSolverFunction)
@@ -149,8 +149,8 @@ namespace dftfe
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::fnormCP(
     const std::vector<distributedCPUVec<double>> &x,
     const std::vector<distributedCPUVec<double>> &p,
-    const std::vector<double> &                   alpha,
-    std::vector<double> &                         fnorms,
+    const std::vector<double>                    &alpha,
+    std::vector<double>                          &fnorms,
     InverseDFTSolverFunction<FEOrder, FEOrderElectro, memorySpace>
       &iDFTSolverFunction)
   {
@@ -327,7 +327,7 @@ namespace dftfe
   void
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::solve(
     InverseDFTSolverFunction<FEOrder, FEOrderElectro, memorySpace>
-      &                                iDFTSolverFunction,
+                                      &iDFTSolverFunction,
     const BFGSInverseDFTSolver::LSType lsType)
   {
     std::vector<distributedCPUVec<double>> y(d_numComponents);

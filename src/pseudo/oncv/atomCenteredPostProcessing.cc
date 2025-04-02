@@ -9,8 +9,8 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
 
   atomCenteredOrbitalsPostProcessing<ValueType, memorySpace>::
-    atomCenteredOrbitalsPostProcessing(const MPI_Comm &   mpi_comm_parent,
-                                       const MPI_Comm &   mpi_comm_domain,
+    atomCenteredOrbitalsPostProcessing(const MPI_Comm    &mpi_comm_parent,
+                                       const MPI_Comm    &mpi_comm_domain,
                                        const std::string &scratchFolderName,
                                        const std::set<unsigned int> &atomTypes,
                                        const bool           reproducibleOutput,
@@ -130,10 +130,10 @@ namespace dftfe
   atomCenteredOrbitalsPostProcessing<ValueType, memorySpace>::
     initialiseNonLocalContribution(
       const std::vector<std::vector<double>> &atomLocations,
-      const std::vector<int> &                imageIds,
+      const std::vector<int>                 &imageIds,
       const std::vector<std::vector<double>> &periodicCoords,
-      const std::vector<double> &             kPointWeights,
-      const std::vector<double> &             kPointCoordinates,
+      const std::vector<double>              &kPointWeights,
+      const std::vector<double>              &kPointCoordinates,
       const bool                              updateNonlocalSparsity)
   {
     std::vector<unsigned int> atomicNumbers;
@@ -280,9 +280,9 @@ namespace dftfe
                                  BLASWrapperPtrHost,
       const unsigned int         quadratureIndex,
       const std::vector<double> &kPointWeights,
-      const MPI_Comm &           interBandGroupComm,
-      const MPI_Comm &           interpoolComm,
-      const dftParameters *      dftParamsPtr,
+      const MPI_Comm            &interBandGroupComm,
+      const MPI_Comm            &interpoolComm,
+      const dftParameters       *dftParamsPtr,
       double                     fermiEnergy,
       unsigned int               highestStateNscfSolve)
   {

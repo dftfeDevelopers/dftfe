@@ -43,8 +43,8 @@ namespace dftfe
 
   struct GaussianBasisInfo
   {
-    const std::string *       symbol; // atom symbol
-    const double *            center; // atom center coordinates
+    const std::string        *symbol; // atom symbol
+    const double             *center; // atom center coordinates
     const ContractedGaussian *cg;     // pointer to the ContractedGaussian
   };
 
@@ -58,7 +58,7 @@ namespace dftfe
     void
     constructBasisSet(
       const std::vector<std::pair<std::string, std::vector<double>>>
-        &                                                 atomCoords,
+                                                         &atomCoords,
       const std::unordered_map<std::string, std::string> &atomBasisFileNames);
 
     int

@@ -31,9 +31,9 @@ namespace dftfe
     exchangeAtomToGlobalNodeIdMaps(
       const unsigned int totalNumberAtoms,
       std::map<int, std::set<dealii::types::global_dof_index>>
-        &                atomToGlobalNodeIdMap,
+                        &atomToGlobalNodeIdMap,
       const unsigned int numMeshPartitions,
-      const MPI_Comm &   mpi_communicator)
+      const MPI_Comm    &mpi_communicator)
 
     {
       std::map<int, std::set<dealii::types::global_dof_index>>::iterator iter;
@@ -109,7 +109,7 @@ namespace dftfe
     exchangeInteractionMaps(const unsigned int            totalNumberAtoms,
                             std::map<int, std::set<int>> &interactionMap,
                             const unsigned int            numMeshPartitions,
-                            const MPI_Comm &              mpi_communicator)
+                            const MPI_Comm               &mpi_communicator)
 
     {
       std::map<int, std::set<int>>::iterator iter;
@@ -179,17 +179,17 @@ namespace dftfe
     unsigned int
     createAndCheckInteractionMap(
       std::map<int, std::set<int>> &interactionMap,
-      const dealii::DoFHandler<3> & dofHandler,
+      const dealii::DoFHandler<3>  &dofHandler,
       const std::map<dealii::types::global_dof_index, dealii::Point<3>>
-        &                                     supportPoints,
+                                             &supportPoints,
       const std::vector<std::vector<double>> &atomLocations,
       const std::vector<std::vector<double>> &imagePositions,
-      const std::vector<int> &                imageIds,
+      const std::vector<int>                 &imageIds,
       const double                            radiusAtomBall,
-      const dealii::BoundingBox<3> &          boundingBoxTria,
+      const dealii::BoundingBox<3>           &boundingBoxTria,
       const unsigned int                      n_mpi_processes,
-      const MPI_Comm &                        mpi_communicator,
-      dealii::TimerOutput &                   computing_timer)
+      const MPI_Comm                         &mpi_communicator,
+      dealii::TimerOutput                    &computing_timer)
     {
       computing_timer.enter_subsection(
         "create bins: find nodes inside atom balls");
@@ -475,9 +475,9 @@ namespace dftfe
   // constructor
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   vselfBinsManager<FEOrder, FEOrderElectro>::vselfBinsManager(
-    const MPI_Comm &     mpi_comm_parent,
-    const MPI_Comm &     mpi_comm_domain,
-    const MPI_Comm &     mpi_intercomm_kpts,
+    const MPI_Comm      &mpi_comm_parent,
+    const MPI_Comm      &mpi_comm_domain,
+    const MPI_Comm      &mpi_intercomm_kpts,
     const dftParameters &dftParams)
     : mpi_communicator(mpi_comm_domain)
     , d_mpiCommParent(mpi_comm_parent)
@@ -496,12 +496,12 @@ namespace dftfe
   vselfBinsManager<FEOrder, FEOrderElectro>::createAtomBins(
     std::vector<const dealii::AffineConstraints<double> *> &constraintsVector,
     const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
-    const dealii::DoFHandler<3> &            dofHandler,
+    const dealii::DoFHandler<3>             &dofHandler,
     const dealii::AffineConstraints<double> &constraintMatrix,
-    const std::vector<std::vector<double>> & atomLocations,
-    const std::vector<std::vector<double>> & imagePositions,
-    const std::vector<int> &                 imageIds,
-    const std::vector<double> &              imageCharges,
+    const std::vector<std::vector<double>>  &atomLocations,
+    const std::vector<std::vector<double>>  &imagePositions,
+    const std::vector<int>                  &imageIds,
+    const std::vector<double>               &imageCharges,
     const double                             radiusAtomBall)
 
   {
@@ -512,8 +512,8 @@ namespace dftfe
                                         pcout,
                                         d_dftParams.reproducible_output ||
                                             d_dftParams.verbosity < 4 ?
-                                          dealii::TimerOutput::never :
-                                          dealii::TimerOutput::summary,
+                                                 dealii::TimerOutput::never :
+                                                 dealii::TimerOutput::summary,
                                         dealii::TimerOutput::wall_times);
 
     computing_timer.enter_subsection("create bins: initial overheads");
@@ -783,7 +783,7 @@ namespace dftfe
             inhomogBoundaryVecVselfDerR[idim]=0.0;
         */
 
-        std::set<int> &               atomsInBinSet = d_bins[iBin];
+        std::set<int>                &atomsInBinSet = d_bins[iBin];
         std::vector<int>              atomsInCurrentBin(atomsInBinSet.begin(),
                                            atomsInBinSet.end());
         std::vector<dealii::Point<3>> atomPositionsInCurrentBin;
@@ -1375,12 +1375,12 @@ namespace dftfe
   vselfBinsManager<FEOrder, FEOrderElectro>::updateBinsBc(
     std::vector<const dealii::AffineConstraints<double> *> &constraintsVector,
     const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
-    const dealii::DoFHandler<3> &            dofHandler,
+    const dealii::DoFHandler<3>             &dofHandler,
     const dealii::AffineConstraints<double> &constraintMatrix,
-    const std::vector<std::vector<double>> & atomLocations,
-    const std::vector<std::vector<double>> & imagePositions,
-    const std::vector<int> &                 imageIds,
-    const std::vector<double> &              imageCharges,
+    const std::vector<std::vector<double>>  &atomLocations,
+    const std::vector<std::vector<double>>  &imagePositions,
+    const std::vector<int>                  &imageIds,
+    const std::vector<double>               &imageCharges,
     const bool                               vselfPerturbationUpdateForStress)
 
   {
@@ -1685,7 +1685,7 @@ namespace dftfe
                                                       dofHandler.begin_active(),
                                                     endc = dofHandler.end();
 
-        std::set<int> &  atomsInBinSet = d_bins[iBin];
+        std::set<int>   &atomsInBinSet = d_bins[iBin];
         std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),
                                            atomsInBinSet.end());
         unsigned int     numberGlobalAtomsInBin = atomsInCurrentBin.size();

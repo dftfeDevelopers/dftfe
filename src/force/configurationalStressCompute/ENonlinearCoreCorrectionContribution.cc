@@ -27,13 +27,14 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  void forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  void
+  forceClass<FEOrder, FEOrderElectro, memorySpace>::
     addENonlinearCoreCorrectionStressContribution(
       dealii::FEEvaluation<
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
@@ -198,13 +199,14 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  void forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  void
+  forceClass<FEOrder, FEOrderElectro, memorySpace>::
     addENonlinearCoreCorrectionStressContributionSpinPolarized(
       dealii::FEEvaluation<
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
@@ -222,7 +224,7 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &        hessianRhoCoreAtoms,
+                &hessianRhoCoreAtoms,
       const bool isXCGGA)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;

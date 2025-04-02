@@ -69,8 +69,8 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                                      basisOperationsPtr,
-    distributedCPUVec<double> &              x,
+                                            &basisOperationsPtr,
+    distributedCPUVec<double>               &x,
     const dealii::AffineConstraints<double> &constraintMatrix,
     const unsigned int                       matrixFreeVectorComponent,
     const unsigned int matrixFreeQuadratureComponentRhsDensity,
@@ -79,7 +79,7 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
     const unsigned int smearedChargeQuadratureId,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                rhoValues,
+                      &rhoValues,
     const bool         isComputeDiagonalA,
     const bool         isComputeMeanValueConstraint,
     const bool         smearedNuclearCharges,
@@ -278,7 +278,7 @@ namespace dftfe
            ++it)
         {
           std::vector<dealii::AffineConstraints<double>::size_type>
-                                 local_dof_indices_origin(1, it->first); // atomic node
+            local_dof_indices_origin(1, it->first); // atomic node
           dealii::Vector<double> cell_rhs_origin(1);
           cell_rhs_origin(0) = -(it->second); // atomic charge
 
@@ -425,7 +425,7 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   poissonSolverProblem<FEOrder, FEOrderElectro>::precondition_Jacobi(
-    distributedCPUVec<double> &      dst,
+    distributedCPUVec<double>       &dst,
     const distributedCPUVec<double> &src,
     const double                     omega) const
   {
@@ -691,9 +691,9 @@ namespace dftfe
   template <unsigned int FEOrder, unsigned int FEOrderElectro>
   void
   poissonSolverProblem<FEOrder, FEOrderElectro>::AX(
-    const dealii::MatrixFree<3, double> &        matrixFreeData,
-    distributedCPUVec<double> &                  dst,
-    const distributedCPUVec<double> &            src,
+    const dealii::MatrixFree<3, double>         &matrixFreeData,
+    distributedCPUVec<double>                   &dst,
+    const distributedCPUVec<double>             &src,
     const std::pair<unsigned int, unsigned int> &cell_range) const
   {
     dealii::VectorizedArray<double> quarter =

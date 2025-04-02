@@ -33,7 +33,7 @@ namespace dftfe
   // constructor
   //
 
-  geoOptCell::geoOptCell(dftBase *       dftPtr,
+  geoOptCell::geoOptCell(dftBase        *dftPtr,
                          const MPI_Comm &mpi_comm_parent,
                          const bool      restart)
     : d_dftPtr(dftPtr)
@@ -557,7 +557,7 @@ namespace dftfe
 
 
   void
-  geoOptCell::precondition(std::vector<double> &      s,
+  geoOptCell::precondition(std::vector<double>       &s,
                            const std::vector<double> &gradient)
   {
     s.resize(getNumberUnknowns() * getNumberUnknowns(), 0.0);

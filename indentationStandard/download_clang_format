@@ -1,18 +1,18 @@
 #!/bin/bash
-## ---------------------------------------------------------------------
+## ------------------------------------------------------------------------
 ##
-## Copyright (C) 2018 by the deal.II authors
+## SPDX-License-Identifier: LGPL-2.1-or-later
+## Copyright (C) 2018 - 2023 by the deal.II authors
 ##
 ## This file is part of the deal.II library.
 ##
-## The deal.II library is free software; you can use it, redistribute
-## it, and/or modify it under the terms of the GNU Lesser General
-## Public License as published by the Free Software Foundation; either
-## version 2.1 of the License, or (at your option) any later version.
-## The full text of the license can be found in the file LICENSE.md at
-## the top level directory of deal.II.
+## Part of the source code is dual licensed under Apache-2.0 WITH
+## LLVM-exception OR LGPL-2.1-or-later. Detailed license information
+## governing the source code and code contributions can be found in
+## LICENSE.md and CONTRIBUTING.md at the top level directory of deal.II.
 ##
-## This file is adapted by Sambit Das for use with DFT-FE code
+## ------------------------------------------------------------------------
+## This file is adapted by Sambit Das and Nikhil Kodali for use with DFT-FE code
 ## -------------------------------------------------------------------------------------
 
 #
@@ -25,22 +25,29 @@
 # This can be done with the compile_clang_format script.
 #
 
+VERSION=16
 PRG="$(cd "$(dirname "$0")" && pwd)/programs"
-CLANG_PATH="${PRG}/clang-6"
+CLANG_PATH="${PRG}/clang-${VERSION}"
 
-URL="https://github.com/dealii/dealii/releases/download/v9.0.0"
+URL="https://github.com/dealii/dealii/releases/download/v9.5.1"
 
 # Find out which kind of OS we are running and set the appropriate settings
 case "${OSTYPE}" in
   linux*)
-    FILENAME="clang-format-6-linux.tar.gz"
+    FILENAME="clang-format-${VERSION}-linux.tar.gz"
     CHECKSUM_CMD="sha256sum"
-    CHECKSUM="26c046456d0a8c109df74e890f46bbe4ad50b035a9febc13ec41c22dabd005a5  $FILENAME"
+    CHECKSUM="e6d92ab1b385f5e4392466a3cf651a9e403a5c212f4c1c3737ee173bc6d79d93  $FILENAME"
     ;;
   darwin*)
-    FILENAME="clang-format-6-darwin.tar.gz"
     CHECKSUM_CMD="shasum"
-    CHECKSUM="8eaf852cc96947245de706f1059e764b7086a82e8bd769da2654936acb1d63e0  $FILENAME"
+    ARCH=$(uname -m)
+    if [[ "$ARCH" == "arm64" ]]; then
+        FILENAME="clang-format-${VERSION}-darwin-arm.tar.gz"
+        CHECKSUM="8b1733414dec5a91e15060f482bebeb0723ac8e8f3115241c1ea595302758b46  $FILENAME"
+    else
+        FILENAME="clang-format-${VERSION}-darwin-intel.tar.gz"
+        CHECKSUM="edff4341fb3b9e25c670902227538be6348d3b91ff88aa676ff8e7bb589b2ae5  $FILENAME"
+    fi
     ;;
   *)
     echo "unknown: ${OSTYPE}"
@@ -60,7 +67,7 @@ then
     exit 1
 fi
 
-echo "Downloading and installing clang-format-6 from ${URL}/${FILENAME}"
+echo "Downloading and installing clang-format-${VERSION} from ${URL}/${FILENAME}"
 mkdir "${CLANG_PATH}"
 
 tmpdir="${TMPDIR:-/tmp}/dealiiclang${RANDOM}${RANDOM}"

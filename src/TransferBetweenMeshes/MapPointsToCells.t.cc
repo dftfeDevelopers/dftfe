@@ -83,8 +83,8 @@ namespace dftfe
                                const std::vector<double> &procUpperRight,
                                const size_type            myProcRank,
                                const size_type            nProcs,
-                               const MPI_Comm &           mpiComm,
-                               std::vector<double> &      allProcsBoundingBoxes)
+                               const MPI_Comm            &mpiComm,
+                               std::vector<double>       &allProcsBoundingBoxes)
       {
         const size_type dim = procLowerLeft.size();
         allProcsBoundingBoxes.resize(2 * dim * nProcs);
@@ -111,10 +111,10 @@ namespace dftfe
       template <size_type dim, size_type M>
       void
       pointsToCell(std::vector<std::shared_ptr<const Cell<dim>>> &srcCells,
-                   const std::vector<std::vector<double>> &       targetPts,
-                   std::vector<std::vector<size_type>> &          cellFoundIds,
+                   const std::vector<std::vector<double>>        &targetPts,
+                   std::vector<std::vector<size_type>>           &cellFoundIds,
                    std::vector<std::vector<double>> &cellRealCoords,
-                   std::vector<bool> &               pointsFound,
+                   std::vector<bool>                &pointsFound,
                    const double                      paramCoordsTol)
       {
         RTreePoint<dim, M> rTreePoint(targetPts);
@@ -169,15 +169,15 @@ namespace dftfe
       void
       getTargetPointsToSend(
         const std::vector<std::shared_ptr<const Cell<dim>>> &srcCells,
-        const std::vector<size_type> &              nonLocalPointLocalIds,
-        const std::vector<std::vector<double>> &    nonLocalPointCoordinates,
-        const std::vector<double> &                 allProcsBoundingBoxes,
+        const std::vector<size_type>               &nonLocalPointLocalIds,
+        const std::vector<std::vector<double>>     &nonLocalPointCoordinates,
+        const std::vector<double>                  &allProcsBoundingBoxes,
         const global_size_type                      locallyOwnedStart,
         const size_type                             myProcRank,
         const size_type                             nProcs,
-        std::vector<size_type> &                    sendToProcIds,
+        std::vector<size_type>                     &sendToProcIds,
         std::vector<std::vector<global_size_type>> &sendToPointsGlobalIds,
-        std::vector<std::vector<double>> &          sendToPointsCoords)
+        std::vector<std::vector<double>>           &sendToPointsCoords)
       {
         sendToProcIds.resize(0);
         sendToPointsGlobalIds.resize(0, std::vector<global_size_type>(0));
@@ -229,13 +229,13 @@ namespace dftfe
       template <size_type dim>
       void
       receivePoints(
-        const std::vector<size_type> &                    sendToProcIds,
+        const std::vector<size_type>                     &sendToProcIds,
         const std::vector<std::vector<global_size_type>> &sendToPointsGlobalIds,
-        const std::vector<std::vector<double>> &          sendToPointsCoords,
-        std::vector<global_size_type> &   receivedPointsGlobalIds,
+        const std::vector<std::vector<double>>           &sendToPointsCoords,
+        std::vector<global_size_type>    &receivedPointsGlobalIds,
         std::vector<std::vector<double>> &receivedPointsCoords,
         unsigned int                      verbosity,
-        const MPI_Comm &                  mpiComm)
+        const MPI_Comm                   &mpiComm)
       {
         int thisRankId;
         MPI_Comm_rank(mpiComm, &thisRankId);
@@ -461,7 +461,7 @@ namespace dftfe
 
     template <size_type dim, size_type M>
     MapPointsToCells<dim, M>::MapPointsToCells(const unsigned int verbosity,
-                                               const MPI_Comm &   mpiComm)
+                                               const MPI_Comm    &mpiComm)
       : d_mpiComm(mpiComm)
     {
       d_verbosity = verbosity;
@@ -473,11 +473,11 @@ namespace dftfe
     void
     MapPointsToCells<dim, M>::init(
       std::vector<std::shared_ptr<const Cell<dim>>>  srcCells,
-      const std::vector<std::vector<double>> &       targetPts,
-      std::vector<std::vector<double>> &             mapCellsToRealCoordinates,
-      std::vector<std::vector<size_type>> &          mapCellLocalToProcLocal,
+      const std::vector<std::vector<double>>        &targetPts,
+      std::vector<std::vector<double>>              &mapCellsToRealCoordinates,
+      std::vector<std::vector<size_type>>           &mapCellLocalToProcLocal,
       std::pair<global_size_type, global_size_type> &locallyOwnedRange,
-      std::vector<global_size_type> &                ghostGlobalIds,
+      std::vector<global_size_type>                 &ghostGlobalIds,
       const double                                   paramCoordsTol)
     {
       MPI_Barrier(d_mpiComm);

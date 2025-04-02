@@ -58,7 +58,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::HOST>::set(std::size_t size,
-                                                     ValueType * ptr,
+                                                     ValueType  *ptr,
                                                      ValueType   val)
     {
       if (size != 0)
@@ -90,7 +90,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::HOST_PINNED>::set(std::size_t size,
-                                                            ValueType * ptr,
+                                                            ValueType  *ptr,
                                                             ValueType   val)
     {
       if (size > 0)
@@ -120,7 +120,7 @@ namespace dftfe
     template <typename ValueType>
     void
     MemoryManager<ValueType, MemorySpace::DEVICE>::set(std::size_t size,
-                                                       ValueType * ptr,
+                                                       ValueType  *ptr,
                                                        ValueType   val)
     {
       if (size > 0)

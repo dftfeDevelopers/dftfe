@@ -52,9 +52,9 @@ namespace dftfe
     init(std::shared_ptr<
            dftfe::basis::
              FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-           &                                basisOperationsPtr,
+                                           &basisOperationsPtr,
          dealii::AffineConstraints<double> &constraintMatrix,
-         distributedCPUVec<double> &        x,
+         distributedCPUVec<double>         &x,
          double                             kerkerMixingParameter,
          const unsigned int                 matrixFreeVectorComponent,
          const unsigned int                 matrixFreeQuadratureComponent);
@@ -104,7 +104,7 @@ namespace dftfe
      *
      */
     void
-    precondition_Jacobi(distributedCPUVec<double> &      dst,
+    precondition_Jacobi(distributedCPUVec<double>       &dst,
                         const distributedCPUVec<double> &src,
                         const double                     omega) const;
 
@@ -120,13 +120,13 @@ namespace dftfe
     /// preconditioning
     void
     subscribe(std::atomic<bool> *const validity,
-              const std::string &      identifier = "") const {};
+              const std::string       &identifier = "") const {};
 
     /// function needed by dealii to mimic SparseMatrix for Jacobi
     /// preconditioning
     void
     unsubscribe(std::atomic<bool> *const validity,
-                const std::string &      identifier = "") const {};
+                const std::string       &identifier = "") const {};
 
     /// function needed by dealii to mimic SparseMatrix
     bool
@@ -141,9 +141,9 @@ namespace dftfe
      *
      */
     void
-    AX(const dealii::MatrixFree<3, double> &        matrixFreeData,
-       distributedCPUVec<double> &                  dst,
-       const distributedCPUVec<double> &            src,
+    AX(const dealii::MatrixFree<3, double>         &matrixFreeData,
+       distributedCPUVec<double>                   &dst,
+       const distributedCPUVec<double>             &src,
        const std::pair<unsigned int, unsigned int> &cell_range) const;
 
 
@@ -175,10 +175,10 @@ namespace dftfe
 
     /// pointer to electron density cell and grad residual data
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      *                                      d_residualQuadValuesPtr;
-    const dealii::DoFHandler<3> *            d_dofHandlerPRefinedPtr;
+                                            *d_residualQuadValuesPtr;
+    const dealii::DoFHandler<3>             *d_dofHandlerPRefinedPtr;
     const dealii::AffineConstraints<double> *d_constraintMatrixPRefinedPtr;
-    const dealii::MatrixFree<3, double> *    d_matrixFreeDataPRefinedPtr;
+    const dealii::MatrixFree<3, double>     *d_matrixFreeDataPRefinedPtr;
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>

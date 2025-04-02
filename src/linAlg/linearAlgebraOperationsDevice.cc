@@ -156,7 +156,7 @@ namespace dftfe
     reformulatedChebyshevFilterOverlapComputeCommunication(
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                                  BLASWrapperPtr,
+                                                          &BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<T1, dftfe::utils::MemorySpace::DEVICE>
         &X1,
@@ -173,7 +173,7 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
         &X2_SP,
       dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
-        &                 Y2_SP,
+                         &Y2_SP,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,
@@ -449,13 +449,13 @@ namespace dftfe
       const unsigned int N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
+                                                      &BLASWrapperPtr,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
+      const MPI_Comm                                  &mpiCommDomain,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
-      const dftParameters &                            dftParams,
+      const dftParameters                             &dftParams,
       const bool                                       rotationMatTranspose,
       const bool                                       isRotationMatLowerTria)
     {
@@ -861,13 +861,13 @@ namespace dftfe
       const unsigned int N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
+                                                      &BLASWrapperPtr,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
+      const MPI_Comm                                  &mpiCommDomain,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
-      const dftParameters &                            dftParams,
+      const dftParameters                             &dftParams,
       const bool                                       rotationMatTranspose)
     {
       const unsigned int maxNumLocalDofs =
@@ -1232,13 +1232,13 @@ namespace dftfe
       const unsigned int N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
+                                                      &BLASWrapperPtr,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
+      const MPI_Comm                                  &mpiCommDomain,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
       const dftfe::ScaLAPACKMatrix<dataTypes::number> &rotationMatPar,
-      const dftParameters &                            dftParams,
+      const dftParameters                             &dftParams,
       const bool                                       rotationMatTranspose)
     {
       const unsigned int maxNumLocalDofs =
@@ -1580,20 +1580,20 @@ namespace dftfe
     void
     fillParallelOverlapMatScalapack(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const dataTypes::number *                            X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const dataTypes::number                             *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
+                                                      &BLASWrapperPtr,
+      const MPI_Comm                                  &mpiCommDomain,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
-      const dftParameters &                            dftParams)
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
+      const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -1627,7 +1627,7 @@ namespace dftfe
                   vectorsBlockSize * N * sizeof(dataTypes::number));
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-                                   OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
+        OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
       dftfe::utils::deviceStream_t streamDeviceCCL = 0;
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
@@ -1802,20 +1802,20 @@ namespace dftfe
     void
     fillParallelOverlapMatScalapackAsyncComputeCommun(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const dataTypes::number *                            X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const dataTypes::number                             *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
+                                                      &BLASWrapperPtr,
+      const MPI_Comm                                  &mpiCommDomain,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
-      const dftParameters &                            dftParams)
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
+      const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -2131,21 +2131,21 @@ namespace dftfe
     void
     fillParallelOverlapMatMixedPrecScalapack(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const dataTypes::number *                            X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const dataTypes::number                             *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
+                                                      &BLASWrapperPtr,
+      const MPI_Comm                                  &mpiCommDomain,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
-      const dftParameters &                            dftParams)
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
+      const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -2565,21 +2565,21 @@ namespace dftfe
     void
     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const dataTypes::number *                            X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const dataTypes::number                             *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
+                                                      &BLASWrapperPtr,
+      const MPI_Comm                                  &mpiCommDomain,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
-      const dftParameters &                            dftParams)
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
+      const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3162,21 +3162,21 @@ namespace dftfe
     void
     fillParallelOverlapMatMixedPrecCommunScalapackAsyncComputeCommun(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const dataTypes::number *                            X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            OXBlock,
+      const dataTypes::number                             *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &OXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
-      const MPI_Comm &                                 mpiCommDomain,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
+                                                      &BLASWrapperPtr,
+      const MPI_Comm                                  &mpiCommDomain,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      overlapMatPar,
-      const dftParameters &                            dftParams)
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &overlapMatPar,
+      const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
       std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3660,18 +3660,18 @@ namespace dftfe
     void
     computeEigenResidualNorm(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      dataTypes::number *                                  X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      dataTypes::number                                   *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &HXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
-      const std::vector<double> &                          eigenValues,
-      const MPI_Comm &                                     mpiCommParent,
-      const MPI_Comm &                                     mpiCommDomain,
-      const MPI_Comm &                                     interBandGroupComm,
+      const std::vector<double>                           &eigenValues,
+      const MPI_Comm                                      &mpiCommParent,
+      const MPI_Comm                                      &mpiCommDomain,
+      const MPI_Comm                                      &interBandGroupComm,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                  BLASWrapperPtr,
+                          &BLASWrapperPtr,
       std::vector<double> &residualNorm,
       const dftParameters &dftParams,
       const bool           useBandParal)
@@ -3820,20 +3820,20 @@ namespace dftfe
     // X^{T}*HConj*XConj
     void
     XtHX(operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-         const dataTypes::number *                            X,
-         distributedDeviceVec<dataTypes::number> &            XBlock,
-         distributedDeviceVec<dataTypes::number> &            HXBlock,
+         const dataTypes::number                             *X,
+         distributedDeviceVec<dataTypes::number>             &XBlock,
+         distributedDeviceVec<dataTypes::number>             &HXBlock,
          const unsigned int                                   M,
          const unsigned int                                   N,
          std::shared_ptr<
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-           &                                              BLASWrapperPtr,
+                                                         &BLASWrapperPtr,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+         dftfe::ScaLAPACKMatrix<dataTypes::number>       &projHamPar,
          utils::DeviceCCLWrapper &devicecclMpiCommDomain,
-         const MPI_Comm &         mpiCommDomain,
-         const MPI_Comm &         interBandGroupComm,
-         const dftParameters &    dftParams,
+         const MPI_Comm          &mpiCommDomain,
+         const MPI_Comm          &interBandGroupComm,
+         const dftParameters     &dftParams,
          const bool               onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -3980,20 +3980,20 @@ namespace dftfe
     void
     XtHXOverlapComputeCommun(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const dataTypes::number *                            X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const dataTypes::number                             *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &HXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
+                                                      &BLASWrapperPtr,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 mpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
-      const dftParameters &                            dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &projHamPar,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &mpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
+      const dftParameters                             &dftParams,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       /////////////PSEUDO CODE for the implementation below for Overlapping
@@ -4364,21 +4364,21 @@ namespace dftfe
     void
     XtHXMixedPrecOverlapComputeCommun(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const dataTypes::number *                            X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const dataTypes::number                             *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &HXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
+                                                      &BLASWrapperPtr,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 mpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
-      const dftParameters &                            dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &projHamPar,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &mpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
+      const dftParameters                             &dftParams,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
@@ -4966,21 +4966,21 @@ namespace dftfe
     void
     XtHXMixedPrecCommunOverlapComputeCommun(
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
-      const dataTypes::number *                            X,
-      distributedDeviceVec<dataTypes::number> &            XBlock,
-      distributedDeviceVec<dataTypes::number> &            HXBlock,
+      const dataTypes::number                             *X,
+      distributedDeviceVec<dataTypes::number>             &XBlock,
+      distributedDeviceVec<dataTypes::number>             &HXBlock,
       const unsigned int                                   M,
       const unsigned int                                   N,
       const unsigned int                                   Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                              BLASWrapperPtr,
+                                                      &BLASWrapperPtr,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      utils::DeviceCCLWrapper &                        devicecclMpiCommDomain,
-      const MPI_Comm &                                 mpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
-      const dftParameters &                            dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &projHamPar,
+      utils::DeviceCCLWrapper                         &devicecclMpiCommDomain,
+      const MPI_Comm                                  &mpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
+      const dftParameters                             &dftParams,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
       /////////////PSEUDO CODE for the implementation below for Overlapping
@@ -5493,7 +5493,7 @@ namespace dftfe
     reformulatedChebyshevFilterOverlapComputeCommunication(
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                                  BLASWrapperPtr,
+                                                          &BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE> &X1,
@@ -5514,7 +5514,7 @@ namespace dftfe
         &X2_SP,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &                 Y2_SP,
+                         &Y2_SP,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,
@@ -5526,7 +5526,7 @@ namespace dftfe
     reformulatedChebyshevFilterOverlapComputeCommunication(
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                                  BLASWrapperPtr,
+                                                          &BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE> &X1,
@@ -5547,7 +5547,7 @@ namespace dftfe
         &X2_SP,
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &                 Y2_SP,
+                         &Y2_SP,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,

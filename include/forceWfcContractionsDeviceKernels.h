@@ -30,21 +30,21 @@ namespace dftfe
       const unsigned int  blockSizeNlp,
       const unsigned int  numQuadsNLP,
       const unsigned int  startingIdNlp,
-      const ValueType *   projectorKetTimesVectorPar,
-      const ValueType *   gradPsiOrPsiQuadValuesNLP,
-      const double *      partialOccupancies,
+      const ValueType    *projectorKetTimesVectorPar,
+      const ValueType    *gradPsiOrPsiQuadValuesNLP,
+      const double       *partialOccupancies,
       const unsigned int *nonTrivialIdToElemIdMap,
       const unsigned int *projecterKetTimesFlattenedVectorLocalIds,
-      ValueType *         nlpContractionContribution);
+      ValueType          *nlpContractionContribution);
 
     template <typename ValueType>
     void
     computeELocWfcEshelbyTensorContributions(const unsigned int wfcBlockSize,
                                              const unsigned int cellsBlockSize,
                                              const unsigned int numQuads,
-                                             const ValueType *  psiQuadValues,
+                                             const ValueType   *psiQuadValues,
                                              const ValueType *gradPsiQuadValues,
-                                             const double *   eigenValues,
+                                             const double    *eigenValues,
                                              const double *partialOccupancies,
 #    ifdef USE_COMPLEX
                                              const double kcoordx,

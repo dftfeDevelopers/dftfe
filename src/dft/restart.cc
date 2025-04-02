@@ -32,13 +32,13 @@ namespace dftfe
   {
     std::vector<double>
     getFractionalCoordinates(const std::vector<double> &latticeVectors,
-                             const dealii::Point<3> &   point,
-                             const dealii::Point<3> &   corner);
+                             const dealii::Point<3>    &point,
+                             const dealii::Point<3>    &corner);
     std::vector<double>
-    wrapAtomsAcrossPeriodicBc(const dealii::Point<3> &   cellCenteredCoord,
-                              const dealii::Point<3> &   corner,
+    wrapAtomsAcrossPeriodicBc(const dealii::Point<3>    &cellCenteredCoord,
+                              const dealii::Point<3>    &corner,
                               const std::vector<double> &latticeVectors,
-                              const std::vector<bool> &  periodicBc);
+                              const std::vector<bool>   &periodicBc);
   } // namespace internal
 
   template <unsigned int              FEOrder,

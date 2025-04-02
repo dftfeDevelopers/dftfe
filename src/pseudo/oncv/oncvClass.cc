@@ -21,9 +21,9 @@ namespace dftfe
 {
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   oncvClass<ValueType, memorySpace>::oncvClass(
-    const MPI_Comm &                            mpi_comm_parent,
-    const std::string &                         scratchFolderName,
-    const std::set<unsigned int> &              atomTypes,
+    const MPI_Comm                             &mpi_comm_parent,
+    const std::string                          &scratchFolderName,
+    const std::set<unsigned int>               &atomTypes,
     const bool                                  floatingNuclearCharges,
     const unsigned int                          nOMPThreads,
     const std::map<unsigned int, unsigned int> &atomAttributes,
@@ -119,7 +119,7 @@ namespace dftfe
     unsigned int                             nlpspQuadratureId,
     unsigned int                             densityQuadratureIdElectro,
     std::shared_ptr<excManager<memorySpace>> excFunctionalPtr,
-    const std::vector<std::vector<double>> & atomLocations,
+    const std::vector<std::vector<double>>  &atomLocations,
     unsigned int                             numEigenValues,
     const bool                               singlePrecNonLocalOperator,
     const bool computeSphericalFnTimesXNonLocalOperator)
@@ -212,10 +212,10 @@ namespace dftfe
   void
   oncvClass<ValueType, memorySpace>::initialiseNonLocalContribution(
     const std::vector<std::vector<double>> &atomLocations,
-    const std::vector<int> &                imageIds,
+    const std::vector<int>                 &imageIds,
     const std::vector<std::vector<double>> &periodicCoords,
-    const std::vector<double> &             kPointWeights,
-    const std::vector<double> &             kPointCoordinates,
+    const std::vector<double>              &kPointWeights,
+    const std::vector<double>              &kPointCoordinates,
     const bool                              updateNonlocalSparsity)
   {
     std::vector<unsigned int> atomicNumbers;
@@ -280,17 +280,17 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   oncvClass<ValueType, memorySpace>::initialiseNonLocalContribution(
-    const std::vector<std::vector<double>> &        atomLocations,
-    const std::vector<int> &                        imageIds,
-    const std::vector<std::vector<double>> &        periodicCoords,
-    const std::vector<double> &                     kPointWeights,
-    const std::vector<double> &                     kPointCoordinates,
+    const std::vector<std::vector<double>>         &atomLocations,
+    const std::vector<int>                         &imageIds,
+    const std::vector<std::vector<double>>         &periodicCoords,
+    const std::vector<double>                      &kPointWeights,
+    const std::vector<double>                      &kPointCoordinates,
     const bool                                      updateNonlocalSparsity,
     const std::map<unsigned int, std::vector<int>> &sparsityPattern,
     const std::vector<std::vector<dealii::CellId>>
       &elementIdsInAtomCompactSupport,
     const std::vector<std::vector<unsigned int>>
-      &                              elementIndexesInAtomCompactSupport,
+                                    &elementIndexesInAtomCompactSupport,
     const std::vector<unsigned int> &atomIdsInCurrentProcess,
     unsigned int                     numberElements)
   {
@@ -632,10 +632,10 @@ namespace dftfe
   void
   oncvClass<ValueType, memorySpace>::setImageCoordinates(
     const std::vector<std::vector<double>> &atomLocations,
-    const std::vector<int> &                imageIds,
+    const std::vector<int>                 &imageIds,
     const std::vector<std::vector<double>> &periodicCoords,
-    std::vector<unsigned int> &             imageIdsTemp,
-    std::vector<double> &                   imageCoordsTemp)
+    std::vector<unsigned int>              &imageIdsTemp,
+    std::vector<double>                    &imageCoordsTemp)
   {
     imageIdsTemp.clear();
     imageCoordsTemp.clear();

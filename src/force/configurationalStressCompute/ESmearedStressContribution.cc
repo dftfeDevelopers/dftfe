@@ -25,9 +25,10 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  void forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  void
+  forceClass<FEOrder, FEOrderElectro, memorySpace>::
     addEPhiTotSmearedStressContribution(
-      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<
@@ -123,9 +124,10 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  void forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  void
+  forceClass<FEOrder, FEOrderElectro, memorySpace>::
     addEVselfSmearedStressContribution(
-      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<

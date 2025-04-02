@@ -48,7 +48,7 @@ namespace dftfe
 
     nudgedElasticBandClass(const std::string  parameter_file,
                            const std::string  restartFilesPath,
-                           const MPI_Comm &   mpi_comm_parent,
+                           const MPI_Comm    &mpi_comm_parent,
                            const bool         restart,
                            const int          verbosity,
                            const bool         useDevice,
@@ -141,7 +141,7 @@ namespace dftfe
 
   private:
     std::vector<std::unique_ptr<dftfeWrapper>> d_dftfeWrapper;
-    dftBase *                                  d_dftPtr;
+    dftBase                                   *d_dftPtr;
     std::unique_ptr<nonLinearSolver>           d_nonLinearSolverPtr;
     // parallel communication objects
     const MPI_Comm d_mpiCommParent;

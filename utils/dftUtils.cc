@@ -99,7 +99,7 @@ namespace dftfe
     void
     cross_product(const std::vector<double> &a,
                   const std::vector<double> &b,
-                  std::vector<double> &      crossProductVector)
+                  std::vector<double>       &crossProductVector)
     {
       std::vector<double> crossProduct(a.size(), 0.0);
       crossProduct[0] = a[1] * b[2] - a[2] * b[1];
@@ -111,7 +111,7 @@ namespace dftfe
 
     void
     transformDomainBoundingVectors(
-      std::vector<std::vector<double>> &  domainBoundingVectors,
+      std::vector<std::vector<double>>   &domainBoundingVectors,
       const dealii::Tensor<2, 3, double> &deformationGradient)
     {
       for (unsigned int idim = 0; idim < 3; ++idim)
@@ -174,13 +174,13 @@ namespace dftfe
 
     void
     writeDataVTUParallelLowestPoolId(const dealii::DoFHandler<3> &dofHandler,
-                                     const dealii::DataOut<3> &   dataOut,
-                                     const MPI_Comm &             mpiCommParent,
-                                     const MPI_Comm &             domainComm,
-                                     const MPI_Comm &             kPointComm,
-                                     const MPI_Comm &             bandGroupComm,
-                                     const std::string &          folderName,
-                                     const std::string &          fileName)
+                                     const dealii::DataOut<3>    &dataOut,
+                                     const MPI_Comm              &mpiCommParent,
+                                     const MPI_Comm              &domainComm,
+                                     const MPI_Comm              &kPointComm,
+                                     const MPI_Comm              &bandGroupComm,
+                                     const std::string           &folderName,
+                                     const std::string           &fileName)
     {
       const unsigned int poolId =
         dealii::Utilities::MPI::this_mpi_process(kPointComm);
@@ -240,7 +240,7 @@ namespace dftfe
 
     void
     createBandParallelizationIndices(
-      const MPI_Comm &           interBandGroupComm,
+      const MPI_Comm            &interBandGroupComm,
       const unsigned int         numBands,
       std::vector<unsigned int> &bandGroupLowHighPlusOneIndices)
     {
@@ -265,7 +265,7 @@ namespace dftfe
 
     void
     createKpointParallelizationIndices(
-      const MPI_Comm &  interKptPoolComm,
+      const MPI_Comm   &interKptPoolComm,
       const int         numberIndices,
       std::vector<int> &kptGroupLowHighPlusOneIndices)
     {
@@ -297,7 +297,7 @@ namespace dftfe
     }
 
 
-    Pool::Pool(const MPI_Comm &   mpi_communicator,
+    Pool::Pool(const MPI_Comm    &mpi_communicator,
                const unsigned int npool,
                const int          verbosity)
     {

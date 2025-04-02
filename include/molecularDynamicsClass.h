@@ -41,7 +41,7 @@ namespace dftfe
      */
     molecularDynamicsClass(const std::string parameter_file,
                            const std::string restartFilesPath,
-                           const MPI_Comm &  mpi_comm_parent,
+                           const MPI_Comm   &mpi_comm_parent,
                            const bool        restart,
                            const int         verbosity,
                            const bool        useDevice);
@@ -70,7 +70,7 @@ namespace dftfe
   private:
     // pointer to dft class
     std::unique_ptr<dftfeWrapper> d_dftfeWrapper;
-    dftBase *                     d_dftPtr;
+    dftBase                      *d_dftPtr;
 
     // parallel communication objects
     const MPI_Comm     d_mpiCommParent;
@@ -118,14 +118,14 @@ namespace dftfe
      *
      */
     int
-    mdNVE(std::vector<double> &                      KineticEnergyVector,
-          std::vector<double> &                      InternalEnergyVector,
-          std::vector<double> &                      EntropicEnergyVector,
-          std::vector<double> &                      TotalEnergyVector,
+    mdNVE(std::vector<double>                       &KineticEnergyVector,
+          std::vector<double>                       &InternalEnergyVector,
+          std::vector<double>                       &EntropicEnergyVector,
+          std::vector<double>                       &TotalEnergyVector,
           std::vector<dealii::Tensor<1, 3, double>> &displacements,
-          std::vector<double> &                      velocity,
-          std::vector<double> &                      force,
-          const std::vector<double> &                atomMass);
+          std::vector<double>                       &velocity,
+          std::vector<double>                       &force,
+          const std::vector<double>                 &atomMass);
     /**
 
     @brief mdNVTnosehoverchainsThermostat Performs a Canonical Ensemble MD calculation. The inital temperature is set by runMD().
@@ -148,14 +148,14 @@ namespace dftfe
      */
     int
     mdNVTnosehoverchainsThermostat(
-      std::vector<double> &                      KineticEnergyVector,
-      std::vector<double> &                      InternalEnergyVector,
-      std::vector<double> &                      EntropicEnergyVector,
-      std::vector<double> &                      TotalEnergyVector,
+      std::vector<double>                       &KineticEnergyVector,
+      std::vector<double>                       &InternalEnergyVector,
+      std::vector<double>                       &EntropicEnergyVector,
+      std::vector<double>                       &TotalEnergyVector,
       std::vector<dealii::Tensor<1, 3, double>> &displacements,
-      std::vector<double> &                      velocity,
-      std::vector<double> &                      force,
-      const std::vector<double> &                atomMass);
+      std::vector<double>                       &velocity,
+      std::vector<double>                       &force,
+      const std::vector<double>                 &atomMass);
 
     /**
 
@@ -181,14 +181,14 @@ namespace dftfe
      */
     int
     mdNVTrescaleThermostat(
-      std::vector<double> &                      KineticEnergyVector,
-      std::vector<double> &                      InternalEnergyVector,
-      std::vector<double> &                      EntropicEnergyVector,
-      std::vector<double> &                      TotalEnergyVector,
+      std::vector<double>                       &KineticEnergyVector,
+      std::vector<double>                       &InternalEnergyVector,
+      std::vector<double>                       &EntropicEnergyVector,
+      std::vector<double>                       &TotalEnergyVector,
       std::vector<dealii::Tensor<1, 3, double>> &displacements,
-      std::vector<double> &                      velocity,
-      std::vector<double> &                      force,
-      const std::vector<double> &                atomMass);
+      std::vector<double>                       &velocity,
+      std::vector<double>                       &force,
+      const std::vector<double>                 &atomMass);
 
 
     /**
@@ -214,9 +214,9 @@ namespace dftfe
                        std::vector<double> &EntropicEnergyVector,
                        std::vector<double> &TotalEnergyVector,
                        std::vector<dealii::Tensor<1, 3, double>> &displacements,
-                       std::vector<double> &                      velocity,
-                       std::vector<double> &                      force,
-                       const std::vector<double> &                atomMass);
+                       std::vector<double>                       &velocity,
+                       std::vector<double>                       &force,
+                       const std::vector<double>                 &atomMass);
 
 
     /**
@@ -236,7 +236,7 @@ namespace dftfe
      *
      */
     double
-    RescaleVelocities(std::vector<double> &      v,
+    RescaleVelocities(std::vector<double>       &v,
                       const std::vector<double> &M,
                       double                     Temperature);
 
@@ -298,10 +298,10 @@ namespace dftfe
      *
      */
     double
-    velocityVerlet(std::vector<double> &                      v,
+    velocityVerlet(std::vector<double>                       &v,
                    std::vector<dealii::Tensor<1, 3, double>> &r,
-                   const std::vector<double> &                atomMass,
-                   std::vector<double> &                      forceOnAtoms);
+                   const std::vector<double>                 &atomMass,
+                   std::vector<double>                       &forceOnAtoms);
 
 
 
@@ -320,8 +320,8 @@ namespace dftfe
 
     void
     writeRestartFile(const std::vector<dealii::Tensor<1, 3, double>> &disp,
-                     const std::vector<double> &                      velocity,
-                     const std::vector<double> &                      force,
+                     const std::vector<double>                       &velocity,
+                     const std::vector<double>                       &force,
                      const std::vector<double> &KineticEnergyVector,
                      const std::vector<double> &InternalEnergyVector,
                      const std::vector<double> &TotalEnergyVector,
@@ -344,12 +344,12 @@ namespace dftfe
  *
  */
     void
-      InitialiseFromRestartFile(std::vector<dealii::Tensor<1, 3, double>> &disp,
-                                std::vector<double> &velocity,
-                                std::vector<double> &force,
-                                std::vector<double> &KE,
-                                std::vector<double> &IE,
-                                std::vector<double> &TE);
+    InitialiseFromRestartFile(std::vector<dealii::Tensor<1, 3, double>> &disp,
+                              std::vector<double> &velocity,
+                              std::vector<double> &force,
+                              std::vector<double> &KE,
+                              std::vector<double> &IE,
+                              std::vector<double> &TE);
 
     /**
 
@@ -437,7 +437,7 @@ namespace dftfe
     int
     checkRestart(std::string &coordinatesFile,
                  std::string &domainVectorsFile,
-                 bool &       scfRestart);
+                 bool        &scfRestart);
 
     /**
      * @brief  DensityExtrapolation Identifies the folder containing the restart file, sets the path of coordinates file and restursn the starting timestep    *

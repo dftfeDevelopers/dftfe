@@ -34,7 +34,7 @@ namespace dftfe
   // constructor
   //
 
-  geoOptIon::geoOptIon(dftBase *       dftPtr,
+  geoOptIon::geoOptIon(dftBase        *dftPtr,
                        const MPI_Comm &mpi_comm_parent,
                        const bool      restart)
     : d_dftPtr(dftPtr)
@@ -498,7 +498,7 @@ namespace dftfe
 
 
   void
-  geoOptIon::precondition(std::vector<double> &      s,
+  geoOptIon::precondition(std::vector<double>       &s,
                           const std::vector<double> &gradient)
   {
     if (d_solverRestart)
@@ -575,8 +575,8 @@ namespace dftfe
                 double rij = 0;
                 int    jatomId =
                   j < numberGlobalAtoms ?
-                    j :
-                    d_dftPtr->getImageAtomIDs()[j - numberGlobalAtoms];
+                       j :
+                       d_dftPtr->getImageAtomIDs()[j - numberGlobalAtoms];
                 if (j < numberGlobalAtoms)
                   for (int k = 2; k < 5; ++k)
                     {

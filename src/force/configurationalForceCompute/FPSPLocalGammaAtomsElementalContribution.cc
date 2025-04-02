@@ -31,13 +31,13 @@ namespace dftfe
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     FPSPLocalGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
-        &                                  forceContributionFPSPLocalGammaAtoms,
-      dealii::FEValues<3> &                feValues,
-      dealii::FEFaceValues<3> &            feFaceValues,
+                                          &forceContributionFPSPLocalGammaAtoms,
+      dealii::FEValues<3>                 &feValues,
+      dealii::FEFaceValues<3>             &feFaceValues,
       dealii::FEEvaluation<3,
                            1,
                            C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                           3> &            forceEval,
+                           3>             &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const unsigned int                   cell,
@@ -46,7 +46,7 @@ namespace dftfe
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtoms,
+                                                      &pseudoVLocAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
       const std::vector<std::map<dealii::CellId, unsigned int>>
         &cellsVselfBallsClosestAtomIdDofHandler)
@@ -82,7 +82,7 @@ namespace dftfe
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
       vselfDerRQuads(numQuadPoints, zeroTensor1);
     dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-                                               totalContribution(numQuadPoints, zeroTensor1);
+      totalContribution(numQuadPoints, zeroTensor1);
     std::vector<std::vector<dealii::Point<3>>> quadPointsSubCells(
       numSubCells, std::vector<dealii::Point<3>>(numQuadPoints));
 
@@ -412,9 +412,9 @@ namespace dftfe
       const std::map<unsigned int, std::vector<double>>
         &forceContributionFPSPLocalGammaAtoms,
       const std::map<std::pair<unsigned int, unsigned int>, unsigned int>
-        &                                      atomsForceDofs,
+                                              &atomsForceDofs,
       const dealii::AffineConstraints<double> &constraintsNoneForce,
-      distributedCPUVec<double> &              configForceVectorLinFE)
+      distributedCPUVec<double>               &configForceVectorLinFE)
   {
     for (unsigned int iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
       {

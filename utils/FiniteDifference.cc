@@ -31,8 +31,8 @@ namespace dftfe
       const unsigned int totalStencilSize,
       const double       h,
       const unsigned int numQuadPoints,
-      const double *     stencilDataAllQuadPoints,
-      double *           firstOrderDerivative)
+      const double      *stencilDataAllQuadPoints,
+      double            *firstOrderDerivative)
     {
       std::string errMsg = "Stencil size invalid. ";
       dftfe::utils::throwException(totalStencilSize > 2 &&
@@ -171,10 +171,10 @@ namespace dftfe
     void
     FiniteDifference::firstOrderDerivativeOneVariableCentral(
       const unsigned int totalStencilSize,
-      const double *     h,
+      const double      *h,
       const unsigned int numQuadPoints,
-      const double *     stencilDataAllQuadPoints,
-      double *           firstOrderDerivative)
+      const double      *stencilDataAllQuadPoints,
+      double            *firstOrderDerivative)
     {
       std::string errMsg = "Stencil size invalid. ";
       dftfe::utils::throwException(totalStencilSize > 2 &&
@@ -315,8 +315,8 @@ namespace dftfe
       const unsigned int totalStencilSize,
       const double       h,
       const unsigned int numQuadPoints,
-      const double *     stencilDataAllQuadPoints,
-      double *           secondOrderDerivative)
+      const double      *stencilDataAllQuadPoints,
+      double            *secondOrderDerivative)
     {
       std::string errMsg = "Stencil size invalid. ";
       dftfe::utils::throwException(totalStencilSize > 2 &&
@@ -467,10 +467,10 @@ namespace dftfe
     void
     FiniteDifference::secondOrderDerivativeOneVariableCentral(
       const unsigned int totalStencilSize,
-      const double *     h,
+      const double      *h,
       const unsigned int numQuadPoints,
-      const double *     stencilDataAllQuadPoints,
-      double *           secondOrderDerivative)
+      const double      *stencilDataAllQuadPoints,
+      double            *secondOrderDerivative)
     {
       std::string errMsg = "Stencil size invalid. ";
       dftfe::utils::throwException(totalStencilSize > 2 &&

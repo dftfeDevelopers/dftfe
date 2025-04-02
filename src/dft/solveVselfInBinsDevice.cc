@@ -35,7 +35,7 @@ namespace dftfe
           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
           &BLASWrapperPtr,
         dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
-          &                           constraintsMatrixDataInfoDevice,
+                                     &constraintsMatrixDataInfoDevice,
         distributedDeviceVec<double> &src,
         distributedDeviceVec<double> &temp,
         const unsigned int            totalLocallyOwnedCells,
@@ -51,7 +51,7 @@ namespace dftfe
           &inhomoIdsColoredVecFlattenedD,
         const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
                                           dftfe::utils::MemorySpace::DEVICE>
-          &                           cellLocalProcIndexIdMapD,
+                                     &cellLocalProcIndexIdMapD,
         distributedDeviceVec<double> &dst,
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
           &cellNodalVectorD,
@@ -152,11 +152,11 @@ namespace dftfe
       }
 
       void
-      precondition_Jacobi(const double *     src,
-                          const double *     diagonalA,
+      precondition_Jacobi(const double      *src,
+                          const double      *diagonalA,
                           const unsigned int numberVectors,
                           const unsigned int localSize,
-                          double *           dst)
+                          double            *dst)
       {
         if (localSize > 0)
           diagScale(numberVectors, localSize, src, diagonalA, dst);
@@ -165,13 +165,13 @@ namespace dftfe
       void
       computeResidualSq(const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
                           dftfe::utils::MemorySpace::DEVICE>> &BLASWrapperPtr,
-                        const double *                         vec1,
-                        const double *                         vec2,
-                        double *                               vecTemp,
-                        const double *                         onesVec,
+                        const double                          *vec1,
+                        const double                          *vec2,
+                        double                                *vecTemp,
+                        const double                          *onesVec,
                         const unsigned int                     numberVectors,
                         const unsigned int                     localSize,
-                        double *                               residualNormSq)
+                        double                                *residualNormSq)
       {
         if (localSize > 0)
           dotProductContributionBlocked(numberVectors * localSize,
@@ -203,19 +203,19 @@ namespace dftfe
         &cellGradNIGradNJIntergralDevice,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                      BLASWrapperPtr,
-      const dealii::MatrixFree<3, double> &    matrixFreeData,
+                                              &BLASWrapperPtr,
+      const dealii::MatrixFree<3, double>     &matrixFreeData,
       const unsigned int                       mfDofHandlerIndex,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
-      const double *                           bH,
-      const double *                           diagonalAH,
-      const double *                           inhomoIdsColoredVecFlattenedH,
+      const double                            *bH,
+      const double                            *diagonalAH,
+      const double                            *inhomoIdsColoredVecFlattenedH,
       const unsigned int                       localSize,
       const unsigned int                       ghostSize,
       const unsigned int                       numberBins,
-      const MPI_Comm &                         mpiCommParent,
-      const MPI_Comm &                         mpiCommDomain,
-      double *                                 xH,
+      const MPI_Comm                          &mpiCommParent,
+      const MPI_Comm                          &mpiCommDomain,
+      double                                  *xH,
       const int                                verbosity,
       const unsigned int                       maxLinearSolverIterations,
       const double                             absLinearSolverTolerance,
@@ -347,7 +347,7 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &BLASWrapperPtr,
       dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
-        &           constraintsMatrixDataInfoDevice,
+                   &constraintsMatrixDataInfoDevice,
       const double *bD,
       const double *diagonalAD,
       const dftfe::utils::MemoryStorage<double,
@@ -358,7 +358,7 @@ namespace dftfe
         &inhomoIdsColoredVecFlattenedD,
       const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &                           cellLocalProcIndexIdMapD,
+                                   &cellLocalProcIndexIdMapD,
       const unsigned int            localSize,
       const unsigned int            ghostSize,
       const unsigned int            numberBins,
@@ -367,8 +367,8 @@ namespace dftfe
       const int                     debugLevel,
       const unsigned int            maxIter,
       const double                  absTol,
-      const MPI_Comm &              mpiCommParent,
-      const MPI_Comm &              mpiCommDomain,
+      const MPI_Comm               &mpiCommParent,
+      const MPI_Comm               &mpiCommDomain,
       distributedDeviceVec<double> &x)
     {
       int this_process;

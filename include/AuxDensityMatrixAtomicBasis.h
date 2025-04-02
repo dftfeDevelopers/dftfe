@@ -24,7 +24,7 @@ namespace dftfe
     reinit(
       const AtomicBasis::BasisType basisType,
       const std::vector<std::pair<std::string, std::vector<double>>>
-        &                                                 atomCoords,
+                                                         &atomCoords,
       const std::unordered_map<std::string, std::string> &atomBasisFileNames,
       const int                                           nSpin,
       const int                                           maxDerOrder);
@@ -64,7 +64,7 @@ namespace dftfe
       const std::unordered_map<std::string, std::vector<dataTypes::number>>
         &projectionInputsDataType,
       const std::unordered_map<std::string, std::vector<double>>
-        &       projectionInputsReal,
+               &projectionInputsReal,
       const int iSpin) override;
 
     void

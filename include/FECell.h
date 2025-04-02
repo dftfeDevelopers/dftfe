@@ -49,7 +49,7 @@ namespace dftfe
 
       FECell(
         typename dealii::DoFHandler<dim>::active_cell_iterator dealiiFECellIter,
-        const dealii::FiniteElement<dim, dim> &                fe);
+        const dealii::FiniteElement<dim, dim>                 &fe);
 
       void
       reinit(DealiiFECellIterator dealiiFECellIter);
@@ -82,7 +82,7 @@ namespace dftfe
       void
       getShapeFuncValuesFromParametricPoints(
         unsigned int                    numPointsInCell,
-        const std::vector<double> &     parametricPoints,
+        const std::vector<double>      &parametricPoints,
         std::vector<dataTypes::number> &shapeFuncValues,
         unsigned int                    cellShapeFuncStartIndex,
         unsigned int                    numDofsPerElement) const;
@@ -110,5 +110,5 @@ namespace dftfe
 
 #include "../utils/FECell.t.cc"
 
-//#include "../utils/FECell.t.cc"
+// #include "../utils/FECell.t.cc"
 #endif // DFTFE_FECELL_H

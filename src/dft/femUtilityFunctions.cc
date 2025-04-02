@@ -29,7 +29,7 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                              basisOperationsPtr,
+                                      &basisOperationsPtr,
       const unsigned int               dofHandlerId,
       const unsigned int               quadratureId,
       const distributedCPUVec<double> &nodalField,
@@ -38,7 +38,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &quadratureGradValueData,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &        quadratureHessianValueData,
+                &quadratureHessianValueData,
       const bool isEvaluateGradData,
       const bool isEvaluateHessianData)
   {
@@ -163,14 +163,14 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                              basisOperationsPtr,
+                                      &basisOperationsPtr,
       const unsigned int               dofHandlerId,
       const unsigned int               quadratureId,
       const distributedCPUVec<double> &nodalField,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &quadratureValueData,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &        quadratureGradValueData,
+                &quadratureGradValueData,
       const bool isEvaluateGradData)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
@@ -265,14 +265,14 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                              basisOperationsPtr,
+                                      &basisOperationsPtr,
       const unsigned int               dofHandlerId,
       const unsigned int               quadratureId,
       const distributedCPUVec<double> &nodalField,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &quadratureValueData,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &        quadratureGradValueData,
+                &quadratureGradValueData,
       const bool isEvaluateGradData)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
@@ -370,7 +370,7 @@ namespace dftfe
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::fieldGradl2Norm(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
-    const distributedCPUVec<double> &    nodalField)
+    const distributedCPUVec<double>     &nodalField)
 
   {
     dealii::FEEvaluation<
@@ -428,12 +428,12 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                                      basisOperationsPtr,
+                                            &basisOperationsPtr,
     const dealii::AffineConstraints<double> &constraintMatrix,
     const unsigned int                       dofHandlerId,
     const unsigned int                       quadratureId,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                        quadratureValueData,
+                              &quadratureValueData,
     distributedCPUVec<double> &nodalField)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);

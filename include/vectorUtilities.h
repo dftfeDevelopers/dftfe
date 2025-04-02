@@ -43,13 +43,13 @@ namespace dftfe
      */
     void
     createParallelConstraintMatrixFromSerial(
-      const dealii::Triangulation<3, 3> &     serTria,
-      const dealii::DoFHandler<3> &           dofHandlerPar,
-      const MPI_Comm &                        mpi_comm_parent,
-      const MPI_Comm &                        mpi_comm_domain,
+      const dealii::Triangulation<3, 3>      &serTria,
+      const dealii::DoFHandler<3>            &dofHandlerPar,
+      const MPI_Comm                         &mpi_comm_parent,
+      const MPI_Comm                         &mpi_comm_domain,
       const std::vector<std::vector<double>> &domainBoundingVectors,
-      dealii::AffineConstraints<double> &     periodicHangingConstraints,
-      dealii::AffineConstraints<double> &     onlyHangingConstraints,
+      dealii::AffineConstraints<double>      &periodicHangingConstraints,
+      dealii::AffineConstraints<double>      &onlyHangingConstraints,
       const int                               verbosity,
       const bool                              periodicX,
       const bool                              periodicY,
@@ -68,7 +68,7 @@ namespace dftfe
     void
     createDealiiVector(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                   partitioner,
+                           &partitioner,
       const unsigned int    blockSize,
       distributedCPUVec<T> &flattenedArray);
 
@@ -87,7 +87,7 @@ namespace dftfe
     computeCellLocalIndexSetMap(
       const std::shared_ptr<
         const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
-        &                                  partitioner,
+                                          &partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
       const unsigned int                   blockSize,
@@ -110,12 +110,12 @@ namespace dftfe
     computeCellLocalIndexSetMap(
       const std::shared_ptr<
         const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
-        &                                  partitioner,
+                                          &partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
       const unsigned int                   blockSize,
       std::vector<dealii::types::global_dof_index>
-        &                        flattenedArrayMacroCellLocalProcIndexId,
+                                &flattenedArrayMacroCellLocalProcIndexId,
       std::vector<unsigned int> &normalCellIdToMacroCellIdMap,
       std::vector<unsigned int> &macroCellIdToNormalCellIdMap,
       std::vector<dealii::types::global_dof_index>
@@ -134,7 +134,7 @@ namespace dftfe
     computeCellLocalIndexSetMap(
       const std::shared_ptr<
         const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
-        &                                  partitioner,
+                                          &partitioner,
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
       const unsigned int                   blockSize,
@@ -169,19 +169,19 @@ namespace dftfe
      */
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::complex<double> *                flattenedArray,
+      const std::complex<double>                 *flattenedArray,
       const unsigned int                          totalNumberComponents,
       const unsigned int                          localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
       const std::vector<dealii::types::global_dof_index>
         &localProcDofIndicesReal,
       const std::vector<dealii::types::global_dof_index>
-        &                                     localProcDofIndicesImag,
+                                             &localProcDofIndicesImag,
       std::vector<distributedCPUVec<double>> &componentVectors);
 
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const std::complex<double> *                flattenedArray,
+      const std::complex<double>                 *flattenedArray,
       const unsigned int                          totalNumberComponents,
       const unsigned int                          localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
@@ -208,11 +208,11 @@ namespace dftfe
      */
     void
     copyFlattenedSTLVecToSingleCompVec(
-      const double *                              flattenedArray,
+      const double                               *flattenedArray,
       const unsigned int                          totalNumberComponents,
       const unsigned int                          localVectorSize,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
-      std::vector<distributedCPUVec<double>> &    componentVectors);
+      std::vector<distributedCPUVec<double>>     &componentVectors);
 
 #endif
 
@@ -252,7 +252,7 @@ namespace dftfe
       const std::vector<dealii::types::global_dof_index>
         &localProcDofIndicesReal,
       const std::vector<dealii::types::global_dof_index>
-        &                                     localProcDofIndicesImag,
+                                             &localProcDofIndicesImag,
       std::vector<distributedCPUVec<double>> &componentVectors,
       const bool isFlattenedDealiiGhostValuesUpdated = false);
 
@@ -279,10 +279,10 @@ namespace dftfe
      */
     void
     copyFlattenedDealiiVecToSingleCompVec(
-      const distributedCPUVec<double> &           flattenedArray,
+      const distributedCPUVec<double>            &flattenedArray,
       const unsigned int                          totalNumberComponents,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
-      std::vector<distributedCPUVec<double>> &    componentVectors,
+      std::vector<distributedCPUVec<double>>     &componentVectors,
       const bool isFlattenedDealiiGhostValuesUpdated = false);
 
 #endif
@@ -314,13 +314,13 @@ namespace dftfe
      */
     void
     copySingleCompVecToFlattenedDealiiVec(
-      distributedCPUVec<std::complex<double>> &   flattenedArray,
+      distributedCPUVec<std::complex<double>>    &flattenedArray,
       const unsigned int                          totalNumberComponents,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
       const std::vector<dealii::types::global_dof_index>
         &localProcDofIndicesReal,
       const std::vector<dealii::types::global_dof_index>
-        &                                           localProcDofIndicesImag,
+                                                   &localProcDofIndicesImag,
       const std::vector<distributedCPUVec<double>> &componentVectors);
 
 #else
@@ -343,7 +343,7 @@ namespace dftfe
      */
     void
     copySingleCompVecToFlattenedDealiiVec(
-      distributedCPUVec<double> &                   flattenedArray,
+      distributedCPUVec<double>                    &flattenedArray,
       const unsigned int                            totalNumberComponents,
       const std::pair<unsigned int, unsigned int>   componentIndexRange,
       const std::vector<distributedCPUVec<double>> &componentVectors);
@@ -377,13 +377,13 @@ namespace dftfe
      */
     void
     copySingleCompVecToFlattenedSTLVec(
-      std::vector<std::complex<double>> &         flattenedArray,
+      std::vector<std::complex<double>>          &flattenedArray,
       const unsigned int                          totalNumberComponents,
       const std::pair<unsigned int, unsigned int> componentIndexRange,
       const std::vector<dealii::types::global_dof_index>
         &localProcDofIndicesReal,
       const std::vector<dealii::types::global_dof_index>
-        &                                           localProcDofIndicesImag,
+                                                   &localProcDofIndicesImag,
       const std::vector<distributedCPUVec<double>> &componentVectors);
 
 #else
@@ -406,7 +406,7 @@ namespace dftfe
      */
     void
     copySingleCompVecToFlattenedSTLVec(
-      std::vector<double> &                         flattenedArray,
+      std::vector<double>                          &flattenedArray,
       const unsigned int                            totalNumberComponents,
       const std::pair<unsigned int, unsigned int>   componentIndexRange,
       const std::vector<distributedCPUVec<double>> &componentVectors);
@@ -421,16 +421,16 @@ namespace dftfe
     classifyInteriorSurfaceNodesInCell(
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const unsigned int                   mfDofHandlerIndex,
-      std::vector<unsigned int> &          nodesPerCellClassificationMap);
+      std::vector<unsigned int>           &nodesPerCellClassificationMap);
 
 
     void
     classifyInteriorSurfaceNodesInGlobalArray(
-      const dealii::MatrixFree<3, double> &    matrix_free_data,
+      const dealii::MatrixFree<3, double>     &matrix_free_data,
       const unsigned int                       mfDofHandlerIndex,
       const dealii::AffineConstraints<double> &constraintMatrix,
-      std::vector<unsigned int> &              nodesPerCellClassificationMap,
-      std::vector<unsigned int> &              globalArrayClassificationMap);
+      std::vector<unsigned int>               &nodesPerCellClassificationMap,
+      std::vector<unsigned int>               &globalArrayClassificationMap);
 
 
 

@@ -33,17 +33,17 @@ namespace dftfe
   computeRhoGradRhoFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    partialOccupVec,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                gradWfcQuadPointData,
-    double *                                    rhoCellsWfcContributions,
-    double *                                    gradRhoCellsWfcContributions,
-    double *                                    rho,
-    double *                                    gradRho,
+    double                                     *partialOccupVec,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *gradWfcQuadPointData,
+    double                                     *rhoCellsWfcContributions,
+    double                                     *gradRhoCellsWfcContributions,
+    double                                     *rho,
+    double                                     *gradRho,
     const bool                                  isEvaluateGradRho);
 
   template <typename NumberType>
@@ -51,14 +51,14 @@ namespace dftfe
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    onesVec,
-    double *                                    partialOccupVecPrime,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                wfcPrimeQuadPointData,
+    double                                     *onesVec,
+    double                                     *partialOccupVecPrime,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *wfcPrimeQuadPointData,
     double *rhoResponseHamCellsWfcContributions,
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,
@@ -68,16 +68,16 @@ namespace dftfe
   void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    partialOccupVec,
-    double *                                    kcoord,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                gradWfcQuadPointData,
-    double *        kineticEnergyCellsWfcContributions,
-    double *        kineticEnergyDensity,
+    double                                     *partialOccupVec,
+    double                                     *kcoord,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *gradWfcQuadPointData,
+    double         *kineticEnergyCellsWfcContributions,
+    double         *kineticEnergyDensity,
     const MPI_Comm &mpiCommDomain);
 
 } // namespace dftfe

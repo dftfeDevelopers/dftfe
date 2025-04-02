@@ -42,7 +42,7 @@ namespace dftfe
         getAllOwnedRanges(const global_size_type         ownedRangeStart,
                           const global_size_type         ownedRangeEnd,
                           std::vector<global_size_type> &allOwnedRanges,
-                          const MPI_Comm &               mpiComm)
+                          const MPI_Comm                &mpiComm)
         {
           int         nprocs = 1;
           int         err    = MPI_Comm_size(mpiComm, &nprocs);
@@ -74,7 +74,7 @@ namespace dftfe
           const global_size_type               nGlobalIndices,
           const std::vector<global_size_type> &allOwnedRanges,
           std::map<size_type, std::vector<size_type>>
-            &             ghostProcIdToLocalGhostIndices,
+                         &ghostProcIdToLocalGhostIndices,
           const MPI_Comm &mpiComm)
         {
           int         nprocs = 1;
@@ -244,8 +244,8 @@ namespace dftfe
       template <dftfe::utils::MemorySpace memorySpace>
       MPIPatternP2P<memorySpace>::MPIPatternP2P(
         const std::pair<global_size_type, global_size_type> &locallyOwnedRange,
-        const std::vector<dftfe::global_size_type> &         ghostIndices,
-        const MPI_Comm &                                     mpiComm)
+        const std::vector<dftfe::global_size_type>          &ghostIndices,
+        const MPI_Comm                                      &mpiComm)
         : d_locallyOwnedRange(locallyOwnedRange)
         , d_mpiComm(mpiComm)
         , d_allOwnedRanges(0)

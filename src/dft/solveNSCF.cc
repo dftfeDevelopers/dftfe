@@ -1198,15 +1198,15 @@ namespace dftfe
             d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
 #endif
 
-          //#ifdef USE_COMPLEX
-          //  if (!(d_dftParamsPtr->kPointDataFile == ""))
-          //  {
-          //  readkPointData();
-          // initnscf(kohnShamDFTEigenOperator, d_phiTotalSolverProblem,
-          // CGSolver); nscf(kohnShamDFTEigenOperator,
-          // d_subspaceIterationSolver); writeBands();
-          //}
-          //#endif
+          // #ifdef USE_COMPLEX
+          //   if (!(d_dftParamsPtr->kPointDataFile == ""))
+          //   {
+          //   readkPointData();
+          //  initnscf(kohnShamDFTEigenOperator, d_phiTotalSolverProblem,
+          //  CGSolver); nscf(kohnShamDFTEigenOperator,
+          //  d_subspaceIterationSolver); writeBands();
+          // }
+          // #endif
         }
 #include "dft.inst.cc"
       } // namespace dftfe

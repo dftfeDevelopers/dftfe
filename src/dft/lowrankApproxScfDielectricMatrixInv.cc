@@ -26,7 +26,7 @@ namespace dftfe
     double
     relativeErrorEstimate(
       const std::deque<distributedCPUVec<double>> &fvcontainer,
-      const distributedCPUVec<double> &            residualVec,
+      const distributedCPUVec<double>             &residualVec,
       const double                                 k0)
     {
       const unsigned int rank = fvcontainer.size();
@@ -73,8 +73,8 @@ namespace dftfe
     void
     predictNextStepResidual(
       const std::deque<distributedCPUVec<double>> &fvcontainer,
-      const distributedCPUVec<double> &            residualVec,
-      distributedCPUVec<double> &                  predictedResidualVec,
+      const distributedCPUVec<double>             &residualVec,
+      distributedCPUVec<double>                   &predictedResidualVec,
       const double                                 k0,
       const double                                 alpha)
     {
@@ -120,9 +120,9 @@ namespace dftfe
     void
     lowrankKernelApply(const std::deque<distributedCPUVec<double>> &fvcontainer,
                        const std::deque<distributedCPUVec<double>> &vcontainer,
-                       const distributedCPUVec<double> &            x,
+                       const distributedCPUVec<double>             &x,
                        const double                                 k0,
-                       distributedCPUVec<double> &                  y)
+                       distributedCPUVec<double>                   &y)
     {
       const unsigned int rank = fvcontainer.size();
 
@@ -158,8 +158,8 @@ namespace dftfe
     void
     lowrankJacInvApply(const std::deque<distributedCPUVec<double>> &fvcontainer,
                        const std::deque<distributedCPUVec<double>> &vcontainer,
-                       const distributedCPUVec<double> &            x,
-                       distributedCPUVec<double> &                  y)
+                       const distributedCPUVec<double>             &x,
+                       distributedCPUVec<double>                   &y)
     {
       const unsigned int rank = fvcontainer.size();
 
@@ -191,8 +191,8 @@ namespace dftfe
     void
     lowrankJacApply(const std::deque<distributedCPUVec<double>> &fvcontainer,
                     const std::deque<distributedCPUVec<double>> &vcontainer,
-                    const distributedCPUVec<double> &            x,
-                    distributedCPUVec<double> &                  y)
+                    const distributedCPUVec<double>             &x,
+                    distributedCPUVec<double>                   &y)
     {
       const unsigned int rank = fvcontainer.size();
 
@@ -214,8 +214,8 @@ namespace dftfe
     estimateLargestEigenvalueMagJacLowrankPower(
       const std::deque<distributedCPUVec<double>> &lowrankFvcontainer,
       const std::deque<distributedCPUVec<double>> &lowrankVcontainer,
-      const distributedCPUVec<double> &            x,
-      const dealii::AffineConstraints<double> &    constraintsRhoNodal)
+      const distributedCPUVec<double>             &x,
+      const dealii::AffineConstraints<double>     &constraintsRhoNodal)
     {
       const double tol = 1.0e-6;
 
@@ -272,8 +272,8 @@ namespace dftfe
     estimateLargestEigenvalueMagJacInvLowrankPower(
       const std::deque<distributedCPUVec<double>> &lowrankFvcontainer,
       const std::deque<distributedCPUVec<double>> &lowrankVcontainer,
-      const distributedCPUVec<double> &            x,
-      const dealii::AffineConstraints<double> &    constraintsRhoNodal)
+      const distributedCPUVec<double>             &x,
+      const dealii::AffineConstraints<double>     &constraintsRhoNodal)
     {
       const double tol = 1.0e-6;
 

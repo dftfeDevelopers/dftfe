@@ -31,14 +31,14 @@ namespace dftfe
     applyKerkerPreconditionerToTotalDensityResidual(
 #ifdef DFTFE_WITH_DEVICE
       kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                   kerkerPreconditionedResidualSolverProblemDevice,
+                           &kerkerPreconditionedResidualSolverProblemDevice,
       linearSolverCGDevice &CGSolverDevice,
 #endif
       kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-        &                 kerkerPreconditionedResidualSolverProblem,
+                         &kerkerPreconditionedResidualSolverProblem,
       dealiiLinearSolver &CGSolver,
       const distributedCPUVec<double> &residualRho,
-      distributedCPUVec<double> &      preCondTotalDensityResidualVector)
+      distributedCPUVec<double>       &preCondTotalDensityResidualVector)
   {
     preCondTotalDensityResidualVector = 0.0;
     // create FEEval object to be used subsequently

@@ -25,7 +25,7 @@ namespace dftfe
   {
     inline void
     getRadialFunctionVal(const double                       radialCoordinate,
-                         double &                           splineVal,
+                         double                            &splineVal,
                          const alglib::spline1dinterpolant *spline)
     {
       splineVal = alglib::spline1dcalc(*spline, radialCoordinate);
@@ -37,7 +37,7 @@ namespace dftfe
                             const double phi,
                             const int    l,
                             const int    m,
-                            double &     sphericalHarmonicVal)
+                            double      &sphericalHarmonicVal)
     {
       if (m < 0)
         sphericalHarmonicVal =

@@ -26,7 +26,7 @@ namespace dftfe
   namespace internal
   {
     void
-    pointWiseScaleWithDiagonal(const double *     diagonal,
+    pointWiseScaleWithDiagonal(const double      *diagonal,
                                const unsigned int numberFields,
                                const unsigned int numberDofs,
                                dataTypes::number *fieldsArrayFlattened)
@@ -329,10 +329,10 @@ namespace dftfe
     const unsigned int spinType,
     const unsigned int kPointIndex,
     KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
-      &                                             kohnShamDFTEigenOperator,
-    elpaScalaManager &                              elpaScala,
+                                                   &kohnShamDFTEigenOperator,
+    elpaScalaManager                               &elpaScala,
     chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
-    std::vector<double> &                           residualNormWaveFunctions,
+    std::vector<double>                            &residualNormWaveFunctions,
     const bool                                      computeResidual,
     const bool                                      useMixedPrec,
     const bool                                      isFirstScf)
@@ -485,10 +485,10 @@ namespace dftfe
     const unsigned int spinType,
     const unsigned int kPointIndex,
     KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::DEVICE>
-      &               kohnShamDFTEigenOperator,
+                     &kohnShamDFTEigenOperator,
     elpaScalaManager &elpaScala,
     chebyshevOrthogonalizedSubspaceIterationSolverDevice
-      &                  subspaceIterationSolverDevice,
+                        &subspaceIterationSolverDevice,
     std::vector<double> &residualNormWaveFunctions,
     const bool           computeResidual,
     const unsigned int   numberRayleighRitzAvoidancePasses,
@@ -584,7 +584,7 @@ namespace dftfe
       const unsigned int spinType,
       const unsigned int kPointIndex,
       KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
-        &               kohnShamDFTEigenOperator,
+                       &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala)
   {
     if (d_dftParamsPtr->verbosity >= 2)
@@ -664,7 +664,7 @@ namespace dftfe
       const unsigned int spinType,
       const unsigned int kPointIndex,
       KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::DEVICE>
-        &               kohnShamDFTEigenOperator,
+                       &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
       chebyshevOrthogonalizedSubspaceIterationSolverDevice
         &subspaceIterationSolverDevice)
@@ -718,9 +718,9 @@ namespace dftfe
     const unsigned int spinType,
     const unsigned int kPointIndex,
     KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
-      &                                             kohnShamDFTEigenOperator,
+                                                   &kohnShamDFTEigenOperator,
     chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
-    std::vector<double> &                           residualNormWaveFunctions,
+    std::vector<double>                            &residualNormWaveFunctions,
     unsigned int                                    ipass)
   {
     computing_timer.enter_subsection("Chebyshev solve");
@@ -834,7 +834,7 @@ namespace dftfe
 #ifdef USE_PETSC
         PetscLogDouble bytes;
         PetscMemoryGetCurrentUsage(&bytes);
-        FILE *       dummy;
+        FILE        *dummy;
         unsigned int this_mpi_process =
           dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
         PetscSynchronizedPrintf(
@@ -894,7 +894,7 @@ namespace dftfe
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
       const unsigned int                      highestState,
-      std::vector<double> &                   maxResidualsAllkPoints)
+      std::vector<double>                    &maxResidualsAllkPoints)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
     maxResidualsAllkPoints.clear();
@@ -932,7 +932,7 @@ namespace dftfe
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
       const double                            fermiEnergy,
-      std::vector<double> &                   maxResidualsAllkPoints)
+      std::vector<double>                    &maxResidualsAllkPoints)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
     maxResidualsAllkPoints.clear();
