@@ -188,6 +188,9 @@ main(int argc, char *argv[])
 #  else
       std::cout << "and without HIGHERQUAD_PSP" << std::endl;
 #  endif
+      std::cout
+        << "=========================================================================================================="
+        << std::endl;
 
       runParams.print_parameters();
     }
