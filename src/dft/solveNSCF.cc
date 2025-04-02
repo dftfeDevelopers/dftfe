@@ -600,613 +600,595 @@ namespace dftfe
                             true);
                       }
                   }
-
-                for (unsigned int s = 0; s < 2; ++s)
-                  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-                       ++kPoint)
-                    {
-                      for (unsigned int i = 0; i < d_numEigenValues; ++i)
-                        eigenValuesSpins[s][kPoint][i] =
-                          eigenValues[kPoint][d_numEigenValues * s + i];
-                    }
-                if (!(d_dftParamsPtr->writeBandsFile))
-                  {
-                    if (d_dftParamsPtr->constraintMagnetization)
-                      {
-                        if (d_dftParamsPtr->pureState)
-                          compute_fermienergy_constraintMagnetization_purestate(
-                            eigenValues);
-                        else
-                          compute_fermienergy_constraintMagnetization(
-                            eigenValues);
-                      }
-                    else
-                      {
-                        if (d_dftParamsPtr->pureState)
-                          compute_fermienergy_purestate(eigenValues,
-                                                        numElectrons);
-                        else
-                          compute_fermienergy(eigenValues, numElectrons);
-                      }
-                  }
-
-                if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-                  {
-                    maxRes =
-                      std::max(computeMaximumHighestOccupiedStateResidualNorm(
-                                 residualNormWaveFunctionsAllkPointsSpins[0],
-                                 eigenValuesSpins[0],
-                                 fermiEnergy,
-                                 maxResidualsAllkPoints[0]),
-                               computeMaximumHighestOccupiedStateResidualNorm(
-                                 residualNormWaveFunctionsAllkPointsSpins[1],
-                                 eigenValuesSpins[1],
-                                 fermiEnergy,
-                                 maxResidualsAllkPoints[1]));
-                  }
-                else
-                  {
-                    maxRes = std::max(
-                      computeMaximumHighestOccupiedStateResidualNorm(
-                        residualNormWaveFunctionsAllkPointsSpins[0],
-                        eigenValuesSpins[0],
-                        d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                        maxResidualsAllkPoints[0]),
-                      computeMaximumHighestOccupiedStateResidualNorm(
-                        residualNormWaveFunctionsAllkPointsSpins[1],
-                        eigenValuesSpins[1],
-                        d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                        maxResidualsAllkPoints[1]));
-                  }
-
-                if (d_dftParamsPtr->verbosity >= 2)
-                  {
-                    if (d_dftParamsPtr
-                          ->highestStateOfInterestForChebFiltering == 0)
-                      {
-                        pcout
-                          << "Maximum residual norm of the state closest to and below Fermi level: "
-                          << maxRes << std::endl;
-                      }
-                    else
-                      {
-                        pcout
-                          << "Maximum residual norm of the highest state of interest : "
-                          << maxRes << std::endl;
-                      }
-                  }
-                count++;
               }
-
-
-            if (d_dftParamsPtr->verbosity >= 1)
-              {
-                pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
-              }
-
-            numberChebyshevSolvePasses = count;
-          }
-        else
-        {
-          std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
-          residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
-          for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-               ++kPoint)
-            residualNormWaveFunctionsAllkPoints[kPoint].resize(
-              d_numEigenValues);
-
-          updateAuxDensityXCMatrix(d_densityInQuadValues,
-                                   d_gradDensityInQuadValues,
-                                   d_rhoCore,
-                                   d_gradRhoCore,
-                                   getEigenVectors(),
-                                   eigenValues,
-                                   fermiEnergy,
-                                   fermiEnergyUp,
-                                   fermiEnergyDown,
-                                   d_auxDensityMatrixXCInPtr);
-
-          computing_timer.enter_subsection("VEff Computation");
-          kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
-                                               d_phiInQuadValues);
-          computing_timer.leave_subsection("VEff Computation");
-
-          for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-               ++kPoint)
-            {
-              kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
-
-
-              computing_timer.enter_subsection(
-                "Hamiltonian Matrix Computation");
-              kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
-              computing_timer.leave_subsection(
-                "Hamiltonian Matrix Computation");
-
-
-              for (unsigned int j = 0; j < 1; ++j)
-                {
-                  if (d_dftParamsPtr->verbosity >= 2)
-                    {
-                      pcout << "Beginning Chebyshev filter pass " << j + 1
-                            << std::endl;
-                    }
-
-
-#ifdef DFTFE_WITH_DEVICE
-                  if constexpr (dftfe::utils::MemorySpace::DEVICE ==
-                                memorySpace)
-                    kohnShamEigenSpaceCompute(
-                      0,
-                      kPoint,
-                      kohnShamDFTEigenOperator,
-                      *d_elpaScala,
-                      d_subspaceIterationSolverDevice,
-                      residualNormWaveFunctionsAllkPoints[kPoint],
-                      true,
-                      0,
-                      false,
-                      true);
-#endif
-                  if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
-                    kohnShamEigenSpaceCompute(
-                      0,
-                      kPoint,
-                      kohnShamDFTEigenOperator,
-                      *d_elpaScala,
-                      d_subspaceIterationSolver,
-                      residualNormWaveFunctionsAllkPoints[kPoint],
-                      true,
-                      false,
-                      true);
-                }
-            }
-
-
-          //
-          // fermi energy
-          //
-          if (!(d_dftParamsPtr->writeBandsFile))
-            {
-              if (d_dftParamsPtr->constraintMagnetization)
-                {
-                  if (d_dftParamsPtr->pureState)
-                    compute_fermienergy_constraintMagnetization_purestate(
-                      eigenValues);
-                  else
-                    compute_fermienergy_constraintMagnetization(eigenValues);
-                }
-              else
-                {
-                  if (d_dftParamsPtr->pureState)
-                    compute_fermienergy_purestate(eigenValues, numElectrons);
-                  else
-                    compute_fermienergy(eigenValues, numElectrons);
-                }
-            }
-
-          unsigned int count = 1;
-
-          //
-          // maximum of the residual norm of the state closest to and
-          // below the Fermi level among all k points
-          //
-          double              maxRes = 0.0;
-          std::vector<double> maxResidualsAllkPoints;
-          if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-            {
-              maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-                residualNormWaveFunctionsAllkPoints,
-                eigenValues,
-                fermiEnergy,
-                maxResidualsAllkPoints);
-            }
-          else
-            {
-              maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-                residualNormWaveFunctionsAllkPoints,
-                eigenValues,
-                d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                maxResidualsAllkPoints);
-            }
-
-          if (d_dftParamsPtr->verbosity >= 2)
-            {
-              if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-                {
-                  pcout
-                    << "Maximum residual norm of the state closest to and below Fermi level: "
-                    << maxRes << std::endl;
-                }
-              else
-                {
-                  pcout
-                    << "Maximum residual norm of the highest state of interest : "
-                    << maxRes << std::endl;
-                }
-            }
-
-          // if the residual norm is greater than
-          // adaptiveChebysevFilterPassesTol (a heuristic value)
-          // do more passes of chebysev filter till the check passes.
-          // This improves the scf convergence performance.
-
-
-          while (maxRes > chebyTol && count < 100)
-            {
+            for (unsigned int s = 0; s < 2; ++s)
               for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                    ++kPoint)
                 {
-                  if (maxResidualsAllkPoints[kPoint] > chebyTol)
-                    {
-                      if (d_dftParamsPtr->verbosity >= 2)
-                        pcout << "Beginning Chebyshev filter pass " << 1 + count
-                              << std::endl;
+                  for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                    eigenValuesSpins[s][kPoint][i] =
+                      eigenValues[kPoint][d_numEigenValues * s + i];
+                }
+            if (!(d_dftParamsPtr->writeBandsFile))
+              {
+                if (d_dftParamsPtr->constraintMagnetization)
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_constraintMagnetization_purestate(
+                        eigenValues);
+                    else
+                      compute_fermienergy_constraintMagnetization(eigenValues);
+                  }
+                else
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_purestate(eigenValues, numElectrons);
+                    else
+                      compute_fermienergy(eigenValues, numElectrons);
+                  }
+              }
 
-                      kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
-                      if (d_dftParamsPtr->memOptMode &&
-                          d_kPointWeights.size() > 0)
-                        {
-                          computing_timer.enter_subsection(
-                            "Hamiltonian Matrix Computation");
-                          kohnShamDFTEigenOperator
-                            .computeCellHamiltonianMatrix();
-                          computing_timer.leave_subsection(
-                            "Hamiltonian Matrix Computation");
-                        }
+            if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
+              {
+                maxRes =
+                  std::max(computeMaximumHighestOccupiedStateResidualNorm(
+                             residualNormWaveFunctionsAllkPointsSpins[0],
+                             eigenValuesSpins[0],
+                             fermiEnergy,
+                             maxResidualsAllkPoints[0]),
+                           computeMaximumHighestOccupiedStateResidualNorm(
+                             residualNormWaveFunctionsAllkPointsSpins[1],
+                             eigenValuesSpins[1],
+                             fermiEnergy,
+                             maxResidualsAllkPoints[1]));
+              }
+            else
+              {
+                maxRes = std::max(
+                  computeMaximumHighestOccupiedStateResidualNorm(
+                    residualNormWaveFunctionsAllkPointsSpins[0],
+                    eigenValuesSpins[0],
+                    d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                    maxResidualsAllkPoints[0]),
+                  computeMaximumHighestOccupiedStateResidualNorm(
+                    residualNormWaveFunctionsAllkPointsSpins[1],
+                    eigenValuesSpins[1],
+                    d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                    maxResidualsAllkPoints[1]));
+              }
+
+            if (d_dftParamsPtr->verbosity >= 2)
+              {
+                if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
+                  {
+                    pcout
+                      << "Maximum residual norm of the state closest to and below Fermi level: "
+                      << maxRes << std::endl;
+                  }
+                else
+                  {
+                    pcout
+                      << "Maximum residual norm of the highest state of interest : "
+                      << maxRes << std::endl;
+                  }
+              }
+            count++;
+          }
+
+
+        if (d_dftParamsPtr->verbosity >= 1)
+          {
+            pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
+          }
+
+        numberChebyshevSolvePasses = count;
+      }
+    else
+      {
+        std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
+        residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
+        for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+          residualNormWaveFunctionsAllkPoints[kPoint].resize(d_numEigenValues);
+
+        updateAuxDensityXCMatrix(d_densityInQuadValues,
+                                 d_gradDensityInQuadValues,
+                                 d_rhoCore,
+                                 d_gradRhoCore,
+                                 getEigenVectors(),
+                                 eigenValues,
+                                 fermiEnergy,
+                                 fermiEnergyUp,
+                                 fermiEnergyDown,
+                                 d_auxDensityMatrixXCInPtr);
+
+        computing_timer.enter_subsection("VEff Computation");
+        kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
+                                             d_phiInQuadValues);
+        computing_timer.leave_subsection("VEff Computation");
+
+        for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+          {
+            kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
+
+
+            computing_timer.enter_subsection("Hamiltonian Matrix Computation");
+            kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
+            computing_timer.leave_subsection("Hamiltonian Matrix Computation");
+
+
+            for (unsigned int j = 0; j < 1; ++j)
+              {
+                if (d_dftParamsPtr->verbosity >= 2)
+                  {
+                    pcout << "Beginning Chebyshev filter pass " << j + 1
+                          << std::endl;
+                  }
+
 
 #ifdef DFTFE_WITH_DEVICE
-                      if constexpr (dftfe::utils::MemorySpace::DEVICE ==
-                                    memorySpace)
-                        kohnShamEigenSpaceCompute(
-                          0,
-                          kPoint,
-                          kohnShamDFTEigenOperator,
-                          *d_elpaScala,
-                          d_subspaceIterationSolverDevice,
-                          residualNormWaveFunctionsAllkPoints[kPoint],
-                          true,
-                          0,
-                          true,
-                          true);
-
+                if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+                  kohnShamEigenSpaceCompute(
+                    0,
+                    kPoint,
+                    kohnShamDFTEigenOperator,
+                    *d_elpaScala,
+                    d_subspaceIterationSolverDevice,
+                    residualNormWaveFunctionsAllkPoints[kPoint],
+                    true,
+                    0,
+                    false,
+                    true);
 #endif
-                      if constexpr (dftfe::utils::MemorySpace::HOST ==
-                                    memorySpace)
-                        kohnShamEigenSpaceCompute(
-                          0,
-                          kPoint,
-                          kohnShamDFTEigenOperator,
-                          *d_elpaScala,
-                          d_subspaceIterationSolver,
-                          residualNormWaveFunctionsAllkPoints[kPoint],
-                          true,
-                          true,
-                          true);
-                    }
-
-                  // //
-                  if (!(d_dftParamsPtr->writeBandsFile))
-                    {
-                      if (d_dftParamsPtr->constraintMagnetization)
-                        {
-                          if (d_dftParamsPtr->pureState)
-                            compute_fermienergy_constraintMagnetization_purestate(
-                              eigenValues);
-                          else
-                            compute_fermienergy_constraintMagnetization(
-                              eigenValues);
-                        }
-                      else
-                        {
-                          if (d_dftParamsPtr->pureState)
-                            compute_fermienergy_purestate(eigenValues,
-                                                          numElectrons);
-                          else
-                            compute_fermienergy(eigenValues, numElectrons);
-                        }
-                    }
-                  //
-                  if (d_dftParamsPtr->highestStateOfInterestForChebFiltering ==
-                      0)
-                    {
-                      maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-                        residualNormWaveFunctionsAllkPoints,
-                        eigenValues,
-                        fermiEnergy,
-                        maxResidualsAllkPoints);
-                    }
-                  else
-                    {
-                      maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-                        residualNormWaveFunctionsAllkPoints,
-                        eigenValues,
-                        d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                        maxResidualsAllkPoints);
-                    }
-                  if (d_dftParamsPtr->verbosity >= 2)
-                    {
-                      if (d_dftParamsPtr
-                            ->highestStateOfInterestForChebFiltering == 0)
-                        {
-                          pcout
-                            << "Maximum residual norm of the state closest to and below Fermi level: "
-                            << maxRes << std::endl;
-                        }
-                      else
-                        {
-                          pcout
-                            << "Maximum residual norm of the highest state of interest : "
-                            << maxRes << std::endl;
-                        }
-                    }
-
-                  count++;
-                }
+                if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
+                  kohnShamEigenSpaceCompute(
+                    0,
+                    kPoint,
+                    kohnShamDFTEigenOperator,
+                    *d_elpaScala,
+                    d_subspaceIterationSolver,
+                    residualNormWaveFunctionsAllkPoints[kPoint],
+                    true,
+                    false,
+                    true);
+              }
+          }
 
 
-              numberChebyshevSolvePasses = count;
+        //
+        // fermi energy
+        //
+        if (!(d_dftParamsPtr->writeBandsFile))
+          {
+            if (d_dftParamsPtr->constraintMagnetization)
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_constraintMagnetization_purestate(
+                    eigenValues);
+                else
+                  compute_fermienergy_constraintMagnetization(eigenValues);
+              }
+            else
+              {
+                if (d_dftParamsPtr->pureState)
+                  compute_fermienergy_purestate(eigenValues, numElectrons);
+                else
+                  compute_fermienergy(eigenValues, numElectrons);
+              }
+          }
 
-              if (d_dftParamsPtr->verbosity == 0 &&
-                  d_dftParamsPtr->reproducible_output)
-                {
-                  pcout << "Fermi Energy computed: " << std::fixed
-                        << std::setprecision(8) << fermiEnergy << std::endl;
-                }
-              else
-                {
-                  pcout << "Fermi Energy computed: " << fermiEnergy
-                        << std::endl;
-                }
-            }
-          computing_timer.enter_subsection("compute rho");
+        unsigned int count = 1;
 
-          compute_rhoOut(true);
+        //
+        // maximum of the residual norm of the state closest to and
+        // below the Fermi level among all k points
+        //
+        double              maxRes = 0.0;
+        std::vector<double> maxResidualsAllkPoints;
+        if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
+          {
+            maxRes = computeMaximumHighestOccupiedStateResidualNorm(
+              residualNormWaveFunctionsAllkPoints,
+              eigenValues,
+              fermiEnergy,
+              maxResidualsAllkPoints);
+          }
+        else
+          {
+            maxRes = computeMaximumHighestOccupiedStateResidualNorm(
+              residualNormWaveFunctionsAllkPoints,
+              eigenValues,
+              d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+              maxResidualsAllkPoints);
+          }
 
-          computing_timer.leave_subsection("compute rho");
+        if (d_dftParamsPtr->verbosity >= 2)
+          {
+            if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
+              {
+                pcout
+                  << "Maximum residual norm of the state closest to and below Fermi level: "
+                  << maxRes << std::endl;
+              }
+            else
+              {
+                pcout
+                  << "Maximum residual norm of the highest state of interest : "
+                  << maxRes << std::endl;
+              }
+          }
 
-          updateAuxDensityXCMatrix(d_densityOutQuadValues,
-                                   d_gradDensityOutQuadValues,
-                                   d_rhoCore,
-                                   d_gradRhoCore,
-                                   getEigenVectors(),
-                                   eigenValues,
-                                   fermiEnergy,
-                                   fermiEnergyUp,
-                                   fermiEnergyDown,
-                                   d_auxDensityMatrixXCOutPtr);
-
-          //
-          // compute integral rhoOut
-          //
-          const double integralRhoValue =
-            totalCharge(d_dofHandlerPRefined, d_densityOutQuadValues[0]);
-
-          if (d_dftParamsPtr->verbosity >= 2)
-            {
-              pcout << std::endl
-                    << "number of electrons: " << integralRhoValue << std::endl;
-            }
-
-          if (d_dftParamsPtr->verbosity >= 1 &&
-              d_dftParamsPtr->spinPolarized == 1)
-            totalMagnetization(d_densityOutQuadValues[1]);
-
-
-          local_timer.stop();
-          if (d_dftParamsPtr->verbosity >= 1)
-            pcout << "Wall time for the above scf iteration: "
-                  << local_timer.wall_time() << " seconds\n"
-                  << "Number of Chebyshev filtered subspace iterations: "
-                  << numberChebyshevSolvePasses << std::endl
-                  << std::endl;
-
-          //
-          // phiTot with rhoOut
-          //
-
-          if (d_dftParamsPtr->verbosity >= 2)
-            pcout
-              << std::endl
-              << "Poisson solve for total electrostatic potential (rhoOut+b): ";
-
-          computing_timer.enter_subsection("phiTot solve");
-
-          if (d_dftParamsPtr->multipoleBoundaryConditions)
-            {
-              computing_timer.enter_subsection("Update inhomogenous BC");
-              computeMultipoleMoments(d_basisOperationsPtrElectroHost,
-                                      d_densityQuadratureIdElectro,
-                                      d_densityOutQuadValues[0],
-                                      &d_bQuadValuesAllAtoms);
-              updatePRefinedConstraints();
-              computing_timer.leave_subsection("Update inhomogenous BC");
-            }
-
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-            densityOutQuadValuesCopy = d_densityOutQuadValues[0];
-          if (std::abs(d_dftParamsPtr->netCharge) > 1e-12 and
-              (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
-               d_dftParamsPtr->periodicZ))
-            {
-              double *tempvec = densityOutQuadValuesCopy.data();
-              for (unsigned int iquad = 0;
-                   iquad < densityOutQuadValuesCopy.size();
-                   iquad++)
-                tempvec[iquad] += -d_dftParamsPtr->netCharge / d_domainVolume;
-            }
+        // if the residual norm is greater than
+        // adaptiveChebysevFilterPassesTol (a heuristic value)
+        // do more passes of chebysev filter till the check passes.
+        // This improves the scf convergence performance.
 
 
-          if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
-              d_dftParamsPtr->floatingNuclearCharges and
-              not d_dftParamsPtr->pinnedNodeForPBC)
-            {
+        while (maxRes > chebyTol && count < 100)
+          {
+            for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
+                 ++kPoint)
+              {
+                if (maxResidualsAllkPoints[kPoint] > chebyTol)
+                  {
+                    if (d_dftParamsPtr->verbosity >= 2)
+                      pcout << "Beginning Chebyshev filter pass " << 1 + count
+                            << std::endl;
+
+                    kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
+                    if (d_dftParamsPtr->memOptMode &&
+                        d_kPointWeights.size() > 0)
+                      {
+                        computing_timer.enter_subsection(
+                          "Hamiltonian Matrix Computation");
+                        kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
+                        computing_timer.leave_subsection(
+                          "Hamiltonian Matrix Computation");
+                      }
+
 #ifdef DFTFE_WITH_DEVICE
-              d_phiTotalSolverProblemDevice.reinit(
-                d_basisOperationsPtrElectroHost,
-                d_phiTotRhoOut,
-                *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-                d_phiTotDofHandlerIndexElectro,
-                d_densityQuadratureIdElectro,
-                d_phiTotAXQuadratureIdElectro,
-                d_atomNodeIdToChargeMap,
-                d_bQuadValuesAllAtoms,
-                d_smearedChargeQuadratureIdElectro,
-                densityOutQuadValuesCopy,
-                d_BLASWrapperPtr,
-                false,
-                false,
-                d_dftParamsPtr->smearedNuclearCharges,
-                true,
-                false,
-                0,
-                false,
-                true,
-                d_dftParamsPtr->multipoleBoundaryConditions);
+                    if constexpr (dftfe::utils::MemorySpace::DEVICE ==
+                                  memorySpace)
+                      kohnShamEigenSpaceCompute(
+                        0,
+                        kPoint,
+                        kohnShamDFTEigenOperator,
+                        *d_elpaScala,
+                        d_subspaceIterationSolverDevice,
+                        residualNormWaveFunctionsAllkPoints[kPoint],
+                        true,
+                        0,
+                        true,
+                        true);
 
-              CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
-                                   d_dftParamsPtr->absLinearSolverTolerance,
-                                   d_dftParamsPtr->maxLinearSolverIterations,
-                                   d_dftParamsPtr->verbosity);
 #endif
-            }
-          else
-            {
-              d_phiTotalSolverProblem.reinit(
-                d_basisOperationsPtrElectroHost,
-                d_phiTotRhoOut,
-                *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
-                d_phiTotDofHandlerIndexElectro,
-                d_densityQuadratureIdElectro,
-                d_phiTotAXQuadratureIdElectro,
-                d_atomNodeIdToChargeMap,
-                d_bQuadValuesAllAtoms,
-                d_smearedChargeQuadratureIdElectro,
-                densityOutQuadValuesCopy,
-                false,
-                false,
-                d_dftParamsPtr->smearedNuclearCharges,
-                true,
-                false,
-                0,
-                false,
-                true,
-                d_dftParamsPtr->multipoleBoundaryConditions);
+                    if constexpr (dftfe::utils::MemorySpace::HOST ==
+                                  memorySpace)
+                      kohnShamEigenSpaceCompute(
+                        0,
+                        kPoint,
+                        kohnShamDFTEigenOperator,
+                        *d_elpaScala,
+                        d_subspaceIterationSolver,
+                        residualNormWaveFunctionsAllkPoints[kPoint],
+                        true,
+                        true,
+                        true);
+                  }
+              }
+            // //
+            if (!(d_dftParamsPtr->writeBandsFile))
+              {
+                if (d_dftParamsPtr->constraintMagnetization)
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_constraintMagnetization_purestate(
+                        eigenValues);
+                    else
+                      compute_fermienergy_constraintMagnetization(eigenValues);
+                  }
+                else
+                  {
+                    if (d_dftParamsPtr->pureState)
+                      compute_fermienergy_purestate(eigenValues, numElectrons);
+                    else
+                      compute_fermienergy(eigenValues, numElectrons);
+                  }
+              }
+            //
+            if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
+              {
+                maxRes = computeMaximumHighestOccupiedStateResidualNorm(
+                  residualNormWaveFunctionsAllkPoints,
+                  eigenValues,
+                  fermiEnergy,
+                  maxResidualsAllkPoints);
+              }
+            else
+              {
+                maxRes = computeMaximumHighestOccupiedStateResidualNorm(
+                  residualNormWaveFunctionsAllkPoints,
+                  eigenValues,
+                  d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+                  maxResidualsAllkPoints);
+              }
+            if (d_dftParamsPtr->verbosity >= 2)
+              {
+                if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
+                  {
+                    pcout
+                      << "Maximum residual norm of the state closest to and below Fermi level: "
+                      << maxRes << std::endl;
+                  }
+                else
+                  {
+                    pcout
+                      << "Maximum residual norm of the highest state of interest : "
+                      << maxRes << std::endl;
+                  }
+              }
 
-              CGSolver.solve(d_phiTotalSolverProblem,
+            count++;
+          }
+
+
+        numberChebyshevSolvePasses = count;
+
+        if (d_dftParamsPtr->verbosity == 0 &&
+            d_dftParamsPtr->reproducible_output)
+          {
+            pcout << "Fermi Energy computed: " << std::fixed
+                  << std::setprecision(8) << fermiEnergy << std::endl;
+          }
+        else
+          {
+            pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
+          }
+      }
+    computing_timer.enter_subsection("compute rho");
+
+    compute_rhoOut(true);
+
+    computing_timer.leave_subsection("compute rho");
+
+    updateAuxDensityXCMatrix(d_densityOutQuadValues,
+                             d_gradDensityOutQuadValues,
+                             d_rhoCore,
+                             d_gradRhoCore,
+                             getEigenVectors(),
+                             eigenValues,
+                             fermiEnergy,
+                             fermiEnergyUp,
+                             fermiEnergyDown,
+                             d_auxDensityMatrixXCOutPtr);
+
+    //
+    // compute integral rhoOut
+    //
+    const double integralRhoValue =
+      totalCharge(d_dofHandlerPRefined, d_densityOutQuadValues[0]);
+
+    if (d_dftParamsPtr->verbosity >= 2)
+      {
+        pcout << std::endl
+              << "number of electrons: " << integralRhoValue << std::endl;
+      }
+
+    if (d_dftParamsPtr->verbosity >= 1 && d_dftParamsPtr->spinPolarized == 1)
+      totalMagnetization(d_densityOutQuadValues[1]);
+
+
+    local_timer.stop();
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout << "Wall time for the above scf iteration: "
+            << local_timer.wall_time() << " seconds\n"
+            << "Number of Chebyshev filtered subspace iterations: "
+            << numberChebyshevSolvePasses << std::endl
+            << std::endl;
+
+    //
+    // phiTot with rhoOut
+    //
+
+    if (d_dftParamsPtr->verbosity >= 2)
+      pcout << std::endl
+            << "Poisson solve for total electrostatic potential (rhoOut+b): ";
+
+    computing_timer.enter_subsection("phiTot solve");
+
+    if (d_dftParamsPtr->multipoleBoundaryConditions)
+      {
+        computing_timer.enter_subsection("Update inhomogenous BC");
+        computeMultipoleMoments(d_basisOperationsPtrElectroHost,
+                                d_densityQuadratureIdElectro,
+                                d_densityOutQuadValues[0],
+                                &d_bQuadValuesAllAtoms);
+        updatePRefinedConstraints();
+        computing_timer.leave_subsection("Update inhomogenous BC");
+      }
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      densityOutQuadValuesCopy = d_densityOutQuadValues[0];
+    if (std::abs(d_dftParamsPtr->netCharge) > 1e-12 and
+        (d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
+         d_dftParamsPtr->periodicZ))
+      {
+        double *tempvec = densityOutQuadValuesCopy.data();
+        for (unsigned int iquad = 0; iquad < densityOutQuadValuesCopy.size();
+             iquad++)
+          tempvec[iquad] += -d_dftParamsPtr->netCharge / d_domainVolume;
+      }
+
+
+    if (d_dftParamsPtr->useDevice and d_dftParamsPtr->poissonGPU and
+        d_dftParamsPtr->floatingNuclearCharges and
+        not d_dftParamsPtr->pinnedNodeForPBC)
+      {
+#ifdef DFTFE_WITH_DEVICE
+        d_phiTotalSolverProblemDevice.reinit(
+          d_basisOperationsPtrElectroHost,
+          d_phiTotRhoOut,
+          *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+          d_phiTotDofHandlerIndexElectro,
+          d_densityQuadratureIdElectro,
+          d_phiTotAXQuadratureIdElectro,
+          d_atomNodeIdToChargeMap,
+          d_bQuadValuesAllAtoms,
+          d_smearedChargeQuadratureIdElectro,
+          densityOutQuadValuesCopy,
+          d_BLASWrapperPtr,
+          false,
+          false,
+          d_dftParamsPtr->smearedNuclearCharges,
+          true,
+          false,
+          0,
+          false,
+          true,
+          d_dftParamsPtr->multipoleBoundaryConditions);
+
+        CGSolverDevice.solve(d_phiTotalSolverProblemDevice,
                              d_dftParamsPtr->absLinearSolverTolerance,
                              d_dftParamsPtr->maxLinearSolverIterations,
                              d_dftParamsPtr->verbosity);
-            }
+#endif
+      }
+    else
+      {
+        d_phiTotalSolverProblem.reinit(
+          d_basisOperationsPtrElectroHost,
+          d_phiTotRhoOut,
+          *d_constraintsVectorElectro[d_phiTotDofHandlerIndexElectro],
+          d_phiTotDofHandlerIndexElectro,
+          d_densityQuadratureIdElectro,
+          d_phiTotAXQuadratureIdElectro,
+          d_atomNodeIdToChargeMap,
+          d_bQuadValuesAllAtoms,
+          d_smearedChargeQuadratureIdElectro,
+          densityOutQuadValuesCopy,
+          false,
+          false,
+          d_dftParamsPtr->smearedNuclearCharges,
+          true,
+          false,
+          0,
+          false,
+          true,
+          d_dftParamsPtr->multipoleBoundaryConditions);
 
-          interpolateElectroNodalDataToQuadratureDataGeneral(
-            d_basisOperationsPtrElectroHost,
-            d_phiTotDofHandlerIndexElectro,
-            d_densityQuadratureIdElectro,
-            d_phiTotRhoOut,
-            d_phiOutQuadValues,
-            dummy);
+        CGSolver.solve(d_phiTotalSolverProblem,
+                       d_dftParamsPtr->absLinearSolverTolerance,
+                       d_dftParamsPtr->maxLinearSolverIterations,
+                       d_dftParamsPtr->verbosity);
+      }
 
-          computing_timer.leave_subsection("phiTot solve");
+    interpolateElectroNodalDataToQuadratureDataGeneral(
+      d_basisOperationsPtrElectroHost,
+      d_phiTotDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro,
+      d_phiTotRhoOut,
+      d_phiOutQuadValues,
+      dummy);
 
-          // const Quadrature<3> &quadrature =
-          // matrix_free_data.get_quadrature(d_densityQuadratureId);
-          d_dispersionCorr.computeDispresionCorrection(atomLocations,
-                                                       d_domainBoundingVectors);
+    computing_timer.leave_subsection("phiTot solve");
 
-
-          d_excManagerPtr->getExcSSDFunctionalObj()
-            ->updateWaveFunctionDependentFuncDerWrtPsi(
-              d_auxDensityMatrixXCOutPtr, d_kPointWeights);
-
-          d_excManagerPtr->getExcSSDFunctionalObj()
-            ->computeWaveFunctionDependentExcEnergy(d_auxDensityMatrixXCOutPtr,
-                                                    d_kPointWeights);
-
-          const double totalEnergy = energyCalc.computeEnergy(
-            d_basisOperationsPtrHost,
-            d_basisOperationsPtrElectroHost,
-            d_densityQuadratureId,
-            d_densityQuadratureIdElectro,
-            d_smearedChargeQuadratureIdElectro,
-            d_lpspQuadratureIdElectro,
-            eigenValues,
-            d_partialOccupancies,
-            d_kPointWeights,
-            fermiEnergy,
-            d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
-            d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyDown,
-            d_excManagerPtr,
-            d_dispersionCorr,
-            d_phiInQuadValues,
-            d_phiOutQuadValues,
-            d_phiTotRhoOut,
-            d_densityInQuadValues,
-            d_densityOutQuadValues,
-            d_gradDensityOutQuadValues,
-            d_densityTotalOutValuesLpspQuad,
-            d_auxDensityMatrixXCInPtr,
-            d_auxDensityMatrixXCOutPtr,
-            d_bQuadValuesAllAtoms,
-            d_bCellNonTrivialAtomIds,
-            d_localVselfs,
-            d_pseudoVLoc,
-            d_atomNodeIdToChargeMap,
-            atomLocations.size(),
-            lowerBoundKindex,
-            0,
-            d_dftParamsPtr->verbosity >= 0 ? true : false,
-            d_dftParamsPtr->smearedNuclearCharges);
-
-          if (d_dftParamsPtr->verbosity <= 1)
-            pcout << "Total energy  : " << totalEnergy << std::endl;
-
-          d_groundStateEnergy = totalEnergy;
-
-          MPI_Barrier(interpoolcomm);
-
-          d_entropicEnergy = energyCalc.computeEntropicEnergy(
-            eigenValues,
-            d_partialOccupancies,
-            d_kPointWeights,
-            fermiEnergy,
-            fermiEnergyUp,
-            fermiEnergyDown,
-            d_dftParamsPtr->spinPolarized == 1,
-            d_dftParamsPtr->constraintMagnetization,
-            d_dftParamsPtr->TVal);
-
-          if (d_dftParamsPtr->verbosity >= 0)
-            pcout << "Total entropic energy: " << d_entropicEnergy << std::endl;
+    // const Quadrature<3> &quadrature =
+    // matrix_free_data.get_quadrature(d_densityQuadratureId);
+    d_dispersionCorr.computeDispresionCorrection(atomLocations,
+                                                 d_domainBoundingVectors);
 
 
-          d_freeEnergy = d_groundStateEnergy - d_entropicEnergy;
+    d_excManagerPtr->getExcSSDFunctionalObj()
+      ->updateWaveFunctionDependentFuncDerWrtPsi(d_auxDensityMatrixXCOutPtr,
+                                                 d_kPointWeights);
 
-          if (d_dftParamsPtr->verbosity >= 0)
-            pcout << "Total free energy: " << d_freeEnergy << std::endl;
+    d_excManagerPtr->getExcSSDFunctionalObj()
+      ->computeWaveFunctionDependentExcEnergy(d_auxDensityMatrixXCOutPtr,
+                                              d_kPointWeights);
+
+    const double totalEnergy = energyCalc.computeEnergy(
+      d_basisOperationsPtrHost,
+      d_basisOperationsPtrElectroHost,
+      d_densityQuadratureId,
+      d_densityQuadratureIdElectro,
+      d_smearedChargeQuadratureIdElectro,
+      d_lpspQuadratureIdElectro,
+      eigenValues,
+      d_partialOccupancies,
+      d_kPointWeights,
+      fermiEnergy,
+      d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyUp,
+      d_dftParamsPtr->spinPolarized == 0 ? fermiEnergy : fermiEnergyDown,
+      d_excManagerPtr,
+      d_dispersionCorr,
+      d_phiInQuadValues,
+      d_phiOutQuadValues,
+      d_phiTotRhoOut,
+      d_densityInQuadValues,
+      d_densityOutQuadValues,
+      d_gradDensityOutQuadValues,
+      d_densityTotalOutValuesLpspQuad,
+      d_auxDensityMatrixXCInPtr,
+      d_auxDensityMatrixXCOutPtr,
+      d_bQuadValuesAllAtoms,
+      d_bCellNonTrivialAtomIds,
+      d_localVselfs,
+      d_pseudoVLoc,
+      d_atomNodeIdToChargeMap,
+      atomLocations.size(),
+      lowerBoundKindex,
+      0,
+      d_dftParamsPtr->verbosity >= 0 ? true : false,
+      d_dftParamsPtr->smearedNuclearCharges);
+
+    if (d_dftParamsPtr->verbosity <= 1)
+      pcout << "Total energy  : " << totalEnergy << std::endl;
+
+    d_groundStateEnergy = totalEnergy;
+
+    MPI_Barrier(interpoolcomm);
+
+    d_entropicEnergy =
+      energyCalc.computeEntropicEnergy(eigenValues,
+                                       d_partialOccupancies,
+                                       d_kPointWeights,
+                                       fermiEnergy,
+                                       fermiEnergyUp,
+                                       fermiEnergyDown,
+                                       d_dftParamsPtr->spinPolarized == 1,
+                                       d_dftParamsPtr->constraintMagnetization,
+                                       d_dftParamsPtr->TVal);
+
+    if (d_dftParamsPtr->verbosity >= 0)
+      pcout << "Total entropic energy: " << d_entropicEnergy << std::endl;
+
+
+    d_freeEnergy = d_groundStateEnergy - d_entropicEnergy;
+
+    if (d_dftParamsPtr->verbosity >= 0)
+      pcout << "Total free energy: " << d_freeEnergy << std::endl;
 
 
 
-          computing_timer.leave_subsection("nscf solve");
-          computingTimerStandard.leave_subsection("Total nscf solve");
+    computing_timer.leave_subsection("nscf solve");
+    computingTimerStandard.leave_subsection("Total nscf solve");
 
 
 #ifdef DFTFE_WITH_DEVICE
-          if (d_dftParamsPtr->useDevice &&
-              (d_dftParamsPtr->writeWfcSolutionFields ||
-               d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
-            d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
+    if (d_dftParamsPtr->useDevice &&
+        (d_dftParamsPtr->writeWfcSolutionFields ||
+         d_dftParamsPtr->writeLdosFile || d_dftParamsPtr->writePdosFile))
+      d_eigenVectorsFlattenedDevice.copyTo(d_eigenVectorsFlattenedHost);
 #endif
 
-          // #ifdef USE_COMPLEX
-          //   if (!(d_dftParamsPtr->kPointDataFile == ""))
-          //   {
-          //   readkPointData();
-          //  initnscf(kohnShamDFTEigenOperator, d_phiTotalSolverProblem,
-          //  CGSolver); nscf(kohnShamDFTEigenOperator,
-          //  d_subspaceIterationSolver); writeBands();
-          // }
-          // #endif
-        }
+    // #ifdef USE_COMPLEX
+    //   if (!(d_dftParamsPtr->kPointDataFile == ""))
+    //   {
+    //   readkPointData();
+    //  initnscf(kohnShamDFTEigenOperator, d_phiTotalSolverProblem,
+    //  CGSolver); nscf(kohnShamDFTEigenOperator,
+    //  d_subspaceIterationSolver); writeBands();
+    // }
+    // #endif
+  }
 #include "dft.inst.cc"
-      } // namespace dftfe
+} // namespace dftfe
