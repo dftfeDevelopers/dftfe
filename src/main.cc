@@ -161,9 +161,9 @@ main(int argc, char *argv[])
       std::cout
         << "=========================================================================================================="
         << std::endl;
-      std::cout << "DFT-FE branch: " << GIT_BRANCH << " commit: " << GIT_COMMIT
+      std::cout << " DFT-FE branch: " << GIT_BRANCH << ", commit: " << GIT_COMMIT
                 << std::endl;
-      std::cout << "compiled ";
+      std::cout << " compiled ";
 #  ifdef DFTFE_WITH_DEVICE
       std::cout << "with GPU support, ";
 #    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
