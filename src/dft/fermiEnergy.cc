@@ -337,13 +337,13 @@ namespace dftfe
     std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
-          for (int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
-            {
-              eigenValuesAllkPointsUp.push_back(
-                eigenValuesInput[kPoint][statesIter]);
-              eigenValuesAllkPointsDown.push_back(
-                eigenValuesInput[kPoint][d_numEigenValues + statesIter]);
-            }
+        for (int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
+          {
+            eigenValuesAllkPointsUp.push_back(
+              eigenValuesInput[kPoint][statesIter]);
+            eigenValuesAllkPointsDown.push_back(
+              eigenValuesInput[kPoint][d_numEigenValues + statesIter]);
+          }
       }
 
     std::sort(eigenValuesAllkPointsUp.begin(), eigenValuesAllkPointsUp.end());
@@ -417,18 +417,18 @@ namespace dftfe
     std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
-          for (int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
-            {
-              eigenValuesAllkPointsUp.push_back(
-                eigenValuesInput[kPoint][statesIter]);
-              eigenValuesAllkPointsDown.push_back(
-                eigenValuesInput[kPoint][d_numEigenValues + statesIter]);
+        for (int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
+          {
+            eigenValuesAllkPointsUp.push_back(
+              eigenValuesInput[kPoint][statesIter]);
+            eigenValuesAllkPointsDown.push_back(
+              eigenValuesInput[kPoint][d_numEigenValues + statesIter]);
 
-              eigenValuesInputUp[kPoint].push_back(
-                eigenValuesInput[kPoint][statesIter]);
-              eigenValuesInputDown[kPoint].push_back(
-                eigenValuesInput[kPoint][d_numEigenValues + statesIter]);
-            }
+            eigenValuesInputUp[kPoint].push_back(
+              eigenValuesInput[kPoint][statesIter]);
+            eigenValuesInputDown[kPoint].push_back(
+              eigenValuesInput[kPoint][d_numEigenValues + statesIter]);
+          }
       }
 
     std::sort(eigenValuesAllkPointsUp.begin(), eigenValuesAllkPointsUp.end());
