@@ -249,10 +249,7 @@ namespace dftfe
                           {
                             const unsigned int startingCellId =
                               iblock * cellsBlockSize;
-
-                            // Since we have the data at the nodal points
-                            // this function interpolates to the quad points
-                            // the what about the inerpolation error?
+                              
                             basisOperationsPtr->interpolateKernel(
                               *(flattenedArrayBlock),
                               wfcQuadPointData.data(),
@@ -771,11 +768,6 @@ namespace dftfe
 
       MPI_Allreduce(
         MPI_IN_PLACE, &sumVal, 1, MPI_DOUBLE, MPI_SUM, mpiCommParent);
-
-      if (rank == 0)
-        {
-          std::cout << "Initial L2 norm of Tau is: " << sumVal << std::endl;
-        }
     }
 
 #if defined(DFTFE_WITH_DEVICE)

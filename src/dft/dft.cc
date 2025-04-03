@@ -1584,7 +1584,6 @@ namespace dftfe
                   isGradDensityDataDependent,
                   isTauMGGA);
 
-                // why don't we put the corresponding d_tauinquadValues here?
                 addAtomicRhoQuadValuesGradients(d_densityInQuadValues[0],
                                                 d_gradDensityInQuadValues[0],
                                                 isGradDensityDataDependent);
@@ -2957,8 +2956,8 @@ namespace dftfe
                         {
                           pcout << d_dftParamsPtr->mixingMethod
                                 << " mixing, L2 norm of "
-                                << (iComp == 0 ? "Tau" : "magnetization")
-                                << " difference: " << normsTau[iComp]
+                                << (iComp == 0 ? "Tau" : "magnetization(Tau) ")
+                                << "-difference: " << normsTau[iComp]
                                 << std::endl;
                         }
                     }

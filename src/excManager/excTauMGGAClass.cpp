@@ -229,9 +229,6 @@ namespace dftfe
 
     std::vector<double> laplacianValues(2 * nquad, 0.0);
 
-    // xc_func_set_dens_threshold(d_funcXPtr.get(), rhoThresholdMgga);
-    // xc_func_set_dens_threshold(d_funcCPtr.get(), rhoThresholdMgga);
-
     xc_mgga_exc_vxc(d_funcXPtr.get(),
                     nquad,
                     &densityValues[0],
@@ -254,47 +251,6 @@ namespace dftfe
                     &pdecSigmaValues[0],
                     &pdecLaplacianValues[0],
                     &pdecTauValuesNonNN[0]);
-    // {
-    //   int rank;
-    //   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    //   // auto tempVec =
-    //   //
-    //   wfcDescriptorData.find(WfcDescriptorDataAttributes::tauSpinUp)->second;
-    //   auto & tempVec = exValues;
-    //   double sumVal1 =
-    //     std::accumulate(densityValues.begin(), densityValues.end(), 0.0);
-    //   double sumVal2 =
-    //     std::accumulate(sigmaValues.begin(), sigmaValues.end(), 0.0);
-    //   double sumVal3 = std::accumulate(tauValues.begin(), tauValues.end(),
-    //   0.0); double sumVal4 = std::accumulate(exValues.begin(),
-    //   exValues.end(), 0.0); double sumVal5 =
-    //   std::accumulate(ecValues.begin(), ecValues.end(), 0.0);
-    //   // if (sumVal > 1e-5)
-    //   {
-    //     std::cout << "Sum : " << sumVal1 << ", " << sumVal2 << ", " <<
-    //     sumVal3
-    //               << ", " << sumVal4 << ", " << sumVal5 << ", " << rank
-    //               << std::endl;
-    //   }
-    // }
-
-    // for (size_t i = 0; i < tauValues.size(); i++)
-    //   {
-    //   if ((std::abs(densityValues[i]) <= tauThreshold)
-    //     || std::abs(tauValues[i] <= tauThreshold))
-    //     {
-    //       pdexDensityValuesNonNN[i] = 0;
-    //       pdexSigmaValues[i] = 0;
-    //       pdexTauValuesNonNN[i] = 0;
-    //       pdecDensityValuesNonNN[i] = 0;
-    //       pdecSigmaValues[i] = 0;
-    //       pdecTauValuesNonNN[i] = 0;
-    //     }
-    //       ecValues[i] = 0;
-    //       exValues[i] = 0;
-    // }
-
-    //##################################################################################################
     for (size_t i = 0; i < nquad; i++)
       {
         if (std::abs(densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=
@@ -322,58 +278,8 @@ namespace dftfe
             pdecSigmaValues[3 * i + 2]        = 0.0;
             pdecTauValuesNonNN[2 * i + 1]     = 0.0;
           }
-
-        // if ((densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=
-        //     rhoThresholdMgga)
-        //   {
-        //     exValues[i]                       = 0.0;
-        //     pdexDensityValuesNonNN[2 * i + 0] = 0.0;
-        //     pdexSigmaValues[3 * i + 0]        = 0.0;
-        //     pdexTauValuesNonNN[2 * i + 0]     = 0.0;
-
-        //     pdexDensityValuesNonNN[2 * i + 1] = 0.0;
-        //     pdexSigmaValues[3 * i + 2]        = 0.0;
-        //     pdexTauValuesNonNN[2 * i + 1]     = 0.0;
-        //   }
-
-        // if ((std::abs(densityValues[2 * i + 0]) <= rhoThresholdMgga) ||
-        //     (sigmaValues[3 * i + 0] <= sigmaThresholdMgga) ||
-        //     (std::abs(tauValues[2 * i + 0]) <= tauThresholdMgga))
-        //   {
-        //     pdexDensityValuesNonNN[2 * i + 0] = 0.0;
-        //     pdexSigmaValues[3 * i + 0]        = 0.0;
-        //     pdexTauValuesNonNN[2 * i + 0]     = 0.0;
-        //   }
-
-        // if ((std::abs(densityValues[2 * i + 1]) <= rhoThresholdMgga) ||
-        //     (sigmaValues[3 * i + 2] <= sigmaThresholdMgga) ||
-        //     (std::abs(tauValues[2 * i + 1]) <= tauThresholdMgga))
-        //   {
-        //     pdexDensityValuesNonNN[2 * i + 1] = 0.0;
-        //     pdexSigmaValues[3 * i + 2]        = 0.0;
-        //     pdexTauValuesNonNN[2 * i + 1]     = 0.0;
-        //   }
-
-        // if (((densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=
-        //      rhoThresholdMgga) ||
-        //     ((sigmaValues[3 * i + 0] + sigmaValues[3 * i + 2]) * 4.0) <=
-        //       sigmaThresholdMgga ||
-        //     (std::abs(tauValues[2 * i + 0] + tauValues[2 * i + 1])) <=
-        //       tauThresholdMgga)
-        //   {
-        //     ecValues[i]                       = 0.0;
-        //     pdecDensityValuesNonNN[2 * i + 0] = 0.0;
-        //     pdecDensityValuesNonNN[2 * i + 1] = 0.0;
-        //     pdecTauValuesNonNN[2 * i + 0]     = 0;
-        //     pdecTauValuesNonNN[2 * i + 1]     = 0;
-        //     pdecSigmaValues[3 * i + 0] =
-        //       0; // review the sigma thresholding part
-        //     pdecSigmaValues[3 * i + 1] = 0;
-        //     pdecSigmaValues[3 * i + 2] = 0;
-        //   }
       }
 
-    //##################################################################################################
     for (size_t i = 0; i < nquad; i++)
       {
         // Evaluation of total exValue and ecValue per unit volume

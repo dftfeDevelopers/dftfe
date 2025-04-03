@@ -413,6 +413,7 @@ namespace dftfe
 
 
     //
+    //
     const unsigned int nk =
       d_dftParamsPtr->nkx * d_dftParamsPtr->nky * d_dftParamsPtr->nkz;
     //
