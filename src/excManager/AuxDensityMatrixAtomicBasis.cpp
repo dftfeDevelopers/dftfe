@@ -282,6 +282,18 @@ namespace dftfe
                   reinterpret_cast<const unsigned int *>(&d_nBasis));
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  AuxDensityMatrixAtomicBasis<memorySpace>::applyLocalOperations(
+    const std::pair<unsigned int, unsigned int> &quadIndexRange,
+    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+      &densityData)
+  {
+    AssertThrow(
+      false,
+      dealii::ExcMessage(
+        "This function is not implemented for AuxDensityMatrixAtomicBasis"));
+  }
 
 
   template <dftfe::utils::MemorySpace memorySpace>

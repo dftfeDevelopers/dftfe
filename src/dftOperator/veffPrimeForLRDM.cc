@@ -129,8 +129,9 @@ namespace dftfe
             std::vector<double>();
         }
 
-      auxDensityXCRepresentationPtr->applyLocalOperations(quadPointsStdVecAll,
-                                                          densityDataAll);
+      auxDensityXCRepresentationPtr->applyLocalOperations(
+        std::make_pair<unsigned int, unsigned int>(0, quadWeightsAll.size()),
+        densityDataAll);
 
       std::vector<double> gradDensitySpinUpAll;
       std::vector<double> gradDensitySpinDownAll;
@@ -224,24 +225,12 @@ namespace dftfe
       //
       for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
         {
-          std::vector<double> quadPointsInCell(numberQuadraturePointsPerCell *
-                                               3);
-          std::vector<double> quadWeightsInCell(numberQuadraturePointsPerCell);
-          for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsPerCell;
-               ++iQuad)
-            {
-              for (unsigned int idim = 0; idim < 3; ++idim)
-                quadPointsInCell[3 * iQuad + idim] =
-                  quadPointsAll[iCell * numberQuadraturePointsPerCell * 3 +
-                                3 * iQuad + idim];
-              quadWeightsInCell[iQuad] = std::real(
-                quadWeightsAll[iCell * numberQuadraturePointsPerCell + iQuad]);
-            }
-
           d_excManagerPtr->getExcSSDFunctionalObj()
             ->computeRhoTauDependentXCData(
               *auxDensityXCPerturbedRepresentationPtr,
-              quadPointsInCell,
+              std::make_pair<unsigned int, unsigned int>(
+                iCell * numberQuadraturePointsPerCell,
+                (iCell + 1) * numberQuadraturePointsPerCell),
               xDataOut,
               cDataOut);
 
@@ -269,7 +258,10 @@ namespace dftfe
 
           if (isGGA)
             auxDensityXCPerturbedRepresentationPtr->applyLocalOperations(
-              quadPointsInCell, densityData);
+              std::make_pair<unsigned int, unsigned int>(
+                iCell * numberQuadraturePointsPerCell,
+                (iCell + 1) * numberQuadraturePointsPerCell),
+              densityData);
 
           const std::vector<double> &gradDensityXCSpinIndex =
             spinIndex == 0 ? gradDensitySpinUp : gradDensitySpinDown;

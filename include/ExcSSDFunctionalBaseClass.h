@@ -181,6 +181,21 @@ namespace dftfe
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
         &cDataout) const = 0;
 
+    /**
+     * x and c denotes exchange and correlation respectively.
+     * This function computes the rho and tau dependent part of
+     * the Exc functional energy density and its partial derivatives
+     */
+    virtual void
+    computeRhoTauDependentXCData(
+      AuxDensityMatrix<memorySpace> &              auxDensityMatrix,
+      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &xDataOut,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &cDataout) const = 0;
+
+
     ExcFamilyType
     getExcFamilyType() const;
 

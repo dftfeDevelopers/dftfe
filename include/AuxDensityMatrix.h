@@ -34,6 +34,16 @@ namespace dftfe
   public:
     /**
      * @brief compute local descriptors of the aux basis electron-density
+     * representation at the supplied range of Quadrature index range
+     */
+    virtual void
+    applyLocalOperations(
+      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+        &densityData) = 0;
+
+    /**
+     * @brief compute local descriptors of the aux basis electron-density
      * representation at the supplied set of points using
      */
     virtual void

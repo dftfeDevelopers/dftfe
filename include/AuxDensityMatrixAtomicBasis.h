@@ -31,6 +31,11 @@ namespace dftfe
 
     void
     applyLocalOperations(
+      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+        &densityData) override;
+    void
+    applyLocalOperations(
       const std::vector<double> &quadpts,
       std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
         &densityData) override;

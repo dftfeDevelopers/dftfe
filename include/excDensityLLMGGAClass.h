@@ -33,6 +33,15 @@ namespace dftfe
         &cDataout) const override;
 
     void
+    computeRhoTauDependentXCData(
+      AuxDensityMatrix<memorySpace> &              auxDensityMatrix,
+      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &xDataOut,
+      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+        &cDataout) const override;
+
+    void
     checkInputOutputDataAttributesConsistency(
       const std::vector<xcRemainderOutputDataAttributes> &outputDataAttributes)
       const override;

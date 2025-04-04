@@ -58,6 +58,22 @@ namespace dftfe
                                                  cDataOut);
   }
 
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  ExcDFTPlusU<ValueType, memorySpace>::computeRhoTauDependentXCData(
+    AuxDensityMatrix<memorySpace> &              auxDensityMatrix,
+    const std::pair<unsigned int, unsigned int> &quadIndexRange,
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      &xDataOut,
+    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      &cDataOut) const
+  {
+    d_excSSDObjPtr->computeRhoTauDependentXCData(auxDensityMatrix,
+                                                 quadIndexRange,
+                                                 xDataOut,
+                                                 cDataOut);
+  }
+
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void

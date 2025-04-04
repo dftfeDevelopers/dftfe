@@ -24,6 +24,12 @@ namespace dftfe
       const std::vector<std::vector<double>> &fractionalOccupancies);
 
 
+    void
+    applyLocalOperations(
+      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+        &densityData) override;
+
 
     // CAUTION: points have to be a contiguous subset of d_quadPointsSet
     void
