@@ -34,18 +34,6 @@ namespace dftfe
     }
   } // namespace
 
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  AuxDensityMatrixFE<memorySpace>::applyLocalOperations(
-    const std::vector<double> &points,
-    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
-      &densityData)
-  {
-    AssertThrow(false,
-                dealii::ExcMessage(
-                  "This function is not implemented for AuxDensityMatrixFE"));
-  }
-
 
   template <dftfe::utils::MemorySpace memorySpace>
   void

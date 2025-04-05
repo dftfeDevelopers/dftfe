@@ -42,15 +42,7 @@ namespace dftfe
       std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
         &densityData) = 0;
 
-    /**
-     * @brief compute local descriptors of the aux basis electron-density
-     * representation at the supplied set of points using
-     */
-    virtual void
-    applyLocalOperations(
-      const std::vector<double> &Points,
-      std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
-        &densityData) = 0;
+
 
     /**
      * @brief Compute aux basis overlap matrix batchwise contribution from

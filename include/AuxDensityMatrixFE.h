@@ -31,12 +31,6 @@ namespace dftfe
         &densityData) override;
 
 
-    // CAUTION: points have to be a contiguous subset of d_quadPointsSet
-    void
-    applyLocalOperations(
-      const std::vector<double> &points,
-      std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
-        &densityData) override;
 
     void
     evalOverlapMatrixStart(const std::vector<double> &quadpts,

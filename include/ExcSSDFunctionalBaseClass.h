@@ -167,19 +167,7 @@ namespace dftfe
     virtual double
     getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi() = 0;
 
-    /**
-     * x and c denotes exchange and correlation respectively.
-     * This function computes the rho and tau dependent part of
-     * the Exc functional energy density and its partial derivatives
-     */
-    virtual void
-    computeRhoTauDependentXCData(
-      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    quadPoints,
-      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
-        &xDataOut,
-      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
-        &cDataout) const = 0;
+
 
     /**
      * x and c denotes exchange and correlation respectively.

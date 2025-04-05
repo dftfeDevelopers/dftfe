@@ -23,14 +23,6 @@ namespace dftfe
 
     ~excDensityLLMGGAClass();
 
-    void
-    computeRhoTauDependentXCData(
-      AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-      const std::vector<double> &    quadPoints,
-      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
-        &xDataOut,
-      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
-        &cDataout) const override;
 
     void
     computeRhoTauDependentXCData(
