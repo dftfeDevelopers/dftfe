@@ -38,31 +38,20 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   AuxDensityMatrixFE<memorySpace>::applyLocalOperations(
-    const std::vector<double> &points,
+    const std::pair<unsigned int, unsigned int> &quadIndexRange,
     std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
       &densityData)
   {
     std::pair<unsigned int, unsigned int> indexRangeVal;
     std::pair<unsigned int, unsigned int> indexRangeGrad;
 
-    unsigned int minIndex = 0;
-    for (unsigned int i = 0; i < d_quadWeightsAll.size(); i++)
-      {
-        if ((std::abs(points[0] - d_quadPointsAll[3 * i + 0]) +
-             std::abs(points[1] - d_quadPointsAll[3 * i + 1]) +
-             std::abs(points[2] - d_quadPointsAll[3 * i + 2])) < 1e-6)
-          {
-            minIndex = i;
-            break;
-          }
-      }
 
 
-    indexRangeVal.first  = minIndex;
-    indexRangeVal.second = minIndex + points.size() / 3;
+    indexRangeVal.first  = quadIndexRange.first;
+    indexRangeVal.second = quadIndexRange.second;
 
-    indexRangeGrad.first  = minIndex * 3;
-    indexRangeGrad.second = minIndex * 3 + points.size();
+    indexRangeGrad.first  = quadIndexRange.first * 3;
+    indexRangeGrad.second = quadIndexRange.second * 3;
 
     if (densityData.find(DensityDescriptorDataAttributes::valuesTotal) !=
         densityData.end())

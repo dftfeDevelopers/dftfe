@@ -99,17 +99,19 @@ namespace dftfe
       }
   }
 
+
+
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excDensityGGAClass<memorySpace>::computeRhoTauDependentXCData(
-    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-    const std::vector<double> &    quadPoints,
+    AuxDensityMatrix<memorySpace> &              auxDensityMatrix,
+    const std::pair<unsigned int, unsigned int> &quadIndexRange,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &xDataOut,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &cDataOut) const
   {
-    const unsigned int                           nquad = quadPoints.size() / 3;
+    const unsigned int nquad = quadIndexRange.second - quadIndexRange.first;
     std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
     for (const auto &element : xDataOut)
       outputDataAttributes.push_back(element.first);
@@ -136,7 +138,8 @@ namespace dftfe
             std::vector<double>(3 * nquad, 0);
       }
 
-    auxDensityMatrix.applyLocalOperations(quadPoints, densityDescriptorData);
+    auxDensityMatrix.applyLocalOperations(quadIndexRange,
+                                          densityDescriptorData);
 
 
     auto &densityValuesSpinUp =
@@ -278,6 +281,7 @@ namespace dftfe
           }
       }
   }
+
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
