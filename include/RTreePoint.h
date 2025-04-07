@@ -70,6 +70,14 @@ namespace dftfe
       getPointIdsInsideBox(const std::vector<double> &lowerLeft,
                            const std::vector<double> &upperRight);
 
+
+      /**
+       * @brief Returns the indices of the n nearest point to the input point
+       */
+      std::vector<size_type>
+      getPointIdsNearInputPoint(const std::vector<double> &inputPoint,
+                                unsigned int               nNearestNeighbours);
+
     private:
       //
       // boost rtree obj

@@ -16,7 +16,7 @@ The steps to install the necessary dependencies and DFT-FE itself are described 
 
 We have created several shell based installation scripts for the development version of DFT-FE (`publicGithubDevelop` branch) on various machines:
   - [OLCF Frontier](https://github.com/dftfeDevelopers/install_DFTFE/tree/postModuleUpdate16July2024)
-  - [NERSC Perlmutter](https://github.com/dftfeDevelopers/install_DFTFE/tree/perlmutterScriptDealii9.5.2)
+  - [NERSC Perlmutter](https://github.com/dftfeDevelopers/install_DFTFE/tree/perlmutterScriptDealii9.5.2_withPetscSlepc)
   - [ALCF Polaris](https://github.com/dftfeDevelopers/install_DFTFE/tree/polarisScript)
   - [UMICH Greatlakes](https://github.com/dftfeDevelopers/install_DFTFE/tree/greatlakesScriptDealii9.5.2)
     

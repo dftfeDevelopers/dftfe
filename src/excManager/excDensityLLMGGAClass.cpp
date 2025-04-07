@@ -89,17 +89,19 @@ namespace dftfe
       }
   }
 
+
+
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excDensityLLMGGAClass<memorySpace>::computeRhoTauDependentXCData(
-    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-    const std::vector<double> &    quadPoints,
+    AuxDensityMatrix<memorySpace> &              auxDensityMatrix,
+    const std::pair<unsigned int, unsigned int> &quadIndexRange,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &xDataOut,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &cDataOut) const
   {
-    const unsigned int                           nquad = quadPoints.size() / 3;
+    const unsigned int nquad = quadIndexRange.second - quadIndexRange.first;
     std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
     for (const auto &element : xDataOut)
       outputDataAttributes.push_back(element.first);
@@ -137,7 +139,8 @@ namespace dftfe
           outputDataAttributes.end())
       isVxcBeingComputed = true;
 
-    auxDensityMatrix.applyLocalOperations(quadPoints, densityDescriptorData);
+    auxDensityMatrix.applyLocalOperations(quadIndexRange,
+                                          densityDescriptorData);
 
     auto &densityValuesSpinUp =
       densityDescriptorData.find(DensityDescriptorDataAttributes::valuesSpinUp)
@@ -317,244 +320,261 @@ namespace dftfe
 
         std::vector<double> d_spacingFDStencil(nquad, 1e-4);
 
-        for (size_t idim = 0; idim < 3; idim++)
-          {
-            for (size_t istencil = 0;
-                 istencil < d_vxcDivergenceTermFDStencilSize;
-                 istencil++)
-              {
-                std::vector<double> quadShiftedFD = quadPoints;
-                for (size_t igrid = 0; igrid < nquad; igrid++)
-                  {
-                    // create FD grid
-                    quadShiftedFD[3 * igrid + idim] =
-                      quadPoints[3 * igrid + idim] +
-                      (-std::floor(d_vxcDivergenceTermFDStencilSize / 2) *
-                         d_spacingFDStencil[igrid] +
-                       igrid * d_spacingFDStencil[igrid]);
-                  }
+        //         for (size_t idim = 0; idim < 3; idim++)
+        //           {
+        //             for (size_t istencil = 0;
+        //                  istencil < d_vxcDivergenceTermFDStencilSize;
+        //                  istencil++)
+        //               {
+        //                 std::vector<double> quadShiftedFD = quadPoints;
+        //                 for (size_t igrid = 0; igrid < nquad; igrid++)
+        //                   {
+        //                     // create FD grid
+        //                     quadShiftedFD[3 * igrid + idim] =
+        //                       quadPoints[3 * igrid + idim] +
+        //                       (-std::floor(d_vxcDivergenceTermFDStencilSize /
+        //                       2) *
+        //                          d_spacingFDStencil[igrid] +
+        //                        igrid * d_spacingFDStencil[igrid]);
+        //                   }
 
-                auxDensityMatrix.applyLocalOperations(
-                  quadShiftedFD, densityDescriptorDataForFD);
+        //                 auxDensityMatrix.applyLocalOperations(
+        //                   quadShiftedFD, densityDescriptorDataForFD);
 
-                auto &densityValuesSpinUpFD =
-                  densityDescriptorDataForFD
-                    .find(DensityDescriptorDataAttributes::valuesSpinUp)
-                    ->second;
-                auto &densityValuesSpinDownFD =
-                  densityDescriptorDataForFD
-                    .find(DensityDescriptorDataAttributes::valuesSpinDown)
-                    ->second;
-                auto &gradValuesSpinUpFD =
-                  densityDescriptorDataForFD
-                    .find(DensityDescriptorDataAttributes::gradValuesSpinUp)
-                    ->second;
-                auto &gradValuesSpinDownFD =
-                  densityDescriptorDataForFD
-                    .find(DensityDescriptorDataAttributes::gradValuesSpinDown)
-                    ->second;
-                auto &laplacianValuesSpinUpFD =
-                  densityDescriptorDataForFD
-                    .find(DensityDescriptorDataAttributes::laplacianSpinUp)
-                    ->second;
-                auto &laplacianValuesSpinDownFD =
-                  densityDescriptorDataForFD
-                    .find(DensityDescriptorDataAttributes::laplacianSpinDown)
-                    ->second;
+        //                 auto &densityValuesSpinUpFD =
+        //                   densityDescriptorDataForFD
+        //                     .find(DensityDescriptorDataAttributes::valuesSpinUp)
+        //                     ->second;
+        //                 auto &densityValuesSpinDownFD =
+        //                   densityDescriptorDataForFD
+        //                     .find(DensityDescriptorDataAttributes::valuesSpinDown)
+        //                     ->second;
+        //                 auto &gradValuesSpinUpFD =
+        //                   densityDescriptorDataForFD
+        //                     .find(DensityDescriptorDataAttributes::gradValuesSpinUp)
+        //                     ->second;
+        //                 auto &gradValuesSpinDownFD =
+        //                   densityDescriptorDataForFD
+        //                     .find(DensityDescriptorDataAttributes::gradValuesSpinDown)
+        //                     ->second;
+        //                 auto &laplacianValuesSpinUpFD =
+        //                   densityDescriptorDataForFD
+        //                     .find(DensityDescriptorDataAttributes::laplacianSpinUp)
+        //                     ->second;
+        //                 auto &laplacianValuesSpinDownFD =
+        //                   densityDescriptorDataForFD
+        //                     .find(DensityDescriptorDataAttributes::laplacianSpinDown)
+        //                     ->second;
 
-                for (size_t i = 0; i < nquad; i++)
-                  {
-                    densityValuesFD[2 * i + 0] = densityValuesSpinUpFD[i];
-                    densityValuesFD[2 * i + 1] = densityValuesSpinDownFD[i];
+        //                 for (size_t i = 0; i < nquad; i++)
+        //                   {
+        //                     densityValuesFD[2 * i + 0] =
+        //                     densityValuesSpinUpFD[i]; densityValuesFD[2 * i +
+        //                     1] = densityValuesSpinDownFD[i];
 
-                    sigmaValuesFD[3 * i + 0] = 0;
-                    sigmaValuesFD[3 * i + 1] = 0;
-                    sigmaValuesFD[3 * i + 2] = 0;
+        //                     sigmaValuesFD[3 * i + 0] = 0;
+        //                     sigmaValuesFD[3 * i + 1] = 0;
+        //                     sigmaValuesFD[3 * i + 2] = 0;
 
-                    for (size_t j = 0; j < 3; j++)
-                      {
-                        sigmaValuesFD[3 * i + 0] +=
-                          gradValuesSpinUpFD[3 * i + j] *
-                          gradValuesSpinUpFD[3 * i + j];
-                        sigmaValuesFD[3 * i + 1] +=
-                          gradValuesSpinUpFD[3 * i + j] *
-                          gradValuesSpinDownFD[3 * i + j];
-                        sigmaValuesFD[3 * i + 2] +=
-                          gradValuesSpinDownFD[3 * i + j] *
-                          gradValuesSpinDownFD[3 * i + j];
-                      }
+        //                     for (size_t j = 0; j < 3; j++)
+        //                       {
+        //                         sigmaValuesFD[3 * i + 0] +=
+        //                           gradValuesSpinUpFD[3 * i + j] *
+        //                           gradValuesSpinUpFD[3 * i + j];
+        //                         sigmaValuesFD[3 * i + 1] +=
+        //                           gradValuesSpinUpFD[3 * i + j] *
+        //                           gradValuesSpinDownFD[3 * i + j];
+        //                         sigmaValuesFD[3 * i + 2] +=
+        //                           gradValuesSpinDownFD[3 * i + j] *
+        //                           gradValuesSpinDownFD[3 * i + j];
+        //                       }
 
-                    laplacianValuesFD[2 * i + 0] = laplacianValuesSpinUp[i];
-                    laplacianValuesFD[2 * i + 1] = laplacianValuesSpinDown[i];
-                  }
+        //                     laplacianValuesFD[2 * i + 0] =
+        //                     laplacianValuesSpinUp[i]; laplacianValuesFD[2 * i
+        //                     + 1] = laplacianValuesSpinDown[i];
+        //                   }
 
-                xc_gga_exc_vxc(d_funcXPtr.get(),
-                               nquad,
-                               &densityValuesFD[0],
-                               &sigmaValuesFD[0],
-                               &exValuesFD[0],
-                               &pdexDensityValuesNonNNFD[0],
-                               &pdexSigmaValuesFD[0]);
-                xc_gga_exc_vxc(d_funcCPtr.get(),
-                               nquad,
-                               &densityValuesFD[0],
-                               &sigmaValuesFD[0],
-                               &ecValuesFD[0],
-                               &pdecDensityValuesNonNNFD[0],
-                               &pdecSigmaValuesFD[0]);
+        //                 xc_gga_exc_vxc(d_funcXPtr.get(),
+        //                                nquad,
+        //                                &densityValuesFD[0],
+        //                                &sigmaValuesFD[0],
+        //                                &exValuesFD[0],
+        //                                &pdexDensityValuesNonNNFD[0],
+        //                                &pdexSigmaValuesFD[0]);
+        //                 xc_gga_exc_vxc(d_funcCPtr.get(),
+        //                                nquad,
+        //                                &densityValuesFD[0],
+        //                                &sigmaValuesFD[0],
+        //                                &ecValuesFD[0],
+        //                                &pdecDensityValuesNonNNFD[0],
+        //                                &pdecSigmaValuesFD[0]);
 
-#ifdef DFTFE_WITH_TORCH
-                if (d_NNLLMGGAPtr != nullptr)
-                  {
-                    std::vector<double> excValuesFromNNFD(nquad, 0);
-                    const size_t        numDescriptors =
-                      this->d_densityDescriptorAttributesList.size();
-                    std::vector<double> pdexcDescriptorValuesFromNNFD(
-                      numDescriptors * nquad, 0);
-
-
-                    d_NNLLMGGAPtr->evaluatevxc(
-                      &(densityValuesFD[0]),
-                      &sigmaValuesFD[0],
-                      &laplacianValuesFD[0],
-                      nquad,
-                      &excValuesFromNNFD[0],
-                      &pdexcDescriptorValuesFromNNFD[0]);
-
-                    for (size_t i = 0; i < nquad; i++)
-                      {
-                        pdexSigmaValuesFD[3 * i + 0] +=
-                          pdexcDescriptorValuesFromNNFD[numDescriptors * i + 2];
-                        pdexSigmaValuesFD[3 * i + 1] +=
-                          pdexcDescriptorValuesFromNNFD[numDescriptors * i + 3];
-                        pdexSigmaValuesFD[3 * i + 2] +=
-                          pdexcDescriptorValuesFromNNFD[numDescriptors * i + 4];
-                        pdexLaplacianValuesFD[2 * i + 0] +=
-                          pdexcDescriptorValuesFromNNFD[numDescriptors * i + 5];
-                        pdexLaplacianValuesFD[2 * i + 1] +=
-                          pdexcDescriptorValuesFromNNFD[numDescriptors * i + 6];
-                      }
-                  }
-#endif
-
-                for (size_t igrid = 0; igrid < nquad; igrid++)
-                  {
-                    pdexGradDensityidimSpinUpStencil
-                      [igrid * d_vxcDivergenceTermFDStencilSize + istencil] =
-                        gradValuesSpinUpFD[3 * igrid + idim] *
-                          (2.0 * pdexSigmaValuesFD[3 * igrid] +
-                           pdexSigmaValuesFD[3 * igrid + 1]) +
-                        gradValuesSpinDownFD[3 * igrid + idim] *
-                          (2.0 * pdexSigmaValuesFD[3 * igrid + 2] +
-                           pdexSigmaValuesFD[3 * igrid + 1]);
-
-                    pdecGradDensityidimSpinUpStencil
-                      [igrid * d_vxcDivergenceTermFDStencilSize + istencil] =
-                        gradValuesSpinUpFD[3 * igrid + idim] *
-                          (2.0 * pdecSigmaValuesFD[3 * igrid] +
-                           pdecSigmaValuesFD[3 * igrid + 1]) +
-                        gradValuesSpinDownFD[3 * igrid + idim] *
-                          (2.0 * pdecSigmaValuesFD[3 * igrid + 2] +
-                           pdecSigmaValuesFD[3 * igrid + 1]);
-
-                    pdexLapDensityidimSpinUpStencil
-                      [igrid * d_vxcDivergenceTermFDStencilSize + istencil] =
-                        pdexLaplacianValuesFD[2 * igrid];
-
-                    pdecLapDensityidimSpinUpStencil
-                      [igrid * d_vxcDivergenceTermFDStencilSize + istencil] =
-                        pdecLaplacianValuesFD[2 * igrid];
-
-                    pdexGradDensityidimSpinDownStencil
-                      [igrid * d_vxcDivergenceTermFDStencilSize + istencil] =
-                        gradValuesSpinUpFD[3 * igrid + idim] *
-                          (2.0 * pdexSigmaValuesFD[3 * igrid] +
-                           pdexSigmaValuesFD[3 * igrid + 1]) +
-                        gradValuesSpinDownFD[3 * igrid + idim] *
-                          (2.0 * pdexSigmaValuesFD[3 * igrid + 2] +
-                           pdexSigmaValuesFD[3 * igrid + 1]);
-
-                    pdecGradDensityidimSpinDownStencil
-                      [igrid * d_vxcDivergenceTermFDStencilSize + istencil] =
-                        gradValuesSpinUpFD[3 * igrid + idim] *
-                          (2.0 * pdecSigmaValuesFD[3 * igrid] +
-                           pdecSigmaValuesFD[3 * igrid + 1]) +
-                        gradValuesSpinDownFD[3 * igrid + idim] *
-                          (2.0 * pdecSigmaValuesFD[3 * igrid + 2] +
-                           pdecSigmaValuesFD[3 * igrid + 1]);
-
-                    pdexLapDensityidimSpinDownStencil
-                      [igrid * d_vxcDivergenceTermFDStencilSize + istencil] =
-                        pdexLaplacianValuesFD[2 * igrid + 1];
-
-                    pdecLapDensityidimSpinDownStencil
-                      [igrid * d_vxcDivergenceTermFDStencilSize + istencil] =
-                        pdecLaplacianValuesFD[2 * igrid + 1];
-                  }
-              } // stencil grid filling loop
-
-            utils::FiniteDifference::firstOrderDerivativeOneVariableCentral(
-              d_vxcDivergenceTermFDStencilSize,
-              &(d_spacingFDStencil[0]),
-              nquad,
-              &(pdexGradDensityidimSpinUpStencil[0]),
-              &(divergenceTermsPdexGradDensitySpinUp[idim][0]));
-
-            utils::FiniteDifference::firstOrderDerivativeOneVariableCentral(
-              d_vxcDivergenceTermFDStencilSize,
-              &(d_spacingFDStencil[0]),
-              nquad,
-              &(pdecGradDensityidimSpinUpStencil[0]),
-              &(divergenceTermsPdecGradDensitySpinUp[idim][0]));
-
-            utils::FiniteDifference::firstOrderDerivativeOneVariableCentral(
-              d_vxcDivergenceTermFDStencilSize,
-              &(d_spacingFDStencil[0]),
-              nquad,
-              &(pdexGradDensityidimSpinDownStencil[0]),
-              &(divergenceTermsPdexGradDensitySpinDown[idim][0]));
-
-            utils::FiniteDifference::firstOrderDerivativeOneVariableCentral(
-              d_vxcDivergenceTermFDStencilSize,
-              &(d_spacingFDStencil[0]),
-              nquad,
-              &(pdecGradDensityidimSpinDownStencil[0]),
-              &(divergenceTermsPdecGradDensitySpinDown[idim][0]));
+        // #ifdef DFTFE_WITH_TORCH
+        //                 if (d_NNLLMGGAPtr != nullptr)
+        //                   {
+        //                     std::vector<double> excValuesFromNNFD(nquad, 0);
+        //                     const size_t        numDescriptors =
+        //                       this->d_densityDescriptorAttributesList.size();
+        //                     std::vector<double>
+        //                     pdexcDescriptorValuesFromNNFD(
+        //                       numDescriptors * nquad, 0);
 
 
-            utils::FiniteDifference::secondOrderDerivativeOneVariableCentral(
-              d_vxcDivergenceTermFDStencilSize,
-              &(d_spacingFDStencil[0]),
-              nquad,
-              &(pdexLapDensityidimSpinUpStencil[0]),
-              &(laplacianTermsPdexLapDensitySpinUp[idim][0]));
+        //                     d_NNLLMGGAPtr->evaluatevxc(
+        //                       &(densityValuesFD[0]),
+        //                       &sigmaValuesFD[0],
+        //                       &laplacianValuesFD[0],
+        //                       nquad,
+        //                       &excValuesFromNNFD[0],
+        //                       &pdexcDescriptorValuesFromNNFD[0]);
 
-            /*
-            utils::FiniteDifference::secondOrderDerivativeOneVariableCentral(
-                    d_vxcDivergenceTermFDStencilSize,
-                    &(d_spacingFDStencil[0]),
-                    nquad,
-                    &(pdecLapDensityidimSpinUpStencil[0]),
-                    &(laplacianTermsPdecLapDensitySpinUp[idim][0]));
-            */
+        //                     for (size_t i = 0; i < nquad; i++)
+        //                       {
+        //                         pdexSigmaValuesFD[3 * i + 0] +=
+        //                           pdexcDescriptorValuesFromNNFD[numDescriptors
+        //                           * i + 2];
+        //                         pdexSigmaValuesFD[3 * i + 1] +=
+        //                           pdexcDescriptorValuesFromNNFD[numDescriptors
+        //                           * i + 3];
+        //                         pdexSigmaValuesFD[3 * i + 2] +=
+        //                           pdexcDescriptorValuesFromNNFD[numDescriptors
+        //                           * i + 4];
+        //                         pdexLaplacianValuesFD[2 * i + 0] +=
+        //                           pdexcDescriptorValuesFromNNFD[numDescriptors
+        //                           * i + 5];
+        //                         pdexLaplacianValuesFD[2 * i + 1] +=
+        //                           pdexcDescriptorValuesFromNNFD[numDescriptors
+        //                           * i + 6];
+        //                       }
+        //                   }
+        // #endif
 
-            utils::FiniteDifference::secondOrderDerivativeOneVariableCentral(
-              d_vxcDivergenceTermFDStencilSize,
-              &(d_spacingFDStencil[0]),
-              nquad,
-              &(pdexLapDensityidimSpinDownStencil[0]),
-              &(laplacianTermsPdexLapDensitySpinDown[idim][0]));
+        //                 for (size_t igrid = 0; igrid < nquad; igrid++)
+        //                   {
+        //                     pdexGradDensityidimSpinUpStencil
+        //                       [igrid * d_vxcDivergenceTermFDStencilSize +
+        //                       istencil] =
+        //                         gradValuesSpinUpFD[3 * igrid + idim] *
+        //                           (2.0 * pdexSigmaValuesFD[3 * igrid] +
+        //                            pdexSigmaValuesFD[3 * igrid + 1]) +
+        //                         gradValuesSpinDownFD[3 * igrid + idim] *
+        //                           (2.0 * pdexSigmaValuesFD[3 * igrid + 2] +
+        //                            pdexSigmaValuesFD[3 * igrid + 1]);
 
-            /*
-            utils::FiniteDifference::secondOrderDerivativeOneVariableCentral(
-                    d_vxcDivergenceTermFDStencilSize,
-                    &(d_spacingFDStencil[0]),
-                    nquad,
-                    &(pdecLapDensityidimSpinDownStencil[0]),
-                    &(laplacianTermsPdecLapDensitySpinDown[idim][0]));
-            */
+        //                     pdecGradDensityidimSpinUpStencil
+        //                       [igrid * d_vxcDivergenceTermFDStencilSize +
+        //                       istencil] =
+        //                         gradValuesSpinUpFD[3 * igrid + idim] *
+        //                           (2.0 * pdecSigmaValuesFD[3 * igrid] +
+        //                            pdecSigmaValuesFD[3 * igrid + 1]) +
+        //                         gradValuesSpinDownFD[3 * igrid + idim] *
+        //                           (2.0 * pdecSigmaValuesFD[3 * igrid + 2] +
+        //                            pdecSigmaValuesFD[3 * igrid + 1]);
 
-          } // dim loop
+        //                     pdexLapDensityidimSpinUpStencil
+        //                       [igrid * d_vxcDivergenceTermFDStencilSize +
+        //                       istencil] =
+        //                         pdexLaplacianValuesFD[2 * igrid];
+
+        //                     pdecLapDensityidimSpinUpStencil
+        //                       [igrid * d_vxcDivergenceTermFDStencilSize +
+        //                       istencil] =
+        //                         pdecLaplacianValuesFD[2 * igrid];
+
+        //                     pdexGradDensityidimSpinDownStencil
+        //                       [igrid * d_vxcDivergenceTermFDStencilSize +
+        //                       istencil] =
+        //                         gradValuesSpinUpFD[3 * igrid + idim] *
+        //                           (2.0 * pdexSigmaValuesFD[3 * igrid] +
+        //                            pdexSigmaValuesFD[3 * igrid + 1]) +
+        //                         gradValuesSpinDownFD[3 * igrid + idim] *
+        //                           (2.0 * pdexSigmaValuesFD[3 * igrid + 2] +
+        //                            pdexSigmaValuesFD[3 * igrid + 1]);
+
+        //                     pdecGradDensityidimSpinDownStencil
+        //                       [igrid * d_vxcDivergenceTermFDStencilSize +
+        //                       istencil] =
+        //                         gradValuesSpinUpFD[3 * igrid + idim] *
+        //                           (2.0 * pdecSigmaValuesFD[3 * igrid] +
+        //                            pdecSigmaValuesFD[3 * igrid + 1]) +
+        //                         gradValuesSpinDownFD[3 * igrid + idim] *
+        //                           (2.0 * pdecSigmaValuesFD[3 * igrid + 2] +
+        //                            pdecSigmaValuesFD[3 * igrid + 1]);
+
+        //                     pdexLapDensityidimSpinDownStencil
+        //                       [igrid * d_vxcDivergenceTermFDStencilSize +
+        //                       istencil] =
+        //                         pdexLaplacianValuesFD[2 * igrid + 1];
+
+        //                     pdecLapDensityidimSpinDownStencil
+        //                       [igrid * d_vxcDivergenceTermFDStencilSize +
+        //                       istencil] =
+        //                         pdecLaplacianValuesFD[2 * igrid + 1];
+        //                   }
+        //               } // stencil grid filling loop
+
+        //             utils::FiniteDifference::firstOrderDerivativeOneVariableCentral(
+        //               d_vxcDivergenceTermFDStencilSize,
+        //               &(d_spacingFDStencil[0]),
+        //               nquad,
+        //               &(pdexGradDensityidimSpinUpStencil[0]),
+        //               &(divergenceTermsPdexGradDensitySpinUp[idim][0]));
+
+        //             utils::FiniteDifference::firstOrderDerivativeOneVariableCentral(
+        //               d_vxcDivergenceTermFDStencilSize,
+        //               &(d_spacingFDStencil[0]),
+        //               nquad,
+        //               &(pdecGradDensityidimSpinUpStencil[0]),
+        //               &(divergenceTermsPdecGradDensitySpinUp[idim][0]));
+
+        //             utils::FiniteDifference::firstOrderDerivativeOneVariableCentral(
+        //               d_vxcDivergenceTermFDStencilSize,
+        //               &(d_spacingFDStencil[0]),
+        //               nquad,
+        //               &(pdexGradDensityidimSpinDownStencil[0]),
+        //               &(divergenceTermsPdexGradDensitySpinDown[idim][0]));
+
+        //             utils::FiniteDifference::firstOrderDerivativeOneVariableCentral(
+        //               d_vxcDivergenceTermFDStencilSize,
+        //               &(d_spacingFDStencil[0]),
+        //               nquad,
+        //               &(pdecGradDensityidimSpinDownStencil[0]),
+        //               &(divergenceTermsPdecGradDensitySpinDown[idim][0]));
+
+
+        //             utils::FiniteDifference::secondOrderDerivativeOneVariableCentral(
+        //               d_vxcDivergenceTermFDStencilSize,
+        //               &(d_spacingFDStencil[0]),
+        //               nquad,
+        //               &(pdexLapDensityidimSpinUpStencil[0]),
+        //               &(laplacianTermsPdexLapDensitySpinUp[idim][0]));
+
+        //             /*
+        //             utils::FiniteDifference::secondOrderDerivativeOneVariableCentral(
+        //                     d_vxcDivergenceTermFDStencilSize,
+        //                     &(d_spacingFDStencil[0]),
+        //                     nquad,
+        //                     &(pdecLapDensityidimSpinUpStencil[0]),
+        //                     &(laplacianTermsPdecLapDensitySpinUp[idim][0]));
+        //             */
+
+        //             utils::FiniteDifference::secondOrderDerivativeOneVariableCentral(
+        //               d_vxcDivergenceTermFDStencilSize,
+        //               &(d_spacingFDStencil[0]),
+        //               nquad,
+        //               &(pdexLapDensityidimSpinDownStencil[0]),
+        //               &(laplacianTermsPdexLapDensitySpinDown[idim][0]));
+
+        //             /*
+        //             utils::FiniteDifference::secondOrderDerivativeOneVariableCentral(
+        //                     d_vxcDivergenceTermFDStencilSize,
+        //                     &(d_spacingFDStencil[0]),
+        //                     nquad,
+        //                     &(pdecLapDensityidimSpinDownStencil[0]),
+        //                     &(laplacianTermsPdecLapDensitySpinDown[idim][0]));
+        //             */
+
+        //           } // dim loop
 
         for (size_t igrid = 0; igrid < nquad; igrid++)
           {
@@ -597,7 +617,6 @@ namespace dftfe
           }
       } // VxcCompute check
   }
-
 
   template <dftfe::utils::MemorySpace memorySpace>
   void

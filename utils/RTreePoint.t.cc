@@ -126,5 +126,31 @@ namespace dftfe
 
       return pointIds;
     }
+
+    template <size_type dim, size_type M>
+    std::vector<size_type>
+    RTreePoint<dim, M>::getPointIdsNearInputPoint(
+      const std::vector<double> &inputPoint,
+      unsigned int               nNearestNeighbours)
+    {
+      BG::model::point<double, dim, BG::cs::cartesian> bgInputPoint;
+      assignValueToBoostPoint<dim>(bgInputPoint, inputPoint);
+
+      std::vector<
+        std::pair<BG::model::point<double, dim, BG::cs::cartesian>, size_type>>
+        result;
+
+      result.resize(0);
+      d_rtreePtr->query(BGI::nearest(bgInputPoint, nNearestNeighbours),
+                        std::back_inserter(result));
+
+      std::vector<size_type> outputVec;
+      outputVec.resize(result.size());
+      for (size_type j = 0; j < result.size(); j++)
+        {
+          outputVec[j] = result[j].second;
+        }
+      return outputVec;
+    }
   } // end of namespace utils
 } // end of namespace dftfe

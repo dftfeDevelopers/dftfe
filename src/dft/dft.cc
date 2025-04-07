@@ -903,7 +903,8 @@ namespace dftfe
               << "Atleast one atom has pseudopotential with nonlinear core correction"
               << std::endl;
             AssertThrow(
-              !(d_dftParamsPtr->XCType.substr(0, 4) == "MGGA" && d_dftParamsPtr ->isIonForce),
+              !(d_dftParamsPtr->XCType.substr(0, 4) == "MGGA" &&
+                d_dftParamsPtr->isIonForce),
               dealii::ExcMessage(
                 "DFT-FE Error : Computation of ION FORCE with MGGA functional with the pseudopotentials"
                 " with NLCC is not completed yet."));

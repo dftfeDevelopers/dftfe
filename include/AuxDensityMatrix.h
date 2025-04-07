@@ -41,18 +41,21 @@ namespace dftfe
   public:
     /**
      * @brief compute local descriptors of the aux basis electron-density
-     * representation at the supplied set of points using
+     * representation at the supplied range of Quadrature index range
      */
     virtual void
     applyLocalOperations(
-      const std::vector<double> &points,
+      const std::pair<unsigned int, unsigned int> &quadIndexRange,
       std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
         &densityData) = 0;
 
+
+
     virtual void
-    applyLocalOperations(const std::vector<double> &              points,
-                         std::unordered_map<WfcDescriptorDataAttributes,
-                                            std::vector<double>> &wfcData) = 0;
+    applyLocalOperations(
+      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+        &wfcData) = 0;
 
     /**
      * @brief Compute aux basis overlap matrix batchwise contribution from

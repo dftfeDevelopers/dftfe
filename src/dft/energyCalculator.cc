@@ -1092,26 +1092,15 @@ namespace dftfe
 
     for (unsigned int iCell = 0; iCell < nCells; ++iCell)
       {
-        std::vector<double> quadPointsInCell(nQuadsPerCell * 3);
-        std::vector<double> quadWeightsInCell(nQuadsPerCell);
-        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-          {
-            for (unsigned int idim = 0; idim < 3; ++idim)
-              quadPointsInCell[3 * iQuad + idim] =
-                quadPointsAll[iCell * nQuadsPerCell * 3 + 3 * iQuad + idim];
-            quadWeightsInCell[iQuad] =
-              std::real(quadWeightsAll[iCell * nQuadsPerCell + iQuad]);
-          }
-
         excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
           *auxDensityXCInRepresentationPtr,
-          quadPointsInCell,
+          std::make_pair(iCell * nQuadsPerCell, (iCell + 1) * nQuadsPerCell),
           xDensityInDataOut,
           cDensityInDataOut);
 
         excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
           *auxDensityXCOutRepresentationPtr,
-          quadPointsInCell,
+          std::make_pair(iCell * nQuadsPerCell, (iCell + 1) * nQuadsPerCell),
           xDensityOutDataOut,
           cDensityOutDataOut);
 
@@ -1150,7 +1139,8 @@ namespace dftfe
 
         if (isIntegrationByPartsGradDensityDependenceVxc)
           auxDensityXCInRepresentationPtr->applyLocalOperations(
-            quadPointsInCell, densityXCInData);
+            std::make_pair(iCell * nQuadsPerCell, (iCell + 1) * nQuadsPerCell),
+            densityXCInData);
 
         std::vector<double> gradXCRhoInDotgradRhoOut;
         if (isIntegrationByPartsGradDensityDependenceVxc)

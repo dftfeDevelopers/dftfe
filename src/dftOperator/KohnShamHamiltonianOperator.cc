@@ -378,6 +378,8 @@ namespace dftfe
           std::vector<double>(numberQuadraturePointsPerCell, 0.0);
       }
 
+    // The Hamiltonian operator for the MGGA case is dependent on the k point.
+    // All the GGA calculations are done inside the condition (kPointIndex == 0)
     for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
          kPointIndex++)
       {
@@ -411,28 +413,17 @@ namespace dftfe
 
         for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
           {
-            std::vector<double> quadPointsInCell(numberQuadraturePointsPerCell *
-                                                 3);
-            std::vector<double> quadWeightsInCell(
-              numberQuadraturePointsPerCell);
-            for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsPerCell;
-                 ++iQuad)
-              {
-                for (unsigned int idim = 0; idim < 3; ++idim)
-                  quadPointsInCell[3 * iQuad + idim] =
-                    quadPointsAll[iCell * numberQuadraturePointsPerCell * 3 +
-                                  3 * iQuad + idim];
-                quadWeightsInCell[iQuad] = std::real(
-                  quadWeightsAll[iCell * numberQuadraturePointsPerCell +
-                                 iQuad]);
-              }
             auto cellJxWPtr = d_basisOperationsPtrHost->JxWBasisData().data() +
                               iCell * numberQuadraturePointsPerCell;
             d_excManagerPtr->getExcSSDFunctionalObj()
-              ->computeRhoTauDependentXCData(*auxDensityXCRepresentation,
-                                             quadPointsInCell,
-                                             xDataOut,
-                                             cDataOut);
+              ->computeRhoTauDependentXCData(
+                *auxDensityXCRepresentation,
+                std::make_pair<unsigned int, unsigned int>(
+                  iCell * numberQuadraturePointsPerCell,
+                  (iCell + 1) * numberQuadraturePointsPerCell),
+                xDataOut,
+                cDataOut);
+
             if (kPointIndex == 0)
               {
                 const std::vector<double> &pdexDensitySpinIndex =
@@ -481,13 +472,15 @@ namespace dftfe
                 std::vector<double> &gradDensitySpinDown = densityData
                   [DensityDescriptorDataAttributes::gradValuesSpinDown];
 
-                std::unordered_map<WfcDescriptorDataAttributes,
-                                   std::vector<double>>
-                  wfcData;
 
+                // This applyLocalOperations is necessary because gradRho values
+                // are required in the operator
                 if (isGGA)
                   auxDensityXCRepresentation->applyLocalOperations(
-                    quadPointsInCell, densityData);
+                    std::make_pair<unsigned int, unsigned int>(
+                      iCell * numberQuadraturePointsPerCell,
+                      (iCell + 1) * numberQuadraturePointsPerCell),
+                    densityData);
 
                 const std::vector<double> &gradDensityXCSpinIndex =
                   spinIndex == 0 ? gradDensitySpinUp : gradDensitySpinDown;
@@ -654,8 +647,8 @@ namespace dftfe
                               }
                           }
                       }
-                  }
-              } // tauMgga
+                  } // TauMGGA
+              }     // kpointIndex=0
             if (isTauMGGA &&
                 std::is_same<dataTypes::number, std::complex<double>>::value)
               {
@@ -750,6 +743,10 @@ namespace dftfe
         d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex].copyFrom(
           d_derExcwithTauTimesinvJacKpointTimesJxWHost);
 #endif
+        if (d_dftParamsPtr->XCType.substr(0,3) == "GGA")
+          {
+            break;
+          }
       } // kpoint loop
 #if defined(DFTFE_WITH_DEVICE)
     d_VeffJxW.resize(d_VeffJxWHost.size());

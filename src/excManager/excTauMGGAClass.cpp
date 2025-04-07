@@ -106,8 +106,8 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excTauMGGAClass<memorySpace>::computeRhoTauDependentXCData(
-    AuxDensityMatrix<memorySpace> &auxDensityMatrix,
-    const std::vector<double> &    quadPoints,
+    AuxDensityMatrix<memorySpace> &              auxDensityMatrix,
+    const std::pair<unsigned int, unsigned int> &quadIndexRange,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &xDataOut,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -117,7 +117,7 @@ namespace dftfe
     double rhoThresholdMgga = 1e-9;
     // double sigmaThresholdMgga   = 1e-24;
 
-    const unsigned int                           nquad = quadPoints.size() / 3;
+    const unsigned int nquad = quadIndexRange.second - quadIndexRange.first;
     std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
 
     for (const auto &element : xDataOut)
@@ -158,8 +158,9 @@ namespace dftfe
             std::vector<double>(nquad, 0.0);
       }
 
-    auxDensityMatrix.applyLocalOperations(quadPoints, densityDescriptorData);
-    auxDensityMatrix.applyLocalOperations(quadPoints, wfcDescriptorData);
+    auxDensityMatrix.applyLocalOperations(quadIndexRange,
+                                          densityDescriptorData);
+    auxDensityMatrix.applyLocalOperations(quadIndexRange, wfcDescriptorData);
 
 
     auto &densityValuesSpinUp =
