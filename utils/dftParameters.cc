@@ -1969,6 +1969,18 @@ namespace dftfe
         wfcBlockSize == chebyWfcBlockSize,
         dealii::ExcMessage(
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
+    if (XCType.substr(0, 4) == "MGGA")
+      {
+        AssertThrow(
+          !isCellStress,
+          dealii::ExcMessage(
+            "DFT-FE Error: Computation of CELL STRESS with MGGA functional is not completed yet."));
+        if (!isPseudopotential)
+          AssertThrow(
+            !isIonForce,
+            dealii::ExcMessage(
+              "DFT-FE Error: Computation of ION FORCE with MGGA functional in all-electron calculation is not completed yet."));
+      }
   }
 
 
@@ -2182,8 +2194,9 @@ namespace dftfe
     // overlap compute communication cheby
 
     bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
-    bool isLocalXC =
-      (XCType.substr(0, 3) == "LDA") || (XCType.substr(0, 3) == "GGA") || ((XCType.substr(0, 4) == "MGGA")) ;
+    bool isLocalXC = (XCType.substr(0, 3) == "LDA") ||
+                     (XCType.substr(0, 3) == "GGA") ||
+                     ((XCType.substr(0, 4) == "MGGA"));
     if (isHubbard || !isLocalXC)
       {
         overlapComputeCommunCheby = false;

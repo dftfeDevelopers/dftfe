@@ -896,10 +896,19 @@ namespace dftfe
       }
 
     if (d_dftParamsPtr->verbosity >= 1)
-      if (d_dftParamsPtr->nonLinearCoreCorrection == true)
-        pcout
-          << "Atleast one atom has pseudopotential with nonlinear core correction"
-          << std::endl;
+      {
+        if (d_dftParamsPtr->nonLinearCoreCorrection == true)
+          {
+            pcout
+              << "Atleast one atom has pseudopotential with nonlinear core correction"
+              << std::endl;
+            AssertThrow(
+              !(d_dftParamsPtr->XCType.substr(0, 4) == "MGGA" && d_dftParamsPtr ->isIonForce),
+              dealii::ExcMessage(
+                "DFT-FE Error : Computation of ION FORCE with MGGA functional with the pseudopotentials"
+                " with NLCC is not completed yet."));
+          }
+      }
 
     d_elpaScala->processGridELPASetup(d_numEigenValues, *d_dftParamsPtr);
     MPI_Barrier(d_mpiCommParent);

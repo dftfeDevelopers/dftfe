@@ -157,52 +157,6 @@ namespace dftfe
 
     if (d_dftParamsPtr->verbosity >= 2 && d_dftParamsPtr->spinPolarized == 1)
       totalMagnetization(d_densityInQuadValues[1]);
-
-
-    if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-        ExcFamilyType::TauMGGA)
-      {
-        if (!d_dftParamsPtr->useDevice)
-          {
-            if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
-              {
-                computeInitTauFromPSI(&d_eigenVectorsFlattenedHost,
-                                      numElectrons,
-                                      d_numEigenValues,
-                                      d_basisOperationsPtrHost,
-                                      d_BLASWrapperPtrHost,
-                                      d_densityDofHandlerIndex,
-                                      d_densityQuadratureId,
-                                      d_kPointCoordinates,
-                                      d_kPointWeights,
-                                      d_tauInQuadValues,
-                                      d_mpiCommParent,
-                                      interpoolcomm,
-                                      interBandGroupComm,
-                                      *d_dftParamsPtr);
-              }
-          }
-#ifdef DFTFE_WITH_DEVICE
-        else
-          {
-            MPI_Barrier(d_mpiCommParent);
-            computeInitTauFromPSI(&d_eigenVectorsFlattenedDevice,
-                                  numElectrons,
-                                  d_numEigenValues,
-                                  d_basisOperationsPtrDevice,
-                                  d_BLASWrapperPtr,
-                                  d_densityDofHandlerIndex,
-                                  d_densityQuadratureId,
-                                  d_kPointCoordinates,
-                                  d_kPointWeights,
-                                  d_tauInQuadValues,
-                                  d_mpiCommParent,
-                                  interpoolcomm,
-                                  interBandGroupComm,
-                                  *d_dftParamsPtr);
-          }
-#endif
-      }
   }
 #include "dft.inst.cc"
 } // namespace dftfe

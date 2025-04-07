@@ -25,6 +25,7 @@
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <vectorUtilities.h>
+#include <cmath>
 
 namespace dftfe
 {
@@ -152,16 +153,6 @@ namespace dftfe
              ++iComp)
           d_gradDensityInQuadValues[iComp].resize(3 * n_q_points * nCells);
       }
-
-    // This below commented case is handled in computeInitTauFromPSI.cc
-
-    // if (isTauMGGA)
-    //   {
-    //     d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    //     for (unsigned int iComp = 0; iComp < d_tauInQuadValues.size();
-    //     ++iComp)
-    //         d_tauInQuadValues[iComp].resize(n_q_points * nCells);
-    //   }
 
     // Initialize electron density table storage for rhoOut only for Anderson
     // with Kerker for other mixing schemes it is done in density.cc as we need
@@ -925,6 +916,57 @@ namespace dftfe
               }
           }
 
+        if (isTauMGGA)
+          {
+            double const prefact =
+              (3.0 / 10.0) * std::pow(3 * C_pi * C_pi, 2.0 / 3.0);
+            d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                          1);
+            for (unsigned int iComp = 0; iComp < d_tauInQuadValues.size();
+                 iComp++)
+              {
+                d_tauInQuadValues[iComp].resize(n_q_points * nCells);
+              }
+            for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+              {
+                for (unsigned int iQuad = 0; iQuad < n_q_points; ++iQuad)
+                  {
+                    if (d_dftParamsPtr->spinPolarized == 0)
+                      {
+                        double rho =
+                          d_densityInQuadValues[0][iCell * n_q_points + iQuad];
+                        d_tauInQuadValues[0][iCell * n_q_points + iQuad] =
+                          prefact * std::pow(std::abs(rho), 5.0 / 3.0);
+                      }
+                    else
+                      {
+                        double rhoSpinUp =
+                          (d_densityInQuadValues[0]
+                                                [iCell * n_q_points + iQuad] +
+                           d_densityInQuadValues[1]
+                                                [iCell * n_q_points + iQuad]) /
+                          2;
+                        double rhoSpinDown =
+                          (d_densityInQuadValues[0]
+                                                [iCell * n_q_points + iQuad] -
+                           d_densityInQuadValues[1]
+                                                [iCell * n_q_points + iQuad]) /
+                          2;
+
+                        d_tauInQuadValues[0][iCell * n_q_points + iQuad] =
+                          prefact *
+                          (std::pow(std::abs(rhoSpinUp) * 2, 5.0 / 3.0) +
+                           std::pow(std::abs(rhoSpinDown) * 2, 5.0 / 3.0)) /
+                          2;
+                        d_tauInQuadValues[1][iCell * n_q_points + iQuad] =
+                          prefact *
+                          (std::pow(std::abs(rhoSpinUp) * 2, 5.0 / 3.0) -
+                           std::pow(std::abs(rhoSpinDown) * 2, 5.0 / 3.0)) /
+                          2;
+                      }
+                  }
+              }
+          }
         normalizeRhoInQuadValues();
         if (d_dftParamsPtr->constraintMagnetization)
           normalizeRhoMagInInitialGuessQuadValues();
@@ -1464,10 +1506,6 @@ namespace dftfe
                 for (unsigned int idim = 0; idim < 3; ++idim)
                   d_gradDensityInQuadValues[iComp][3 * iCell * n_q_points +
                                                    3 * q + idim] *= scaling;
-
-            // why don't we scale here for isTauMGGA case?
-            // In many cases of initrho we have not used d_tauinqaudValues at
-            // respective places of d_densityinquadvalues
           }
       }
     double chargeAfterScaling =

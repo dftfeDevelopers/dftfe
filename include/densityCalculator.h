@@ -55,28 +55,6 @@ namespace dftfe
     const MPI_Comm &     interBandGroupComm,
     const dftParameters &dftParams);
 
-  template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
-  void
-  computeInitTauFromPSI(
-    const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
-    const unsigned int                                          numElectrons,
-    const unsigned int totalNumWaveFunctions,
-    std::shared_ptr<
-      dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
-      &basisOperationsPtr,
-    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      &                        BLASWrapperPtr,
-    const unsigned int         matrixFreeDofhandlerIndex,
-    const unsigned int         quadratureIndex,
-    const std::vector<double> &kPointCoords,
-    const std::vector<double> &kPointWeights,
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                  tauValues,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
-    const dftParameters &dftParams);
 
   template <typename NumberType>
   void
