@@ -544,8 +544,11 @@ namespace dftfe
       }
 
 
-    std::string fileNameOld = fileName;
-    for (unsigned int iCell = 1; iCell < nCells; ++iCell)
+    std::string  fileNameOld = fileName;
+    unsigned int iCell       = 1;
+#pragma omp parallel for num_threads(d_nOMPThreads) \
+  firstprivate(fileNameOld, fileName, startLocation, dataInput, cell)
+    for (iCell = 1; iCell < nCells; ++iCell)
       {
         cell = basisOperationsPtr->getCellIterator(iCell);
 
@@ -633,7 +636,9 @@ namespace dftfe
         std::vector<unsigned int> startLocations(nCellsPerTask[this_process],
                                                  0);
         // Try openmp parallelization Here
-        for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+        unsigned int iCell = 0;
+#pragma omp parallel for num_threads(d_nOMPThreads)
+        for (iCell = 0; iCell < nCells; ++iCell)
           {
             typename dealii::DoFHandler<3>::active_cell_iterator cell =
               basisOperationsPtr->getCellIterator(iCell);

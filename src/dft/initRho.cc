@@ -1558,6 +1558,7 @@ namespace dftfe
     loadDensityFromQuadratureValues()
   {
     clearRhoData();
+    computingTimerStandard.enter_subsection("load Quad density");    
     pcout << "Loading Density data from Quadrature checkpoint......"
           << std::endl;
     // Initialize electron density table storage for rhoIn
@@ -1678,6 +1679,7 @@ namespace dftfe
                   << std::endl;
           }
       }
+      computingTimerStandard.leave_subsection("load Quad density");    
   }
 
 #include "dft.inst.cc"
