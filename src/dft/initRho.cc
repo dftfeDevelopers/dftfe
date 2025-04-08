@@ -1550,5 +1550,135 @@ namespace dftfe
       pcout << "Total charge out after scaling: " << chargeAfterScaling
             << std::endl;
   }
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::
+    loadDensityFromQuadratureValues()
+  {
+    clearRhoData();
+    pcout << "Loading Density data from Quadrature checkpoint......"
+          << std::endl;
+    // Initialize electron density table storage for rhoIn
+    d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+    const unsigned int n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
+    const unsigned int nCells     = d_basisOperationsPtrHost->nCells();
+    d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
+      d_densityInQuadValues[iComp].resize(n_q_points * nCells);
+    bool isGradDensityDataDependent =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
+       densityFamilyType::GGA);
+    // Initialize electron density table storage for rhoOut only for Anderson
+    // with Kerker for other mixing schemes it is done in density.cc as we need
+    // to do this initialization every SCF
+    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+      {
+        d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                           1);
+
+
+        if (isGradDensityDataDependent)
+          {
+            d_gradDensityOutQuadValues.resize(
+              d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+          }
+      }
+    if (isGradDensityDataDependent)
+      {
+        d_gradDensityInQuadValues.resize(
+          d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+        for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size();
+             ++iComp)
+          d_gradDensityInQuadValues[iComp].resize(3 * n_q_points * nCells);
+      }
+    std::vector<std::string> field     = {"RHO", "MAG_Z"};
+    std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
+    for (int i = 0; i < d_densityInQuadValues.size(); i++)
+      {
+        loadQuadratureData(d_basisOperationsPtrHost,
+                           d_densityQuadratureId,
+                           d_densityInQuadValues[i],
+                           1,
+                           field[i],
+                           d_dftParamsPtr->restartFolder,
+                           d_mpiCommParent,
+                           mpi_communicator,
+                           interpoolcomm,
+                           interBandGroupComm);
+        if (isGradDensityDataDependent)
+          {
+            loadQuadratureData(d_basisOperationsPtrHost,
+                               d_densityQuadratureId,
+                               d_gradDensityInQuadValues[i],
+                               3,
+                               Gradfield[i],
+                               d_dftParamsPtr->restartFolder,
+                               d_mpiCommParent,
+                               mpi_communicator,
+                               interpoolcomm,
+                               interBandGroupComm);
+          }
+      }
+    double integralChargeFromQuadDataInput =
+      totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[0]);
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout << "Total charge from quadrature data input: "
+            << integralChargeFromQuadDataInput << std::endl;
+    if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+      {
+        for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size();
+             ++iComp)
+          {
+            l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                    d_constraintsRhoNodal,
+                                    d_densityDofHandlerIndexElectro,
+                                    d_densityQuadratureIdElectro,
+                                    d_densityInQuadValues[iComp],
+                                    d_densityInNodalValues[iComp]);
+          }
+
+
+        // normalize rho
+        const double charge =
+          totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[0]);
+
+
+        const double scalingFactor = ((double)numElectrons) / charge;
+
+        // scale nodal vector with scalingFactor
+        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+             ++iComp)
+          d_densityInNodalValues[iComp] *= scalingFactor;
+
+        // interpolate nodal rhoOut data to quadrature data
+        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+             ++iComp)
+          interpolateDensityNodalDataToQuadratureDataGeneral(
+            d_basisOperationsPtrElectroHost,
+            d_densityDofHandlerIndexElectro,
+            d_densityQuadratureIdElectro,
+            d_densityInNodalValues[iComp],
+            d_densityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            d_gradDensityInQuadValues[iComp],
+            isGradDensityDataDependent);
+
+        if (d_dftParamsPtr->verbosity >= 3)
+          {
+            pcout << "Total Charge before scaling: " << charge << std::endl;
+            pcout << "Total Charge using nodal Rho in: "
+                  << totalCharge(d_matrixFreeDataPRefined,
+                                 d_densityInNodalValues[0])
+                  << std::endl;
+          }
+      }
+  }
+
 #include "dft.inst.cc"
 } // namespace dftfe

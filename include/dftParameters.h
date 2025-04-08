@@ -105,6 +105,8 @@ namespace dftfe
     bool        keepScratchFolder;
     bool        saveRhoData;
     bool        loadRhoData;
+    bool        saveQuadData;
+    bool        loadQuadData;
     bool        restartSpinFromNoSpin;
 
     bool reproducible_output;

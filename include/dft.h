@@ -807,6 +807,42 @@ namespace dftfe
     loadTriaInfoAndRhoNodalData();
 
     void
+    saveQuadratureData(
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int quadratureId,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                quadratureValueData,
+      const unsigned int fieldDimension,
+      const std::string &fieldName,
+      const std::string &folderPath,
+      const MPI_Comm &   mpi_comm_parent,
+      const MPI_Comm &   mpi_comm_domain,
+      const MPI_Comm &   interpoolcomm,
+      const MPI_Comm &   interBandGroupComm);
+
+    void
+    loadQuadratureData(
+      const std::shared_ptr<
+        dftfe::basis::FEBasisOperations<dataTypes::number,
+                                        double,
+                                        dftfe::utils::MemorySpace::HOST>>
+        &                basisOperationsPtr,
+      const unsigned int quadratureId,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &                quadratureValueData,
+      const unsigned int fieldDimension,
+      const std::string &fieldName,
+      const std::string &folderPath,
+      const MPI_Comm &   mpi_comm_parent,
+      const MPI_Comm &   mpi_comm_domain,
+      const MPI_Comm &   interpoolcomm,
+      const MPI_Comm &   interBandGroupComm);
+
+    void
     generateMPGrid();
     void
     writeMesh(std::string meshFileName);
@@ -1010,6 +1046,9 @@ namespace dftfe
 
     void
     initRho();
+
+    void
+    loadDensityFromQuadratureValues();
     void
     initCoreRho();
     void

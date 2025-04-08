@@ -226,6 +226,17 @@ namespace dftfe
           dealii::Patterns::Bool(),
           "[Standard] Loads charge density and mesh triagulation data from file.");
 
+        prm.declare_entry("SAVE QUAD DATA",
+                          "false",
+                          dealii::Patterns::Bool(),
+                          "[Standard] ");
+
+        prm.declare_entry("LOAD QUAD DATA",
+                          "false",
+                          dealii::Patterns::Bool(),
+                          "[Standard] ");
+
+
         prm.declare_entry(
           "RESTART SP FROM NO SP",
           "false",
@@ -1369,6 +1380,8 @@ namespace dftfe
     restartFolder                                  = ".";
     saveRhoData                                    = false;
     loadRhoData                                    = false;
+    saveQuadData                                   = false;
+    loadQuadData                                   = false;
     restartSpinFromNoSpin                          = false;
     reproducible_output                            = false;
     meshAdaption                                   = false;
@@ -1566,6 +1579,8 @@ namespace dftfe
     {
       saveRhoData           = prm.get_bool("SAVE RHO DATA");
       loadRhoData           = prm.get_bool("LOAD RHO DATA");
+      saveQuadData          = prm.get_bool("SAVE QUAD DATA");
+      loadQuadData          = prm.get_bool("LOAD QUAD DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
       if (solverMode == "NEB")
         saveRhoData = true;
@@ -1931,7 +1946,7 @@ namespace dftfe
 
     if (solverMode == "NSCF")
       AssertThrow(
-        loadRhoData == true,
+        loadRhoData || loadQuadData == true,
         dealii::ExcMessage(
           "DFT-FE Error: Cant run NSCF without load rho data set to true"));
 

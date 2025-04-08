@@ -1393,7 +1393,8 @@ namespace dftfe
 
 
     initHubbardOperator();
-    if (d_useHubbard && d_dftParamsPtr->loadRhoData)
+    if (d_useHubbard &&
+        (d_dftParamsPtr->loadRhoData || d_dftParamsPtr->loadQuadData))
       {
         d_hubbardClassPtr->readHubbOccFromFile();
       }
@@ -1978,7 +1979,8 @@ namespace dftfe
     if (d_dftParamsPtr->meshAdaption)
       aposterioriMeshGenerate();
 
-    if (d_dftParamsPtr->restartFolder != "." && d_dftParamsPtr->saveRhoData &&
+    if (d_dftParamsPtr->restartFolder != "." &&
+        (d_dftParamsPtr->saveRhoData || d_dftParamsPtr->saveQuadData) &&
         dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
@@ -3829,12 +3831,90 @@ namespace dftfe
                 d_hubbardClassPtr->writeHubbOccToFile();
               }
           }
+        else if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
+                 d_dftParamsPtr->solverMode == "GS")
+          {
+            std::vector<std::string> field     = {"RHO", "MAG_Z"};
+            std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
+            for (int i = 0; i < d_densityOutQuadValues.size(); i++)
+              {
+                saveQuadratureData(d_basisOperationsPtrHost,
+                                   d_densityQuadratureId,
+                                   d_densityOutQuadValues[i],
+                                   1,
+                                   field[i],
+                                   d_dftParamsPtr->restartFolder,
+                                   d_mpiCommParent,
+                                   mpi_communicator,
+                                   interpoolcomm,
+                                   interBandGroupComm);
+                bool isGradDensityDataDependent =
+                  (d_excManagerPtr->getExcSSDFunctionalObj()
+                     ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+                if (isGradDensityDataDependent)
+                  {
+                    saveQuadratureData(d_basisOperationsPtrHost,
+                                       d_densityQuadratureId,
+                                       d_gradDensityOutQuadValues[i],
+                                       3,
+                                       Gradfield[i],
+                                       d_dftParamsPtr->restartFolder,
+                                       d_mpiCommParent,
+                                       mpi_communicator,
+                                       interpoolcomm,
+                                       interBandGroupComm);
+                  }
+              }
+            if (d_useHubbard)
+              {
+                d_hubbardClassPtr->writeHubbOccToFile();
+              }
+          }
       }
 
     if (d_dftParamsPtr->saveRhoData &&
         !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
       {
         saveTriaInfoAndRhoNodalData();
+        if (d_useHubbard)
+          {
+            d_hubbardClassPtr->writeHubbOccToFile();
+          }
+      }
+    else if (d_dftParamsPtr->saveQuadData &&
+             !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
+      {
+        std::vector<std::string> field     = {"RHO", "MAG_Z"};
+        std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
+        for (int i = 0; i < d_densityOutQuadValues.size(); i++)
+          {
+            saveQuadratureData(d_basisOperationsPtrHost,
+                               d_densityQuadratureId,
+                               d_densityOutQuadValues[i],
+                               1,
+                               field[i],
+                               d_dftParamsPtr->restartFolder,
+                               d_mpiCommParent,
+                               mpi_communicator,
+                               interpoolcomm,
+                               interBandGroupComm);
+            bool isGradDensityDataDependent =
+              (d_excManagerPtr->getExcSSDFunctionalObj()
+                 ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+            if (isGradDensityDataDependent)
+              {
+                saveQuadratureData(d_basisOperationsPtrHost,
+                                   d_densityQuadratureId,
+                                   d_gradDensityOutQuadValues[i],
+                                   3,
+                                   Gradfield[i],
+                                   d_dftParamsPtr->restartFolder,
+                                   d_mpiCommParent,
+                                   mpi_communicator,
+                                   interpoolcomm,
+                                   interBandGroupComm);
+              }
+          }
         if (d_useHubbard)
           {
             d_hubbardClassPtr->writeHubbOccToFile();
@@ -3871,7 +3951,7 @@ namespace dftfe
         if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             if (d_dftParamsPtr->solverMode == "GS" &&
-                d_dftParamsPtr->saveRhoData)
+                (d_dftParamsPtr->saveRhoData || d_dftParamsPtr->saveQuadData))
               {
                 FILE *fermiFile;
                 fermiFile = fopen("fermiEnergy.out", "w");

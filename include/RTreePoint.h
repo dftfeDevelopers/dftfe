@@ -76,7 +76,8 @@ namespace dftfe
        */
       std::vector<size_type>
       getPointIdsNearInputPoint(const std::vector<double> &inputPoint,
-                      unsigned int nNearestNeighbours);
+                                unsigned int               nNearestNeighbours);
+
     private:
       //
       // boost rtree obj
