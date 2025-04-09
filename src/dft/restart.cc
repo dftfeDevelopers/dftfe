@@ -476,6 +476,7 @@ namespace dftfe
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
     const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     const unsigned int nCells        = basisOperationsPtr->nCells();
+    const unsigned int totalTarget   = nCells * nQuadsPerCell;
     const dealii::DoFHandler<3> &dofHandlerTemp =
       basisOperationsPtr->getDofHandler();
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -511,6 +512,8 @@ namespace dftfe
         AssertThrow(false,
                     dealii::ExcMessage("DFT-FE Error: Master file not found"));
       }
+    unsigned int count = 0;
+
     if (nCells > 0)
       {
         typename dealii::DoFHandler<3>::active_cell_iterator cell =
@@ -542,6 +545,7 @@ namespace dftfe
                     quadratureValueData[q * fieldDimension + iField] =
                       dataInput[startLocation + q][3 + iField];
                   }
+                count++;
               }
           }
 
@@ -585,10 +589,15 @@ namespace dftfe
                                             q * fieldDimension + iField] =
                           dataInput[startLocation + q][3 + iField];
                       }
+                    count++;
                   }
               }
           } // iCell
       }
+    if (count < totalTarget)
+      AssertThrow(false,
+                  dealii::ExcMessage(std::string(
+                    "All quadrature data not filled. Check restart files!")));
   }
 
   template <unsigned int              FEOrder,

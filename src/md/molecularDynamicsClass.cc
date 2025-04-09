@@ -326,7 +326,7 @@ namespace dftfe
 
         d_dftPtr->solve(true,
                         false,
-                        d_dftPtr->getParametersObject().loadRhoData);
+                        d_dftPtr->getParametersObject().loadQuadData);
         force = d_dftPtr->getForceonAtoms();
         if (d_dftPtr->getParametersObject().extrapolateDensity == 1 &&
             d_dftPtr->getParametersObject().spinPolarized != 1)
@@ -1704,7 +1704,7 @@ namespace dftfe
     IE[0] = IE0[0][0];
     TE[0] = TE0[0][0];
 
-    d_dftPtr->solve(true, false, d_dftPtr->getParametersObject().loadRhoData);
+    d_dftPtr->solve(true, false, d_dftPtr->getParametersObject().loadQuadData);
     force = d_dftPtr->getForceonAtoms();
 
     if (d_dftPtr->getParametersObject().extrapolateDensity == 1 &&
