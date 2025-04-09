@@ -511,47 +511,15 @@ namespace dftfe
         AssertThrow(false,
                     dealii::ExcMessage("DFT-FE Error: Master file not found"));
       }
-    typename dealii::DoFHandler<3>::active_cell_iterator cell =
-      basisOperationsPtr->getCellIterator(0);
-
-    // search for fileName and startLocation
-    std::string                      fileName;
-    unsigned int                     startLocation = 0;
-    std::vector<std::vector<double>> dataInput;
-    if (cell->is_locally_owned())
+    if (nCells > 0)
       {
-        for (unsigned int index = 0; index < startIndex.size(); ++index)
-          {
-            if (std::fabs(cell->center()[0] - centroidX[index]) < 1e-6 &&
-                std::fabs(cell->center()[1] - centroidY[index]) < 1e-6 &&
-                std::fabs(cell->center()[2] - centroidZ[index]) < 1e-6)
-              {
-                fileName      = folderPath + "/" + fileNames[index];
-                startLocation = startIndex[index];
-                break;
-              }
-          }
+        typename dealii::DoFHandler<3>::active_cell_iterator cell =
+          basisOperationsPtr->getCellIterator(0);
 
-        dftUtils::readFile(dataInput, fileName);
-        for (unsigned int q = 0; q < nQuadsPerCell; ++q)
-          {
-            for (int iField = 0; iField < fieldDimension; ++iField)
-              {
-                quadratureValueData[q * fieldDimension + iField] =
-                  dataInput[startLocation + q][3 + iField];
-              }
-          }
-      }
-
-
-    std::string  fileNameOld = fileName;
-    unsigned int iCell       = 1;
-#pragma omp parallel for num_threads(d_nOMPThreads) \
-  firstprivate(fileNameOld, fileName, startLocation, dataInput, cell)
-    for (iCell = 1; iCell < nCells; ++iCell)
-      {
-        cell = basisOperationsPtr->getCellIterator(iCell);
-
+        // search for fileName and startLocation
+        std::string                      fileName;
+        unsigned int                     startLocation = 0;
+        std::vector<std::vector<double>> dataInput;
         if (cell->is_locally_owned())
           {
             for (unsigned int index = 0; index < startIndex.size(); ++index)
@@ -565,24 +533,62 @@ namespace dftfe
                     break;
                   }
               }
-            if (fileName != fileNameOld)
-              {
-                dataInput.clear();
-                dataInput.resize(0);
-                dftUtils::readFile(dataInput, fileName);
-                fileNameOld = fileName;
-              }
+
+            dftUtils::readFile(dataInput, fileName);
             for (unsigned int q = 0; q < nQuadsPerCell; ++q)
               {
                 for (int iField = 0; iField < fieldDimension; ++iField)
                   {
-                    quadratureValueData[iCell * nQuadsPerCell * fieldDimension +
-                                        q * fieldDimension + iField] =
+                    quadratureValueData[q * fieldDimension + iField] =
                       dataInput[startLocation + q][3 + iField];
                   }
               }
           }
-      } // iCell
+
+
+        std::string  fileNameOld = fileName;
+        unsigned int iCell       = 1;
+#pragma omp parallel for num_threads(d_nOMPThreads) \
+  firstprivate(fileNameOld, fileName, startLocation, dataInput, cell)
+        for (iCell = 1; iCell < nCells; ++iCell)
+          {
+            cell = basisOperationsPtr->getCellIterator(iCell);
+
+            if (cell->is_locally_owned())
+              {
+                for (unsigned int index = 0; index < startIndex.size(); ++index)
+                  {
+                    if (std::fabs(cell->center()[0] - centroidX[index]) <
+                          1e-6 &&
+                        std::fabs(cell->center()[1] - centroidY[index]) <
+                          1e-6 &&
+                        std::fabs(cell->center()[2] - centroidZ[index]) < 1e-6)
+                      {
+                        fileName      = folderPath + "/" + fileNames[index];
+                        startLocation = startIndex[index];
+                        break;
+                      }
+                  }
+                if (fileName != fileNameOld)
+                  {
+                    dataInput.clear();
+                    dataInput.resize(0);
+                    dftUtils::readFile(dataInput, fileName);
+                    fileNameOld = fileName;
+                  }
+                for (unsigned int q = 0; q < nQuadsPerCell; ++q)
+                  {
+                    for (int iField = 0; iField < fieldDimension; ++iField)
+                      {
+                        quadratureValueData[iCell * nQuadsPerCell *
+                                              fieldDimension +
+                                            q * fieldDimension + iField] =
+                          dataInput[startLocation + q][3 + iField];
+                      }
+                  }
+              }
+          } // iCell
+      }
   }
 
   template <unsigned int              FEOrder,
@@ -707,8 +713,12 @@ namespace dftfe
                       mpi_comm_domain);
         std::string masterFileName =
           folderPath + "/MasterFile_" + fieldName + "_.chk";
-        if (std::ifstream(masterFileName))
-          dftfe::dftUtils::moveFile(masterFileName, masterFileName + ".old");
+        if (this_process == 0)
+          {
+            if (std::ifstream(masterFileName))
+              dftfe::dftUtils::moveFile(masterFileName,
+                                        masterFileName + ".old");
+          }
         unsigned int  index = 0;
         std::ofstream outFile(masterFileName);
         if (outFile.is_open())

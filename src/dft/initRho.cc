@@ -1558,7 +1558,7 @@ namespace dftfe
     loadDensityFromQuadratureValues()
   {
     clearRhoData();
-    computingTimerStandard.enter_subsection("load Quad density");    
+    computingTimerStandard.enter_subsection("load Quad density");
     pcout << "Loading Density data from Quadrature checkpoint......"
           << std::endl;
     // Initialize electron density table storage for rhoIn
@@ -1600,28 +1600,48 @@ namespace dftfe
     std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
     for (int i = 0; i < d_densityInQuadValues.size(); i++)
       {
-        loadQuadratureData(d_basisOperationsPtrHost,
-                           d_densityQuadratureId,
-                           d_densityInQuadValues[i],
-                           1,
-                           field[i],
-                           d_dftParamsPtr->restartFolder,
-                           d_mpiCommParent,
-                           mpi_communicator,
-                           interpoolcomm,
-                           interBandGroupComm);
+        if (!(i == 1 && d_dftParamsPtr->restartSpinFromNoSpin))
+          loadQuadratureData(d_basisOperationsPtrHost,
+                             d_densityQuadratureId,
+                             d_densityInQuadValues[i],
+                             1,
+                             field[i],
+                             d_dftParamsPtr->restartFolder,
+                             d_mpiCommParent,
+                             mpi_communicator,
+                             interpoolcomm,
+                             interBandGroupComm);
+        else
+          {
+            for (long unsigned int index = 0;
+                 index < d_densityInQuadValues[i].size();
+                 index++)
+              d_densityInQuadValues[i][index] =
+                d_dftParamsPtr->tot_magnetization *
+                d_densityInQuadValues[0][index];
+          }
         if (isGradDensityDataDependent)
           {
-            loadQuadratureData(d_basisOperationsPtrHost,
-                               d_densityQuadratureId,
-                               d_gradDensityInQuadValues[i],
-                               3,
-                               Gradfield[i],
-                               d_dftParamsPtr->restartFolder,
-                               d_mpiCommParent,
-                               mpi_communicator,
-                               interpoolcomm,
-                               interBandGroupComm);
+            if (!(i == 1 && d_dftParamsPtr->restartSpinFromNoSpin))
+              loadQuadratureData(d_basisOperationsPtrHost,
+                                 d_densityQuadratureId,
+                                 d_gradDensityInQuadValues[i],
+                                 3,
+                                 Gradfield[i],
+                                 d_dftParamsPtr->restartFolder,
+                                 d_mpiCommParent,
+                                 mpi_communicator,
+                                 interpoolcomm,
+                                 interBandGroupComm);
+            else
+              {
+                for (long unsigned int index = 0;
+                     index < d_gradDensityInQuadValues[i].size();
+                     index++)
+                  d_gradDensityInQuadValues[i][index] =
+                    d_dftParamsPtr->tot_magnetization *
+                    d_gradDensityInQuadValues[0][index];
+              }
           }
       }
     double integralChargeFromQuadDataInput =
@@ -1679,7 +1699,7 @@ namespace dftfe
                   << std::endl;
           }
       }
-      computingTimerStandard.leave_subsection("load Quad density");    
+    computingTimerStandard.leave_subsection("load Quad density");
   }
 
 #include "dft.inst.cc"

@@ -226,22 +226,24 @@ namespace dftfe
           dealii::Patterns::Bool(),
           "[Standard] Loads charge density and mesh triagulation data from file.");
 
-        prm.declare_entry("SAVE QUAD DATA",
-                          "false",
-                          dealii::Patterns::Bool(),
-                          "[Standard] ");
+        prm.declare_entry(
+          "SAVE QUAD DATA",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Saves the charge density, magnetization density at quad points to restart file. Default value is false.");
 
-        prm.declare_entry("LOAD QUAD DATA",
-                          "false",
-                          dealii::Patterns::Bool(),
-                          "[Standard] ");
+        prm.declare_entry(
+          "LOAD QUAD DATA",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Loads the charge density, magnetization density at quad points from restart file. Used for NSCF calculations where the quadrature density is required. Default value is false.");
 
 
         prm.declare_entry(
           "RESTART SP FROM NO SP",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false.");
+          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is used in conjuction with LOAD QUAD DATA or LOAD RHO DATA. Default false.");
       }
       prm.leave_subsection();
 
