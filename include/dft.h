@@ -809,8 +809,10 @@ namespace dftfe
      * @brief save data of quad points to checkpoint file. Used for restart calculations, nscf and bands.
      *
      *  @param[in] basisOperationsPtr basisoperationsPtr object
-     *  @param[in] quadratureId  quadrature Id of quad point used in checkpoint file
-     *  @param[out] quadratureValueData  quadrature data of field that is to be saved
+     *  @param[in] quadratureId  quadrature Id of quad point used in checkpoint
+     * file
+     *  @param[out] quadratureValueData  quadrature data of field that is to be
+     * saved
      *  @param[in] fieldDimension  dimension of field.
      *  @param[in] fieldName  file name of checkpoint data to be saved
      *  @param[in] folderPath  restart folder name
@@ -820,7 +822,7 @@ namespace dftfe
      *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
      * points
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
-     * bands              
+     * bands
      */
     void
     saveQuadratureData(
@@ -843,8 +845,10 @@ namespace dftfe
      * @brief loads data from quad points of checkpoint file. Used for restart calculations, nscf and bands.
      *
      *  @param[in] basisOperationsPtr basisoperationsPtr object
-     *  @param[in] quadratureId  quadrature Id of quad point used in checkpoint file
-     *  @param[out] quadratureValueData  quadrature data of field that is to be loaded
+     *  @param[in] quadratureId  quadrature Id of quad point used in checkpoint
+     * file
+     *  @param[out] quadratureValueData  quadrature data of field that is to be
+     * loaded
      *  @param[in] fieldDimension  dimension of field.
      *  @param[in] fieldName  file name containing checkpoint data
      *  @param[in] folderPath  restart folder name
@@ -854,7 +858,7 @@ namespace dftfe
      *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
      * points
      *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
-     * bands              
+     * bands
      */
     void
     loadQuadratureData(
