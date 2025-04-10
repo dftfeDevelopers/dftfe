@@ -805,7 +805,23 @@ namespace dftfe
      */
     void
     loadTriaInfoAndRhoNodalData();
-
+    /**
+     * @brief save data of quad points to checkpoint file. Used for restart calculations, nscf and bands.
+     *
+     *  @param[in] basisOperationsPtr basisoperationsPtr object
+     *  @param[in] quadratureId  quadrature Id of quad point used in checkpoint file
+     *  @param[out] quadratureValueData  quadrature data of field that is to be saved
+     *  @param[in] fieldDimension  dimension of field.
+     *  @param[in] fieldName  file name of checkpoint data to be saved
+     *  @param[in] folderPath  restart folder name
+     *  @param[in] mpi_comm_parent parent communicator
+     *  @param[in] mpi_comm_domain  mpi_communicator for domain decomposition
+     * parallelization
+     *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
+     * points
+     *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
+     * bands              
+     */
     void
     saveQuadratureData(
       const std::shared_ptr<
@@ -823,7 +839,23 @@ namespace dftfe
       const MPI_Comm &   mpi_comm_domain,
       const MPI_Comm &   interpoolcomm,
       const MPI_Comm &   interBandGroupComm);
-
+    /**
+     * @brief loads data from quad points of checkpoint file. Used for restart calculations, nscf and bands.
+     *
+     *  @param[in] basisOperationsPtr basisoperationsPtr object
+     *  @param[in] quadratureId  quadrature Id of quad point used in checkpoint file
+     *  @param[out] quadratureValueData  quadrature data of field that is to be loaded
+     *  @param[in] fieldDimension  dimension of field.
+     *  @param[in] fieldName  file name containing checkpoint data
+     *  @param[in] folderPath  restart folder name
+     *  @param[in] mpi_comm_parent parent communicator
+     *  @param[in] mpi_comm_domain  mpi_communicator for domain decomposition
+     * parallelization
+     *  @param[in] interpoolcomm  mpi_communicator for parallelization over k
+     * points
+     *  @param[in] interBandGroupComm  mpi_communicator for parallelization over
+     * bands              
+     */
     void
     loadQuadratureData(
       const std::shared_ptr<
