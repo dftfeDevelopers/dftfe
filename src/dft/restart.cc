@@ -473,6 +473,8 @@ namespace dftfe
     const MPI_Comm &   interpoolcomm,
     const MPI_Comm &   interBandGroupComm)
   {
+    pcout << "Reading Quad data from checkpoint in progress..."
+          << std::endl;
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
     const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     const unsigned int nCells        = basisOperationsPtr->nCells();
@@ -598,6 +600,7 @@ namespace dftfe
       AssertThrow(false,
                   dealii::ExcMessage(std::string(
                     "All quadrature data not filled. Check restart files!")));
+    pcout<<"Reading Quad data done..."<<std::endl;                
   }
 
   template <unsigned int              FEOrder,
@@ -621,6 +624,7 @@ namespace dftfe
     const MPI_Comm &   interpoolcomm,
     const MPI_Comm &   interBandGroupComm)
   {
+    pcout<<"Saving Quad data in progress..."<<std::endl;
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
     const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     const unsigned int nCells        = basisOperationsPtr->nCells();
@@ -753,6 +757,7 @@ namespace dftfe
         outFile.close();
 
       } // Pool ==0 and bandGroup == 0
+    pcout<<"Saveing Qud data completed..."<<std::endl;  
   }
 
 #include "dft.inst.cc"
