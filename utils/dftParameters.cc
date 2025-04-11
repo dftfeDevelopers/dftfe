@@ -218,13 +218,13 @@ namespace dftfe
           "SAVE QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Saves the charge density, magnetization density at quad points to restart file. Default value is false.");
+          "[Standard] Saves the various variables involved in the SCF fixed point interation to restart file. Default value is false.");
 
         prm.declare_entry(
           "LOAD QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Loads the charge density, magnetization density at quad points from restart file. Used for NSCF calculations where the quadrature density is required. Default value is false.");
+          "[Standard] Loads the various variables involved in the SCF fixed point iteration from restart file. Used for NSCF calculations where the quadrature density is required. Default value is false.");
 
 
         prm.declare_entry(
