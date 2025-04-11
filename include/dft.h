@@ -52,7 +52,8 @@
 #include <eigenSolver.h>
 #include <interpolation.h>
 #include <kerkerSolverProblem.h>
-#include <KohnShamHamiltonianOperator.h>
+#include <KohnShamDFTBaseOperator.h>
+#include <KohnShamDFTStandardEigenOperator.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
 #include <poissonSolverProblem.h>
@@ -524,7 +525,7 @@ namespace dftfe
     kohnShamEigenSpaceCompute(
       const unsigned int s,
       const unsigned int kPointIndex,
-      KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
+      KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
         &                                             kohnShamDFTEigenOperator,
       elpaScalaManager &                              elpaScala,
       chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
@@ -542,7 +543,7 @@ namespace dftfe
     kohnShamEigenSpaceCompute(
       const unsigned int s,
       const unsigned int kPointIndex,
-      KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::DEVICE>
+      KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
         &               kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
       chebyshevOrthogonalizedSubspaceIterationSolverDevice
@@ -581,7 +582,7 @@ namespace dftfe
     /**
      *@brief get the Ptr to the operator class ( Kohn Sham Operator)
      */
-    KohnShamHamiltonianOperator<memorySpace> *
+    KohnShamDFTBaseOperator<memorySpace> *
     getOperatorClass();
 
     /**
@@ -1595,7 +1596,7 @@ namespace dftfe
 
     bool d_kohnShamDFTOperatorsInitialized;
 
-    KohnShamHamiltonianOperator<memorySpace> *d_kohnShamDFTOperatorPtr;
+    KohnShamDFTBaseOperator<memorySpace> *d_KohnShamDFTOperatorPtr;
 
     const std::string d_dftfeScratchFolderName;
 
@@ -1891,11 +1892,11 @@ namespace dftfe
     bool scfConverged;
     void
     nscf(
-      KohnShamHamiltonianOperator<memorySpace> &      kohnShamDFTEigenOperator,
+      KohnShamDFTBaseOperator<memorySpace> &          kohnShamDFTEigenOperator,
       chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver);
     void
     initnscf(
-      KohnShamHamiltonianOperator<memorySpace> &     kohnShamDFTEigenOperator,
+      KohnShamDFTBaseOperator<memorySpace> &         kohnShamDFTEigenOperator,
       poissonSolverProblem<FEOrder, FEOrderElectro> &phiTotalSolverProblem,
       dealiiLinearSolver &                           CGSolver);
 
@@ -1927,7 +1928,7 @@ namespace dftfe
     kohnShamEigenSpaceFirstOrderDensityMatResponse(
       const unsigned int s,
       const unsigned int kPointIndex,
-      KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::DEVICE>
+      KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
         &               kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
       chebyshevOrthogonalizedSubspaceIterationSolverDevice
@@ -1939,7 +1940,7 @@ namespace dftfe
     kohnShamEigenSpaceFirstOrderDensityMatResponse(
       const unsigned int s,
       const unsigned int kPointIndex,
-      KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
+      KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
         &               kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala);
 
@@ -1947,7 +1948,7 @@ namespace dftfe
     kohnShamEigenSpaceComputeNSCF(
       const unsigned int spinType,
       const unsigned int kPointIndex,
-      KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
+      KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
         &                                             kohnShamDFTEigenOperator,
       chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
       std::vector<double> &                           residualNormWaveFunctions,
