@@ -43,8 +43,9 @@ namespace dftfe
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
         basisOperationsPtrHost,
-      std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
-                                               oncvClassPtr,
+      std::shared_ptr<
+        dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
+                                               pseudopotentialClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       dftParameters *                          dftParamsPtr,
       const unsigned int                       densityQuadratureID,
@@ -55,7 +56,7 @@ namespace dftfe
     : KohnShamDFTBaseOperator<memorySpace>(BLASWrapperPtr,
                                            basisOperationsPtr,
                                            basisOperationsPtrHost,
-                                           oncvClassPtr,
+                                           pseudopotentialClassPtr,
                                            excManagerPtr,
                                            dftParamsPtr,
                                            densityQuadratureID,
@@ -65,372 +66,6 @@ namespace dftfe
                                            mpi_comm_domain)
   {}
 
-
-
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  KohnShamDFTStandardEigenOperator<memorySpace>::HX(
-    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-    const double                                                       scalarHX,
-    const double                                                       scalarY,
-    const double                                                       scalarX,
-    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
-  {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
-    if (d_numVectorsInternal != numberWavefunctions)
-      reinitNumberWavefunctions(numberWavefunctions);
-
-    if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
-      d_basisOperationsPtr->reinit(numberWavefunctions,
-                                   d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
-    d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
-                            scalarX,
-                            src.data(),
-                            scalarY,
-                            dst.data());
-    src.updateGhostValues();
-    d_basisOperationsPtr->distribute(src);
-    const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
-                            scalarCoeffBeta  = dataTypes::number(0.0);
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
-      {
-        if (d_dftParamsPtr->isPseudopotential)
-          {
-            d_ONCVnonLocalOperator->initialiseOperatorActionOnX(d_kPointIndex);
-          }
-
-        d_excManagerPtr->getExcSSDFunctionalObj()
-          ->reinitKPointDependentVariables(d_kPointIndex);
-      }
-    const bool hasNonlocalComponents =
-      d_dftParamsPtr->isPseudopotential &&
-      (d_ONCVnonLocalOperator->getTotalNonLocalElementsInCurrentProcessor() >
-       0) &&
-      !onlyHPrimePartForFirstOrderDensityMatResponse;
-#pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
-      {
-        std::pair<unsigned int, unsigned int> cellRange(
-          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-        d_BLASWrapperPtr->stridedCopyToBlock(
-          numberWavefunctions,
-          numDoFsPerCell * (cellRange.second - cellRange.first),
-          src.data(),
-          d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
-          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-              .data() +
-            cellRange.first * numDoFsPerCell);
-#pragma omp critical(hx_Cconj)
-        if (hasNonlocalComponents)
-          {
-            d_ONCVnonLocalOperator->applyCconjtransOnX(
-              d_cellWaveFunctionMatrixSrc.data() +
-                cellRange.first * numDoFsPerCell * numberWavefunctions,
-              cellRange);
-          }
-      }
-    if (d_dftParamsPtr->isPseudopotential &&
-        !onlyHPrimePartForFirstOrderDensityMatResponse)
-      {
-        d_ONCVNonLocalProjectorTimesVectorBlock.setValue(0);
-        d_ONCVnonLocalOperator->applyAllReduceOnCconjtransX(
-          d_ONCVNonLocalProjectorTimesVectorBlock);
-        d_ONCVnonLocalOperator->applyVOnCconjtransX(
-          CouplingStructure::diagonal,
-          d_oncvClassPtr->getCouplingMatrix(),
-          d_ONCVNonLocalProjectorTimesVectorBlock,
-          true);
-      }
-#pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
-      {
-        std::pair<unsigned int, unsigned int> cellRange(
-          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-
-        d_BLASWrapperPtr->xgemmStridedBatched(
-          'N',
-          'N',
-          numberWavefunctions,
-          numDoFsPerCell,
-          numDoFsPerCell,
-          &scalarCoeffAlpha,
-          d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
-          numberWavefunctions,
-          numDoFsPerCell * numberWavefunctions,
-          d_cellHamiltonianMatrix[d_HamiltonianIndex].data() +
-            cellRange.first * numDoFsPerCell * numDoFsPerCell,
-          numDoFsPerCell,
-          numDoFsPerCell * numDoFsPerCell,
-          &scalarCoeffBeta,
-          d_cellWaveFunctionMatrixDst.data() +
-            omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-              numberWavefunctions,
-          numberWavefunctions,
-          numDoFsPerCell * numberWavefunctions,
-          cellRange.second - cellRange.first);
-        if (hasNonlocalComponents)
-          {
-            d_ONCVnonLocalOperator->applyCOnVCconjtransX(
-              d_cellWaveFunctionMatrixDst.data() +
-                omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-                  numberWavefunctions,
-              cellRange);
-          }
-#pragma omp critical(hx_assembly)
-        d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
-          numberWavefunctions,
-          numDoFsPerCell * (cellRange.second - cellRange.first),
-          scalarHX,
-          d_cellWaveFunctionMatrixDst.data() +
-            omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-              numberWavefunctions,
-          dst.data(),
-          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-              .data() +
-            cellRange.first * numDoFsPerCell);
-      }
-
-    if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-         ExcFamilyType::DFTPlusU) ||
-        (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-         ExcFamilyType::HYBRID) ||
-        (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-         ExcFamilyType::MGGA))
-      {
-        unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
-        d_BLASWrapperPtr->xcopy(src.locallyOwnedSize() * numberWavefunctions,
-                                src.data(),
-                                1,
-                                d_srcNonLocalTemp.data(),
-                                1);
-
-        d_srcNonLocalTemp.updateGhostValues();
-        d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
-
-        d_dstNonLocalTemp.setValue(0.0);
-        d_excManagerPtr->getExcSSDFunctionalObj()
-          ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
-                                                    d_dstNonLocalTemp,
-                                                    numberWavefunctions,
-                                                    d_kPointIndex,
-                                                    d_spinIndex);
-
-        d_BLASWrapperPtr->axpby(dst.localSize() * numberWavefunctions,
-                                scalarHX,
-                                d_dstNonLocalTemp.data(),
-                                1.0,
-                                dst.data());
-      }
-
-    d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-      .distribute_slave_to_master(dst);
-
-
-    src.zeroOutGhosts();
-    inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
-    dst.accumulateAddLocallyOwned();
-    dst.zeroOutGhosts();
-  }
-
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  KohnShamDFTStandardEigenOperator<memorySpace>::
-    HXWithLowdinOrthonormalisedInput(
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-      const double scalarHX,
-      const double scalarY,
-      const double scalarX,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const bool onlyHPrimePartForFirstOrderDensityMatResponse)
-  {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
-    if (d_numVectorsInternal != numberWavefunctions)
-      reinitNumberWavefunctions(numberWavefunctions);
-
-    if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
-      d_basisOperationsPtr->reinit(numberWavefunctions,
-                                   d_cellsBlockSizeHX,
-                                   d_densityQuadratureID,
-                                   false,
-                                   false);
-
-    d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
-                            scalarX,
-                            src.data(),
-                            scalarY,
-                            dst.data());
-
-    src.updateGhostValues();
-    inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr->distribute(src);
-    const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
-                            scalarCoeffBeta  = dataTypes::number(0.0);
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
-      {
-        if (d_dftParamsPtr->isPseudopotential)
-          {
-            d_ONCVnonLocalOperator->initialiseOperatorActionOnX(d_kPointIndex);
-          }
-
-        d_excManagerPtr->getExcSSDFunctionalObj()
-          ->reinitKPointDependentVariables(d_kPointIndex);
-      }
-    const bool hasNonlocalComponents =
-      d_dftParamsPtr->isPseudopotential &&
-      (d_ONCVnonLocalOperator->getTotalNonLocalElementsInCurrentProcessor() >
-       0) &&
-      !onlyHPrimePartForFirstOrderDensityMatResponse;
-#pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
-      {
-        std::pair<unsigned int, unsigned int> cellRange(
-          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-        d_BLASWrapperPtr->stridedBlockScaleCopy(
-          numberWavefunctions,
-          numDoFsPerCell * (cellRange.second - cellRange.first),
-          1.0,
-          d_basisOperationsPtr->cellInverseSqrtMassVectorBasisData().data() +
-            cellRange.first * numDoFsPerCell,
-          src.data(),
-          d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
-          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-              .data() +
-            cellRange.first * numDoFsPerCell);
-#pragma omp critical(hx_Cconj)
-        if (hasNonlocalComponents)
-          {
-            d_ONCVnonLocalOperator->applyCconjtransOnX(
-              d_cellWaveFunctionMatrixSrc.data() +
-                cellRange.first * numDoFsPerCell * numberWavefunctions,
-              cellRange);
-          }
-      }
-    if (d_dftParamsPtr->isPseudopotential &&
-        !onlyHPrimePartForFirstOrderDensityMatResponse)
-      {
-        d_ONCVNonLocalProjectorTimesVectorBlock.setValue(0);
-        d_ONCVnonLocalOperator->applyAllReduceOnCconjtransX(
-          d_ONCVNonLocalProjectorTimesVectorBlock);
-        d_ONCVnonLocalOperator->applyVOnCconjtransX(
-          CouplingStructure::diagonal,
-          d_oncvClassPtr->getCouplingMatrix(),
-          d_ONCVNonLocalProjectorTimesVectorBlock,
-          true);
-      }
-#pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
-      {
-        std::pair<unsigned int, unsigned int> cellRange(
-          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-
-        d_BLASWrapperPtr->xgemmStridedBatched(
-          'N',
-          'N',
-          numberWavefunctions,
-          numDoFsPerCell,
-          numDoFsPerCell,
-          &scalarCoeffAlpha,
-          d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
-          numberWavefunctions,
-          numDoFsPerCell * numberWavefunctions,
-          d_cellHamiltonianMatrix[d_HamiltonianIndex].data() +
-            cellRange.first * numDoFsPerCell * numDoFsPerCell,
-          numDoFsPerCell,
-          numDoFsPerCell * numDoFsPerCell,
-          &scalarCoeffBeta,
-          d_cellWaveFunctionMatrixDst.data() +
-            omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-              numberWavefunctions,
-          numberWavefunctions,
-          numDoFsPerCell * numberWavefunctions,
-          cellRange.second - cellRange.first);
-        if (hasNonlocalComponents)
-          {
-            d_ONCVnonLocalOperator->applyCOnVCconjtransX(
-              d_cellWaveFunctionMatrixDst.data() +
-                omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-                  numberWavefunctions,
-              cellRange);
-          }
-#pragma omp critical(hx_assembly)
-        d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
-          numberWavefunctions,
-          numDoFsPerCell * (cellRange.second - cellRange.first),
-          scalarHX,
-          d_basisOperationsPtr->cellInverseSqrtMassVectorBasisData().data() +
-            cellRange.first * numDoFsPerCell,
-          d_cellWaveFunctionMatrixDst.data() +
-            omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-              numberWavefunctions,
-          dst.data(),
-          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-              .data() +
-            cellRange.first * numDoFsPerCell);
-      }
-
-    if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-         ExcFamilyType::DFTPlusU) ||
-        (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-         ExcFamilyType::HYBRID) ||
-        (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-         ExcFamilyType::MGGA))
-      {
-        unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
-        d_BLASWrapperPtr->stridedBlockScaleCopy(
-          numberWavefunctions,
-          relaventDofs,
-          1.0,
-          getInverseSqrtMassVector().data(),
-          src.data(),
-          d_srcNonLocalTemp.data(),
-          d_mapNodeIdToProcId.data());
-
-        d_srcNonLocalTemp.updateGhostValues();
-        d_basisOperationsPtr->distribute(d_srcNonLocalTemp);
-
-        // TODO d_srcNonLocalTemp and d_dstNonLocalTemp can be removed
-        d_dstNonLocalTemp.setValue(0.0);
-        d_excManagerPtr->getExcSSDFunctionalObj()
-          ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTemp,
-                                                    d_dstNonLocalTemp,
-                                                    numberWavefunctions,
-                                                    d_kPointIndex,
-                                                    d_spinIndex);
-
-
-        d_basisOperationsPtr
-          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
-          .distribute_slave_to_master(d_dstNonLocalTemp);
-
-
-        d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
-          numberWavefunctions,
-          relaventDofs,
-          scalarHX,
-          getInverseSqrtMassVector().data(),
-          d_dstNonLocalTemp.data(),
-          dst.data(),
-          d_mapNodeIdToProcId.data());
-      }
-
-    inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr
-      ->distribute_slave_to_master(dst);
-    src.zeroOutGhosts();
-    inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
-    dst.accumulateAddLocallyOwned();
-    dst.zeroOutGhosts();
-  }
 
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -622,8 +257,8 @@ namespace dftfe
                                    false);
     const bool hasNonlocalComponents =
       d_dftParamsPtr->isPseudopotential &&
-      (d_ONCVnonLocalOperator->getTotalNonLocalElementsInCurrentProcessor() >
-       0) &&
+      (d_pseudopotentialNonLocalOperator
+         ->getTotalNonLocalElementsInCurrentProcessor() > 0) &&
       !onlyHPrimePartForFirstOrderDensityMatResponse;
     const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
                             scalarCoeffBeta  = dataTypes::number(0.0);
@@ -636,7 +271,7 @@ namespace dftfe
         if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
           {
             if (d_dftParamsPtr->isPseudopotential)
-              d_ONCVnonLocalOperator->initialiseOperatorActionOnX(
+              d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
                 d_kPointIndex);
 
             d_excManagerPtr->getExcSSDFunctionalObj()
@@ -662,7 +297,7 @@ namespace dftfe
                 cellRange.first * numDoFsPerCell);
 #pragma omp critical(hxc_Cconj)
             if (hasNonlocalComponents)
-              d_ONCVnonLocalOperator->applyCconjtransOnX(
+              d_pseudopotentialNonLocalOperator->applyCconjtransOnX(
                 d_cellWaveFunctionMatrixSrc.data() +
                   cellRange.first * numDoFsPerCell * numberWavefunctions,
                 cellRange);
@@ -673,10 +308,10 @@ namespace dftfe
         if (d_dftParamsPtr->isPseudopotential &&
             !onlyHPrimePartForFirstOrderDensityMatResponse)
           {
-            d_ONCVNonLocalProjectorTimesVectorBlock.setValue(0);
-            d_ONCVnonLocalOperator->applyAllReduceOnCconjtransX(
-              d_ONCVNonLocalProjectorTimesVectorBlock, true);
-            d_ONCVNonLocalProjectorTimesVectorBlock
+            d_pseudopotentialNonLocalProjectorTimesVectorBlock.setValue(0);
+            d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
+              d_pseudopotentialNonLocalProjectorTimesVectorBlock, true);
+            d_pseudopotentialNonLocalProjectorTimesVectorBlock
               .accumulateAddLocallyOwnedBegin();
           }
         src.zeroOutGhosts();
@@ -684,9 +319,10 @@ namespace dftfe
         if (d_dftParamsPtr->isPseudopotential &&
             !onlyHPrimePartForFirstOrderDensityMatResponse)
           {
-            d_ONCVNonLocalProjectorTimesVectorBlock
+            d_pseudopotentialNonLocalProjectorTimesVectorBlock
               .accumulateAddLocallyOwnedEnd();
-            d_ONCVNonLocalProjectorTimesVectorBlock.updateGhostValuesBegin();
+            d_pseudopotentialNonLocalProjectorTimesVectorBlock
+              .updateGhostValuesBegin();
           }
         d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
                                 scalarX,
@@ -696,11 +332,12 @@ namespace dftfe
         if (d_dftParamsPtr->isPseudopotential &&
             !onlyHPrimePartForFirstOrderDensityMatResponse)
           {
-            d_ONCVNonLocalProjectorTimesVectorBlock.updateGhostValuesEnd();
-            d_ONCVnonLocalOperator->applyVOnCconjtransX(
+            d_pseudopotentialNonLocalProjectorTimesVectorBlock
+              .updateGhostValuesEnd();
+            d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
               CouplingStructure::diagonal,
-              d_oncvClassPtr->getCouplingMatrix(),
-              d_ONCVNonLocalProjectorTimesVectorBlock,
+              d_pseudopotentialClassPtr->getCouplingMatrix(),
+              d_pseudopotentialNonLocalProjectorTimesVectorBlock,
               true);
           }
       }
@@ -736,7 +373,7 @@ namespace dftfe
               numDoFsPerCell * numberWavefunctions,
               cellRange.second - cellRange.first);
             if (hasNonlocalComponents)
-              d_ONCVnonLocalOperator->applyCOnVCconjtransX(
+              d_pseudopotentialNonLocalOperator->applyCOnVCconjtransX(
                 d_cellWaveFunctionMatrixDst.data() +
                   omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
                     numberWavefunctions,
@@ -838,7 +475,7 @@ namespace dftfe
                                    false);
     const bool hasNonlocalComponents =
       d_dftParamsPtr->isPseudopotential &&
-      (d_ONCVnonLocalOperatorSinglePrec
+      (d_pseudopotentialNonLocalOperatorSinglePrec
          ->getTotalNonLocalElementsInCurrentProcessor() > 0) &&
       !onlyHPrimePartForFirstOrderDensityMatResponse;
     const dataTypes::numberFP32 scalarCoeffAlpha = dataTypes::numberFP32(1.0),
@@ -851,8 +488,8 @@ namespace dftfe
         inverseMassVectorScaledConstraintsNoneDataInfoPtr->distribute(src);
         if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
           if (d_dftParamsPtr->isPseudopotential)
-            d_ONCVnonLocalOperatorSinglePrec->initialiseOperatorActionOnX(
-              d_kPointIndex);
+            d_pseudopotentialNonLocalOperatorSinglePrec
+              ->initialiseOperatorActionOnX(d_kPointIndex);
 #pragma omp parallel for num_threads(d_nOMPThreads)
         for (unsigned int iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
@@ -873,7 +510,7 @@ namespace dftfe
                 cellRange.first * numDoFsPerCell);
 #pragma omp critical(hxc_Cconj)
             if (hasNonlocalComponents)
-              d_ONCVnonLocalOperatorSinglePrec->applyCconjtransOnX(
+              d_pseudopotentialNonLocalOperatorSinglePrec->applyCconjtransOnX(
                 d_cellWaveFunctionMatrixSrcSinglePrec.data() +
                   cellRange.first * numDoFsPerCell * numberWavefunctions,
                 cellRange);
@@ -884,10 +521,13 @@ namespace dftfe
         if (d_dftParamsPtr->isPseudopotential &&
             !onlyHPrimePartForFirstOrderDensityMatResponse)
           {
-            d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec.setValue(0);
-            d_ONCVnonLocalOperatorSinglePrec->applyAllReduceOnCconjtransX(
-              d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec, true);
-            d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+              .setValue(0);
+            d_pseudopotentialNonLocalOperatorSinglePrec
+              ->applyAllReduceOnCconjtransX(
+                d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec,
+                true);
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
               .accumulateAddLocallyOwnedBegin();
           }
         src.zeroOutGhosts();
@@ -895,9 +535,9 @@ namespace dftfe
         if (d_dftParamsPtr->isPseudopotential &&
             !onlyHPrimePartForFirstOrderDensityMatResponse)
           {
-            d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
               .accumulateAddLocallyOwnedEnd();
-            d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
               .updateGhostValuesBegin();
           }
         d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
@@ -908,12 +548,12 @@ namespace dftfe
         if (d_dftParamsPtr->isPseudopotential &&
             !onlyHPrimePartForFirstOrderDensityMatResponse)
           {
-            d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
               .updateGhostValuesEnd();
-            d_ONCVnonLocalOperatorSinglePrec->applyVOnCconjtransX(
+            d_pseudopotentialNonLocalOperatorSinglePrec->applyVOnCconjtransX(
               CouplingStructure::diagonal,
-              d_oncvClassPtr->getCouplingMatrixSinglePrec(),
-              d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec,
+              d_pseudopotentialClassPtr->getCouplingMatrixSinglePrec(),
+              d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec,
               true);
           }
       }
@@ -949,7 +589,7 @@ namespace dftfe
               numDoFsPerCell * numberWavefunctions,
               cellRange.second - cellRange.first);
             if (hasNonlocalComponents)
-              d_ONCVnonLocalOperatorSinglePrec->applyCOnVCconjtransX(
+              d_pseudopotentialNonLocalOperatorSinglePrec->applyCOnVCconjtransX(
                 d_cellWaveFunctionMatrixDstSinglePrec.data() +
                   omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
                     numberWavefunctions,
@@ -1023,16 +663,6 @@ namespace dftfe
         dftfe::linearAlgebra::tensorOpDataType::fp32);
 #endif
   }
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  KohnShamDFTStandardEigenOperator<memorySpace>::HX(
-    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &src,
-    const double scalarHX,
-    const double scalarY,
-    const double scalarX,
-    dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
-    const bool onlyHPrimePartForFirstOrderDensityMatResponse)
-  {}
 
   template class KohnShamDFTStandardEigenOperator<
     dftfe::utils::MemorySpace::HOST>;

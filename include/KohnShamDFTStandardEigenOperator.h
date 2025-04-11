@@ -47,8 +47,9 @@ namespace dftfe
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
         basisOperationsPtrHost,
-      std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
-                                               oncvClassPtr,
+      std::shared_ptr<
+        dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
+                                               pseudopotentialClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       dftParameters *                          dftParamsPtr,
       const unsigned int                       densityQuadratureID,
@@ -58,64 +59,6 @@ namespace dftfe
       const MPI_Comm &                         mpi_comm_domain);
 
 
-
-    /**
-     * @brief Computing Y = scalarHX*HX + scalarX*X + scalarY*Y for a given X and Y in full precision
-     *
-     * @param src X vector
-     * @param scalarHX scalar for HX
-     * @param scalarY scalar for Y
-     * @param scalarX scalar for X
-     * @param dst Y vector
-     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
-     */
-    void
-    HX(dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-       const double scalarHX,
-       const double scalarY,
-       const double scalarX,
-       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
-
-    /**
-     * @brief Computing Y = scalarHX*HX + scalarX*X + scalarY*Y for a given X and Y in full precision
-     *
-     * @param src X vector
-     * @param scalarHX scalar for HX
-     * @param scalarY scalar for Y
-     * @param scalarX scalar for X
-     * @param dst Y vector
-     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
-     */
-    void
-    HX(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-         &          src,
-       const double scalarHX,
-       const double scalarY,
-       const double scalarX,
-       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-         &        dst,
-       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
-
-
-    /**
-     * @brief Computing Y = scalarHX*M^{1/2}HM^{1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision. Used for TD-DFT and Inverse DFT calc.
-     *
-     * @param src X vector
-     * @param scalarHX scalar for HX
-     * @param scalarY scalar for Y
-     * @param scalarX scalar for X
-     * @param dst Y vector
-     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
-     */
-    void
-    HXWithLowdinOrthonormalisedInput(
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-      const double scalarHX,
-      const double scalarY,
-      const double scalarX,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
     /**
      * @brief Computing Y = scalarOX*OX + scalarX*X + scalarY*Y for a given X and Y in full precision
@@ -232,13 +175,14 @@ namespace dftfe
 
 
   protected:
-    using KohnShamDFTBaseOperator<memorySpace>::d_ONCVnonLocalOperator;
     using KohnShamDFTBaseOperator<
-      memorySpace>::d_ONCVnonLocalOperatorSinglePrec;
+      memorySpace>::d_pseudopotentialNonLocalOperator;
+    using KohnShamDFTBaseOperator<
+      memorySpace>::d_pseudopotentialNonLocalOperatorSinglePrec;
     using KohnShamDFTBaseOperator<memorySpace>::d_BLASWrapperPtr;
     using KohnShamDFTBaseOperator<memorySpace>::d_basisOperationsPtr;
     using KohnShamDFTBaseOperator<memorySpace>::d_basisOperationsPtrHost;
-    using KohnShamDFTBaseOperator<memorySpace>::d_oncvClassPtr;
+    using KohnShamDFTBaseOperator<memorySpace>::d_pseudopotentialClassPtr;
     using KohnShamDFTBaseOperator<memorySpace>::d_excManagerPtr;
     using KohnShamDFTBaseOperator<memorySpace>::d_dftParamsPtr;
     using KohnShamDFTBaseOperator<memorySpace>::d_cellHamiltonianMatrix;
@@ -252,9 +196,9 @@ namespace dftfe
     using KohnShamDFTBaseOperator<
       memorySpace>::d_cellWaveFunctionMatrixDstSinglePrec;
     using KohnShamDFTBaseOperator<
-      memorySpace>::d_ONCVNonLocalProjectorTimesVectorBlock;
-    using KohnShamDFTBaseOperator<
-      memorySpace>::d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec;
+      memorySpace>::d_pseudopotentialNonLocalProjectorTimesVectorBlock;
+    using KohnShamDFTBaseOperator<memorySpace>::
+      d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec;
     using KohnShamDFTBaseOperator<memorySpace>::d_tempBlockVectorOverlapInvX;
     using KohnShamDFTBaseOperator<
       memorySpace>::d_tempBlockVectorOverlapInvXSinglePrec;

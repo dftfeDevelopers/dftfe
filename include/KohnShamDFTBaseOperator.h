@@ -24,7 +24,7 @@
 #include <operator.h>
 #include <BLASWrapper.h>
 #include <FEBasisOperations.h>
-#include <oncvClass.h>
+#include <pseudopotentialBaseClass.h>
 #include <AuxDensityMatrix.h>
 
 #include "hubbardClass.h"
@@ -46,8 +46,9 @@ namespace dftfe
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
         basisOperationsPtrHost,
-      std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
-                                               oncvClassPtr,
+      std::shared_ptr<
+        dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
+                                               pseudopotentialClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       dftParameters *                          dftParamsPtr,
       const unsigned int                       densityQuadratureID,
@@ -162,45 +163,61 @@ namespace dftfe
     void
     computeCellHamiltonianMatrixExtPotContribution();
 
-    // /**
-    //  * @brief Computing Y = scalarHX*HX + scalarX*X + scalarY*Y for a given X and Y in full precision
-    //  *
-    //  * @param src X vector
-    //  * @param scalarHX scalar for HX
-    //  * @param scalarY scalar for Y
-    //  * @param scalarX scalar for X
-    //  * @param dst Y vector
-    //  * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
-    //  */
-    // void
-    // HX(dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-    // &src,
-    //    const double scalarHX,
-    //    const double scalarY,
-    //    const double scalarX,
-    //    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-    //    &dst, const bool onlyHPrimePartForFirstOrderDensityMatResponse =
-    //    false);
+    /**
+     * @brief Computing Y = scalarHX*HX + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarHX scalar for HX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+     */
+    void
+    HX(dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+       const double scalarHX,
+       const double scalarY,
+       const double scalarX,
+       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
-
-    // /**
-    //  * @brief Computing Y = scalarHX*M^{1/2}HM^{1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision. Used for TD-DFT and Inverse DFT calc.
-    //  *
-    //  * @param src X vector
-    //  * @param scalarHX scalar for HX
-    //  * @param scalarY scalar for Y
-    //  * @param scalarX scalar for X
-    //  * @param dst Y vector
-    //  * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
-    //  */
-    // void
-    // HXWithLowdinOrthonormalisedInput(
-    //   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-    //   const double scalarHX,
-    //   const double scalarY,
-    //   const double scalarX,
-    //   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-    //   const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
+    /**
+     * @brief Computing Y = scalarHX*HX + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarHX scalar for HX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+     */
+    void
+    HX(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+         &          src,
+       const double scalarHX,
+       const double scalarY,
+       const double scalarX,
+       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+         &        dst,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
+    /**
+     * @brief Computing Y = scalarHX*M^{1/2}HM^{1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision. Used for TD-DFT and Inverse DFT calc.
+     *
+     * @param src X vector
+     * @param scalarHX scalar for HX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+     */
+    void
+    HXWithLowdinOrthonormalisedInput(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarHX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
     // /**
     //  * @brief Computing Y = scalarOX*OX + scalarX*X + scalarY*Y for a given X and Y in full precision
@@ -321,7 +338,7 @@ namespace dftfe
   protected:
     std::shared_ptr<
       AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-      d_ONCVnonLocalOperator;
+      d_pseudopotentialNonLocalOperator;
 
 
     /*
@@ -336,7 +353,7 @@ namespace dftfe
 
     std::shared_ptr<
       AtomicCenteredNonLocalOperator<dataTypes::numberFP32, memorySpace>>
-      d_ONCVnonLocalOperatorSinglePrec;
+      d_pseudopotentialNonLocalOperatorSinglePrec;
 
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
       d_BLASWrapperPtr;
@@ -348,8 +365,9 @@ namespace dftfe
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
       d_basisOperationsPtrHost;
-    std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
-                                             d_oncvClassPtr;
+    std::shared_ptr<
+      dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
+                                             d_pseudopotentialClassPtr;
     std::shared_ptr<excManager<memorySpace>> d_excManagerPtr;
     dftParameters *                          d_dftParamsPtr;
 
@@ -372,9 +390,9 @@ namespace dftfe
       d_cellWaveFunctionMatrixDstSinglePrec;
 
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      d_ONCVNonLocalProjectorTimesVectorBlock;
+      d_pseudopotentialNonLocalProjectorTimesVectorBlock;
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-      d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec;
+      d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec;
 
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       d_tempBlockVectorOverlapInvX;
