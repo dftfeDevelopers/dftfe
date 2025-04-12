@@ -1164,30 +1164,30 @@ namespace dftfe
     // optimization is on as well as reuse wfcs and density from previous ionic
     // step is on, or if serial constraints generation is on.
     //
-    if (d_dftParamsPtr->loadRhoData)
-      {
-        d_mesh.generateCoarseMeshesForRestart(
-          atomLocations,
-          d_imagePositionsTrunc,
-          d_imageIdsTrunc,
-          d_nearestAtomDistances,
-          d_domainBoundingVectors,
-          d_dftParamsPtr->useSymm ||
-            d_dftParamsPtr->createConstraintsFromSerialDofhandler);
+    // if (d_dftParamsPtr->loadRhoData)
+    //   {
+    //     d_mesh.generateCoarseMeshesForRestart(
+    //       atomLocations,
+    //       d_imagePositionsTrunc,
+    //       d_imageIdsTrunc,
+    //       d_nearestAtomDistances,
+    //       d_domainBoundingVectors,
+    //       d_dftParamsPtr->useSymm ||
+    //         d_dftParamsPtr->createConstraintsFromSerialDofhandler);
 
-        loadTriaInfoAndRhoNodalData();
-      }
-    else
-      {
-        d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(
-          atomLocations,
-          d_imagePositionsTrunc,
-          d_imageIdsTrunc,
-          d_nearestAtomDistances,
-          d_domainBoundingVectors,
-          d_dftParamsPtr->useSymm ||
-            d_dftParamsPtr->createConstraintsFromSerialDofhandler);
-      }
+    //     loadTriaInfoAndRhoNodalData();
+    //   }
+    // else
+    //{
+    d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(
+      atomLocations,
+      d_imagePositionsTrunc,
+      d_imageIdsTrunc,
+      d_nearestAtomDistances,
+      d_domainBoundingVectors,
+      d_dftParamsPtr->useSymm ||
+        d_dftParamsPtr->createConstraintsFromSerialDofhandler);
+    //}
     computing_timer.leave_subsection("mesh generation");
 
     if (d_dftParamsPtr->verbosity >= 4)
@@ -1312,96 +1312,95 @@ namespace dftfe
         d_isAtomsGaussianDisplacementsReadFromFile = false;
       }
 
-    if (d_dftParamsPtr->loadRhoData)
-      {
-        if (d_dftParamsPtr->verbosity >= 1)
-          pcout
-            << "Overwriting input density data to SCF solve with data read from restart file.."
-            << std::endl;
+    // if (d_dftParamsPtr->loadRhoData)
+    //   {
+    //     if (d_dftParamsPtr->verbosity >= 1)
+    //       pcout
+    //         << "Overwriting input density data to SCF solve with data read
+    //         from restart file.."
+    //         << std::endl;
 
-        // Note: d_rhoInNodalValuesRead is not compatible with
-        // d_matrixFreeDataPRefined
-        for (unsigned int i = 0;
-             i < d_densityInNodalValues[0].locally_owned_size();
-             i++)
-          d_densityInNodalValues[0].local_element(i) =
-            d_rhoInNodalValuesRead.local_element(i);
+    //     // Note: d_rhoInNodalValuesRead is not compatible with
+    //     // d_matrixFreeDataPRefined
+    //     for (unsigned int i = 0;
+    //          i < d_densityInNodalValues[0].locally_owned_size();
+    //          i++)
+    //       d_densityInNodalValues[0].local_element(i) =
+    //         d_rhoInNodalValuesRead.local_element(i);
 
-        bool isGradDensityDataDependent =
-          (d_excManagerPtr->getExcSSDFunctionalObj()
-             ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-        const bool isTauMGGA =
-          (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-           ExcFamilyType::TauMGGA);
+    //     bool isGradDensityDataDependent =
+    //       (d_excManagerPtr->getExcSSDFunctionalObj()
+    //          ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+    // const bool isTauMGGA =
+    //   (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+    //    ExcFamilyType::TauMGGA);
 
-        if (d_dftParamsPtr->spinPolarized == 1)
-          {
-            d_densityInNodalValues[1] = 0;
-            for (unsigned int i = 0;
-                 i < d_densityInNodalValues[1].locally_owned_size();
-                 i++)
-              {
-                d_densityInNodalValues[1].local_element(i) =
-                  d_magInNodalValuesRead.local_element(i);
-              }
-          }
+    //     if (d_dftParamsPtr->spinPolarized == 1)
+    //       {
+    //         d_densityInNodalValues[1] = 0;
+    //         for (unsigned int i = 0;
+    //              i < d_densityInNodalValues[1].locally_owned_size();
+    //              i++)
+    //           {
+    //             d_densityInNodalValues[1].local_element(i) =
+    //               d_magInNodalValuesRead.local_element(i);
+    //           }
+    //       }
 
-        if (d_dftParamsPtr->spinPolarized == 1 &&
-            d_dftParamsPtr->constraintMagnetization)
-          {
-            // normalize rho mag
-            const double netMag =
-              totalCharge(d_matrixFreeDataPRefined, d_densityInNodalValues[1]);
+    //     if (d_dftParamsPtr->spinPolarized == 1 &&
+    //         d_dftParamsPtr->constraintMagnetization)
+    //       {
+    //         // normalize rho mag
+    //         const double netMag =
+    //           totalCharge(d_matrixFreeDataPRefined,
+    //           d_densityInNodalValues[1]);
 
-            const double shift =
-              (d_dftParamsPtr->tot_magnetization * numElectrons - shift) /
-              numElectrons;
+    //         const double shift =
+    //           (d_dftParamsPtr->tot_magnetization * numElectrons - shift) /
+    //           numElectrons;
 
-            d_densityInNodalValues[1].add(shift, d_densityInNodalValues[0]);
+    //         d_densityInNodalValues[1].add(shift, d_densityInNodalValues[0]);
 
-            if (d_dftParamsPtr->verbosity >= 1)
-              {
-                pcout << "Net magnetization before Normalizing:  " << netMag
-                      << std::endl;
-                pcout << "Net magnetization after Normalizing: "
-                      << totalCharge(d_matrixFreeDataPRefined,
-                                     d_densityInNodalValues[1])
-                      << std::endl;
-              }
-          }
+    //         if (d_dftParamsPtr->verbosity >= 1)
+    //           {
+    //             pcout << "Net magnetization before Normalizing:  " << netMag
+    //                   << std::endl;
+    //             pcout << "Net magnetization after Normalizing: "
+    //                   << totalCharge(d_matrixFreeDataPRefined,
+    //                                  d_densityInNodalValues[1])
+    //                   << std::endl;
+    //           }
+    //       }
 
-        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
-             ++iComp)
-          interpolateDensityNodalDataToQuadratureDataGeneral(
-            d_basisOperationsPtrElectroHost,
-            d_densityDofHandlerIndexElectro,
-            d_densityQuadratureIdElectro,
-            d_densityInNodalValues[iComp],
-            d_densityInQuadValues[iComp],
-            d_gradDensityInQuadValues[iComp],
-            d_tauInQuadValues[iComp],
-            d_gradDensityInQuadValues[iComp],
-            isGradDensityDataDependent,
-            isTauMGGA);
+    //     for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+    //          ++iComp)
+    //       interpolateDensityNodalDataToQuadratureDataGeneral(
+    //         d_basisOperationsPtrElectroHost,
+    //         d_densityDofHandlerIndexElectro,
+    //         d_densityQuadratureIdElectro,
+    //         d_densityInNodalValues[iComp],
+    //         d_densityInQuadValues[iComp],
+    //         d_gradDensityInQuadValues[iComp],
+    //         d_gradDensityInQuadValues[iComp],
+    //         isGradDensityDataDependent);
 
 
-        if ((d_dftParamsPtr->solverMode == "GEOOPT"))
-          {
-            d_densityOutNodalValues = d_densityInNodalValues;
-            for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
-                 ++iComp)
-              d_densityOutNodalValues[iComp].update_ghost_values();
+    //     if ((d_dftParamsPtr->solverMode == "GEOOPT"))
+    //       {
+    //         d_densityOutNodalValues = d_densityInNodalValues;
+    //         for (unsigned int iComp = 0; iComp <
+    //         d_densityOutNodalValues.size();
+    //              ++iComp)
+    //           d_densityOutNodalValues[iComp].update_ghost_values();
 
-            d_densityOutQuadValues = d_densityInQuadValues;
+    //         d_densityOutQuadValues = d_densityInQuadValues;
 
-            if (isGradDensityDataDependent)
-              d_gradDensityOutQuadValues = d_gradDensityInQuadValues;
-            if (isTauMGGA)
-              d_tauOutQuadValues = d_tauInQuadValues;
-          }
+    //         if (isGradDensityDataDependent)
+    //           d_gradDensityOutQuadValues = d_gradDensityInQuadValues;
+    //       }
 
-        d_isRestartGroundStateCalcFromChk = true;
-      }
+    //     d_isRestartGroundStateCalcFromChk = true;
+    //   }
 
     d_isFirstFilteringCall.clear();
     d_isFirstFilteringCall.resize((d_dftParamsPtr->spinPolarized + 1) *
@@ -1410,7 +1409,7 @@ namespace dftfe
 
 
     initHubbardOperator();
-    if (d_useHubbard && d_dftParamsPtr->loadRhoData)
+    if (d_useHubbard && (d_dftParamsPtr->loadQuadData))
       {
         d_hubbardClassPtr->readHubbOccFromFile();
       }
@@ -2005,7 +2004,8 @@ namespace dftfe
     if (d_dftParamsPtr->meshAdaption)
       aposterioriMeshGenerate();
 
-    if (d_dftParamsPtr->restartFolder != "." && d_dftParamsPtr->saveRhoData &&
+    if (d_dftParamsPtr->restartFolder != "." &&
+        (d_dftParamsPtr->saveQuadData) &&
         dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         mkdir(d_dftParamsPtr->restartFolder.c_str(), ACCESSPERMS);
@@ -3964,10 +3964,67 @@ namespace dftfe
         //
         scfIter++;
 
-        if (d_dftParamsPtr->saveRhoData && scfIter % 10 == 0 &&
+        // if (d_dftParamsPtr->saveRhoData && scfIter % 10 == 0 &&
+        //     d_dftParamsPtr->solverMode == "GS")
+        //   {
+        //     saveTriaInfoAndRhoNodalData();
+        //     if (d_useHubbard)
+        //       {
+        //         d_hubbardClassPtr->writeHubbOccToFile();
+        //       }
+        //   }
+        if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
             d_dftParamsPtr->solverMode == "GS")
           {
-            saveTriaInfoAndRhoNodalData();
+            std::vector<std::string> field     = {"RHO", "MAG_Z"};
+            std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
+            std::vector<std::string> field2    = {"TAU", "TAUMAG_Z"};
+            for (int i = 0; i < d_densityOutQuadValues.size(); i++)
+              {
+                saveQuadratureData(d_basisOperationsPtrHost,
+                                   d_densityQuadratureId,
+                                   d_densityOutQuadValues[i],
+                                   1,
+                                   field[i],
+                                   d_dftParamsPtr->restartFolder,
+                                   d_mpiCommParent,
+                                   mpi_communicator,
+                                   interpoolcomm,
+                                   interBandGroupComm);
+                bool isGradDensityDataDependent =
+                  (d_excManagerPtr->getExcSSDFunctionalObj()
+                     ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+                if (isGradDensityDataDependent)
+                  {
+                    saveQuadratureData(d_basisOperationsPtrHost,
+                                       d_densityQuadratureId,
+                                       d_gradDensityOutQuadValues[i],
+                                       3,
+                                       Gradfield[i],
+                                       d_dftParamsPtr->restartFolder,
+                                       d_mpiCommParent,
+                                       mpi_communicator,
+                                       interpoolcomm,
+                                       interBandGroupComm);
+                  }
+              }
+            const bool isTauMGGA =
+              (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+               ExcFamilyType::TauMGGA);
+            if (isTauMGGA)
+              for (int i = 0; i < d_tauOutQuadValues.size(); i++)
+                {
+                  saveQuadratureData(d_basisOperationsPtrHost,
+                                     d_densityQuadratureId,
+                                     d_tauOutQuadValues[i],
+                                     1,
+                                     field2[i],
+                                     d_dftParamsPtr->restartFolder,
+                                     d_mpiCommParent,
+                                     mpi_communicator,
+                                     interpoolcomm,
+                                     interBandGroupComm);
+                }
             if (d_useHubbard)
               {
                 d_hubbardClassPtr->writeHubbOccToFile();
@@ -3975,10 +4032,49 @@ namespace dftfe
           }
       }
 
-    if (d_dftParamsPtr->saveRhoData &&
+    // if (d_dftParamsPtr->saveRhoData &&
+    //     !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
+    //   {
+    //     saveTriaInfoAndRhoNodalData();
+    //     if (d_useHubbard)
+    //       {
+    //         d_hubbardClassPtr->writeHubbOccToFile();
+    //       }
+    //   }
+    if (d_dftParamsPtr->saveQuadData &&
         !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
       {
-        saveTriaInfoAndRhoNodalData();
+        std::vector<std::string> field     = {"RHO", "MAG_Z"};
+        std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
+        for (int i = 0; i < d_densityOutQuadValues.size(); i++)
+          {
+            saveQuadratureData(d_basisOperationsPtrHost,
+                               d_densityQuadratureId,
+                               d_densityOutQuadValues[i],
+                               1,
+                               field[i],
+                               d_dftParamsPtr->restartFolder,
+                               d_mpiCommParent,
+                               mpi_communicator,
+                               interpoolcomm,
+                               interBandGroupComm);
+            bool isGradDensityDataDependent =
+              (d_excManagerPtr->getExcSSDFunctionalObj()
+                 ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+            if (isGradDensityDataDependent)
+              {
+                saveQuadratureData(d_basisOperationsPtrHost,
+                                   d_densityQuadratureId,
+                                   d_gradDensityOutQuadValues[i],
+                                   3,
+                                   Gradfield[i],
+                                   d_dftParamsPtr->restartFolder,
+                                   d_mpiCommParent,
+                                   mpi_communicator,
+                                   interpoolcomm,
+                                   interBandGroupComm);
+              }
+          }
         if (d_useHubbard)
           {
             d_hubbardClassPtr->writeHubbOccToFile();
@@ -4015,7 +4111,7 @@ namespace dftfe
         if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
             if (d_dftParamsPtr->solverMode == "GS" &&
-                d_dftParamsPtr->saveRhoData)
+                (d_dftParamsPtr->saveQuadData))
               {
                 FILE *fermiFile;
                 fermiFile = fopen("fermiEnergy.out", "w");
