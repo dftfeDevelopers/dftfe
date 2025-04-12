@@ -956,7 +956,176 @@ namespace dftfe
     const double scalarX,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
-  {}
+  {    const unsigned int numCells       = d_basisOperationsPtr->nCells();
+    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const unsigned int numberWavefunctions = src.numVectors();
+    if (d_numVectorsInternal != numberWavefunctions)
+      reinitNumberWavefunctions(numberWavefunctions);
+      #if defined(DFTFE_WITH_DEVICE)
+      if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+        {
+          if (d_dftParamsPtr->tensorOpType == "TF32")
+            d_BLASWrapperPtr->setTensorOpDataType(
+              dftfe::linearAlgebra::tensorOpDataType::tf32);
+        }
+  #endif
+    if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
+      d_basisOperationsPtr->reinit(numberWavefunctions,
+                                   d_cellsBlockSizeHX,
+                                   d_densityQuadratureID,
+                                   false,
+                                   false);
+    d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * src.numVectors(),
+                            scalarX,
+                            src.data(),
+                            scalarY,
+                            dst.data());
+    src.updateGhostValues();
+    d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID].distribute(src);
+    const dataTypes::numberFP32 scalarCoeffAlpha = dataTypes::numberFP32(1.0),
+                            scalarCoeffBeta  = dataTypes::numberFP32(0.0);
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+      {
+        if (d_dftParamsPtr->isPseudopotential)
+          {
+            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
+              d_kPointIndex);
+          }
+
+        d_excManagerPtr->getExcSSDFunctionalObj()
+          ->reinitKPointDependentVariables(d_kPointIndex);
+      }
+    const bool hasNonlocalComponents =
+      d_dftParamsPtr->isPseudopotential &&
+      (d_pseudopotentialNonLocalOperator
+         ->getTotalNonLocalElementsInCurrentProcessor() > 0) &&
+      !onlyHPrimePartForFirstOrderDensityMatResponse;
+#pragma omp parallel for num_threads(d_nOMPThreads)
+    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
+      {
+        std::pair<unsigned int, unsigned int> cellRange(
+          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
+        d_BLASWrapperPtr->stridedCopyToBlock(
+          numberWavefunctions,
+          numDoFsPerCell * (cellRange.second - cellRange.first),
+          src.data(),
+          d_cellWaveFunctionMatrixSrcSinglePrec.data() +
+            cellRange.first * numDoFsPerCell * numberWavefunctions,
+          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+              .data() +
+            cellRange.first * numDoFsPerCell);
+#pragma omp critical(hx_Cconj)
+        if (hasNonlocalComponents)
+          {
+            d_pseudopotentialNonLocalOperatorSinglePrec->applyCconjtransOnX(
+              d_cellWaveFunctionMatrixSrcSinglePrec.data() +
+                cellRange.first * numDoFsPerCell * numberWavefunctions,
+              cellRange);
+          }
+      }
+    if (d_dftParamsPtr->isPseudopotential &&
+        !onlyHPrimePartForFirstOrderDensityMatResponse)
+      {
+        d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec.setValue(0);
+        d_pseudopotentialNonLocalOperatorSinglePrec->applyAllReduceOnCconjtransX(
+          d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
+        d_pseudopotentialNonLocalOperatorSinglePrec->applyVOnCconjtransX(
+          CouplingStructure::diagonal,
+          d_pseudopotentialClassPtr->getCouplingMatrixSinglePrec(),
+          d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec,
+          true);
+      }
+#pragma omp parallel for num_threads(d_nOMPThreads)
+    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
+      {
+        std::pair<unsigned int, unsigned int> cellRange(
+          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
+
+        d_BLASWrapperPtr->xgemmStridedBatched(
+          'N',
+          'N',
+          numberWavefunctions,
+          numDoFsPerCell,
+          numDoFsPerCell,
+          &scalarCoeffAlpha,
+          d_cellWaveFunctionMatrixSrcSinglePrec.data() +
+            cellRange.first * numDoFsPerCell * numberWavefunctions,
+          numberWavefunctions,
+          numDoFsPerCell * numberWavefunctions,
+          d_cellHamiltonianMatrixSinglePrec[d_HamiltonianIndex].data() +
+            cellRange.first * numDoFsPerCell * numDoFsPerCell,
+          numDoFsPerCell,
+          numDoFsPerCell * numDoFsPerCell,
+          &scalarCoeffBeta,
+          d_cellWaveFunctionMatrixDstSinglePrec.data() +
+            omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
+              numberWavefunctions,
+          numberWavefunctions,
+          numDoFsPerCell * numberWavefunctions,
+          cellRange.second - cellRange.first);
+        if (hasNonlocalComponents)
+          {
+            d_pseudopotentialNonLocalOperatorSinglePrec->applyCOnVCconjtransX(
+              d_cellWaveFunctionMatrixDstSinglePrec.data() +
+                omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
+                  numberWavefunctions,
+              cellRange);
+          }
+#pragma omp critical(hx_assembly)
+        d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
+          numberWavefunctions,
+          numDoFsPerCell * (cellRange.second - cellRange.first),
+          scalarHX,
+          d_cellWaveFunctionMatrixDstSinglePrec.data() +
+            omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
+              numberWavefunctions,
+          dst.data(),
+          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+              .data() +
+            cellRange.first * numDoFsPerCell);
+      }
+
+    if ((d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+         ExcFamilyType::DFTPlusU) ||
+        (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+         ExcFamilyType::HYBRID) ||
+        (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+         ExcFamilyType::MGGA))
+      {
+        unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+        d_BLASWrapperPtr->xcopy(src.locallyOwnedSize() * numberWavefunctions,
+                                src.data(),
+                                1,
+                                d_srcNonLocalTempSinglePrec.data(),
+                                1);
+
+        d_srcNonLocalTempSinglePrec.updateGhostValues();
+        d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID].distribute(d_srcNonLocalTempSinglePrec);
+
+        d_dstNonLocalTempSinglePrec.setValue(0.0);
+        d_excManagerPtr->getExcSSDFunctionalObj()
+          ->applyWaveFunctionDependentFuncDerWrtPsi(d_srcNonLocalTempSinglePrec,
+                                                    d_dstNonLocalTempSinglePrec,
+                                                    numberWavefunctions,
+                                                    d_kPointIndex,
+                                                    d_spinIndex);
+
+        d_BLASWrapperPtr->axpby(dst.localSize() * numberWavefunctions,
+                                scalarHX,
+                                d_dstNonLocalTempSinglePrec.data(),
+                                1.0,
+                                dst.data());
+      }
+
+    d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+      .distribute_slave_to_master(dst);
+
+
+    src.zeroOutGhosts();
+    inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
+    dst.accumulateAddLocallyOwned();
+    dst.zeroOutGhosts();
+  }
   template <dftfe::utils::MemorySpace memorySpace>
   void
   KohnShamDFTBaseOperator<memorySpace>::HX(
