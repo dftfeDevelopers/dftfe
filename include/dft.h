@@ -194,6 +194,11 @@ namespace dftfe
     void
     solveNoSCF();
     /**
+     * @brief compute bands without solving the SCF iteration
+     */
+    void
+    solveBands();
+    /**
      * @brief Kohn-Sham ground-state solve using SCF iteration
      *
      * @return tuple of boolean flag on whether scf converged,
@@ -291,7 +296,6 @@ namespace dftfe
      * @brief Number of Kohn-Sham eigen values to be computed
      */
     unsigned int d_numEigenValues;
-    unsigned int d_highestStateForResidualComputation;
 
 
     /**
@@ -1947,16 +1951,6 @@ namespace dftfe
       KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
                        &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala);
-
-    void
-    kohnShamEigenSpaceComputeNSCF(
-      const unsigned int spinType,
-      const unsigned int kPointIndex,
-      KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
-                                                     &kohnShamDFTEigenOperator,
-      chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
-      std::vector<double>                            &residualNormWaveFunctions,
-      unsigned int                                    ipass);
 
     expConfiningPotential                                    d_expConfiningPot;
     std::shared_ptr<hubbard<dataTypes::number, memorySpace>> d_hubbardClassPtr;

@@ -184,6 +184,7 @@ SET(TARGET_SRC
   ./src/dft/publicMethods.cc
   ./src/dft/restart.cc
   ./src/dft/solveNSCF.cc
+  ./src/dft/solveBands.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInv.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInvSpinPolarized.cc
   ./src/dft/computeOutputDensityDirectionalDerivative.cc

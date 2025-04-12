@@ -166,12 +166,6 @@ namespace dftfe
           "false",
           dealii::Patterns::Bool(),
           "[Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.");
-
-        prm.declare_entry(
-          "WRITE BANDS",
-          "false",
-          dealii::Patterns::Bool(),
-          "[Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. If it is set to true, Fermi energy is obtained from 'fermiEnergy.out' file, created from previous GS calculation with 'SAVE RHO DATA' set to true. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 4 columns with first column indicating the k-point index, second column indicating band index, third column indicating corresponding eigenvalue and fourth column indicating the corresponding occupation number.");
       }
       prm.leave_subsection();
 
@@ -1152,7 +1146,7 @@ namespace dftfe
             "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
             "0",
             dealii::Patterns::Integer(0),
-            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation. For DOS/PDOS calculations, the value of this parameter should be large enough to ensure sufficient number of buffer states beyond the 'Fermi level'.");
+            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF/BANDS calculations. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation. For DOS/PDOS calculations, the value of this parameter should be large enough to ensure sufficient number of buffer states beyond the 'Fermi level'.");
 
           prm.declare_entry(
             "RESTRICT TO SINGLE FILTER PASS",
@@ -1333,7 +1327,6 @@ namespace dftfe
     smearTval                   = 500;
     intervalSize                = 0.01;
     writeLocalizationLengths    = false;
-    writeBandsFile              = false;
     std::string coordinatesFile = "";
     domainBoundingVectorsFile   = "";
     kPointDataFile              = "";
@@ -1509,7 +1502,7 @@ namespace dftfe
     auto entriesNotSet  = prm.get_entries_wrongly_not_set();
     if (auto memOptSet = entriesNotSet.find("MEM_20OPT_20MODE");
         memOptSet != entriesNotSet.end())
-      prm.set("MEM OPT MODE", solverMode == "NSCF");
+      prm.set("MEM OPT MODE", solverMode == "NSCF" || solverMode == "BANDS");
     memOptMode = prm.get_bool("MEM OPT MODE");
     writeStructreEnergyForcesFileForPostProcess =
       prm.get_bool("WRITE STRUCTURE ENERGY FORCES DATA POST PROCESS");
@@ -1543,7 +1536,6 @@ namespace dftfe
       readWfcForPdosPspFile =
         prm.get_bool("READ ATOMIC WFC PDOS FROM PSP FILE");
       writeLocalizationLengths = prm.get_bool("WRITE LOCALIZATION LENGTHS");
-      writeBandsFile           = prm.get_bool("WRITE BANDS");
     }
     prm.leave_subsection();
 
@@ -1894,6 +1886,16 @@ namespace dftfe
         !useSymm,
         dealii::ExcMessage(
           "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+    if (solverMode == "BANDS")
+      AssertThrow(
+        kPointDataFile != "",
+        dealii::ExcMessage(
+          "DFT-FE Error: kPOINT RULE FILE must be provided for bands."));
+    if (solverMode == "BANDS" || solverMode == "NSCF")
+      AssertThrow(
+        highestStateOfInterestForChebFiltering != 0,
+        dealii::ExcMessage(
+          "DFT-FE Error: HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING must be provided for nscf and bands."));
 #endif
 #ifndef USE_COMPLEX
     AssertThrow(
@@ -1901,6 +1903,9 @@ namespace dftfe
         offsetFlagY == 0 && offsetFlagZ == 0,
       dealii::ExcMessage(
         "DFT-FE Error: Real executable cannot be used for non-zero k point."));
+    AssertThrow(solverMode != "BANDS",
+                dealii::ExcMessage(
+                  "DFT-FE Error: Real executable cannot be used for bands."));
 #endif
     if (numberEigenValues != 0)
       AssertThrow(
@@ -1929,11 +1934,11 @@ namespace dftfe
                 dealii::ExcMessage(
                   "DFT-FE Error: DOMAIN VECTORS FILE not given."));
 
-    if (solverMode == "NSCF")
+    if (solverMode == "NSCF" || solverMode == "BANDS")
       AssertThrow(
         loadRhoData == true,
         dealii::ExcMessage(
-          "DFT-FE Error: Cant run NSCF without load rho data set to true"));
+          "DFT-FE Error: Cant run NSCF/BANDS without load rho data set to true"));
 
     if (isPseudopotential)
       AssertThrow(
@@ -2151,7 +2156,7 @@ namespace dftfe
         else if (mixingMethod == "ANDERSON_WITH_KERKER" ||
                  mixingMethod == "ANDERSON_WITH_RESTA")
           chebyshevTolerance = 1.0e-2;
-        else if (solverMode != "NSCF")
+        else if (solverMode != "NSCF" && solverMode != "BANDS")
           chebyshevTolerance = 5.0e-2;
       }
 

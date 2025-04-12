@@ -268,6 +268,18 @@ main(int argc, char *argv[])
                                        runParams.useDevice);
       dftfeWrapped.run();
     }
+  else if (runParams.solvermode == "BANDS")
+    {
+      dftfe::dftfeWrapper dftfeWrapped(parameter_file,
+                                       MPI_COMM_WORLD,
+                                       true,
+                                       true,
+                                       "BANDS",
+                                       runParams.restartFilesPath,
+                                       runParams.verbosity,
+                                       runParams.useDevice);
+      dftfeWrapped.run();
+    }
   else if (runParams.solvermode == "FUNCTIONAL_TEST")
     {
       dftfe::dftfeWrapper dftfeWrapped(parameter_file,

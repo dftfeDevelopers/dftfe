@@ -32,7 +32,7 @@ namespace dftfe
         "SOLVER MODE",
         "GS",
         dealii::Patterns::Selection(
-          "GS|MD|NEB|GEOOPT|NONE|NSCF|FUNCTIONAL_TEST"),
+          "GS|MD|NEB|GEOOPT|NONE|NSCF|BANDS|FUNCTIONAL_TEST"),
         "[Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calculation at the k-points specified. If FUNCTIONAL_TEST: tests if the different functionalities of the software are running as expected.");
 
 

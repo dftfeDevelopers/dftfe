@@ -448,12 +448,14 @@ namespace dftfe
               //
               // loop over wave functions
               //
-              for (int kPoint = 0;
-                   kPoint < (d_dftParamsPtr->reproducible_output ?
-                               ((1 + d_dftParamsPtr->spinPolarized) *
-                                d_kPointWeights.size()) :
-                               (1 + d_dftParamsPtr->spinPolarized));
-                   ++kPoint)
+              unsigned int numKpoints =
+                (d_dftParamsPtr->reproducible_output ?
+                   ((1 + d_dftParamsPtr->spinPolarized) *
+                    d_kPointWeights.size()) :
+                   (1 + d_dftParamsPtr->spinPolarized));
+              if (d_dftParamsPtr->solverMode == "BANDS")
+                numKpoints = 1;
+              for (int kPoint = 0; kPoint < numKpoints; ++kPoint)
                 {
                   // unsigned int waveFunction=0;
                   for (std::vector<orbital>::iterator it =
@@ -607,10 +609,11 @@ namespace dftfe
 
     if (!d_dftParamsPtr->reproducible_output)
       {
-        for (unsigned int kPoint = 1;
-             kPoint <
-             (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
-             ++kPoint)
+        unsigned int numKpoints =
+          (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
+        if (d_dftParamsPtr->solverMode == "BANDS")
+          numKpoints = 1;
+        for (unsigned int kPoint = 1; kPoint < numKpoints; ++kPoint)
           {
             dataTypes::number *temp1 = d_eigenVectorsFlattenedHost.data() +
                                        kPoint * d_numEigenValues * numberDofs;

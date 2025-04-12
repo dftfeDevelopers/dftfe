@@ -155,7 +155,7 @@ namespace dftfe
     std::vector<double> eigenValuesAllkPoints;
     for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       for (int statesIter = 0;
-           statesIter <= d_highestStateForResidualComputation;
+           statesIter <= d_dftParamsPtr->highestStateOfInterestForChebFiltering;
            ++statesIter)
         eigenValuesAllkPoints.push_back(eigenValuesInput[kPoint][statesIter]);
 
@@ -207,7 +207,8 @@ namespace dftfe
                      ++spinType)
                   {
                     for (unsigned int statesIter = 0;
-                         statesIter <= d_highestStateForResidualComputation;
+                         statesIter <=
+                         d_dftParamsPtr->highestStateOfInterestForChebFiltering;
                          ++statesIter)
                       {
                         double term1 =
@@ -253,7 +254,8 @@ namespace dftfe
             for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
               {
                 for (unsigned int statesIter = 0;
-                     statesIter <= d_highestStateForResidualComputation;
+                     statesIter <=
+                     d_dftParamsPtr->highestStateOfInterestForChebFiltering;
                      ++statesIter)
                   {
                     double term1 =

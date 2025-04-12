@@ -37,8 +37,6 @@ namespace dftfe
     KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
       *d_kohnShamDFTOperatorPtr;
 
-    const dealii::Quadrature<3> &quadrature =
-      matrix_free_data.get_quadrature(d_densityQuadratureId);
 
     // computingTimerStandard.enter_subsection("Total scf solve");
     energyCalculator<memorySpace> energyCalc(d_mpiCommParent,
@@ -317,526 +315,73 @@ namespace dftfe
     //
     // eigen solve
     //
-    // if writeBandsFile == true, get the fermi energy from the fermiEnergy.out
-    if (d_dftParamsPtr->writeBandsFile)
+
+    std::vector<std::vector<std::vector<double>>> eigenValuesSpins(
+      d_dftParamsPtr->spinPolarized + 1,
+      std::vector<std::vector<double>>(
+        d_kPointWeights.size(), std::vector<double>((d_numEigenValues))));
+
+    std::vector<std::vector<std::vector<double>>>
+      residualNormWaveFunctionsAllkPointsSpins(
+        d_dftParamsPtr->spinPolarized + 1,
+        std::vector<std::vector<double>>(
+          d_kPointWeights.size(), std::vector<double>(d_numEigenValues)));
+
+    updateAuxDensityXCMatrix(d_densityInQuadValues,
+                             d_gradDensityInQuadValues,
+                             d_rhoCore,
+                             d_gradRhoCore,
+                             getEigenVectors(),
+                             eigenValues,
+                             fermiEnergy,
+                             fermiEnergyUp,
+                             fermiEnergyDown,
+                             d_auxDensityMatrixXCInPtr);
+
+    unsigned int       count     = 0;
+    const unsigned int maxPasses = 100;
+
+
+    // maximum of the residual norm of the state closest to and
+    // below the Fermi level among all k points, and also the
+    // maximum between the two spins
+    std::vector<std::vector<double>> maxResidualsAllkPoints(
+      d_dftParamsPtr->spinPolarized + 1);
+    std::vector<double> maxResSpins(d_dftParamsPtr->spinPolarized + 1, 0.0);
+    double              maxRes = 1.0;
+
+    // if the residual norm is greater than
+    // adaptiveChebysevFilterPassesTol (a heuristic value)
+    // do more passes of chebysev filter till the check passes.
+    // This improves the scf convergence performance.
+
+
+    while (maxRes > chebyTol && count < maxPasses)
       {
-        std::ifstream file("fermiEnergy.out");
-        std::string   line;
-
-        if (file.is_open())
+        for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
           {
-            if (d_dftParamsPtr->constraintMagnetization)
+            if ((d_dftParamsPtr->memOptMode &&
+                 d_dftParamsPtr->spinPolarized == 1) ||
+                count == 0)
               {
-                std::vector<double> temp;
-                while (getline(file, line))
-                  {
-                    if (!line.empty())
-                      {
-                        std::istringstream iss(line);
-                        double             temp1;
-                        while (iss >> temp1)
-                          {
-                            temp.push_back(temp1);
-                          }
-                      }
-                  }
-                fermiEnergy     = temp[0];
-                fermiEnergyUp   = temp[1];
-                fermiEnergyDown = temp[2];
+                computing_timer.enter_subsection("VEff Computation");
+                kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
+                                                     d_phiInQuadValues,
+                                                     s);
+
+                computing_timer.leave_subsection("VEff Computation");
               }
-            else
-              {
-                getline(file, line);
-                std::istringstream iss(line);
-                iss >> fermiEnergy;
-              }
-          }
-        else
-          {
-            pcout
-              << "Unable to open file fermiEnergy.out. Check if it is present.";
-          }
-      }
-
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
-        std::vector<std::vector<std::vector<double>>> eigenValuesSpins(
-          2,
-          std::vector<std::vector<double>>(
-            d_kPointWeights.size(), std::vector<double>((d_numEigenValues))));
-
-        std::vector<std::vector<std::vector<double>>>
-          residualNormWaveFunctionsAllkPointsSpins(
-            2,
-            std::vector<std::vector<double>>(
-              d_kPointWeights.size(), std::vector<double>(d_numEigenValues)));
-
-        updateAuxDensityXCMatrix(d_densityInQuadValues,
-                                 d_gradDensityInQuadValues,
-                                 d_rhoCore,
-                                 d_gradRhoCore,
-                                 getEigenVectors(),
-                                 eigenValues,
-                                 fermiEnergy,
-                                 fermiEnergyUp,
-                                 fermiEnergyDown,
-                                 d_auxDensityMatrixXCInPtr);
-
-
-        for (unsigned int s = 0; s < 2; ++s)
-          {
-            computing_timer.enter_subsection("VEff Computation");
-
-
-            kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
-                                                 d_phiInQuadValues,
-                                                 s);
-
-            computing_timer.leave_subsection("VEff Computation");
-
-
             for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                  ++kPoint)
               {
-                kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
-
-
-                computing_timer.enter_subsection(
-                  "Hamiltonian Matrix Computation");
-                kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
-                computing_timer.leave_subsection(
-                  "Hamiltonian Matrix Computation");
-
-
-                for (unsigned int j = 0; j < 1; ++j)
-                  {
-                    if (d_dftParamsPtr->verbosity >= 2)
-                      {
-                        pcout << "Beginning Chebyshev filter pass " << j + 1
-                              << " for spin " << s + 1 << std::endl;
-                      }
-
-#ifdef DFTFE_WITH_DEVICE
-                    if constexpr (dftfe::utils::MemorySpace::DEVICE ==
-                                  memorySpace)
-                      kohnShamEigenSpaceCompute(
-                        s,
-                        kPoint,
-                        kohnShamDFTEigenOperator,
-                        *d_elpaScala,
-                        d_subspaceIterationSolverDevice,
-                        residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                        true,
-                        0,
-                        false,
-                        true);
-#endif
-                    if constexpr (dftfe::utils::MemorySpace::HOST ==
-                                  memorySpace)
-                      kohnShamEigenSpaceCompute(
-                        s,
-                        kPoint,
-                        kohnShamDFTEigenOperator,
-                        *d_elpaScala,
-                        d_subspaceIterationSolver,
-                        residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                        true,
-                        false,
-                        true);
-                  }
-              }
-          }
-
-
-        for (unsigned int s = 0; s < 2; ++s)
-          for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-               ++kPoint)
-            {
-              for (unsigned int i = 0; i < d_numEigenValues; ++i)
-                eigenValuesSpins[s][kPoint][i] =
-                  eigenValues[kPoint][d_numEigenValues * s + i];
-            }
-        //
-        // fermi energy
-        //
-        if (!(d_dftParamsPtr->writeBandsFile))
-          {
-            if (d_dftParamsPtr->constraintMagnetization)
-              {
-                if (d_dftParamsPtr->pureState)
-                  compute_fermienergy_constraintMagnetization_purestate(
-                    eigenValues);
-                else
-                  compute_fermienergy_constraintMagnetization(eigenValues);
-              }
-            else
-              {
-                if (d_dftParamsPtr->pureState)
-                  compute_fermienergy_purestate(eigenValues, numElectrons);
-                else
-                  compute_fermienergy(eigenValues, numElectrons);
-              }
-          }
-
-        unsigned int count = 1;
-
-
-        // maximum of the residual norm of the state closest to and
-        // below the Fermi level among all k points, and also the
-        // maximum between the two spins
-        double                           maxRes = 0.0;
-        std::vector<std::vector<double>> maxResidualsAllkPoints(2);
-        if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-          {
-            maxRes = std::max(computeMaximumHighestOccupiedStateResidualNorm(
-                                residualNormWaveFunctionsAllkPointsSpins[0],
-                                eigenValuesSpins[0],
-                                fermiEnergy,
-                                maxResidualsAllkPoints[0]),
-                              computeMaximumHighestOccupiedStateResidualNorm(
-                                residualNormWaveFunctionsAllkPointsSpins[1],
-                                eigenValuesSpins[1],
-                                fermiEnergy,
-                                maxResidualsAllkPoints[1]));
-          }
-        else
-          {
-            maxRes =
-              std::max(computeMaximumHighestOccupiedStateResidualNorm(
-                         residualNormWaveFunctionsAllkPointsSpins[0],
-                         eigenValuesSpins[0],
-                         d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                         maxResidualsAllkPoints[0]),
-                       computeMaximumHighestOccupiedStateResidualNorm(
-                         residualNormWaveFunctionsAllkPointsSpins[1],
-                         eigenValuesSpins[1],
-                         d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                         maxResidualsAllkPoints[1]));
-          }
-
-
-        if (d_dftParamsPtr->verbosity >= 2)
-          {
-            if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-              {
-                pcout
-                  << "Maximum residual norm of the state closest to and below Fermi level: "
-                  << maxRes << std::endl;
-              }
-            else
-              {
-                pcout
-                  << "Maximum residual norm of the highest state of interest : "
-                  << maxRes << std::endl;
-              }
-          }
-
-        // if the residual norm is greater than
-        // adaptiveChebysevFilterPassesTol (a heuristic value)
-        // do more passes of chebysev filter till the check passes.
-        // This improves the scf convergence performance.
-
-
-        while (maxRes > chebyTol && count < 100)
-          {
-            for (unsigned int s = 0; s < 2; ++s)
-              {
-                if (d_dftParamsPtr->memOptMode)
-                  {
-                    computing_timer.enter_subsection("VEff Computation");
-                    kohnShamDFTEigenOperator.computeVEff(
-                      d_auxDensityMatrixXCInPtr, d_phiInQuadValues, s);
-
-                    computing_timer.leave_subsection("VEff Computation");
-                  }
-                for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-                     ++kPoint)
-                  {
-                    if (maxResidualsAllkPoints[s][kPoint] > chebyTol)
-                      {
-                        if (d_dftParamsPtr->verbosity >= 2)
-                          pcout << "Beginning Chebyshev filter pass "
-                                << 1 + count << " for spin " << s + 1
-                                << std::endl;
-
-                        kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint,
-                                                                       s);
-                        if (d_dftParamsPtr->memOptMode)
-                          {
-                            computing_timer.enter_subsection(
-                              "Hamiltonian Matrix Computation");
-                            kohnShamDFTEigenOperator
-                              .computeCellHamiltonianMatrix();
-                            computing_timer.leave_subsection(
-                              "Hamiltonian Matrix Computation");
-                          }
-
-#ifdef DFTFE_WITH_DEVICE
-                        if constexpr (dftfe::utils::MemorySpace::DEVICE ==
-                                      memorySpace)
-                          kohnShamEigenSpaceCompute(
-                            s,
-                            kPoint,
-                            kohnShamDFTEigenOperator,
-                            *d_elpaScala,
-                            d_subspaceIterationSolverDevice,
-                            residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                            true,
-                            0,
-                            false,
-                            true);
-#endif
-                        if constexpr (dftfe::utils::MemorySpace::HOST ==
-                                      memorySpace)
-                          kohnShamEigenSpaceCompute(
-                            s,
-                            kPoint,
-                            kohnShamDFTEigenOperator,
-                            *d_elpaScala,
-                            d_subspaceIterationSolver,
-                            residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                            true,
-                            false,
-                            true);
-                      }
-                  }
-              }
-            for (unsigned int s = 0; s < 2; ++s)
-              for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-                   ++kPoint)
-                {
-                  for (unsigned int i = 0; i < d_numEigenValues; ++i)
-                    eigenValuesSpins[s][kPoint][i] =
-                      eigenValues[kPoint][d_numEigenValues * s + i];
-                }
-            if (!(d_dftParamsPtr->writeBandsFile))
-              {
-                if (d_dftParamsPtr->constraintMagnetization)
-                  {
-                    if (d_dftParamsPtr->pureState)
-                      compute_fermienergy_constraintMagnetization_purestate(
-                        eigenValues);
-                    else
-                      compute_fermienergy_constraintMagnetization(eigenValues);
-                  }
-                else
-                  {
-                    if (d_dftParamsPtr->pureState)
-                      compute_fermienergy_purestate(eigenValues, numElectrons);
-                    else
-                      compute_fermienergy(eigenValues, numElectrons);
-                  }
-              }
-
-            if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-              {
-                maxRes =
-                  std::max(computeMaximumHighestOccupiedStateResidualNorm(
-                             residualNormWaveFunctionsAllkPointsSpins[0],
-                             eigenValuesSpins[0],
-                             fermiEnergy,
-                             maxResidualsAllkPoints[0]),
-                           computeMaximumHighestOccupiedStateResidualNorm(
-                             residualNormWaveFunctionsAllkPointsSpins[1],
-                             eigenValuesSpins[1],
-                             fermiEnergy,
-                             maxResidualsAllkPoints[1]));
-              }
-            else
-              {
-                maxRes = std::max(
-                  computeMaximumHighestOccupiedStateResidualNorm(
-                    residualNormWaveFunctionsAllkPointsSpins[0],
-                    eigenValuesSpins[0],
-                    d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                    maxResidualsAllkPoints[0]),
-                  computeMaximumHighestOccupiedStateResidualNorm(
-                    residualNormWaveFunctionsAllkPointsSpins[1],
-                    eigenValuesSpins[1],
-                    d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                    maxResidualsAllkPoints[1]));
-              }
-
-            if (d_dftParamsPtr->verbosity >= 2)
-              {
-                if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-                  {
-                    pcout
-                      << "Maximum residual norm of the state closest to and below Fermi level: "
-                      << maxRes << std::endl;
-                  }
-                else
-                  {
-                    pcout
-                      << "Maximum residual norm of the highest state of interest : "
-                      << maxRes << std::endl;
-                  }
-              }
-            count++;
-          }
-
-
-        if (d_dftParamsPtr->verbosity >= 1)
-          {
-            pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
-          }
-
-        numberChebyshevSolvePasses = count;
-      }
-    else
-      {
-        std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
-        residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
-        for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-          residualNormWaveFunctionsAllkPoints[kPoint].resize(d_numEigenValues);
-
-        updateAuxDensityXCMatrix(d_densityInQuadValues,
-                                 d_gradDensityInQuadValues,
-                                 d_rhoCore,
-                                 d_gradRhoCore,
-                                 getEigenVectors(),
-                                 eigenValues,
-                                 fermiEnergy,
-                                 fermiEnergyUp,
-                                 fermiEnergyDown,
-                                 d_auxDensityMatrixXCInPtr);
-
-        computing_timer.enter_subsection("VEff Computation");
-        kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
-                                             d_phiInQuadValues);
-        computing_timer.leave_subsection("VEff Computation");
-
-        for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-          {
-            kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
-
-
-            computing_timer.enter_subsection("Hamiltonian Matrix Computation");
-            kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
-            computing_timer.leave_subsection("Hamiltonian Matrix Computation");
-
-
-            for (unsigned int j = 0; j < 1; ++j)
-              {
-                if (d_dftParamsPtr->verbosity >= 2)
-                  {
-                    pcout << "Beginning Chebyshev filter pass " << j + 1
-                          << std::endl;
-                  }
-
-
-#ifdef DFTFE_WITH_DEVICE
-                if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
-                  kohnShamEigenSpaceCompute(
-                    0,
-                    kPoint,
-                    kohnShamDFTEigenOperator,
-                    *d_elpaScala,
-                    d_subspaceIterationSolverDevice,
-                    residualNormWaveFunctionsAllkPoints[kPoint],
-                    true,
-                    0,
-                    false,
-                    true);
-#endif
-                if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
-                  kohnShamEigenSpaceCompute(
-                    0,
-                    kPoint,
-                    kohnShamDFTEigenOperator,
-                    *d_elpaScala,
-                    d_subspaceIterationSolver,
-                    residualNormWaveFunctionsAllkPoints[kPoint],
-                    true,
-                    false,
-                    true);
-              }
-          }
-
-
-        //
-        // fermi energy
-        //
-        if (!(d_dftParamsPtr->writeBandsFile))
-          {
-            if (d_dftParamsPtr->constraintMagnetization)
-              {
-                if (d_dftParamsPtr->pureState)
-                  compute_fermienergy_constraintMagnetization_purestate(
-                    eigenValues);
-                else
-                  compute_fermienergy_constraintMagnetization(eigenValues);
-              }
-            else
-              {
-                if (d_dftParamsPtr->pureState)
-                  compute_fermienergy_purestate(eigenValues, numElectrons);
-                else
-                  compute_fermienergy(eigenValues, numElectrons);
-              }
-          }
-
-        unsigned int count = 1;
-
-        //
-        // maximum of the residual norm of the state closest to and
-        // below the Fermi level among all k points
-        //
-        double              maxRes = 0.0;
-        std::vector<double> maxResidualsAllkPoints;
-        if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-          {
-            maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-              residualNormWaveFunctionsAllkPoints,
-              eigenValues,
-              fermiEnergy,
-              maxResidualsAllkPoints);
-          }
-        else
-          {
-            maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-              residualNormWaveFunctionsAllkPoints,
-              eigenValues,
-              d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-              maxResidualsAllkPoints);
-          }
-
-        if (d_dftParamsPtr->verbosity >= 2)
-          {
-            if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-              {
-                pcout
-                  << "Maximum residual norm of the state closest to and below Fermi level: "
-                  << maxRes << std::endl;
-              }
-            else
-              {
-                pcout
-                  << "Maximum residual norm of the highest state of interest : "
-                  << maxRes << std::endl;
-              }
-          }
-
-        // if the residual norm is greater than
-        // adaptiveChebysevFilterPassesTol (a heuristic value)
-        // do more passes of chebysev filter till the check passes.
-        // This improves the scf convergence performance.
-
-
-        while (maxRes > chebyTol && count < 100)
-          {
-            for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
-                 ++kPoint)
-              {
-                if (maxResidualsAllkPoints[kPoint] > chebyTol)
+                if (count == 0 || maxResidualsAllkPoints[s][kPoint] > chebyTol)
                   {
                     if (d_dftParamsPtr->verbosity >= 2)
                       pcout << "Beginning Chebyshev filter pass " << 1 + count
-                            << std::endl;
+                            << " for spin " << s + 1 << std::endl;
 
-                    kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, 0);
-                    if (d_dftParamsPtr->memOptMode &&
-                        d_kPointWeights.size() > 0)
+                    kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
+                    if (d_dftParamsPtr->memOptMode)
                       {
                         computing_timer.enter_subsection(
                           "Hamiltonian Matrix Computation");
@@ -849,101 +394,79 @@ namespace dftfe
                     if constexpr (dftfe::utils::MemorySpace::DEVICE ==
                                   memorySpace)
                       kohnShamEigenSpaceCompute(
-                        0,
+                        s,
                         kPoint,
                         kohnShamDFTEigenOperator,
                         *d_elpaScala,
                         d_subspaceIterationSolverDevice,
-                        residualNormWaveFunctionsAllkPoints[kPoint],
+                        residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
                         0,
-                        true,
+                        false,
                         true);
-
 #endif
                     if constexpr (dftfe::utils::MemorySpace::HOST ==
                                   memorySpace)
                       kohnShamEigenSpaceCompute(
-                        0,
+                        s,
                         kPoint,
                         kohnShamDFTEigenOperator,
                         *d_elpaScala,
                         d_subspaceIterationSolver,
-                        residualNormWaveFunctionsAllkPoints[kPoint],
+                        residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
                         true,
-                        true,
+                        false,
                         true);
                   }
               }
-            // //
-            if (!(d_dftParamsPtr->writeBandsFile))
-              {
-                if (d_dftParamsPtr->constraintMagnetization)
-                  {
-                    if (d_dftParamsPtr->pureState)
-                      compute_fermienergy_constraintMagnetization_purestate(
-                        eigenValues);
-                    else
-                      compute_fermienergy_constraintMagnetization(eigenValues);
-                  }
-                else
-                  {
-                    if (d_dftParamsPtr->pureState)
-                      compute_fermienergy_purestate(eigenValues, numElectrons);
-                    else
-                      compute_fermienergy(eigenValues, numElectrons);
-                  }
-              }
-            //
-            if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-              {
-                maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-                  residualNormWaveFunctionsAllkPoints,
-                  eigenValues,
-                  fermiEnergy,
-                  maxResidualsAllkPoints);
-              }
-            else
-              {
-                maxRes = computeMaximumHighestOccupiedStateResidualNorm(
-                  residualNormWaveFunctionsAllkPoints,
-                  eigenValues,
-                  d_dftParamsPtr->highestStateOfInterestForChebFiltering,
-                  maxResidualsAllkPoints);
-              }
-            if (d_dftParamsPtr->verbosity >= 2)
-              {
-                if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
-                  {
-                    pcout
-                      << "Maximum residual norm of the state closest to and below Fermi level: "
-                      << maxRes << std::endl;
-                  }
-                else
-                  {
-                    pcout
-                      << "Maximum residual norm of the highest state of interest : "
-                      << maxRes << std::endl;
-                  }
-              }
-
-            count++;
           }
+        for (unsigned int s = 0; s < 2; ++s)
+          for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
+               ++kPoint)
+            {
+              for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                eigenValuesSpins[s][kPoint][i] =
+                  eigenValues[kPoint][d_numEigenValues * s + i];
+            }
 
-
-        numberChebyshevSolvePasses = count;
-
-        if (d_dftParamsPtr->verbosity == 0 &&
-            d_dftParamsPtr->reproducible_output)
+        if (d_dftParamsPtr->constraintMagnetization)
           {
-            pcout << "Fermi Energy computed: " << std::fixed
-                  << std::setprecision(8) << fermiEnergy << std::endl;
+            if (d_dftParamsPtr->pureState)
+              compute_fermienergy_constraintMagnetization_purestate(
+                eigenValues);
+            else
+              compute_fermienergy_constraintMagnetization(eigenValues);
           }
         else
           {
-            pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
+            if (d_dftParamsPtr->pureState)
+              compute_fermienergy_purestate(eigenValues, numElectrons);
+            else
+              compute_fermienergy(eigenValues, numElectrons);
           }
+
+        for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
+          {
+            maxResSpins[s] = computeMaximumHighestOccupiedStateResidualNorm(
+              residualNormWaveFunctionsAllkPointsSpins[s],
+              eigenValuesSpins[s],
+              d_dftParamsPtr->highestStateOfInterestForChebFiltering,
+              maxResidualsAllkPoints[s]);
+          }
+        maxRes = *std::max_element(maxResSpins.begin(), maxResSpins.end());
+
+        if (d_dftParamsPtr->verbosity >= 2)
+          pcout << "Maximum residual norm of the highest state of interest : "
+                << maxRes << std::endl;
+        count++;
       }
+
+
+    if (d_dftParamsPtr->verbosity >= 1)
+      pcout << "Fermi Energy computed: " << fermiEnergy << std::endl;
+
+    numberChebyshevSolvePasses = count;
+
     computing_timer.enter_subsection("compute rho");
 
     compute_rhoOut(true);

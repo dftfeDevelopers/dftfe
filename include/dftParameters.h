@@ -60,8 +60,7 @@ namespace dftfe
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
-      writeLdosFile, writeBandsFile, writeLocalizationLengths, pinnedNodeForPBC,
-      writePdosFile;
+      writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
 
     bool pureState;
 
