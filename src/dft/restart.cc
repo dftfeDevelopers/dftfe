@@ -25,6 +25,7 @@
 #include <fileReaders.h>
 #include <dftUtils.h>
 #include <linearAlgebraOperations.h>
+#include <sys/stat.h>
 
 namespace dftfe
 {
@@ -449,6 +450,313 @@ namespace dftfe
 
 
     dftUtils::writeDataIntoFile(data, Path, d_mpiCommParent);
+  }
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::loadQuadratureData(
+    const std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+                      &basisOperationsPtr,
+    const unsigned int quadratureId,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                      &quadratureValueData,
+    const unsigned int fieldDimension,
+    const std::string &fieldName,
+    const std::string &folderPath,
+    const MPI_Comm    &mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_domain,
+    const MPI_Comm    &interpoolcomm,
+    const MPI_Comm    &interBandGroupComm)
+  {
+    pcout << "Reading Quad data from checkpoint in progress..." << std::endl;
+    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+    const unsigned int nCells        = basisOperationsPtr->nCells();
+    const unsigned int totalTarget   = nCells * nQuadsPerCell;
+    const dealii::DoFHandler<3> &dofHandlerTemp =
+      basisOperationsPtr->getDofHandler();
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+               &quadPoints = basisOperationsPtr->quadPoints();
+    std::string masterFileName =
+      folderPath + "/MasterFile_" + fieldName + "_.chk";
+
+    std::vector<double>       centroidX, centroidY, centroidZ;
+    std::vector<unsigned int> startIndex;
+    std::vector<std::string>  fileNames;
+
+    std::ifstream inMasterFile(masterFileName);
+    if (inMasterFile.is_open())
+      {
+        std::string line;
+        while (std::getline(inMasterFile, line))
+          {
+            std::istringstream iss(line);
+            unsigned int       start;
+            double             x, y, z;
+            std::string        fileName;
+            iss >> x >> y >> z >> fileName >> start;
+            centroidX.push_back(x);
+            centroidY.push_back(y);
+            centroidZ.push_back(z);
+            fileNames.push_back(fileName);
+            startIndex.push_back(start);
+          }
+        inMasterFile.close();
+      }
+    else
+      {
+        AssertThrow(false,
+                    dealii::ExcMessage("DFT-FE Error: Master file not found"));
+      }
+    unsigned int count = 0;
+
+    if (nCells > 0)
+      {
+        typename dealii::DoFHandler<3>::active_cell_iterator cell =
+          basisOperationsPtr->getCellIterator(0);
+
+        // search for fileName and startLocation
+        std::string                      fileName;
+        unsigned int                     startLocation = 0;
+        std::vector<std::vector<double>> dataInput;
+        if (cell->is_locally_owned())
+          {
+            for (unsigned int index = 0; index < startIndex.size(); ++index)
+              {
+                if (std::fabs(cell->center()[0] - centroidX[index]) < 1e-6 &&
+                    std::fabs(cell->center()[1] - centroidY[index]) < 1e-6 &&
+                    std::fabs(cell->center()[2] - centroidZ[index]) < 1e-6)
+                  {
+                    fileName      = folderPath + "/" + fileNames[index];
+                    startLocation = startIndex[index];
+                    break;
+                  }
+              }
+
+            dftUtils::readFile(dataInput, fileName);
+            for (unsigned int q = 0; q < nQuadsPerCell; ++q)
+              {
+                for (int iField = 0; iField < fieldDimension; ++iField)
+                  {
+                    quadratureValueData[q * fieldDimension + iField] =
+                      dataInput[startLocation + q][3 + iField];
+                  }
+                count++;
+              }
+          }
+
+
+        std::string  fileNameOld = fileName;
+        unsigned int iCell       = 1;
+#pragma omp parallel for num_threads(d_nOMPThreads) \
+  firstprivate(fileNameOld, fileName, startLocation, dataInput, cell)
+        for (iCell = 1; iCell < nCells; ++iCell)
+          {
+            cell = basisOperationsPtr->getCellIterator(iCell);
+
+            if (cell->is_locally_owned())
+              {
+                for (unsigned int index = 0; index < startIndex.size(); ++index)
+                  {
+                    if (std::fabs(cell->center()[0] - centroidX[index]) <
+                          1e-6 &&
+                        std::fabs(cell->center()[1] - centroidY[index]) <
+                          1e-6 &&
+                        std::fabs(cell->center()[2] - centroidZ[index]) < 1e-6)
+                      {
+                        fileName      = folderPath + "/" + fileNames[index];
+                        startLocation = startIndex[index];
+                        break;
+                      }
+                  }
+                if (fileName != fileNameOld)
+                  {
+                    dataInput.clear();
+                    dataInput.resize(0);
+                    dftUtils::readFile(dataInput, fileName);
+                    fileNameOld = fileName;
+                  }
+                for (unsigned int q = 0; q < nQuadsPerCell; ++q)
+                  {
+                    for (int iField = 0; iField < fieldDimension; ++iField)
+                      {
+                        quadratureValueData[iCell * nQuadsPerCell *
+                                              fieldDimension +
+                                            q * fieldDimension + iField] =
+                          dataInput[startLocation + q][3 + iField];
+                      }
+                    count++;
+                  }
+              }
+          } // iCell
+      }
+    if (count < totalTarget)
+      AssertThrow(false,
+                  dealii::ExcMessage(std::string(
+                    "All quadrature data not filled. Check restart files!")));
+    pcout << "Reading Quad data done..." << std::endl;
+  }
+
+  template <unsigned int              FEOrder,
+            unsigned int              FEOrderElectro,
+            dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::saveQuadratureData(
+    const std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+                      &basisOperationsPtr,
+    const unsigned int quadratureId,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                      &quadratureValueData,
+    const unsigned int fieldDimension,
+    const std::string &fieldName,
+    const std::string &folderPath,
+    const MPI_Comm    &mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_domain,
+    const MPI_Comm    &interpoolcomm,
+    const MPI_Comm    &interBandGroupComm)
+  {
+    pcout << "Saving Quad data in progress..." << std::endl;
+    basisOperationsPtr->reinit(0, 0, quadratureId, false);
+    const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+    const unsigned int nCells        = basisOperationsPtr->nCells();
+    const dealii::DoFHandler<3> &dofHandlerTemp =
+      basisOperationsPtr->getDofHandler();
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadPoints = basisOperationsPtr->quadPoints();
+    if (dealii::Utilities::MPI::this_mpi_process(interpoolcomm) == 0 &&
+        dealii::Utilities::MPI::this_mpi_process(interBandGroupComm) == 0)
+      {
+        const unsigned int this_process =
+          dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain);
+        const unsigned int n_mpi_processes =
+          dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain);
+        std::vector<unsigned int> nCellsPerTask(n_mpi_processes, 0);
+        nCellsPerTask[this_process] = nCells;
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &nCellsPerTask[0],
+                      n_mpi_processes,
+                      MPI_UNSIGNED,
+                      MPI_SUM,
+                      mpi_comm_domain);
+        std::vector<std::vector<double>> quadratureData(
+          nCellsPerTask[this_process] * nQuadsPerCell,
+          std::vector<double>(fieldDimension + 3, 0.0));
+        std::vector<double> centroidLocations(3 * nCellsPerTask[this_process],
+                                              0.0);
+        std::vector<unsigned int> startLocations(nCellsPerTask[this_process],
+                                                 0);
+        // Try openmp parallelization Here
+        unsigned int iCell = 0;
+#pragma omp parallel for num_threads(d_nOMPThreads)
+        for (iCell = 0; iCell < nCells; ++iCell)
+          {
+            typename dealii::DoFHandler<3>::active_cell_iterator cell =
+              basisOperationsPtr->getCellIterator(iCell);
+            if (cell->is_locally_owned())
+              {
+                for (unsigned int q = 0; q < nQuadsPerCell; ++q)
+                  {
+                    quadratureData[iCell * nQuadsPerCell + q][0] =
+                      quadPoints[3 * iCell * nQuadsPerCell + 3 * q + 0];
+                    quadratureData[iCell * nQuadsPerCell + q][1] =
+                      quadPoints[3 * iCell * nQuadsPerCell + 3 * q + 1];
+                    quadratureData[iCell * nQuadsPerCell + q][2] =
+                      quadPoints[3 * iCell * nQuadsPerCell + 3 * q + 2];
+                    for (unsigned int i = 0; i < fieldDimension; ++i)
+                      {
+                        quadratureData[iCell * nQuadsPerCell + q][3 + i] =
+                          quadratureValueData[iCell * nQuadsPerCell *
+                                                fieldDimension +
+                                              q * fieldDimension + i];
+                      }
+                  } // QuadPoint Loop
+                centroidLocations[3 * iCell + 0] = cell->center()[0];
+                centroidLocations[3 * iCell + 1] = cell->center()[1];
+                centroidLocations[3 * iCell + 2] = cell->center()[2];
+                startLocations[iCell]            = iCell * nQuadsPerCell;
+              }
+
+          } // iCell
+
+        // Save QuadPointData to File
+        std::string quadFileName = folderPath + "/MPITask_" +
+                                   std::to_string(this_process) + "_" +
+                                   fieldName + "_quadPoints.chk";
+        dftUtils::writeDataIntoFile(quadratureData, quadFileName);
+        unsigned int startLocation = 0;
+        unsigned int totalSize     = 0;
+        for (unsigned int i = 0; i < n_mpi_processes; ++i)
+          {
+            totalSize += nCellsPerTask[i];
+            if (i < this_process)
+              startLocation += nCellsPerTask[i];
+          }
+        std::vector<double>       centroidData(3 * totalSize, 0.0);
+        std::vector<unsigned int> startLocationsData(totalSize, 0);
+        for (unsigned int i = 0; i < nCellsPerTask[this_process]; ++i)
+          {
+            centroidData[3 * (startLocation + i) + 0] =
+              centroidLocations[3 * i + 0];
+            centroidData[3 * (startLocation + i) + 1] =
+              centroidLocations[3 * i + 1];
+            centroidData[3 * (startLocation + i) + 2] =
+              centroidLocations[3 * i + 2];
+            startLocationsData[startLocation + i] = startLocations[i];
+          }
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &centroidData[0],
+                      3 * totalSize,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      mpi_comm_domain);
+        MPI_Allreduce(MPI_IN_PLACE,
+                      &startLocationsData[0],
+                      totalSize,
+                      MPI_UNSIGNED,
+                      MPI_SUM,
+                      mpi_comm_domain);
+        std::string masterFileName =
+          folderPath + "/MasterFile_" + fieldName + "_.chk";
+        if (this_process == 0)
+          {
+            if (std::ifstream(masterFileName))
+              dftfe::dftUtils::moveFile(masterFileName,
+                                        masterFileName + ".old");
+          }
+        unsigned int  index = 0;
+        std::ofstream outFile(masterFileName);
+        if (outFile.is_open())
+          {
+            for (unsigned int i = 0; i < n_mpi_processes; ++i)
+              {
+                const unsigned int totalCells = nCellsPerTask[i];
+                const std::string  tempFile   = "MPITask_" + std::to_string(i) +
+                                             "_" + fieldName +
+                                             "_quadPoints.chk";
+                for (unsigned int j = 0; j < totalCells; j++)
+                  {
+                    outFile << std::setprecision(
+                                 std::numeric_limits<double>::max_digits10)
+                            << centroidData[3 * index + 0] << " "
+                            << centroidData[3 * index + 1] << " "
+                            << centroidData[3 * index + 2] << " " << tempFile
+                            << " " << startLocationsData[index] << std::endl;
+                    index++;
+                  }
+              }
+          }
+        outFile.close();
+
+      } // Pool ==0 and bandGroup == 0
+    pcout << "Saving Qud data completed..." << std::endl;
   }
 
 #include "dft.inst.cc"

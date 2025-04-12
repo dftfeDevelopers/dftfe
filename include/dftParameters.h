@@ -102,8 +102,8 @@ namespace dftfe
     int         verbosity;
     std::string solverMode;
     bool        keepScratchFolder;
-    bool        saveRhoData;
-    bool        loadRhoData;
+    bool        saveQuadData;
+    bool        loadQuadData;
     bool        restartSpinFromNoSpin;
 
     bool reproducible_output;

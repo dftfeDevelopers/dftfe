@@ -209,22 +209,23 @@ namespace dftfe
       prm.enter_subsection("SCF Checkpointing and Restart");
       {
         prm.declare_entry(
-          "SAVE RHO DATA",
+          "SAVE QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Saves charge density and mesh triagulation data for restart, if SOLVER MODE is GS then the save is done every 10 scf iterations, otherwise it is done after each converged scf solve. If the value is 'true', the SOLVER MODE is GS and if the SCF loop converges, an outputfile 'fermiEnergy.out' is written that contains the fermi energy in the units of Ha. This Fermi energy is used when 'WRITE BANDS' is true");
+          "[Standard] Saves the various variables involved in the SCF fixed point interation to restart file. Default value is false.");
 
         prm.declare_entry(
-          "LOAD RHO DATA",
+          "LOAD QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Loads charge density and mesh triagulation data from file.");
+          "[Standard] Loads the various variables involved in the SCF fixed point iteration from restart file. Used for NSCF calculations where the quadrature density is required. Default value is false.");
+
 
         prm.declare_entry(
           "RESTART SP FROM NO SP",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is only valid for CHK TYPE=2 and RESTART FROM CHK=true. Default false.");
+          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is used in conjuction with LOAD QUAD DATA or LOAD RHO DATA. Default false.");
       }
       prm.leave_subsection();
 
@@ -1360,8 +1361,8 @@ namespace dftfe
     verbosity                                      = 0;
     keepScratchFolder                              = false;
     restartFolder                                  = ".";
-    saveRhoData                                    = false;
-    loadRhoData                                    = false;
+    saveQuadData                                   = false;
+    loadQuadData                                   = false;
     restartSpinFromNoSpin                          = false;
     reproducible_output                            = false;
     meshAdaption                                   = false;
@@ -1556,11 +1557,11 @@ namespace dftfe
 
     prm.enter_subsection("SCF Checkpointing and Restart");
     {
-      saveRhoData           = prm.get_bool("SAVE RHO DATA");
-      loadRhoData           = prm.get_bool("LOAD RHO DATA");
+      saveQuadData          = prm.get_bool("SAVE QUAD DATA");
+      loadQuadData          = prm.get_bool("LOAD QUAD DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
       if (solverMode == "NEB")
-        saveRhoData = true;
+        saveQuadData = true;
     }
     prm.leave_subsection();
 
@@ -1936,9 +1937,9 @@ namespace dftfe
 
     if (solverMode == "NSCF" || solverMode == "BANDS")
       AssertThrow(
-        loadRhoData == true,
+        loadQuadData == true,
         dealii::ExcMessage(
-          "DFT-FE Error: Cant run NSCF/BANDS without load rho data set to true"));
+          "DFT-FE Error: Cant run NSCF/BANDS without load Quad data set to true"));
 
     if (isPseudopotential)
       AssertThrow(

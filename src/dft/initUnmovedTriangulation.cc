@@ -31,7 +31,6 @@
 #endif
 #include <AtomicBasis.h>
 #include <AuxDensityMatrixFE.h>
-#include <AuxDensityMatrixAtomicBasis.h>
 #include <PeriodicTable.h>
 
 
@@ -372,60 +371,6 @@ namespace dftfe
       }
     else if (d_dftParamsPtr->auxBasisTypeXC == "SLATER")
       {
-        std::vector<std::pair<std::string, std::vector<double>>> atomCoords;
-        dftfe::pseudoUtils::PeriodicTable                        pTable;
-
-        for (const auto &atom : atomLocations)
-          {
-            int         atomicNumber = static_cast<int>(atom[0]);
-            std::string atomicSymbol = pTable.symbol(atomicNumber);
-
-            // Assuming atom[2], atom[3], atom[4] are x, y, z coordinates
-            std::vector<double> coords = {atom[2], atom[3], atom[4]};
-
-            atomCoords.emplace_back(atomicSymbol, coords);
-          }
-
-        const auto atomToAtomicBasisFileName =
-          readAtomToAtomicBasisFileName(d_dftParamsPtr->auxBasisDataXC);
-
-        d_auxDensityMatrixXCInPtr =
-          std::make_shared<AuxDensityMatrixAtomicBasis<memorySpace>>();
-        auto derivedInPtr =
-          std::dynamic_pointer_cast<AuxDensityMatrixAtomicBasis<memorySpace>>(
-            d_auxDensityMatrixXCInPtr);
-        if (derivedInPtr)
-          {
-            derivedInPtr->reinit(AtomicBasis::BasisType::SLATER,
-                                 atomCoords,
-                                 atomToAtomicBasisFileName,
-                                 2,
-                                 1);
-          }
-        else
-          {
-            throw std::runtime_error(
-              "Error: Failed to cast to AuxDensityMatrixAtomicBasis.");
-          }
-
-        d_auxDensityMatrixXCOutPtr =
-          std::make_shared<AuxDensityMatrixAtomicBasis<memorySpace>>();
-        auto derivedOutPtr =
-          std::dynamic_pointer_cast<AuxDensityMatrixAtomicBasis<memorySpace>>(
-            d_auxDensityMatrixXCOutPtr);
-        if (derivedOutPtr)
-          {
-            derivedOutPtr->reinit(AtomicBasis::BasisType::SLATER,
-                                  atomCoords,
-                                  atomToAtomicBasisFileName,
-                                  2,
-                                  1);
-          }
-        else
-          {
-            throw std::runtime_error(
-              "Error: Failed to cast to AuxDensityMatrixAtomicBasis.");
-          }
       }
 
     computing_timer.leave_subsection("unmoved setup");

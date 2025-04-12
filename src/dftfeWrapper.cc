@@ -445,8 +445,8 @@ namespace dftfe
                                            useDevice);
         d_dftfeParamsPtr->coordinatesFile           = restartCoordsFile;
         d_dftfeParamsPtr->domainBoundingVectorsFile = restartDomainVectorsFile;
-        d_dftfeParamsPtr->loadRhoData =
-          d_dftfeParamsPtr->loadRhoData && isScfRestart;
+        d_dftfeParamsPtr->loadQuadData =
+          d_dftfeParamsPtr->loadQuadData && isScfRestart;
       }
     initialize(setDeviceToMPITaskBindingInternally, useDevice);
   }

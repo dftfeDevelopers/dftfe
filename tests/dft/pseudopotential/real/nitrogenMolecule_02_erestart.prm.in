@@ -40,7 +40,7 @@ subsection DFT functional parameters
 end
 
 subsection SCF Checkpointing and Restart
-  set LOAD RHO DATA = true
+  set LOAD QUAD DATA = true
 end
 
 subsection SCF parameters

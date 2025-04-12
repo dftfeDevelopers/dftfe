@@ -863,22 +863,13 @@ namespace dftfe
                     const unsigned int subCellIndex =
                       dftPtr->d_basisOperationsPtrHost->cellIndex(subCellId);
 
-                    std::vector<double> quadPointsInCell(numQuadPoints * 3);
-                    std::vector<double> quadWeightsInCell(numQuadPoints);
-                    for (unsigned int iQuad = 0; iQuad < numQuadPoints; ++iQuad)
-                      {
-                        for (unsigned int idim = 0; idim < 3; ++idim)
-                          quadPointsInCell[iQuad * 3 + idim] =
-                            quadPointsAll[subCellIndex * numQuadPoints * 3 +
-                                          iQuad * 3 + idim];
-                        quadWeightsInCell[iQuad] = std::real(
-                          quadWeightsAll[subCellIndex * numQuadPoints + iQuad]);
-                      }
 
                     dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
                       ->computeRhoTauDependentXCData(
                         *(dftPtr->d_auxDensityMatrixXCOutPtr),
-                        quadPointsInCell,
+                        std::make_pair<unsigned int, unsigned int>(
+                          subCellIndex * numQuadPoints,
+                          (subCellIndex + 1) * numQuadPoints),
                         xDensityOutDataOut,
                         cDensityOutDataOut);
 
@@ -911,7 +902,10 @@ namespace dftfe
                       }
 
                     dftPtr->d_auxDensityMatrixXCOutPtr->applyLocalOperations(
-                      quadPointsInCell, densityXCOutData);
+                      std::make_pair<unsigned int, unsigned int>(
+                        subCellIndex * numQuadPoints,
+                        (subCellIndex + 1) * numQuadPoints),
+                      densityXCOutData);
 
                     if (isGradDensityDataRequired)
                       {
