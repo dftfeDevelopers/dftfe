@@ -41,7 +41,6 @@ namespace dftfe
   {
     d_funcXPtr = funcXPtr;
     d_funcCPtr = funcCPtr;
-    // d_NNGGAPtr = nullptr;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -63,11 +62,6 @@ namespace dftfe
   {
     d_funcXPtr = funcXPtr;
     d_funcCPtr = funcCPtr;
-    // d_NNGGAPtr = nullptr;
-#ifdef DFTFE_WITH_TORCH
-    std::string errMsg = "NNMGGA is not implemented yet.";
-    dftfe::utils::throwException(false, errMsg);
-#endif
   }
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::~excTauMGGAClass()
@@ -299,10 +293,6 @@ namespace dftfe
         pdecTauSpinDownValues[i] = pdecTauValuesNonNN[2 * i + 1];
       }
 
-#ifdef DFTFE_WITH_TORCH
-    std::string errMsg = "NNMGGA is not implemented yet.";
-    dftfe::utils::throwException(false, errMsg);
-#endif
 
     for (size_t i = 0; i < outputDataAttributes.size(); i++)
       {

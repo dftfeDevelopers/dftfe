@@ -26,6 +26,12 @@ namespace dftfe
 {
   enum class ExcFamilyType
   {
+    /*
+    LLMGGA: Includes only Laplacian of the electron-density
+    TauMGGA: Includes only kinetic energy density
+    MGGA: Includes both the Laplacian of the electron-density and kinetic energy
+    density
+    */
     LDA,
     GGA,
     LLMGGA,

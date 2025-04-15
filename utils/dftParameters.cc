@@ -697,7 +697,7 @@ namespace dftfe
           "GGA-PBE",
           dealii::Patterns::Selection(
             "LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U|MGGA-SCAN|MGGA-R2SCAN"),
-          R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen & Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental. Add +U to use hubbard correction), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)])");
+          R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). (Caution: MLXC options are experimental. Add +U to use hubbard correction), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)]))");
 
         prm.declare_entry(
           "MODEL XC INPUT FILE",
@@ -1975,11 +1975,75 @@ namespace dftfe
           !isCellStress,
           dealii::ExcMessage(
             "DFT-FE Error: Computation of CELL STRESS with MGGA functional is not completed yet."));
-        if (!isPseudopotential)
+        if (!floatingNuclearCharges)
           AssertThrow(
             !isIonForce,
             dealii::ExcMessage(
               "DFT-FE Error: Computation of ION FORCE with MGGA functional in all-electron calculation is not completed yet."));
+        AssertThrow(
+          !(mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+            mixingMethod == "ANDERSON_WITH_KERKER" ||
+            mixingMethod == "ANDERSON_WITH_RESTA"),
+          dealii::ExcMessage(
+            "DFT-FE Error: ANDERSON_WITH_RESTA or ANDERSON_WITH_KERKER or LRDM mixing scheme in MGGA functional is not completed yet."));
+      }
+
+    bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
+    if (isHubbard)
+      AssertThrow(
+        !(mixingMethod == "ANDERSON_WITH_KERKER" ||
+          mixingMethod == "ANDERSON_WITH_RESTA"),
+        dealii::ExcMessage(
+          "DFT-FE Error: ANDERSON_WITH_RESTA or ANDERSON_WITH_KERKER for Hubbard is not completed yet."));
+    bool customParameters = !(dc_dampingParameterFilename == "");
+    if (!customParameters)
+      {
+        if (XCType == "GGA-PBE")
+          {
+            if (dc_dispersioncorrectiontype == 1)
+              AssertThrow(
+                dc_d3dampingtype != 4,
+                dealii::ExcMessage(std::string(
+                  "The OP damping functions has not been parametrized for this functional.")));
+          }
+        else if (XCType == "GGA-RPBE")
+          {
+            if (dc_dispersioncorrectiontype == 1)
+              AssertThrow(
+                dc_d3dampingtype == 0 || dc_d3dampingtype == 1,
+                dealii::ExcMessage(std::string(
+                  "The OP, BJM and ZEROM damping functions have not been parametrized for this functional.")));
+          }
+        else if (XCType == "MGGA-R2SCAN")
+          {
+            if (dc_dispersioncorrectiontype == 1)
+              AssertThrow(
+                dc_d3dampingtype == 1,
+                dealii::ExcMessage(std::string(
+                  "Only BJ damping function has been parametrized for this functional.")));
+
+            if (dc_dispersioncorrectiontype == 2)
+              AssertThrow(
+                !dc_d4MBD,
+                dealii::ExcMessage(std::string(
+                  "D4 MBD has not been parametrized for this functional.")));
+          }
+
+        else if (XCType == "MGGA-SCAN")
+          {
+            if (dc_dispersioncorrectiontype == 1)
+              AssertThrow(
+                dc_d3dampingtype == 0 || dc_d3dampingtype == 1,
+                dealii::ExcMessage(std::string(
+                  "Only ZERO and BJ damping functions have been parametrized for this functional.")));
+          }
+        else
+          {
+            AssertThrow(
+              false,
+              dealii::ExcMessage(std::string(
+                "DFTD3/4 have not been parametrized for this functional.")));
+          }
       }
   }
 

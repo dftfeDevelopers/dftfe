@@ -2643,21 +2643,16 @@ namespace dftfe
                   pcout << d_dftParamsPtr->mixingMethod
                         << " mixing, L2 norm of electron-density difference: "
                         << norm << std::endl;
-                if (isTauMGGA)
-                  {
-                    std::string errMsg = "LRDM in SCAN in not implemented.";
-                    dftfe::utils::throwException(false, errMsg);
-                  }
+                // if (isTauMGGA)
+                //   {
+                //   }
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
                      d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
               {
-                if (isTauMGGA)
-                  {
-                    std::string errMsg =
-                      "RESTA/KERKER in SCAN in not implemented.";
-                    dftfe::utils::throwException(false, errMsg);
-                  }
+                // if (isTauMGGA)
+                //   {
+                //   }
                 // Fill in New Kerker framework here
                 std::vector<double> norms(
                   d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
@@ -2966,8 +2961,10 @@ namespace dftfe
                         {
                           pcout << d_dftParamsPtr->mixingMethod
                                 << " mixing, L2 norm of "
-                                << (iComp == 0 ? "Tau" : "magnetization(Tau) ")
-                                << "-difference: " << normsTau[iComp]
+                                << (iComp == 0 ?
+                                      "Kinetic energy density" :
+                                      "magnetization (Kinetic energy density)")
+                                << " difference: " << normsTau[iComp]
                                 << std::endl;
                         }
                     }
@@ -6143,8 +6140,8 @@ namespace dftfe
               }
             if (d_dftParamsPtr->nonLinearCoreCorrection)
               {
-                std::string errMsg = "NLCC is not implemented yet for SCAN.";
-                dftfe::utils::throwException(false, errMsg);
+                // std::string errMsg = "NLCC is not completed yet for SCAN.";
+                // dftfe::utils::throwException(false, errMsg);
               }
           }
 
