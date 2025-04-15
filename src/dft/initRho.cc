@@ -1639,6 +1639,17 @@ namespace dftfe
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+    if (isTauMGGA)
+      {
+        d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+        for (unsigned int iComp = 0; iComp < d_tauInQuadValues.size(); iComp++)
+          {
+            d_tauInQuadValues[iComp].resize(n_q_points * nCells);
+          }
+      }
     // Initialize electron density table storage for rhoOut only for Anderson
     // with Kerker for other mixing schemes it is done in density.cc as we need
     // to do this initialization every SCF
@@ -1712,6 +1723,33 @@ namespace dftfe
               }
           }
       }
+    std::vector<std::string> field2 = {"TAU", "TAUMAG_Z"};
+    if (isTauMGGA)
+      {
+        for (int i = 0; i < d_tauInQuadValues.size(); i++)
+          {
+            if (!(i == 1 && d_dftParamsPtr->restartSpinFromNoSpin))
+              loadQuadratureData(d_basisOperationsPtrHost,
+                                 d_densityQuadratureId,
+                                 d_tauInQuadValues[i],
+                                 1,
+                                 field2[i],
+                                 d_dftParamsPtr->restartFolder,
+                                 d_mpiCommParent,
+                                 mpi_communicator,
+                                 interpoolcomm,
+                                 interBandGroupComm);
+            else
+              {
+                for (long unsigned int index = 0;
+                     index < d_tauInQuadValues[i].size();
+                     index++)
+                  d_tauInQuadValues[i][index] =
+                    d_dftParamsPtr->tot_magnetization *
+                    d_tauInQuadValues[0][index];
+              }
+          }
+      }
     double integralChargeFromQuadDataInput =
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[0]);
     if (d_dftParamsPtr->verbosity >= 1)
@@ -1755,9 +1793,10 @@ namespace dftfe
             d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
+            d_tauInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            isGradDensityDataDependent);
-
+            isGradDensityDataDependent,
+            isTauMGGA);
         if (d_dftParamsPtr->verbosity >= 3)
           {
             pcout << "Total Charge before scaling: " << charge << std::endl;

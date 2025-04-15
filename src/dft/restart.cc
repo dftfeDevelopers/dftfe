@@ -513,8 +513,9 @@ namespace dftfe
         AssertThrow(false,
                     dealii::ExcMessage("DFT-FE Error: Master file not found"));
       }
-    unsigned int count = 0;
-
+    unsigned int              count = 0;
+    std::vector<unsigned int> countPerThread(d_nOMPThreads,
+                                             0); // for each thread
     if (nCells > 0)
       {
         typename dealii::DoFHandler<3>::active_cell_iterator cell =
@@ -553,6 +554,7 @@ namespace dftfe
 
         std::string  fileNameOld = fileName;
         unsigned int iCell       = 1;
+
 #pragma omp parallel for num_threads(d_nOMPThreads) \
   firstprivate(fileNameOld, fileName, startLocation, dataInput, cell)
         for (iCell = 1; iCell < nCells; ++iCell)
@@ -590,15 +592,21 @@ namespace dftfe
                                             q * fieldDimension + iField] =
                           dataInput[startLocation + q][3 + iField];
                       }
-                    count++;
+                    countPerThread[omp_get_thread_num()]++;
                   }
               }
           } // iCell
       }
+    for (int i = 0; i < d_nOMPThreads; ++i)
+      {
+        count += countPerThread[i];
+      }
     if (count < totalTarget)
-      AssertThrow(false,
-                  dealii::ExcMessage(std::string(
-                    "All quadrature data not filled. Check restart files!")));
+      {
+        AssertThrow(false,
+                    dealii::ExcMessage(std::string(
+                      "All quadrature data not filled. Check restart files!")));
+      }
     pcout << "Reading Quad data done..." << std::endl;
   }
 
