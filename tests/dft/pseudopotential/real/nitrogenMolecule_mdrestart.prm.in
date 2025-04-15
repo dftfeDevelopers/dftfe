@@ -70,7 +70,7 @@ subsection SCF parameters
 end
 
 subsection SCF Checkpointing and Restart
-  set LOAD RHO DATA = true
+  set LOAD QUAD DATA = true
 end
 
 subsection Molecular Dynamics

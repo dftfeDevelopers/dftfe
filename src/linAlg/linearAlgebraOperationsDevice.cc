@@ -2857,7 +2857,7 @@ namespace dftfe
                   if (ivecNew + BNew > Noc)
                     {
                       BLASWrapperPtr->xgemm(
-                        dftfe::utils::DEVICEBLAS_OP_N,
+                        'N',
                         std::is_same<dataTypes::number,
                                      std::complex<double>>::value ?
                           'C' :
@@ -2877,7 +2877,7 @@ namespace dftfe
                   else
                     {
                       BLASWrapperPtr->xgemm(
-                        dftfe::utils::DEVICEBLAS_OP_N,
+                        'N',
                         std::is_same<dataTypes::number,
                                      std::complex<double>>::value ?
                           'C' :
@@ -3329,7 +3329,7 @@ namespace dftfe
 
 
                   BLASWrapperPtr->xgemm(
-                    dftfe::utils::DEVICEBLAS_OP_N,
+                    'N',
                     std::is_same<dataTypes::number,
                                  std::complex<double>>::value ?
                       'C' :

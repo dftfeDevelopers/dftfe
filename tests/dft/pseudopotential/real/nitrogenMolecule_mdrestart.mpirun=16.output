@@ -17,11 +17,9 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.296487490021431155e+00 5.365505453136515737e-03 5.261733344552399841e-03
-AtomId 1:  1.296487503372444339e+00 -5.365505479671766297e-03 -5.261733372974815304e-03
+AtomId 0:  -1.296487507334227685e+00 5.365505454350641759e-03 5.261733344673844362e-03
+AtomId 1:  1.296487520200524823e+00 -5.365505481723054255e-03 -5.261733373092799051e-03
 -----------------------------------------------------------------------------------------
-Reading tria info and rho data from checkpoint in progress...
-...Reading from checkpoint done.
 
 Finite element mesh information
 -------------------------------------------------
@@ -33,8 +31,11 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 31257
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
-
-Reading initial guess for electron-density.....
+Loading Density data from Quadrature checkpoint......
+Reading Quad data from checkpoint in progress...
+Reading Quad data done...
+Reading Quad data from checkpoint in progress...
+Reading Quad data done...
 
 Pseudopotential initalization....
 ----------------------Starting Initialization of BOMD-------------------------
@@ -42,16 +43,16 @@ Starting Temperature from Input 3.000000000000000000e+02
 RestartFlag: 1
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 5 iterations.
+SCF iterations converged to the specified tolerance after: 2 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78841149
+             Total energy:         -19.78841148
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290494,0.001038,0.001018
-AtomId    1:  0.290494,0.001038,0.001018
+AtomId    0:  0.290498,0.001038,0.001018
+AtomId    1:  0.290490,0.001038,0.001018
 --------------------------------------------------------------------------------------------
 ---------------MDNVE() called------------------ 
 
@@ -69,19 +70,19 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 8 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.79364586
+             Total energy:         -19.79364584
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.289416,0.001557,0.001527
-AtomId    1:  0.289416,0.001557,0.001527
+AtomId    0:  0.289430,0.001557,0.001527
+AtomId    1:  0.289393,0.001557,0.001527
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 3 ------------------ 
- Temperature from velocities: 1829.44
+ Temperature from velocities: 1829.43
  Total Energy in Ha at timeIndex -19.78496
 
 Finite element mesh information
@@ -102,7 +103,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.80164629
+             Total energy:         -19.80164622
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -110,6 +111,6 @@ AtomId    0:  0.287151,0.002070,0.002030
 AtomId    1:  0.287151,0.002070,0.002030
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 4 ------------------ 
- Temperature from velocities: 3511.57
+ Temperature from velocities: 3511.53
  Total Energy in Ha at timeIndex -19.78497
 ---MD run completed successfully---

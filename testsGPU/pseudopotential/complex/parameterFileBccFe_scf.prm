@@ -44,7 +44,7 @@ subsection Finite element mesh parameters
 end
 
 subsection SCF Checkpointing and Restart
-    set SAVE RHO DATA = true
+    set SAVE QUAD DATA = true
 end
 
 subsection DFT functional parameters
