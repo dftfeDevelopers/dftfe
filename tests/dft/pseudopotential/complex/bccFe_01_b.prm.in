@@ -61,5 +61,6 @@ end
 subsection SCF parameters
   subsection Eigen-solver parameters
       set CHEBYSHEV FILTER TOLERANCE  = 1e-12
+      set HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING    = 15
   end
 end

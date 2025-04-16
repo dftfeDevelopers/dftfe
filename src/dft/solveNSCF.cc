@@ -420,7 +420,7 @@ namespace dftfe
                   }
               }
           }
-        for (unsigned int s = 0; s < 2; ++s)
+        for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
           for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
                ++kPoint)
             {

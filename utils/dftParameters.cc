@@ -1147,7 +1147,7 @@ namespace dftfe
             "HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING",
             "0",
             dealii::Patterns::Integer(0),
-            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF/BANDS calculations. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation. For DOS/PDOS calculations, the value of this parameter should be large enough to ensure sufficient number of buffer states beyond the 'Fermi level'.");
+            "[Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in NSCF/BANDS calculations. By default, this is set to N/2*1.05 where N is the number of electrons. It is strongly encouraged to have at least 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the NSCF/BANDS calculation.");
 
           prm.declare_entry(
             "RESTRICT TO SINGLE FILTER PASS",
@@ -1892,11 +1892,6 @@ namespace dftfe
         kPointDataFile != "",
         dealii::ExcMessage(
           "DFT-FE Error: kPOINT RULE FILE must be provided for bands."));
-    if (solverMode == "BANDS" || solverMode == "NSCF")
-      AssertThrow(
-        highestStateOfInterestForChebFiltering != 0,
-        dealii::ExcMessage(
-          "DFT-FE Error: HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING must be provided for nscf and bands."));
 #endif
 #ifndef USE_COMPLEX
     AssertThrow(

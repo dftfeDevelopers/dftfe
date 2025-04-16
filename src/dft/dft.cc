@@ -535,7 +535,9 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 1 and
         std::abs(d_dftParamsPtr->netCharge) > 1e-12)
       pcout << "Setting netcharge " << d_dftParamsPtr->netCharge << std::endl;
-
+    if (d_dftParamsPtr->highestStateOfInterestForChebFiltering == 0)
+      d_dftParamsPtr->highestStateOfInterestForChebFiltering =
+        std::floor(numElectrons * 1.05 / 2.0);
     if (d_dftParamsPtr->solverMode == "NSCF" ||
         d_dftParamsPtr->solverMode == "BANDS")
       {
