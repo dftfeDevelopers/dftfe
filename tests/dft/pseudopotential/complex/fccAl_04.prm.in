@@ -26,9 +26,9 @@ subsection Brillouin zone k point sampling options
 end
 
 subsection SCF Checkpointing and Restart
- set LOAD RHO DATA     = true
+ set LOAD QUAD DATA     = true
  set RESTART SP FROM NO SP = false
- set SAVE RHO DATA     = false
+ set SAVE QUAD DATA     = false
 end
 
 subsection Parallelization

@@ -123,11 +123,14 @@ namespace dftfe
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                         "Created flattened array eigenvectors");
 
-    // if(!(d_dftParamsPtr->chkType==2 && d_dftParamsPtr->restartFromChk))
-    //{
-    initRho();
-    // d_rhoOutNodalValues.reinit(d_rhoInNodalValues);
-    //}
+    if (d_dftParamsPtr->loadQuadData)
+      {
+        loadDensityFromQuadratureValues();
+        d_isRestartGroundStateCalcFromChk = true;
+      }
+    else
+      initRho();
+
 
     if (d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator, "initRho called");

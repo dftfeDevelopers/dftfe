@@ -15,22 +15,19 @@
 # Author: David M. Rogers <predictivestatmech@gmail.com>
 
 find_package(PkgConfig)
-# elpa-2020.05.001.pc
 set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH TRUE)
 foreach(pkg elpa_openmp elpa) # prioritize elpa_openmp
-    foreach(ver 2024.03.001)
-        pkg_search_module(PC_ELPA ${pkg})
-        if(PC_ELPA_FOUND)
-            break()
-        endif()
-    endforeach()
+    pkg_search_module(PC_ELPA ${pkg})
+    if(PC_ELPA_FOUND)
+        break()
+    endif()
     if(PC_ELPA_FOUND)
         break()
     endif()
 endforeach()
 
 if(ELPA_FIND_REQUIRED AND NOT PC_ELPA_FOUND)
-    MESSAGE(FATAL_ERROR "Unable to find ELPA. Try adding dir containing lib/pkgconfig/elpa-ver.pc to -DCMAKE_PREFIX_PATH")
+    MESSAGE(FATAL_ERROR "Unable to find ELPA. Try adding dir containing lib/pkgconfig/elpa.pc to -DCMAKE_PREFIX_PATH")
 endif()
 
 find_path(ELPA_INCLUDE_DIR
