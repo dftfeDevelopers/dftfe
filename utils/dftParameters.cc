@@ -1996,54 +1996,58 @@ namespace dftfe
           mixingMethod == "ANDERSON_WITH_RESTA"),
         dealii::ExcMessage(
           "DFT-FE Error: ANDERSON_WITH_RESTA or ANDERSON_WITH_KERKER for Hubbard is not completed yet."));
-    bool customParameters = !(dc_dampingParameterFilename == "");
-    if (!customParameters)
+
+    if (dc_dispersioncorrectiontype == 1 || dc_dispersioncorrectiontype == 2)
       {
-        if (XCType == "GGA-PBE")
+        bool customParameters = !(dc_dampingParameterFilename == "");
+        if (!customParameters)
           {
-            if (dc_dispersioncorrectiontype == 1)
-              AssertThrow(
-                dc_d3dampingtype != 4,
-                dealii::ExcMessage(std::string(
-                  "The OP damping functions has not been parametrized for this functional.")));
-          }
-        else if (XCType == "GGA-RPBE")
-          {
-            if (dc_dispersioncorrectiontype == 1)
-              AssertThrow(
-                dc_d3dampingtype == 0 || dc_d3dampingtype == 1,
-                dealii::ExcMessage(std::string(
-                  "The OP, BJM and ZEROM damping functions have not been parametrized for this functional.")));
-          }
-        else if (XCType == "MGGA-R2SCAN")
-          {
-            if (dc_dispersioncorrectiontype == 1)
-              AssertThrow(
-                dc_d3dampingtype == 1,
-                dealii::ExcMessage(std::string(
-                  "Only BJ damping function has been parametrized for this functional.")));
+            if (XCType == "GGA-PBE")
+              {
+                if (dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    dc_d3dampingtype != 4,
+                    dealii::ExcMessage(std::string(
+                      "The OP damping functions has not been parametrized for this functional.")));
+              }
+            else if (XCType == "GGA-RPBE")
+              {
+                if (dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    dc_d3dampingtype == 0 || dc_d3dampingtype == 1,
+                    dealii::ExcMessage(std::string(
+                      "The OP, BJM and ZEROM damping functions have not been parametrized for this functional.")));
+              }
+            else if (XCType == "MGGA-R2SCAN")
+              {
+                if (dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    dc_d3dampingtype == 1,
+                    dealii::ExcMessage(std::string(
+                      "Only BJ damping function has been parametrized for this functional.")));
 
-            if (dc_dispersioncorrectiontype == 2)
-              AssertThrow(
-                !dc_d4MBD,
-                dealii::ExcMessage(std::string(
-                  "D4 MBD has not been parametrized for this functional.")));
-          }
+                if (dc_dispersioncorrectiontype == 2)
+                  AssertThrow(
+                    !dc_d4MBD,
+                    dealii::ExcMessage(std::string(
+                      "D4 MBD has not been parametrized for this functional.")));
+              }
 
-        else if (XCType == "MGGA-SCAN")
-          {
-            if (dc_dispersioncorrectiontype == 1)
-              AssertThrow(
-                dc_d3dampingtype == 0 || dc_d3dampingtype == 1,
-                dealii::ExcMessage(std::string(
-                  "Only ZERO and BJ damping functions have been parametrized for this functional.")));
-          }
-        else
-          {
-            AssertThrow(
-              false,
-              dealii::ExcMessage(std::string(
-                "DFTD3/4 have not been parametrized for this functional.")));
+            else if (XCType == "MGGA-SCAN")
+              {
+                if (dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    dc_d3dampingtype == 0 || dc_d3dampingtype == 1,
+                    dealii::ExcMessage(std::string(
+                      "Only ZERO and BJ damping functions have been parametrized for this functional.")));
+              }
+            else
+              {
+                AssertThrow(
+                  false,
+                  dealii::ExcMessage(std::string(
+                    "DFTD3/4 have not been parametrized for this functional.")));
+              }
           }
       }
   }
