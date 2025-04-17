@@ -580,10 +580,10 @@ namespace dftfe
         &kineticEnergyDensityValues);
 
     /**
-     *@brief get the Ptr to the operator class ( Kohn Sham Operator)
+     *@brief get the Ptr to the operator class ( Kohn Sham Base Operator)
      */
     KohnShamDFTBaseOperator<memorySpace> *
-    getOperatorClass();
+    getKohnShamDFTBaseOperatorClass();
 
     /**
      *@brief get the index of the DoF Handler corresponding to
