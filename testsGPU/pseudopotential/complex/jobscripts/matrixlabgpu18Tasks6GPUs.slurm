@@ -42,3 +42,4 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scfConstraintMag.p
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
+mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan

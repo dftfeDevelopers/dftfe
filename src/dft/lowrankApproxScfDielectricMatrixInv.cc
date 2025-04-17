@@ -684,6 +684,10 @@ namespace dftfe
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
 
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
     // interpolate nodal data to quadrature data
     interpolateDensityNodalDataToQuadratureDataGeneral(
       d_basisOperationsPtrElectroHost,
@@ -692,8 +696,10 @@ namespace dftfe
       d_densityInNodalValues[0],
       d_densityInQuadValues[0],
       d_gradDensityInQuadValues[0],
+      d_tauInQuadValues[0],
       d_gradDensityInQuadValues[0],
-      isGradDensityDataDependent);
+      isGradDensityDataDependent,
+      isTauMGGA);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

@@ -14,7 +14,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Nikhil Kodali
+// @author Nikhil Kodali, Srinibas Nandi
 //
 
 #include <KohnShamHamiltonianOperator.h>
@@ -160,6 +160,8 @@ namespace dftfe
     d_kPointCoordinates = kPointCoordinates;
     d_kPointWeights     = kPointWeights;
     d_invJacKPointTimesJxW.resize(d_kPointWeights.size());
+    d_halfKSquareTimesDerExcwithTauJxW.resize(d_kPointWeights.size());
+    d_derExcwithTauTimesinvJacKpointTimesJxW.resize(d_kPointWeights.size());
     d_cellHamiltonianMatrix.resize(
       d_dftParamsPtr->memOptMode ?
         1 :
@@ -188,6 +190,11 @@ namespace dftfe
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID, false);
     const unsigned int numberQuadraturePoints =
       d_basisOperationsPtrHost->nQuadsPerCell();
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
            ++kPointIndex)
@@ -297,6 +304,9 @@ namespace dftfe
     bool isIntegrationByPartsGradDensityDependenceVxc =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
     const bool isGGA = isIntegrationByPartsGradDensityDependenceVxc;
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID);
     const unsigned int totalLocallyOwnedCells =
@@ -308,10 +318,13 @@ namespace dftfe
       d_VeffJxWHost;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_invJacderExcWithSigmaTimesGradRhoJxWHost;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      d_invJacinvJacderExcWithTauJxWHost;
 #else
     auto &d_VeffJxWHost = d_VeffJxW;
     auto &d_invJacderExcWithSigmaTimesGradRhoJxWHost =
       d_invJacderExcWithSigmaTimesGradRhoJxW;
+    auto &d_invJacinvJacderExcWithTauJxWHost = d_invJacinvJacderExcWithTauJxW;
 #endif
     d_VeffJxWHost.resize(totalLocallyOwnedCells * numberQuadraturePointsPerCell,
                          0.0);
@@ -320,6 +333,11 @@ namespace dftfe
       isGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell * 3 : 0,
       0.0);
 
+    d_invJacinvJacderExcWithTauJxWHost.clear();
+    d_invJacinvJacderExcWithTauJxWHost.resize(
+      isTauMGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell * 9 :
+                  0,
+      0.0);
 
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       xDataOut;
@@ -336,143 +354,400 @@ namespace dftfe
     std::vector<double> &pdecDensitySpinDown =
       cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
+    pdexDensitySpinUp.resize(numberQuadraturePointsPerCell, 0.0);
+    pdecDensitySpinUp.resize(numberQuadraturePointsPerCell, 0.0);
+    pdexDensitySpinDown.resize(numberQuadraturePointsPerCell, 0.0);
+    pdecDensitySpinDown.resize(numberQuadraturePointsPerCell, 0.0);
+
     if (isGGA)
       {
         xDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
-          std::vector<double>();
+          std::vector<double>(3 * numberQuadraturePointsPerCell, 0.0);
         cDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
-          std::vector<double>();
+          std::vector<double>(3 * numberQuadraturePointsPerCell, 0.0);
+      }
+    if (isTauMGGA)
+      {
+        xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] =
+          std::vector<double>(numberQuadraturePointsPerCell, 0.0);
+        xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown] =
+          std::vector<double>(numberQuadraturePointsPerCell, 0.0);
+        cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] =
+          std::vector<double>(numberQuadraturePointsPerCell, 0.0);
+        cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown] =
+          std::vector<double>(numberQuadraturePointsPerCell, 0.0);
       }
 
-    auto quadPointsAll = d_basisOperationsPtrHost->quadPoints();
-
-    auto quadWeightsAll = d_basisOperationsPtrHost->JxW();
-
-    for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
+    // The Hamiltonian operator for the MGGA case is dependent on the k point.
+    // All the GGA calculations are done inside the condition (kPointIndex == 0)
+    for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
+         kPointIndex++)
       {
-        d_excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
-          *auxDensityXCRepresentation,
-          std::make_pair<unsigned int, unsigned int>(
-            iCell * numberQuadraturePointsPerCell,
-            (iCell + 1) * numberQuadraturePointsPerCell),
-          xDataOut,
-          cDataOut);
+#if defined(DFTFE_WITH_DEVICE)
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          d_halfKSquareTimesDerExcwithTauJxWHost;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          d_derExcwithTauTimesinvJacKpointTimesJxWHost;
+#else
+        auto &d_halfKSquareTimesDerExcwithTauJxWHost =
+          d_halfKSquareTimesDerExcwithTauJxW[kPointIndex];
 
-        const std::vector<double> &pdexDensitySpinIndex =
-          spinIndex == 0 ? pdexDensitySpinUp : pdexDensitySpinDown;
-        const std::vector<double> &pdecDensitySpinIndex =
-          spinIndex == 0 ? pdecDensitySpinUp : pdecDensitySpinDown;
+        auto &d_derExcwithTauTimesinvJacKpointTimesJxWHost =
+          d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex];
+#endif
+        d_halfKSquareTimesDerExcwithTauJxWHost.clear();
+        d_halfKSquareTimesDerExcwithTauJxWHost.resize(
+          isTauMGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell :
+                      0,
+          0.0);
+        d_derExcwithTauTimesinvJacKpointTimesJxWHost.clear();
+        d_derExcwithTauTimesinvJacKpointTimesJxWHost.resize(
+          isTauMGGA ?
+            totalLocallyOwnedCells * numberQuadraturePointsPerCell * 3 :
+            0,
+          0.0);
 
-        std::vector<double> pdexSigma;
-        std::vector<double> pdecSigma;
-        if (isGGA)
+        auto quadPointsAll = d_basisOperationsPtrHost->quadPoints();
+
+        auto quadWeightsAll = d_basisOperationsPtrHost->JxW();
+
+        for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
           {
-            pdexSigma = xDataOut[xcRemainderOutputDataAttributes::pdeSigma];
-            pdecSigma = cDataOut[xcRemainderOutputDataAttributes::pdeSigma];
-          }
+            auto cellJxWPtr = d_basisOperationsPtrHost->JxWBasisData().data() +
+                              iCell * numberQuadraturePointsPerCell;
+            d_excManagerPtr->getExcSSDFunctionalObj()
+              ->computeRhoTauDependentXCData(
+                *auxDensityXCRepresentation,
+                std::make_pair<unsigned int, unsigned int>(
+                  iCell * numberQuadraturePointsPerCell,
+                  (iCell + 1) * numberQuadraturePointsPerCell),
+                xDataOut,
+                cDataOut);
 
-        std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
-                             densityData;
-        std::vector<double> &densitySpinUp =
-          densityData[DensityDescriptorDataAttributes::valuesSpinUp];
-        std::vector<double> &densitySpinDown =
-          densityData[DensityDescriptorDataAttributes::valuesSpinDown];
-        std::vector<double> &gradDensitySpinUp =
-          densityData[DensityDescriptorDataAttributes::gradValuesSpinUp];
-        std::vector<double> &gradDensitySpinDown =
-          densityData[DensityDescriptorDataAttributes::gradValuesSpinDown];
-
-        if (isGGA)
-          auxDensityXCRepresentation->applyLocalOperations(
-            std::make_pair<unsigned int, unsigned int>(
-              iCell * numberQuadraturePointsPerCell,
-              (iCell + 1) * numberQuadraturePointsPerCell),
-            densityData);
-
-        const std::vector<double> &gradDensityXCSpinIndex =
-          spinIndex == 0 ? gradDensitySpinUp : gradDensitySpinDown;
-        const std::vector<double> &gradDensityXCOtherSpinIndex =
-          spinIndex == 0 ? gradDensitySpinDown : gradDensitySpinUp;
-
-
-        const double *tempPhi =
-          phiValues.data() + iCell * numberQuadraturePointsPerCell;
-
-        auto cellJxWPtr = d_basisOperationsPtrHost->JxWBasisData().data() +
-                          iCell * numberQuadraturePointsPerCell;
-        for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsPerCell;
-             ++iQuad)
-          {
-            d_VeffJxWHost[iCell * numberQuadraturePointsPerCell + iQuad] =
-              (tempPhi[iQuad] + pdexDensitySpinIndex[iQuad] +
-               pdecDensitySpinIndex[iQuad]) *
-              cellJxWPtr[iQuad];
-          }
-
-        if (isGGA)
-          {
-            if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
+            if (kPointIndex == 0)
               {
+                const std::vector<double> &pdexDensitySpinIndex =
+                  spinIndex == 0 ? pdexDensitySpinUp : pdexDensitySpinDown;
+                const std::vector<double> &pdecDensitySpinIndex =
+                  spinIndex == 0 ? pdecDensitySpinUp : pdecDensitySpinDown;
+
+                std::vector<double> pdexSigma;
+                std::vector<double> pdecSigma;
+                if (isGGA)
+                  {
+                    pdexSigma =
+                      xDataOut[xcRemainderOutputDataAttributes::pdeSigma];
+                    pdecSigma =
+                      cDataOut[xcRemainderOutputDataAttributes::pdeSigma];
+                  }
+
+                std::vector<double> pdexTauSpinIndex;
+                std::vector<double> pdecTauSpinIndex;
+                if (isTauMGGA)
+                  {
+                    pdexTauSpinIndex =
+                      spinIndex == 0 ?
+                        xDataOut
+                          [xcRemainderOutputDataAttributes::pdeTauSpinUp] :
+                        xDataOut
+                          [xcRemainderOutputDataAttributes::pdeTauSpinDown];
+
+                    pdecTauSpinIndex =
+                      spinIndex == 0 ?
+                        cDataOut
+                          [xcRemainderOutputDataAttributes::pdeTauSpinUp] :
+                        cDataOut
+                          [xcRemainderOutputDataAttributes::pdeTauSpinDown];
+                  }
+
+                std::unordered_map<DensityDescriptorDataAttributes,
+                                   std::vector<double>>
+                                     densityData;
+                std::vector<double> &densitySpinUp =
+                  densityData[DensityDescriptorDataAttributes::valuesSpinUp];
+                std::vector<double> &densitySpinDown =
+                  densityData[DensityDescriptorDataAttributes::valuesSpinDown];
+                std::vector<double> &gradDensitySpinUp = densityData
+                  [DensityDescriptorDataAttributes::gradValuesSpinUp];
+                std::vector<double> &gradDensitySpinDown = densityData
+                  [DensityDescriptorDataAttributes::gradValuesSpinDown];
+
+
+                // This applyLocalOperations is necessary because gradRho values
+                // are required in the operator
+                if (isGGA)
+                  auxDensityXCRepresentation->applyLocalOperations(
+                    std::make_pair<unsigned int, unsigned int>(
+                      iCell * numberQuadraturePointsPerCell,
+                      (iCell + 1) * numberQuadraturePointsPerCell),
+                    densityData);
+
+                const std::vector<double> &gradDensityXCSpinIndex =
+                  spinIndex == 0 ? gradDensitySpinUp : gradDensitySpinDown;
+                const std::vector<double> &gradDensityXCOtherSpinIndex =
+                  spinIndex == 0 ? gradDensitySpinDown : gradDensitySpinUp;
+
+
+                const double *tempPhi =
+                  phiValues.data() + iCell * numberQuadraturePointsPerCell;
+
                 for (unsigned int iQuad = 0;
                      iQuad < numberQuadraturePointsPerCell;
                      ++iQuad)
                   {
-                    const double *inverseJacobiansQuadPtr =
-                      d_basisOperationsPtrHost->inverseJacobiansBasisData()
-                        .data() +
-                      (d_basisOperationsPtrHost->cellsTypeFlag() == 0 ?
-                         iCell * numberQuadraturePointsPerCell * 9 + iQuad * 9 :
-                         iCell * 9);
-                    const double *gradDensityQuadPtr =
-                      gradDensityXCSpinIndex.data() + iQuad * 3;
-                    const double *gradDensityOtherQuadPtr =
-                      gradDensityXCOtherSpinIndex.data() + iQuad * 3;
-                    const double term = (pdexSigma[iQuad * 3 + 2 * spinIndex] +
-                                         pdecSigma[iQuad * 3 + 2 * spinIndex]) *
-                                        cellJxWPtr[iQuad];
-                    const double termoff =
-                      (pdexSigma[iQuad * 3 + 1] + pdecSigma[iQuad * 3 + 1]) *
+                    d_VeffJxWHost[iCell * numberQuadraturePointsPerCell +
+                                  iQuad] =
+                      (tempPhi[iQuad] + pdexDensitySpinIndex[iQuad] +
+                       pdecDensitySpinIndex[iQuad]) *
                       cellJxWPtr[iQuad];
-                    for (unsigned jDim = 0; jDim < 3; ++jDim)
-                      for (unsigned iDim = 0; iDim < 3; ++iDim)
-                        d_invJacderExcWithSigmaTimesGradRhoJxWHost
-                          [iCell * numberQuadraturePointsPerCell * 3 +
-                           iQuad * 3 + iDim] +=
-                          inverseJacobiansQuadPtr[3 * jDim + iDim] *
-                          (2.0 * gradDensityQuadPtr[jDim] * term +
-                           gradDensityOtherQuadPtr[jDim] * termoff);
                   }
-              }
-            else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
+
+                if (isGGA)
+                  {
+                    if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
+                      {
+                        for (unsigned int iQuad = 0;
+                             iQuad < numberQuadraturePointsPerCell;
+                             ++iQuad)
+                          {
+                            const double *inverseJacobiansQuadPtr =
+                              d_basisOperationsPtrHost
+                                ->inverseJacobiansBasisData()
+                                .data() +
+                              (d_basisOperationsPtrHost->cellsTypeFlag() == 0 ?
+                                 iCell * numberQuadraturePointsPerCell * 9 +
+                                   iQuad * 9 :
+                                 iCell * 9);
+                            const double *gradDensityQuadPtr =
+                              gradDensityXCSpinIndex.data() + iQuad * 3;
+                            const double *gradDensityOtherQuadPtr =
+                              gradDensityXCOtherSpinIndex.data() + iQuad * 3;
+                            const double term =
+                              (pdexSigma[iQuad * 3 + 2 * spinIndex] +
+                               pdecSigma[iQuad * 3 + 2 * spinIndex]) *
+                              cellJxWPtr[iQuad];
+                            const double termoff = (pdexSigma[iQuad * 3 + 1] +
+                                                    pdecSigma[iQuad * 3 + 1]) *
+                                                   cellJxWPtr[iQuad];
+                            for (unsigned jDim = 0; jDim < 3; ++jDim)
+                              for (unsigned iDim = 0; iDim < 3; ++iDim)
+                                d_invJacderExcWithSigmaTimesGradRhoJxWHost
+                                  [iCell * numberQuadraturePointsPerCell * 3 +
+                                   iQuad * 3 + iDim] +=
+                                  inverseJacobiansQuadPtr[3 * jDim + iDim] *
+                                  (2.0 * gradDensityQuadPtr[jDim] * term +
+                                   gradDensityOtherQuadPtr[jDim] * termoff);
+                          }
+                      }
+                    else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
+                      {
+                        for (unsigned int iQuad = 0;
+                             iQuad < numberQuadraturePointsPerCell;
+                             ++iQuad)
+                          {
+                            const double *inverseJacobiansQuadPtr =
+                              d_basisOperationsPtrHost
+                                ->inverseJacobiansBasisData()
+                                .data() +
+                              iCell * 3;
+                            const double *gradDensityQuadPtr =
+                              gradDensityXCSpinIndex.data() + iQuad * 3;
+                            const double *gradDensityOtherQuadPtr =
+                              gradDensityXCOtherSpinIndex.data() + iQuad * 3;
+                            const double term =
+                              (pdexSigma[iQuad * 3 + 2 * spinIndex] +
+                               pdecSigma[iQuad * 3 + 2 * spinIndex]) *
+                              cellJxWPtr[iQuad];
+                            const double termoff = (pdexSigma[iQuad * 3 + 1] +
+                                                    pdecSigma[iQuad * 3 + 1]) *
+                                                   cellJxWPtr[iQuad];
+                            for (unsigned iDim = 0; iDim < 3; ++iDim)
+                              d_invJacderExcWithSigmaTimesGradRhoJxWHost
+                                [iCell * numberQuadraturePointsPerCell * 3 +
+                                 iQuad * 3 + iDim] =
+                                  inverseJacobiansQuadPtr[iDim] *
+                                  (2.0 * gradDensityQuadPtr[iDim] * term +
+                                   gradDensityOtherQuadPtr[iDim] * termoff);
+                          }
+                      }
+                  } // GGA
+
+                if (isTauMGGA)
+                  {
+                    if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
+                      {
+                        for (unsigned int iQuad = 0;
+                             iQuad < numberQuadraturePointsPerCell;
+                             ++iQuad)
+                          {
+                            const double *inverseJacobiansQuadPtr =
+                              d_basisOperationsPtrHost
+                                ->inverseJacobiansBasisData()
+                                .data() +
+                              (d_basisOperationsPtrHost->cellsTypeFlag() == 0 ?
+                                 iCell * numberQuadraturePointsPerCell * 9 +
+                                   iQuad * 9 :
+                                 iCell * 9);
+                            const auto jacobianFactorForTauPtr =
+                              d_invJacinvJacderExcWithTauJxWHost.data() +
+                              iCell * numberQuadraturePointsPerCell * 9 +
+                              iQuad * 9;
+
+                            const double termTau = 0.5 *
+                                                   (pdexTauSpinIndex[iQuad] +
+                                                    pdecTauSpinIndex[iQuad]) *
+                                                   cellJxWPtr[iQuad];
+
+                            for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                              {
+                                for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                                  {
+                                    for (unsigned int kDim = 0; kDim < 3;
+                                         ++kDim)
+                                      {
+                                        jacobianFactorForTauPtr[3 * jDim +
+                                                                iDim] +=
+                                          inverseJacobiansQuadPtr[3 * kDim +
+                                                                  iDim] *
+                                          inverseJacobiansQuadPtr[3 * kDim +
+                                                                  jDim];
+                                      }
+                                    jacobianFactorForTauPtr[3 * jDim + iDim] *=
+                                      termTau;
+                                  }
+                              }
+                          }
+                      }
+                    else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
+                      {
+                        for (unsigned int iQuad = 0;
+                             iQuad < numberQuadraturePointsPerCell;
+                             ++iQuad)
+                          {
+                            const double *inverseJacobiansQuadPtr =
+                              d_basisOperationsPtrHost
+                                ->inverseJacobiansBasisData()
+                                .data() +
+                              iCell * 3;
+
+                            const auto jacobianFactorForTauPtr =
+                              d_invJacinvJacderExcWithTauJxWHost.data() +
+                              iCell * numberQuadraturePointsPerCell * 9 +
+                              iQuad * 9;
+                            const double termTau = 0.5 *
+                                                   (pdexTauSpinIndex[iQuad] +
+                                                    pdecTauSpinIndex[iQuad]) *
+                                                   cellJxWPtr[iQuad];
+
+                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                              {
+                                jacobianFactorForTauPtr[3 * iDim + iDim] +=
+                                  inverseJacobiansQuadPtr[iDim] *
+                                  inverseJacobiansQuadPtr[iDim] * termTau;
+                              }
+                          }
+                      }
+                  } // TauMGGA
+              }     // kpointIndex=0
+            if (isTauMGGA &&
+                std::is_same<dataTypes::number, std::complex<double>>::value)
               {
+                std::vector<double> pdexTauSpinIndex =
+                  spinIndex == 0 ?
+                    xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] :
+                    xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown];
+                std::vector<double> pdecTauSpinIndex =
+                  spinIndex == 0 ?
+                    cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] :
+                    cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown];
+                const double *kPointCoords =
+                  d_kPointCoordinates.data() + 3 * kPointIndex;
+
                 for (unsigned int iQuad = 0;
                      iQuad < numberQuadraturePointsPerCell;
                      ++iQuad)
                   {
-                    const double *inverseJacobiansQuadPtr =
-                      d_basisOperationsPtrHost->inverseJacobiansBasisData()
-                        .data() +
-                      iCell * 3;
-                    const double *gradDensityQuadPtr =
-                      gradDensityXCSpinIndex.data() + iQuad * 3;
-                    const double *gradDensityOtherQuadPtr =
-                      gradDensityXCOtherSpinIndex.data() + iQuad * 3;
-                    const double term = (pdexSigma[iQuad * 3 + 2 * spinIndex] +
-                                         pdecSigma[iQuad * 3 + 2 * spinIndex]) *
-                                        cellJxWPtr[iQuad];
-                    const double termoff =
-                      (pdexSigma[iQuad * 3 + 1] + pdecSigma[iQuad * 3 + 1]) *
-                      cellJxWPtr[iQuad];
-                    for (unsigned iDim = 0; iDim < 3; ++iDim)
-                      d_invJacderExcWithSigmaTimesGradRhoJxWHost
-                        [iCell * numberQuadraturePointsPerCell * 3 + iQuad * 3 +
-                         iDim] = inverseJacobiansQuadPtr[iDim] *
-                                 (2.0 * gradDensityQuadPtr[iDim] * term +
-                                  gradDensityOtherQuadPtr[iDim] * termoff);
+                    const double kSquareTimesHalf =
+                      0.5 * (kPointCoords[0] * kPointCoords[0] +
+                             kPointCoords[1] * kPointCoords[1] +
+                             kPointCoords[2] * kPointCoords[2]);
+                    d_halfKSquareTimesDerExcwithTauJxWHost
+                      [iCell * numberQuadraturePointsPerCell + iQuad] =
+                        kSquareTimesHalf *
+                        (pdexTauSpinIndex[iQuad] + pdecTauSpinIndex[iQuad]) *
+                        cellJxWPtr[iQuad];
                   }
-              }
-          } // GGA
-      }     // cell loop
+
+                if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
+                  {
+                    for (unsigned int iQuad = 0;
+                         iQuad < numberQuadraturePointsPerCell;
+                         ++iQuad)
+                      {
+                        const double *inverseJacobiansQuadPtr =
+                          d_basisOperationsPtrHost->inverseJacobiansBasisData()
+                            .data() +
+                          (d_basisOperationsPtrHost->cellsTypeFlag() == 0 ?
+                             iCell * numberQuadraturePointsPerCell * 9 +
+                               iQuad * 9 :
+                             iCell * 9);
+                        for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                          {
+                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                              {
+                                d_derExcwithTauTimesinvJacKpointTimesJxWHost
+                                  [iCell * numberQuadraturePointsPerCell * 3 +
+                                   iQuad * 3 + iDim] +=
+                                  -0.5 *
+                                  inverseJacobiansQuadPtr[3 * jDim + iDim] *
+                                  kPointCoords[jDim] * cellJxWPtr[iQuad] *
+                                  (pdexTauSpinIndex[iQuad] +
+                                   pdecTauSpinIndex[iQuad]);
+                              }
+                          }
+                      }
+                  }
+
+                else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
+                  {
+                    for (unsigned int iQuad = 0;
+                         iQuad < numberQuadraturePointsPerCell;
+                         ++iQuad)
+                      {
+                        const double *inverseJacobiansQuadPtr =
+                          d_basisOperationsPtrHost->inverseJacobiansBasisData()
+                            .data() +
+                          iCell * 3;
+
+                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                          {
+                            d_derExcwithTauTimesinvJacKpointTimesJxWHost
+                              [iCell * numberQuadraturePointsPerCell * 3 +
+                               iQuad * 3 + iDim] =
+                                -0.5 * inverseJacobiansQuadPtr[iDim] *
+                                kPointCoords[iDim] * cellJxWPtr[iQuad] *
+                                (pdexTauSpinIndex[iQuad] +
+                                 pdecTauSpinIndex[iQuad]);
+                          }
+                      }
+                  }
+              } // TauMGGA
+          }     // cell loop
+#if defined(DFTFE_WITH_DEVICE)
+        d_halfKSquareTimesDerExcwithTauJxW[kPointIndex].resize(
+          d_halfKSquareTimesDerExcwithTauJxWHost.size());
+        d_halfKSquareTimesDerExcwithTauJxW[kPointIndex].copyFrom(
+          d_halfKSquareTimesDerExcwithTauJxWHost);
+        d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex].resize(
+          d_derExcwithTauTimesinvJacKpointTimesJxWHost.size());
+        d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex].copyFrom(
+          d_derExcwithTauTimesinvJacKpointTimesJxWHost);
+#endif
+        if (d_dftParamsPtr->XCType.substr(0, 3) == "GGA")
+          {
+            break;
+          }
+      } // kpoint loop
 #if defined(DFTFE_WITH_DEVICE)
     d_VeffJxW.resize(d_VeffJxWHost.size());
     d_VeffJxW.copyFrom(d_VeffJxWHost);
@@ -480,6 +755,9 @@ namespace dftfe
       d_invJacderExcWithSigmaTimesGradRhoJxWHost.size());
     d_invJacderExcWithSigmaTimesGradRhoJxW.copyFrom(
       d_invJacderExcWithSigmaTimesGradRhoJxWHost);
+    d_invJacinvJacderExcWithTauJxW.resize(
+      d_invJacinvJacderExcWithTauJxWHost.size());
+    d_invJacinvJacderExcWithTauJxW.copyFrom(d_invJacinvJacderExcWithTauJxWHost);
 #endif
   }
 
@@ -861,11 +1139,22 @@ namespace dftfe
         bool isGradDensityDataDependent =
           (d_excManagerPtr->getExcSSDFunctionalObj()
              ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+        const bool isTauMGGA =
+          (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+           ExcFamilyType::TauMGGA);
         if (isGradDensityDataDependent)
           d_basisOperationsPtr->computeWeightedCellNjGradNiPlusNiGradNjMatrix(
             cellRange,
             d_invJacderExcWithSigmaTimesGradRhoJxW,
             tempHamMatrixRealBlock);
+        if (isTauMGGA)
+          {
+            d_basisOperationsPtr->computeWeightedCellStiffnessMatrix(
+              cellRange,
+              d_invJacinvJacderExcWithTauJxW,
+              tempHamMatrixRealBlock);
+          }
+
         if (!onlyHPrimePartForFirstOrderDensityMatResponse)
           d_BLASWrapperPtr->xaxpy(
             nDofsPerCell * nDofsPerCell * (cellRange.second - cellRange.first),
@@ -882,12 +1171,12 @@ namespace dftfe
             tempHamMatrixImagBlock.setValue(0.0);
             if (!onlyHPrimePartForFirstOrderDensityMatResponse)
               {
-                const double *kPointCoors =
+                const double *kPointCoords =
                   d_kPointCoordinates.data() + 3 * d_kPointIndex;
                 const double kSquareTimesHalf =
-                  0.5 * (kPointCoors[0] * kPointCoors[0] +
-                         kPointCoors[1] * kPointCoors[1] +
-                         kPointCoors[2] * kPointCoors[2]);
+                  0.5 * (kPointCoords[0] * kPointCoords[0] +
+                         kPointCoords[1] * kPointCoords[1] +
+                         kPointCoords[2] * kPointCoords[2]);
                 d_BLASWrapperPtr->xaxpy(
                   nDofsPerCell * nDofsPerCell *
                     (cellRange.second - cellRange.first),
@@ -901,6 +1190,20 @@ namespace dftfe
                   cellRange,
                   d_invJacKPointTimesJxW[d_kPointIndex],
                   tempHamMatrixImagBlock);
+
+                if (isTauMGGA)
+                  {
+                    d_basisOperationsPtr->computeWeightedCellMassMatrix(
+                      cellRange,
+                      d_halfKSquareTimesDerExcwithTauJxW[d_kPointIndex],
+                      tempHamMatrixRealBlock);
+
+                    d_basisOperationsPtr
+                      ->computeWeightedCellNjGradNiMinusNiGradNjMatrix(
+                        cellRange,
+                        d_derExcwithTauTimesinvJacKpointTimesJxW[d_kPointIndex],
+                        tempHamMatrixImagBlock);
+                  }
               }
             d_BLASWrapperPtr->copyRealArrsToComplexArr(
               nDofsPerCell * nDofsPerCell *

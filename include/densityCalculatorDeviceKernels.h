@@ -48,6 +48,22 @@ namespace dftfe
 
   template <typename NumberType>
   void
+  computeTauFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                                               &BLASWrapperPtr,
+    const std::pair<unsigned int, unsigned int> cellRange,
+    const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
+    double                                     *partialOccupVec,
+    double                                     *kCoord,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *gradWfcQuadPointData,
+    double *kineticEnergyDensityCellsWfcContributions,
+    double *tau);
+
+  template <typename NumberType>
+  void
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>

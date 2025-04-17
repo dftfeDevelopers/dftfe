@@ -1887,6 +1887,219 @@ namespace dftfe
               dftfe::utils::MemorySpace memorySpace>
     void
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      computeWeightedCellNjGradNiMinusNiGradNjMatrix(
+        const std::pair<unsigned int, unsigned int> cellRangeTotal,
+        dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &weights,
+        dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+          &weightedCellNjGradNiMinusNiGradNjMatrix) const
+    {
+      const unsigned int nCells        = this->nCells();
+      const unsigned int nQuadsPerCell = this->nQuadsPerCell();
+      const unsigned int nDofsPerCell  = this->nDofsPerCell();
+
+      if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+        {
+          dftfe::basis::FEBasisOperationsKernelsInternal::
+            reshapeToNonAffineLayoutHost(
+              nDofsPerCell,
+              nQuadsPerCell,
+              1,
+              shapeFunctionGradientBasisData().data(),
+              tempCellGradientsBlock.data());
+        }
+      else
+        {
+          dftfe::basis::FEBasisOperationsKernelsInternal::
+            reshapeToNonAffineLayoutDevice(
+              nDofsPerCell,
+              nQuadsPerCell,
+              1,
+              shapeFunctionGradientBasisData().data(),
+              tempCellGradientsBlock.data());
+        }
+      if (d_cellsBlockSize > 1)
+        d_BLASWrapperPtr->stridedCopyToBlock(nQuadsPerCell * nDofsPerCell * 3,
+                                             d_cellsBlockSize - 1,
+                                             tempCellGradientsBlock.data(),
+                                             tempCellGradientsBlock.data() +
+                                               nQuadsPerCell * nDofsPerCell * 3,
+                                             zeroIndexVec.data());
+      const ValueTypeBasisData scalarCoeffAlpha  = ValueTypeBasisData(1.0),
+                               scalarCoeffBeta   = ValueTypeBasisData(0.0),
+                               scalarCoeffNegOne = ValueTypeBasisData(-1.0);
+
+      for (unsigned int iCell = cellRangeTotal.first;
+           iCell < cellRangeTotal.second;
+           iCell += d_cellsBlockSize)
+        {
+          std::pair<unsigned int, unsigned int> cellRange(
+            iCell, std::min(iCell + d_cellsBlockSize, cellRangeTotal.second));
+          d_BLASWrapperPtr->xgemmStridedBatched(
+            'N',
+            'N',
+            d_nDofsPerCell,
+            1,
+            3,
+            &scalarCoeffAlpha,
+            tempCellGradientsBlock.data(),
+            d_nDofsPerCell,
+            d_nDofsPerCell * 3,
+            weights.data() + 3 * cellRange.first * nQuadsPerCell,
+            3,
+            3,
+            &scalarCoeffBeta,
+            tempCellValuesBlock.data(),
+            d_nDofsPerCell,
+            d_nDofsPerCell,
+            (cellRange.second - cellRange.first) * nQuadsPerCell);
+          d_BLASWrapperPtr->xgemmStridedBatched(
+            'N',
+            'T',
+            nDofsPerCell,
+            nDofsPerCell,
+            nQuadsPerCell,
+            &scalarCoeffAlpha,
+            tempCellValuesBlock.data(),
+            nDofsPerCell,
+            nDofsPerCell * nQuadsPerCell,
+            shapeFunctionBasisData().data(),
+            nDofsPerCell,
+            0,
+            &scalarCoeffAlpha,
+            weightedCellNjGradNiMinusNiGradNjMatrix.data() +
+              (cellRange.first - cellRangeTotal.first) * nDofsPerCell *
+                nDofsPerCell,
+            nDofsPerCell,
+            nDofsPerCell * nDofsPerCell,
+            cellRange.second - cellRange.first);
+          // FIXME : Can be optimized further, this is just the transpose of the
+          // earlier gemm
+          d_BLASWrapperPtr->xgemmStridedBatched(
+            'N',
+            'T',
+            nDofsPerCell,
+            nDofsPerCell,
+            nQuadsPerCell,
+            &scalarCoeffNegOne,
+            shapeFunctionBasisData().data(),
+            nDofsPerCell,
+            0,
+            tempCellValuesBlock.data(),
+            nDofsPerCell,
+            nDofsPerCell * nQuadsPerCell,
+            &scalarCoeffAlpha,
+            weightedCellNjGradNiMinusNiGradNjMatrix.data() +
+              (cellRange.first - cellRangeTotal.first) * nDofsPerCell *
+                nDofsPerCell,
+            nDofsPerCell,
+            nDofsPerCell * nDofsPerCell,
+            cellRange.second - cellRange.first);
+        }
+    }
+
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      computeWeightedCellStiffnessMatrix(
+        const std::pair<unsigned int, unsigned int> cellRangeTotal,
+        dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &weights,
+        dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+          &weightedCellStiffnessMatrix) const
+    {
+      const unsigned int nCells        = this->nCells();
+      const unsigned int nQuadsPerCell = this->nQuadsPerCell();
+      const unsigned int nDofsPerCell  = this->nDofsPerCell();
+
+      const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+
+      if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+        {
+          dftfe::basis::FEBasisOperationsKernelsInternal::
+            reshapeToNonAffineLayoutHost(
+              nDofsPerCell,
+              nQuadsPerCell,
+              1,
+              shapeFunctionGradientBasisData().data(),
+              tempCellGradientsBlock.data());
+        }
+      else
+        {
+          dftfe::basis::FEBasisOperationsKernelsInternal::
+            reshapeToNonAffineLayoutDevice(
+              nDofsPerCell,
+              nQuadsPerCell,
+              1,
+              shapeFunctionGradientBasisData().data(),
+              tempCellGradientsBlock.data());
+        }
+      if (d_cellsBlockSize > 1)
+        {
+          d_BLASWrapperPtr->stridedCopyToBlock(nQuadsPerCell * nDofsPerCell * 3,
+                                               d_cellsBlockSize - 1,
+                                               tempCellGradientsBlock.data(),
+                                               tempCellGradientsBlock.data() +
+                                                 nQuadsPerCell * nDofsPerCell *
+                                                   3,
+                                               zeroIndexVec.data());
+        }
+
+      for (unsigned int iCell = cellRangeTotal.first;
+           iCell < cellRangeTotal.second;
+           iCell += d_cellsBlockSize)
+        {
+          std::pair<unsigned int, unsigned int> cellRange(
+            iCell, std::min(iCell + d_cellsBlockSize, cellRangeTotal.second));
+
+          d_BLASWrapperPtr->xgemmStridedBatched(
+            'N',
+            'N',
+            nDofsPerCell,
+            3,
+            3,
+            &scalarCoeffAlpha,
+            tempCellGradientsBlock.data(),
+            nDofsPerCell,
+            nDofsPerCell * 3,
+            weights.data() + 9 * cellRange.first * nQuadsPerCell,
+            3,
+            9,
+            &scalarCoeffBeta,
+            tempCellGradientsBlock2.data(),
+            nDofsPerCell,
+            nDofsPerCell * 3,
+            (cellRange.second - cellRange.first) * nQuadsPerCell);
+
+          d_BLASWrapperPtr->xgemmStridedBatched(
+            'N',
+            'T',
+            nDofsPerCell,
+            nDofsPerCell,
+            nQuadsPerCell * 3,
+            &scalarCoeffAlpha,
+            tempCellGradientsBlock2.data(),
+            nDofsPerCell,
+            nDofsPerCell * nQuadsPerCell * 3,
+            tempCellGradientsBlock.data(),
+            nDofsPerCell,
+            0,
+            &scalarCoeffAlpha,
+            weightedCellStiffnessMatrix.data() +
+              (cellRange.first - cellRangeTotal.first) * nDofsPerCell *
+                nDofsPerCell,
+            nDofsPerCell,
+            nDofsPerCell * nDofsPerCell,
+            cellRange.second - cellRange.first);
+        }
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       computeCellMassMatrix(const unsigned int quadratureID,
                             const unsigned int cellsBlockSize,
                             const bool         basisType,

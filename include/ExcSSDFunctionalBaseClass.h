@@ -26,12 +26,19 @@ namespace dftfe
 {
   enum class ExcFamilyType
   {
+    /*
+    LLMGGA: Includes only Laplacian of the electron-density
+    TauMGGA: Includes only kinetic energy density
+    MGGA: Includes both the Laplacian of the electron-density and kinetic energy
+    density
+    */
     LDA,
     GGA,
     LLMGGA,
     HYBRID,
     DFTPlusU,
-    MGGA
+    MGGA,
+    TauMGGA
   };
 
   enum class densityFamilyType
@@ -83,6 +90,12 @@ namespace dftfe
                               const densityFamilyType densityFamType,
                               const std::vector<DensityDescriptorDataAttributes>
                                 &densityDescriptorAttributesList);
+    ExcSSDFunctionalBaseClass(const ExcFamilyType     excFamType,
+                              const densityFamilyType densityFamType,
+                              const std::vector<DensityDescriptorDataAttributes>
+                                &densityDescriptorAttributesList,
+                              const std::vector<WfcDescriptorDataAttributes>
+                                &wfcDescriptorAttributesList);
 
     virtual ~ExcSSDFunctionalBaseClass();
 
@@ -198,6 +211,9 @@ namespace dftfe
   protected:
     const std::vector<DensityDescriptorDataAttributes>
       d_densityDescriptorAttributesList;
+
+    const std::vector<WfcDescriptorDataAttributes>
+      d_wfcDescriptorAttributesList;
 
     ExcFamilyType     d_ExcFamilyType;
     densityFamilyType d_densityFamilyType;

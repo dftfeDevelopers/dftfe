@@ -409,6 +409,7 @@ namespace dftfe
 
     //
     //
+    //
     std::vector<std::vector<double>> eigenValuesInputUp(
       eigenValuesInput.size());
     std::vector<std::vector<double>> eigenValuesInputDown(

@@ -41,3 +41,4 @@ srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scfConstraintMa
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan

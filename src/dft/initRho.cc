@@ -25,6 +25,7 @@
 #include <dftUtils.h>
 #include <fileReaders.h>
 #include <vectorUtilities.h>
+#include <cmath>
 
 namespace dftfe
 {
@@ -130,6 +131,8 @@ namespace dftfe
     const unsigned int n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
     const unsigned int nCells     = d_basisOperationsPtrHost->nCells();
     d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    // below resize is unnecessary as the same is
+    // done in "interpolateDensityNodalDataToQuadratureDataGeneral" function
     for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
       d_densityInQuadValues[iComp].resize(n_q_points * nCells);
 
@@ -137,6 +140,10 @@ namespace dftfe
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
 
     if (isGradDensityDataDependent)
       {
@@ -400,8 +407,10 @@ namespace dftfe
             d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
+            d_tauInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            isGradDensityDataDependent);
+            isGradDensityDataDependent,
+            isTauMGGA);
 
         if (d_dftParamsPtr->spinPolarized == 1 &&
             d_dftParamsPtr->constraintMagnetization &&
@@ -429,8 +438,10 @@ namespace dftfe
               d_densityInNodalValues[1],
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
+              d_tauInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent);
+              isGradDensityDataDependent,
+              isTauMGGA);
           }
         else if (d_dftParamsPtr->spinPolarized == 1 &&
                  d_dftParamsPtr->constraintMagnetization &&
@@ -462,8 +473,10 @@ namespace dftfe
               d_densityInNodalValues[1],
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
+              d_tauInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent);
+              isGradDensityDataDependent,
+              isTauMGGA);
           }
 
         normalizeRhoInQuadValues();
@@ -903,6 +916,57 @@ namespace dftfe
               }
           }
 
+        if (isTauMGGA)
+          {
+            double const prefact =
+              (3.0 / 10.0) * std::pow(3 * C_pi * C_pi, 2.0 / 3.0);
+            d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                          1);
+            for (unsigned int iComp = 0; iComp < d_tauInQuadValues.size();
+                 iComp++)
+              {
+                d_tauInQuadValues[iComp].resize(n_q_points * nCells);
+              }
+            for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+              {
+                for (unsigned int iQuad = 0; iQuad < n_q_points; ++iQuad)
+                  {
+                    if (d_dftParamsPtr->spinPolarized == 0)
+                      {
+                        double rho =
+                          d_densityInQuadValues[0][iCell * n_q_points + iQuad];
+                        d_tauInQuadValues[0][iCell * n_q_points + iQuad] =
+                          prefact * std::pow(std::abs(rho), 5.0 / 3.0);
+                      }
+                    else
+                      {
+                        double rhoSpinUp =
+                          (d_densityInQuadValues[0]
+                                                [iCell * n_q_points + iQuad] +
+                           d_densityInQuadValues[1]
+                                                [iCell * n_q_points + iQuad]) /
+                          2;
+                        double rhoSpinDown =
+                          (d_densityInQuadValues[0]
+                                                [iCell * n_q_points + iQuad] -
+                           d_densityInQuadValues[1]
+                                                [iCell * n_q_points + iQuad]) /
+                          2;
+
+                        d_tauInQuadValues[0][iCell * n_q_points + iQuad] =
+                          prefact *
+                          (std::pow(std::abs(rhoSpinUp) * 2, 5.0 / 3.0) +
+                           std::pow(std::abs(rhoSpinDown) * 2, 5.0 / 3.0)) /
+                          2;
+                        d_tauInQuadValues[1][iCell * n_q_points + iQuad] =
+                          prefact *
+                          (std::pow(std::abs(rhoSpinUp) * 2, 5.0 / 3.0) -
+                           std::pow(std::abs(rhoSpinDown) * 2, 5.0 / 3.0)) /
+                          2;
+                      }
+                  }
+              }
+          }
         normalizeRhoInQuadValues();
         if (d_dftParamsPtr->constraintMagnetization)
           normalizeRhoMagInInitialGuessQuadValues();
@@ -945,6 +1009,10 @@ namespace dftfe
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
 
     if (isGradDensityDataDependent)
       {
@@ -1571,6 +1639,17 @@ namespace dftfe
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+    if (isTauMGGA)
+      {
+        d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+        for (unsigned int iComp = 0; iComp < d_tauInQuadValues.size(); iComp++)
+          {
+            d_tauInQuadValues[iComp].resize(n_q_points * nCells);
+          }
+      }
     // Initialize electron density table storage for rhoOut only for Anderson
     // with Kerker for other mixing schemes it is done in density.cc as we need
     // to do this initialization every SCF
@@ -1644,6 +1723,33 @@ namespace dftfe
               }
           }
       }
+    std::vector<std::string> field2 = {"TAU", "TAUMAG_Z"};
+    if (isTauMGGA)
+      {
+        for (int i = 0; i < d_tauInQuadValues.size(); i++)
+          {
+            if (!(i == 1 && d_dftParamsPtr->restartSpinFromNoSpin))
+              loadQuadratureData(d_basisOperationsPtrHost,
+                                 d_densityQuadratureId,
+                                 d_tauInQuadValues[i],
+                                 1,
+                                 field2[i],
+                                 d_dftParamsPtr->restartFolder,
+                                 d_mpiCommParent,
+                                 mpi_communicator,
+                                 interpoolcomm,
+                                 interBandGroupComm);
+            else
+              {
+                for (long unsigned int index = 0;
+                     index < d_tauInQuadValues[i].size();
+                     index++)
+                  d_tauInQuadValues[i][index] =
+                    d_dftParamsPtr->tot_magnetization *
+                    d_tauInQuadValues[0][index];
+              }
+          }
+      }
     double integralChargeFromQuadDataInput =
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[0]);
     if (d_dftParamsPtr->verbosity >= 1)
@@ -1687,9 +1793,10 @@ namespace dftfe
             d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
+            d_tauInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            isGradDensityDataDependent);
-
+            isGradDensityDataDependent,
+            isTauMGGA);
         if (d_dftParamsPtr->verbosity >= 3)
           {
             pcout << "Total Charge before scaling: " << charge << std::endl;

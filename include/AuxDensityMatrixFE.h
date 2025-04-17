@@ -33,6 +33,12 @@ namespace dftfe
 
 
     void
+    applyLocalOperations(
+      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+        &wfcData) override;
+
+    void
     evalOverlapMatrixStart(const std::vector<double> &quadpts,
                            const std::vector<double> &quadWt) override;
 
@@ -96,6 +102,10 @@ namespace dftfe
     std::vector<double> d_densityValsSpinDownAllQuads;
     std::vector<double> d_gradDensityValsSpinUpAllQuads;
     std::vector<double> d_gradDensityValsSpinDownAllQuads;
+    std::vector<double> d_tauValsTotalAllQuads;
+    std::vector<double> d_tauValsSpinUpAllQuads;
+    std::vector<double> d_tauValsSpinDownAllQuads;
+
     std::vector<double> d_quadPointsAll;
     std::vector<double> d_quadWeightsAll;
   };

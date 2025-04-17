@@ -346,6 +346,7 @@ namespace dftfe
 
     updateAuxDensityXCMatrix(d_densityInQuadValues,
                              d_gradDensityInQuadValues,
+                             d_tauInQuadValues,
                              d_rhoCore,
                              d_gradRhoCore,
                              getEigenVectors(),

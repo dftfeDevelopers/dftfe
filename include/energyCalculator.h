@@ -249,6 +249,12 @@ namespace dftfe
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradDensityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoOutValuesLpsp,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
@@ -302,6 +308,12 @@ namespace dftfe
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradDensityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauInValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauOutValues,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         AuxDensityXCInRepresentationPtr,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
@@ -313,7 +325,6 @@ namespace dftfe
       const std::map<dealii::types::global_dof_index, double>
                 &atomElectrostaticNodeIdToChargeMap,
       const bool smearedNuclearCharges);
-
 
 
     void
@@ -331,6 +342,9 @@ namespace dftfe
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradDensityOutValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &tauInValues,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         AuxDensityXCInRepresentationPtr,
       std::shared_ptr<AuxDensityMatrix<memorySpace>>

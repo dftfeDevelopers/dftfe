@@ -1008,8 +1008,11 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &quadratureGradValueData,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadratureTauValueData,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                 &quadratureHessianValueData,
       const bool isEvaluateGradData    = false,
+      const bool isEvaluateTauData     = false,
       const bool isEvaluateHessianData = false);
 
 
@@ -1376,6 +1379,9 @@ namespace dftfe
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradDensityQuadValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+                                                          &tauQuadValues,
       const std::map<dealii::CellId, std::vector<double>> &rhoCore,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCore,
       const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
@@ -1796,6 +1802,14 @@ namespace dftfe
       d_densityResidualQuadValues;
     std::vector<distributedCPUVec<double>> d_densityInNodalValues,
       d_densityOutNodalValues, d_densityResidualNodalValues;
+
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      d_tauInQuadValues, d_tauOutQuadValues, d_tauResidualQuadValues;
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      d_tauInNodalValues, d_tauOutNodalValues, d_tauResidualNodalValues;
+
 
     // std::map<dealii::CellId, std::vector<double>> d_phiInValues,
     // d_phiOutValues;

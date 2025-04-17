@@ -37,18 +37,24 @@ namespace dftfe
                               &BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
+    const std::vector<double> &kPointCoords,
     const std::vector<double> &kPointWeights,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &densityValues,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                        &gradDensityValues,
+      &gradDensityValues,
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+                        &tauValues,
     const bool           isEvaluateGradRho,
+    const bool           isEvaluateTau,
     const MPI_Comm      &mpiCommParent,
     const MPI_Comm      &interpoolcomm,
     const MPI_Comm      &interBandGroupComm,
     const dftParameters &dftParams);
+
 
   template <typename NumberType>
   void
@@ -68,5 +74,20 @@ namespace dftfe
     double                                     *gradRho,
     const bool                                  isEvaluateGradRho);
 
+  template <typename NumberType>
+  void
+  computeTauFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                                               &BLASWrapperPtr,
+    const std::pair<unsigned int, unsigned int> cellRange,
+    const std::pair<unsigned int, unsigned int> vecRange,
+    const unsigned int                          nQuadsPerCell,
+    double                                     *partialOccupVec,
+    double                                     *kCoord,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *gradWfcQuadPointData,
+    double *kineticEnergyDensityCellsWfcContributions,
+    double *tau);
 } // namespace dftfe
 #endif

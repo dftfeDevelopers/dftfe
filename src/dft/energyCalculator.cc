@@ -576,6 +576,12 @@ namespace dftfe
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &gradDensityOutValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &tauInValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &tauOutValues,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &rhoOutValuesLpsp,
     std::shared_ptr<AuxDensityMatrix<memorySpace>>
@@ -647,6 +653,9 @@ namespace dftfe
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       gradDensityOutQuadValuesSpinPolarized;
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      tauOutQuadValuesSpinPolarized = tauOutValues;
 
     if (d_dftParams.spinPolarized == 0)
       densityOutQuadValuesSpinPolarized.push_back(
@@ -656,6 +665,10 @@ namespace dftfe
     bool isIntegrationByPartsGradDensityDependenceVxc =
       (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+
+    const bool isTauMGGA =
+      (excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
 
     if (isIntegrationByPartsGradDensityDependenceVxc)
       {
@@ -668,11 +681,23 @@ namespace dftfe
               gradDensityOutValues[0].size(), 0.0));
       }
 
+    if (isTauMGGA)
+      {
+        if (d_dftParams.spinPolarized == 0)
+          {
+            tauOutQuadValuesSpinPolarized.push_back(
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>(
+                tauOutValues[0].size(), 0.0));
+          }
+      }
+
     computeXCEnergyTermsSpinPolarized(basisOperationsPtr,
                                       densityQuadratureID,
                                       excManagerPtr,
                                       densityOutQuadValuesSpinPolarized,
                                       gradDensityOutQuadValuesSpinPolarized,
+                                      tauOutQuadValuesSpinPolarized,
                                       auxDensityXCInRepresentationPtr,
                                       auxDensityXCOutRepresentationPtr,
                                       exchangeEnergy,
@@ -799,6 +824,12 @@ namespace dftfe
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &gradDensityOutValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &tauInValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &tauOutValues,
     std::shared_ptr<AuxDensityMatrix<memorySpace>>
       auxDensityXCInRepresentationPtr,
     std::shared_ptr<AuxDensityMatrix<memorySpace>>
@@ -849,14 +880,30 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       gradDensityOutQuadValuesSpinPolarized;
 
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      tauInQuadValuesSpinPolarized;
+    std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      tauOutQuadValuesSpinPolarized;
+
     bool isIntegrationByPartsGradDensityDependenceVxc =
       (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
+
+    const bool isTauMGGA =
+      (excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
 
     if (isIntegrationByPartsGradDensityDependenceVxc)
       {
         gradDensityInQuadValuesSpinPolarized  = gradDensityInValues;
         gradDensityOutQuadValuesSpinPolarized = gradDensityOutValues;
+      }
+    if (isTauMGGA)
+      {
+        tauInQuadValuesSpinPolarized  = tauInValues;
+        tauOutQuadValuesSpinPolarized = tauOutValues;
       }
 
     if (d_dftParams.spinPolarized == 0)
@@ -879,6 +926,17 @@ namespace dftfe
                                           dftfe::utils::MemorySpace::HOST>(
                 gradDensityOutValues[0].size(), 0.0));
           }
+        if (isTauMGGA)
+          {
+            tauInQuadValuesSpinPolarized.push_back(
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>(
+                tauInValues[0].size(), 0.0));
+            tauOutQuadValuesSpinPolarized.push_back(
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>(
+                tauOutValues[0].size(), 0.0));
+          }
       }
 
     computeXCEnergyTermsSpinPolarized(basisOperationsPtr,
@@ -886,6 +944,7 @@ namespace dftfe
                                       excManagerPtr,
                                       densityInQuadValuesSpinPolarized,
                                       gradDensityInQuadValuesSpinPolarized,
+                                      tauInQuadValuesSpinPolarized,
                                       auxDensityXCInRepresentationPtr,
                                       auxDensityXCInRepresentationPtr,
                                       exchangeEnergy,
@@ -901,6 +960,7 @@ namespace dftfe
                                       excManagerPtr,
                                       densityOutQuadValuesSpinPolarized,
                                       gradDensityOutQuadValuesSpinPolarized,
+                                      tauOutQuadValuesSpinPolarized,
                                       auxDensityXCInRepresentationPtr,
                                       auxDensityXCOutRepresentationPtr,
                                       exchangeEnergy,
@@ -946,6 +1006,9 @@ namespace dftfe
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &gradDensityOutValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &tauOutValues,
     std::shared_ptr<AuxDensityMatrix<memorySpace>>
       auxDensityXCInRepresentationPtr,
     std::shared_ptr<AuxDensityMatrix<memorySpace>>
@@ -987,11 +1050,27 @@ namespace dftfe
       (excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
 
+    const bool isTauMGGA =
+      (excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
     if (isIntegrationByPartsGradDensityDependenceVxc)
       {
         xDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
           std::vector<double>();
         cDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
+          std::vector<double>();
+      }
+
+    if (isTauMGGA)
+      {
+        xDensityInDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] =
+          std::vector<double>();
+        xDensityInDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown] =
+          std::vector<double>();
+        cDensityInDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp] =
+          std::vector<double>();
+        cDensityInDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown] =
           std::vector<double>();
       }
 
@@ -1033,6 +1112,22 @@ namespace dftfe
               xDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma];
             pdecDensityInSigma =
               cDensityInDataOut[xcRemainderOutputDataAttributes::pdeSigma];
+          }
+
+        std::vector<double> pdexTauInSpinUp;
+        std::vector<double> pdexTauInSpinDown;
+        std::vector<double> pdecTauInSpinUp;
+        std::vector<double> pdecTauInSpinDown;
+        if (isTauMGGA)
+          {
+            pdexTauInSpinUp =
+              xDensityInDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp];
+            pdexTauInSpinDown = xDensityInDataOut
+              [xcRemainderOutputDataAttributes::pdeTauSpinDown];
+            pdecTauInSpinUp =
+              cDensityInDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp];
+            pdecTauInSpinDown = cDensityInDataOut
+              [xcRemainderOutputDataAttributes::pdeTauSpinDown];
           }
 
         std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
@@ -1125,8 +1220,30 @@ namespace dftfe
                   VxcGrad * basisOperationsPtr
                               ->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
               }
-          }
-      } // cell loop
+            if (isTauMGGA)
+              {
+                double VxcTauContribution =
+                  pdexTauInSpinUp[iQuad] + pdecTauInSpinUp[iQuad];
+                excCorrPotentialTimesRho +=
+                  VxcTauContribution *
+                  ((tauOutValues[0][iCell * nQuadsPerCell + iQuad] +
+                    tauOutValues[1][iCell * nQuadsPerCell + iQuad]) /
+                   2.0) *
+                  basisOperationsPtr
+                    ->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+
+                VxcTauContribution =
+                  pdexTauInSpinDown[iQuad] + pdecTauInSpinDown[iQuad];
+                excCorrPotentialTimesRho +=
+                  VxcTauContribution *
+                  ((tauOutValues[0][iCell * nQuadsPerCell + iQuad] -
+                    tauOutValues[1][iCell * nQuadsPerCell + iQuad]) /
+                   2.0) *
+                  basisOperationsPtr
+                    ->JxWBasisData()[iCell * nQuadsPerCell + iQuad];
+              } // TauMGGA loop
+          }     // iQuad loop
+      }         // cell loop
   }
 
 

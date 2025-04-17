@@ -34,7 +34,9 @@ namespace dftfe
     gradRho,
     magZ,
     gradMagZ,
-    hubbardOccupation
+    hubbardOccupation,
+    tau,
+    tauMagZ
   };
 
   /**
@@ -165,11 +167,14 @@ namespace dftfe
     std::vector<double> d_A, d_c;
     double              d_cFinal;
 
+  public:
     std::map<
       mixingVariable,
       std::deque<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>>
       d_variableHistoryIn, d_variableHistoryResidual;
+
+  private:
     std::map<
       mixingVariable,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>

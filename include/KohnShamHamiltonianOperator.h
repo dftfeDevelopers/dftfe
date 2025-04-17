@@ -384,8 +384,14 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, memorySpace>
       d_invJacderExcWithSigmaTimesGradRhoJxW;
+    dftfe::utils::MemoryStorage<double, memorySpace>
+      d_invJacinvJacderExcWithTauJxW;
     std::vector<dftfe::utils::MemoryStorage<double, memorySpace>>
       d_invJacKPointTimesJxW;
+    std::vector<dftfe::utils::MemoryStorage<double, memorySpace>>
+      d_halfKSquareTimesDerExcwithTauJxW;
+    std::vector<dftfe::utils::MemoryStorage<double, memorySpace>>
+      d_derExcwithTauTimesinvJacKpointTimesJxW;
     // Constraints scaled with inverse sqrt diagonal Mass Matrix
     std::shared_ptr<dftUtils::constraintMatrixInfo<memorySpace>>
       inverseMassVectorScaledConstraintsNoneDataInfoPtr;

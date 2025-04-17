@@ -44,3 +44,4 @@ srun ./dftfe parameterFileBccFe_scfConstraintMag.prm > outputBccFe_scfConstraint
 srun ./dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
 srun ./dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
 srun ./dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
+srun ./dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
