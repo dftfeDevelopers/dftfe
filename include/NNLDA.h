@@ -16,12 +16,12 @@ namespace dftfe
 
     ~NNLDA();
     void
-    evaluateexc(const double *rho, const unsigned int numPoints, double *exc);
+    evaluateexc(const double *rho, const dftfe::uInt numPoints, double *exc);
     void
-    evaluatevxc(const double      *rho,
-                const unsigned int numPoints,
-                double            *exc,
-                double            *vxc);
+    evaluatevxc(const double     *rho,
+                const dftfe::uInt numPoints,
+                double           *exc,
+                double           *vxc);
 
   private:
     std::string                          d_modelFilename;

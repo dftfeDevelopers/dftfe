@@ -82,7 +82,7 @@ namespace dftfe
       template <typename T>
       void
       distribute(distributedCPUVec<T> &fieldVector,
-                 const unsigned int    blockSize) const;
+                 const dftfe::uInt     blockSize) const;
 
       template <typename T>
       void
@@ -102,7 +102,7 @@ namespace dftfe
       template <typename T>
       void
       distribute_slave_to_master(distributedCPUVec<T> &fieldVector,
-                                 const unsigned int    blockSize) const;
+                                 const dftfe::uInt     blockSize) const;
 
       template <typename T>
       void
@@ -132,7 +132,7 @@ namespace dftfe
       template <typename T>
       void
       set_zero(distributedCPUVec<T> &fieldVector,
-               const unsigned int    blockSize) const;
+               const dftfe::uInt     blockSize) const;
       template <typename T>
       void
       set_zero(
@@ -199,7 +199,7 @@ namespace dftfe
       template <typename T>
       void
       distribute(distributedCPUVec<T> &fieldVector,
-                 const unsigned int    blockSize) const;
+                 const dftfe::uInt     blockSize) const;
 
       /**
        * @brief overloaded dealii internal function distribute for flattened dealii array  which sets
@@ -245,7 +245,7 @@ namespace dftfe
       template <typename T>
       void
       distribute_slave_to_master(distributedCPUVec<T> &fieldVector,
-                                 const unsigned int    blockSize) const;
+                                 const dftfe::uInt     blockSize) const;
 
       void
       initializeScaledConstraints(
@@ -264,7 +264,7 @@ namespace dftfe
       template <typename T>
       void
       set_zero(distributedCPUVec<T> &fieldVector,
-               const unsigned int    blockSize) const;
+               const dftfe::uInt     blockSize) const;
 
       /**
        * clear data members
@@ -274,55 +274,55 @@ namespace dftfe
 
 
     private:
-      std::vector<unsigned int> d_rowIdsLocal;
-      std::vector<unsigned int> d_columnIdsLocal;
-      std::vector<double>       d_columnValues;
-      std::vector<double>       d_inhomogenities;
-      std::vector<unsigned int> d_rowSizes;
-      std::vector<unsigned int> d_rowSizesAccumulated;
+      std::vector<dftfe::uInt> d_rowIdsLocal;
+      std::vector<dftfe::uInt> d_columnIdsLocal;
+      std::vector<double>      d_columnValues;
+      std::vector<double>      d_inhomogenities;
+      std::vector<dftfe::uInt> d_rowSizes;
+      std::vector<dftfe::uInt> d_rowSizesAccumulated;
       std::vector<dealii::types::global_dof_index>
         d_localIndexMapUnflattenedToFlattened;
 
-      dftfe::utils::MemoryStorage<unsigned int,
+      dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::DEVICE>
         d_rowIdsLocalDevice;
-      dftfe::utils::MemoryStorage<unsigned int,
+      dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::DEVICE>
         d_columnIdsLocalDevice;
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         d_columnValuesDevice;
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         d_inhomogenitiesDevice;
-      dftfe::utils::MemoryStorage<unsigned int,
+      dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::DEVICE>
         d_rowSizesDevice;
-      dftfe::utils::MemoryStorage<unsigned int,
+      dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::DEVICE>
         d_rowSizesAccumulatedDevice;
       dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
                                   dftfe::utils::MemorySpace::DEVICE>
         d_localIndexMapUnflattenedToFlattenedDevice;
 
-      std::vector<unsigned int> d_rowIdsLocalBins;
-      std::vector<unsigned int> d_columnIdsLocalBins;
-      std::vector<unsigned int> d_columnIdToRowIdMapBins;
-      std::vector<double>       d_columnValuesBins;
-      std::vector<unsigned int> d_binColumnSizes;
-      std::vector<unsigned int> d_binColumnSizesAccumulated;
+      std::vector<dftfe::uInt> d_rowIdsLocalBins;
+      std::vector<dftfe::uInt> d_columnIdsLocalBins;
+      std::vector<dftfe::uInt> d_columnIdToRowIdMapBins;
+      std::vector<double>      d_columnValuesBins;
+      std::vector<dftfe::uInt> d_binColumnSizes;
+      std::vector<dftfe::uInt> d_binColumnSizesAccumulated;
 
-      dftfe::utils::MemoryStorage<unsigned int,
+      dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::DEVICE>
         d_rowIdsLocalBinsDevice;
-      dftfe::utils::MemoryStorage<unsigned int,
+      dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::DEVICE>
         d_columnIdsLocalBinsDevice;
-      dftfe::utils::MemoryStorage<unsigned int,
+      dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::DEVICE>
         d_columnIdToRowIdMapBinsDevice;
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         d_columnValuesBinsDevice;
 
-      unsigned int d_numConstrainedDofs;
+      dftfe::uInt d_numConstrainedDofs;
     };
 #endif
 

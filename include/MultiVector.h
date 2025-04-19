@@ -103,7 +103,7 @@ namespace dftfe
      * the behavior of a MultiVector while using just one processor)
      *
      * @tparam template parameter ValueType defines underlying datatype being stored
-     *  in the MultiVector (i.e., int, double, complex<double>, etc.)
+     *  in the MultiVector (i.e., dftfe::Int, double, complex<double>, etc.)
      * @tparam template parameter memorySpace defines the MemorySpace (i.e., HOST or
      * DEVICE) in which the MultiVector must reside.
      *
@@ -155,9 +155,9 @@ namespace dftfe
        * @param[in] initVal initial value of elements of the MultiVector
        *
        */
-      MultiVector(const size_type size,
-                  const size_type numVectors,
-                  const ValueType initVal = 0);
+      MultiVector(const dftfe::uInt size,
+                  const dftfe::uInt numVectors,
+                  const ValueType   initVal = 0);
 
       /**
        * @brief Constructor for a \serial MultiVector with a predefined
@@ -180,8 +180,8 @@ namespace dftfe
        */
       MultiVector(
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
-                  storage,
-        size_type numVectors);
+                    storage,
+        dftfe::uInt numVectors);
 
       /**
        * @brief Constructor for a \b distributed MultiVector based on an input MPIPatternP2P.
@@ -193,9 +193,9 @@ namespace dftfe
        * initialized
        */
       MultiVector(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                                  mpiPatternP2P,
-                  const size_type numVectors,
-                  const ValueType initVal = 0);
+                                    mpiPatternP2P,
+                  const dftfe::uInt numVectors,
+                  const ValueType   initVal = 0);
 
       /**
        * @brief Constructor for a \b distributed MultiVector with a predefined
@@ -221,8 +221,8 @@ namespace dftfe
         std::unique_ptr<typename MultiVector<ValueType, memorySpace>::Storage>
           &storage,
         std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                        mpiPatternP2P,
-        const size_type numVectors);
+                          mpiPatternP2P,
+        const dftfe::uInt numVectors);
 
       /**
        * @brief Constructor for a \distributed MultiVector based on locally
@@ -243,12 +243,11 @@ namespace dftfe
        * @note The locallyOwnedRange should be an open interval where the start
        * index is included, but the end index is not included.
        */
-      MultiVector(
-        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const std::vector<global_size_type>                &ghostIndices,
-        const MPI_Comm                                     &mpiComm,
-        const size_type                                     numVectors,
-        ValueType                                           initVal = 0);
+      MultiVector(const std::pair<dftfe::uInt, dftfe::uInt> locallyOwnedRange,
+                  const std::vector<dftfe::uInt>           &ghostIndices,
+                  const MPI_Comm                           &mpiComm,
+                  const dftfe::uInt                         numVectors,
+                  ValueType                                 initVal = 0);
 
       /**
        * @brief Constructor for a special case of \b distributed MultiVector where none
@@ -267,11 +266,10 @@ namespace dftfe
        * @note The locallyOwnedRange should be an open interval where the start index included,
        * but the end index is not included.
        */
-      MultiVector(
-        const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const MPI_Comm                                     &mpiComm,
-        const size_type                                     numVectors,
-        const ValueType                                     initVal = 0);
+      MultiVector(const std::pair<dftfe::uInt, dftfe::uInt> locallyOwnedRange,
+                  const MPI_Comm                           &mpiComm,
+                  const dftfe::uInt                         numVectors,
+                  const ValueType                           initVal = 0);
 
 
       /**
@@ -291,10 +289,10 @@ namespace dftfe
        * @param[in] initVal value with which the MultiVector shoud be
        * initialized
        */
-      MultiVector(const global_size_type globalSize,
-                  const MPI_Comm        &mpiComm,
-                  const size_type        numVectors,
-                  const ValueType        initVal = 0);
+      MultiVector(const dftfe::uInt globalSize,
+                  const MPI_Comm   &mpiComm,
+                  const dftfe::uInt numVectors,
+                  const ValueType   initVal = 0);
 
 
       /**
@@ -352,9 +350,9 @@ namespace dftfe
        */
       void
       reinit(std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
-                             mpiPatternP2P,
-             const size_type numVectors,
-             const ValueType initVal = 0);
+                               mpiPatternP2P,
+             const dftfe::uInt numVectors,
+             const ValueType   initVal = 0);
 
       /**
        * @brief reinit based on an input distributed MultiVector.
@@ -453,19 +451,20 @@ namespace dftfe
       zeroOutGhosts();
 
       void
-      updateGhostValues(const size_type communicationChannel = 0);
+      updateGhostValues(const dftfe::uInt communicationChannel = 0);
 
       void
-      accumulateAddLocallyOwned(const size_type communicationChannel = 0);
+      accumulateAddLocallyOwned(const dftfe::uInt communicationChannel = 0);
 
       void
-      updateGhostValuesBegin(const size_type communicationChannel = 0);
+      updateGhostValuesBegin(const dftfe::uInt communicationChannel = 0);
 
       void
       updateGhostValuesEnd();
 
       void
-      accumulateAddLocallyOwnedBegin(const size_type communicationChannel = 0);
+      accumulateAddLocallyOwnedBegin(
+        const dftfe::uInt communicationChannel = 0);
 
       void
       accumulateAddLocallyOwnedEnd();
@@ -485,15 +484,15 @@ namespace dftfe
         utils::mpi::communicationPrecision commPrecision);
 
 
-      global_size_type
+      dftfe::uInt
       globalSize() const;
-      size_type
+      dftfe::uInt
       localSize() const;
-      size_type
+      dftfe::uInt
       locallyOwnedSize() const;
-      size_type
+      dftfe::uInt
       ghostSize() const;
-      size_type
+      dftfe::uInt
       numVectors() const;
 
       const Storage &
@@ -501,11 +500,11 @@ namespace dftfe
 
     private:
       std::unique_ptr<Storage> d_storage;
-      size_type                d_localSize;
-      global_size_type         d_globalSize;
-      size_type                d_locallyOwnedSize;
-      size_type                d_ghostSize;
-      size_type                d_numVectors;
+      dftfe::uInt              d_localSize;
+      dftfe::uInt              d_globalSize;
+      dftfe::uInt              d_locallyOwnedSize;
+      dftfe::uInt              d_ghostSize;
+      dftfe::uInt              d_numVectors;
       std::unique_ptr<utils::mpi::MPICommunicatorP2P<ValueType, memorySpace>>
         d_mpiCommunicatorP2P;
       std::shared_ptr<const utils::mpi::MPIPatternP2P<memorySpace>>
@@ -520,7 +519,7 @@ namespace dftfe
     createMultiVectorFromDealiiPartitioner(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
                                           &partitioner,
-      const size_type                      numVectors,
+      const dftfe::uInt                    numVectors,
       MultiVector<ValueType, memorySpace> &multiVector);
 
   } // end of namespace linearAlgebra

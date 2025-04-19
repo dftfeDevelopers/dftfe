@@ -29,11 +29,11 @@ namespace dftfe
 {
   struct SlaterPrimitive
   {
-    int    n;         // principal quantum number
-    int    l;         // azimuthal (angular) quantum number
-    int    m;         // magnetic quantum number
-    double alpha;     // exponent of the basis
-    double normConst; // normalization constant for the radial part
+    dftfe::Int n;         // principal quantum number
+    dftfe::Int l;         // azimuthal (angular) quantum number
+    dftfe::Int m;         // magnetic quantum number
+    double     alpha;     // exponent of the basis
+    double     normConst; // normalization constant for the radial part
   };
 
   struct SlaterBasisInfo
@@ -58,19 +58,19 @@ namespace dftfe
       const std::unordered_map<std::string, std::string> &atomBasisFileNames)
       override;
 
-    virtual int
+    virtual dftfe::Int
     getNumBasis() const override;
 
     virtual std::vector<double>
-    getBasisValue(const unsigned int         basisId,
+    getBasisValue(const dftfe::uInt          basisId,
                   const std::vector<double> &x) const override;
 
     virtual std::vector<double>
-    getBasisGradient(const unsigned int         basisId,
+    getBasisGradient(const dftfe::uInt          basisId,
                      const std::vector<double> &x) const override;
 
     virtual std::vector<double>
-    getBasisLaplacian(const unsigned int         basisId,
+    getBasisLaplacian(const dftfe::uInt          basisId,
                       const std::vector<double> &x) const override;
 
   private:

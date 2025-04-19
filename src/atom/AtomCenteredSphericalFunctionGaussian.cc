@@ -20,9 +20,9 @@
 namespace dftfe
 {
   AtomCenteredSphericalFunctionGaussian::AtomCenteredSphericalFunctionGaussian(
-    double       RcParameter,
-    double       RmaxParameter,
-    unsigned int lParameter)
+    double      RcParameter,
+    double      RmaxParameter,
+    dftfe::uInt lParameter)
   {
     d_lQuantumNumber = lParameter;
     d_Rc             = RcParameter;

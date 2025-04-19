@@ -29,14 +29,14 @@ namespace dftfe
   {
     template <typename ValueType>
     __global__ void
-    saddKernel(ValueType             *y,
-               ValueType             *x,
-               const ValueType        beta,
-               const dftfe::size_type size)
+    saddKernel(ValueType        *y,
+               ValueType        *x,
+               const ValueType   beta,
+               const dftfe::uInt size)
     {
-      const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
+      const dftfe::uInt globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dftfe::size_type idx = globalId; idx < size;
+      for (dftfe::uInt idx = globalId; idx < size;
            idx += blockDim.x * gridDim.x)
         {
           y[idx] = beta * y[idx] - x[idx];
@@ -47,14 +47,14 @@ namespace dftfe
 
     template <typename ValueTypeComplex, typename ValueTypeReal>
     __global__ void
-    copyComplexArrToRealArrsDeviceKernel(const dftfe::size_type  size,
+    copyComplexArrToRealArrsDeviceKernel(const dftfe::uInt       size,
                                          const ValueTypeComplex *complexArr,
                                          ValueTypeReal          *realArr,
                                          ValueTypeReal          *imagArr)
     {
-      const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
+      const dftfe::uInt globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dftfe::size_type idx = globalId; idx < size;
+      for (dftfe::uInt idx = globalId; idx < size;
            idx += blockDim.x * gridDim.x)
         {
           realArr[idx] = complexArr[idx].x;
@@ -64,14 +64,14 @@ namespace dftfe
 
     template <typename ValueTypeComplex, typename ValueTypeReal>
     __global__ void
-    copyRealArrsToComplexArrDeviceKernel(const dftfe::size_type size,
-                                         const ValueTypeReal   *realArr,
-                                         const ValueTypeReal   *imagArr,
-                                         ValueTypeComplex      *complexArr)
+    copyRealArrsToComplexArrDeviceKernel(const dftfe::uInt    size,
+                                         const ValueTypeReal *realArr,
+                                         const ValueTypeReal *imagArr,
+                                         ValueTypeComplex    *complexArr)
     {
-      const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
+      const dftfe::uInt globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dftfe::size_type idx = globalId; idx < size;
+      for (dftfe::uInt idx = globalId; idx < size;
            idx += blockDim.x * gridDim.x)
         {
           complexArr[idx].x = realArr[idx];
@@ -84,34 +84,32 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     __global__ void
     interpolateNodalDataToQuadDeviceKernel(
-      const dftfe::size_type numDofsPerElem,
-      const dftfe::size_type numQuadPoints,
-      const dftfe::size_type numVecs,
-      const ValueType2      *parentShapeFunc,
-      const ValueType1      *mapPointToCellIndex,
-      const ValueType1      *mapPointToProcLocal,
-      const ValueType1      *mapPointToShapeFuncIndex,
-      const ValueType2      *parentNodalValues,
-      ValueType2            *quadValues)
+      const dftfe::uInt numDofsPerElem,
+      const dftfe::uInt numQuadPoints,
+      const dftfe::uInt numVecs,
+      const ValueType2 *parentShapeFunc,
+      const ValueType1 *mapPointToCellIndex,
+      const ValueType1 *mapPointToProcLocal,
+      const ValueType1 *mapPointToShapeFuncIndex,
+      const ValueType2 *parentNodalValues,
+      ValueType2       *quadValues)
     {
-      const dftfe::size_type globalThreadId =
-        blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::size_type numberEntries = numQuadPoints * numVecs;
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numberEntries  = numQuadPoints * numVecs;
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          dftfe::size_type pointIndex = index / numVecs;
-          dftfe::size_type iCellIndex = mapPointToCellIndex[pointIndex];
-          dftfe::size_type iShapeFuncIndex =
-            mapPointToShapeFuncIndex[pointIndex];
-          dftfe::size_type iProcLocalIndex = mapPointToProcLocal[pointIndex];
+          dftfe::uInt pointIndex      = index / numVecs;
+          dftfe::uInt iCellIndex      = mapPointToCellIndex[pointIndex];
+          dftfe::uInt iShapeFuncIndex = mapPointToShapeFuncIndex[pointIndex];
+          dftfe::uInt iProcLocalIndex = mapPointToProcLocal[pointIndex];
 
-          dftfe::size_type iVec = index - pointIndex * numVecs;
-
+          dftfe::uInt iVec = index - pointIndex * numVecs;
 
 
-          for (dftfe::size_type iParentNode = 0; iParentNode < numDofsPerElem;
+
+          for (dftfe::uInt iParentNode = 0; iParentNode < numDofsPerElem;
                iParentNode++)
             {
               dftfe::utils::copyValue(
@@ -142,7 +140,7 @@ namespace dftfe
         // std::cout<<"Device Id: "<<device_id<<" Task Id
         // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
         dftfe::utils::setDevice(device_id);
-        // int device = 0;
+        // dftfe::Int device = 0;
         // dftfe::utils::getDevice(&device);
         // std::cout<< "Device Id currently used is "<<device<< " for taskId:
         // "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
@@ -152,7 +150,7 @@ namespace dftfe
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
-      copyComplexArrToRealArrsDevice(const dftfe::size_type  size,
+      copyComplexArrToRealArrsDevice(const dftfe::uInt       size,
                                      const ValueTypeComplex *complexArr,
                                      ValueTypeReal          *realArr,
                                      ValueTypeReal          *imagArr)
@@ -183,10 +181,10 @@ namespace dftfe
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
-      copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                     const ValueTypeReal   *realArr,
-                                     const ValueTypeReal   *imagArr,
-                                     ValueTypeComplex      *complexArr)
+      copyRealArrsToComplexArrDevice(const dftfe::uInt    size,
+                                     const ValueTypeReal *realArr,
+                                     const ValueTypeReal *imagArr,
+                                     ValueTypeComplex    *complexArr)
       {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         copyRealArrsToComplexArrDeviceKernel<<<
@@ -214,12 +212,12 @@ namespace dftfe
 
       template <typename ValueType>
       void
-      sadd(ValueType             *y,
-           ValueType             *x,
-           const ValueType        beta,
-           const dftfe::size_type size)
+      sadd(ValueType        *y,
+           ValueType        *x,
+           const ValueType   beta,
+           const dftfe::uInt size)
       {
-        const dftfe::size_type gridSize =
+        const dftfe::uInt gridSize =
           (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
           (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -245,15 +243,15 @@ namespace dftfe
       template <typename ValueType1, typename ValueType2>
       void
       interpolateNodalDataToQuadDevice(
-        const dftfe::size_type numDofsPerElem,
-        const dftfe::size_type numQuadPoints,
-        const dftfe::size_type numVecs,
-        const ValueType2      *parentShapeFunc,
-        const ValueType1      *mapPointToCellIndex,
-        const ValueType1      *mapPointToProcLocal,
-        const ValueType1      *mapPointToShapeFuncIndex,
-        const ValueType2      *parentNodalValues,
-        ValueType2            *quadValues)
+        const dftfe::uInt numDofsPerElem,
+        const dftfe::uInt numQuadPoints,
+        const dftfe::uInt numVecs,
+        const ValueType2 *parentShapeFunc,
+        const ValueType1 *mapPointToCellIndex,
+        const ValueType1 *mapPointToProcLocal,
+        const ValueType1 *mapPointToShapeFuncIndex,
+        const ValueType2 *parentNodalValues,
+        ValueType2       *quadValues)
       {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         interpolateNodalDataToQuadDeviceKernel<<<
@@ -290,57 +288,54 @@ namespace dftfe
 
       template void
       interpolateNodalDataToQuadDevice(
-        const dftfe::size_type numDofsPerElem,
-        const dftfe::size_type numQuadPoints,
-        const dftfe::size_type numVecs,
-        const double          *parentShapeFunc,
-        const size_type       *mapPointToCellIndex,
-        const size_type       *mapPointToProcLocal,
-        const size_type       *mapPointToShapeFuncIndex,
-        const double          *parentNodalValues,
-        double                *quadValues);
+        const dftfe::uInt  numDofsPerElem,
+        const dftfe::uInt  numQuadPoints,
+        const dftfe::uInt  numVecs,
+        const double      *parentShapeFunc,
+        const dftfe::uInt *mapPointToCellIndex,
+        const dftfe::uInt *mapPointToProcLocal,
+        const dftfe::uInt *mapPointToShapeFuncIndex,
+        const double      *parentNodalValues,
+        double            *quadValues);
 
 
       template void
-      copyComplexArrToRealArrsDevice(const dftfe::size_type      size,
+      copyComplexArrToRealArrsDevice(const dftfe::uInt           size,
                                      const std::complex<double> *complexArr,
                                      double                     *realArr,
                                      double                     *imagArr);
 
       template void
-      copyComplexArrToRealArrsDevice(const dftfe::size_type     size,
+      copyComplexArrToRealArrsDevice(const dftfe::uInt          size,
                                      const std::complex<float> *complexArr,
                                      float                     *realArr,
                                      float                     *imagArr);
 
       template void
-      copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                     const double          *realArr,
-                                     const double          *imagArr,
-                                     std::complex<double>  *complexArr);
+      copyRealArrsToComplexArrDevice(const dftfe::uInt     size,
+                                     const double         *realArr,
+                                     const double         *imagArr,
+                                     std::complex<double> *complexArr);
 
       template void
-      copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                     const float           *realArr,
-                                     const float           *imagArr,
-                                     std::complex<float>   *complexArr);
+      copyRealArrsToComplexArrDevice(const dftfe::uInt    size,
+                                     const float         *realArr,
+                                     const float         *imagArr,
+                                     std::complex<float> *complexArr);
       template void
-      copyComplexArrToRealArrsDevice(const dftfe::size_type     size,
+      copyComplexArrToRealArrsDevice(const dftfe::uInt          size,
                                      const std::complex<float> *complexArr,
                                      double                    *realArr,
                                      double                    *imagArr);
 
       template void
-      copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                     const double          *realArr,
-                                     const double          *imagArr,
-                                     std::complex<float>   *complexArr);
+      copyRealArrsToComplexArrDevice(const dftfe::uInt    size,
+                                     const double        *realArr,
+                                     const double        *imagArr,
+                                     std::complex<float> *complexArr);
 
       template void
-      sadd(double                *y,
-           double                *x,
-           const double           beta,
-           const dftfe::size_type size);
+      sadd(double *y, double *x, const double beta, const dftfe::uInt size);
     } // namespace deviceKernelsGeneric
   }   // namespace utils
 } // namespace dftfe

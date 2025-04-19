@@ -26,15 +26,15 @@ namespace dftfe
   // Constructor.
   //
   BFGSNonLinearSolver::BFGSNonLinearSolver(
-    const bool         usePreconditioner,
-    const bool         useRFOStep,
-    const unsigned int maxNumberIterations,
-    const unsigned int debugLevel,
-    const MPI_Comm    &mpi_comm_parent,
-    const double       trustRadius_maximum,
-    const double       trustRadius_initial,
-    const double       trustRadius_minimum,
-    const bool         isCurvatureOnlyLineSearchStoppingCondition)
+    const bool        usePreconditioner,
+    const bool        useRFOStep,
+    const dftfe::uInt maxNumberIterations,
+    const dftfe::uInt debugLevel,
+    const MPI_Comm   &mpi_comm_parent,
+    const double      trustRadius_maximum,
+    const double      trustRadius_initial,
+    const double      trustRadius_minimum,
+    const bool        isCurvatureOnlyLineSearchStoppingCondition)
     : nonLinearSolver(debugLevel, maxNumberIterations)
     , mpi_communicator(mpi_comm_parent)
     , d_usePreconditioner(usePreconditioner)
@@ -144,7 +144,7 @@ namespace dftfe
     computeLInfNorm(std::vector<double> &vec)
     {
       double norm = 0.0;
-      for (unsigned int i = 0; i < vec.size(); ++i)
+      for (dftfe::uInt i = 0; i < vec.size(); ++i)
         {
           norm = norm > std::abs(vec[i]) ? norm : std::abs(vec[i]);
         }
@@ -412,7 +412,7 @@ namespace dftfe
           pcout << "Using Identity matrix for initial Hessian guess."
                 << std::endl;
         d_hessian.resize(d_numberUnknowns * d_numberUnknowns, 0.0);
-        for (int i = 0; i < d_numberUnknowns; ++i)
+        for (dftfe::Int i = 0; i < d_numberUnknowns; ++i)
           {
             d_hessian[i + i * d_numberUnknowns] = 1.0;
           }
@@ -693,11 +693,11 @@ namespace dftfe
     //
     // get the size of solution
     //
-    const std::vector<double>::size_type solutionSize = d_numberUnknowns;
+    const dftfe::uInt solutionSize = d_numberUnknowns;
     incrementVector.resize(d_numberUnknowns);
 
 
-    for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
+    for (dftfe::uInt i = 0; i < solutionSize; ++i)
       incrementVector[i] = step[i];
 
     //
@@ -720,13 +720,13 @@ namespace dftfe
         pcout << "Saving BFGS data to " << checkpointFileName << std::endl;
       }
     std::vector<std::vector<double>> data;
-    for (unsigned int i = 0; i < d_deltaX.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_deltaX.size(); ++i)
       data.push_back(std::vector<double>(1, d_deltaX[i]));
-    for (unsigned int i = 0; i < d_gradient.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_gradient.size(); ++i)
       data.push_back(std::vector<double>(1, d_gradient[i]));
-    for (unsigned int i = 0; i < d_hessian.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_hessian.size(); ++i)
       data.push_back(std::vector<double>(1, d_hessian[i]));
-    for (unsigned int i = 0; i < d_Srfo.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_Srfo.size(); ++i)
       data.push_back(std::vector<double>(1, d_Srfo[i]));
     data.push_back(d_value);
     data.push_back(d_valueNew);
@@ -763,16 +763,16 @@ namespace dftfe
     d_Srfo.resize(d_numberUnknowns * d_numberUnknowns);
     d_value.resize(1);
     d_valueNew.resize(1);
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       d_deltaX[i] = data[i][0];
 
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       d_gradient[i] = data[i + d_numberUnknowns][0];
 
-    for (unsigned int i = 0; i < d_numberUnknowns * d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns * d_numberUnknowns; ++i)
       d_hessian[i] = data[i + 2 * d_numberUnknowns][0];
 
-    for (unsigned int i = 0; i < d_numberUnknowns * d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns * d_numberUnknowns; ++i)
       d_Srfo[i] =
         data[i + 2 * d_numberUnknowns + d_numberUnknowns * d_numberUnknowns][0];
 
@@ -785,8 +785,8 @@ namespace dftfe
     d_trustRadius = data[2 + 2 * d_numberUnknowns +
                          2 * d_numberUnknowns * d_numberUnknowns][0];
 
-    d_iter = (int)data[3 + 2 * d_numberUnknowns +
-                       2 * d_numberUnknowns * d_numberUnknowns][0] +
+    d_iter = (dftfe::Int)data[3 + 2 * d_numberUnknowns +
+                              2 * d_numberUnknowns * d_numberUnknowns][0] +
              1;
 
     d_stepAccepted = data[4 + 2 * d_numberUnknowns +
@@ -846,11 +846,15 @@ namespace dftfe
     //
     // check for convergence
     //
-    unsigned int isSuccess = 0;
+    dftfe::uInt isSuccess = 0;
     if (problem.isConverged())
       isSuccess = 1;
 
-    MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
+    MPI_Bcast(&(isSuccess),
+              1,
+              dftfe::dataTypes::mpi_type_id(&isSuccess),
+              0,
+              mpi_communicator);
     if (isSuccess == 1)
       return SUCCESS;
 
@@ -874,7 +878,11 @@ namespace dftfe
             computeNewtonStep();
           }
         computeTrustRadius(problem);
-        MPI_Bcast(&(d_isReset), 1, MPI_INT, 0, mpi_communicator);
+        MPI_Bcast(&(d_isReset),
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&d_isReset),
+                  0,
+                  mpi_communicator);
         if (d_isReset == 2)
           break;
 
@@ -924,11 +932,15 @@ namespace dftfe
         problem.save();
         // check for convergence
         //
-        unsigned int isBreak = 0;
+        dftfe::uInt isBreak = 0;
 
         if (problem.isConverged())
           isBreak = 1;
-        MPI_Bcast(&(isBreak), 1, MPI_INT, 0, mpi_communicator);
+        MPI_Bcast(&(isBreak),
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&isBreak),
+                  0,
+                  mpi_communicator);
         if (isBreak == 1)
           break;
       }

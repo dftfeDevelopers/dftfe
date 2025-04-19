@@ -28,14 +28,14 @@ namespace dftfe
       // lapack Ax=b
       //
       void
-      dgesv_(int    *N,
-             int    *NRHS,
-             double *A,
-             int    *LDA,
-             int    *IPIV,
-             double *B,
-             int    *LDB,
-             int    *INFO);
+      dgesv_(dftfe::Int *N,
+             dftfe::Int *NRHS,
+             double     *A,
+             dftfe::Int *LDA,
+             dftfe::Int *IPIV,
+             double     *B,
+             dftfe::Int *LDB,
+             dftfe::Int *INFO);
     }
 
 
@@ -48,7 +48,7 @@ namespace dftfe
       // recenter vertex about corner
       //
       std::vector<double> recenteredPoint(3);
-      for (unsigned int i = 0; i < 3; ++i)
+      for (dftfe::uInt i = 0; i < 3; ++i)
         recenteredPoint[i] = point[i] - corner[i];
 
       std::vector<double> latticeVectorsDup = latticeVectors;
@@ -57,11 +57,11 @@ namespace dftfe
       // to get the fractionalCoords, solve a linear
       // system of equations
       //
-      int N    = 3;
-      int NRHS = 1;
-      int LDA  = 3;
-      int IPIV[3];
-      int info;
+      dftfe::Int N    = 3;
+      dftfe::Int NRHS = 1;
+      dftfe::Int LDA  = 3;
+      dftfe::Int IPIV[3];
+      dftfe::Int info;
 
       dgesv_(&N,
              &NRHS,
@@ -94,7 +94,7 @@ namespace dftfe
 
 
       // wrap fractional coordinate
-      for (unsigned int i = 0; i < 3; ++i)
+      for (dftfe::uInt i = 0; i < 3; ++i)
         {
           if (periodicBc[i])
             {
@@ -126,8 +126,8 @@ namespace dftfe
   // displacement input. Depending on the maximum displacement magnitude this
   // function decides wether to do auto remeshing or move mesh using Gaussian
   // functions.
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -136,21 +136,21 @@ namespace dftfe
       const double                                     maxJacobianRatioFactor,
       const bool useSingleAtomSolutionsOverride)
   {
-    bool      isAutoRemeshSupressed = false;
-    const int numberGlobalAtoms     = atomLocations.size();
-    int       numberImageCharges    = d_imageIdsTrunc.size();
-    int       totalNumberAtoms      = numberGlobalAtoms + numberImageCharges;
+    bool             isAutoRemeshSupressed = false;
+    const dftfe::Int numberGlobalAtoms     = atomLocations.size();
+    dftfe::Int       numberImageCharges    = d_imageIdsTrunc.size();
+    dftfe::Int       totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
     std::vector<double> latticeVectorsFlattened(9, 0.0);
-    for (unsigned int idim = 0; idim < 3; idim++)
-      for (unsigned int jdim = 0; jdim < 3; jdim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
+      for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
         latticeVectorsFlattened[3 * idim + jdim] =
           d_domainBoundingVectors[idim][jdim];
     dealii::Point<3> corner;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       {
         corner[idim] = 0;
-        for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
           corner[idim] -= d_domainBoundingVectors[jdim][idim] / 2.0;
       }
     std::vector<bool> periodicBc(3, false);
@@ -176,7 +176,7 @@ namespace dftfe
 
     double maxDispAtom = -1;
     if (!d_dftParamsPtr->floatingNuclearCharges)
-      for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+      for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
         {
           d_gaussianMovementAtomsNetDisplacements[iAtom] +=
             globalAtomsDisplacements[iAtom];
@@ -190,7 +190,7 @@ namespace dftfe
     double maxCurrentDispAtom = -1;
     if (!d_dftParamsPtr->floatingNuclearCharges)
       {
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
             const double currentDisp = globalAtomsDisplacements[iAtom].norm();
 
@@ -204,8 +204,8 @@ namespace dftfe
 
 
     if (d_dftParamsPtr->floatingNuclearCharges)
-      for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
-        for (unsigned int idim = 0; idim < 3; idim++)
+      for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
             d_netFloatingDispSinceLastBinsUpdate[3 * iAtom + idim] +=
               globalAtomsDisplacements[iAtom][idim];
@@ -219,8 +219,8 @@ namespace dftfe
       0.0;
     if (d_dftParamsPtr->floatingNuclearCharges)
       {
-        for (unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
-          for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); iAtom++)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
             {
               const double temp = std::fabs(
                 d_netFloatingDispSinceLastBinsUpdate[iAtom * 3 + idim]);
@@ -241,8 +241,8 @@ namespace dftfe
             }
       }
 
-    unsigned int useGaussian          = 0;
-    unsigned int atomsPeriodicWrapped = 1;
+    dftfe::uInt  useGaussian          = 0;
+    dftfe::uInt  atomsPeriodicWrapped = 1;
     const double tol                  = 1e-6;
     const double break1               = 1.0;
 
@@ -252,29 +252,37 @@ namespace dftfe
 
     // for synchrozination in case the updateCase are different in different
     // processors due to floating point comparison
-    MPI_Bcast(&(useGaussian), 1, MPI_INT, 0, d_mpiCommParent);
+    MPI_Bcast(&(useGaussian),
+              1,
+              dftfe::dataTypes::mpi_type_id(&useGaussian),
+              0,
+              d_mpiCommParent);
 
     if (useGaussian || (maxFloatingDispComponentMag < 0.5 &&
                         d_dftParamsPtr->floatingNuclearCharges))
       atomsPeriodicWrapped = 0;
 
-    MPI_Bcast(&(atomsPeriodicWrapped), 1, MPI_INT, 0, d_mpiCommParent);
+    MPI_Bcast(&(atomsPeriodicWrapped),
+              1,
+              dftfe::dataTypes::mpi_type_id(&atomsPeriodicWrapped),
+              0,
+              d_mpiCommParent);
 
 
     if ((d_dftParamsPtr->periodicX || d_dftParamsPtr->periodicY ||
          d_dftParamsPtr->periodicZ) &&
         atomsPeriodicWrapped == 1)
       {
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
             dealii::Point<3> atomCoor;
-            int              atomId = iAtom;
+            dftfe::Int       atomId = iAtom;
             atomCoor[0]             = atomLocations[iAtom][2];
             atomCoor[1]             = atomLocations[iAtom][3];
             atomCoor[2]             = atomLocations[iAtom][4];
 
             dealii::Point<3> newCoord;
-            for (unsigned int idim = 0; idim < 3; ++idim)
+            for (dftfe::uInt idim = 0; idim < 3; ++idim)
               newCoord[idim] =
                 atomCoor[idim] + globalAtomsDisplacements[atomId][idim];
 
@@ -295,10 +303,10 @@ namespace dftfe
               d_dftParamsPtr->periodicZ) &&
              atomsPeriodicWrapped == 0)
       {
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
             dealii::Point<3> atomCoor;
-            int              atomId = iAtom;
+            dftfe::Int       atomId = iAtom;
 
             atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
             atomLocations[iAtom][3] += globalAtomsDisplacements[atomId][1];
@@ -309,10 +317,10 @@ namespace dftfe
           pcout
             << "-----------------------------Fractional coordinates of atoms----------------------------"
             << std::endl;
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; ++iAtom)
           {
             dealii::Point<3> atomCoor;
-            int              atomId = iAtom;
+            dftfe::Int       atomId = iAtom;
 
             atomCoor[0] = atomLocations[iAtom][2];
             atomCoor[1] = atomLocations[iAtom][3];
@@ -328,8 +336,8 @@ namespace dftfe
             atomLocationsFractional[iAtom][4] = newFracCoord[2];
 
             if (d_dftParamsPtr->verbosity >= 1)
-              pcout << (unsigned int)atomLocationsFractional[iAtom][0] << " "
-                    << (unsigned int)atomLocationsFractional[iAtom][1] << " "
+              pcout << (dftfe::uInt)atomLocationsFractional[iAtom][0] << " "
+                    << (dftfe::uInt)atomLocationsFractional[iAtom][1] << " "
                     << atomLocationsFractional[iAtom][2] << " "
                     << atomLocationsFractional[iAtom][3] << " "
                     << atomLocationsFractional[iAtom][4] << '\n';
@@ -341,9 +349,9 @@ namespace dftfe
 
         // initImageChargesUpdateKPoints(false);
 
-        for (int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
+        for (dftfe::Int iImage = 0; iImage < d_imagePositions.size(); ++iImage)
           {
-            const unsigned int imageChargeId = d_imageIds[iImage];
+            const dftfe::uInt imageChargeId = d_imageIds[iImage];
             d_imagePositions[iImage][0] +=
               globalAtomsDisplacements[imageChargeId][0];
             d_imagePositions[iImage][1] +=
@@ -352,9 +360,10 @@ namespace dftfe
               globalAtomsDisplacements[imageChargeId][2];
           }
 
-        for (int iImage = 0; iImage < d_imagePositionsTrunc.size(); ++iImage)
+        for (dftfe::Int iImage = 0; iImage < d_imagePositionsTrunc.size();
+             ++iImage)
           {
-            const unsigned int imageChargeId = d_imageIdsTrunc[iImage];
+            const dftfe::uInt imageChargeId = d_imageIdsTrunc[iImage];
             d_imagePositionsTrunc[iImage][0] +=
               globalAtomsDisplacements[imageChargeId][0];
             d_imagePositionsTrunc[iImage][1] +=
@@ -369,17 +378,17 @@ namespace dftfe
           pcout
             << "------------Cartesian coordinates of atoms (origin at center of domain)------------------"
             << std::endl;
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
             dealii::Point<3> atomCoor;
-            int              atomId = iAtom;
+            dftfe::Int       atomId = iAtom;
 
             atomLocations[iAtom][2] += globalAtomsDisplacements[atomId][0];
             atomLocations[iAtom][3] += globalAtomsDisplacements[atomId][1];
             atomLocations[iAtom][4] += globalAtomsDisplacements[atomId][2];
             if (d_dftParamsPtr->verbosity >= 1)
-              pcout << (unsigned int)atomLocations[iAtom][0] << " "
-                    << (unsigned int)atomLocations[iAtom][1] << " "
+              pcout << (dftfe::uInt)atomLocations[iAtom][0] << " "
+                    << (dftfe::uInt)atomLocations[iAtom][1] << " "
                     << atomLocations[iAtom][2] << " " << atomLocations[iAtom][3]
                     << " " << atomLocations[iAtom][4] << '\n';
           }
@@ -396,7 +405,7 @@ namespace dftfe
         atomsloop_time = MPI_Wtime();
 
         std::vector<dealii::Point<3>> atomPoints;
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
             dealii::Point<3> atomCoor;
             atomCoor[0] = atomLocations[iAtom][2];
@@ -409,10 +418,10 @@ namespace dftfe
         numberImageCharges = d_imageIdsTrunc.size();
         totalNumberAtoms   = numberGlobalAtoms + numberImageCharges;
 
-        for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
+        for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
           {
             dealii::Point<3> temp;
-            int              atomId;
+            dftfe::Int       atomId;
             dealii::Point<3> atomCoor;
             if (iAtom < numberGlobalAtoms)
               {
@@ -422,7 +431,8 @@ namespace dftfe
               }
             else
               {
-                const int atomId = d_imageIdsTrunc[iAtom - numberGlobalAtoms];
+                const dftfe::Int atomId =
+                  d_imageIdsTrunc[iAtom - numberGlobalAtoms];
                 d_gaussianMovementAtomsNetDisplacements.push_back(
                   d_gaussianMovementAtomsNetDisplacements[atomId]);
               }
@@ -461,7 +471,7 @@ namespace dftfe
 
             init();
 
-            // for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+            // for (dftfe::uInt iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
             // d_dispClosestTriaVerticesToAtoms[iAtom]= 0.0;
 
             if (!d_dftParamsPtr->reproducible_output)
@@ -469,7 +479,11 @@ namespace dftfe
 
 
             d_autoMesh = 1;
-            MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, d_mpiCommParent);
+            MPI_Bcast(&(d_autoMesh),
+                      1,
+                      dftfe::dataTypes::mpi_type_id(&d_autoMesh),
+                      0,
+                      d_mpiCommParent);
           }
         else
           {
@@ -557,7 +571,11 @@ namespace dftfe
                 init();
 
                 d_autoMesh = 1;
-                MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, d_mpiCommParent);
+                MPI_Bcast(&(d_autoMesh),
+                          1,
+                          dftfe::dataTypes::mpi_type_id(&d_autoMesh),
+                          0,
+                          d_mpiCommParent);
 
                 if (!d_dftParamsPtr->reproducible_output)
                   pcout << "...Reinitialization end" << std::endl;
@@ -600,7 +618,11 @@ namespace dftfe
                   {
                     d_autoMesh = 1;
                   }
-                MPI_Bcast(&(d_autoMesh), 1, MPI_INT, 0, d_mpiCommParent);
+                MPI_Bcast(&(d_autoMesh),
+                          1,
+                          dftfe::dataTypes::mpi_type_id(&d_autoMesh),
+                          0,
+                          d_mpiCommParent);
                 if (d_autoMesh == 1)
                   {
                     if (!d_dftParamsPtr->reproducible_output)
@@ -622,17 +644,17 @@ namespace dftfe
                     if (d_dftParamsPtr->periodicX ||
                         d_dftParamsPtr->periodicY || d_dftParamsPtr->periodicZ)
                       {
-                        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms;
+                        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms;
                              iAtom++)
                           {
                             dealii::Point<3> atomCoor;
-                            int              atomId = iAtom;
+                            dftfe::Int       atomId = iAtom;
                             atomCoor[0]             = atomLocations[iAtom][2];
                             atomCoor[1]             = atomLocations[iAtom][3];
                             atomCoor[2]             = atomLocations[iAtom][4];
 
                             dealii::Point<3> newCoord;
-                            for (unsigned int idim = 0; idim < 3; ++idim)
+                            for (dftfe::uInt idim = 0; idim < 3; ++idim)
                               newCoord[idim] =
                                 atomCoor[idim] +
                                 globalAtomsDisplacements[atomId][idim];

@@ -37,9 +37,9 @@ namespace dftfe
     /**
      * @brief constructor
      */
-    MDIEngine(MPI_Comm &dftfeMPIComm, int argc, char *argv[]);
+    MDIEngine(MPI_Comm &dftfeMPIComm, dftfe::Int argc, char *argv[]);
 
-    int
+    dftfe::Int
     execute_command(const char *command, MDI_Comm &mdicomm);
 
     void
@@ -48,7 +48,7 @@ namespace dftfe
 
   private:
     /// 1 for proc 0, otherwise 0
-    int d_root;
+    dftfe::Int d_root;
 
     /// MDI communicator
     MDI_Comm d_mdicomm;
@@ -62,7 +62,7 @@ namespace dftfe
     // state of MDI engine
 
     /// which mode engine is in ()
-    int d_mode;
+    dftfe::Int d_mode;
     /// current MDI command being processed
     char *d_mdicmd;
     /// which node engine is at
@@ -76,21 +76,21 @@ namespace dftfe
 
     // flags for data received by engine
     // not acted on until a request to send <ENERGY,<FORCES,<PE,<STRESS
-    int d_actionflag;
-    int d_flag_natoms, d_flag_elements;
-    int d_flag_cell, d_flag_dimensions, d_flag_cell_displ;
-    int d_flag_charges, d_flag_coords;
-    int d_flag_mpGrid, d_flag_mpShift;
-    int d_flag_spin;
+    dftfe::Int d_actionflag;
+    dftfe::Int d_flag_natoms, d_flag_elements;
+    dftfe::Int d_flag_cell, d_flag_dimensions, d_flag_cell_displ;
+    dftfe::Int d_flag_charges, d_flag_coords;
+    dftfe::Int d_flag_mpGrid, d_flag_mpShift;
+    dftfe::Int d_flag_spin;
 
-    int                 d_sys_natoms;
-    int                 d_sys_dimensions[3];
-    std::vector<int>    d_sys_elements;
-    std::vector<double> d_sys_coords;
-    double              d_sys_cell[9], d_sys_cell_displ[3];
-    int                 d_mpGrid[3];
-    double              d_mpShift[3];
-    int                 d_spinPolarization;
+    dftfe::Int              d_sys_natoms;
+    dftfe::Int              d_sys_dimensions[3];
+    std::vector<dftfe::Int> d_sys_elements;
+    std::vector<double>     d_sys_coords;
+    double                  d_sys_cell[9], d_sys_cell_displ[3];
+    dftfe::Int              d_mpGrid[3];
+    double                  d_mpShift[3];
+    dftfe::Int              d_spinPolarization;
 
     // class methods
     void

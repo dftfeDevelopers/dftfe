@@ -49,7 +49,7 @@ namespace dftfe
      when EXIT command is received, mdi engine command exits
   ---------------------------------------------------------------------- */
 
-  MDIEngine::MDIEngine(MPI_Comm &dftfeMPIComm, int argc, char *argv[])
+  MDIEngine::MDIEngine(MPI_Comm &dftfeMPIComm, dftfe::Int argc, char *argv[])
     : d_dftfeMPIComm(dftfeMPIComm)
   {
     d_spinPolarization = 0;
@@ -64,7 +64,7 @@ namespace dftfe
 
     // confirm DFTFE is being run as an engine
 
-    int role;
+    dftfe::Int role;
     MDI_Get_role(&role);
     if (role != MDI_ENGINE)
       AssertThrow(false,
@@ -74,7 +74,7 @@ namespace dftfe
     // engine");
 
     // root = 1 for proc 0, otherwise 0
-    int rank;
+    dftfe::Int rank;
     MPI_Comm_rank(d_dftfeMPIComm, &rank);
     d_root = (rank == 0) ? 1 : 0;
 
@@ -153,7 +153,7 @@ namespace dftfe
   void
   MDIEngine::engine_node(const char *node)
   {
-    int ierr;
+    dftfe::Int ierr;
 
     // do not process commands if engine and driver request are not the same
 
@@ -204,15 +204,15 @@ namespace dftfe
        when DFTFE is running as a plugin
   ---------------------------------------------------------------------- */
 
-  int
+  dftfe::Int
   MDIEngine::execute_command(const char *command, MDI_Comm &mdicomm)
   {
-    int ierr;
+    dftfe::Int ierr;
 
     // confirm this command is supported at this node
     // otherwise is error
 
-    int command_exists;
+    dftfe::Int command_exists;
     if (d_root)
       {
         ierr = MDI_Check_command_exists(d_node_engine,
@@ -228,7 +228,12 @@ namespace dftfe
         // supported", command);
       }
 
-    MPI_Bcast(&command_exists, 1, MPI_INT, 0, d_dftfeMPIComm);
+    MPI_Bcast(&command_exists,
+              1,
+              dftfe::dataTypes::mpi_type_id(&command_exists),
+              0,
+              d_dftfeMPIComm);
+
     if (!command_exists)
       AssertThrow(false,
                   dealii::ExcMessage("MDI: Received command " +
@@ -330,7 +335,7 @@ namespace dftfe
       {
         if (d_root == 1)
           {
-            int ierr =
+            dftfe::Int ierr =
               MDI_Send(d_node_engine, MDI_NAME_LENGTH, MDI_CHAR, d_mdicomm);
             if (ierr)
               AssertThrow(false, dealii::ExcMessage("MDI: <@ data"));
@@ -413,9 +418,10 @@ namespace dftfe
   void
   MDIEngine::evaluate()
   {
-    int flag_create = d_flag_natoms | d_flag_elements | d_flag_dimensions |
-                      d_flag_mpGrid | d_flag_mpShift | d_flag_spin;
-    int flag_other = d_flag_cell | d_flag_cell_displ | d_flag_coords;
+    dftfe::Int flag_create = d_flag_natoms | d_flag_elements |
+                             d_flag_dimensions | d_flag_mpGrid |
+                             d_flag_mpShift | d_flag_spin;
+    dftfe::Int flag_other = d_flag_cell | d_flag_cell_displ | d_flag_coords;
 
     // create new system or incrementally update system
     // NOTE: logic here is as follows
@@ -488,17 +494,17 @@ namespace dftfe
     std::vector<std::vector<double>> atomicPositionsCart(
       d_sys_natoms, std::vector<double>(3, 0.0));
 
-    for (unsigned int i = 0; i < d_sys_natoms; ++i)
-      for (unsigned int j = 0; j < 3; ++j)
+    for (dftfe::uInt i = 0; i < d_sys_natoms; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
         atomicPositionsCart[i][j] = d_sys_coords[3 * i + j];
 
-    std::vector<unsigned int> atomicNumbers(d_sys_natoms, 0);
-    for (unsigned int i = 0; i < d_sys_natoms; ++i)
+    std::vector<dftfe::uInt> atomicNumbers(d_sys_natoms, 0);
+    for (dftfe::uInt i = 0; i < d_sys_natoms; ++i)
       atomicNumbers[i] = d_sys_elements[i];
 
     std::vector<bool> pbc({true, true, true});
 
-    for (int i = 0; i < 3; i++)
+    for (dftfe::Int i = 0; i < 3; i++)
       {
         if (d_sys_dimensions[i] == 1)
           {
@@ -517,8 +523,8 @@ namespace dftfe
           }
       }
 
-    std::vector<unsigned int> mpGrid(3);
-    for (int idim = 0; idim < 3; idim++)
+    std::vector<dftfe::uInt> mpGrid(3);
+    for (dftfe::Int idim = 0; idim < 3; idim++)
       {
         if (d_mpGrid[idim] > 1 && pbc[idim] == false)
           AssertThrow(
@@ -530,7 +536,7 @@ namespace dftfe
 
     const double      tol = 1e-6;
     std::vector<bool> mpShift(3);
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       {
         if (d_mpShift[idim] > tol && pbc[idim] == false)
           AssertThrow(
@@ -568,32 +574,32 @@ namespace dftfe
 
     // row major storage of columns of cell vectors
     std::vector<double> currentCellFlattenedInv(9, 0.0);
-    for (unsigned int i = 0; i < 3; ++i)
-      for (unsigned int j = 0; j < 3; ++j)
+    for (dftfe::uInt i = 0; i < 3; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
         currentCellFlattenedInv[i + 3 * j] = currentCell[i][j];
     dftfe::linearAlgebraOperations::inverse(&currentCellFlattenedInv[0], 3);
 
     // row major storage of columns of cell vectors
     std::vector<double> newCellFlattened(9, 0.0);
-    for (unsigned int i = 0; i < 3; ++i)
-      for (unsigned int j = 0; j < 3; ++j)
+    for (dftfe::uInt i = 0; i < 3; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
         newCellFlattened[i + 3 * j] = d_sys_cell[3 * i + j];
 
 
 
     std::vector<double> deformationGradientFlattened(9, 0.0);
 
-    for (unsigned int i = 0; i < 3; ++i)
-      for (unsigned int j = 0; j < 3; ++j)
-        for (unsigned int k = 0; k < 3; ++k)
+    for (dftfe::uInt i = 0; i < 3; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
+        for (dftfe::uInt k = 0; k < 3; ++k)
           deformationGradientFlattened[3 * i + j] +=
             newCellFlattened[3 * i + k] * currentCellFlattenedInv[3 * k + j];
 
 
     std::vector<std::vector<double>> deformationGradient(
       3, std::vector<double>(3));
-    for (unsigned int i = 0; i < 3; ++i)
-      for (unsigned int j = 0; j < 3; ++j)
+    for (dftfe::uInt i = 0; i < 3; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
         deformationGradient[i][j] = deformationGradientFlattened[3 * i + j];
     d_dftfeWrapper.deformCell(deformationGradient);
   }
@@ -607,8 +613,8 @@ namespace dftfe
     std::vector<std::vector<double>> atomsDisplacements(
       d_sys_natoms, std::vector<double>(3, 0.0));
     // in atomic units
-    for (unsigned int i = 0; i < d_sys_natoms; ++i)
-      for (unsigned int j = 0; j < 3; ++j)
+    for (dftfe::uInt i = 0; i < d_sys_natoms; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
         atomsDisplacements[i][j] =
           d_sys_coords[3 * i + j] - currentCoords[i][j];
 
@@ -637,13 +643,13 @@ namespace dftfe
 
     if (d_root == 1)
       {
-        int ierr = MDI_Recv(d_sys_cell, 9, MDI_DOUBLE, d_mdicomm);
+        dftfe::Int ierr = MDI_Recv(d_sys_cell, 9, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: >CELL data"));
       }
 
     MPI_Bcast(d_sys_cell, 9, MPI_DOUBLE, 0, d_dftfeMPIComm);
-    // for (int i = 0; i < 9; i++)
+    // for (dftfe::Int i = 0; i < 9; i++)
     //  std::cout << "cell: " << d_sys_cell[i] << std::endl;
   }
 
@@ -664,7 +670,7 @@ namespace dftfe
 
     if (d_root == 1)
       {
-        int ierr = MDI_Recv(d_sys_cell_displ, 3, MDI_DOUBLE, d_mdicomm);
+        dftfe::Int ierr = MDI_Recv(d_sys_cell_displ, 3, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: >CELL_DISPLS data"));
       }
@@ -681,26 +687,26 @@ namespace dftfe
   {
     d_actionflag  = 0;
     d_flag_coords = 1;
-    int n         = 3 * d_sys_natoms;
+    dftfe::Int n  = 3 * d_sys_natoms;
     d_sys_coords.resize(n);
 
     if (d_root == 1)
       {
-        int ierr = MDI_Recv(&d_sys_coords[0], n, MDI_DOUBLE, d_mdicomm);
+        dftfe::Int ierr = MDI_Recv(&d_sys_coords[0], n, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: >COORDS data"));
       }
 
     MPI_Bcast(&d_sys_coords[0], n, MPI_DOUBLE, 0, d_dftfeMPIComm);
 
-    // for (int i = 0; i < n; i++)
+    // for (dftfe::Int i = 0; i < n; i++)
     //  std::cout << "coord: " << d_sys_coords[i] << std::endl;
   }
 
 
   /* ----------------------------------------------------------------------
      >NATOMS command
-     natoms cannot exceed 32-bit int for use with MDI
+     natoms cannot exceed 32-bit dftfe::Int for use with MDI
   ---------------------------------------------------------------------- */
 
   void
@@ -710,12 +716,17 @@ namespace dftfe
     d_flag_natoms = 1;
     if (d_root == 1)
       {
-        int ierr = MDI_Recv(&d_sys_natoms, 1, MDI_INT, d_mdicomm);
+        dftfe::Int ierr = MDI_Recv(&d_sys_natoms, 1, MDI_INT, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: >NATOMS data"));
       }
 
-    MPI_Bcast(&d_sys_natoms, 1, MPI_INT, 0, d_dftfeMPIComm);
+    MPI_Bcast(&d_sys_natoms,
+              1,
+              dftfe::dataTypes::mpi_type_id(&d_sys_natoms),
+              0,
+              d_dftfeMPIComm);
+
     // std::cout << "n atoms: " << d_sys_natoms << std::endl;
   }
 
@@ -732,15 +743,19 @@ namespace dftfe
     d_sys_elements.resize(d_sys_natoms);
     if (d_root == 1)
       {
-        int ierr =
+        dftfe::Int ierr =
           MDI_Recv(&d_sys_elements[0], d_sys_natoms, MDI_INT, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: >ELEMENTS data"));
       }
 
-    MPI_Bcast(&d_sys_elements[0], d_sys_natoms, MPI_INT, 0, d_dftfeMPIComm);
+    MPI_Bcast(&d_sys_elements[0],
+              d_sys_natoms,
+              dftfe::dataTypes::mpi_type_id(d_sys_elements.data()),
+              0,
+              d_dftfeMPIComm);
 
-    // for (int i = 0; i < d_sys_natoms; i++)
+    // for (dftfe::Int i = 0; i < d_sys_natoms; i++)
     //  std::cout << "element: " << d_sys_elements[i] << std::endl;
   }
 
@@ -752,14 +767,18 @@ namespace dftfe
     d_flag_dimensions = 1;
     if (d_root == 1)
       {
-        int ierr = MDI_Recv(d_sys_dimensions, 3, MDI_INT, d_mdicomm);
+        dftfe::Int ierr = MDI_Recv(d_sys_dimensions, 3, MDI_INT, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: >DIMENSIONS data"));
       }
 
-    MPI_Bcast(d_sys_dimensions, 3, MPI_INT, 0, d_dftfeMPIComm);
+    MPI_Bcast(d_sys_dimensions,
+              3,
+              dftfe::dataTypes::mpi_type_id(d_sys_dimensions),
+              0,
+              d_dftfeMPIComm);
 
-    // for (int i = 0; i < d_sys_natoms; i++)
+    // for (dftfe::Int i = 0; i < d_sys_natoms; i++)
     //  std::cout << "element: " << d_sys_elements[i] << std::endl;
   }
 
@@ -770,13 +789,14 @@ namespace dftfe
     d_flag_mpGrid = 1;
     if (d_root == 1)
       {
-        int ierr = MDI_Recv(d_mpGrid, 3, MDI_INT, d_mdicomm);
+        dftfe::Int ierr = MDI_Recv(d_mpGrid, 3, MDI_INT, d_mdicomm);
         if (ierr)
           AssertThrow(false,
                       dealii::ExcMessage("MDI: >MONKHORST-PACK_NPOINTS data"));
       }
 
-    MPI_Bcast(d_mpGrid, 3, MPI_INT, 0, d_dftfeMPIComm);
+    MPI_Bcast(
+      d_mpGrid, 3, dftfe::dataTypes::mpi_type_id(d_mpGrid), 0, d_dftfeMPIComm);
   }
 
   void
@@ -786,7 +806,7 @@ namespace dftfe
     d_flag_mpShift = 1;
     if (d_root == 1)
       {
-        int ierr = MDI_Recv(d_mpShift, 3, MDI_DOUBLE, d_mdicomm);
+        dftfe::Int ierr = MDI_Recv(d_mpShift, 3, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false,
                       dealii::ExcMessage("MDI: >MONKHORST-PACK_SHIFT data"));
@@ -802,13 +822,17 @@ namespace dftfe
     d_flag_spin  = 1;
     if (d_root == 1)
       {
-        int ierr = MDI_Recv(&d_spinPolarization, 1, MDI_INT, d_mdicomm);
+        dftfe::Int ierr = MDI_Recv(&d_spinPolarization, 1, MDI_INT, d_mdicomm);
         if (ierr)
           AssertThrow(false,
                       dealii::ExcMessage("MDI: >SPIN POLARIZATION data"));
       }
 
-    MPI_Bcast(&d_spinPolarization, 1, MPI_INT, 0, d_dftfeMPIComm);
+    MPI_Bcast(&d_spinPolarization,
+              1,
+              dftfe::dataTypes::mpi_type_id(&d_spinPolarization),
+              0,
+              d_dftfeMPIComm);
   }
 
   // ----------------------------------------------------------------------
@@ -829,7 +853,8 @@ namespace dftfe
     if (d_root == 1)
       {
         std::string str = "dftfe";
-        int ierr = MDI_Send(str.c_str(), MDI_NAME_LENGTH, MDI_CHAR, d_mdicomm);
+        dftfe::Int  ierr =
+          MDI_Send(str.c_str(), MDI_NAME_LENGTH, MDI_CHAR, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: <NAME data"));
       }
@@ -841,7 +866,7 @@ namespace dftfe
   {
     if (d_root == 1)
       {
-        int ierr = MDI_Send(d_sys_cell, 9, MDI_DOUBLE, d_mdicomm);
+        dftfe::Int ierr = MDI_Send(d_sys_cell, 9, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: <CELL data"));
       }
@@ -854,7 +879,7 @@ namespace dftfe
   {
     if (d_root == 1)
       {
-        int ierr =
+        dftfe::Int ierr =
           MDI_Send(&d_sys_coords[0], d_sys_natoms * 3, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: <COORDS data"));
@@ -867,7 +892,7 @@ namespace dftfe
   {
     if (d_root == 1)
       {
-        int ierr = MDI_Send(&d_sys_natoms, 1, MDI_INT, d_mdicomm);
+        dftfe::Int ierr = MDI_Send(&d_sys_natoms, 1, MDI_INT, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: <NATOMS data"));
       }
@@ -879,7 +904,7 @@ namespace dftfe
   {
     if (d_root == 1)
       {
-        int ierr =
+        dftfe::Int ierr =
           MDI_Send(&d_sys_elements[0], d_sys_natoms, MDI_INT, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: <ELEMENTS data"));
@@ -892,7 +917,7 @@ namespace dftfe
   {
     if (d_root == 1)
       {
-        int ierr = MDI_Send(&d_spinPolarization, 1, MDI_INT, d_mdicomm);
+        dftfe::Int ierr = MDI_Send(&d_spinPolarization, 1, MDI_INT, d_mdicomm);
         if (ierr)
           AssertThrow(false,
                       dealii::ExcMessage("MDI: <SPIN_POLARIZATION data"));
@@ -911,7 +936,7 @@ namespace dftfe
     const double energy = d_dftfeWrapper.getDFTFreeEnergy();
     if (d_root == 1)
       {
-        int ierr = MDI_Send(&energy, 1, MDI_DOUBLE, d_mdicomm);
+        dftfe::Int ierr = MDI_Send(&energy, 1, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: <ENERGY data"));
       }
@@ -932,7 +957,7 @@ namespace dftfe
       d_dftfeWrapper.getForcesAtoms();
 
     std::vector<double> forces(3 * d_sys_natoms, 0.0);
-    for (unsigned int i = 0; i < d_sys_natoms; i++)
+    for (dftfe::uInt i = 0; i < d_sys_natoms; i++)
       {
         forces[3 * i + 0] = ionicForces[i][0];
         forces[3 * i + 1] = ionicForces[i][1];
@@ -940,7 +965,7 @@ namespace dftfe
       }
     if (d_root == 1)
       {
-        int ierr =
+        dftfe::Int ierr =
           MDI_Send(&forces[0], 3 * d_sys_natoms, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: <FORCES data"));
@@ -974,7 +999,7 @@ namespace dftfe
 
     if (d_root == 1)
       {
-        int ierr =
+        dftfe::Int ierr =
           MDI_Send(&stressTensorFlattened[0], 9, MDI_DOUBLE, d_mdicomm);
         if (ierr)
           AssertThrow(false, dealii::ExcMessage("MDI: <STRESS data"));

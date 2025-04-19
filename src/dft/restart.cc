@@ -42,8 +42,8 @@ namespace dftfe
                               const std::vector<bool>   &periodicBc);
   } // namespace internal
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::saveTriaInfoAndRhoNodalData()
@@ -52,7 +52,7 @@ namespace dftfe
                                             0,
                                             d_densityQuadratureIdElectro,
                                             false);
-    unsigned int nQuadsPerCell =
+    dftfe::uInt nQuadsPerCell =
       d_basisOperationsPtrElectroHost->nQuadsPerCell();
     std::vector<const distributedCPUVec<double> *> solutionVectors;
 
@@ -105,8 +105,8 @@ namespace dftfe
     pcout << "...checkpointing done." << std::endl;
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::loadTriaInfoAndRhoNodalData()
@@ -140,8 +140,7 @@ namespace dftfe
 
         d_magInNodalValuesRead = 0;
 
-        for (unsigned int i = 0;
-             i < d_rhoInNodalValuesRead.locally_owned_size();
+        for (dftfe::uInt i = 0; i < d_rhoInNodalValuesRead.locally_owned_size();
              i++)
           {
             d_magInNodalValuesRead.local_element(i) =
@@ -151,8 +150,8 @@ namespace dftfe
       }
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -167,18 +166,18 @@ namespace dftfe
         d_dftParamsPtr->periodicZ)
       {
         atomLocationsFractionalCurrent        = atomLocationsFractional;
-        const int           numberGlobalAtoms = atomLocations.size();
+        const dftfe::Int    numberGlobalAtoms = atomLocations.size();
         std::vector<double> latticeVectorsFlattened(9, 0.0);
         std::vector<std::vector<double>> atomFractionalCoordinates;
-        for (unsigned int idim = 0; idim < 3; idim++)
-          for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
+          for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
             latticeVectorsFlattened[3 * idim + jdim] =
               d_domainBoundingVectors[idim][jdim];
         dealii::Point<3> corner;
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
             corner[idim] = 0;
-            for (unsigned int jdim = 0; jdim < 3; jdim++)
+            for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
               corner[idim] -= d_domainBoundingVectors[jdim][idim] / 2.0;
           }
 
@@ -189,10 +188,10 @@ namespace dftfe
 
         if (!d_dftParamsPtr->floatingNuclearCharges)
           {
-            for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+            for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
               {
                 dealii::Point<3> atomCoor;
-                int              atomId = iAtom;
+                dftfe::Int       atomId = iAtom;
                 atomCoor[0]             = d_atomLocationsAutoMesh[iAtom][0];
                 atomCoor[1]             = d_atomLocationsAutoMesh[iAtom][1];
                 atomCoor[2]             = d_atomLocationsAutoMesh[iAtom][2];
@@ -211,10 +210,10 @@ namespace dftfe
           }
         else
           {
-            for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+            for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
               {
                 dealii::Point<3> atomCoor;
-                int              atomId = iAtom;
+                dftfe::Int       atomId = iAtom;
                 atomCoor[0]             = atomLocations[iAtom][2];
                 atomCoor[1]             = atomLocations[iAtom][3];
                 atomCoor[2]             = atomLocations[iAtom][4];
@@ -237,7 +236,7 @@ namespace dftfe
 
     std::vector<std::vector<double>> atomLocationsAutoMesh = atomLocations;
     if (!d_dftParamsPtr->floatingNuclearCharges)
-      for (unsigned int iAtom = 0; iAtom < d_atomLocationsAutoMesh.size();
+      for (dftfe::uInt iAtom = 0; iAtom < d_atomLocationsAutoMesh.size();
            iAtom++)
         {
           atomLocationsAutoMesh[iAtom][2] = d_atomLocationsAutoMesh[iAtom][0];
@@ -292,8 +291,8 @@ namespace dftfe
         //
         std::vector<std::vector<double>> atomsDisplacementsGaussian(
           d_atomLocationsAutoMesh.size(), std::vector<double>(3, 0.0));
-        for (int i = 0; i < atomsDisplacementsGaussian.size(); ++i)
-          for (int j = 0; j < 3; ++j)
+        for (dftfe::Int i = 0; i < atomsDisplacementsGaussian.size(); ++i)
+          for (dftfe::Int j = 0; j < 3; ++j)
             atomsDisplacementsGaussian[i][j] =
               d_gaussianMovementAtomsNetDisplacements[i][j];
 
@@ -303,8 +302,8 @@ namespace dftfe
       }
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::writeDomainAndAtomCoordinates(
@@ -319,18 +318,18 @@ namespace dftfe
         d_dftParamsPtr->periodicZ)
       {
         atomLocationsFractionalCurrent        = atomLocationsFractional;
-        const int           numberGlobalAtoms = atomLocations.size();
+        const dftfe::Int    numberGlobalAtoms = atomLocations.size();
         std::vector<double> latticeVectorsFlattened(9, 0.0);
         std::vector<std::vector<double>> atomFractionalCoordinates;
-        for (unsigned int idim = 0; idim < 3; idim++)
-          for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
+          for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
             latticeVectorsFlattened[3 * idim + jdim] =
               d_domainBoundingVectors[idim][jdim];
         dealii::Point<3> corner;
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
             corner[idim] = 0;
-            for (unsigned int jdim = 0; jdim < 3; jdim++)
+            for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
               corner[idim] -= d_domainBoundingVectors[jdim][idim] / 2.0;
           }
 
@@ -341,10 +340,10 @@ namespace dftfe
 
 
 
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
             dealii::Point<3> atomCoor;
-            int              atomId = iAtom;
+            dftfe::Int       atomId = iAtom;
             atomCoor[0]             = atomLocations[iAtom][2];
             atomCoor[1]             = atomLocations[iAtom][3];
             atomCoor[2]             = atomLocations[iAtom][4];
@@ -379,14 +378,14 @@ namespace dftfe
       }
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     writeStructureEnergyForcesDataPostProcess(const std::string Path) const
   {
-    const int                        numberGlobalAtoms = atomLocations.size();
+    const dftfe::Int                 numberGlobalAtoms = atomLocations.size();
     std::vector<std::vector<double>> data(
       4 + numberGlobalAtoms + 2 +
         (d_dftParamsPtr->isIonForce ? numberGlobalAtoms : 0) +
@@ -402,7 +401,7 @@ namespace dftfe
         getParametersObject().periodicZ)
       {
         std::vector<std::vector<double>> atomsFrac = getAtomLocationsFrac();
-        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+        for (dftfe::uInt i = 0; i < numberGlobalAtoms; ++i)
           {
             data[4 + i]    = std::vector<double>(4, 0);
             data[4 + i][0] = atomsFrac[i][0];
@@ -414,7 +413,7 @@ namespace dftfe
     else
       {
         std::vector<std::vector<double>> atomsCart = getAtomLocationsCart();
-        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+        for (dftfe::uInt i = 0; i < numberGlobalAtoms; ++i)
           {
             data[4 + i]    = std::vector<double>(4, 0);
             data[4 + i][0] = atomsCart[i][0];
@@ -428,7 +427,7 @@ namespace dftfe
     data[5 + numberGlobalAtoms][0] = getInternalEnergy();
     if (d_dftParamsPtr->isIonForce)
       {
-        for (unsigned int i = 0; i < numberGlobalAtoms; ++i)
+        for (dftfe::uInt i = 0; i < numberGlobalAtoms; ++i)
           {
             data[6 + numberGlobalAtoms + i]    = std::vector<double>(3, 0);
             data[6 + numberGlobalAtoms + i][0] = -getForceonAtoms()[3 * i];
@@ -440,10 +439,10 @@ namespace dftfe
 
     if (d_dftParamsPtr->isCellStress)
       {
-        for (unsigned int i = 0; i < 3; ++i)
+        for (dftfe::uInt i = 0; i < 3; ++i)
           {
             data[6 + 2 * numberGlobalAtoms + i] = std::vector<double>(3, 0);
-            for (unsigned int j = 0; j < 3; ++j)
+            for (dftfe::uInt j = 0; j < 3; ++j)
               data[6 + 2 * numberGlobalAtoms + i][j] = -getCellStress()[i][j];
           }
       }
@@ -452,8 +451,8 @@ namespace dftfe
     dftUtils::writeDataIntoFile(data, Path, d_mpiCommParent);
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::loadQuadratureData(
@@ -461,11 +460,11 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
-                      &basisOperationsPtr,
-    const unsigned int quadratureId,
+                     &basisOperationsPtr,
+    const dftfe::uInt quadratureId,
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                       &quadratureValueData,
-    const unsigned int fieldDimension,
+    const dftfe::uInt  fieldDimension,
     const std::string &fieldName,
     const std::string &folderPath,
     const MPI_Comm    &mpi_comm_parent,
@@ -475,9 +474,9 @@ namespace dftfe
   {
     pcout << "Reading Quad data from checkpoint in progress..." << std::endl;
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
-    const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells        = basisOperationsPtr->nCells();
-    const unsigned int totalTarget   = nCells * nQuadsPerCell;
+    const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+    const dftfe::uInt nCells        = basisOperationsPtr->nCells();
+    const dftfe::uInt totalTarget   = nCells * nQuadsPerCell;
     const dealii::DoFHandler<3> &dofHandlerTemp =
       basisOperationsPtr->getDofHandler();
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -485,9 +484,9 @@ namespace dftfe
     std::string masterFileName =
       folderPath + "/MasterFile_" + fieldName + "_.chk";
 
-    std::vector<double>       centroidX, centroidY, centroidZ;
-    std::vector<unsigned int> startIndex;
-    std::vector<std::string>  fileNames;
+    std::vector<double>      centroidX, centroidY, centroidZ;
+    std::vector<dftfe::uInt> startIndex;
+    std::vector<std::string> fileNames;
 
     std::ifstream inMasterFile(masterFileName);
     if (inMasterFile.is_open())
@@ -496,7 +495,7 @@ namespace dftfe
         while (std::getline(inMasterFile, line))
           {
             std::istringstream iss(line);
-            unsigned int       start;
+            dftfe::uInt        start;
             double             x, y, z;
             std::string        fileName;
             iss >> x >> y >> z >> fileName >> start;
@@ -513,9 +512,9 @@ namespace dftfe
         AssertThrow(false,
                     dealii::ExcMessage("DFT-FE Error: Master file not found"));
       }
-    unsigned int              count = 0;
-    std::vector<unsigned int> countPerThread(d_nOMPThreads,
-                                             0); // for each thread
+    dftfe::uInt              count = 0;
+    std::vector<dftfe::uInt> countPerThread(d_nOMPThreads,
+                                            0); // for each thread
     if (nCells > 0)
       {
         typename dealii::DoFHandler<3>::active_cell_iterator cell =
@@ -523,11 +522,11 @@ namespace dftfe
 
         // search for fileName and startLocation
         std::string                      fileName;
-        unsigned int                     startLocation = 0;
+        dftfe::uInt                      startLocation = 0;
         std::vector<std::vector<double>> dataInput;
         if (cell->is_locally_owned())
           {
-            for (unsigned int index = 0; index < startIndex.size(); ++index)
+            for (dftfe::uInt index = 0; index < startIndex.size(); ++index)
               {
                 if (std::fabs(cell->center()[0] - centroidX[index]) < 1e-6 &&
                     std::fabs(cell->center()[1] - centroidY[index]) < 1e-6 &&
@@ -540,9 +539,9 @@ namespace dftfe
               }
 
             dftUtils::readFile(dataInput, fileName);
-            for (unsigned int q = 0; q < nQuadsPerCell; ++q)
+            for (dftfe::uInt q = 0; q < nQuadsPerCell; ++q)
               {
-                for (int iField = 0; iField < fieldDimension; ++iField)
+                for (dftfe::Int iField = 0; iField < fieldDimension; ++iField)
                   {
                     quadratureValueData[q * fieldDimension + iField] =
                       dataInput[startLocation + q][3 + iField];
@@ -552,8 +551,8 @@ namespace dftfe
           }
 
 
-        std::string  fileNameOld = fileName;
-        unsigned int iCell       = 1;
+        std::string fileNameOld = fileName;
+        dftfe::uInt iCell       = 1;
 
 #pragma omp parallel for num_threads(d_nOMPThreads) \
   firstprivate(fileNameOld, fileName, startLocation, dataInput, cell)
@@ -563,7 +562,7 @@ namespace dftfe
 
             if (cell->is_locally_owned())
               {
-                for (unsigned int index = 0; index < startIndex.size(); ++index)
+                for (dftfe::uInt index = 0; index < startIndex.size(); ++index)
                   {
                     if (std::fabs(cell->center()[0] - centroidX[index]) <
                           1e-6 &&
@@ -583,9 +582,10 @@ namespace dftfe
                     dftUtils::readFile(dataInput, fileName);
                     fileNameOld = fileName;
                   }
-                for (unsigned int q = 0; q < nQuadsPerCell; ++q)
+                for (dftfe::uInt q = 0; q < nQuadsPerCell; ++q)
                   {
-                    for (int iField = 0; iField < fieldDimension; ++iField)
+                    for (dftfe::Int iField = 0; iField < fieldDimension;
+                         ++iField)
                       {
                         quadratureValueData[iCell * nQuadsPerCell *
                                               fieldDimension +
@@ -597,7 +597,7 @@ namespace dftfe
               }
           } // iCell
       }
-    for (int i = 0; i < d_nOMPThreads; ++i)
+    for (dftfe::Int i = 0; i < d_nOMPThreads; ++i)
       {
         count += countPerThread[i];
       }
@@ -610,8 +610,8 @@ namespace dftfe
     pcout << "Reading Quad data done..." << std::endl;
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::saveQuadratureData(
@@ -619,11 +619,11 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
-                      &basisOperationsPtr,
-    const unsigned int quadratureId,
+                     &basisOperationsPtr,
+    const dftfe::uInt quadratureId,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                       &quadratureValueData,
-    const unsigned int fieldDimension,
+    const dftfe::uInt  fieldDimension,
     const std::string &fieldName,
     const std::string &folderPath,
     const MPI_Comm    &mpi_comm_parent,
@@ -633,8 +633,8 @@ namespace dftfe
   {
     pcout << "Saving Quad data in progress..." << std::endl;
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
-    const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nCells        = basisOperationsPtr->nCells();
+    const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+    const dftfe::uInt nCells        = basisOperationsPtr->nCells();
     const dealii::DoFHandler<3> &dofHandlerTemp =
       basisOperationsPtr->getDofHandler();
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -642,16 +642,16 @@ namespace dftfe
     if (dealii::Utilities::MPI::this_mpi_process(interpoolcomm) == 0 &&
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm) == 0)
       {
-        const unsigned int this_process =
+        const dftfe::uInt this_process =
           dealii::Utilities::MPI::this_mpi_process(mpi_comm_domain);
-        const unsigned int n_mpi_processes =
+        const dftfe::uInt n_mpi_processes =
           dealii::Utilities::MPI::n_mpi_processes(mpi_comm_domain);
-        std::vector<unsigned int> nCellsPerTask(n_mpi_processes, 0);
+        std::vector<dftfe::uInt> nCellsPerTask(n_mpi_processes, 0);
         nCellsPerTask[this_process] = nCells;
         MPI_Allreduce(MPI_IN_PLACE,
                       &nCellsPerTask[0],
                       n_mpi_processes,
-                      MPI_UNSIGNED,
+                      dftfe::dataTypes::mpi_type_id(nCellsPerTask.data()),
                       MPI_SUM,
                       mpi_comm_domain);
         std::vector<std::vector<double>> quadratureData(
@@ -659,10 +659,9 @@ namespace dftfe
           std::vector<double>(fieldDimension + 3, 0.0));
         std::vector<double> centroidLocations(3 * nCellsPerTask[this_process],
                                               0.0);
-        std::vector<unsigned int> startLocations(nCellsPerTask[this_process],
-                                                 0);
+        std::vector<dftfe::uInt> startLocations(nCellsPerTask[this_process], 0);
         // Try openmp parallelization Here
-        unsigned int iCell = 0;
+        dftfe::uInt iCell = 0;
 #pragma omp parallel for num_threads(d_nOMPThreads)
         for (iCell = 0; iCell < nCells; ++iCell)
           {
@@ -670,7 +669,7 @@ namespace dftfe
               basisOperationsPtr->getCellIterator(iCell);
             if (cell->is_locally_owned())
               {
-                for (unsigned int q = 0; q < nQuadsPerCell; ++q)
+                for (dftfe::uInt q = 0; q < nQuadsPerCell; ++q)
                   {
                     quadratureData[iCell * nQuadsPerCell + q][0] =
                       quadPoints[3 * iCell * nQuadsPerCell + 3 * q + 0];
@@ -678,7 +677,7 @@ namespace dftfe
                       quadPoints[3 * iCell * nQuadsPerCell + 3 * q + 1];
                     quadratureData[iCell * nQuadsPerCell + q][2] =
                       quadPoints[3 * iCell * nQuadsPerCell + 3 * q + 2];
-                    for (unsigned int i = 0; i < fieldDimension; ++i)
+                    for (dftfe::uInt i = 0; i < fieldDimension; ++i)
                       {
                         quadratureData[iCell * nQuadsPerCell + q][3 + i] =
                           quadratureValueData[iCell * nQuadsPerCell *
@@ -699,17 +698,17 @@ namespace dftfe
                                    std::to_string(this_process) + "_" +
                                    fieldName + "_quadPoints.chk";
         dftUtils::writeDataIntoFile(quadratureData, quadFileName);
-        unsigned int startLocation = 0;
-        unsigned int totalSize     = 0;
-        for (unsigned int i = 0; i < n_mpi_processes; ++i)
+        dftfe::uInt startLocation = 0;
+        dftfe::uInt totalSize     = 0;
+        for (dftfe::uInt i = 0; i < n_mpi_processes; ++i)
           {
             totalSize += nCellsPerTask[i];
             if (i < this_process)
               startLocation += nCellsPerTask[i];
           }
-        std::vector<double>       centroidData(3 * totalSize, 0.0);
-        std::vector<unsigned int> startLocationsData(totalSize, 0);
-        for (unsigned int i = 0; i < nCellsPerTask[this_process]; ++i)
+        std::vector<double>      centroidData(3 * totalSize, 0.0);
+        std::vector<dftfe::uInt> startLocationsData(totalSize, 0);
+        for (dftfe::uInt i = 0; i < nCellsPerTask[this_process]; ++i)
           {
             centroidData[3 * (startLocation + i) + 0] =
               centroidLocations[3 * i + 0];
@@ -728,7 +727,7 @@ namespace dftfe
         MPI_Allreduce(MPI_IN_PLACE,
                       &startLocationsData[0],
                       totalSize,
-                      MPI_UNSIGNED,
+                      dftfe::dataTypes::mpi_type_id(startLocationsData.data()),
                       MPI_SUM,
                       mpi_comm_domain);
         std::string masterFileName =
@@ -739,17 +738,17 @@ namespace dftfe
               dftfe::dftUtils::moveFile(masterFileName,
                                         masterFileName + ".old");
           }
-        unsigned int  index = 0;
+        dftfe::uInt   index = 0;
         std::ofstream outFile(masterFileName);
         if (outFile.is_open())
           {
-            for (unsigned int i = 0; i < n_mpi_processes; ++i)
+            for (dftfe::uInt i = 0; i < n_mpi_processes; ++i)
               {
-                const unsigned int totalCells = nCellsPerTask[i];
-                const std::string  tempFile   = "MPITask_" + std::to_string(i) +
+                const dftfe::uInt totalCells = nCellsPerTask[i];
+                const std::string tempFile   = "MPITask_" + std::to_string(i) +
                                              "_" + fieldName +
                                              "_quadPoints.chk";
-                for (unsigned int j = 0; j < totalCells; j++)
+                for (dftfe::uInt j = 0; j < totalCells; j++)
                   {
                     outFile << std::setprecision(
                                  std::numeric_limits<double>::max_digits10)

@@ -4,27 +4,27 @@ namespace dftfe
 {
   namespace utils
   {
-    template <unsigned int dim>
+    template <dftfe::uInt dim>
     Cell<dim>::Cell(const std::vector<double> &ll,
                     const std::vector<double> &ur)
     {
       d_lowerLeft.resize(dim, 0.0);
       d_upperRight.resize(dim, 0.0);
-      for (unsigned int j = 0; j < dim; j++)
+      for (dftfe::uInt j = 0; j < dim; j++)
         {
           d_lowerLeft[j]  = ll[j];
           d_upperRight[j] = ur[j];
         }
     }
 
-    template <unsigned int dim>
+    template <dftfe::uInt dim>
     Cell<dim>::Cell()
     {
       d_lowerLeft.resize(dim, 0.0);
       d_upperRight.resize(dim, 0.0);
     }
 
-    template <unsigned int dim>
+    template <dftfe::uInt dim>
     std::pair<std::vector<double>, std::vector<double>>
     Cell<dim>::getBoundingBox() const
     {
@@ -33,13 +33,13 @@ namespace dftfe
       return pp;
     }
 
-    template <unsigned int dim>
+    template <dftfe::uInt dim>
     bool
     Cell<dim>::isPointInside(const std::vector<double> &point,
                              const double               tol) const
     {
       bool returnVal = true;
-      for (unsigned int j = 0; j < dim; j++)
+      for (dftfe::uInt j = 0; j < dim; j++)
         {
           if ((point[j] < d_lowerLeft[j] - tol) ||
               (point[j] > d_upperRight[j] + tol))
@@ -50,29 +50,29 @@ namespace dftfe
       return returnVal;
     }
 
-    template <unsigned int dim>
+    template <dftfe::uInt dim>
     void
     Cell<dim>::getVertices(std::vector<std::vector<double>> &points) const
     {
-      size_type numPoints = std::pow(2, dim);
+      dftfe::uInt numPoints = std::pow(2, dim);
       points.resize(numPoints, std::vector<double>(dim, 0.0));
 
-      for (size_type iPoint = 0; iPoint < numPoints; iPoint++)
+      for (dftfe::uInt iPoint = 0; iPoint < numPoints; iPoint++)
         {
           getVertex(iPoint, points[iPoint]);
         }
     }
 
-    template <unsigned int dim>
+    template <dftfe::uInt dim>
     void
-    Cell<dim>::getVertex(size_type i, std::vector<double> &point) const
+    Cell<dim>::getVertex(dftfe::uInt i, std::vector<double> &point) const
     {
       point.resize(dim, 0.0);
-      for (size_type iDim = 0; iDim < dim; iDim++)
+      for (dftfe::uInt iDim = 0; iDim < dim; iDim++)
         {
-          size_type denom      = std::pow(2, iDim);
-          size_type coordIndex = i / denom;
-          size_type coord      = coordIndex % 2;
+          dftfe::uInt denom      = std::pow(2, iDim);
+          dftfe::uInt coordIndex = i / denom;
+          dftfe::uInt coord      = coordIndex % 2;
           if (coord == 1)
             point[iDim] = d_upperRight[iDim];
           else
@@ -80,12 +80,12 @@ namespace dftfe
         }
     }
 
-    template <unsigned int dim>
+    template <dftfe::uInt dim>
     std::vector<double>
     Cell<dim>::getParametricPoint(const std::vector<double> &realPoint) const
     {
       std::vector<double> pointParam(dim, 0.0);
-      for (unsigned int j = 0; j < dim; j++)
+      for (dftfe::uInt j = 0; j < dim; j++)
         {
           pointParam[j] = (realPoint[j] - d_lowerLeft[j]) /
                           (d_upperRight[j] - d_lowerLeft[j]);
@@ -94,14 +94,14 @@ namespace dftfe
       return pointParam;
     }
 
-    //    template <unsigned int dim>
+    //    template <dftfe::uInt dim>
     //    void
-    //    Cell<dim>::getShapeFuncValues(unsigned int numPointsInCell,
+    //    Cell<dim>::getShapeFuncValues(dftfe::uInt numPointsInCell,
     //                                  const std::vector<double>
     //                                  &coordinatesOfPointsInCell,
     //                                  std::vector<dataTypes::number>
-    //                                  &shapeFuncValues, unsigned int
-    //                                  cellShapeFuncStartIndex, unsigned int
+    //                                  &shapeFuncValues, dftfe::uInt
+    //                                  cellShapeFuncStartIndex, dftfe::uInt
     //                                  numDofsPerElement) const
     //    {
     //      AssertThrow(false,

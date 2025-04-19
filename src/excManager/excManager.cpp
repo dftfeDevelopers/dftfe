@@ -29,7 +29,7 @@ namespace dftfe
   namespace
   {
     std::string
-    lastN(std::string input, unsigned int n)
+    lastN(std::string input, dftfe::uInt n)
     {
       if (input.size() < n)
         return input;
@@ -44,7 +44,7 @@ namespace dftfe
                      std::shared_ptr<xc_func_type> funcCPtr,
                      std::string                   modelXCInputFile)
     {
-      int exceptParamX = -1, exceptParamC = -1;
+      dftfe::Int exceptParamX = -1, exceptParamC = -1;
 
       std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> excObj;
       if (XCType == "LDA-PZ")
@@ -212,7 +212,7 @@ namespace dftfe
 
     if (enableHubbard)
       {
-        unsigned int numSpin = 1;
+        dftfe::uInt numSpin = 1;
         if (isSpinPolarized == true)
           numSpin = 2;
 

@@ -19,6 +19,7 @@
 
 #ifndef constants_H_
 #define constants_H_
+#include <TypeConfig.h>
 
 namespace dftfe
 {
@@ -35,22 +36,22 @@ namespace dftfe
   const double C_AngToBohr           = 1.0 / 0.529177210903;
 
   /// 1d quadrature rule order
-  template <unsigned int FEOrder>
-  constexpr unsigned int
+  template <dftfe::uInt FEOrder>
+  constexpr dftfe::uInt
   C_num1DQuad()
   {
     return FEOrder + 1;
   }
 
   /// 1d quad rule smeared nuclear charge
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_num1DQuadSmearedCharge()
   {
     return 10;
   }
 
   /// number of copies 1d quad rule smeared nuclear charge
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_numCopies1DQuadSmearedCharge()
   {
     return 2; // can be changed from 2 to 3
@@ -58,7 +59,7 @@ namespace dftfe
 
   /// 1d quad rule smeared nuclear charge
   /// if a very coarse FE mesh is used (e.g. softer pseudopotentials)
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_num1DQuadSmearedChargeHigh()
   {
     return 10;
@@ -66,14 +67,14 @@ namespace dftfe
 
   /// number of copies 1d quad rule smeared nuclear charge
   /// if a very coarse FE mesh is used (e.g. softer pseudpotentials)
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_numCopies1DQuadSmearedChargeHigh()
   {
     return 3;
   }
 
   /// 1d quad rule smeared nuclear charge if cell stress calculation is on
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_num1DQuadSmearedChargeStress()
   {
     return 10;
@@ -81,7 +82,7 @@ namespace dftfe
 
   /// number of copies 1d quad rule smeared nuclear charge if cell stress
   /// calculation is on
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_numCopies1DQuadSmearedChargeStress()
   {
     return 5; //
@@ -89,38 +90,38 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_HIGHERQUAD_PSP
   /// rho nodal polynomial order
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  constexpr unsigned int
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  constexpr dftfe::uInt
   C_rhoNodalPolyOrder()
   {
     return ((FEOrder + 2) > FEOrderElectro ? (FEOrder + 2) : FEOrderElectro);
   }
 
   /// 1d quadrature rule order for non-local part of pseudopotential
-  template <unsigned int FEOrder>
-  constexpr unsigned int
+  template <dftfe::uInt FEOrder>
+  constexpr dftfe::uInt
   C_num1DQuadNLPSP()
   {
     return 14; // Can be changed from 14 to 18 Step 1
   }
 
   /// number of copies 1d quad rule non-local PSP
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_numCopies1DQuadNLPSP()
   {
     return 1;
   }
 
   /// 1d quadrature rule order for local part of pseudopotential
-  template <unsigned int FEOrder>
-  constexpr unsigned int
+  template <dftfe::uInt FEOrder>
+  constexpr dftfe::uInt
   C_num1DQuadLPSP()
   {
     return 14;
   }
 
   /// number of copies 1d quad rule local PSP
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_numCopies1DQuadLPSP()
   {
     return 1;
@@ -128,38 +129,38 @@ namespace dftfe
 #else
 
   /// rho nodal polynomial order
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  constexpr unsigned int
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  constexpr dftfe::uInt
   C_rhoNodalPolyOrder()
   {
     return ((FEOrder + 2) > FEOrderElectro ? (FEOrder + 2) : FEOrderElectro);
   }
 
   /// 1d quadrature rule order for non-local part of pseudopotential
-  template <unsigned int FEOrder>
-  constexpr unsigned int
+  template <dftfe::uInt FEOrder>
+  constexpr dftfe::uInt
   C_num1DQuadNLPSP()
   {
     return 10;
   }
 
   /// number of copies 1d quad rule non-local PSP
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_numCopies1DQuadNLPSP()
   {
     return 1;
   }
 
   /// 1d quadrature rule order for local part of pseudopotential
-  template <unsigned int FEOrder>
-  constexpr unsigned int
+  template <dftfe::uInt FEOrder>
+  constexpr dftfe::uInt
   C_num1DQuadLPSP()
   {
     return 10;
   }
 
   /// number of copies 1d quad rule local PSP
-  constexpr unsigned int
+  constexpr dftfe::uInt
   C_numCopies1DQuadLPSP()
   {
     return 1;

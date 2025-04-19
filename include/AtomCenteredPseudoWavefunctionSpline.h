@@ -50,10 +50,10 @@ namespace dftfe
      * @param[in] truncationTol the minimum function value after which the
      * function is truncated.
      */
-    AtomCenteredPseudoWavefunctionSpline(std::string  filename,
-                                         unsigned int l,
-                                         double       cutoff,
-                                         double       truncationTol = 1E-10);
+    AtomCenteredPseudoWavefunctionSpline(std::string filename,
+                                         dftfe::uInt l,
+                                         double      cutoff,
+                                         double      truncationTol = 1E-10);
   };
 
 } // end of namespace dftfe

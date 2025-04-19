@@ -22,52 +22,52 @@
 namespace dftfe
 {
   // compute ESmeared contribution stress
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     addEPhiTotSmearedStressContribution(
       dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
+      const dftfe::uInt                    cell,
       const dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradPhiTotQuads,
-      const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
-      const std::map<dealii::CellId, std::vector<int>>
+      const std::vector<dftfe::uInt> &nonTrivialAtomImageIdsMacroCell,
+      const std::map<dealii::CellId, std::vector<dftfe::Int>>
         &bQuadAtomIdsAllAtomsImages,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
         &smearedbQuads)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
-    for (unsigned int idim = 0; idim < 3; idim++)
-      for (unsigned int jdim = 0; jdim < 3; jdim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
+      for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
         {
           zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
         }
 
-    const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
-    const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
-    const unsigned int numberTotalAtoms =
-      numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells =
+    const dftfe::uInt numberGlobalAtoms  = dftPtr->atomLocations.size();
+    const dftfe::uInt numberImageCharges = dftPtr->d_imageIdsTrunc.size();
+    const dftfe::uInt numberTotalAtoms = numberGlobalAtoms + numberImageCharges;
+    const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
-    const unsigned int numQuadPoints = forceEval.n_q_points;
+    const dftfe::uInt numQuadPoints = forceEval.n_q_points;
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
     dealii::AlignedVector<dealii::VectorizedArray<double>> smearedbQuadsiAtom(
       numQuadPoints, dealii::make_vectorized_array(0.0));
 
-    for (int iAtomNonTrivial = 0;
+    for (dftfe::Int iAtomNonTrivial = 0;
          iAtomNonTrivial < nonTrivialAtomImageIdsMacroCell.size();
          iAtomNonTrivial++)
       {
-        const int iAtom = nonTrivialAtomImageIdsMacroCell[iAtomNonTrivial];
+        const dftfe::Int iAtom =
+          nonTrivialAtomImageIdsMacroCell[iAtomNonTrivial];
         dealii::Point<3, double> atomLocation;
         if (iAtom < numberGlobalAtoms)
           {
@@ -77,10 +77,10 @@ namespace dftfe
           }
         else
           {
-            const int imageId = iAtom - numberGlobalAtoms;
-            atomLocation[0]   = dftPtr->d_imagePositionsTrunc[imageId][0];
-            atomLocation[1]   = dftPtr->d_imagePositionsTrunc[imageId][1];
-            atomLocation[2]   = dftPtr->d_imagePositionsTrunc[imageId][2];
+            const dftfe::Int imageId = iAtom - numberGlobalAtoms;
+            atomLocation[0] = dftPtr->d_imagePositionsTrunc[imageId][0];
+            atomLocation[1] = dftPtr->d_imagePositionsTrunc[imageId][1];
+            atomLocation[2] = dftPtr->d_imagePositionsTrunc[imageId][2];
           }
 
         dealii::Point<3, dealii::VectorizedArray<double>> atomLocationVect;
@@ -92,13 +92,13 @@ namespace dftfe
                   smearedbQuadsiAtom.end(),
                   dealii::make_vectorized_array(0.0));
 
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
-            dealii::CellId          subCellId = subCellPtr->id();
-            const std::vector<int> &bQuadAtomIdsCell =
+            dealii::CellId                 subCellId = subCellPtr->id();
+            const std::vector<dftfe::Int> &bQuadAtomIdsCell =
               bQuadAtomIdsAllAtomsImages.find(subCellId)->second;
-            for (unsigned int q = 0; q < numQuadPoints; ++q)
+            for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
               if (bQuadAtomIdsCell[q] == iAtom)
                 smearedbQuadsiAtom[q][iSubCell] = smearedbQuads[q][iSubCell];
           }
@@ -106,65 +106,66 @@ namespace dftfe
 
         dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
           EPSPStressContribution = zeroTensor2;
-        for (unsigned int q = 0; q < numQuadPoints; ++q)
+        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
           EPSPStressContribution -=
             outer_product(smearedbQuadsiAtom[q] * gradPhiTotQuads[q],
                           forceEval.quadrature_point(q) - atomLocationVect) *
             forceEval.JxW(q);
 
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-          for (unsigned int idim = 0; idim < 3; idim++)
-            for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
+            for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
               d_stress[idim][jdim] +=
                 EPSPStressContribution[idim][jdim][iSubCell];
       } // iAtom loop
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     addEVselfSmearedStressContribution(
       dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
+      const dftfe::uInt                    cell,
       const dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradVselfQuads,
-      const std::vector<unsigned int> &nonTrivialAtomImageIdsMacroCell,
-      const std::map<dealii::CellId, std::vector<int>>
+      const std::vector<dftfe::uInt> &nonTrivialAtomImageIdsMacroCell,
+      const std::map<dealii::CellId, std::vector<dftfe::Int>>
         &bQuadAtomIdsAllAtomsImages,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
         &smearedbQuads)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
-    for (unsigned int idim = 0; idim < 3; idim++)
-      for (unsigned int jdim = 0; jdim < 3; jdim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
+      for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
         {
           zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
         }
 
-    const unsigned int numSubCells =
+    const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
-    const unsigned int numQuadPoints = forceEval.n_q_points;
+    const dftfe::uInt numQuadPoints = forceEval.n_q_points;
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
+    const dftfe::uInt numberGlobalAtoms = dftPtr->atomLocations.size();
 
     dealii::AlignedVector<dealii::VectorizedArray<double>> smearedbQuadsiAtom(
       numQuadPoints, dealii::make_vectorized_array(0.0));
 
-    for (int iAtomNonTrivial = 0;
+    for (dftfe::Int iAtomNonTrivial = 0;
          iAtomNonTrivial < nonTrivialAtomImageIdsMacroCell.size();
          iAtomNonTrivial++)
       {
-        const int atomId = nonTrivialAtomImageIdsMacroCell[iAtomNonTrivial];
+        const dftfe::Int atomId =
+          nonTrivialAtomImageIdsMacroCell[iAtomNonTrivial];
 
         dealii::Point<3, double> atomLocation;
         if (atomId < numberGlobalAtoms)
@@ -175,10 +176,10 @@ namespace dftfe
           }
         else
           {
-            const int imageId = atomId - numberGlobalAtoms;
-            atomLocation[0]   = dftPtr->d_imagePositionsTrunc[imageId][0];
-            atomLocation[1]   = dftPtr->d_imagePositionsTrunc[imageId][1];
-            atomLocation[2]   = dftPtr->d_imagePositionsTrunc[imageId][2];
+            const dftfe::Int imageId = atomId - numberGlobalAtoms;
+            atomLocation[0] = dftPtr->d_imagePositionsTrunc[imageId][0];
+            atomLocation[1] = dftPtr->d_imagePositionsTrunc[imageId][1];
+            atomLocation[2] = dftPtr->d_imagePositionsTrunc[imageId][2];
           }
 
         dealii::Point<3, dealii::VectorizedArray<double>> atomLocationVect;
@@ -190,28 +191,28 @@ namespace dftfe
                   smearedbQuadsiAtom.end(),
                   dealii::make_vectorized_array(0.0));
 
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
-            dealii::CellId          subCellId = subCellPtr->id();
-            const std::vector<int> &bQuadAtomIdsCell =
+            dealii::CellId                 subCellId = subCellPtr->id();
+            const std::vector<dftfe::Int> &bQuadAtomIdsCell =
               bQuadAtomIdsAllAtomsImages.find(subCellId)->second;
-            for (unsigned int q = 0; q < numQuadPoints; ++q)
+            for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
               if (bQuadAtomIdsCell[q] == atomId)
                 smearedbQuadsiAtom[q][iSubCell] = smearedbQuads[q][iSubCell];
           }
 
         dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
           EPSPStressContribution = zeroTensor2;
-        for (unsigned int q = 0; q < numQuadPoints; ++q)
+        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
           EPSPStressContribution +=
             outer_product(smearedbQuadsiAtom[q] * gradVselfQuads[q],
                           forceEval.quadrature_point(q) - atomLocationVect) *
             forceEval.JxW(q);
 
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-          for (unsigned int idim = 0; idim < 3; idim++)
-            for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
+            for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
               d_stress[idim][jdim] +=
                 EPSPStressContribution[idim][jdim][iSubCell];
       } // iAtom loop

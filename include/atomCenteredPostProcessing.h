@@ -32,9 +32,9 @@ namespace dftfe
     atomCenteredOrbitalsPostProcessing(const MPI_Comm    &mpi_comm_parent,
                                        const MPI_Comm    &mpi_comm_domain,
                                        const std::string &scratchFolderName,
-                                       const std::set<unsigned int> &atomTypes,
+                                       const std::set<dftfe::uInt> &atomTypes,
                                        const bool           reproducibleOutput,
-                                       const int            verbosity,
+                                       const dftfe::Int     verbosity,
                                        const bool           useDevice,
                                        const dftParameters *dftParamsPtr);
     /**
@@ -66,10 +66,10 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         BLASWrapperPtrDevice,
 #endif
-      unsigned int                            sparsityPatternQuadratureId,
-      unsigned int                            nlpspQuadratureId,
+      dftfe::uInt                             sparsityPatternQuadratureId,
+      dftfe::uInt                             nlpspQuadratureId,
       const std::vector<std::vector<double>> &atomLocations,
-      unsigned int                            numEigenValues);
+      dftfe::uInt                             numEigenValues);
 
 
     /**
@@ -81,7 +81,7 @@ namespace dftfe
     void
     initialiseNonLocalContribution(
       const std::vector<std::vector<double>> &atomLocations,
-      const std::vector<int>                 &imageIds,
+      const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &periodicCoords,
       const std::vector<double>              &kPointWeights,
       const std::vector<double>              &kPointCoordinates,
@@ -94,12 +94,12 @@ namespace dftfe
     double
     smearFunction(double x, const dftParameters *dftParamsPtr);
 
-    std::unordered_map<unsigned int, std::string> LQnumToNameMap;
+    std::unordered_map<dftfe::uInt, std::string> LQnumToNameMap;
 
     void
     computeAtomCenteredEntries(
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> *X,
-      const unsigned int                      totalNumWaveFunctions,
+      const dftfe::uInt                       totalNumWaveFunctions,
       const std::vector<std::vector<double>> &eigenValues,
       std::shared_ptr<
         dftfe::basis::FEBasisOperations<ValueType, double, memorySpace>>
@@ -112,39 +112,39 @@ namespace dftfe
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                  BLASWrapperPtrHost,
-      const unsigned int         quadratureIndex,
+      const dftfe::uInt          quadratureIndex,
       const std::vector<double> &kPointWeights,
       const MPI_Comm            &interBandGroupComm,
       const MPI_Comm            &interpoolComm,
       const dftParameters       *dftParamsPtr,
       double                     fermiEnergy,
-      unsigned int               highestStateNscfSolve);
+      dftfe::uInt                highestStateNscfSolve);
 
   private:
     const MPI_Comm             d_mpiCommParentPostProcessing;
     const MPI_Comm             d_mpiCommDomain;
-    const unsigned int         d_this_mpi_process;
+    const dftfe::uInt          d_this_mpi_process;
     std::string                d_dftfeScratchFolderName;
-    std::set<unsigned int>     d_atomTypes;
+    std::set<dftfe::uInt>      d_atomTypes;
     bool                       d_reproducible_output;
-    unsigned int               d_verbosity;
+    dftfe::uInt                d_verbosity;
     bool                       d_useDevice;
     dealii::ConditionalOStream pcout;
-    unsigned int               d_sparsityPatternQuadratureId;
-    unsigned int               d_nlpspQuadratureId;
-    unsigned int               d_numEigenValues;
+    dftfe::uInt                d_sparsityPatternQuadratureId;
+    dftfe::uInt                d_nlpspQuadratureId;
+    dftfe::uInt                d_numEigenValues;
 
     void
     createAtomCenteredSphericalFunctionsForOrbitals();
 
-    std::map<unsigned int, std::vector<std::pair<unsigned int, unsigned int>>>
+    std::map<dftfe::uInt, std::vector<std::pair<dftfe::uInt, dftfe::uInt>>>
                         nlNumsMap;
     dealii::TimerOutput computing_timer;
 
     std::shared_ptr<AtomCenteredSphericalFunctionContainer>
       d_atomicOrbitalFnsContainer;
 
-    std::map<std::pair<unsigned int, unsigned int>,
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>,
              std::shared_ptr<AtomCenteredSphericalFunctionBase>>
       d_atomicOrbitalFnsMap;
 

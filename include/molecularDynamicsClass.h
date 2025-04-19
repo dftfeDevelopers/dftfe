@@ -43,7 +43,7 @@ namespace dftfe
                            const std::string restartFilesPath,
                            const MPI_Comm   &mpi_comm_parent,
                            const bool        restart,
-                           const int         verbosity,
+                           const dftfe::Int  verbosity,
                            const bool        useDevice);
 
 
@@ -53,7 +53,7 @@ namespace dftfe
     const double AngTobohr           = 1.0 / bohrToAng;
     const double kB = 8.617333262e-05; // eV/K **3.166811429e-6**;
 
-    int d_startingTimeStep;
+    dftfe::Int d_startingTimeStep;
     /**
      * @brief runMD: Assign atom mass to charge. Create vectors for displacement, velocity, force.
      * Create KE vector, TE vector, PE vector. Initialise velocities from
@@ -62,7 +62,7 @@ namespace dftfe
      *
      *
      */
-    int
+    dftfe::Int
     runMD();
 
 
@@ -73,22 +73,22 @@ namespace dftfe
     dftBase                      *d_dftPtr;
 
     // parallel communication objects
-    const MPI_Comm     d_mpiCommParent;
-    const unsigned int d_this_mpi_process;
+    const MPI_Comm    d_mpiCommParent;
+    const dftfe::uInt d_this_mpi_process;
 
     // conditional stream object
     dealii::ConditionalOStream pcout;
 
-    std::string d_restartFilesPath;
-    const int   d_verbosity;
+    std::string      d_restartFilesPath;
+    const dftfe::Int d_verbosity;
 
-    unsigned int                     d_restartFlag;
-    unsigned int                     d_numberGlobalCharges;
+    dftfe::uInt                      d_restartFlag;
+    dftfe::uInt                      d_numberGlobalCharges;
     double                           d_TimeStep;
-    unsigned int                     d_TimeIndex;
-    unsigned int                     d_numberofSteps;
+    dftfe::uInt                      d_TimeIndex;
+    dftfe::uInt                      d_numberofSteps;
     double                           d_startingTemperature;
-    int                              d_ThermostatTimeConstant;
+    dftfe::Int                       d_ThermostatTimeConstant;
     std::string                      d_ThermostatType;
     double                           d_MDstartWallTime;
     double                           d_MaxWallTime;
@@ -117,7 +117,7 @@ namespace dftfe
      *
      *
      */
-    int
+    dftfe::Int
     mdNVE(std::vector<double>                       &KineticEnergyVector,
           std::vector<double>                       &InternalEnergyVector,
           std::vector<double>                       &EntropicEnergyVector,
@@ -146,7 +146,7 @@ namespace dftfe
      *
      *
      */
-    int
+    dftfe::Int
     mdNVTnosehoverchainsThermostat(
       std::vector<double>                       &KineticEnergyVector,
       std::vector<double>                       &InternalEnergyVector,
@@ -179,7 +179,7 @@ namespace dftfe
      *
      *
      */
-    int
+    dftfe::Int
     mdNVTrescaleThermostat(
       std::vector<double>                       &KineticEnergyVector,
       std::vector<double>                       &InternalEnergyVector,
@@ -208,7 +208,7 @@ namespace dftfe
     TimeStep
      *
      */
-    int
+    dftfe::Int
     mdNVTsvrThermostat(std::vector<double> &KineticEnergyVector,
                        std::vector<double> &InternalEnergyVector,
                        std::vector<double> &EntropicEnergyVector,
@@ -325,7 +325,7 @@ namespace dftfe
                      const std::vector<double> &KineticEnergyVector,
                      const std::vector<double> &InternalEnergyVector,
                      const std::vector<double> &TotalEnergyVector,
-                     int                        time);
+                     dftfe::Int                 time);
 
     /**
 
@@ -367,7 +367,7 @@ namespace dftfe
     writeRestartNHCfile(const std::vector<double> &v_e,
                         const std::vector<double> &e,
                         const std::vector<double> &Q,
-                        const int                  time);
+                        const dftfe::Int           time);
 
     /**
 
@@ -400,7 +400,7 @@ namespace dftfe
     void
     writeTotalDisplacementFile(
       const std::vector<dealii::Tensor<1, 3, double>> &r,
-      int                                              time);
+      dftfe::Int                                       time);
 
     /**
 
@@ -434,7 +434,7 @@ namespace dftfe
      *
      *
      */
-    int
+    dftfe::Int
     checkRestart(std::string &coordinatesFile,
                  std::string &domainVectorsFile,
                  bool        &scfRestart);
@@ -447,7 +447,7 @@ namespace dftfe
      *
      */
     void
-    DensityExtrapolation(int TimeStep);
+    DensityExtrapolation(dftfe::Int TimeStep);
 
     /**
      * @brief  DensityExtrapolation calculates the t+dt density as a second order extrapolation of density from t, t-dt and t-2dt
@@ -458,7 +458,7 @@ namespace dftfe
      *
      */
     void
-    DensitySplitExtrapolation(int TimeStep);
+    DensitySplitExtrapolation(dftfe::Int TimeStep);
 
 
     /**

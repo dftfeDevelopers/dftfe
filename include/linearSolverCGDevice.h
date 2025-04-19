@@ -69,8 +69,8 @@ namespace dftfe
     void
     solve(linearSolverProblemDevice &problem,
           const double               absTolerance,
-          const unsigned int         maxNumberIterations,
-          const int                  debugLevel     = 0,
+          const dftfe::uInt          maxNumberIterations,
+          const dftfe::Int           debugLevel     = 0,
           bool                       distributeFlag = true);
 
   private:
@@ -80,15 +80,15 @@ namespace dftfe
     /// define some temporary vectors
     distributedDeviceVec<double> d_qvec, d_rvec, d_dvec;
 
-    int     d_xLocalDof;
-    double *d_devSumPtr;
+    dftfe::Int d_xLocalDof;
+    double    *d_devSumPtr;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_devSum;
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>

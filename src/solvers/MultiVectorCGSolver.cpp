@@ -40,11 +40,11 @@ namespace dftfe
                                                             BLASWrapperPtr,
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &x,
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &NDBCVec,
-    unsigned int                                            locallyOwned,
-    unsigned int                                            blockSize,
+    dftfe::uInt                                             locallyOwned,
+    dftfe::uInt                                             blockSize,
     const double                                            absTolerance,
-    const unsigned int                                      maxNumberIterations,
-    const unsigned int                                      debugLevel,
+    const dftfe::uInt                                       maxNumberIterations,
+    const dftfe::uInt                                       debugLevel,
     bool                                                    distributeFlag)
 
   {
@@ -73,7 +73,7 @@ namespace dftfe
 
 
 
-    int                                              it = 0;
+    dftfe::Int                                       it = 0;
     dftfe::utils::MemoryStorage<double, memorySpace> resMemSpace, alphaMemSpace,
       initial_resMemSpace;
     std::vector<double> resHost, alphaHost, initial_resHost;
@@ -126,7 +126,7 @@ namespace dftfe
                                     resHost.data());
 
     pcout << "initial residuals = \n";
-    for (unsigned int i = 0; i < blockSize; i++)
+    for (dftfe::uInt i = 0; i < blockSize; i++)
       {
         initial_resHost[i] = resHost[i];
         pcout << initial_resHost[i] << "\n";
@@ -148,7 +148,7 @@ namespace dftfe
                                     resHost.data());
 
     pcout << "initial residuals = \n";
-    for (unsigned int i = 0; i < blockSize; i++)
+    for (dftfe::uInt i = 0; i < blockSize; i++)
       {
         resHost[i]         = std::sqrt(resHost[i]);
         initial_resHost[i] = resHost[i];
@@ -187,7 +187,7 @@ namespace dftfe
                                         alphaMemSpace.data(),
                                         mpi_communicator,
                                         alphaHost.data());
-        for (unsigned int i = 0; i < blockSize; i++)
+        for (dftfe::uInt i = 0; i < blockSize; i++)
           {
             alphaHost[i] = ghHost[i] / alphaHost[i];
           }
@@ -211,7 +211,7 @@ namespace dftfe
                                         mpi_communicator,
                                         resHost.data());
 
-        for (unsigned int i = 0; i < blockSize; i++)
+        for (dftfe::uInt i = 0; i < blockSize; i++)
           {
             resHost[i] = std::sqrt(resHost[i]);
           }
@@ -234,7 +234,7 @@ namespace dftfe
                                         mpi_communicator,
                                         ghHost.data());
 
-        for (unsigned int i = 0; i < blockSize; i++)
+        for (dftfe::uInt i = 0; i < blockSize; i++)
           {
             betaHost[i] = (ghHost[i] / betaHost[i]);
           }
@@ -254,7 +254,7 @@ namespace dftfe
           locallyOwned * blockSize, -1.0, h.data(), 1.0, d.data());
 
         bool convergeStat = true;
-        for (unsigned int id = 0; id < blockSize; id++)
+        for (dftfe::uInt id = 0; id < blockSize; id++)
           {
             if (std::abs(resHost[id]) > absTolerance)
               convergeStat = false;
@@ -291,11 +291,11 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
       &x,
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
-                      &NDBCVec,
-    unsigned int       locallyOwned,
-    unsigned int       blockSize,
-    const double       absTolerance,
-    const unsigned int maxNumberIterations,
-    const unsigned int debugLevel,
-    bool               distributeFlag);
+                     &NDBCVec,
+    dftfe::uInt       locallyOwned,
+    dftfe::uInt       blockSize,
+    const double      absTolerance,
+    const dftfe::uInt maxNumberIterations,
+    const dftfe::uInt debugLevel,
+    bool              distributeFlag);
 } // namespace dftfe

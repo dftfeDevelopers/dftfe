@@ -64,7 +64,7 @@ namespace dftfe
       d_solver = 2;
     // initialize d_strainEpsilon to identity
     d_strainEpsilon = 0;
-    for (unsigned int i = 0; i < 3; ++i)
+    for (dftfe::uInt i = 0; i < 3; ++i)
       d_strainEpsilon[i][i] = 1.0;
 
     d_domainVolumeInitial = d_dftPtr->getCellVolume();
@@ -192,10 +192,10 @@ namespace dftfe
         std::vector<std::vector<double>> tmp, cellOptData;
         dftUtils::readFile(1, cellOptData, d_restartPath + "/cellOpt.dat");
         dftUtils::readFile(1, tmp, d_restartPath + "/step.chk");
-        int solver             = cellOptData[0][0];
-        int cellConstraintType = cellOptData[1][0];
-        d_domainVolumeInitial  = cellOptData[2][0];
-        d_totalUpdateCalls     = tmp[0][0];
+        dftfe::Int solver             = cellOptData[0][0];
+        dftfe::Int cellConstraintType = cellOptData[1][0];
+        d_domainVolumeInitial         = cellOptData[2][0];
+        d_totalUpdateCalls            = tmp[0][0];
         if (solver != d_solver)
           pcout
             << "Solver has changed since last save, the newly set solver will start from scratch."
@@ -396,7 +396,7 @@ namespace dftfe
   }
 
 
-  int
+  dftfe::Int
   geoOptCell::run()
   {
     if (getNumberUnknowns() > 0)
@@ -434,7 +434,7 @@ namespace dftfe
             pcout
               << "-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"
               << std::endl;
-            for (int i = 0; i < d_dftPtr->getCell().size(); ++i)
+            for (dftfe::Int i = 0; i < d_dftPtr->getCell().size(); ++i)
               {
                 pcout << "v" << i + 1 << " : " << d_dftPtr->getCell()[i][0]
                       << " " << d_dftPtr->getCell()[i][1] << " "
@@ -451,7 +451,7 @@ namespace dftfe
                 pcout
                   << "------------------Fractional coordinates of atoms--------------------"
                   << std::endl;
-                for (unsigned int i = 0;
+                for (dftfe::uInt i = 0;
                      i < d_dftPtr->getAtomLocationsCart().size();
                      ++i)
                   pcout << "AtomId " << i << ":  "
@@ -470,7 +470,7 @@ namespace dftfe
                 pcout
                   << "------------Cartesian coordinates of atoms (origin at center of domain)------------------"
                   << std::endl;
-                for (unsigned int i = 0;
+                for (dftfe::uInt i = 0;
                      i < d_dftPtr->getAtomLocationsCart().size();
                      ++i)
                   {
@@ -506,7 +506,7 @@ namespace dftfe
 
 
 
-  unsigned int
+  dftfe::uInt
   geoOptCell::getNumberUnknowns() const
   {
     return std::accumulate(d_relaxationFlags.begin(),
@@ -574,7 +574,7 @@ namespace dftfe
                      const bool useSingleAtomSolutionsInitialGuess)
   {
     std::vector<double> bcastSolution(solution.size());
-    for (unsigned int i = 0; i < solution.size(); ++i)
+    for (dftfe::uInt i = 0; i < solution.size(); ++i)
       {
         bcastSolution[i] = solution[i];
       }
@@ -588,7 +588,7 @@ namespace dftfe
 
     dealii::Tensor<2, 3, double> strainEpsilonNew = d_strainEpsilon;
 
-    unsigned int count = 0;
+    dftfe::uInt count = 0;
     if (d_relaxationFlags[0] == 1)
       {
         strainEpsilonNew[0][0] += bcastSolution[count];
@@ -709,7 +709,7 @@ namespace dftfe
         stress[0] =
           (tempGradient[0][0] + tempGradient[1][1] + tempGradient[2][2]) / 3.0;
       }
-    for (int i = 0; i < stress.size(); ++i)
+    for (dftfe::Int i = 0; i < stress.size(); ++i)
       converged = converged && (std::abs(stress[i]) <
                                 d_dftPtr->getParametersObject().stressRelaxTol);
     return converged;
@@ -729,7 +729,7 @@ namespace dftfe
   }
 
 
-  std::vector<unsigned int>
+  std::vector<dftfe::uInt>
   geoOptCell::getUnknownCountFlag() const
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());

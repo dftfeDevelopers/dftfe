@@ -33,14 +33,14 @@ namespace dftfe
     : public AtomCenteredSphericalFunctionBase
   {
   public:
-    AtomCenteredSphericalFunctionSinc(double       RcParameter,
-                                      double       RmaxParameter,
-                                      unsigned int lParameter);
+    AtomCenteredSphericalFunctionSinc(double      RcParameter,
+                                      double      RmaxParameter,
+                                      dftfe::uInt lParameter);
 
     double
     getRadialValue(double r) const override;
 
-    unsigned int
+    dftfe::uInt
     getQuantumNumbern() const;
 
     double

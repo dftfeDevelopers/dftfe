@@ -36,21 +36,21 @@ namespace dftfe
 
     std::fill(d_forceDispersion.begin(), d_forceDispersion.end(), 0.0);
     std::fill(d_stressDispersion.begin(), d_stressDispersion.end(), 0.0);
-    for (unsigned int i = 0; i < d_natoms; ++i)
+    for (dftfe::uInt i = 0; i < d_natoms; ++i)
       {
         d_atomicNumbers[i] = atomLocations[i][0];
       }
 
-    for (unsigned int irow = 0; irow < d_natoms; ++irow)
+    for (dftfe::uInt irow = 0; irow < d_natoms; ++irow)
       {
-        for (unsigned int icol = 0; icol < 3; ++icol)
+        for (dftfe::uInt icol = 0; icol < 3; ++icol)
           {
             d_atomCoordinates[irow * 3 + icol] = atomLocations[irow][2 + icol];
           }
       }
-    for (unsigned int irow = 0; irow < 3; ++irow)
+    for (dftfe::uInt irow = 0; irow < 3; ++irow)
       {
-        for (unsigned int icol = 0; icol < 3; ++icol)
+        for (dftfe::uInt icol = 0; icol < 3; ++icol)
           {
             d_latticeVectors[irow * 3 + icol] =
               d_domainBoundingVectors[irow][icol];
@@ -355,17 +355,17 @@ namespace dftfe
             default:
               break;
           }
-        for (unsigned int irow = 0; irow < d_natoms; ++irow)
+        for (dftfe::uInt irow = 0; irow < d_natoms; ++irow)
           {
-            for (unsigned int icol = 0; icol < 3; ++icol)
+            for (dftfe::uInt icol = 0; icol < 3; ++icol)
               {
                 d_forceDispersion[irow * 3 + icol] =
                   std::trunc(d_forceDispersion[irow * 3 + icol] * 1e12) * 1e-12;
               }
           }
-        for (unsigned int irow = 0; irow < 3; ++irow)
+        for (dftfe::uInt irow = 0; irow < 3; ++irow)
           {
-            for (unsigned int icol = 0; icol < 3; ++icol)
+            for (dftfe::uInt icol = 0; icol < 3; ++icol)
               {
                 d_stressDispersion[irow * 3 + icol] =
                   std::trunc(d_stressDispersion[irow * 3 + icol] * 1e12) *
@@ -434,13 +434,15 @@ namespace dftfe
   }
 
   double
-  dispersionCorrection::getForceCorrection(int atomNo, int dim) const
+  dispersionCorrection::getForceCorrection(dftfe::Int atomNo,
+                                           dftfe::Int dim) const
   {
     return d_forceDispersion[atomNo * 3 + dim];
   }
 
   double
-  dispersionCorrection::getStressCorrection(int dim1, int dim2) const
+  dispersionCorrection::getStressCorrection(dftfe::Int dim1,
+                                            dftfe::Int dim2) const
   {
     return d_stressDispersion[dim1 * 3 + dim2];
   }

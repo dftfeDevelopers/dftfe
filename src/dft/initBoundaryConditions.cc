@@ -23,8 +23,8 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initBoundaryConditions(
@@ -294,7 +294,7 @@ namespace dftfe
                                           dftfe::basis::update_jxw;
             dftfe::basis::UpdateFlags updateFlagssparsityPattern =
               dftfe::basis::update_quadpoints;
-            std::vector<unsigned int> quadratureIndices{
+            std::vector<dftfe::uInt> quadratureIndices{
               d_densityQuadratureId,
               d_nlpspQuadratureId,
               d_gllQuadratureId,
@@ -327,12 +327,12 @@ namespace dftfe
       }
     if (!d_dftParamsPtr->useDevice && recomputeBasisData)
       {
-        std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+        std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
         dftUtils::createBandParallelizationIndices(
           interBandGroupComm, d_numEigenValues, bandGroupLowHighPlusOneIndices);
 
-        unsigned int BVec = std::min(d_dftParamsPtr->chebyWfcBlockSize,
-                                     bandGroupLowHighPlusOneIndices[1]);
+        dftfe::uInt BVec = std::min(d_dftParamsPtr->chebyWfcBlockSize,
+                                    bandGroupLowHighPlusOneIndices[1]);
 
 
         d_basisOperationsPtrHost->createScratchMultiVectors(1, 4);
@@ -349,8 +349,8 @@ namespace dftfe
           d_basisOperationsPtrHost->createScratchMultiVectorsSinglePrec(
             d_numEigenValues % BVec, 2);
 
-        unsigned int BVec2 = std::min(d_dftParamsPtr->wfcBlockSize,
-                                      bandGroupLowHighPlusOneIndices[1]);
+        dftfe::uInt BVec2 = std::min(d_dftParamsPtr->wfcBlockSize,
+                                     bandGroupLowHighPlusOneIndices[1]);
         if (BVec != BVec2)
           {
             d_basisOperationsPtrHost->createScratchMultiVectors(
@@ -368,7 +368,7 @@ namespace dftfe
           {
             d_basisOperationsPtrDevice->clear();
             d_basisOperationsPtrDevice->init(*d_basisOperationsPtrHost);
-            const unsigned int BVec =
+            const dftfe::uInt BVec =
               std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
             d_basisOperationsPtrDevice->createScratchMultiVectors(1, 4);
@@ -411,7 +411,7 @@ namespace dftfe
             dftfe::basis::UpdateFlags updateFlagsValuesGradients =
               dftfe::basis::update_values | dftfe::basis::update_gradients;
 
-            std::vector<unsigned int> quadratureIndices{
+            std::vector<dftfe::uInt> quadratureIndices{
               d_nlpspQuadratureId,
               d_densityQuadratureId,
               d_feOrderPlusOneQuadratureId};
@@ -432,7 +432,7 @@ namespace dftfe
     else if (d_dftParamsPtr->useDevice)
       {
         d_basisOperationsPtrDevice->clearScratchMultiVectors();
-        const unsigned int BVec =
+        const dftfe::uInt BVec =
           std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
         d_basisOperationsPtrDevice->createScratchMultiVectors(1, 4);

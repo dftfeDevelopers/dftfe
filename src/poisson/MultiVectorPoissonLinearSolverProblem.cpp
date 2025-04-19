@@ -79,9 +79,9 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<double, double, memorySpace>>
                                              basisOperationsPtr,
     const dealii::AffineConstraints<double> &constraintMatrix,
-    const unsigned int                       matrixFreeVectorComponent,
-    const unsigned int                       matrixFreeQuadratureComponentRhs,
-    const unsigned int                       matrixFreeQuadratureComponentAX,
+    const dftfe::uInt                        matrixFreeVectorComponent,
+    const dftfe::uInt                        matrixFreeQuadratureComponentRhs,
+    const dftfe::uInt                        matrixFreeQuadratureComponentAX,
     bool                                     isComputeMeanValueConstraint)
   {
     int this_process;
@@ -146,7 +146,7 @@ namespace dftfe
 
 
     double l2NormStiff = 0.0;
-    for (unsigned int iNode = 0;
+    for (dftfe::uInt iNode = 0;
          iNode < d_numCells * d_numberDofsPerElement * d_numberDofsPerElement;
          iNode++)
       {
@@ -214,8 +214,8 @@ namespace dftfe
       1,
       expectedOutput);
 
-    std::map<dealii::types::global_dof_index, double> atoms;
-    std::map<dealii::CellId, std::vector<double>>     smearedChargeValues;
+    std::map<dftfe::uInt, double>                 atoms;
+    std::map<dealii::CellId, std::vector<double>> smearedChargeValues;
 
     phiTotalSolverProblem.reinit(d_basisOperationsPtr,
                                  expectedOutput,
@@ -259,7 +259,7 @@ namespace dftfe
     double l2NormSqrtDiag = 0.0;
 
     double scalarVal = std::sqrt(4.0 * M_PI);
-    for (unsigned int iNode = 0; iNode < d_diagonalA.size(); iNode++)
+    for (dftfe::uInt iNode = 0; iNode < d_diagonalA.size(); iNode++)
       {
         double diff = ((4.0 * M_PI) * d_diagonalA.data()[iNode]) -
                       outputVec.local_element(iNode);
@@ -278,7 +278,7 @@ namespace dftfe
   MultiVectorPoissonLinearSolverProblem<memorySpace>::vmult(
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &Ax,
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &x,
-    unsigned int                                            blockSize)
+    dftfe::uInt                                             blockSize)
   {
     Ax.setValue(0.0);
     d_AxCellLLevelNodalData.setValue(0.0);
@@ -294,9 +294,9 @@ namespace dftfe
     d_basisOperationsPtr->extractToCellNodalData(x,
                                                  d_xCellLLevelNodalData.data());
 
-    for (size_type iCell = 0; iCell < d_numCells; iCell += d_cellBlockSize)
+    for (dftfe::uInt iCell = 0; iCell < d_numCells; iCell += d_cellBlockSize)
       {
-        std::pair<unsigned int, unsigned int> cellRange(
+        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_cellBlockSize, d_numCells));
 
         d_BLASWrapperPtr->xgemmStridedBatched(
@@ -377,7 +377,7 @@ namespace dftfe
     //
     // get FE data
     //
-    const unsigned int totalLocallyOwnedCells =
+    const dftfe::uInt totalLocallyOwnedCells =
       d_matrixFreeDataPtr->n_physical_cells();
 
     // Quadrature for AX multiplication will FEOrderElectro+1
@@ -388,7 +388,7 @@ namespace dftfe
                                     dealii::update_values |
                                       dealii::update_gradients |
                                       dealii::update_JxW_values);
-    const unsigned int  numberQuadraturePointsAX = quadratureAX.size();
+    const dftfe::uInt   numberQuadraturePointsAX = quadratureAX.size();
 
     // Quadrature for the integration of the rhs should be higher
     const dealii::Quadrature<3> &quadratureRhs =
@@ -398,9 +398,9 @@ namespace dftfe
                                      dealii::update_values |
                                        dealii::update_gradients |
                                        dealii::update_JxW_values);
-    const unsigned int  numberDofsPerElement =
+    const dftfe::uInt   numberDofsPerElement =
       d_dofHandler->get_fe().dofs_per_cell;
-    const unsigned int numberQuadraturePointsRhs = quadratureRhs.size();
+    const dftfe::uInt numberQuadraturePointsRhs = quadratureRhs.size();
 
     //
     // resize data members
@@ -420,9 +420,9 @@ namespace dftfe
     // dealii macrocells which allows efficient integration of cell-level matrix
     // integrals using dealii vectorized arrays
     typename dealii::DoFHandler<3>::active_cell_iterator
-      cell             = d_dofHandler->begin_active(),
-      endc             = d_dofHandler->end();
-    unsigned int iElem = 0;
+      cell            = d_dofHandler->begin_active(),
+      endc            = d_dofHandler->end();
+    dftfe::uInt iElem = 0;
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
@@ -434,10 +434,9 @@ namespace dftfe
               d_shapeFunctionValue.resize(numberDofsPerElement *
                                           numberQuadraturePointsRhs);
 
-              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                   ++iNode)
+              for (dftfe::uInt iNode = 0; iNode < numberDofsPerElement; ++iNode)
                 {
-                  for (unsigned int q_point = 0;
+                  for (dftfe::uInt q_point = 0;
                        q_point < numberQuadraturePointsRhs;
                        ++q_point)
                     {
@@ -448,13 +447,12 @@ namespace dftfe
                 }
             }
 
-          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+          for (dftfe::uInt iNode = 0; iNode < numberDofsPerElement; ++iNode)
             {
-              for (unsigned int jNode = 0; jNode < numberDofsPerElement;
-                   ++jNode)
+              for (dftfe::uInt jNode = 0; jNode < numberDofsPerElement; ++jNode)
                 {
                   double shapeFunctionGradientValue = 0.0;
-                  for (unsigned int q_point = 0;
+                  for (dftfe::uInt q_point = 0;
                        q_point < numberQuadraturePointsAX;
                        ++q_point)
                     shapeFunctionGradientValue +=
@@ -471,7 +469,7 @@ namespace dftfe
 
 
             } // i node loop
-          for (unsigned int q_point = 0; q_point < numberQuadraturePointsRhs;
+          for (dftfe::uInt q_point = 0; q_point < numberQuadraturePointsRhs;
                ++q_point)
             {
               d_cellShapeFunctionJxW[(iElem * numberQuadraturePointsRhs) +
@@ -489,14 +487,14 @@ namespace dftfe
     //
     // get FE data
     //
-    const unsigned int totalLocallyOwnedCells =
+    const dftfe::uInt totalLocallyOwnedCells =
       d_matrixFreeDataPtr->n_physical_cells();
     // Quadrature for the integration of the rhs should be higher
     const dealii::Quadrature<3> &quadratureRhs =
       d_matrixFreeDataPtr->get_quadrature(d_matrixFreeQuadratureComponentRhs);
-    const unsigned int numberDofsPerElement =
+    const dftfe::uInt numberDofsPerElement =
       d_dofHandler->get_fe().dofs_per_cell;
-    const unsigned      numberQuadraturePointsRhs = quadratureRhs.size();
+    const dftfe::uInt   numberQuadraturePointsRhs = quadratureRhs.size();
     std::vector<double> quadPointsValues, cellLevelJxW, cellLevelShapeFunction,
       cellLevelRhsInput;
     quadPointsValues.resize(numberQuadraturePointsRhs);
@@ -504,14 +502,13 @@ namespace dftfe
     cellLevelShapeFunction.resize(numberDofsPerElement *
                                   numberQuadraturePointsRhs);
     cellLevelRhsInput.resize(numberDofsPerElement * d_blockSize);
-    const unsigned int inc  = 1;
-    const double       beta = 0.0, alpha = 1.0;
-    char               transposeMat      = 'T';
-    char               doNotTransposeMat = 'N';
+    const dftfe::uInt inc  = 1;
+    const double      beta = 0.0, alpha = 1.0;
+    char              transposeMat      = 'T';
+    char              doNotTransposeMat = 'N';
 
     // storage for precomputing index maps
-    std::vector<dealii::types::global_dof_index>
-      flattenedArrayMacroCellLocalProcIndexIdMap,
+    std::vector<dftfe::uInt> flattenedArrayMacroCellLocalProcIndexIdMap,
       flattenedArrayCellLocalProcIndexIdMap;
 
     vectorTools::computeCellLocalIndexSetMap(
@@ -529,7 +526,7 @@ namespace dftfe
                                          //
 
     double l2ErrorIndex = 0.0;
-    for (unsigned int i = 0; i < flattenedArrayCellLocalProcIndexIdMap.size();
+    for (dftfe::uInt i = 0; i < flattenedArrayCellLocalProcIndexIdMap.size();
          i++)
       {
         double diff =
@@ -542,24 +539,22 @@ namespace dftfe
 
     // Calculating the rhs from the quad points
     // multiVectorInput is stored on the quad points
-    unsigned int iElem = 0;
+    dftfe::uInt iElem = 0;
     typename dealii::DoFHandler<3>::active_cell_iterator
       cell = d_dofHandler->begin_active(),
       endc = d_dofHandler->end();
 
-    // rhs += \int N_i cellLevelQuad
+    // rhs += \dftfe::Int N_i cellLevelQuad
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
           std::fill(cellLevelRhsInput.begin(), cellLevelRhsInput.end(), 0.0);
 
-          for (unsigned int iBlock = 0; iBlock < d_blockSize; iBlock++)
+          for (dftfe::uInt iBlock = 0; iBlock < d_blockSize; iBlock++)
             {
-              for (unsigned int iNode = 0; iNode < numberDofsPerElement;
-                   iNode++)
+              for (dftfe::uInt iNode = 0; iNode < numberDofsPerElement; iNode++)
                 {
-                  for (unsigned int jQuad = 0;
-                       jQuad < numberQuadraturePointsRhs;
+                  for (dftfe::uInt jQuad = 0; jQuad < numberQuadraturePointsRhs;
                        jQuad++)
                     {
                       cellLevelRhsInput[iNode * d_blockSize + iBlock] +=
@@ -578,13 +573,13 @@ namespace dftfe
 
 
           // Copy to the cell level rhs to the global rhs
-          for (unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+          for (dftfe::uInt iNode = 0; iNode < numberDofsPerElement; ++iNode)
             {
-              dealii::types::global_dof_index localNodeId =
+              dftfe::uInt localNodeId =
                 flattenedArrayCellLocalProcIndexIdMap[iElem *
                                                         numberDofsPerElement +
                                                       iNode];
-              for (unsigned int iBlock = 0; iBlock < d_blockSize; iBlock++)
+              for (dftfe::uInt iBlock = 0; iBlock < d_blockSize; iBlock++)
                 {
                   *(rhs.data() + localNodeId + iBlock) +=
                     cellLevelRhsInput[d_blockSize * iNode + iBlock];
@@ -604,7 +599,7 @@ namespace dftfe
   MultiVectorPoissonLinearSolverProblem<memorySpace>::computeRhs(
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &NDBCVec,
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &outputVec,
-    unsigned int                                            blockSizeInput)
+    dftfe::uInt                                             blockSizeInput)
   {
     d_basisOperationsPtr->reinit(blockSizeInput,
                                  d_cellBlockSize,
@@ -620,19 +615,19 @@ namespace dftfe
     if (d_blockSize != blockSizeInput)
       {
         d_blockSize = blockSizeInput;
-        dftfe::utils::MemoryStorage<dftfe::global_size_type,
+        dftfe::utils::MemoryStorage<dftfe::uInt,
                                     dftfe::utils::MemorySpace::HOST>
           nodeIds, quadIds;
         nodeIds.resize(d_locallyOwnedSize);
         quadIds.resize(d_numCells * d_nQuadsPerCell);
-        for (size_type i = 0; i < d_locallyOwnedSize; i++)
+        for (dftfe::uInt i = 0; i < d_locallyOwnedSize; i++)
           {
             nodeIds.data()[i] = i * d_blockSize;
           }
         d_mapNodeIdToProcId.resize(d_locallyOwnedSize);
         d_mapNodeIdToProcId.copyFrom(nodeIds);
 
-        for (size_type i = 0; i < d_numCells * d_nQuadsPerCell; i++)
+        for (dftfe::uInt i = 0; i < d_numCells * d_nQuadsPerCell; i++)
           {
             quadIds.data()[i] = i * d_blockSize;
           }
@@ -668,14 +663,14 @@ namespace dftfe
     // multiVectorInput is stored on the quad points
 
     // Assumes that NDBC is constraints distribute is called
-    // rhs  = - ( 1.0 / 4 \pi ) \int \nabla N_j \nabla N_i  d_NDBC
+    // rhs  = - ( 1.0 / 4 \pi ) \dftfe::Int \nabla N_j \nabla N_i  d_NDBC
 
     d_basisOperationsPtr->extractToCellNodalData(*d_blockedNDBCPtr,
                                                  xCellLLevelNodalData.data());
 
-    for (size_type iCell = 0; iCell < d_numCells; iCell += d_numCells)
+    for (dftfe::uInt iCell = 0; iCell < d_numCells; iCell += d_numCells)
       {
-        std::pair<unsigned int, unsigned int> cellRange(
+        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_numCells, d_numCells));
 
         d_BLASWrapperPtr->xgemmStridedBatched(
@@ -712,7 +707,7 @@ namespace dftfe
                                          //
 
 
-    std::pair<unsigned int, unsigned int> cellRange =
+    std::pair<dftfe::uInt, dftfe::uInt> cellRange =
       std::make_pair(0, d_numCells);
     d_basisOperationsPtr->integrateWithBasis(d_rhsQuadDataPtr->data(),
                                              NULL,

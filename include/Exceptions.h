@@ -111,7 +111,7 @@ template parameter instead. Available typedefs LogicError - std::logic_error
 #define MPICHECK(cmd)                                                      \
   do                                                                       \
     {                                                                      \
-      int e = cmd;                                                         \
+      dftfe::Int e = cmd;                                                  \
       if (e != MPI_SUCCESS)                                                \
         {                                                                  \
           printf("Failed: MPI error %s:%d '%d'\n", __FILE__, __LINE__, e); \

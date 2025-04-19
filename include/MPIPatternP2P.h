@@ -59,9 +59,9 @@ namespace dftfe
         /// typedefs
         ///
       public:
-        using SizeTypeVector = utils::MemoryStorage<size_type, memorySpace>;
+        using SizeTypeVector = utils::MemoryStorage<dftfe::uInt, memorySpace>;
         using GlobalSizeTypeVector =
-          utils::MemoryStorage<global_size_type, memorySpace>;
+          utils::MemoryStorage<dftfe::uInt, memorySpace>;
 
       public:
         virtual ~MPIPatternP2P() = default;
@@ -94,10 +94,10 @@ namespace dftfe
          * to an MPI library. This allows the user code to seamlessly link and
          * delink an MPI library.
          */
-        MPIPatternP2P(const std::pair<global_size_type, global_size_type>
-                        &locallyOwnedRange,
-                      const std::vector<dftfe::global_size_type> &ghostIndices,
-                      const MPI_Comm                             &mpiComm);
+        MPIPatternP2P(
+          const std::pair<dftfe::uInt, dftfe::uInt> &locallyOwnedRange,
+          const std::vector<dftfe::uInt>            &ghostIndices,
+          const MPI_Comm                            &mpiComm);
         /**
          * @brief Constructor. This constructor is to create an MPI Pattern for
          * a serial case. This is provided so that one can seamlessly use
@@ -115,74 +115,74 @@ namespace dftfe
          * constructor, care is taken to create a dummy MPIPatternP2P while not
          * linking to an MPI library.
          */
-        MPIPatternP2P(const size_type size);
+        MPIPatternP2P(const dftfe::uInt size);
 
 
 
         // void
         // reinit(){};
 
-        std::pair<global_size_type, global_size_type>
+        std::pair<dftfe::uInt, dftfe::uInt>
         getLocallyOwnedRange() const;
 
-        size_type
+        dftfe::uInt
         localOwnedSize() const;
 
-        size_type
+        dftfe::uInt
         localGhostSize() const;
 
         bool
-        inLocallyOwnedRange(const global_size_type globalId) const;
+        inLocallyOwnedRange(const dftfe::uInt globalId) const;
 
         bool
-        isGhostEntry(const global_size_type globalId) const;
+        isGhostEntry(const dftfe::uInt globalId) const;
 
-        size_type
-        globalToLocal(const global_size_type globalId) const;
+        dftfe::uInt
+        globalToLocal(const dftfe::uInt globalId) const;
 
-        global_size_type
-        localToGlobal(const size_type localId) const;
+        dftfe::uInt
+        localToGlobal(const dftfe::uInt localId) const;
 
-        const std::vector<global_size_type> &
+        const std::vector<dftfe::uInt> &
         getGhostIndices() const;
 
-        const std::vector<size_type> &
+        const std::vector<dftfe::uInt> &
         getGhostProcIds() const;
 
-        const std::vector<size_type> &
+        const std::vector<dftfe::uInt> &
         getNumGhostIndicesInProcs() const;
 
-        size_type
-        getNumGhostIndicesInProc(const size_type procId) const;
+        dftfe::uInt
+        getNumGhostIndicesInProc(const dftfe::uInt procId) const;
 
         SizeTypeVector
-        getGhostLocalIndices(const size_type procId) const;
+        getGhostLocalIndices(const dftfe::uInt procId) const;
 
-        const std::vector<size_type> &
+        const std::vector<dftfe::uInt> &
         getGhostLocalIndicesRanges() const;
 
-        const std::vector<size_type> &
+        const std::vector<dftfe::uInt> &
         getTargetProcIds() const;
 
-        const std::vector<size_type> &
+        const std::vector<dftfe::uInt> &
         getNumOwnedIndicesForTargetProcs() const;
 
-        size_type
-        getNumOwnedIndicesForTargetProc(const size_type procId) const;
+        dftfe::uInt
+        getNumOwnedIndicesForTargetProc(const dftfe::uInt procId) const;
 
         const SizeTypeVector &
         getOwnedLocalIndicesForTargetProcs() const;
 
         SizeTypeVector
-        getOwnedLocalIndices(const size_type procId) const;
+        getOwnedLocalIndices(const dftfe::uInt procId) const;
 
-        size_type
+        dftfe::uInt
         nmpiProcesses() const;
 
-        size_type
+        dftfe::uInt
         thisProcessId() const;
 
-        global_size_type
+        dftfe::uInt
         nGlobalIndices() const;
 
         const MPI_Comm &
@@ -199,7 +199,7 @@ namespace dftfe
          * @note It is an open interval where \f$a\f$ is included,
          * but \f$b\f$ is not included.
          */
-        std::pair<global_size_type, global_size_type> d_locallyOwnedRange;
+        std::pair<dftfe::uInt, dftfe::uInt> d_locallyOwnedRange;
 
         /**
          * A vector of size 2 times number of processors to store the
@@ -210,28 +210,28 @@ namespace dftfe
          *
          * @note \f$a\f$ is included but \f$b\f$ is not included.
          */
-        std::vector<global_size_type> d_allOwnedRanges;
+        std::vector<dftfe::uInt> d_allOwnedRanges;
 
         /**
          * Number of locally owned indices in the current processor
          */
-        size_type d_numLocallyOwnedIndices;
+        dftfe::uInt d_numLocallyOwnedIndices;
 
         /**
          * Number of ghost indices in the current processor
          */
-        size_type d_numGhostIndices;
+        dftfe::uInt d_numGhostIndices;
 
         /**
          * Vector to store an ordered set of ghost indices
          * (ordered in increasing order and non-repeating)
          */
-        std::vector<global_size_type> d_ghostIndices;
+        std::vector<dftfe::uInt> d_ghostIndices;
 
         /**
          * A copy of the above d_ghostIndices stored as an STL set
          */
-        std::set<global_size_type> d_ghostIndicesSetSTL;
+        std::set<dftfe::uInt> d_ghostIndicesSetSTL;
 
         /**
          * An OptimizedIndexSet object to store the ghost indices for
@@ -239,26 +239,26 @@ namespace dftfe
          * contiguous sub-ranges within the set of indices and hence can
          * optimize the finding of an index
          */
-        OptimizedIndexSet<global_size_type> d_ghostIndicesOptimizedIndexSet;
+        OptimizedIndexSet<dftfe::uInt> d_ghostIndicesOptimizedIndexSet;
 
         /**
          * Number of ghost processors for the current processor. A ghost
          * processor is one which owns at least one of the ghost indices of this
          * processor.
          */
-        size_type d_numGhostProcs;
+        dftfe::uInt d_numGhostProcs;
 
         /**
          * Vector to store the ghost processor Ids. A ghost processor is
          * one which owns at least one of the ghost indices of this processor.
          */
-        std::vector<size_type> d_ghostProcIds;
+        std::vector<dftfe::uInt> d_ghostProcIds;
 
         /** Vector of size number of ghost processors to store how many ghost
          * indices
          *  of this current processor are owned by a ghost processor.
          */
-        std::vector<size_type> d_numGhostIndicesInGhostProcs;
+        std::vector<dftfe::uInt> d_numGhostIndicesInGhostProcs;
 
         /**
          * A flattened vector of size number of ghosts containing the ghost
@@ -275,8 +275,8 @@ namespace dftfe
          * @note We store only the ghost index local to this processor, i.e.,
          * position of the ghost index in d_ghostIndicesSetSTL or
          d_ghostIndices.
-         * This is done to use size_type which is unsigned int instead of
-         * global_size_type which is long unsigned it. This helps in reducing
+         * This is done to use dftfe::uInt which is dftfe::uInt instead of
+         * dftfe::uInt which is long unsigned it. This helps in reducing
          the
          * volume of data transfered during MPI calls.
 
@@ -316,21 +316,21 @@ namespace dftfe
          * d_ghostIndices (i.e., it is the subset of d_ghostIndices lying
          * bewteen d_ghostIndices[a_i] and d_ghostIndices[b_i].
          */
-        std::vector<size_type> d_localGhostIndicesRanges;
+        std::vector<dftfe::uInt> d_localGhostIndicesRanges;
 
         /**
          * Number of target processors for the current processor. A
          * target processor is one which owns at least one of the locally owned
          * indices of this processor as its ghost index.
          */
-        size_type d_numTargetProcs;
+        dftfe::uInt d_numTargetProcs;
 
         /**
          * Vector to store the target processor Ids. A target processor is
          * one which contains at least one of the locally owned indices of this
          * processor as its ghost index.
          */
-        std::vector<size_type> d_targetProcIds;
+        std::vector<dftfe::uInt> d_targetProcIds;
 
         /**
          * Vector of size number of target processors to store how many locally
@@ -338,7 +338,7 @@ namespace dftfe
          * of this current processor are need ghost in each of the target
          *  processors.
          */
-        std::vector<size_type> d_numOwnedIndicesForTargetProcs;
+        std::vector<dftfe::uInt> d_numOwnedIndicesForTargetProcs;
 
         /** Vector of size \f$\sum_i\f$ d_numOwnedIndicesForTargetProcs[i]
          * to store all thelocally owned indices
@@ -354,9 +354,9 @@ namespace dftfe
          *
          * @note We store only the indices local to this processor, i.e.,
          * the relative position of the index in the locally owned range of this
-         * processor This is done to use size_type which is unsigned int instead
-         * of global_size_type which is long unsigned it. This helps in reducing
-         * the volume of data transfered during MPI calls.
+         * processor This is done to use dftfe::uInt which is dftfe::uInt
+         * instead of dftfe::uInt which is long unsigned it. This helps in
+         * reducing the volume of data transfered during MPI calls.
          *
          *  @note The list \f$L_i\f$ must be ordered.
          */
@@ -371,7 +371,7 @@ namespace dftfe
         /**
          * Total number of unique indices across all processors
          */
-        global_size_type d_nGlobalIndices;
+        dftfe::uInt d_nGlobalIndices;
 
         /// MPI Communicator object.
         MPI_Comm d_mpiComm;

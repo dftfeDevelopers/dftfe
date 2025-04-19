@@ -49,9 +49,9 @@ namespace dftfe
                                              oncvClassPtr,
     std::shared_ptr<excManager<memorySpace>> excManagerPtr,
     dftParameters                           *dftParamsPtr,
-    const unsigned int                       densityQuadratureID,
-    const unsigned int                       lpspQuadratureID,
-    const unsigned int                       feOrderPlusOneQuadratureID,
+    const dftfe::uInt                        densityQuadratureID,
+    const dftfe::uInt                        lpspQuadratureID,
+    const dftfe::uInt                        feOrderPlusOneQuadratureID,
     const MPI_Comm                          &mpi_comm_parent,
     const MPI_Comm                          &mpi_comm_domain)
     : d_kPointIndex(0)
@@ -169,26 +169,26 @@ namespace dftfe
     d_cellHamiltonianMatrixSinglePrec.resize(
       d_dftParamsPtr->useSinglePrecCheby ? d_cellHamiltonianMatrix.size() : 0);
 
-    const unsigned int nCells       = d_basisOperationsPtr->nCells();
-    const unsigned int nDofsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt nCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt nDofsPerCell = d_basisOperationsPtr->nDofsPerCell();
     tempHamMatrixRealBlock.resize(nDofsPerCell * nDofsPerCell *
                                   d_cellsBlockSizeHamiltonianConstruction);
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
       tempHamMatrixImagBlock.resize(nDofsPerCell * nDofsPerCell *
                                     d_cellsBlockSizeHamiltonianConstruction);
-    for (unsigned int iHamiltonian = 0;
+    for (dftfe::uInt iHamiltonian = 0;
          iHamiltonian < d_cellHamiltonianMatrix.size();
          ++iHamiltonian)
       d_cellHamiltonianMatrix[iHamiltonian].resize(nDofsPerCell * nDofsPerCell *
                                                    nCells);
-    for (unsigned int iHamiltonian = 0;
+    for (dftfe::uInt iHamiltonian = 0;
          iHamiltonian < d_cellHamiltonianMatrixSinglePrec.size();
          ++iHamiltonian)
       d_cellHamiltonianMatrixSinglePrec[iHamiltonian].resize(
         nDofsPerCell * nDofsPerCell * nCells);
 
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID, false);
-    const unsigned int numberQuadraturePoints =
+    const dftfe::uInt numberQuadraturePoints =
       d_basisOperationsPtrHost->nQuadsPerCell();
 
     const bool isTauMGGA =
@@ -196,7 +196,7 @@ namespace dftfe
        ExcFamilyType::TauMGGA);
 
     if (std::is_same<dataTypes::number, std::complex<double>>::value)
-      for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
+      for (dftfe::uInt kPointIndex = 0; kPointIndex < d_kPointWeights.size();
            ++kPointIndex)
         {
 #if defined(DFTFE_WITH_DEVICE)
@@ -208,7 +208,7 @@ namespace dftfe
 #endif
           d_invJacKPointTimesJxWHost.resize(nCells * numberQuadraturePoints * 3,
                                             0.0);
-          for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+          for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
             {
               auto cellJxWPtr =
                 d_basisOperationsPtrHost->JxWBasisData().data() +
@@ -218,7 +218,7 @@ namespace dftfe
 
               if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
                 {
-                  for (unsigned int iQuad = 0; iQuad < numberQuadraturePoints;
+                  for (dftfe::uInt iQuad = 0; iQuad < numberQuadraturePoints;
                        ++iQuad)
                     {
                       const double *inverseJacobiansQuadPtr =
@@ -227,8 +227,8 @@ namespace dftfe
                         (d_basisOperationsPtrHost->cellsTypeFlag() == 0 ?
                            iCell * numberQuadraturePoints * 9 + iQuad * 9 :
                            iCell * 9);
-                      for (unsigned jDim = 0; jDim < 3; ++jDim)
-                        for (unsigned iDim = 0; iDim < 3; ++iDim)
+                      for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                           d_invJacKPointTimesJxWHost[iCell *
                                                        numberQuadraturePoints *
                                                        3 +
@@ -239,14 +239,14 @@ namespace dftfe
                 }
               else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
                 {
-                  for (unsigned int iQuad = 0; iQuad < numberQuadraturePoints;
+                  for (dftfe::uInt iQuad = 0; iQuad < numberQuadraturePoints;
                        ++iQuad)
                     {
                       const double *inverseJacobiansQuadPtr =
                         d_basisOperationsPtrHost->inverseJacobiansBasisData()
                           .data() +
                         iCell * 3;
-                      for (unsigned iDim = 0; iDim < 3; ++iDim)
+                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                         d_invJacKPointTimesJxWHost[iCell *
                                                      numberQuadraturePoints *
                                                      3 +
@@ -298,8 +298,8 @@ namespace dftfe
   KohnShamHamiltonianOperator<memorySpace>::computeVEff(
     std::shared_ptr<AuxDensityMatrix<memorySpace>> auxDensityXCRepresentation,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                      &phiValues,
-    const unsigned int spinIndex)
+                     &phiValues,
+    const dftfe::uInt spinIndex)
   {
     bool isIntegrationByPartsGradDensityDependenceVxc =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
@@ -309,9 +309,9 @@ namespace dftfe
        ExcFamilyType::TauMGGA);
     const bool isGGA = isIntegrationByPartsGradDensityDependenceVxc;
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID);
-    const unsigned int totalLocallyOwnedCells =
+    const dftfe::uInt totalLocallyOwnedCells =
       d_basisOperationsPtrHost->nCells();
-    const unsigned int numberQuadraturePointsPerCell =
+    const dftfe::uInt numberQuadraturePointsPerCell =
       d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -380,7 +380,7 @@ namespace dftfe
 
     // The Hamiltonian operator for the MGGA case is dependent on the k point.
     // All the GGA calculations are done inside the condition (kPointIndex == 0)
-    for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size();
+    for (dftfe::uInt kPointIndex = 0; kPointIndex < d_kPointWeights.size();
          kPointIndex++)
       {
 #if defined(DFTFE_WITH_DEVICE)
@@ -411,14 +411,14 @@ namespace dftfe
 
         auto quadWeightsAll = d_basisOperationsPtrHost->JxW();
 
-        for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
+        for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
           {
             auto cellJxWPtr = d_basisOperationsPtrHost->JxWBasisData().data() +
                               iCell * numberQuadraturePointsPerCell;
             d_excManagerPtr->getExcSSDFunctionalObj()
               ->computeRhoTauDependentXCData(
                 *auxDensityXCRepresentation,
-                std::make_pair<unsigned int, unsigned int>(
+                std::make_pair<dftfe::uInt, dftfe::uInt>(
                   iCell * numberQuadraturePointsPerCell,
                   (iCell + 1) * numberQuadraturePointsPerCell),
                 xDataOut,
@@ -477,7 +477,7 @@ namespace dftfe
                 // are required in the operator
                 if (isGGA)
                   auxDensityXCRepresentation->applyLocalOperations(
-                    std::make_pair<unsigned int, unsigned int>(
+                    std::make_pair<dftfe::uInt, dftfe::uInt>(
                       iCell * numberQuadraturePointsPerCell,
                       (iCell + 1) * numberQuadraturePointsPerCell),
                     densityData);
@@ -491,7 +491,7 @@ namespace dftfe
                 const double *tempPhi =
                   phiValues.data() + iCell * numberQuadraturePointsPerCell;
 
-                for (unsigned int iQuad = 0;
+                for (dftfe::uInt iQuad = 0;
                      iQuad < numberQuadraturePointsPerCell;
                      ++iQuad)
                   {
@@ -506,7 +506,7 @@ namespace dftfe
                   {
                     if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
                       {
-                        for (unsigned int iQuad = 0;
+                        for (dftfe::uInt iQuad = 0;
                              iQuad < numberQuadraturePointsPerCell;
                              ++iQuad)
                           {
@@ -529,8 +529,8 @@ namespace dftfe
                             const double termoff = (pdexSigma[iQuad * 3 + 1] +
                                                     pdecSigma[iQuad * 3 + 1]) *
                                                    cellJxWPtr[iQuad];
-                            for (unsigned jDim = 0; jDim < 3; ++jDim)
-                              for (unsigned iDim = 0; iDim < 3; ++iDim)
+                            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+                              for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                                 d_invJacderExcWithSigmaTimesGradRhoJxWHost
                                   [iCell * numberQuadraturePointsPerCell * 3 +
                                    iQuad * 3 + iDim] +=
@@ -541,7 +541,7 @@ namespace dftfe
                       }
                     else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
                       {
-                        for (unsigned int iQuad = 0;
+                        for (dftfe::uInt iQuad = 0;
                              iQuad < numberQuadraturePointsPerCell;
                              ++iQuad)
                           {
@@ -561,7 +561,7 @@ namespace dftfe
                             const double termoff = (pdexSigma[iQuad * 3 + 1] +
                                                     pdecSigma[iQuad * 3 + 1]) *
                                                    cellJxWPtr[iQuad];
-                            for (unsigned iDim = 0; iDim < 3; ++iDim)
+                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                               d_invJacderExcWithSigmaTimesGradRhoJxWHost
                                 [iCell * numberQuadraturePointsPerCell * 3 +
                                  iQuad * 3 + iDim] =
@@ -576,7 +576,7 @@ namespace dftfe
                   {
                     if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
                       {
-                        for (unsigned int iQuad = 0;
+                        for (dftfe::uInt iQuad = 0;
                              iQuad < numberQuadraturePointsPerCell;
                              ++iQuad)
                           {
@@ -598,12 +598,11 @@ namespace dftfe
                                                     pdecTauSpinIndex[iQuad]) *
                                                    cellJxWPtr[iQuad];
 
-                            for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                               {
-                                for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                                for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                                   {
-                                    for (unsigned int kDim = 0; kDim < 3;
-                                         ++kDim)
+                                    for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
                                       {
                                         jacobianFactorForTauPtr[3 * jDim +
                                                                 iDim] +=
@@ -620,7 +619,7 @@ namespace dftfe
                       }
                     else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
                       {
-                        for (unsigned int iQuad = 0;
+                        for (dftfe::uInt iQuad = 0;
                              iQuad < numberQuadraturePointsPerCell;
                              ++iQuad)
                           {
@@ -639,7 +638,7 @@ namespace dftfe
                                                     pdecTauSpinIndex[iQuad]) *
                                                    cellJxWPtr[iQuad];
 
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                               {
                                 jacobianFactorForTauPtr[3 * iDim + iDim] +=
                                   inverseJacobiansQuadPtr[iDim] *
@@ -663,7 +662,7 @@ namespace dftfe
                 const double *kPointCoords =
                   d_kPointCoordinates.data() + 3 * kPointIndex;
 
-                for (unsigned int iQuad = 0;
+                for (dftfe::uInt iQuad = 0;
                      iQuad < numberQuadraturePointsPerCell;
                      ++iQuad)
                   {
@@ -680,7 +679,7 @@ namespace dftfe
 
                 if (d_basisOperationsPtrHost->cellsTypeFlag() != 2)
                   {
-                    for (unsigned int iQuad = 0;
+                    for (dftfe::uInt iQuad = 0;
                          iQuad < numberQuadraturePointsPerCell;
                          ++iQuad)
                       {
@@ -691,9 +690,9 @@ namespace dftfe
                              iCell * numberQuadraturePointsPerCell * 9 +
                                iQuad * 9 :
                              iCell * 9);
-                        for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                        for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                           {
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                               {
                                 d_derExcwithTauTimesinvJacKpointTimesJxWHost
                                   [iCell * numberQuadraturePointsPerCell * 3 +
@@ -710,7 +709,7 @@ namespace dftfe
 
                 else if (d_basisOperationsPtrHost->cellsTypeFlag() == 2)
                   {
-                    for (unsigned int iQuad = 0;
+                    for (dftfe::uInt iQuad = 0;
                          iQuad < numberQuadraturePointsPerCell;
                          ++iQuad)
                       {
@@ -719,7 +718,7 @@ namespace dftfe
                             .data() +
                           iCell * 3;
 
-                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                           {
                             d_derExcwithTauTimesinvJacKpointTimesJxWHost
                               [iCell * numberQuadraturePointsPerCell * 3 +
@@ -766,14 +765,14 @@ namespace dftfe
   KohnShamHamiltonianOperator<memorySpace>::setVEff(
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                      &vKS_quadValues,
-    const unsigned int spinIndex)
+                     &vKS_quadValues,
+    const dftfe::uInt spinIndex)
   {
-    const unsigned int spinPolarizedFactor = 1 + d_dftParamsPtr->spinPolarized;
+    const dftfe::uInt spinPolarizedFactor = 1 + d_dftParamsPtr->spinPolarized;
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID);
-    const unsigned int totalLocallyOwnedCells =
+    const dftfe::uInt totalLocallyOwnedCells =
       d_basisOperationsPtrHost->nCells();
-    const unsigned int numberQuadraturePoints =
+    const dftfe::uInt numberQuadraturePoints =
       d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -790,11 +789,11 @@ namespace dftfe
     d_VeffJxWHost.resize(totalLocallyOwnedCells * numberQuadraturePoints, 0.0);
     d_invJacderExcWithSigmaTimesGradRhoJxWHost.resize(0, 0.0);
 
-    for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
+    for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
       {
         auto cellJxWPtr = d_basisOperationsPtrHost->JxWBasisData().data() +
                           iCell * numberQuadraturePoints;
-        for (unsigned int qPoint = 0; qPoint < numberQuadraturePoints; ++qPoint)
+        for (dftfe::uInt qPoint = 0; qPoint < numberQuadraturePoints; ++qPoint)
           {
             // TODO extend to spin polarised case
             d_VeffJxWHost[qPoint + iCell * numberQuadraturePoints] =
@@ -822,8 +821,8 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &externalPotCorrValues)
   {
     d_basisOperationsPtrHost->reinit(0, 0, d_lpspQuadratureID, false);
-    const unsigned int nCells = d_basisOperationsPtrHost->nCells();
-    const int nQuadsPerCell   = d_basisOperationsPtrHost->nQuadsPerCell();
+    const dftfe::uInt nCells        = d_basisOperationsPtrHost->nCells();
+    const dftfe::Int  nQuadsPerCell = d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_VeffExtPotJxWHost;
@@ -832,7 +831,7 @@ namespace dftfe
 #endif
     d_VeffExtPotJxWHost.resize(nCells * nQuadsPerCell);
 
-    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+    for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
       {
         const auto &temp =
           externalPotCorrValues.find(d_basisOperationsPtrHost->cellID(iCell))
@@ -840,7 +839,7 @@ namespace dftfe
         const double *cellJxWPtr =
           d_basisOperationsPtrHost->JxWBasisData().data() +
           iCell * nQuadsPerCell;
-        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+        for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
           d_VeffExtPotJxWHost[iCell * nQuadsPerCell + iQuad] =
             temp[iQuad] * cellJxWPtr[iQuad];
       }
@@ -858,8 +857,8 @@ namespace dftfe
   KohnShamHamiltonianOperator<memorySpace>::setVEffExternalPotCorrToZero()
   {
     d_basisOperationsPtrHost->reinit(0, 0, d_lpspQuadratureID, false);
-    const unsigned int nCells = d_basisOperationsPtrHost->nCells();
-    const int nQuadsPerCell   = d_basisOperationsPtrHost->nQuadsPerCell();
+    const dftfe::uInt nCells        = d_basisOperationsPtrHost->nCells();
+    const dftfe::Int  nQuadsPerCell = d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_VeffExtPotJxWHost;
@@ -868,9 +867,9 @@ namespace dftfe
 #endif
     d_VeffExtPotJxWHost.resize(nCells * nQuadsPerCell);
 
-    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+    for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
       {
-        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+        for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
           d_VeffExtPotJxWHost[iCell * nQuadsPerCell + iQuad] = 0.0;
       }
 
@@ -884,8 +883,8 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   KohnShamHamiltonianOperator<memorySpace>::reinitkPointSpinIndex(
-    const unsigned int kPointIndex,
-    const unsigned int spinIndex)
+    const dftfe::uInt kPointIndex,
+    const dftfe::uInt spinIndex)
   {
     d_kPointIndex = kPointIndex;
     d_spinIndex   = spinIndex;
@@ -914,10 +913,10 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   KohnShamHamiltonianOperator<memorySpace>::reinitNumberWavefunctions(
-    const unsigned int numWaveFunctions)
+    const dftfe::uInt numWaveFunctions)
   {
-    const unsigned int nCells       = d_basisOperationsPtr->nCells();
-    const unsigned int nDofsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt nCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt nDofsPerCell = d_basisOperationsPtr->nDofsPerCell();
     if (d_cellWaveFunctionMatrixSrc.size() <
         nCells * nDofsPerCell * numWaveFunctions)
       d_cellWaveFunctionMatrixSrc.resize(nCells * nDofsPerCell *
@@ -1001,13 +1000,12 @@ namespace dftfe
       }
 
 
-    dftfe::utils::MemoryStorage<dftfe::global_size_type,
-                                dftfe::utils::MemorySpace::HOST>
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::HOST>
       nodeIds;
 
-    unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+    dftfe::uInt relaventDofs = d_basisOperationsPtr->nRelaventDofs();
     nodeIds.resize(relaventDofs);
-    for (dftfe::size_type i = 0; i < relaventDofs; i++)
+    for (dftfe::uInt i = 0; i < relaventDofs; i++)
       {
         nodeIds.data()[i] = i * numWaveFunctions;
       }
@@ -1053,8 +1051,8 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &
   KohnShamHamiltonianOperator<memorySpace>::getScratchFEMultivector(
-    const unsigned int numVectors,
-    const unsigned int index)
+    const dftfe::uInt numVectors,
+    const dftfe::uInt index)
   {
     return d_basisOperationsPtr->getMultiVector(numVectors, index);
   }
@@ -1062,8 +1060,8 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &
   KohnShamHamiltonianOperator<memorySpace>::getScratchFEMultivectorSinglePrec(
-    const unsigned int numVectors,
-    const unsigned int index)
+    const dftfe::uInt numVectors,
+    const dftfe::uInt index)
   {
     return d_basisOperationsPtr->getMultiVectorSinglePrec(numVectors, index);
   }
@@ -1078,12 +1076,12 @@ namespace dftfe
                                  d_lpspQuadratureID,
                                  false,
                                  true);
-    const unsigned int nCells       = d_basisOperationsPtr->nCells();
-    const unsigned int nDofsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt nCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt nDofsPerCell = d_basisOperationsPtr->nDofsPerCell();
     d_cellHamiltonianMatrixExtPot.resize(nCells * nDofsPerCell * nDofsPerCell);
     d_cellHamiltonianMatrixExtPot.setValue(0.0);
     d_basisOperationsPtr->computeWeightedCellMassMatrix(
-      std::pair<unsigned int, unsigned int>(0, nCells),
+      std::pair<dftfe::uInt, dftfe::uInt>(0, nCells),
       d_VeffExtPotJxW,
       d_cellHamiltonianMatrixExtPot);
     d_isExternalPotCorrHamiltonianComputed = true;
@@ -1103,20 +1101,20 @@ namespace dftfe
         !onlyHPrimePartForFirstOrderDensityMatResponse)
       if (!d_isExternalPotCorrHamiltonianComputed)
         computeCellHamiltonianMatrixExtPotContribution();
-    const unsigned int nCells           = d_basisOperationsPtr->nCells();
-    const unsigned int nQuadsPerCell    = d_basisOperationsPtr->nQuadsPerCell();
-    const unsigned int nDofsPerCell     = d_basisOperationsPtr->nDofsPerCell();
-    const double       scalarCoeffAlpha = 1.0;
-    const double       scalarCoeffHalf  = 0.5;
+    const dftfe::uInt nCells           = d_basisOperationsPtr->nCells();
+    const dftfe::uInt nQuadsPerCell    = d_basisOperationsPtr->nQuadsPerCell();
+    const dftfe::uInt nDofsPerCell     = d_basisOperationsPtr->nDofsPerCell();
+    const double      scalarCoeffAlpha = 1.0;
+    const double      scalarCoeffHalf  = 0.5;
     d_basisOperationsPtr->reinit(0,
                                  d_cellsBlockSizeHamiltonianConstruction,
                                  d_densityQuadratureID,
                                  false,
                                  true);
-    for (unsigned int iCell = 0; iCell < nCells;
+    for (dftfe::uInt iCell = 0; iCell < nCells;
          iCell += d_cellsBlockSizeHamiltonianConstruction)
       {
-        std::pair<unsigned int, unsigned int> cellRange(
+        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell,
           std::min(iCell + d_cellsBlockSizeHamiltonianConstruction, nCells));
         tempHamMatrixRealBlock.setValue(0.0);
@@ -1253,9 +1251,9 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
+    const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
 
@@ -1290,9 +1288,9 @@ namespace dftfe
        0) &&
       !onlyHPrimePartForFirstOrderDensityMatResponse;
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
+    for (dftfe::uInt iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
       {
-        std::pair<unsigned int, unsigned int> cellRange(
+        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
         d_BLASWrapperPtr->stridedCopyToBlock(
           numberWavefunctions,
@@ -1325,9 +1323,9 @@ namespace dftfe
           true);
       }
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
+    for (dftfe::uInt iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
       {
-        std::pair<unsigned int, unsigned int> cellRange(
+        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
 
         d_BLASWrapperPtr->xgemmStridedBatched(
@@ -1381,7 +1379,7 @@ namespace dftfe
         (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
          ExcFamilyType::MGGA))
       {
-        unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+        dftfe::uInt relaventDofs = d_basisOperationsPtr->nRelaventDofs();
         d_BLASWrapperPtr->xcopy(src.locallyOwnedSize() * numberWavefunctions,
                                 src.data(),
                                 1,
@@ -1426,9 +1424,9 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
   {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
+    const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
 
@@ -1465,9 +1463,9 @@ namespace dftfe
        0) &&
       !onlyHPrimePartForFirstOrderDensityMatResponse;
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
+    for (dftfe::uInt iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
       {
-        std::pair<unsigned int, unsigned int> cellRange(
+        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
         d_BLASWrapperPtr->stridedBlockScaleCopy(
           numberWavefunctions,
@@ -1503,9 +1501,9 @@ namespace dftfe
           true);
       }
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
+    for (dftfe::uInt iCell = 0; iCell < numCells; iCell += d_cellsBlockSizeHX)
       {
-        std::pair<unsigned int, unsigned int> cellRange(
+        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
 
         d_BLASWrapperPtr->xgemmStridedBatched(
@@ -1561,7 +1559,7 @@ namespace dftfe
         (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
          ExcFamilyType::MGGA))
       {
-        unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+        dftfe::uInt relaventDofs = d_basisOperationsPtr->nRelaventDofs();
         d_BLASWrapperPtr->stridedBlockScaleCopy(
           numberWavefunctions,
           relaventDofs,
@@ -1618,10 +1616,10 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
     const bool useApproximateMatrixEntries)
   {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
-    const double       one(1.0);
+    const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
+    const double      one(1.0);
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
 
@@ -1639,7 +1637,7 @@ namespace dftfe
                             dst.data());
     if (useApproximateMatrixEntries)
       {
-        const unsigned int blockSize = src.numVectors();
+        const dftfe::uInt blockSize = src.numVectors();
         d_BLASWrapperPtr->stridedBlockAxpy(
           blockSize,
           src.locallyOwnedSize(),
@@ -1655,10 +1653,10 @@ namespace dftfe
         const dataTypes::number scalarCoeffAlpha = scalarOX,
                                 scalarCoeffBeta  = dataTypes::number(0.0);
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
             d_BLASWrapperPtr->stridedCopyToBlock(
               numberWavefunctions,
@@ -1670,10 +1668,10 @@ namespace dftfe
                   .data() +
                 cellRange.first * numDoFsPerCell);
           }
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
 
             d_BLASWrapperPtr->xgemmStridedBatched(
@@ -1730,7 +1728,7 @@ namespace dftfe
     const double scalarX,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst)
   {
-    const unsigned int blockSize = src.numVectors();
+    const dftfe::uInt blockSize = src.numVectors();
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * blockSize,
                             scalarX,
                             src.data(),
@@ -1753,7 +1751,7 @@ namespace dftfe
     const double scalarX,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst)
   {
-    const unsigned int blockSize = src.numVectors();
+    const dftfe::uInt blockSize = src.numVectors();
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * blockSize,
                             scalarX,
                             src.data(),
@@ -1783,9 +1781,9 @@ namespace dftfe
     const bool skip2,
     const bool skip3)
   {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
+    const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
 
@@ -1818,10 +1816,10 @@ namespace dftfe
               ->reinitKPointDependentVariables(d_kPointIndex);
           }
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
             d_BLASWrapperPtr->stridedBlockScaleCopy(
               numberWavefunctions,
@@ -1882,10 +1880,10 @@ namespace dftfe
     if (!skip3)
       {
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
 
             d_BLASWrapperPtr->xgemmStridedBatched(
@@ -1937,7 +1935,7 @@ namespace dftfe
             (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
              ExcFamilyType::MGGA))
           {
-            unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+            dftfe::uInt relaventDofs = d_basisOperationsPtr->nRelaventDofs();
             d_BLASWrapperPtr->stridedBlockAxpBy(
               numberWavefunctions,
               src.locallyOwnedSize(),
@@ -1991,9 +1989,9 @@ namespace dftfe
     const bool skip2,
     const bool skip3)
   {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
+    const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
 #if defined(DFTFE_WITH_DEVICE)
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {
@@ -2029,10 +2027,10 @@ namespace dftfe
             d_ONCVnonLocalOperatorSinglePrec->initialiseOperatorActionOnX(
               d_kPointIndex);
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
             d_BLASWrapperPtr->stridedBlockScaleCopy(
               numberWavefunctions,
@@ -2095,10 +2093,10 @@ namespace dftfe
     if (!skip3)
       {
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
 
             d_BLASWrapperPtr->xgemmStridedBatched(
@@ -2151,7 +2149,7 @@ namespace dftfe
             (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
              ExcFamilyType::MGGA))
           {
-            unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+            dftfe::uInt relaventDofs = d_basisOperationsPtr->nRelaventDofs();
             d_BLASWrapperPtr->stridedBlockAxpBy(
               numberWavefunctions,
               src.locallyOwnedSize(),

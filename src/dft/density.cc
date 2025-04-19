@@ -24,8 +24,8 @@
 namespace dftfe
 {
   // calculate electron density
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_rhoOut(
@@ -53,12 +53,12 @@ namespace dftfe
         const double scalingFactor = ((double)numElectrons) / charge;
 
         // scale nodal vector with scalingFactor
-        for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
              ++iComp)
           d_densityOutNodalValues[iComp] *= scalingFactor;
 
         // interpolate nodal rhoOut data to quadrature data
-        for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
              ++iComp)
           interpolateDensityNodalDataToQuadratureDataGeneral(
             d_basisOperationsPtrElectroHost,
@@ -84,9 +84,9 @@ namespace dftfe
     else
       {
         d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
-        const unsigned int nQuadsPerCell =
+        const dftfe::uInt nQuadsPerCell =
           d_basisOperationsPtrHost->nQuadsPerCell();
-        const unsigned int nCells = d_basisOperationsPtrHost->nCells();
+        const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
         d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
         if (isGradDensityDataDependent)
@@ -99,15 +99,15 @@ namespace dftfe
             d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
           }
-        for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityOutQuadValues.size();
              ++iComp)
           d_densityOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
 
-        for (unsigned int iComp = 0; iComp < d_gradDensityOutQuadValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_gradDensityOutQuadValues.size();
              ++iComp)
           d_gradDensityOutQuadValues[iComp].resize(3 * nQuadsPerCell * nCells);
 
-        for (unsigned int iComp = 0; iComp < d_tauOutQuadValues.size(); ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size(); ++iComp)
           {
             d_tauOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
           }
@@ -197,14 +197,14 @@ namespace dftfe
           rhoOutValuesCopy = d_densityOutQuadValues[0];
         const dealii::Quadrature<3> &quadrature_formula =
           matrix_free_data.get_quadrature(d_densityQuadratureId);
-        const unsigned int n_q_points = quadrature_formula.size();
+        const dftfe::uInt n_q_points = quadrature_formula.size();
 
         const double charge =
           totalCharge(d_dofHandlerRhoNodal, d_densityOutQuadValues[0]);
         const double scaling = ((double)numElectrons) / charge;
 
         // scaling rho
-        for (unsigned int i = 0; i < rhoOutValuesCopy.size(); ++i)
+        for (dftfe::uInt i = 0; i < rhoOutValuesCopy.size(); ++i)
           rhoOutValuesCopy[i] *= scaling;
         l2ProjectionQuadDensityMinusAtomicDensity(
           d_basisOperationsPtrElectroHost,
@@ -219,8 +219,8 @@ namespace dftfe
 
   // rho data reinitilization without remeshing. The rho out of last ground
   // state solve is made the rho in of the new solve
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::noRemeshRhoDataInit()
@@ -260,11 +260,11 @@ namespace dftfe
 
         // scale nodal vector with scalingFactor
         // why this scaling is neeed?
-        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           d_densityInNodalValues[iComp] *= scalingFactor;
 
-        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           interpolateDensityNodalDataToQuadratureDataGeneral(
             d_basisOperationsPtrElectroHost,
@@ -279,14 +279,14 @@ namespace dftfe
             isTauMGGA);
 
         d_densityOutQuadValues.resize(d_densityInNodalValues.size());
-        for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityOutQuadValues.size();
              ++iComp)
           d_densityOutQuadValues[iComp].resize(
             d_densityInQuadValues[iComp].size());
         if (isGradDensityDataDependent)
           {
             d_gradDensityOutQuadValues.resize(d_gradDensityInQuadValues.size());
-            for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
+            for (dftfe::uInt iComp = 0; iComp < d_densityOutQuadValues.size();
                  ++iComp)
               d_gradDensityOutQuadValues[iComp].resize(
                 d_gradDensityInQuadValues[iComp].size());
@@ -295,7 +295,7 @@ namespace dftfe
         if (isTauMGGA)
           {
             d_tauOutQuadValues.resize(d_tauInNodalValues.size());
-            for (unsigned int iComp = 0; iComp < d_tauOutQuadValues.size();
+            for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
                  ++iComp)
               d_tauOutQuadValues[iComp].resize(d_tauInQuadValues[iComp].size());
           }
@@ -305,8 +305,8 @@ namespace dftfe
     normalizeRhoInQuadValues();
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::computeRhoNodalFromPSI()
@@ -322,7 +322,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       tauPRefinedNodalData;
     // initialize variables to be used later
-    const unsigned int dofs_per_cell =
+    const dftfe::uInt dofs_per_cell =
       d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
     typename dealii::DoFHandler<3>::active_cell_iterator
       cell = d_dofHandlerRhoNodal.begin_active(),
@@ -331,7 +331,7 @@ namespace dftfe
       d_dofHandlerRhoNodal.locally_owned_dofs();
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_gllQuadratureId);
-    const unsigned int numQuadPoints = quadrature_formula.size();
+    const dftfe::uInt numQuadPoints = quadrature_formula.size();
 
     // get access to quadrature point coordinates and density DoFHandler nodal
     // points
@@ -339,14 +339,14 @@ namespace dftfe
       quadrature_formula.get_points();
     const std::vector<dealii::Point<3>> &supportPointNaturalCoor =
       d_dofHandlerRhoNodal.get_fe().get_unit_support_points();
-    std::vector<unsigned int> renumberingMap(numQuadPoints);
+    std::vector<dftfe::uInt> renumberingMap(numQuadPoints);
 
     // create renumbering map between the numbering order of quadrature points
     // and lobatto support points
-    for (unsigned int i = 0; i < numQuadPoints; ++i)
+    for (dftfe::uInt i = 0; i < numQuadPoints; ++i)
       {
         const dealii::Point<3> &nodalCoor = supportPointNaturalCoor[i];
-        for (unsigned int j = 0; j < numQuadPoints; ++j)
+        for (dftfe::uInt j = 0; j < numQuadPoints; ++j)
           {
             const dealii::Point<3> &quadCoor = quadraturePointCoor[j];
             double                  dist     = quadCoor.distance(nodalCoor);
@@ -410,7 +410,7 @@ namespace dftfe
                                                           .begin_active(),
                                                 endcP =
                                                   d_dofHandlerRhoNodal.end();
-    unsigned int iCell = 0;
+    dftfe::uInt iCell = 0;
     for (; cellP != endcP; ++cellP)
       {
         if (cellP->is_locally_owned())
@@ -421,7 +421,7 @@ namespace dftfe
             const double *nodalValues =
               densityPRefinedNodalData[0].data() + iCell * dofs_per_cell;
 
-            for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+            for (dftfe::uInt iNode = 0; iNode < dofs_per_cell; ++iNode)
               {
                 const dealii::types::global_dof_index nodeID =
                   cell_dof_indices[iNode];
@@ -451,7 +451,7 @@ namespace dftfe
                 const double *nodalValues =
                   densityPRefinedNodalData[1].data() + iCell * dofs_per_cell;
 
-                for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+                for (dftfe::uInt iNode = 0; iNode < dofs_per_cell; ++iNode)
                   {
                     const dealii::types::global_dof_index nodeID =
                       cell_dof_indices[iNode];

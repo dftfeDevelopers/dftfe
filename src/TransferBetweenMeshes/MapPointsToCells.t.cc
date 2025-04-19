@@ -13,13 +13,13 @@ namespace dftfe
         dst.insert(dst.end(), src.begin(), src.end());
       }
 
-      std::pair<global_size_type, global_size_type>
-      getLocallyOwnedRange(const MPI_Comm &mpiComm,
-                           const size_type myProcRank,
-                           const size_type nProcs,
-                           const size_type nLocalPoints)
+      std::pair<dftfe::uInt, dftfe::uInt>
+      getLocallyOwnedRange(const MPI_Comm   &mpiComm,
+                           const dftfe::uInt myProcRank,
+                           const dftfe::uInt nProcs,
+                           const dftfe::uInt nLocalPoints)
       {
-        std::vector<size_type> numPointsInProcs(nProcs, 0);
+        std::vector<dftfe::uInt> numPointsInProcs(nProcs, 0);
         std::fill(numPointsInProcs.begin(), numPointsInProcs.end(), 0);
         numPointsInProcs[myProcRank] = nLocalPoints;
         MPI_Allreduce(MPI_IN_PLACE,
@@ -29,18 +29,18 @@ namespace dftfe
                       MPI_SUM,
                       mpiComm);
 
-        global_size_type locallyOwnedStart = 0, locallyOwnedEnd = 0;
+        dftfe::uInt locallyOwnedStart = 0, locallyOwnedEnd = 0;
 
-        for (unsigned int iProc = 0; iProc < myProcRank; iProc++)
+        for (dftfe::uInt iProc = 0; iProc < myProcRank; iProc++)
           {
-            locallyOwnedStart += (global_size_type)numPointsInProcs[iProc];
+            locallyOwnedStart += (dftfe::uInt)numPointsInProcs[iProc];
           }
 
         locallyOwnedEnd = locallyOwnedStart + numPointsInProcs[myProcRank];
         return (std::make_pair(locallyOwnedStart, locallyOwnedEnd));
       }
 
-      template <size_type dim>
+      template <dftfe::uInt dim>
       void
       getProcBoundingBox(std::vector<std::shared_ptr<const Cell<dim>>> &cells,
                          std::vector<double> &lowerLeft,
@@ -48,7 +48,7 @@ namespace dftfe
       {
         lowerLeft.resize(dim);
         upperRight.resize(dim);
-        const size_type nCells = cells.size();
+        const dftfe::uInt nCells = cells.size();
         // First index is dimension and second index is cell Id
         // For each cell store both the lower left and upper right
         // limit in each dimension
@@ -56,10 +56,10 @@ namespace dftfe
           dim, std::vector<double>(nCells));
         std::vector<std::vector<double>> cellsUpperRight(
           dim, std::vector<double>(nCells));
-        for (size_type iCell = 0; iCell < nCells; ++iCell)
+        for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
           {
             auto boundingBox = cells[iCell]->getBoundingBox();
-            for (size_type iDim = 0; iDim < dim; ++iDim)
+            for (dftfe::uInt iDim = 0; iDim < dim; ++iDim)
               {
                 cellsLowerLeft[iDim][iCell]  = boundingBox.first[iDim];
                 cellsUpperRight[iDim][iCell] = boundingBox.second[iDim];
@@ -67,7 +67,7 @@ namespace dftfe
           }
 
         // sort the cellLimits
-        for (size_type iDim = 0; iDim < dim; ++iDim)
+        for (dftfe::uInt iDim = 0; iDim < dim; ++iDim)
           {
             std::sort(cellsLowerLeft[iDim].begin(), cellsLowerLeft[iDim].end());
             std::sort(cellsUpperRight[iDim].begin(),
@@ -81,18 +81,18 @@ namespace dftfe
       void
       getAllProcsBoundingBoxes(const std::vector<double> &procLowerLeft,
                                const std::vector<double> &procUpperRight,
-                               const size_type            myProcRank,
-                               const size_type            nProcs,
+                               const dftfe::uInt          myProcRank,
+                               const dftfe::uInt          nProcs,
                                const MPI_Comm            &mpiComm,
                                std::vector<double>       &allProcsBoundingBoxes)
       {
-        const size_type dim = procLowerLeft.size();
+        const dftfe::uInt dim = procLowerLeft.size();
         allProcsBoundingBoxes.resize(2 * dim * nProcs);
         std::fill(allProcsBoundingBoxes.begin(),
                   allProcsBoundingBoxes.end(),
                   0.0);
 
-        for (unsigned int j = 0; j < dim; j++)
+        for (dftfe::uInt j = 0; j < dim; j++)
           {
             allProcsBoundingBoxes[2 * dim * myProcRank + j] = procLowerLeft[j];
             allProcsBoundingBoxes[2 * dim * myProcRank + dim + j] =
@@ -108,31 +108,31 @@ namespace dftfe
       }
 
 
-      template <size_type dim, size_type M>
+      template <dftfe::uInt dim, dftfe::uInt M>
       void
       pointsToCell(std::vector<std::shared_ptr<const Cell<dim>>> &srcCells,
                    const std::vector<std::vector<double>>        &targetPts,
-                   std::vector<std::vector<size_type>>           &cellFoundIds,
+                   std::vector<std::vector<dftfe::uInt>>         &cellFoundIds,
                    std::vector<std::vector<double>> &cellRealCoords,
                    std::vector<bool>                &pointsFound,
                    const double                      paramCoordsTol)
       {
         RTreePoint<dim, M> rTreePoint(targetPts);
-        const size_type    numCells = srcCells.size();
+        const dftfe::uInt  numCells = srcCells.size();
         pointsFound.resize(targetPts.size());
         std::fill(pointsFound.begin(), pointsFound.end(), false);
-        cellFoundIds.resize(numCells, std::vector<size_type>(0));
+        cellFoundIds.resize(numCells, std::vector<dftfe::uInt>(0));
         cellRealCoords.resize(numCells, std::vector<double>(0));
-        for (size_type iCell = 0; iCell < numCells; iCell++)
+        for (dftfe::uInt iCell = 0; iCell < numCells; iCell++)
           {
             auto bbCell = srcCells[iCell]->getBoundingBox();
             auto targetPointList =
               rTreePoint.getPointIdsInsideBox(bbCell.first, bbCell.second);
 
-            for (size_type iPoint = 0; iPoint < targetPointList.size();
+            for (dftfe::uInt iPoint = 0; iPoint < targetPointList.size();
                  iPoint++)
               {
-                size_type pointIndex = targetPointList[iPoint];
+                dftfe::uInt pointIndex = targetPointList[iPoint];
                 if (!pointsFound[pointIndex])
                   {
                     //                    auto paramPoint =
@@ -140,7 +140,7 @@ namespace dftfe
                     bool pointInside =
                       srcCells[iCell]->isPointInside(targetPts[pointIndex],
                                                      paramCoordsTol);
-                    //                    for( unsigned int j = 0 ; j <dim; j++)
+                    //                    for( dftfe::uInt j = 0 ; j <dim; j++)
                     //                      {
                     //                        if((paramPoint[j] <
                     //                        -paramCoordsTol) || (paramPoint[j]
@@ -152,7 +152,7 @@ namespace dftfe
                     if (pointInside)
                       {
                         pointsFound[pointIndex] = true;
-                        for (size_type iDim = 0; iDim < dim; iDim++)
+                        for (dftfe::uInt iDim = 0; iDim < dim; iDim++)
                           {
                             cellRealCoords[iCell].push_back(
                               targetPts[pointIndex][iDim]);
@@ -165,32 +165,32 @@ namespace dftfe
       }
 
 
-      template <size_type dim, size_type M>
+      template <dftfe::uInt dim, dftfe::uInt M>
       void
       getTargetPointsToSend(
         const std::vector<std::shared_ptr<const Cell<dim>>> &srcCells,
-        const std::vector<size_type>               &nonLocalPointLocalIds,
-        const std::vector<std::vector<double>>     &nonLocalPointCoordinates,
-        const std::vector<double>                  &allProcsBoundingBoxes,
-        const global_size_type                      locallyOwnedStart,
-        const size_type                             myProcRank,
-        const size_type                             nProcs,
-        std::vector<size_type>                     &sendToProcIds,
-        std::vector<std::vector<global_size_type>> &sendToPointsGlobalIds,
-        std::vector<std::vector<double>>           &sendToPointsCoords)
+        const std::vector<dftfe::uInt>         &nonLocalPointLocalIds,
+        const std::vector<std::vector<double>> &nonLocalPointCoordinates,
+        const std::vector<double>              &allProcsBoundingBoxes,
+        const dftfe::uInt                       locallyOwnedStart,
+        const dftfe::uInt                       myProcRank,
+        const dftfe::uInt                       nProcs,
+        std::vector<dftfe::uInt>               &sendToProcIds,
+        std::vector<std::vector<dftfe::uInt>>  &sendToPointsGlobalIds,
+        std::vector<std::vector<double>>       &sendToPointsCoords)
       {
         sendToProcIds.resize(0);
-        sendToPointsGlobalIds.resize(0, std::vector<global_size_type>(0));
+        sendToPointsGlobalIds.resize(0, std::vector<dftfe::uInt>(0));
         sendToPointsCoords.resize(0, std::vector<double>(0));
 
         RTreePoint<dim, M> rTree(nonLocalPointCoordinates);
-        for (size_type iProc = 0; iProc < nProcs; iProc++)
+        for (dftfe::uInt iProc = 0; iProc < nProcs; iProc++)
           {
             if (iProc != myProcRank)
               {
                 std::vector<double> llProc(dim, 0.0);
                 std::vector<double> urProc(dim, 0.0);
-                for (size_type iDim = 0; iDim < dim; iDim++)
+                for (dftfe::uInt iDim = 0; iDim < dim; iDim++)
                   {
                     llProc[iDim] =
                       allProcsBoundingBoxes[2 * dim * iProc + iDim];
@@ -200,17 +200,18 @@ namespace dftfe
                 auto targetPointList =
                   rTree.getPointIdsInsideBox(llProc, urProc);
 
-                size_type numTargetPointsToSend = targetPointList.size();
+                dftfe::uInt numTargetPointsToSend = targetPointList.size();
                 if (numTargetPointsToSend > 0)
                   {
-                    std::vector<global_size_type> globalIds(
-                      numTargetPointsToSend, -1);
+                    std::vector<dftfe::uInt> globalIds(numTargetPointsToSend,
+                                                       -1);
                     sendToProcIds.push_back(iProc);
                     std::vector<double> pointCoordinates(0);
-                    for (size_type iPoint = 0; iPoint < targetPointList.size();
+                    for (dftfe::uInt iPoint = 0;
+                         iPoint < targetPointList.size();
                          iPoint++)
                       {
-                        size_type pointIndex = targetPointList[iPoint];
+                        dftfe::uInt pointIndex = targetPointList[iPoint];
 
                         appendToVec(pointCoordinates,
                                     nonLocalPointCoordinates[pointIndex]);
@@ -226,25 +227,25 @@ namespace dftfe
           }
       }
 
-      template <size_type dim>
+      template <dftfe::uInt dim>
       void
       receivePoints(
-        const std::vector<size_type>                     &sendToProcIds,
-        const std::vector<std::vector<global_size_type>> &sendToPointsGlobalIds,
-        const std::vector<std::vector<double>>           &sendToPointsCoords,
-        std::vector<global_size_type>    &receivedPointsGlobalIds,
-        std::vector<std::vector<double>> &receivedPointsCoords,
-        unsigned int                      verbosity,
-        const MPI_Comm                   &mpiComm)
+        const std::vector<dftfe::uInt>              &sendToProcIds,
+        const std::vector<std::vector<dftfe::uInt>> &sendToPointsGlobalIds,
+        const std::vector<std::vector<double>>      &sendToPointsCoords,
+        std::vector<dftfe::uInt>                    &receivedPointsGlobalIds,
+        std::vector<std::vector<double>>            &receivedPointsCoords,
+        dftfe::uInt                                  verbosity,
+        const MPI_Comm                              &mpiComm)
       {
         int thisRankId;
         MPI_Comm_rank(mpiComm, &thisRankId);
         dftfe::utils::mpi::MPIRequestersNBX mpiRequestersNBX(sendToProcIds,
                                                              mpiComm);
-        std::vector<size_type>              receiveFromProcIds =
+        std::vector<dftfe::uInt>            receiveFromProcIds =
           mpiRequestersNBX.getRequestingRankIds();
 
-        size_type numMaxProcsSendTo = sendToProcIds.size();
+        dftfe::uInt numMaxProcsSendTo = sendToProcIds.size();
         MPI_Allreduce(MPI_IN_PLACE,
                       &numMaxProcsSendTo,
                       1,
@@ -252,7 +253,7 @@ namespace dftfe
                       MPI_MAX,
                       mpiComm);
 
-        size_type numMaxProcsReceiveFrom = receiveFromProcIds.size();
+        dftfe::uInt numMaxProcsReceiveFrom = receiveFromProcIds.size();
         MPI_Allreduce(MPI_IN_PLACE,
                       &numMaxProcsReceiveFrom,
                       1,
@@ -272,23 +273,23 @@ namespace dftfe
 
         std::vector<std::vector<double>> receivedPointsCoordsProcWise(
           receiveFromProcIds.size(), std::vector<double>(0));
-        std::vector<size_type> numPointsReceived(receiveFromProcIds.size(), -1);
+        std::vector<dftfe::uInt> numPointsReceived(receiveFromProcIds.size(),
+                                                   -1);
 
-        std::vector<size_type>   numPointsToSend(sendToPointsGlobalIds.size(),
-                                               -1);
+        std::vector<dftfe::uInt> numPointsToSend(sendToPointsGlobalIds.size(),
+                                                 -1);
         std::vector<MPI_Request> sendRequests(sendToProcIds.size());
         std::vector<MPI_Status>  sendStatuses(sendToProcIds.size());
         std::vector<MPI_Request> recvRequests(receiveFromProcIds.size());
         std::vector<MPI_Status>  recvStatuses(receiveFromProcIds.size());
-        const int                tag =
-          static_cast<int>(dftfe::utils::mpi::MPITags::MPI_P2P_PATTERN_TAG);
-        for (size_type i = 0; i < sendToProcIds.size(); ++i)
+        const dftfe::Int         tag = static_cast<dftfe::Int>(
+          dftfe::utils::mpi::MPITags::MPI_P2P_PATTERN_TAG);
+        for (dftfe::uInt i = 0; i < sendToProcIds.size(); ++i)
           {
-            size_type procId   = sendToProcIds[i];
+            dftfe::uInt procId = sendToProcIds[i];
             numPointsToSend[i] = sendToPointsGlobalIds[i].size();
             MPI_Isend(&numPointsToSend[i],
                       1,
-                      //                            MPI_UNSIGNED,
                       dftfe::dataTypes::mpi_type_id(&numPointsToSend[i]),
                       procId,
                       procId, // setting the tag to procId
@@ -296,12 +297,11 @@ namespace dftfe
                       &sendRequests[i]);
           }
 
-        for (size_type i = 0; i < receiveFromProcIds.size(); ++i)
+        for (dftfe::uInt i = 0; i < receiveFromProcIds.size(); ++i)
           {
-            size_type procId = receiveFromProcIds[i];
+            dftfe::uInt procId = receiveFromProcIds[i];
             MPI_Irecv(&numPointsReceived[i],
                       1,
-                      //                            MPI_UNSIGNED,
                       dftfe::dataTypes::mpi_type_id(&numPointsReceived[i]),
                       procId,
                       thisRankId, // the tag is set to the receiving id
@@ -312,9 +312,9 @@ namespace dftfe
 
         if (sendRequests.size() > 0)
           {
-            int         err    = MPI_Waitall(sendToProcIds.size(),
-                                  sendRequests.data(),
-                                  sendStatuses.data());
+            dftfe::Int  err    = MPI_Waitall(sendToProcIds.size(),
+                                         sendRequests.data(),
+                                         sendStatuses.data());
             std::string errMsg = "Error occured while using MPI_Waitall. "
                                  "Error code: " +
                                  std::to_string(err);
@@ -323,25 +323,25 @@ namespace dftfe
 
         if (recvRequests.size() > 0)
           {
-            int         err    = MPI_Waitall(receiveFromProcIds.size(),
-                                  recvRequests.data(),
-                                  recvStatuses.data());
+            dftfe::Int  err    = MPI_Waitall(receiveFromProcIds.size(),
+                                         recvRequests.data(),
+                                         recvStatuses.data());
             std::string errMsg = "Error occured while using MPI_Waitall. "
                                  "Error code: " +
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
           }
 
-        const size_type numTotalPointsReceived =
+        const dftfe::uInt numTotalPointsReceived =
           std::accumulate(numPointsReceived.begin(),
                           numPointsReceived.end(),
                           0);
         receivedPointsGlobalIds.resize(numTotalPointsReceived, -1);
 
-        for (size_type i = 0; i < sendToProcIds.size(); ++i)
+        for (dftfe::uInt i = 0; i < sendToProcIds.size(); ++i)
           {
-            size_type procId        = sendToProcIds[i];
-            size_type nPointsToSend = sendToPointsGlobalIds[i].size();
+            dftfe::uInt procId        = sendToProcIds[i];
+            dftfe::uInt nPointsToSend = sendToPointsGlobalIds[i].size();
             MPI_Isend(&sendToPointsGlobalIds[i][0],
                       nPointsToSend,
                       dftfe::dataTypes::mpi_type_id(
@@ -352,10 +352,10 @@ namespace dftfe
                       &sendRequests[i]);
           }
 
-        size_type offset = 0;
-        for (size_type i = 0; i < receiveFromProcIds.size(); ++i)
+        dftfe::uInt offset = 0;
+        for (dftfe::uInt i = 0; i < receiveFromProcIds.size(); ++i)
           {
-            size_type procId = receiveFromProcIds[i];
+            dftfe::uInt procId = receiveFromProcIds[i];
             MPI_Irecv(&receivedPointsGlobalIds[offset],
                       numPointsReceived[i],
                       dftfe::dataTypes::mpi_type_id(
@@ -371,9 +371,9 @@ namespace dftfe
 
         if (sendRequests.size() > 0)
           {
-            int         err    = MPI_Waitall(sendToProcIds.size(),
-                                  sendRequests.data(),
-                                  sendStatuses.data());
+            dftfe::Int  err    = MPI_Waitall(sendToProcIds.size(),
+                                         sendRequests.data(),
+                                         sendStatuses.data());
             std::string errMsg = "Error occured while using MPI_Waitall. "
                                  "Error code: " +
                                  std::to_string(err);
@@ -382,19 +382,19 @@ namespace dftfe
 
         if (recvRequests.size() > 0)
           {
-            int         err    = MPI_Waitall(receiveFromProcIds.size(),
-                                  recvRequests.data(),
-                                  recvStatuses.data());
+            dftfe::Int  err    = MPI_Waitall(receiveFromProcIds.size(),
+                                         recvRequests.data(),
+                                         recvStatuses.data());
             std::string errMsg = "Error occured while using MPI_Waitall. "
                                  "Error code: " +
                                  std::to_string(err);
             throwException(err == MPI_SUCCESS, errMsg);
           }
 
-        for (size_type i = 0; i < sendToProcIds.size(); ++i)
+        for (dftfe::uInt i = 0; i < sendToProcIds.size(); ++i)
           {
-            size_type procId        = sendToProcIds[i];
-            size_type nPointsToSend = sendToPointsGlobalIds[i].size();
+            dftfe::uInt procId        = sendToProcIds[i];
+            dftfe::uInt nPointsToSend = sendToPointsGlobalIds[i].size();
             MPI_Isend(&sendToPointsCoords[i][0],
                       nPointsToSend * dim,
                       MPI_DOUBLE,
@@ -404,9 +404,9 @@ namespace dftfe
                       &sendRequests[i]);
           }
 
-        for (size_type i = 0; i < receiveFromProcIds.size(); ++i)
+        for (dftfe::uInt i = 0; i < receiveFromProcIds.size(); ++i)
           {
-            size_type procId = receiveFromProcIds[i];
+            dftfe::uInt procId = receiveFromProcIds[i];
             receivedPointsCoordsProcWise[i].resize(numPointsReceived[i] * dim);
             MPI_Irecv(&receivedPointsCoordsProcWise[i][0],
                       numPointsReceived[i] * dim,
@@ -419,9 +419,9 @@ namespace dftfe
 
         if (sendRequests.size() > 0)
           {
-            int         err    = MPI_Waitall(sendToProcIds.size(),
-                                  sendRequests.data(),
-                                  sendStatuses.data());
+            dftfe::Int  err    = MPI_Waitall(sendToProcIds.size(),
+                                         sendRequests.data(),
+                                         sendStatuses.data());
             std::string errMsg = "Error occured while using MPI_Waitall. "
                                  "Error code: " +
                                  std::to_string(err);
@@ -430,9 +430,9 @@ namespace dftfe
 
         if (recvRequests.size() > 0)
           {
-            int         err    = MPI_Waitall(receiveFromProcIds.size(),
-                                  recvRequests.data(),
-                                  recvStatuses.data());
+            dftfe::Int  err    = MPI_Waitall(receiveFromProcIds.size(),
+                                         recvRequests.data(),
+                                         recvStatuses.data());
             std::string errMsg = "Error occured while using MPI_Waitall. "
                                  "Error code: " +
                                  std::to_string(err);
@@ -441,14 +441,15 @@ namespace dftfe
 
         receivedPointsCoords.resize(numTotalPointsReceived,
                                     std::vector<double>(dim, 0.0));
-        size_type count = 0;
-        for (size_type i = 0; i < receiveFromProcIds.size(); i++)
+        dftfe::uInt count = 0;
+        for (dftfe::uInt i = 0; i < receiveFromProcIds.size(); i++)
           {
             std::vector<double> &pointsCoordProc =
               receivedPointsCoordsProcWise[i];
-            for (size_type iPoint = 0; iPoint < numPointsReceived[i]; iPoint++)
+            for (dftfe::uInt iPoint = 0; iPoint < numPointsReceived[i];
+                 iPoint++)
               {
-                for (size_type iDim = 0; iDim < dim; iDim++)
+                for (dftfe::uInt iDim = 0; iDim < dim; iDim++)
                   {
                     receivedPointsCoords[count][iDim] =
                       pointsCoordProc[iPoint * dim + iDim];
@@ -459,9 +460,9 @@ namespace dftfe
       }
     } // namespace
 
-    template <size_type dim, size_type M>
-    MapPointsToCells<dim, M>::MapPointsToCells(const unsigned int verbosity,
-                                               const MPI_Comm    &mpiComm)
+    template <dftfe::uInt dim, dftfe::uInt M>
+    MapPointsToCells<dim, M>::MapPointsToCells(const dftfe::uInt verbosity,
+                                               const MPI_Comm   &mpiComm)
       : d_mpiComm(mpiComm)
     {
       d_verbosity = verbosity;
@@ -469,28 +470,28 @@ namespace dftfe
       MPI_Comm_size(d_mpiComm, &d_numMPIRank);
     }
 
-    template <size_type dim, size_type M>
+    template <dftfe::uInt dim, dftfe::uInt M>
     void
     MapPointsToCells<dim, M>::init(
-      std::vector<std::shared_ptr<const Cell<dim>>>  srcCells,
-      const std::vector<std::vector<double>>        &targetPts,
-      std::vector<std::vector<double>>              &mapCellsToRealCoordinates,
-      std::vector<std::vector<size_type>>           &mapCellLocalToProcLocal,
-      std::pair<global_size_type, global_size_type> &locallyOwnedRange,
-      std::vector<global_size_type>                 &ghostGlobalIds,
-      const double                                   paramCoordsTol)
+      std::vector<std::shared_ptr<const Cell<dim>>> srcCells,
+      const std::vector<std::vector<double>>       &targetPts,
+      std::vector<std::vector<double>>             &mapCellsToRealCoordinates,
+      std::vector<std::vector<dftfe::uInt>>        &mapCellLocalToProcLocal,
+      std::pair<dftfe::uInt, dftfe::uInt>          &locallyOwnedRange,
+      std::vector<dftfe::uInt>                     &ghostGlobalIds,
+      const double                                  paramCoordsTol)
     {
       MPI_Barrier(d_mpiComm);
-      double    startComp = MPI_Wtime();
-      size_type numCells  = srcCells.size();
-      size_type numPoints = targetPts.size();
-      mapCellLocalToProcLocal.resize(numCells, std::vector<size_type>(0));
+      double      startComp = MPI_Wtime();
+      dftfe::uInt numCells  = srcCells.size();
+      dftfe::uInt numPoints = targetPts.size();
+      mapCellLocalToProcLocal.resize(numCells, std::vector<dftfe::uInt>(0));
       mapCellsToRealCoordinates.resize(numCells, std::vector<double>(0));
 
-      std::vector<std::vector<global_size_type>> mapCellLocalToGlobal;
-      mapCellLocalToGlobal.resize(numCells, std::vector<global_size_type>(0));
+      std::vector<std::vector<dftfe::uInt>> mapCellLocalToGlobal;
+      mapCellLocalToGlobal.resize(numCells, std::vector<dftfe::uInt>(0));
 
-      std::vector<size_type> numLocalPointsInCell(numCells, 0);
+      std::vector<dftfe::uInt> numLocalPointsInCell(numCells, 0);
 
       // Create the bounding box for each process
       // and share it across to all the processors
@@ -513,12 +514,12 @@ namespace dftfe
 
       locallyOwnedRange =
         getLocallyOwnedRange(d_mpiComm, d_thisRank, d_numMPIRank, numPoints);
-      const global_size_type locallyOwnedStart = locallyOwnedRange.first;
-      const global_size_type locallyOwnedEnd   = locallyOwnedRange.second;
+      const dftfe::uInt locallyOwnedStart = locallyOwnedRange.first;
+      const dftfe::uInt locallyOwnedEnd   = locallyOwnedRange.second;
 
-      std::vector<bool>                   pointsFoundLocally(numPoints, false);
-      std::vector<std::vector<size_type>> cellLocalFoundIds;
-      std::vector<std::vector<double>>    cellLocalFoundRealCoords;
+      std::vector<bool> pointsFoundLocally(numPoints, false);
+      std::vector<std::vector<dftfe::uInt>> cellLocalFoundIds;
+      std::vector<std::vector<double>>      cellLocalFoundRealCoords;
       // pointsToCell finds the points from the target pts that lie inside each
       // cell
       pointsToCell<dim, M>(srcCells,
@@ -528,18 +529,18 @@ namespace dftfe
                            pointsFoundLocally,
                            paramCoordsTol);
 
-      size_type numLocallyFoundPoints = 0;
-      for (size_type iCell = 0; iCell < numCells; iCell++)
+      dftfe::uInt numLocallyFoundPoints = 0;
+      for (dftfe::uInt iCell = 0; iCell < numCells; iCell++)
         {
           numLocalPointsInCell[iCell] = cellLocalFoundIds[iCell].size();
 
           appendToVec(mapCellLocalToProcLocal[iCell], cellLocalFoundIds[iCell]);
 
           // initialSize should be zero
-          size_type initialSize = mapCellLocalToGlobal[iCell].size();
-          size_type finalSize   = initialSize + cellLocalFoundIds[iCell].size();
+          dftfe::uInt initialSize = mapCellLocalToGlobal[iCell].size();
+          dftfe::uInt finalSize = initialSize + cellLocalFoundIds[iCell].size();
           mapCellLocalToGlobal[iCell].resize(finalSize);
-          for (size_type indexVal = initialSize; indexVal < finalSize;
+          for (dftfe::uInt indexVal = initialSize; indexVal < finalSize;
                indexVal++)
             {
               mapCellLocalToGlobal[iCell][indexVal] =
@@ -555,9 +556,9 @@ namespace dftfe
       MPI_Barrier(d_mpiComm);
       double endLocalComp = MPI_Wtime();
       // get the points that are not found locally
-      std::vector<size_type>           nonLocalPointLocalIds(0);
+      std::vector<dftfe::uInt>         nonLocalPointLocalIds(0);
       std::vector<std::vector<double>> nonLocalPointCoordinates(0);
-      for (size_type iPoint = 0; iPoint < numPoints; iPoint++)
+      for (dftfe::uInt iPoint = 0; iPoint < numPoints; iPoint++)
         {
           if (!pointsFoundLocally[iPoint])
             {
@@ -567,9 +568,9 @@ namespace dftfe
             }
         }
 
-      std::vector<size_type>                     sendToProcIds(0);
-      std::vector<std::vector<global_size_type>> sendToPointsGlobalIds;
-      std::vector<std::vector<double>>           sendToPointsCoords;
+      std::vector<dftfe::uInt>              sendToProcIds(0);
+      std::vector<std::vector<dftfe::uInt>> sendToPointsGlobalIds;
+      std::vector<std::vector<double>>      sendToPointsCoords;
 
       // This function takes the points not found locally and find all the
       // bounding boxes inside which any of the non-local points lie.
@@ -585,7 +586,7 @@ namespace dftfe
                                     sendToPointsGlobalIds,
                                     sendToPointsCoords);
 
-      std::vector<global_size_type>    receivedPointsGlobalIds;
+      std::vector<dftfe::uInt>         receivedPointsGlobalIds;
       std::vector<std::vector<double>> receivedPointsCoords;
 
       // Receive points from other points that lie inside the bounding box
@@ -605,9 +606,9 @@ namespace dftfe
       MPI_Barrier(d_mpiComm);
 
 
-      size_type numTotalPointsReceived = receivedPointsCoords.size();
-      std::vector<std::vector<size_type>> cellReceivedPointsFoundIds;
-      std::vector<std::vector<double>>    cellReceivedPointsFoundRealCoords;
+      dftfe::uInt numTotalPointsReceived = receivedPointsCoords.size();
+      std::vector<std::vector<dftfe::uInt>> cellReceivedPointsFoundIds;
+      std::vector<std::vector<double>>      cellReceivedPointsFoundRealCoords;
       std::vector<bool> receivedPointsFound(numTotalPointsReceived, false);
 
       // Search through the points received from other processors to find which
@@ -625,20 +626,20 @@ namespace dftfe
       double endNonLocalComp = MPI_Wtime();
 
       ghostGlobalIds.resize(0);
-      std::set<global_size_type> ghostGlobalIdsSet;
-      for (size_type iCell = 0; iCell < numCells; iCell++)
+      std::set<dftfe::uInt> ghostGlobalIdsSet;
+      for (dftfe::uInt iCell = 0; iCell < numCells; iCell++)
         {
-          const size_type numPointsReceivedFound =
+          const dftfe::uInt numPointsReceivedFound =
             cellReceivedPointsFoundIds[iCell].size();
-          const size_type mapCellLocalToGlobalCurrIndex =
+          const dftfe::uInt mapCellLocalToGlobalCurrIndex =
             mapCellLocalToGlobal[iCell].size();
           mapCellLocalToGlobal[iCell].resize(mapCellLocalToGlobalCurrIndex +
                                              numPointsReceivedFound);
-          for (size_type i = 0; i < numPointsReceivedFound; ++i)
+          for (dftfe::uInt i = 0; i < numPointsReceivedFound; ++i)
             {
-              const size_type pointIndex = cellReceivedPointsFoundIds[iCell][i];
-              const global_size_type globalId =
-                receivedPointsGlobalIds[pointIndex];
+              const dftfe::uInt pointIndex =
+                cellReceivedPointsFoundIds[iCell][i];
+              const dftfe::uInt globalId = receivedPointsGlobalIds[pointIndex];
               mapCellLocalToGlobal[iCell][mapCellLocalToGlobalCurrIndex + i] =
                 globalId;
 
@@ -653,28 +654,28 @@ namespace dftfe
       MPI_Barrier(d_mpiComm);
       double endNonLocalVecComp = MPI_Wtime();
 
-      OptimizedIndexSet<global_size_type> ghostGlobalIdsOptIndexSet(
+      OptimizedIndexSet<dftfe::uInt> ghostGlobalIdsOptIndexSet(
         ghostGlobalIdsSet);
 
       std::string errMsgInFindingPoint =
         "Error in finding ghost index in mapPointsToCells.cpp.";
-      for (size_type iCell = 0; iCell < numCells; iCell++)
+      for (dftfe::uInt iCell = 0; iCell < numCells; iCell++)
         {
-          const size_type startId = numLocalPointsInCell[iCell];
-          const size_type endId   = mapCellLocalToGlobal[iCell].size();
-          for (size_type iPoint = startId; iPoint < endId; ++iPoint)
+          const dftfe::uInt startId = numLocalPointsInCell[iCell];
+          const dftfe::uInt endId   = mapCellLocalToGlobal[iCell].size();
+          for (dftfe::uInt iPoint = startId; iPoint < endId; ++iPoint)
             {
-              size_type globalId = mapCellLocalToGlobal[iCell][iPoint];
-              size_type pos      = -1;
-              bool      found    = true;
+              dftfe::uInt globalId = mapCellLocalToGlobal[iCell][iPoint];
+              dftfe::uInt pos      = -1;
+              bool        found    = true;
               ghostGlobalIdsOptIndexSet.getPosition(globalId, pos, found);
               mapCellLocalToProcLocal[iCell].push_back(numPoints + pos);
             }
         }
 
-      size_type ghostSetSize = ghostGlobalIdsSet.size();
+      dftfe::uInt ghostSetSize = ghostGlobalIdsSet.size();
       ghostGlobalIds.resize(ghostSetSize, -1);
-      size_type ghostIndex = 0;
+      dftfe::uInt ghostIndex = 0;
       for (auto it = ghostGlobalIdsSet.begin(); it != ghostGlobalIdsSet.end();
            it++)
         {
@@ -687,7 +688,7 @@ namespace dftfe
 
       double endCompAll = MPI_Wtime();
 
-      global_size_type numNonLocalPointsReceived = numTotalPointsReceived;
+      dftfe::uInt numNonLocalPointsReceived = numTotalPointsReceived;
       MPI_Allreduce(MPI_IN_PLACE,
                     &numNonLocalPointsReceived,
                     1,

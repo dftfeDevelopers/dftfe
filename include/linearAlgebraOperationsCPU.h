@@ -64,9 +64,9 @@ namespace dftfe
      *  @param[in] mpiComm global communicator
      *  @return flag indicating success/failure. 1 for failure, 0 for success
      */
-    unsigned int
+    dftfe::uInt
     lowdenOrthogonalization(std::vector<dataTypes::number> &X,
-                            const unsigned int              numberComponents,
+                            const dftfe::uInt               numberComponents,
                             const MPI_Comm                 &mpiComm,
                             const dftParameters            &dftParams);
 
@@ -85,15 +85,15 @@ namespace dftfe
      *  @return flag indicating success/failure. 1 for failure, 0 for success
      */
     template <typename T>
-    unsigned int
+    dftfe::uInt
     pseudoGramSchmidtOrthogonalization(
       elpaScalaManager &elpaScala,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                           &BLASWrapperPtr,
       T                   *X,
-      const unsigned int   numberComponents,
-      const unsigned int   numberDofs,
+      const dftfe::uInt    numberComponents,
+      const dftfe::uInt    numberDofs,
       const MPI_Comm      &mpiCommParent,
       const MPI_Comm      &interBandGroupComm,
       const MPI_Comm      &mpiCommDomain,
@@ -123,8 +123,8 @@ namespace dftfe
                           &BLASWrapperPtr,
       elpaScalaManager    &elpaScala,
       T                   *X,
-      const unsigned int   numberComponents,
-      const unsigned int   numberDofs,
+      const dftfe::uInt    numberComponents,
+      const dftfe::uInt    numberDofs,
       const MPI_Comm      &mpiCommParent,
       const MPI_Comm      &interBandGroupComm,
       const MPI_Comm      &mpiCommDomain,
@@ -155,8 +155,8 @@ namespace dftfe
                           &BLASWrapperPtr,
       elpaScalaManager    &elpaScala,
       T                   *X,
-      const unsigned int   numberComponents,
-      const unsigned int   numberDofs,
+      const dftfe::uInt    numberComponents,
+      const dftfe::uInt    numberDofs,
       const MPI_Comm      &mpiCommParent,
       const MPI_Comm      &interBandGroupComm,
       const MPI_Comm      &mpiCommDomain,
@@ -184,8 +184,8 @@ namespace dftfe
                                 &BLASWrapperPtr,
       T                         *X,
       const std::vector<double> &eigenValues,
-      const unsigned int         numberComponents,
-      const unsigned int         numberDofs,
+      const dftfe::uInt          numberComponents,
+      const dftfe::uInt          numberDofs,
       const MPI_Comm            &mpiCommParent,
       const MPI_Comm            &mpiCommDomain,
       const MPI_Comm            &interBandGroupComm,
@@ -203,8 +203,8 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                 &BLASWrapperPtr,
       T                         *X,
-      const unsigned int         N,
-      const unsigned int         numberLocalDofs,
+      const dftfe::uInt          N,
+      const dftfe::uInt          numberLocalDofs,
       const MPI_Comm            &mpiCommParent,
       const MPI_Comm            &mpiCommDomain,
       const MPI_Comm            &interBandGroupComm,
@@ -227,8 +227,8 @@ namespace dftfe
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                         &BLASWrapperPtr,
          const dataTypes::number        *X,
-         const unsigned int              numberComponents,
-         const unsigned int              numberLocalDofs,
+         const dftfe::uInt               numberComponents,
+         const dftfe::uInt               numberLocalDofs,
          const MPI_Comm                 &mpiCommDomain,
          const MPI_Comm                 &interBandGroupComm,
          const dftParameters            &dftParams,
@@ -249,8 +249,8 @@ namespace dftfe
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                          &BLASWrapperPtr,
          const dataTypes::number                         *X,
-         const unsigned int                               numberComponents,
-         const unsigned int                               numberLocalDofs,
+         const dftfe::uInt                                numberComponents,
+         const dftfe::uInt                                numberLocalDofs,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          const MPI_Comm                                  &mpiCommDomain,
          const MPI_Comm                                  &interBandGroupComm,
@@ -274,8 +274,8 @@ namespace dftfe
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                          &BLASWrapperPtr,
          const dataTypes::number                         *X,
-         const unsigned int                               numberComponents,
-         const unsigned int                               numberLocalDofs,
+         const dftfe::uInt                                numberComponents,
+         const dftfe::uInt                                numberLocalDofs,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
          const MPI_Comm                                  &mpiCommDomain,
          const MPI_Comm                                  &interBandGroupComm,
@@ -302,9 +302,9 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                       &BLASWrapperPtr,
       const dataTypes::number                         *X,
-      const unsigned int                               totalNumberComponents,
-      const unsigned int                               singlePrecComponents,
-      const unsigned int                               numberLocalDofs,
+      const dftfe::uInt                                totalNumberComponents,
+      const dftfe::uInt                                singlePrecComponents,
+      const dftfe::uInt                                numberLocalDofs,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm                                  &mpiCommDomain,
       const MPI_Comm                                  &interBandGroupComm,
@@ -333,9 +333,9 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                       &BLASWrapperPtr,
       const dataTypes::number                         *X,
-      const unsigned int                               totalNumberComponents,
-      const unsigned int                               singlePrecComponents,
-      const unsigned int                               numberLocalDofs,
+      const dftfe::uInt                                totalNumberComponents,
+      const dftfe::uInt                                singlePrecComponents,
+      const dftfe::uInt                                numberLocalDofs,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm                                  &mpiCommDomain,
       const MPI_Comm                                  &interBandGroupComm,
@@ -359,8 +359,8 @@ namespace dftfe
              const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
                dftfe::utils::MemorySpace::HOST>>               &BLASWrapperPtr,
              const dataTypes::number                           *X,
-             const unsigned int                               numberComponents,
-             const unsigned int                               numberLocalDofs,
+             const dftfe::uInt                                numberComponents,
+             const dftfe::uInt                                numberLocalDofs,
              const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
              const MPI_Comm                                  &mpiCommDomain,
              const MPI_Comm                            &interBandGroupComm,
@@ -390,9 +390,9 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                       &BLASWrapperPtr,
       const dataTypes::number                         *X,
-      const unsigned int                               totalNumberComponents,
-      const unsigned int                               singlePrecComponents,
-      const unsigned int                               numberLocalDofs,
+      const dftfe::uInt                                totalNumberComponents,
+      const dftfe::uInt                                singlePrecComponents,
+      const dftfe::uInt                                numberLocalDofs,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
       const MPI_Comm                                  &mpiCommDomain,
       const MPI_Comm                                  &interBandGroupComm,

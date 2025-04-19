@@ -29,16 +29,16 @@ namespace dftfe
     const std::string  restartFilesPath,
     const MPI_Comm    &mpi_comm_parent,
     const bool         restart,
-    const int          verbosity,
+    const dftfe::Int   verbosity,
     const bool         useDevice,
-    const int          d_numberOfImages,
+    const dftfe::Int   d_numberOfImages,
     const bool         imageFreeze,
     double             Kmax,
     double             Kmin,
     const double       pathThreshold,
-    const int          maximumNEBIteration,
-    const unsigned int _maxLineSearchIterCGPRP,
-    const unsigned int _lbfgsNumPastSteps,
+    const dftfe::Int   maximumNEBIteration,
+    const dftfe::uInt  _maxLineSearchIterCGPRP,
+    const dftfe::uInt  _lbfgsNumPastSteps,
     const std::string &_bfgsStepMethod,
     const double       optimizermaxIonUpdateStep,
     const std::string &optimizationSolver,
@@ -100,7 +100,7 @@ namespace dftfe
         dftUtils::readFile(initialatomLocations, coordinatesFileNEB);
         dftUtils::readFile(3, LatticeVectors, domainVectorsFileNEB);
         d_numberGlobalCharges = initialatomLocations.size() / d_numberOfImages;
-        for (int Image = 0; Image < d_numberOfImages; Image++)
+        for (dftfe::Int Image = 0; Image < d_numberOfImages; Image++)
           {
             std::string coordinatesFile, domainVectorsFile;
             coordinatesFile = d_restartFilesPath + "/Step0/Image" +
@@ -108,18 +108,18 @@ namespace dftfe
             domainVectorsFile = d_restartFilesPath + "/Step0/Image" +
                                 std::to_string(Image) + "domainVectors.inp";
             std::vector<std::vector<double>> coordinates, domainVectors;
-            for (int i = Image * d_numberGlobalCharges;
+            for (dftfe::Int i = Image * d_numberGlobalCharges;
                  i < (Image + 1) * d_numberGlobalCharges;
                  i++)
               coordinates.push_back(initialatomLocations[i]);
             if (LatticeVectors.size() == 3)
               {
-                for (int i = 0; i < 3; i++)
+                for (dftfe::Int i = 0; i < 3; i++)
                   domainVectors.push_back(LatticeVectors[i]);
               }
             else
               {
-                for (int i = Image * 3; i < (Image + 1) * 3; i++)
+                for (dftfe::Int i = Image * 3; i < (Image + 1) * 3; i++)
                   domainVectors.push_back(LatticeVectors[i]);
               }
 
@@ -156,10 +156,10 @@ namespace dftfe
         dftUtils::readFile(1,
                            nudgedElasticBandData,
                            d_restartFilesPath + "/nudgedElasticBand.dat");
-        int  solver            = nudgedElasticBandData[0][0];
-        bool usePreconditioner = nudgedElasticBandData[1][0] > 1e-6;
-        d_numberGlobalCharges  = nudgedElasticBandData[2][0] / d_numberOfImages;
-        d_totalUpdateCalls     = checkRestart(Periodic);
+        dftfe::Int solver            = nudgedElasticBandData[0][0];
+        bool       usePreconditioner = nudgedElasticBandData[1][0] > 1e-6;
+        d_numberGlobalCharges = nudgedElasticBandData[2][0] / d_numberOfImages;
+        d_totalUpdateCalls    = checkRestart(Periodic);
         dftUtils::readFile(1,
                            tmp,
                            d_restartFilesPath + "/Step" +
@@ -173,7 +173,7 @@ namespace dftfe
                   << std::endl;
           }
 
-        for (int Image = 0; Image < d_numberOfImages; Image++)
+        for (dftfe::Int Image = 0; Image < d_numberOfImages; Image++)
           {
             std::string coordinatesFile, domainVectorsFile;
             coordinatesFile = d_restartFilesPath + "/Step" +
@@ -223,7 +223,7 @@ namespace dftfe
       temp_domainBoundingVectors,
       d_dftPtr->getParametersObject().domainBoundingVectorsFile);
 
-    for (int i = 0; i < 3; i++)
+    for (dftfe::Int i = 0; i < 3; i++)
       {
         double temp =
           temp_domainBoundingVectors[i][0] * temp_domainBoundingVectors[i][0] +
@@ -244,10 +244,10 @@ namespace dftfe
 
 
   void
-  nudgedElasticBandClass::CalculatePathTangent(int                  image,
+  nudgedElasticBandClass::CalculatePathTangent(dftfe::Int           image,
                                                std::vector<double> &tangent)
   {
-    unsigned int count = 0;
+    dftfe::uInt count = 0;
     if (image != 0 && image != d_numberOfImages - 1)
       {
         std::vector<std::vector<double>> atomLocationsi, atomLocationsiminus,
@@ -263,9 +263,10 @@ namespace dftfe
         GSEnergy      = (d_dftfeWrapper[image])->getDFTFreeEnergy();
         if (GSEnergyplus > GSEnergy && GSEnergy > GSEnergyminus)
           {
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 iCharge++)
               {
-                for (int j = 0; j < 3; j++)
+                for (dftfe::Int j = 0; j < 3; j++)
                   {
                     if (d_relaxationFlags[3 * iCharge + j] == 1)
                       {
@@ -289,9 +290,10 @@ namespace dftfe
           }
         else if (GSEnergyminus > GSEnergy && GSEnergy > GSEnergyplus)
           {
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 iCharge++)
               {
-                for (int j = 0; j < 3; j++)
+                for (dftfe::Int j = 0; j < 3; j++)
                   {
                     if (d_relaxationFlags[3 * iCharge + j] == 1)
                       {
@@ -323,10 +325,10 @@ namespace dftfe
 
             if (GSEnergyplus > GSEnergyminus)
               {
-                for (int iCharge = 0; iCharge < d_numberGlobalCharges;
+                for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
                      iCharge++)
                   {
-                    for (int j = 0; j < 3; j++)
+                    for (dftfe::Int j = 0; j < 3; j++)
                       {
                         if (d_relaxationFlags[3 * iCharge + j] == 1)
                           {
@@ -365,10 +367,10 @@ namespace dftfe
               }
             else if (GSEnergyplus < GSEnergyminus)
               {
-                for (int iCharge = 0; iCharge < d_numberGlobalCharges;
+                for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
                      iCharge++)
                   {
-                    for (int j = 0; j < 3; j++)
+                    for (dftfe::Int j = 0; j < 3; j++)
                       {
                         if (d_relaxationFlags[3 * iCharge + j] == 1)
                           {
@@ -405,9 +407,10 @@ namespace dftfe
               }
 
             else
-              for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+              for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                   iCharge++)
                 {
-                  for (int j = 0; j < 3; j++)
+                  for (dftfe::Int j = 0; j < 3; j++)
                     {
                       if (d_relaxationFlags[3 * iCharge + j] == 1)
                         {
@@ -438,9 +441,9 @@ namespace dftfe
         atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
         atomLocationsiplus =
           (d_dftfeWrapper[image + 1])->getAtomPositionsCart();
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
-            for (int j = 0; j < 3; j++)
+            for (dftfe::Int j = 0; j < 3; j++)
               {
                 if (d_relaxationFlags[3 * iCharge + j] == 1)
                   {
@@ -471,9 +474,9 @@ namespace dftfe
         atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
         atomLocationsiminus =
           (d_dftfeWrapper[image - 1])->getAtomPositionsCart();
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
-            for (int j = 0; j < 3; j++)
+            for (dftfe::Int j = 0; j < 3; j++)
               {
                 if (d_relaxationFlags[3 * iCharge + j] == 1)
                   {
@@ -500,10 +503,11 @@ namespace dftfe
   }
 
   void
-  nudgedElasticBandClass::ReturnNormedVector(std::vector<double> &v, int len)
+  nudgedElasticBandClass::ReturnNormedVector(std::vector<double> &v,
+                                             dftfe::Int           len)
   {
-    int    i;
-    double norm = 0.0000;
+    dftfe::Int i;
+    double     norm = 0.0000;
 
     for (i = 0; i < len; i++)
       {
@@ -523,12 +527,12 @@ namespace dftfe
 
 
   void
-  nudgedElasticBandClass::CalculateSpringForce(int                  image,
+  nudgedElasticBandClass::CalculateSpringForce(dftfe::Int           image,
                                                std::vector<double> &ForceSpring,
                                                std::vector<double>  tangent)
   {
-    unsigned int count        = 0;
-    double       innerproduct = 0.0;
+    dftfe::uInt count        = 0;
+    double      innerproduct = 0.0;
     if (image != 0 && image != d_numberOfImages - 1)
       {
         double                           norm1 = 0.0;
@@ -542,10 +546,10 @@ namespace dftfe
           (d_dftfeWrapper[image - 1])->getAtomPositionsCart();
         atomLocationsiplus =
           (d_dftfeWrapper[image + 1])->getAtomPositionsCart();
-        int count = 0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        dftfe::Int count = 0;
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
-            for (int j = 0; j < 3; j++)
+            for (dftfe::Int j = 0; j < 3; j++)
               {
                 if (d_relaxationFlags[3 * iCharge + j] == 1)
                   {
@@ -585,10 +589,10 @@ namespace dftfe
         atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
         atomLocationsiplus =
           (d_dftfeWrapper[image + 1])->getAtomPositionsCart();
-        int count = 0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        dftfe::Int count = 0;
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
-            for (int j = 0; j < 3; j++)
+            for (dftfe::Int j = 0; j < 3; j++)
               {
                 if (d_relaxationFlags[3 * iCharge + j] == 1)
                   {
@@ -617,10 +621,10 @@ namespace dftfe
         atomLocationsi = (d_dftfeWrapper[image])->getAtomPositionsCart();
         atomLocationsiminus =
           (d_dftfeWrapper[image - 1])->getAtomPositionsCart();
-        int count = 0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        dftfe::Int count = 0;
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
-            for (int j = 0; j < 3; j++)
+            for (dftfe::Int j = 0; j < 3; j++)
               {
                 if (d_relaxationFlags[3 * iCharge + j] == 1)
                   {
@@ -649,7 +653,7 @@ namespace dftfe
 
   void
   nudgedElasticBandClass::CalculateForceparallel(
-    int                        image,
+    dftfe::Int                 image,
     std::vector<double>       &Forceparallel,
     const std::vector<double> &tangent)
   {
@@ -657,12 +661,12 @@ namespace dftfe
       {
         std::vector<std::vector<double>> forceonAtoms =
           (d_dftfeWrapper[image])->getForcesAtoms();
-        double       Innerproduct = 0.0;
-        unsigned int count        = 0;
+        double      Innerproduct = 0.0;
+        dftfe::uInt count        = 0;
 
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
-            for (int j = 0; j < 3; j++)
+            for (dftfe::Int j = 0; j < 3; j++)
               {
                 if (d_relaxationFlags[3 * iCharge + j] == 1)
                   {
@@ -683,18 +687,18 @@ namespace dftfe
 
   void
   nudgedElasticBandClass::CalculateForceperpendicular(
-    int                        image,
+    dftfe::Int                 image,
     std::vector<double>       &Forceperpendicular,
     const std::vector<double> &Forceparallel,
     const std::vector<double> &tangent)
   {
     std::vector<std::vector<double>> forceonAtoms =
       (d_dftfeWrapper[image])->getForcesAtoms();
-    unsigned int count = 0;
+    dftfe::uInt count = 0;
 
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
-        for (int j = 0; j < 3; j++)
+        for (dftfe::Int j = 0; j < 3; j++)
           {
             if (d_relaxationFlags[3 * iCharge + j] == 1)
               {
@@ -707,7 +711,7 @@ namespace dftfe
   }
 
 
-  int
+  dftfe::Int
   nudgedElasticBandClass::findMEP()
   {
     nonLinearSolver::ReturnValueType solverReturn =
@@ -722,10 +726,10 @@ namespace dftfe
           << d_optimizertolerance
           << ", total number of ion position updates: " << d_totalUpdateCalls
           << std::endl;
-        std::vector<int> flagmultiplier(d_numberOfImages, 1);
+        std::vector<dftfe::Int> flagmultiplier(d_numberOfImages, 1);
         flagmultiplier[0]                    = 0;
         flagmultiplier[d_numberOfImages - 1] = 0;
-        std::vector<int> Flag(d_numberOfImages - 2, 0);
+        std::vector<dftfe::Int> Flag(d_numberOfImages - 2, 0);
         pcout << "--------------Final Results-------------" << std::endl;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           {
@@ -733,9 +737,9 @@ namespace dftfe
                   << " Free Energy(Ha) " << std::setw(16) << " Error(Ha/bohr) "
                   << std::endl;
           }
-        double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
-        int    count     = 0;
-        for (int image = 0; image < d_numberOfImages; image++)
+        double     maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
+        dftfe::Int count     = 0;
+        for (dftfe::Int image = 0; image < d_numberOfImages; image++)
           {
             double FreeEnergy = (d_dftfeWrapper[image])->getDFTFreeEnergy();
             double InternalEnergy =
@@ -831,18 +835,18 @@ namespace dftfe
 
     if (solverReturn != nonLinearSolver::SUCCESS && d_verbosity >= 1)
       {
-        std::vector<int> flagmultiplier(d_numberOfImages, 1);
+        std::vector<dftfe::Int> flagmultiplier(d_numberOfImages, 1);
         flagmultiplier[0]                    = 0;
         flagmultiplier[d_numberOfImages - 1] = 0;
-        std::vector<int> Flag(d_numberOfImages - 2, 0);
+        std::vector<dftfe::Int> Flag(d_numberOfImages - 2, 0);
         pcout << "--------------Current Results-------------" << std::endl;
         if (!d_dftPtr->getParametersObject().reproducible_output)
           pcout << std::setw(12) << "Image No" << std::setw(25)
                 << " Free Energy(Ha) " << std::setw(16) << " Error(Ha/bohr) "
                 << std::endl;
-        double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
-        int    count     = 0;
-        for (int image = 0; image < d_numberOfImages; image++)
+        double     maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
+        dftfe::Int count     = 0;
+        for (dftfe::Int image = 0; image < d_numberOfImages; image++)
           {
             double FreeEnergy = (d_dftfeWrapper[image])->getDFTFreeEnergy();
             double InternalEnergy =
@@ -932,26 +936,26 @@ namespace dftfe
   void
   nudgedElasticBandClass::LNorm(double             &norm,
                                 std::vector<double> v,
-                                int                 L,
-                                int                 len)
+                                dftfe::Int          L,
+                                dftfe::Int          len)
   {
     norm = 0.0;
     if (L == 2)
       {
-        for (int i = 0; i < len; i++)
+        for (dftfe::Int i = 0; i < len; i++)
           norm = norm + v[i] * v[i];
         norm = sqrt(norm);
       }
     if (L == 0)
       {
         norm = -1;
-        for (int i = 0; i < len; i++)
+        for (dftfe::Int i = 0; i < len; i++)
           norm = std::max(norm, fabs(v[i]));
       }
     if (L == 1)
       {
         norm = 0.0;
-        for (int i = 0; i < len; i++)
+        for (dftfe::Int i = 0; i < len; i++)
           norm = norm + std::fabs(v[i]);
       }
   }
@@ -961,10 +965,10 @@ namespace dftfe
   nudgedElasticBandClass::gradient(std::vector<double> &gradient)
   {
     gradient.clear();
-    std::vector<int> flagmultiplier(d_numberOfImages, 1);
+    std::vector<dftfe::Int> flagmultiplier(d_numberOfImages, 1);
     flagmultiplier[0]                    = 0;
     flagmultiplier[d_numberOfImages - 1] = 0;
-    std::vector<int> Flag(d_numberOfImages - 2, 0);
+    std::vector<dftfe::Int> Flag(d_numberOfImages - 2, 0);
     pcout
       << "-----------------------------------------------------------------------"
       << std::endl;
@@ -977,9 +981,9 @@ namespace dftfe
       pcout << std::setw(12) << "Image No" << std::setw(25)
             << " Free Energy(Ha) " << std::setw(16) << " Error(Ha/bohr) "
             << std::endl;
-    double maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
-    int    count     = 0;
-    for (int image = 0; image < d_numberOfImages; image++)
+    double     maxEnergy = (d_dftfeWrapper[0])->getDFTFreeEnergy();
+    dftfe::Int count     = 0;
+    for (dftfe::Int image = 0; image < d_numberOfImages; image++)
       {
         double FreeEnergy = (d_dftfeWrapper[image])->getDFTFreeEnergy();
         double InternalEnergy =
@@ -1052,13 +1056,13 @@ namespace dftfe
               << "--Path Length: " << Length << " Bohr" << std::endl;
         pcout << "----------------------------------------------" << std::endl;
       }
-    int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
-    bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
+    dftfe::Int FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
+    bool       flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
 
     if (flag == true)
       pcout << "Optimization Criteria Met!!" << std::endl;
 
-    for (int image = 1; image < d_numberOfImages - 1; image++)
+    for (dftfe::Int image = 1; image < d_numberOfImages - 1; image++)
       {
         d_NEBImageno = image;
         std::vector<double> tangent(d_countrelaxationFlags, 0.0);
@@ -1082,7 +1086,7 @@ namespace dftfe
 
 
         // pcout << "Flag: " << Flag[image - 1] << std::endl;
-        for (int i = 0; i < d_countrelaxationFlags; i++)
+        for (dftfe::Int i = 0; i < d_countrelaxationFlags; i++)
           {
             if (Flag[image - 1] == 0)
               gradient.push_back(-ForceonImage[i] * flagmultiplier[image]);
@@ -1096,7 +1100,7 @@ namespace dftfe
 
     d_maximumAtomForceToBeRelaxed = -1.0;
 
-    for (unsigned int i = 0; i < gradient.size(); ++i)
+    for (dftfe::uInt i = 0; i < gradient.size(); ++i)
       {
         const double temp = std::sqrt(gradient[i] * gradient[i]);
 
@@ -1116,7 +1120,7 @@ namespace dftfe
     const std::vector<double> &SpringForce,
     std::vector<double>       &ForceonImage)
   {
-    unsigned int count = 0;
+    dftfe::uInt count = 0;
 
     for (count = 0; count < d_countrelaxationFlags; count++)
       {
@@ -1136,9 +1140,9 @@ namespace dftfe
     std::vector<std::vector<double>> globalAtomsDisplacements(
       d_numberGlobalCharges, std::vector<double>(3, 0.0));
 
-    for (int image = 1; image < d_numberOfImages - 1; image++)
+    for (dftfe::Int image = 1; image < d_numberOfImages - 1; image++)
       {
-        int multiplier = 1;
+        dftfe::Int multiplier = 1;
 
 
         if (d_ImageError[image] < 0.95 * d_optimizertolerance && d_imageFreeze)
@@ -1148,14 +1152,18 @@ namespace dftfe
             //       << " with Image force: " << d_ImageError[image] <<
             //       std::endl;
           }
-        MPI_Bcast(&multiplier, 1, MPI_INT, 0, d_mpiCommParent);
-        int count = 0;
+        MPI_Bcast(&multiplier,
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&multiplier),
+                  0,
+                  d_mpiCommParent);
+        dftfe::Int count = 0;
         if (d_verbosity > 4 &&
             !d_dftPtr->getParametersObject().reproducible_output)
           pcout << "--Displacements for image: " << image << std::endl;
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+        for (dftfe::uInt i = 0; i < d_numberGlobalCharges; ++i)
           {
-            for (unsigned int j = 0; j < 3; ++j)
+            for (dftfe::uInt j = 0; j < 3; ++j)
               {
                 if (d_this_mpi_process == 0)
                   {
@@ -1262,7 +1270,7 @@ namespace dftfe
         dftUtils::writeDataIntoFile(forceData,
                                     savePath + "/maxForce.chk",
                                     d_mpiCommParent);
-        for (int i = 0; i < d_numberOfImages; i++)
+        for (dftfe::Int i = 0; i < d_numberOfImages; i++)
           {
             d_dftfeWrapper[i]->writeDomainAndAtomCoordinates(
               savePath + "/Image" + std::to_string(i));
@@ -1278,7 +1286,7 @@ namespace dftfe
 
 
 
-  std::vector<unsigned int>
+  std::vector<dftfe::uInt>
   nudgedElasticBandClass::getUnknownCountFlag() const
   {
     AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1290,13 +1298,13 @@ namespace dftfe
   {
     functionValue.clear();
 
-    int midImage = d_numberOfImages / 2;
+    dftfe::Int midImage = d_numberOfImages / 2;
     functionValue.push_back((d_dftfeWrapper[midImage])->getDFTFreeEnergy());
   }
 
 
 
-  unsigned int
+  dftfe::uInt
   nudgedElasticBandClass::getNumberUnknowns() const
   {
     return (d_countrelaxationFlags * (d_numberOfImages - 2));
@@ -1308,17 +1316,17 @@ namespace dftfe
   nudgedElasticBandClass::CalculatePathLength(bool flag) const
   {
     double                           length = 0.0;
-    int                              atomId = 0;
+    dftfe::Int                       atomId = 0;
     std::vector<std::vector<double>> atomLocations, atomLocationsInitial;
     std::vector<double>              pathLength(d_numberGlobalCharges, 0.0);
 
-    for (int i = 0; i < d_numberOfImages - 1; i++)
+    for (dftfe::Int i = 0; i < d_numberOfImages - 1; i++)
       {
         atomLocations        = (d_dftfeWrapper[i + 1])->getAtomPositionsCart();
         atomLocationsInitial = (d_dftfeWrapper[i])->getAtomPositionsCart();
         double tempx, tempy, tempz, temp;
         temp = 0.0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             tempx = std::fabs(atomLocations[iCharge][0] -
                               atomLocationsInitial[iCharge][0]);
@@ -1336,7 +1344,7 @@ namespace dftfe
               std::sqrt(tempx * tempx + tempy * tempy + tempz * tempz);
           }
       }
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         if (pathLength[iCharge] > length)
           {
@@ -1352,8 +1360,8 @@ namespace dftfe
   }
 
   void
-  nudgedElasticBandClass::CalculateSpringConstant(int     NEBImage,
-                                                  double &SpringConstant)
+  nudgedElasticBandClass::CalculateSpringConstant(dftfe::Int NEBImage,
+                                                  double    &SpringConstant)
   {
     SpringConstant = 0.0;
     double Emin, ksum, kdiff, deltaE, Emax;
@@ -1362,7 +1370,7 @@ namespace dftfe
     double Ei;
     Emax = -5000000;
     Emin = 500;
-    for (int image = 0; image < d_numberOfImages - 1; image++)
+    for (dftfe::Int image = 0; image < d_numberOfImages - 1; image++)
       {
         Emax = std::max(Emax, (d_dftfeWrapper[image])->getDFTFreeEnergy());
         Emin = std::min(Emin, (d_dftfeWrapper[image])->getDFTFreeEnergy());
@@ -1383,7 +1391,7 @@ namespace dftfe
 
 
   void
-  nudgedElasticBandClass::ImageError(int image, double &Force)
+  nudgedElasticBandClass::ImageError(dftfe::Int image, double &Force)
   {
     Force = 0.0;
     std::vector<double> tangent(d_countrelaxationFlags, 0.0);
@@ -1401,9 +1409,9 @@ namespace dftfe
   bool
   nudgedElasticBandClass::isConverged() const
   {
-    std::vector<int> Flag(d_numberOfImages - 2, 0);
-    int              count = 0;
-    for (int i = 0; i < d_numberOfImages; i++)
+    std::vector<dftfe::Int> Flag(d_numberOfImages - 2, 0);
+    dftfe::Int              count = 0;
+    for (dftfe::Int i = 0; i < d_numberOfImages; i++)
       {
         double Force  = d_ImageError[i];
         double Energy = (d_dftfeWrapper[i])->getDFTFreeEnergy();
@@ -1417,8 +1425,8 @@ namespace dftfe
       }
     MPI_Barrier(d_mpiCommParent);
     // double length = CalculatePathLength(false);
-    int  FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
-    bool flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
+    dftfe::Int FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
+    bool       flag      = FlagTotal == (d_numberOfImages - 2) ? true : false;
     return flag;
   }
 
@@ -1429,8 +1437,8 @@ namespace dftfe
     double step_time;
     if (d_ionRelaxFlagsFile != "")
       {
-        std::vector<std::vector<int>>    tempRelaxFlagsData;
-        std::vector<std::vector<double>> tempForceData;
+        std::vector<std::vector<dftfe::Int>> tempRelaxFlagsData;
+        std::vector<std::vector<double>>     tempForceData;
         dftUtils::readRelaxationFlagsFile(6,
                                           tempRelaxFlagsData,
                                           tempForceData,
@@ -1443,9 +1451,9 @@ namespace dftfe
 
 
 
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+        for (dftfe::uInt i = 0; i < d_numberGlobalCharges; ++i)
           {
-            for (unsigned int j = 0; j < 3; ++j)
+            for (dftfe::uInt j = 0; j < 3; ++j)
               {
                 d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
                 d_externalForceOnAtom.push_back(tempForceData[i][j]);
@@ -1456,7 +1464,7 @@ namespace dftfe
           {
             pcout << " --------------Ion force relaxation flags----------------"
                   << std::endl;
-            for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+            for (dftfe::uInt i = 0; i < d_numberGlobalCharges; ++i)
               {
                 pcout << tempRelaxFlagsData[i][0] << "  "
                       << tempRelaxFlagsData[i][1] << "  "
@@ -1470,9 +1478,9 @@ namespace dftfe
       {
         d_relaxationFlags.clear();
         d_externalForceOnAtom.clear();
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+        for (dftfe::uInt i = 0; i < d_numberGlobalCharges; ++i)
           {
-            for (unsigned int j = 0; j < 3; ++j)
+            for (dftfe::uInt j = 0; j < 3; ++j)
               {
                 d_relaxationFlags.push_back(1.0);
                 d_externalForceOnAtom.push_back(0.0);
@@ -1480,7 +1488,7 @@ namespace dftfe
           }
       }
     d_countrelaxationFlags = 0;
-    for (int i = 0; i < d_relaxationFlags.size(); i++)
+    for (dftfe::Int i = 0; i < d_relaxationFlags.size(); i++)
       {
         if (d_relaxationFlags[i] == 1)
           d_countrelaxationFlags++;
@@ -1495,13 +1503,13 @@ namespace dftfe
                            d_restartFilesPath + "/nudgedElasticBand.dat");
 
         bool relaxationFlagsMatch = true;
-        for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+        for (dftfe::uInt i = 0; i < d_numberGlobalCharges; ++i)
           {
-            for (unsigned int j = 0; j < 3; ++j)
+            for (dftfe::uInt j = 0; j < 3; ++j)
               {
                 relaxationFlagsMatch =
                   (d_relaxationFlags[i * 3 + j] ==
-                   (int)nudgedElasticBandData[i * 3 + j + 6][0]) &&
+                   (dftfe::Int)nudgedElasticBandData[i * 3 + j + 6][0]) &&
                   relaxationFlagsMatch;
               }
           }
@@ -1531,9 +1539,9 @@ namespace dftfe
       d_dftPtr->getParametersObject().periodicY ? 1 : 0;
     nudgedElasticBandData[5][0] =
       d_dftPtr->getParametersObject().periodicZ ? 1 : 0;
-    for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+    for (dftfe::uInt i = 0; i < d_numberGlobalCharges; ++i)
       {
-        for (unsigned int j = 0; j < 3; ++j)
+        for (dftfe::uInt j = 0; j < 3; ++j)
           {
             nudgedElasticBandData[i * 3 + j + 6][0] =
               d_relaxationFlags[i * 3 + j];
@@ -1548,7 +1556,7 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     step_time = MPI_Wtime();
 
-    for (int i = 0; i < d_numberOfImages; i++)
+    for (dftfe::Int i = 0; i < d_numberOfImages; i++)
       {
         d_NEBImageno = i;
         auto groundState =
@@ -1573,8 +1581,8 @@ namespace dftfe
 
 
 
-    int count = 0;
-    for (int i = 0; i < d_numberOfImages; i++)
+    dftfe::Int count = 0;
+    for (dftfe::Int i = 0; i < d_numberOfImages; i++)
       {
         d_NEBImageno = i;
         Force        = 0.0;
@@ -1736,7 +1744,7 @@ namespace dftfe
     d_isRestart = false;
   }
 
-  int
+  dftfe::Int
   nudgedElasticBandClass::checkRestart(bool &periodic)
 
   {
@@ -1746,14 +1754,14 @@ namespace dftfe
                        d_restartFilesPath + "/nudgedElasticBand.dat");
     dftUtils::readFile(1, tmp, d_restartFilesPath + "/Step.chk");
     dftUtils::readFile(1, tmp2, d_restartFilesPath + "/Step.chk.old");
-    int  solver            = nudgedElasticBandData[0][0];
-    bool usePreconditioner = nudgedElasticBandData[1][0] > 1e-6;
-    d_numberGlobalCharges  = nudgedElasticBandData[2][0] / d_numberOfImages;
-    periodic               = nudgedElasticBandData[3][0] == 1 ||
+    dftfe::Int solver            = nudgedElasticBandData[0][0];
+    bool       usePreconditioner = nudgedElasticBandData[1][0] > 1e-6;
+    d_numberGlobalCharges = nudgedElasticBandData[2][0] / d_numberOfImages;
+    periodic              = nudgedElasticBandData[3][0] == 1 ||
                nudgedElasticBandData[4][0] == 1 ||
                nudgedElasticBandData[5][0] == 1;
-    d_totalUpdateCalls = tmp[0][0];
-    int Checkcall      = tmp2[0][0];
+    d_totalUpdateCalls   = tmp[0][0];
+    dftfe::Int Checkcall = tmp2[0][0];
     if (Checkcall != d_totalUpdateCalls)
       d_totalUpdateCalls = Checkcall;
     tmp.clear();
@@ -1775,7 +1783,7 @@ namespace dftfe
         path =
           d_restartFilesPath + "/Step" + std::to_string(d_totalUpdateCalls);
         flag = true;
-        for (int image = 0; image < d_numberOfImages; image++)
+        for (dftfe::Int image = 0; image < d_numberOfImages; image++)
           {
             std::string file1;
             if (periodic)

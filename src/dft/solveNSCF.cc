@@ -28,8 +28,8 @@
 #include <energyCalculator.h>
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::solveNoSCF()
@@ -205,7 +205,7 @@ namespace dftfe
          d_dftParamsPtr->periodicZ))
       {
         double *tempvec = densityInQuadValuesCopy.data();
-        for (unsigned int iquad = 0; iquad < densityInQuadValuesCopy.size();
+        for (dftfe::uInt iquad = 0; iquad < densityInQuadValuesCopy.size();
              iquad++)
           tempvec[iquad] += -d_dftParamsPtr->netCharge / d_domainVolume;
       }
@@ -311,7 +311,7 @@ namespace dftfe
 
     computing_timer.leave_subsection("phiTot solve");
 
-    unsigned int numberChebyshevSolvePasses = 0;
+    dftfe::uInt numberChebyshevSolvePasses = 0;
     //
     // eigen solve
     //
@@ -339,8 +339,8 @@ namespace dftfe
                              fermiEnergyDown,
                              d_auxDensityMatrixXCInPtr);
 
-    unsigned int       count     = 0;
-    const unsigned int maxPasses = 100;
+    dftfe::uInt       count     = 0;
+    const dftfe::uInt maxPasses = 100;
 
 
     // maximum of the residual norm of the state closest to and
@@ -359,7 +359,7 @@ namespace dftfe
 
     while (maxRes > chebyTol && count < maxPasses)
       {
-        for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
+        for (dftfe::uInt s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
           {
             if ((d_dftParamsPtr->memOptMode &&
                  d_dftParamsPtr->spinPolarized == 1) ||
@@ -372,7 +372,7 @@ namespace dftfe
 
                 computing_timer.leave_subsection("VEff Computation");
               }
-            for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
+            for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size();
                  ++kPoint)
               {
                 if (count == 0 || maxResidualsAllkPoints[s][kPoint] > chebyTol)
@@ -421,11 +421,11 @@ namespace dftfe
                   }
               }
           }
-        for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
-          for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size();
+        for (dftfe::uInt s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
+          for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size();
                ++kPoint)
             {
-              for (unsigned int i = 0; i < d_numEigenValues; ++i)
+              for (dftfe::uInt i = 0; i < d_numEigenValues; ++i)
                 eigenValuesSpins[s][kPoint][i] =
                   eigenValues[kPoint][d_numEigenValues * s + i];
             }
@@ -446,7 +446,7 @@ namespace dftfe
               compute_fermienergy(eigenValues, numElectrons);
           }
 
-        for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
+        for (dftfe::uInt s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
           {
             maxResSpins[s] = computeMaximumHighestOccupiedStateResidualNorm(
               residualNormWaveFunctionsAllkPointsSpins[s],
@@ -538,7 +538,7 @@ namespace dftfe
          d_dftParamsPtr->periodicZ))
       {
         double *tempvec = densityOutQuadValuesCopy.data();
-        for (unsigned int iquad = 0; iquad < densityOutQuadValuesCopy.size();
+        for (dftfe::uInt iquad = 0; iquad < densityOutQuadValuesCopy.size();
              iquad++)
           tempvec[iquad] += -d_dftParamsPtr->netCharge / d_domainVolume;
       }

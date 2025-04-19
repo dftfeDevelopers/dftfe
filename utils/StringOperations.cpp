@@ -34,11 +34,11 @@ namespace dftfe
     namespace stringOps
     {
       bool
-      strToInt(const std::string s, int &i)
+      strToInt(const std::string s, dftfe::Int &i)
       {
         try
           {
-            i = boost::lexical_cast<int>(s);
+            i = boost::lexical_cast<dftfe::Int>(s);
           }
         catch (const boost::bad_lexical_cast &e)
           {

@@ -69,8 +69,9 @@ namespace dftfe
 
     d_scalapackBlockSize =
       std::min(dftParams.scalapackBlockSize,
-               (na + d_processGridDftfeWrapper->get_process_grid_rows() - 1) /
-                 d_processGridDftfeWrapper->get_process_grid_rows());
+               dftfe::uInt(
+                 (na + d_processGridDftfeWrapper->get_process_grid_rows() - 1) /
+                 d_processGridDftfeWrapper->get_process_grid_rows()));
 
     if (dftParams.useELPA)
       {

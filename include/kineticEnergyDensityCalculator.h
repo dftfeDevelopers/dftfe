@@ -29,12 +29,12 @@ namespace dftfe
   computeKineticEnergyDensity(
     const dftfe::linearAlgebra::BLASWrapper<memorySpace>       &BLASWrapperPtr,
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
-    const unsigned int                      totalNumWaveFunctions,
+    const dftfe::uInt                       totalNumWaveFunctions,
     const std::vector<std::vector<double>> &partialOccupancies,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
                               &basisOperationsPtr,
-    const unsigned int         quadratureIndex,
+    const dftfe::uInt          quadratureIndex,
     const std::vector<double> &kPointCoords,
     const std::vector<double> &kPointWeights,
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -49,17 +49,17 @@ namespace dftfe
   void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>
-                                               &BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    const unsigned int                          nQuadsPerCell,
-    double                                     *partialOccupVec,
-    double                                     *kcoord,
-    NumberType                                 *wfcQuadPointData,
-    NumberType                                 *gradWfcQuadPointData,
-    double                                     *kineticCellsWfcContributions,
-    double                                     *kineticEnergyDensity,
-    const MPI_Comm                             &mpiCommDomain);
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *partialOccupVec,
+    double                                   *kcoord,
+    NumberType                               *wfcQuadPointData,
+    NumberType                               *gradWfcQuadPointData,
+    double                                   *kineticCellsWfcContributions,
+    double                                   *kineticEnergyDensity,
+    const MPI_Comm                           &mpiCommDomain);
 
 } // namespace dftfe
 #endif

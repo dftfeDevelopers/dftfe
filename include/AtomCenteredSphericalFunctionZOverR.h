@@ -36,9 +36,9 @@ namespace dftfe
     : public AtomCenteredSphericalFunctionBase
   {
   public:
-    AtomCenteredSphericalFunctionOneOverR(double       Z,
-                                          double       Rtail,
-                                          unsigned int l);
+    AtomCenteredSphericalFunctionOneOverR(double      Z,
+                                          double      Rtail,
+                                          dftfe::uInt l);
 
 
 

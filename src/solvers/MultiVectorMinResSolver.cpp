@@ -41,11 +41,11 @@ namespace dftfe
                                                             BLASWrapperPtr,
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &xMemSpace,
     dftfe::linearAlgebra::MultiVector<double, memorySpace> &NDBCVec,
-    unsigned int                                            locallyOwned,
-    unsigned int                                            blockSize,
+    dftfe::uInt                                             locallyOwned,
+    dftfe::uInt                                             blockSize,
     const double                                            absTolerance,
-    const unsigned int                                      maxNumberIterations,
-    const unsigned int                                      debugLevel,
+    const dftfe::uInt                                       maxNumberIterations,
+    const dftfe::uInt                                       debugLevel,
     bool                                                    distributeFlag)
   {
     int this_process;
@@ -173,7 +173,7 @@ namespace dftfe
                                  beta1Host.end(),
                                  [](double val) { return val <= 0.0; });
 
-    for (unsigned int i = 0; i < blockSize; ++i)
+    for (dftfe::uInt i = 0; i < blockSize; ++i)
       beta1Host[i] = std::sqrt(beta1Host[i]) + rhsNormTolForZero;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -232,15 +232,15 @@ namespace dftfe
       negOldepsHost(blockSize, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       negDeltaHost(blockSize, 0.0);
-    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::HOST>
-                 lanczosSizeHost(blockSize, 0);
-    unsigned int iter = 0;
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::HOST>
+                lanczosSizeHost(blockSize, 0);
+    dftfe::uInt iter = 0;
     computing_timer.leave_subsection("MINRES initial MPI");
     while (iter < maxNumberIterations && hasAllConverged == false)
       {
         // pcout << "iter  = " << iter << "\n";
         computing_timer.enter_subsection("MINRES vmult MPI");
-        for (unsigned int i = 0; i < blockSize; ++i)
+        for (dftfe::uInt i = 0; i < blockSize; ++i)
           sHost[i] = (1.0 / betaHost[i]) - 1.0;
 
         BLASWrapperPtr->axpby(locallyOwned * blockSize,
@@ -262,7 +262,7 @@ namespace dftfe
 
         if (iter > 0)
           {
-            for (unsigned int i = 0; i < blockSize; ++i)
+            for (dftfe::uInt i = 0; i < blockSize; ++i)
               negBetaByBetaOldHost[i] = -betaHost[i] / oldbHost[i];
 
             negBetaByBetaOldMemSpace.copyFrom(negBetaByBetaOldHost);
@@ -292,7 +292,7 @@ namespace dftfe
                                         mpi_communicator,
                                         alphaHost.begin());
 
-        for (unsigned int i = 0; i < blockSize; ++i)
+        for (dftfe::uInt i = 0; i < blockSize; ++i)
           negAlphaByBetaHost[i] = -alphaHost[i] / betaHost[i];
 
         negAlphaByBetaMemSpace.copyFrom(negAlphaByBetaHost);
@@ -340,12 +340,12 @@ namespace dftfe
                                 betaHost.end(),
                                 [](double val) { return val <= 0.0; });
 
-        for (unsigned int i = 0; i < blockSize; ++i)
+        for (dftfe::uInt i = 0; i < blockSize; ++i)
           {
             betaHost[i] = std::sqrt(betaHost[i]) + rhsNormTolForZero;
           }
 
-        for (unsigned int i = 0; i < blockSize; ++i)
+        for (dftfe::uInt i = 0; i < blockSize; ++i)
           {
             oldepsHost[i] = epslnHost[i];
             deltaHost[i]  = csHost[i] * dbarHost[i] + snHost[i] * alphaHost[i];
@@ -421,7 +421,7 @@ namespace dftfe
                                                           phiMemSpace.data(),
                                                           xTmpMemSpace.data());
 
-        for (unsigned int i = 0; i < blockSize; ++i)
+        for (dftfe::uInt i = 0; i < blockSize; ++i)
           {
             qrnormHost[i] = phibarHost[i];
             rnormHost[i]  = qrnormHost[i];
@@ -435,7 +435,7 @@ namespace dftfe
           coeffForXMemHost(blockSize, 1.0);
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           coeffForXTmpHost(blockSize, 0.0);
-        for (unsigned int i = 0; i < blockSize; ++i)
+        for (dftfe::uInt i = 0; i < blockSize; ++i)
           {
             // pcout << " res = " << rnormHost[i] << "\n";
             if (rnormHost[i] < absTolerance && hasConvergedHost[i] == false)
@@ -487,7 +487,7 @@ namespace dftfe
       coeffForXMemHost(blockSize, 1.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       coeffForXTmpHost(blockSize, 0.0);
-    for (unsigned int i = 0; i < blockSize; ++i)
+    for (dftfe::uInt i = 0; i < blockSize; ++i)
       {
         if (hasConvergedHost[i] == false)
           {
@@ -502,7 +502,7 @@ namespace dftfe
     if (updateUncovergedFlag)
       {
         pcout << " Inside update for unconverged \n";
-        for (unsigned int i = 0; i < blockSize; ++i)
+        for (dftfe::uInt i = 0; i < blockSize; ++i)
           {
             pcout << " i = " << i
                   << " coeffForXMemHost = " << coeffForXMemHost[i]
@@ -524,7 +524,7 @@ namespace dftfe
                 xMemSpace.l2Norm(&l2NormVec1[0]);
 
                 pcout << " xMemSpace before dist = \n";
-                for (unsigned int iB = 0; iB < blockSize; iB++)
+                for (dftfe::uInt iB = 0; iB < blockSize; iB++)
                   {
                     pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] <<
            "\n";
@@ -533,7 +533,7 @@ namespace dftfe
                 xTmpMemSpace.l2Norm(&l2NormVec1[0]);
 
                 pcout << " xTmpMemSpace before dist = \n";
-                for (unsigned int iB = 0; iB < blockSize; iB++)
+                for (dftfe::uInt iB = 0; iB < blockSize; iB++)
                   {
                     pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] <<
            "\n";
@@ -551,7 +551,7 @@ namespace dftfe
                 xMemSpace.l2Norm(&l2NormVec1[0]);
 
                 pcout << " xMemSpace before dist = \n";
-                for (unsigned int iB = 0; iB < blockSize; iB++)
+                for (dftfe::uInt iB = 0; iB < blockSize; iB++)
                   {
                     pcout << " iB = " << iB << " norm = " << l2NormVec1[iB] <<
            "\n";
@@ -566,7 +566,7 @@ namespace dftfe
         xMemSpace.l2Norm(&l2NormVec[0]);
 
         pcout << " xMemSpace before dist = \n";
-        for (unsigned int iB = 0; iB < blockSize; iB++)
+        for (dftfe::uInt iB = 0; iB < blockSize; iB++)
           {
             pcout << " iB = " << iB << " norm = " << l2NormVec[iB] << "\n";
           }
@@ -576,7 +576,7 @@ namespace dftfe
     xMemSpace.l2Norm(&l2NormVec[0]);
 
     pcout << " xMemSpace after dist = \n";
-    for (unsigned int iB = 0; iB < blockSize; iB++)
+    for (dftfe::uInt iB = 0; iB < blockSize; iB++)
       {
         pcout << " iB = " << iB << " norm = " << l2NormVec[iB] << "\n";
       }
@@ -597,13 +597,13 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
       &xMemSpace,
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::HOST>
-                      &NDBCVec,
-    unsigned int       locallyOwned,
-    unsigned int       blockSize,
-    const double       absTolerance,
-    const unsigned int maxNumberIterations,
-    const unsigned int debugLevel,
-    bool               distributeFlag);
+                     &NDBCVec,
+    dftfe::uInt       locallyOwned,
+    dftfe::uInt       blockSize,
+    const double      absTolerance,
+    const dftfe::uInt maxNumberIterations,
+    const dftfe::uInt debugLevel,
+    bool              distributeFlag);
 
 
 #ifdef DFTFE_WITH_DEVICE
@@ -617,13 +617,13 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::DEVICE>
       &xMemSpace,
     dftfe::linearAlgebra::MultiVector<double, dftfe::utils::MemorySpace::DEVICE>
-                      &NDBCVec,
-    unsigned int       locallyOwned,
-    unsigned int       blockSize,
-    const double       absTolerance,
-    const unsigned int maxNumberIterations,
-    const unsigned int debugLevel,
-    bool               distributeFlag);
+                     &NDBCVec,
+    dftfe::uInt       locallyOwned,
+    dftfe::uInt       blockSize,
+    const double      absTolerance,
+    const dftfe::uInt maxNumberIterations,
+    const dftfe::uInt debugLevel,
+    bool              distributeFlag);
 
 #endif
 } // namespace dftfe

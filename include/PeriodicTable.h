@@ -23,6 +23,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <TypeConfig.h>
 
 namespace dftfe
 {
@@ -40,11 +41,11 @@ namespace dftfe
   {
     struct Element
     {
-      int         z;
+      dftfe::Int  z;
       std::string symbol;
       std::string config;
       double      mass;
-      Element(int zz, std::string s, std::string c, double m)
+      Element(dftfe::Int zz, std::string s, std::string c, double m)
         : z(zz)
         , symbol(s)
         , config(c)
@@ -55,24 +56,24 @@ namespace dftfe
     class PeriodicTable
     {
     private:
-      std::vector<Element>       ptable;
-      std::map<std::string, int> zmap;
+      std::vector<Element>              ptable;
+      std::map<std::string, dftfe::Int> zmap;
 
     public:
       PeriodicTable(void);
-      int
+      dftfe::Int
       z(std::string symbol) const;
       std::string
-      symbol(int zval) const;
+      symbol(dftfe::Int zval) const;
       std::string
-      configuration(int zval) const;
+      configuration(dftfe::Int zval) const;
       std::string
       configuration(std::string symbol) const;
       double
-      mass(int zval) const;
+      mass(dftfe::Int zval) const;
       double
       mass(std::string symbol) const;
-      int
+      dftfe::Int
       size(void) const;
     };
   } // namespace pseudoUtils

@@ -1,9 +1,9 @@
 #ifndef dftfeTypeConfig_h
 #define dftfeTypeConfig_h
-
+#include <cstdint>
 namespace dftfe
 {
-  using size_type        = unsigned int;
-  using global_size_type = unsigned long int;
+  using uInt = std::uint64_t;
+  using Int  = std::int64_t;
 } // namespace dftfe
 #endif

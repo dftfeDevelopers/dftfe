@@ -30,7 +30,7 @@ namespace dftfe
    *
    * @author Phani Motamarri
    */
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   class kerkerSolverProblem : public dealiiLinearSolverProblem
   {
   public:
@@ -56,8 +56,8 @@ namespace dftfe
          dealii::AffineConstraints<double> &constraintMatrix,
          distributedCPUVec<double>         &x,
          double                             kerkerMixingParameter,
-         const unsigned int                 matrixFreeVectorComponent,
-         const unsigned int                 matrixFreeQuadratureComponent);
+         const dftfe::uInt                  matrixFreeVectorComponent,
+         const dftfe::uInt                  matrixFreeQuadratureComponent);
 
 
 
@@ -141,10 +141,10 @@ namespace dftfe
      *
      */
     void
-    AX(const dealii::MatrixFree<3, double>         &matrixFreeData,
-       distributedCPUVec<double>                   &dst,
-       const distributedCPUVec<double>             &src,
-       const std::pair<unsigned int, unsigned int> &cell_range) const;
+    AX(const dealii::MatrixFree<3, double>       &matrixFreeData,
+       distributedCPUVec<double>                 &dst,
+       const distributedCPUVec<double>           &src,
+       const std::pair<dftfe::uInt, dftfe::uInt> &cell_range) const;
 
 
     /**
@@ -167,10 +167,10 @@ namespace dftfe
 
     /// matrix free index required to access the DofHandler and
     /// dealii::AffineConstraints<double> objects corresponding to the problem
-    unsigned int d_matrixFreeVectorComponent;
+    dftfe::uInt d_matrixFreeVectorComponent;
 
     /// matrix free quadrature index
-    unsigned int d_matrixFreeQuadratureComponent;
+    dftfe::uInt d_matrixFreeQuadratureComponent;
 
 
     /// pointer to electron density cell and grad residual data
@@ -187,8 +187,8 @@ namespace dftfe
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
   };
 

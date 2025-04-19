@@ -29,12 +29,12 @@ namespace dftfe
   TransferDataBetweenMeshesIncompatiblePartitioning<memorySpace>::
     TransferDataBetweenMeshesIncompatiblePartitioning(
       const dealii::MatrixFree<3, double> &matrixFreeMesh1,
-      const unsigned int                   matrixFreeMesh1VectorComponent,
-      const unsigned int                   matrixFreeMesh1QuadratureComponent,
+      const dftfe::uInt                    matrixFreeMesh1VectorComponent,
+      const dftfe::uInt                    matrixFreeMesh1QuadratureComponent,
       const dealii::MatrixFree<3, double> &matrixFreeMesh2,
-      const unsigned int                   matrixFreeMesh2VectorComponent,
-      const unsigned int                   matrixFreeMesh2QuadratureComponent,
-      const unsigned int                   verbosity,
+      const dftfe::uInt                    matrixFreeMesh2VectorComponent,
+      const dftfe::uInt                    matrixFreeMesh2QuadratureComponent,
+      const dftfe::uInt                    verbosity,
       const MPI_Comm                      &mpiComm,
       const bool                           useMemOptForCellWiseInterpolation)
     : d_mpiComm(mpiComm)
@@ -74,11 +74,13 @@ namespace dftfe
                                        dealii::update_values |
                                          dealii::update_quadrature_points);
 
-    size_type numberQuadraturePointsMesh1 = quadratureMesh1.size();
-    size_type numberQuadraturePointsMesh2 = quadratureMesh2.size();
+    dftfe::uInt numberQuadraturePointsMesh1 = quadratureMesh1.size();
+    dftfe::uInt numberQuadraturePointsMesh2 = quadratureMesh2.size();
 
-    size_type totallyOwnedCellsMesh1 = d_matrixFreeMesh1Ptr->n_physical_cells();
-    size_type totallyOwnedCellsMesh2 = d_matrixFreeMesh2Ptr->n_physical_cells();
+    dftfe::uInt totallyOwnedCellsMesh1 =
+      d_matrixFreeMesh1Ptr->n_physical_cells();
+    dftfe::uInt totallyOwnedCellsMesh2 =
+      d_matrixFreeMesh2Ptr->n_physical_cells();
 
     std::vector<std::vector<double>> quadPointsMesh1(
       totallyOwnedCellsMesh1 * numberQuadraturePointsMesh1,
@@ -94,7 +96,7 @@ namespace dftfe
       endcMesh1 = dofHandlerMesh1->end();
 
     const dealii::FiniteElement<3> &feMesh1 = dofHandlerMesh1->get_fe();
-    std::vector<unsigned int>       numberDofsPerCell1;
+    std::vector<dftfe::uInt>        numberDofsPerCell1;
     numberDofsPerCell1.resize(totallyOwnedCellsMesh1);
 
     std::vector<std::shared_ptr<const dftfe::utils::Cell<3>>> srcCellsMesh1(0);
@@ -102,7 +104,7 @@ namespace dftfe
     std::vector<std::shared_ptr<InterpolateFromCellToLocalPoints<memorySpace>>>
       interpolateLocalMesh1(0), interpolateLocalMesh2(0);
     // iterate through child cells
-    size_type iElemIndex = 0;
+    dftfe::uInt iElemIndex = 0;
     for (; cellMesh1 != endcMesh1; cellMesh1++)
       {
         if (cellMesh1->is_locally_owned())
@@ -119,13 +121,13 @@ namespace dftfe
                 numberDofsPerCell1[iElemIndex],
                 useMemOptForCellWiseInterpolation));
             fe_valuesMesh1.reinit(cellMesh1);
-            for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsMesh1;
+            for (dftfe::uInt iQuad = 0; iQuad < numberQuadraturePointsMesh1;
                  iQuad++)
               {
                 dealii::Point<3, double> qPointVal =
                   fe_valuesMesh1.quadrature_point(iQuad);
 
-                for (size_type iDim = 0; iDim < 3; iDim++)
+                for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
                   {
                     quadPointsMesh1[iElemIndex * numberQuadraturePointsMesh1 +
                                     iQuad][iDim] = qPointVal[iDim];
@@ -136,7 +138,7 @@ namespace dftfe
       }
 
     const dealii::FiniteElement<3> &feMesh2 = dofHandlerMesh2->get_fe();
-    std::vector<unsigned int>       numberDofsPerCell2;
+    std::vector<dftfe::uInt>        numberDofsPerCell2;
     numberDofsPerCell2.resize(totallyOwnedCellsMesh2);
 
     std::vector<std::shared_ptr<const dftfe::utils::Cell<3>>> srcCellsMesh2(0);
@@ -161,13 +163,13 @@ namespace dftfe
                 numberDofsPerCell2[iElemIndex],
                 useMemOptForCellWiseInterpolation));
             fe_valuesMesh2.reinit(cellMesh2);
-            for (unsigned int iQuad = 0; iQuad < numberQuadraturePointsMesh2;
+            for (dftfe::uInt iQuad = 0; iQuad < numberQuadraturePointsMesh2;
                  iQuad++)
               {
                 dealii::Point<3, double> qPointVal =
                   fe_valuesMesh2.quadrature_point(iQuad);
 
-                for (size_type iDim = 0; iDim < 3; iDim++)
+                for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
                   {
                     quadPointsMesh2[iElemIndex * numberQuadraturePointsMesh2 +
                                     iQuad][iDim] = qPointVal[iDim];
@@ -227,15 +229,15 @@ namespace dftfe
                                                            &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<dftfe::dataTypes::number,
                                               memorySpace> &inputVec,
-      const unsigned int                                    numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+      const dftfe::uInt                                     numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-                        &outputQuadData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeOutputVec)
+                       &outputQuadData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeOutputVec)
   {
     d_mesh1toMesh2->interpolateSrcDataToTargetPoints(
       BLASWrapperPtr,
@@ -257,15 +259,15 @@ namespace dftfe
                                                            &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<dftfe::dataTypes::number,
                                               memorySpace> &inputVec,
-      const unsigned int                                    numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+      const dftfe::uInt                                     numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh2,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-                        &outputQuadData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeOutputVec)
+                       &outputQuadData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeOutputVec)
   {
     d_mesh2toMesh1->interpolateSrcDataToTargetPoints(
       BLASWrapperPtr,
@@ -287,17 +289,17 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                         &BLASWrapperPtr,
       const distributedCPUVec<dftfe::dataTypes::number> &inputVec,
-      const unsigned int                                 numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type,
+      const dftfe::uInt                                  numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::HOST>
         &mapVecToCells,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-                        &outputQuadData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeOutputVec)
+                       &outputQuadData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeOutputVec)
   {
     d_mesh2toMesh1->interpolateSrcDataToTargetPoints(BLASWrapperPtr,
                                                      inputVec,
@@ -318,17 +320,17 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                         &BLASWrapperPtr,
       const distributedCPUVec<dftfe::dataTypes::number> &inputVec,
-      const unsigned int                                 numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type,
+      const dftfe::uInt                                  numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::HOST>
         &fullFlattenedArrayCellLocalProcIndexIdMapParent,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-                        &outputQuadData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeOutputVec)
+                       &outputQuadData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeOutputVec)
   {
     d_mesh1toMesh2->interpolateSrcDataToTargetPoints(
       BLASWrapperPtr,

@@ -12,9 +12,9 @@ namespace dftfe
     atomCenteredOrbitalsPostProcessing(const MPI_Comm    &mpi_comm_parent,
                                        const MPI_Comm    &mpi_comm_domain,
                                        const std::string &scratchFolderName,
-                                       const std::set<unsigned int> &atomTypes,
+                                       const std::set<dftfe::uInt> &atomTypes,
                                        const bool           reproducibleOutput,
-                                       const int            verbosity,
+                                       const dftfe::Int     verbosity,
                                        const bool           useDevice,
                                        const dftParameters *dftParamsPtr)
     : d_mpiCommParentPostProcessing(mpi_comm_parent)
@@ -71,10 +71,10 @@ namespace dftfe
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
       BLASWrapperPtrDevice,
 #endif
-    unsigned int                            sparsityPatternQuadratureId,
-    unsigned int                            nlpspQuadratureId,
+    dftfe::uInt                             sparsityPatternQuadratureId,
+    dftfe::uInt                             nlpspQuadratureId,
     const std::vector<std::vector<double>> &atomLocations,
-    unsigned int                            numEigenValues)
+    dftfe::uInt                             numEigenValues)
   {
     MPI_Barrier(d_mpiCommDomain);
     d_BasisOperatorHostPtr = basisOperationsHostPtr;
@@ -84,8 +84,8 @@ namespace dftfe
     d_BasisOperatorDevicePtr = basisOperationsDevicePtr;
 #endif
 
-    std::vector<unsigned int> atomicNumbers;
-    for (int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
+    std::vector<dftfe::uInt> atomicNumbers;
+    for (dftfe::Int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
       {
         atomicNumbers.push_back(atomLocations[iAtom][0]);
       }
@@ -130,19 +130,19 @@ namespace dftfe
   atomCenteredOrbitalsPostProcessing<ValueType, memorySpace>::
     initialiseNonLocalContribution(
       const std::vector<std::vector<double>> &atomLocations,
-      const std::vector<int>                 &imageIds,
+      const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &periodicCoords,
       const std::vector<double>              &kPointWeights,
       const std::vector<double>              &kPointCoordinates,
       const bool                              updateNonlocalSparsity)
   {
-    std::vector<unsigned int> atomicNumbers;
-    std::vector<double>       atomCoords;
+    std::vector<dftfe::uInt> atomicNumbers;
+    std::vector<double>      atomCoords;
 
-    for (int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
+    for (dftfe::Int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
       {
         atomicNumbers.push_back(atomLocations[iAtom][0]);
-        for (int dim = 2; dim < 5; dim++)
+        for (dftfe::Int dim = 2; dim < 5; dim++)
           atomCoords.push_back(atomLocations[iAtom][dim]);
       }
 
@@ -181,7 +181,7 @@ namespace dftfe
   atomCenteredOrbitalsPostProcessing<ValueType, memorySpace>::
     createAtomCenteredSphericalFunctionsForOrbitals()
   {
-    for (std::set<unsigned int>::iterator it = d_atomTypes.begin();
+    for (std::set<dftfe::uInt>::iterator it = d_atomTypes.begin();
          it != d_atomTypes.end();
          it++)
       {
@@ -190,11 +190,11 @@ namespace dftfe
                (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
                 "/PseudoAtomDat")
                  .c_str());
-        unsigned int  Znum = *it;
+        dftfe::uInt   Znum = *it;
         std::ifstream readPseudoDataFileNames(pseudoAtomDataFile);
-        std::set<std::pair<int, int>> radFunctionIds;
-        std::string                   readLine;
-        char                          waveFunctionFileName[512];
+        std::set<std::pair<dftfe::Int, dftfe::Int>> radFunctionIds;
+        std::string                                 readLine;
+        char                                        waveFunctionFileName[512];
 
         nlNumsMap[Znum].clear();
 
@@ -210,19 +210,21 @@ namespace dftfe
             if (readLine.find("psi") != std::string::npos)
               {
                 std::string nlPart = readLine.substr(3, readLine.size() - 7);
-                int nQuantumNumber = std::atoi(nlPart.substr(0, 1).c_str());
-                int lQuantumNumber = std::atoi(nlPart.substr(1, 1).c_str());
+                dftfe::Int  nQuantumNumber =
+                  std::atoi(nlPart.substr(0, 1).c_str());
+                dftfe::Int lQuantumNumber =
+                  std::atoi(nlPart.substr(1, 1).c_str());
                 radFunctionIds.insert(
                   std::make_pair(nQuantumNumber, lQuantumNumber));
               }
           }
-        std::vector<std::pair<int, int>> tempVec(radFunctionIds.begin(),
-                                                 radFunctionIds.end());
+        std::vector<std::pair<dftfe::Int, dftfe::Int>> tempVec(
+          radFunctionIds.begin(), radFunctionIds.end());
 
         // std::sort(tempVec.begin(),
         //           tempVec.end(),
-        //           [](const std::pair<int, int> &a,
-        //              const std::pair<int, int> &b) {
+        //           [](const std::pair<dftfe::Int, dftfe::Int> &a,
+        //              const std::pair<dftfe::Int, dftfe::Int> &b) {
         //             if (a.second == b.second)
         //               {
         //                 return a.first < b.first;
@@ -231,13 +233,14 @@ namespace dftfe
         //           });
 
         readPseudoDataFileNames.close();
-        unsigned int alpha = 0;
-        for (std::vector<std::pair<int, int>>::iterator i = tempVec.begin();
+        dftfe::uInt alpha = 0;
+        for (std::vector<std::pair<dftfe::Int, dftfe::Int>>::iterator i =
+               tempVec.begin();
              i != tempVec.end();
              ++i)
           {
-            int nQuantumNumber = i->first;
-            int lQuantumNumber = i->second;
+            dftfe::Int nQuantumNumber = i->first;
+            dftfe::Int lQuantumNumber = i->second;
             strcpy(waveFunctionFileName,
                    (d_dftfeScratchFolderName + "/z" + std::to_string(*it) +
                     "/psi" + std::to_string(nQuantumNumber) +
@@ -265,7 +268,7 @@ namespace dftfe
   atomCenteredOrbitalsPostProcessing<ValueType, memorySpace>::
     computeAtomCenteredEntries(
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> *X,
-      const unsigned int                      totalNumWaveFunctions,
+      const dftfe::uInt                       totalNumWaveFunctions,
       const std::vector<std::vector<double>> &eigenValues,
       std::shared_ptr<
         dftfe::basis::FEBasisOperations<ValueType, double, memorySpace>>
@@ -278,43 +281,43 @@ namespace dftfe
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                  BLASWrapperPtrHost,
-      const unsigned int         quadratureIndex,
+      const dftfe::uInt          quadratureIndex,
       const std::vector<double> &kPointWeights,
       const MPI_Comm            &interBandGroupComm,
       const MPI_Comm            &interpoolComm,
       const dftParameters       *dftParamsPtr,
       double                     fermiEnergy,
-      unsigned int               highestStateNscfSolve)
+      dftfe::uInt                highestStateNscfSolve)
   {
     computing_timer.enter_subsection("PDOS computation");
-    const unsigned int totalLocallyOwnedCells = basisOperationsPtr->nCells();
-    unsigned int       numSpinComponents;
-    numSpinComponents               = dftParamsPtr->spinPolarized + 1;
-    const unsigned int numLocalDofs = basisOperationsPtr->nOwnedDofs();
+    const dftfe::uInt totalLocallyOwnedCells = basisOperationsPtr->nCells();
+    dftfe::uInt       numSpinComponents;
+    numSpinComponents              = dftParamsPtr->spinPolarized + 1;
+    const dftfe::uInt numLocalDofs = basisOperationsPtr->nOwnedDofs();
 
-    const unsigned int cellsBlockSize =
+    const dftfe::uInt cellsBlockSize =
       memorySpace == dftfe::utils::MemorySpace::DEVICE ?
         totalLocallyOwnedCells :
         1;
-    const unsigned int numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
-    const unsigned int remCellBlockSize =
+    const dftfe::uInt numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
+    const dftfe::uInt remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
-    const unsigned int numNodesPerElement = basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numNodesPerElement = basisOperationsPtr->nDofsPerCell();
 
-    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
-    const unsigned int        bandGroupTaskId =
+    std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
+    const dftfe::uInt        bandGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
     dftUtils::createBandParallelizationIndices(interBandGroupComm,
                                                totalNumWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
 
-    unsigned int BVec = std::min(dftParamsPtr->chebyWfcBlockSize,
-                                 bandGroupLowHighPlusOneIndices[1]);
+    dftfe::uInt BVec = std::min(dftParamsPtr->chebyWfcBlockSize,
+                                bandGroupLowHighPlusOneIndices[1]);
 
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       *flattenedArrayBlock;
 
-    unsigned int previousSize = 0;
+    dftfe::uInt previousSize = 0;
 
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> resVec;
 
@@ -325,9 +328,9 @@ namespace dftfe
 
     std::vector<double> eigenValuesAllkPoints;
 
-    for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
+    for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
-        for (int statesIter = 0; statesIter <= highestStateNscfSolve;
+        for (dftfe::Int statesIter = 0; statesIter <= highestStateNscfSolve;
              ++statesIter)
           {
             eigenValuesAllkPoints.push_back(eigenValues[kPoint][statesIter]);
@@ -363,35 +366,35 @@ namespace dftfe
     upperBoundEpsilon =
       upperBoundEpsilon + 0.1 * (upperBoundEpsilon - lowerBoundEpsilon);
 
-    const unsigned int numberIntervals =
+    const dftfe::uInt numberIntervals =
       std::ceil((upperBoundEpsilon - lowerBoundEpsilon) / intervalSize);
 
-    std::vector<unsigned int> atomicNumbers =
+    std::vector<dftfe::uInt> atomicNumbers =
       d_atomicOrbitalFnsContainer->getAtomicNumbers();
 
     // spin,kpoint,atomId, beta x numWfc vector
-    std::vector<std::vector<std::map<unsigned int, std::vector<double>>>>
+    std::vector<std::vector<std::map<dftfe::uInt, std::vector<double>>>>
       pdosKernelWithoutSmearFunction;
     pdosKernelWithoutSmearFunction.resize(numSpinComponents);
-    for (unsigned int spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
+    for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
       {
         pdosKernelWithoutSmearFunction[spinIndex].resize(kPointWeights.size());
       }
 
-    for (unsigned int spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
+    for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
       {
-        for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); kPoint++)
+        for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); kPoint++)
           {
             d_nonLocalOperator->initialiseOperatorActionOnX(kPoint);
 
-            std::map<unsigned int, std::vector<double>>
+            std::map<dftfe::uInt, std::vector<double>>
               &pdosKernelWithoutSmearFunctionSpinKpoint =
                 pdosKernelWithoutSmearFunction[spinIndex][kPoint];
 
-            for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
+            for (dftfe::uInt jvec = 0; jvec < totalNumWaveFunctions;
                  jvec += BVec)
               {
-                const unsigned int currentBlockSize =
+                const dftfe::uInt currentBlockSize =
                   std::min(BVec, totalNumWaveFunctions - jvec);
 
                 flattenedArrayBlock =
@@ -413,8 +416,7 @@ namespace dftfe
                       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                   {
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
-                      for (unsigned int iNode = 0; iNode < numLocalDofs;
-                           ++iNode)
+                      for (dftfe::uInt iNode = 0; iNode < numLocalDofs; ++iNode)
                         std::memcpy(flattenedArrayBlock->data() +
                                       iNode * currentBlockSize,
                                     X->data() +
@@ -442,14 +444,15 @@ namespace dftfe
                     flattenedArrayBlock->updateGhostValues();
                     basisOperationsPtr->distribute(*(flattenedArrayBlock));
 
-                    for (int iblock = 0; iblock < (numCellBlocks + 1); iblock++)
+                    for (dftfe::Int iblock = 0; iblock < (numCellBlocks + 1);
+                         iblock++)
                       {
-                        const unsigned int currentCellsBlockSize =
+                        const dftfe::uInt currentCellsBlockSize =
                           (iblock == numCellBlocks) ? remCellBlockSize :
                                                       cellsBlockSize;
                         if (currentCellsBlockSize > 0)
                           {
-                            const unsigned int startingCellId =
+                            const dftfe::uInt startingCellId =
                               iblock * cellsBlockSize;
 
                             if (currentCellsBlockSize * currentBlockSize !=
@@ -472,12 +475,12 @@ namespace dftfe
                             basisOperationsPtr->extractToCellNodalDataKernel(
                               *(flattenedArrayBlock),
                               tempCellNodalData.data(),
-                              std::pair<unsigned int, unsigned int>(
+                              std::pair<dftfe::uInt, dftfe::uInt>(
                                 startingCellId,
                                 startingCellId + currentCellsBlockSize));
                             d_nonLocalOperator->applyCconjtransOnX(
                               tempCellNodalData.data(),
-                              std::pair<unsigned int, unsigned int>(
+                              std::pair<dftfe::uInt, dftfe::uInt>(
                                 startingCellId,
                                 startingCellId + currentCellsBlockSize));
                           }
@@ -491,19 +494,19 @@ namespace dftfe
                         resVec, scalingVec);
 
 
-                    const std::vector<unsigned int> atomIdsInProcessor =
+                    const std::vector<dftfe::uInt> atomIdsInProcessor =
                       d_atomicOrbitalFnsContainer->getAtomIdsInCurrentProcess();
 
 
-                    for (unsigned int iAtom = 0;
+                    for (dftfe::uInt iAtom = 0;
                          iAtom <
                          d_nonLocalOperator->getTotalAtomInCurrentProcessor();
                          iAtom++)
                       {
-                        unsigned int atomId =
+                        dftfe::uInt atomId =
                           atomIdsInProcessor[iAtom]; // globa Id
-                        unsigned int Znum = atomicNumbers[atomId];
-                        unsigned int numberSphericalFunctions =
+                        dftfe::uInt Znum = atomicNumbers[atomId];
+                        dftfe::uInt numberSphericalFunctions =
                           d_atomicOrbitalFnsContainer
                             ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
                         // size beta x currentblocksize (row major)
@@ -527,7 +530,7 @@ namespace dftfe
 
                         // contains for every atomId a matrix of size beta_a x
                         // currentblocksize (absolute value squared value)
-                        std::map<unsigned int, std::vector<double>>
+                        std::map<dftfe::uInt, std::vector<double>>
                           extractedAtomicMapSquaredBlock;
                         extractedAtomicMapSquaredBlock[atomId].clear();
                         extractedAtomicMapSquaredBlock[atomId].resize(
@@ -557,7 +560,7 @@ namespace dftfe
     std::vector<double> smearedValues;
     // spin, (atomId, beta x numEnergies)
     // summed over wfc blocks and kpoints
-    std::vector<std::map<unsigned int, std::vector<double>>> summedOverBlocks;
+    std::vector<std::map<dftfe::uInt, std::vector<double>>> summedOverBlocks;
     summedOverBlocks.resize(numSpinComponents);
 
     std::vector<double> numTotalAtomicOrbitals;
@@ -568,9 +571,9 @@ namespace dftfe
 
     for (auto pair : pdosKernelWithoutSmearFunction[0][0])
       {
-        unsigned     atomId = pair.first;
-        unsigned int Znum   = atomicNumbers[atomId];
-        unsigned int numberSphericalFunctions =
+        dftfe::uInt atomId = pair.first;
+        dftfe::uInt Znum   = atomicNumbers[atomId];
+        dftfe::uInt numberSphericalFunctions =
           d_atomicOrbitalFnsContainer
             ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
         // two different processes can have the same atomIDs.
@@ -587,7 +590,7 @@ namespace dftfe
                   MPI_MAX,
                   d_mpiCommDomain);
 
-    for (unsigned int i = 0; i < dftParamsPtr->natoms; i++)
+    for (dftfe::uInt i = 0; i < dftParamsPtr->natoms; i++)
       {
         if (i == 0)
           {
@@ -607,19 +610,18 @@ namespace dftfe
         cumulativeNumAtomicOrbitals[dftParamsPtr->natoms - 1] * numberIntervals,
       0.0);
 
-    for (unsigned int spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
+    for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
       {
-        for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); kPoint++)
+        for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); kPoint++)
           {
-            const std::map<unsigned int, std::vector<double>>
-              &spinKpointKernel =
-                pdosKernelWithoutSmearFunction[spinIndex][kPoint];
+            const std::map<dftfe::uInt, std::vector<double>> &spinKpointKernel =
+              pdosKernelWithoutSmearFunction[spinIndex][kPoint];
 
-            for (unsigned int epsInt = 0; epsInt < numberIntervals; epsInt++)
+            for (dftfe::uInt epsInt = 0; epsInt < numberIntervals; epsInt++)
               {
                 smearedValues.clear();
                 double epsValue = lowerBoundEpsilon + epsInt * intervalSize;
-                for (unsigned int iEigenVec = 0;
+                for (dftfe::uInt iEigenVec = 0;
                      iEigenVec < totalNumWaveFunctions;
                      iEigenVec++)
                   {
@@ -655,10 +657,10 @@ namespace dftfe
                   }
                 for (auto &pair : spinKpointKernel)
                   {
-                    unsigned int        atomId      = pair.first;
+                    dftfe::uInt         atomId      = pair.first;
                     std::vector<double> kernelValue = pair.second;
-                    unsigned int        Znum        = atomicNumbers[atomId];
-                    unsigned int        numberSphericalFunctions =
+                    dftfe::uInt         Znum        = atomicNumbers[atomId];
+                    dftfe::uInt         numberSphericalFunctions =
                       d_atomicOrbitalFnsContainer
                         ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
 
@@ -670,10 +672,10 @@ namespace dftfe
 
                     const double zero(0.0), one(1.0);
 
-                    for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
+                    for (dftfe::uInt jvec = 0; jvec < totalNumWaveFunctions;
                          jvec += BVec)
                       {
-                        const unsigned int currentBlockSize =
+                        const dftfe::uInt currentBlockSize =
                           std::min(BVec, totalNumWaveFunctions - jvec);
 
                         // In summedOverBlocks, summation of kpoints is done
@@ -701,7 +703,7 @@ namespace dftfe
 
         for (auto pair : pdosKernelWithoutSmearFunction[spinIndex][0])
           {
-            unsigned int atomId = pair.first;
+            dftfe::uInt atomId = pair.first;
 
             MPI_Allreduce(MPI_IN_PLACE,
                           &summedOverBlocks[spinIndex][atomId][0],
@@ -757,18 +759,18 @@ namespace dftfe
             pcout << "Writing PDOS outputs..." << std::endl;
           }
 
-        for (unsigned int atomId = 0; atomId < dftParamsPtr->natoms; atomId++)
+        for (dftfe::uInt atomId = 0; atomId < dftParamsPtr->natoms; atomId++)
           {
-            unsigned int              Znum = atomicNumbers[atomId];
-            std::vector<unsigned int> nQuantumNums;
-            std::vector<unsigned int> lQuantumNums;
+            dftfe::uInt              Znum = atomicNumbers[atomId];
+            std::vector<dftfe::uInt> nQuantumNums;
+            std::vector<dftfe::uInt> lQuantumNums;
 
-            unsigned int wfc_number    = 0;
-            unsigned int wfcStartIndex = 0;
+            dftfe::uInt wfc_number    = 0;
+            dftfe::uInt wfcStartIndex = 0;
             for (auto i : nlNumsMap[Znum])
               {
-                unsigned int       nQuantumNum = i.first;
-                unsigned int       lQuantumNum = i.second;
+                dftfe::uInt        nQuantumNum = i.first;
+                dftfe::uInt        lQuantumNum = i.second;
                 std::ostringstream pdosFileName;
 
                 pdosFileName << "pdosData_atom#" << atomId << "_wfc#"
@@ -962,7 +964,7 @@ namespace dftfe
                               }
                           }
                       }
-                    for (unsigned int epsInt = 0; epsInt < numberIntervals;
+                    for (dftfe::uInt epsInt = 0; epsInt < numberIntervals;
                          ++epsInt)
                       {
                         pdosSumUp   = 0.0;
@@ -982,7 +984,8 @@ namespace dftfe
 
                         std::vector<double> pdosVec;
 
-                        for (int spinIndex = 0; spinIndex < numSpinComponents;
+                        for (dftfe::Int spinIndex = 0;
+                             spinIndex < numSpinComponents;
                              spinIndex++)
                           {
                             std::vector<double>::iterator startIt;
@@ -1008,7 +1011,7 @@ namespace dftfe
                             auto endIt =
                               startIt + numTotalAtomicOrbitals[atomId];
 
-                            for (int j = wfcStartIndex;
+                            for (dftfe::Int j = wfcStartIndex;
                                  j < wfcStartIndex + 2 * lQuantumNum + 1;
                                  j++)
                               {

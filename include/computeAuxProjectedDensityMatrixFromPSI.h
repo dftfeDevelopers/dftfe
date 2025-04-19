@@ -29,15 +29,15 @@ namespace dftfe
   void
   computeAuxProjectedDensityMatrixFromPSI(
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> &X,
-    const unsigned int                      totalNumWaveFunctions,
+    const dftfe::uInt                       totalNumWaveFunctions,
     const std::vector<std::vector<double>> &partialOccupancies,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                                   &BLASWrapperPtr,
-    const unsigned int             matrixFreeDofhandlerIndex,
-    const unsigned int             quadratureIndex,
+    const dftfe::uInt              matrixFreeDofhandlerIndex,
+    const dftfe::uInt              quadratureIndex,
     const std::vector<double>     &kPointWeights,
     AuxDensityMatrix<memorySpace> &auxDensityMatrixRepresentation,
     const MPI_Comm                &mpiCommParent,

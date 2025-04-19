@@ -21,18 +21,18 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::computeStress(
     const dealii::MatrixFree<3, double> &matrixFreeData,
     const dispersionCorrection          &dispersionCorr,
-    const unsigned int                   eigenDofHandlerIndex,
-    const unsigned int                   smearedChargeQuadratureId,
-    const unsigned int                   lpspQuadratureIdElectro,
+    const dftfe::uInt                    eigenDofHandlerIndex,
+    const dftfe::uInt                    smearedChargeQuadratureId,
+    const dftfe::uInt                    lpspQuadratureIdElectro,
     const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-    const unsigned int                   phiTotDofHandlerIndexElectro,
+    const dftfe::uInt                    phiTotDofHandlerIndexElectro,
     const distributedCPUVec<double>     &phiTotRhoOutElectro,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -45,14 +45,14 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &gradRhoTotalOutValuesLpsp,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-    const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                                         &pseudoVLocAtomsElectro,
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
-    const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
-    const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                             &hessianRhoCoreAtoms,
     const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
     const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
@@ -70,9 +70,9 @@ namespace dftfe
                           d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
 
     // reset to zero
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       {
-        for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
           {
             d_stress[idim][jdim]        = 0.0;
             d_stressKPoints[idim][jdim] = 0.0;
@@ -130,9 +130,9 @@ namespace dftfe
 
     if (d_dftParams.dc_dispersioncorrectiontype != 0)
       {
-        for (unsigned int irow = 0; irow < 3; irow++)
+        for (dftfe::uInt irow = 0; irow < 3; irow++)
           {
-            for (unsigned int icol = 0; icol < 3; icol++)
+            for (dftfe::uInt icol = 0; icol < 3; icol++)
               {
                 d_stress[irow][icol] +=
                   dispersionCorr.getStressCorrection(irow, icol);
@@ -144,8 +144,8 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::printStress()
@@ -157,7 +157,7 @@ namespace dftfe
         pcout
           << "------------------------------------------------------------------------"
           << std::endl;
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           pcout << d_stress[idim][0] << "  " << d_stress[idim][1] << "  "
                 << d_stress[idim][2] << std::endl;
         pcout
@@ -171,10 +171,10 @@ namespace dftfe
         pcout
           << "------------------------------------------------------------------------"
           << std::endl;
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
             std::vector<double> truncatedStress(3);
-            for (unsigned int jdim = 0; jdim < 3; jdim++)
+            for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
               truncatedStress[jdim] = std::fabs(
                 std::floor(10000000 * d_stress[idim][jdim]) / 10000000.0);
             pcout << std::fixed << std::setprecision(6) << truncatedStress[0]

@@ -33,22 +33,22 @@ namespace dftfe
 
     template <typename IN1, typename IN2, typename IN3, typename OUT>
     inline void
-    interleave(IN1          it1,
-               IN1          end1,
-               IN2          it2,
-               IN2          end2,
-               IN3          it3,
-               IN3          end3,
-               unsigned int nbatch1,
-               unsigned int nbatch2,
-               unsigned int nbatch3,
-               OUT          out)
+    interleave(IN1         it1,
+               IN1         end1,
+               IN2         it2,
+               IN2         end2,
+               IN3         it3,
+               IN3         end3,
+               dftfe::uInt nbatch1,
+               dftfe::uInt nbatch2,
+               dftfe::uInt nbatch3,
+               OUT         out)
     {
       // interleave until at least one container is done
       while (it1 != end1 && it2 != end2 && it3 != end3)
         {
           // insert from container 1
-          unsigned int ibatch1 = 0;
+          dftfe::uInt ibatch1 = 0;
           while (ibatch1 < nbatch1 && it1 != end1)
             {
               *out = *it1;
@@ -58,7 +58,7 @@ namespace dftfe
             }
 
           // insert from container 2
-          unsigned int ibatch2 = 0;
+          dftfe::uInt ibatch2 = 0;
           while (ibatch2 < nbatch2 && it2 != end2)
             {
               *out = *it2;
@@ -68,7 +68,7 @@ namespace dftfe
             }
 
           // insert from container 3
-          unsigned int ibatch3 = 0;
+          dftfe::uInt ibatch3 = 0;
           while (ibatch3 < nbatch3 && it3 != end3)
             {
               *out = *it3;
@@ -134,7 +134,7 @@ namespace dftfe
       const double                        *rho,
       const double                        *sigma,
       const double                        *laprho,
-      const unsigned int                   numPoints,
+      const dftfe::uInt                    numPoints,
       double                              *exc,
       torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
@@ -144,7 +144,7 @@ namespace dftfe
       std::vector<double> rhoModified(2 * numPoints, 0.0);
       if (densityPositivityCheckType ==
           excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             std::string errMsg =
               "Negative electron-density encountered during xc evaluations";
@@ -152,23 +152,23 @@ namespace dftfe
           }
       else if (densityPositivityCheckType ==
                excDensityPositivityCheckTypes::MAKE_POSITIVE)
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             rhoModified[i] =
               std::max(rho[i], 0.0); // rhoTol will be added subsequently
           }
       else
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             rhoModified[i] = rho[i];
           }
 
       std::vector<double> modGradRhoTotal(numPoints, 0.0);
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         modGradRhoTotal[i] =
           std::sqrt(sigma[3 * i] + 2.0 * sigma[3 * i + 1] + sigma[3 * i + 2]);
 
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         {
           const double rhoTotal = rhoModified[2 * i] + rhoModified[2 * i + 1];
           const double rho4By3  = std::pow(rhoTotal, 4.0 / 3.0);
@@ -180,7 +180,7 @@ namespace dftfe
         }
 
       std::vector<double> lapRhoTotal(numPoints, 0.0);
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         {
           lapRhoTotal[i] = laprho[2 * i] + laprho[2 * i + 1];
         }
@@ -206,7 +206,7 @@ namespace dftfe
       std::vector<torch::jit::IValue> input(0);
       input.push_back(rhoTensor);
       auto excTensor = model->forward(input).toTensor();
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
                  (rhoModified[2 * i] + rhoModified[2 * i + 1] + 2 * rhoTol);
     }
@@ -216,7 +216,7 @@ namespace dftfe
       const double                        *rho,
       const double                        *sigma,
       const double                        *laprho,
-      const unsigned int                   numPoints,
+      const dftfe::uInt                    numPoints,
       double                              *exc,
       double                              *dexc,
       torch::jit::script::Module          *model,
@@ -227,7 +227,7 @@ namespace dftfe
       std::vector<double> rhoModified(2 * numPoints, 0.0);
       if (densityPositivityCheckType ==
           excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             std::string errMsg =
               "Negative electron-density encountered during xc evaluations";
@@ -235,23 +235,23 @@ namespace dftfe
           }
       else if (densityPositivityCheckType ==
                excDensityPositivityCheckTypes::MAKE_POSITIVE)
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             rhoModified[i] =
               std::max(rho[i], 0.0); // rhoTol will be added subsequently
           }
       else
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             rhoModified[i] = rho[i];
           }
 
       std::vector<double> modGradRhoTotal(numPoints, 0.0);
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         modGradRhoTotal[i] =
           std::sqrt(sigma[3 * i] + 2.0 * sigma[3 * i + 1] + sigma[3 * i + 2]);
 
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         {
           const double rhoTotal = rhoModified[2 * i] + rhoModified[2 * i + 1];
           const double rho4By3  = std::pow(rhoTotal, 4.0 / 3.0);
@@ -263,7 +263,7 @@ namespace dftfe
         }
 
       std::vector<double> lapRhoTotal(numPoints, 0.0);
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         {
           lapRhoTotal[i] = laprho[2 * i] + laprho[2 * i + 1];
         }
@@ -293,7 +293,7 @@ namespace dftfe
                                                {rhoTensor},
                                              /*grad_outputs=*/{grad_output},
                                              /*create_graph=*/true)[0];
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         {
           exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
                    (rhoModified[2 * i] + rhoModified[2 * i + 1] + 2 * rhoTol);
@@ -330,7 +330,7 @@ namespace dftfe
                                            "S_THRESHOLD"};
 
     // check if all required keys are found
-    for (unsigned int i = 0; i < keysToFind.size(); ++i)
+    for (dftfe::uInt i = 0; i < keysToFind.size(); ++i)
       {
         bool found = false;
         for (auto it = modelKeyValues.begin(); it != modelKeyValues.end(); ++it)
@@ -361,11 +361,11 @@ namespace dftfe
   }
 
   void
-  NNLLMGGA::evaluateexc(const double      *rho,
-                        const double      *sigma,
-                        const double      *laprho,
-                        const unsigned int numPoints,
-                        double            *exc)
+  NNLLMGGA::evaluateexc(const double     *rho,
+                        const double     *sigma,
+                        const double     *laprho,
+                        const dftfe::uInt numPoints,
+                        double           *exc)
   {
     if (!d_isSpinPolarized)
       throw std::runtime_error("Spin unpolarized NN is yet to be implemented.");
@@ -382,12 +382,12 @@ namespace dftfe
   }
 
   void
-  NNLLMGGA::evaluatevxc(const double      *rho,
-                        const double      *sigma,
-                        const double      *laprho,
-                        const unsigned int numPoints,
-                        double            *exc,
-                        double            *dexc)
+  NNLLMGGA::evaluatevxc(const double     *rho,
+                        const double     *sigma,
+                        const double     *laprho,
+                        const dftfe::uInt numPoints,
+                        double           *exc,
+                        double           *dexc)
   {
     if (!d_isSpinPolarized)
       throw std::runtime_error("Spin unpolarized NN is yet to be implemented.");

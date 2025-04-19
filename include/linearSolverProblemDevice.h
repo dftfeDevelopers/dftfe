@@ -86,9 +86,6 @@ namespace dftfe
     copyXfromDeviceToHost() = 0;
 
     // protected:
-
-    /// typedef declaration needed by dealii
-    typedef dealii::types::global_dof_index size_type;
   };
 
 } // namespace dftfe

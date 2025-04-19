@@ -26,19 +26,19 @@ namespace dftfe
   {
     __global__ void
     computeRhoResponseFromInterpolatedValues(
-      const unsigned int numVectors,
-      const unsigned int numCells,
-      const unsigned int nQuadsPerCell,
-      const double      *wfc,
-      const double      *wfcPrime,
-      double            *rhoResponseHamCellsWfcContributions,
-      double            *rhoResponseFermiEnergyCellsWfcContributions)
+      const dftfe::uInt numVectors,
+      const dftfe::uInt numCells,
+      const dftfe::uInt nQuadsPerCell,
+      const double     *wfc,
+      const double     *wfcPrime,
+      double           *rhoResponseHamCellsWfcContributions,
+      double           *rhoResponseFermiEnergyCellsWfcContributions)
     {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
-      const unsigned int numberEntries     = numEntriesPerCell * numCells;
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-      for (unsigned int index = globalThreadId; index < numberEntries;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
           const double psi                                   = wfc[index];
@@ -50,19 +50,19 @@ namespace dftfe
 
     __global__ void
     computeRhoResponseFromInterpolatedValues(
-      const unsigned int                       numVectors,
-      const unsigned int                       numCells,
-      const unsigned int                       nQuadsPerCell,
+      const dftfe::uInt                        numVectors,
+      const dftfe::uInt                        numCells,
+      const dftfe::uInt                        nQuadsPerCell,
       const dftfe::utils::deviceDoubleComplex *wfc,
       const dftfe::utils::deviceDoubleComplex *wfcPrime,
       double *rhoResponseHamCellsWfcContributions,
       double *rhoResponseFermiEnergyCellsWfcContributions)
     {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
-      const unsigned int numberEntries     = numEntriesPerCell * numCells;
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-      for (unsigned int index = globalThreadId; index < numberEntries;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
           const dftfe::utils::deviceDoubleComplex psi      = wfc[index];
@@ -79,23 +79,23 @@ namespace dftfe
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                                               &BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    const unsigned int                          nQuadsPerCell,
-    double                                     *onesVec,
-    double                                     *partialOccupPrimeVec,
-    NumberType                                 *wfcQuadPointData,
-    NumberType                                 *wfcPrimeQuadPointData,
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *onesVec,
+    double                                   *partialOccupPrimeVec,
+    NumberType                               *wfcQuadPointData,
+    NumberType                               *wfcPrimeQuadPointData,
     double *rhoResponseHamCellsWfcContributions,
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,
     double *rhoResponseFermiEnergy)
   {
-    const unsigned int cellsBlockSize      = cellRange.second - cellRange.first;
-    const unsigned int vectorsBlockSize    = vecRange.second - vecRange.first;
-    const double       scalarCoeffAlphaRho = 1.0;
-    const double       scalarCoeffBetaRho  = 1.0;
+    const dftfe::uInt cellsBlockSize      = cellRange.second - cellRange.first;
+    const dftfe::uInt vectorsBlockSize    = vecRange.second - vecRange.first;
+    const double      scalarCoeffAlphaRho = 1.0;
+    const double      scalarCoeffBetaRho  = 1.0;
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     computeRhoResponseFromInterpolatedValues<<<
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -157,14 +157,14 @@ namespace dftfe
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                                               &BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    const unsigned int                          nQuadsPerCell,
-    double                                     *onesVec,
-    double                                     *partialOccupVec,
-    dataTypes::number                          *wfcQuadPointData,
-    dataTypes::number                          *wfcPrimeQuadPointData,
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *onesVec,
+    double                                   *partialOccupVec,
+    dataTypes::number                        *wfcQuadPointData,
+    dataTypes::number                        *wfcPrimeQuadPointData,
     double *rhoResponseHamCellsWfcContributions,
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,

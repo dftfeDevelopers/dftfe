@@ -20,30 +20,29 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     calculateNearestAtomDistances()
   {
-    const unsigned int numberGlobalAtoms = atomLocations.size();
-    const unsigned int numberImageAtoms  = d_imageIdsTrunc.size();
+    const dftfe::uInt numberGlobalAtoms = atomLocations.size();
+    const dftfe::uInt numberImageAtoms  = d_imageIdsTrunc.size();
     d_nearestAtomDistances.clear();
     d_nearestAtomIds.clear();
     d_nearestAtomDistances.resize(numberGlobalAtoms, 1e+6);
     d_nearestAtomIds.resize(numberGlobalAtoms);
-    for (unsigned int i = 0; i < numberGlobalAtoms; i++)
+    for (dftfe::uInt i = 0; i < numberGlobalAtoms; i++)
       {
         dealii::Point<3> atomCoori;
         dealii::Point<3> atomCoorj;
         atomCoori[0] = atomLocations[i][2];
         atomCoori[1] = atomLocations[i][3];
         atomCoori[2] = atomLocations[i][4];
-        for (unsigned int j = 0; j < (numberGlobalAtoms + numberImageAtoms);
-             j++)
+        for (dftfe::uInt j = 0; j < (numberGlobalAtoms + numberImageAtoms); j++)
           {
-            int jatomId;
+            dftfe::Int jatomId;
 
             if (j < numberGlobalAtoms)
               {
@@ -80,8 +79,8 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::moveMeshToAtoms(
@@ -108,20 +107,20 @@ namespace dftfe
                       triangulationSerial,
                       d_domainBoundingVectors);
 
-    const unsigned int numberGlobalAtoms = atomLocations.size();
-    const unsigned int numberImageAtoms  = d_imageIdsTrunc.size();
+    const dftfe::uInt numberGlobalAtoms = atomLocations.size();
+    const dftfe::uInt numberImageAtoms  = d_imageIdsTrunc.size();
 
     std::vector<dealii::Point<3>> atomPoints;
     d_atomLocationsAutoMesh.resize(numberGlobalAtoms,
                                    std::vector<double>(3, 0.0));
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       {
         dealii::Point<3> atomCoor;
         atomCoor[0] = atomLocations[iAtom][2];
         atomCoor[1] = atomLocations[iAtom][3];
         atomCoor[2] = atomLocations[iAtom][4];
         atomPoints.push_back(atomCoor);
-        for (unsigned int j = 0; j < 3; j++)
+        for (dftfe::uInt j = 0; j < 3; j++)
           d_atomLocationsAutoMesh[iAtom][j] = atomCoor[j];
       }
 
@@ -149,7 +148,7 @@ namespace dftfe
     timer_movemesh.enter_subsection("move mesh to atoms: move mesh");
     // add control point locations and displacements corresponding to images
     if (!reuseClosestTriaVertices)
-      for (unsigned int iImage = 0; iImage < numberImageAtoms; iImage++)
+      for (dftfe::uInt iImage = 0; iImage < numberImageAtoms; iImage++)
         {
           dealii::Point<3> imageCoor;
           dealii::Point<3> correspondingAtomCoor;
@@ -157,7 +156,7 @@ namespace dftfe
           imageCoor[0]             = d_imagePositionsTrunc[iImage][0];
           imageCoor[1]             = d_imagePositionsTrunc[iImage][1];
           imageCoor[2]             = d_imagePositionsTrunc[iImage][2];
-          const int atomId         = d_imageIdsTrunc[iImage];
+          const dftfe::Int atomId  = d_imageIdsTrunc[iImage];
           correspondingAtomCoor[0] = atomLocations[atomId][2];
           correspondingAtomCoor[1] = atomLocations[atomId][3];
           correspondingAtomCoor[2] = atomLocations[atomId][4];
@@ -174,7 +173,7 @@ namespace dftfe
     d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
     d_dispClosestTriaVerticesToAtoms   = dispClosestTriaVerticesToAtoms;
     d_gaussianMovementAtomsNetDisplacements.resize(numberGlobalAtoms);
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       d_gaussianMovementAtomsNetDisplacements[iAtom] = 0.0;
 
     d_controlPointLocationsCurrentMove.clear();
@@ -184,7 +183,7 @@ namespace dftfe
     d_generatorFlatTopWidths.clear();
     d_gaussianConstantsAutoMesh.resize(numberGlobalAtoms);
     d_flatTopWidthsAutoMeshMove.resize(numberGlobalAtoms);
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       {
         d_flatTopWidthsAutoMeshMove[iAtom] =
           d_dftParamsPtr->useFlatTopGenerator ?
@@ -199,7 +198,7 @@ namespace dftfe
 
     std::vector<double> gaussianConstantsAutoMesh;
     std::vector<double> flatTopWidths;
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms + numberImageAtoms;
+    for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms + numberImageAtoms;
          iAtom++)
       {
         dealii::Point<3> atomCoor;
@@ -218,10 +217,10 @@ namespace dftfe
         d_controlPointLocationsCurrentMove.push_back(atomCoor);
       }
 
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms + numberImageAtoms;
+    for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms + numberImageAtoms;
          iAtom++)
       {
-        int atomId;
+        dftfe::Int atomId;
         if (iAtom < numberGlobalAtoms)
           atomId = iAtom;
         else
@@ -257,7 +256,7 @@ namespace dftfe
     d_gaussianConstantsForce.resize(numberGlobalAtoms);
     d_generatorFlatTopWidths = d_flatTopWidthsAutoMeshMove;
 
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       d_gaussianConstantsForce[iAtom] =
         d_dftParamsPtr->reproducible_output ?
           1 / std::sqrt(5.0) :
@@ -267,24 +266,24 @@ namespace dftfe
                        d_dftParamsPtr->gaussianConstantForce)));
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::calculateSmearedChargeWidths()
   {
     d_smearedChargeWidths.clear();
 
-    const unsigned int numberGlobalAtoms = atomLocations.size();
+    const dftfe::uInt numberGlobalAtoms = atomLocations.size();
 
     d_smearedChargeWidths.resize(numberGlobalAtoms);
 
     if (d_dftParamsPtr->smearedNuclearCharges)
       {
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           d_smearedChargeWidths[iAtom] = 0.7;
 
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
             while (d_nearestAtomDistances[iAtom] <
                    (d_smearedChargeWidths[iAtom] +
@@ -295,7 +294,7 @@ namespace dftfe
               }
           }
 
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           if (d_dftParamsPtr->verbosity >= 5)
             pcout << "iAtom: " << iAtom
                   << ", Smeared charge width: " << d_smearedChargeWidths[iAtom]

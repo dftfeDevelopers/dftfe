@@ -26,7 +26,7 @@ namespace dftfe
 
     void
     applyLocalOperations(
-      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
       std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
         &densityData) override;
 
@@ -34,7 +34,7 @@ namespace dftfe
 
     void
     applyLocalOperations(
-      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
       std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
         &wfcData) override;
 
@@ -50,8 +50,8 @@ namespace dftfe
       const std::unordered_map<std::string, std::vector<dataTypes::number>>
         &projectionInputsDataType,
       const std::unordered_map<std::string, std::vector<double>>
-               &projectionInputsReal,
-      const int iSpin) override;
+                      &projectionInputsReal,
+      const dftfe::Int iSpin) override;
 
     void
     projectDensityMatrixEnd(const MPI_Comm &mpiComm) override;

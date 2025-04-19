@@ -67,7 +67,7 @@ namespace dftfe
   void
   meshMovementAffineTransform::computeIncrement()
   {
-    const unsigned int vertices_per_cell =
+    const dftfe::uInt vertices_per_cell =
       dealii::GeometryInfo<3>::vertices_per_cell;
     std::vector<bool> vertex_touched(
       d_dofHandlerMoveMesh.get_triangulation().n_vertices(), false);
@@ -77,9 +77,9 @@ namespace dftfe
                                                   d_dofHandlerMoveMesh.end();
     for (; cell != endc; ++cell)
       if (!cell->is_artificial())
-        for (unsigned int i = 0; i < vertices_per_cell; ++i)
+        for (dftfe::uInt i = 0; i < vertices_per_cell; ++i)
           {
-            const unsigned global_vertex_no = cell->vertex_index(i);
+            const dftfe::uInt global_vertex_no = cell->vertex_index(i);
 
             if (vertex_touched[global_vertex_no])
               continue;
@@ -88,9 +88,9 @@ namespace dftfe
             const dealii::Tensor<1, 3, double> increment =
               d_deformationGradient * nodalCoor - nodalCoor;
 
-            for (unsigned int idim = 0; idim < 3; idim++)
+            for (dftfe::uInt idim = 0; idim < 3; idim++)
               {
-                const unsigned int globalDofIndex =
+                const dftfe::uInt globalDofIndex =
                   cell->vertex_dof_index(i, idim);
 
                 d_incrementalDisplacement[globalDofIndex] = increment[idim];

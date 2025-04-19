@@ -41,7 +41,7 @@ namespace dftfe
     const MPI_Comm      &mpi_comm_domain,
     const MPI_Comm      &interpoolcomm,
     const MPI_Comm      &interbandgroup_comm,
-    const unsigned int   FEOrder,
+    const dftfe::uInt    FEOrder,
     const dftParameters &dftParams)
     : d_parallelTriangulationUnmoved(mpi_comm_domain)
     , d_parallelTriangulationMoved(mpi_comm_domain)
@@ -76,7 +76,7 @@ namespace dftfe
   triangulationManager::generateSerialUnmovedAndParallelMovedUnmovedMesh(
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<std::vector<double>> &imageAtomLocations,
-    const std::vector<int>                 &imageIds,
+    const std::vector<dftfe::Int>          &imageIds,
     const std::vector<double>              &nearestAtomDistances,
     const std::vector<std::vector<double>> &domainBoundingVectors,
     const bool                              generateSerialTria)
@@ -135,8 +135,7 @@ namespace dftfe
     if (generateSerialTria)
       {
         generateCoarseMesh(d_serialTriangulationUnmoved);
-        for (unsigned int i = 0; i < d_parallelTriaCurrentRefinement.size();
-             ++i)
+        for (dftfe::uInt i = 0; i < d_parallelTriaCurrentRefinement.size(); ++i)
           {
             d_serialTriangulationUnmoved.load_refine_flags(
               d_serialTriaCurrentRefinement[i]);
@@ -146,7 +145,7 @@ namespace dftfe
 
     generateCoarseMesh(d_parallelTriangulationUnmoved);
     generateCoarseMesh(d_parallelTriangulationMoved);
-    for (unsigned int i = 0; i < d_parallelTriaCurrentRefinement.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_parallelTriaCurrentRefinement.size(); ++i)
       {
         d_parallelTriangulationUnmoved.load_refine_flags(
           d_parallelTriaCurrentRefinement[i]);
@@ -165,7 +164,7 @@ namespace dftfe
   triangulationManager::generateCoarseMeshesForRestart(
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<std::vector<double>> &imageAtomLocations,
-    const std::vector<int>                 &imageIds,
+    const std::vector<dftfe::Int>          &imageIds,
     const std::vector<double>              &nearestAtomDistances,
     const std::vector<std::vector<double>> &domainBoundingVectors,
     const bool                              generateSerialTria)
@@ -244,11 +243,11 @@ namespace dftfe
     cellB = parallelTriangulationB.begin();
 
     for (; cellA != endcA; ++cellA, ++cellB)
-      for (unsigned int vertexNo = 0;
+      for (dftfe::uInt vertexNo = 0;
            vertexNo < dealii::GeometryInfo<3>::vertices_per_cell;
            ++vertexNo)
         {
-          const unsigned int globalVertexNo = cellA->vertex_index(vertexNo);
+          const dftfe::uInt globalVertexNo = cellA->vertex_index(vertexNo);
 
           if (vertexTouched[globalVertexNo])
             continue;

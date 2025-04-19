@@ -35,7 +35,7 @@ namespace dftfe
         dftfe::basis::
           FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
                                                           &basisOperationsPtr,
-      const unsigned int                                   quadratureId,
+      const dftfe::uInt                                    quadratureId,
       const std::map<dealii::CellId, std::vector<double>> &fieldValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &densityQuadValues);
@@ -47,7 +47,7 @@ namespace dftfe
         dftfe::basis::
           FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
                                                           &basisOperationsPtr,
-      const unsigned int                                   quadratureId,
+      const dftfe::uInt                                    quadratureId,
       const std::map<dealii::CellId, std::vector<double>> &fieldValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &densityQuadValuesIn,
@@ -60,8 +60,8 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
-                        &basisOperationsPtr,
-      const unsigned int quadratureId,
+                       &basisOperationsPtr,
+      const dftfe::uInt quadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &fieldValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -73,8 +73,8 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
-                        &basisOperationsPtr,
-      const unsigned int quadratureId,
+                       &basisOperationsPtr,
+      const dftfe::uInt quadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &fieldValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -90,11 +90,11 @@ namespace dftfe
                 const double                      totalElectrostaticEnergy,
                 const double                      dispersionEnergy,
                 const double                      totalEnergy,
-                const unsigned int                numberAtoms,
+                const dftfe::uInt                 numberAtoms,
                 const dealii::ConditionalOStream &pcout,
                 const bool                        reproducibleOutput,
                 const bool                        isPseudo,
-                const unsigned int                verbosity,
+                const dftfe::uInt                 verbosity,
                 const dftParameters              &dftParams);
 
     double
@@ -105,11 +105,11 @@ namespace dftfe
                     const double                            fermiEnergyUp,
                     const double                            fermiEnergyDown,
                     const double                            TVal,
-                    const unsigned int                      spinPolarized,
+                    const dftfe::uInt                       spinPolarized,
                     const dealii::ConditionalOStream       &scout,
                     const MPI_Comm                         &interpoolcomm,
-                    const unsigned int                      lowerBoundKindex,
-                    const unsigned int                      verbosity,
+                    const dftfe::uInt                       lowerBoundKindex,
+                    const dftfe::uInt                       verbosity,
                     const dftParameters                    &dftParams);
 
     double
@@ -117,7 +117,7 @@ namespace dftfe
       const distributedCPUVec<double>                     &phiTotRhoOut,
       const std::vector<std::vector<double>>              &localVselfs,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-      const std::map<dealii::CellId, std::vector<unsigned int>>
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
                                   &smearedbNonTrivialAtomIds,
       const dealii::DoFHandler<3> &dofHandlerElectrostatic,
       const dealii::Quadrature<3> &quadratureElectrostatic,
@@ -131,7 +131,7 @@ namespace dftfe
       const distributedCPUVec<double>                     &phiTotRhoIn,
       const distributedCPUVec<double>                     &phiTotRhoOut,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-      const std::map<dealii::CellId, std::vector<unsigned int>>
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
                                   &smearedbNonTrivialAtomIds,
       const dealii::DoFHandler<3> &dofHandlerElectrostatic,
       const dealii::Quadrature<3> &quadratureSmearedCharge,
@@ -223,10 +223,10 @@ namespace dftfe
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
                                              &basisOperationsPtrElectro,
-      const unsigned int                      densityQuadratureID,
-      const unsigned int                      densityQuadratureIDElectro,
-      const unsigned int                      smearedChargeQuadratureIDElectro,
-      const unsigned int                      lpspQuadratureIDElectro,
+      const dftfe::uInt                       densityQuadratureID,
+      const dftfe::uInt                       densityQuadratureIDElectro,
+      const dftfe::uInt                       smearedChargeQuadratureIDElectro,
+      const dftfe::uInt                       lpspQuadratureIDElectro,
       const std::vector<std::vector<double>> &eigenValues,
       const std::vector<std::vector<double>> &partialOccupancies,
       const std::vector<double>              &kPointWeights,
@@ -262,17 +262,17 @@ namespace dftfe
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         auxDensityXCOutRepresentationPtr,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-      const std::map<dealii::CellId, std::vector<unsigned int>>
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
                                              &smearedbNonTrivialAtomIds,
       const std::vector<std::vector<double>> &localVselfs,
       const std::map<dealii::CellId, std::vector<double>> &pseudoLocValues,
       const std::map<dealii::types::global_dof_index, double>
-                        &atomElectrostaticNodeIdToChargeMap,
-      const unsigned int numberGlobalAtoms,
-      const unsigned int lowerBoundKindex,
-      const unsigned int scfConverged,
-      const bool         print,
-      const bool         smearedNuclearCharges = false);
+                       &atomElectrostaticNodeIdToChargeMap,
+      const dftfe::uInt numberGlobalAtoms,
+      const dftfe::uInt lowerBoundKindex,
+      const dftfe::uInt scfConverged,
+      const bool        print,
+      const bool        smearedNuclearCharges = false);
 
     double
     computeEnergyResidual(
@@ -284,11 +284,11 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-                        &basisOperationsPtrElectro,
-      const unsigned int densityQuadratureID,
-      const unsigned int densityQuadratureIDElectro,
-      const unsigned int smearedChargeQuadratureIDElectro,
-      const unsigned int lpspQuadratureIDElectro,
+                       &basisOperationsPtrElectro,
+      const dftfe::uInt densityQuadratureID,
+      const dftfe::uInt densityQuadratureIDElectro,
+      const dftfe::uInt smearedChargeQuadratureIDElectro,
+      const dftfe::uInt lpspQuadratureIDElectro,
       const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &phiTotRhoInValues,
@@ -319,7 +319,7 @@ namespace dftfe
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         AuxDensityXCOutRepresentationPtr,
       const std::map<dealii::CellId, std::vector<double>> &smearedbValues,
-      const std::map<dealii::CellId, std::vector<unsigned int>>
+      const std::map<dealii::CellId, std::vector<dftfe::uInt>>
                                              &smearedbNonTrivialAtomIds,
       const std::vector<std::vector<double>> &localVselfs,
       const std::map<dealii::types::global_dof_index, double>
@@ -334,7 +334,7 @@ namespace dftfe
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
                                                     &basisOperationsPtr,
-      const unsigned int                             quadratureId,
+      const dftfe::uInt                              quadratureId,
       const std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>

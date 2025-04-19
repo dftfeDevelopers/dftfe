@@ -23,8 +23,8 @@
 namespace dftfe
 {
   // init
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initElectronicFields()
@@ -46,16 +46,14 @@ namespace dftfe
 
     d_matrixFreeDataPRefined.initialize_dof_vector(
       d_densityInNodalValues[0], d_densityDofHandlerIndexElectro);
-    for (unsigned int iComp = 1; iComp < d_densityInNodalValues.size(); ++iComp)
+    for (dftfe::uInt iComp = 1; iComp < d_densityInNodalValues.size(); ++iComp)
       d_densityInNodalValues[iComp].reinit(d_densityInNodalValues[0]);
-    for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
-         ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size(); ++iComp)
       d_densityOutNodalValues[iComp].reinit(d_densityInNodalValues[0]);
 
-    for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size(); ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size(); ++iComp)
       d_densityInNodalValues[iComp] = 0;
-    for (unsigned int iComp = 0; iComp < d_densityOutNodalValues.size();
-         ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size(); ++iComp)
       d_densityOutNodalValues[iComp] = 0;
 
 

@@ -34,7 +34,7 @@ namespace dftfe
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
-      copyComplexArrToRealArrsDevice(const dftfe::size_type  size,
+      copyComplexArrToRealArrsDevice(const dftfe::uInt       size,
                                      const ValueTypeComplex *complexArr,
                                      ValueTypeReal          *realArr,
                                      ValueTypeReal          *imagArr);
@@ -42,19 +42,19 @@ namespace dftfe
 
       template <typename ValueTypeComplex, typename ValueTypeReal>
       void
-      copyRealArrsToComplexArrDevice(const dftfe::size_type size,
-                                     const ValueTypeReal   *realArr,
-                                     const ValueTypeReal   *imagArr,
-                                     ValueTypeComplex      *complexArr);
+      copyRealArrsToComplexArrDevice(const dftfe::uInt    size,
+                                     const ValueTypeReal *realArr,
+                                     const ValueTypeReal *imagArr,
+                                     ValueTypeComplex    *complexArr);
 
 
 
       template <typename ValueType>
       void
-      sadd(ValueType             *y,
-           ValueType             *x,
-           const ValueType        beta,
-           const dftfe::size_type size);
+      sadd(ValueType        *y,
+           ValueType        *x,
+           const ValueType   beta,
+           const dftfe::uInt size);
 
 
       // This kernel interpolates the nodal data to quad data
@@ -64,15 +64,15 @@ namespace dftfe
       template <typename ValueType1, typename ValueType2>
       void
       interpolateNodalDataToQuadDevice(
-        const dftfe::size_type numDofsPerElem,
-        const dftfe::size_type numQuadPoints,
-        const dftfe::size_type numVecs,
-        const ValueType2      *parentShapeFunc,
-        const ValueType1      *mapPointToCellIndex,
-        const ValueType1      *mapPointToProcLocal,
-        const ValueType1      *mapPointToShapeFuncIndex,
-        const ValueType2      *parentNodalValues,
-        ValueType2            *quadValues);
+        const dftfe::uInt numDofsPerElem,
+        const dftfe::uInt numQuadPoints,
+        const dftfe::uInt numVecs,
+        const ValueType2 *parentShapeFunc,
+        const ValueType1 *mapPointToCellIndex,
+        const ValueType1 *mapPointToProcLocal,
+        const ValueType1 *mapPointToShapeFuncIndex,
+        const ValueType2 *parentNodalValues,
+        ValueType2       *quadValues);
 
     } // namespace deviceKernelsGeneric
   }   // namespace utils

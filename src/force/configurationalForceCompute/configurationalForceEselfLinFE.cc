@@ -25,8 +25,8 @@ namespace dftfe
 {
   // compute configurational force contribution from nuclear self energy on the
   // mesh nodes using linear shape function generators
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -34,7 +34,7 @@ namespace dftfe
       const dealii::DoFHandler<3>                     &dofHandlerElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
       const dealii::MatrixFree<3, double>             &matrixFreeDataElectro,
-      const unsigned int smearedChargeQuadratureId)
+      const dftfe::uInt smearedChargeQuadratureId)
   {
     const std::vector<std::vector<double>> &atomLocations =
       dftPtr->atomLocations;
@@ -53,26 +53,26 @@ namespace dftfe
     dealii::FEValues<3> feVselfValues(dofHandlerElectro.get_fe(),
                                       quadrature,
                                       dealii::update_gradients);
-    const unsigned int  forceDofsPerCell = FEForce.dofs_per_cell;
-    const unsigned int  forceBaseIndicesPerCell =
+    const dftfe::uInt   forceDofsPerCell = FEForce.dofs_per_cell;
+    const dftfe::uInt   forceBaseIndicesPerCell =
       forceDofsPerCell / FEForce.components;
     dealii::Vector<double> elementalForce(forceDofsPerCell);
-    const unsigned int     numQuadPoints = quadrature.size();
+    const dftfe::uInt      numQuadPoints = quadrature.size();
     std::vector<dealii::types::global_dof_index> forceLocalDofIndices(
       forceDofsPerCell);
-    const unsigned int numberBins =
+    const dftfe::uInt numberBins =
       vselfBinsManagerElectro.getAtomIdsBins().size();
     std::vector<dealii::Tensor<1, 3, double>> gradVselfQuad(numQuadPoints);
-    std::vector<unsigned int>    baseIndexDofsVec(forceBaseIndicesPerCell * 3);
+    std::vector<dftfe::uInt>     baseIndexDofsVec(forceBaseIndicesPerCell * 3);
     dealii::Tensor<1, 3, double> baseIndexForceVec;
 
     // kpoint group parallelization data structures
-    const unsigned int numberKptGroups =
+    const dftfe::uInt numberKptGroups =
       dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
 
-    const unsigned int kptGroupTaskId =
+    const dftfe::uInt kptGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
-    std::vector<int> kptGroupLowHighPlusOneIndices;
+    std::vector<dftfe::Int> kptGroupLowHighPlusOneIndices;
 
     if (numberBins > 0)
       dftUtils::createKpointParallelizationIndices(
@@ -80,14 +80,14 @@ namespace dftfe
 
     if (!d_dftParams.floatingNuclearCharges)
       {
-        for (unsigned int ibase = 0; ibase < forceBaseIndicesPerCell; ++ibase)
+        for (dftfe::uInt ibase = 0; ibase < forceBaseIndicesPerCell; ++ibase)
           {
-            for (unsigned int idim = 0; idim < 3; idim++)
+            for (dftfe::uInt idim = 0; idim < 3; idim++)
               baseIndexDofsVec[3 * ibase + idim] =
                 FEForce.component_to_system_index(idim, ibase);
           }
 
-        for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
+        for (dftfe::uInt iBin = 0; iBin < numberBins; ++iBin)
           {
             if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
                 iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
@@ -119,12 +119,11 @@ namespace dftfe
                     feForceValues.reinit(cellForce);
                     cellForce->get_dof_indices(forceLocalDofIndices);
                     elementalForce = 0.0;
-                    for (unsigned int ibase = 0;
-                         ibase < forceBaseIndicesPerCell;
+                    for (dftfe::uInt ibase = 0; ibase < forceBaseIndicesPerCell;
                          ++ibase)
                       {
                         baseIndexForceVec = 0;
-                        for (unsigned int qPoint = 0; qPoint < numQuadPoints;
+                        for (dftfe::uInt qPoint = 0; qPoint < numQuadPoints;
                              ++qPoint)
                           {
                             baseIndexForceVec +=
@@ -134,7 +133,7 @@ namespace dftfe
                                 baseIndexDofsVec[3 * ibase], qPoint) *
                               feForceValues.JxW(qPoint);
                           } // q point loop
-                        for (unsigned int idim = 0; idim < 3; idim++)
+                        for (dftfe::uInt idim = 0; idim < 3; idim++)
                           elementalForce[baseIndexDofsVec[3 * ibase + idim]] =
                             baseIndexForceVec[idim];
                       } // base index loop
@@ -153,7 +152,7 @@ namespace dftfe
     //
     if (d_dftParams.smearedNuclearCharges)
       {
-        const std::map<int, std::set<int>> &atomIdsBins =
+        const std::map<dftfe::Int, std::set<dftfe::Int>> &atomIdsBins =
           vselfBinsManagerElectro.getAtomIdsBins();
 
         dealii::FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
@@ -162,18 +161,18 @@ namespace dftfe
           smearedChargeQuadratureId);
 
         dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
-        const unsigned int                          numQuadPointsSmearedb =
+        const dftfe::uInt                           numQuadPointsSmearedb =
           forceEvalSmearedCharge.n_q_points;
 
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor;
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
             zeroTensor[idim] = dealii::make_vectorized_array(0.0);
           }
 
         dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
-        for (unsigned int idim = 0; idim < 3; idim++)
-          for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
+          for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
             {
               zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
             }
@@ -184,10 +183,10 @@ namespace dftfe
           dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
           gradVselfSmearedChargeQuads(numQuadPointsSmearedb, zeroTensor);
 
-        std::map<unsigned int, std::vector<double>>
+        std::map<dftfe::uInt, std::vector<double>>
           forceContributionSmearedChargesGammaAtoms;
 
-        for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
+        for (dftfe::uInt iBin = 0; iBin < numberBins; ++iBin)
           {
             if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
                 iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
@@ -197,30 +196,30 @@ namespace dftfe
                   dftPtr->d_binsStartDofHandlerIndexElectro + 4 * iBin,
                   smearedChargeQuadratureId);
 
-                const std::set<int> &atomIdsInBin =
+                const std::set<dftfe::Int> &atomIdsInBin =
                   atomIdsBins.find(iBin)->second;
                 forceContributionSmearedChargesGammaAtoms.clear();
-                for (unsigned int cell = 0;
+                for (dftfe::uInt cell = 0;
                      cell < matrixFreeDataElectro.n_cell_batches();
                      ++cell)
                   {
-                    std::set<unsigned int>
-                                       nonTrivialSmearedChargeAtomIdsMacroCell;
-                    const unsigned int numSubCells =
+                    std::set<dftfe::uInt>
+                                      nonTrivialSmearedChargeAtomIdsMacroCell;
+                    const dftfe::uInt numSubCells =
                       matrixFreeDataElectro.n_active_entries_per_cell_batch(
                         cell);
-                    for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                    for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells;
                          ++iSubCell)
                       {
                         subCellPtr =
                           matrixFreeDataElectro.get_cell_iterator(cell,
                                                                   iSubCell);
                         dealii::CellId subCellId = subCellPtr->id();
-                        const std::vector<unsigned int> &temp =
+                        const std::vector<dftfe::uInt> &temp =
                           dftPtr->d_bCellNonTrivialAtomIdsBins[iBin]
                             .find(subCellId)
                             ->second;
-                        for (int i = 0; i < temp.size(); i++)
+                        for (dftfe::Int i = 0; i < temp.size(); i++)
                           nonTrivialSmearedChargeAtomIdsMacroCell.insert(
                             temp[i]);
                       }
@@ -243,7 +242,7 @@ namespace dftfe
                               zeroTensor);
 
                     bool isCellNonTrivial = false;
-                    for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                    for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells;
                          ++iSubCell)
                       {
                         subCellPtr =
@@ -251,13 +250,13 @@ namespace dftfe
                                                                   iSubCell);
                         dealii::CellId subCellId = subCellPtr->id();
 
-                        const std::vector<int> &bQuadAtomIdsCell =
+                        const std::vector<dftfe::Int> &bQuadAtomIdsCell =
                           dftPtr->d_bQuadAtomIdsAllAtoms.find(subCellId)
                             ->second;
                         const std::vector<double> &bQuadValuesCell =
                           dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
 
-                        for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
+                        for (dftfe::uInt q = 0; q < numQuadPointsSmearedb; ++q)
                           {
                             if (atomIdsInBin.find(bQuadAtomIdsCell[q]) !=
                                 atomIdsInBin.end())
@@ -271,7 +270,7 @@ namespace dftfe
                     if (!isCellNonTrivial)
                       continue;
 
-                    for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPointsSmearedb; ++q)
                       {
                         gradVselfSmearedChargeQuads[q] =
                           vselfEvalSmearedCharge.get_gradient(q);
@@ -298,7 +297,7 @@ namespace dftfe
                       matrixFreeDataElectro,
                       cell,
                       gradVselfSmearedChargeQuads,
-                      std::vector<unsigned int>(
+                      std::vector<dftfe::uInt>(
                         nonTrivialSmearedChargeAtomIdsMacroCell.begin(),
                         nonTrivialSmearedChargeAtomIdsMacroCell.end()),
                       dftPtr->d_bQuadAtomIdsAllAtoms,
@@ -340,46 +339,46 @@ namespace dftfe
           faceQuadrature,
           dealii::update_values | dealii::update_JxW_values |
             dealii::update_normal_vectors | dealii::update_quadrature_points);
-        const unsigned int faces_per_cell =
+        const dftfe::uInt faces_per_cell =
           dealii::GeometryInfo<3>::faces_per_cell;
-        const unsigned int numFaceQuadPoints = faceQuadrature.size();
-        const unsigned int forceDofsPerFace  = FEForce.dofs_per_face;
-        const unsigned int forceBaseIndicesPerFace =
+        const dftfe::uInt numFaceQuadPoints = faceQuadrature.size();
+        const dftfe::uInt forceDofsPerFace  = FEForce.dofs_per_face;
+        const dftfe::uInt forceBaseIndicesPerFace =
           forceDofsPerFace / FEForce.components;
         dealii::Vector<double> elementalFaceForce(forceDofsPerFace);
         std::vector<dealii::types::global_dof_index> forceFaceLocalDofIndices(
           forceDofsPerFace);
-        std::vector<unsigned int> baseIndexFaceDofsForceVec(
+        std::vector<dftfe::uInt> baseIndexFaceDofsForceVec(
           forceBaseIndicesPerFace * 3);
         dealii::Tensor<1, 3, double> baseIndexFaceForceVec;
-        const unsigned int           numberGlobalAtoms = atomLocations.size();
+        const dftfe::uInt            numberGlobalAtoms = atomLocations.size();
 
-        for (unsigned int iFaceDof = 0; iFaceDof < forceDofsPerFace; ++iFaceDof)
+        for (dftfe::uInt iFaceDof = 0; iFaceDof < forceDofsPerFace; ++iFaceDof)
           {
-            std::pair<unsigned int, unsigned int> baseComponentIndexPair =
+            std::pair<dftfe::uInt, dftfe::uInt> baseComponentIndexPair =
               FEForce.face_system_to_component_index(iFaceDof);
             baseIndexFaceDofsForceVec[3 * baseComponentIndexPair.second +
                                       baseComponentIndexPair.first] = iFaceDof;
           }
-        for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
+        for (dftfe::uInt iBin = 0; iBin < numberBins; ++iBin)
           {
             if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
                 iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
               {
                 const std::map<dealii::DoFHandler<3>::active_cell_iterator,
-                               std::vector<unsigned int>>
+                               std::vector<dftfe::uInt>>
                   &cellsVselfBallSurfacesDofHandler =
                     d_cellFacesVselfBallSurfacesDofHandlerElectro[iBin];
                 const std::map<dealii::DoFHandler<3>::active_cell_iterator,
-                               std::vector<unsigned int>>
+                               std::vector<dftfe::uInt>>
                   &cellsVselfBallSurfacesDofHandlerForce =
                     d_cellFacesVselfBallSurfacesDofHandlerForceElectro[iBin];
                 const distributedCPUVec<double> &iBinVselfField =
                   vselfBinsManagerElectro.getVselfFieldBins()[iBin];
                 std::map<dealii::DoFHandler<3>::active_cell_iterator,
-                         std::vector<unsigned int>>::const_iterator iter1;
+                         std::vector<dftfe::uInt>>::const_iterator iter1;
                 std::map<dealii::DoFHandler<3>::active_cell_iterator,
-                         std::vector<unsigned int>>::const_iterator iter2;
+                         std::vector<dftfe::uInt>>::const_iterator iter2;
                 iter2 = cellsVselfBallSurfacesDofHandlerForce.begin();
                 for (iter1 = cellsVselfBallSurfacesDofHandler.begin();
                      iter1 != cellsVselfBallSurfacesDofHandler.end();
@@ -387,7 +386,7 @@ namespace dftfe
                   {
                     dealii::DoFHandler<3>::active_cell_iterator cell =
                       iter1->first;
-                    const int closestAtomId =
+                    const dftfe::Int closestAtomId =
                       d_cellsVselfBallsClosestAtomIdDofHandlerElectro
                         [iBin][cell->id()];
                     double           closestAtomCharge;
@@ -407,7 +406,8 @@ namespace dftfe
                       }
                     else
                       {
-                        const int imageId = closestAtomId - numberGlobalAtoms;
+                        const dftfe::Int imageId =
+                          closestAtomId - numberGlobalAtoms;
                         closestAtomCharge = imageChargesTrunc[imageId];
                         closestAtomLocation[0] =
                           imagePositionsTrunc[imageId][0];
@@ -420,25 +420,24 @@ namespace dftfe
                     dealii::DoFHandler<3>::active_cell_iterator cellForce =
                       iter2->first;
 
-                    const std::vector<unsigned int> &dirichletFaceIds =
+                    const std::vector<dftfe::uInt> &dirichletFaceIds =
                       iter2->second;
-                    for (unsigned int index = 0;
-                         index < dirichletFaceIds.size();
+                    for (dftfe::uInt index = 0; index < dirichletFaceIds.size();
                          index++)
                       {
-                        const unsigned int faceId = dirichletFaceIds[index];
+                        const dftfe::uInt faceId = dirichletFaceIds[index];
 
                         feForceFaceValues.reinit(cellForce, faceId);
                         cellForce->face(faceId)->get_dof_indices(
                           forceFaceLocalDofIndices);
                         elementalFaceForce = 0;
 
-                        for (unsigned int ibase = 0;
+                        for (dftfe::uInt ibase = 0;
                              ibase < forceBaseIndicesPerFace;
                              ++ibase)
                           {
                             baseIndexFaceForceVec = 0;
-                            for (unsigned int qPoint = 0;
+                            for (dftfe::uInt qPoint = 0;
                                  qPoint < numFaceQuadPoints;
                                  ++qPoint)
                               {
@@ -467,7 +466,7 @@ namespace dftfe
                                     qPoint);
 
                               } // q point loop
-                            for (unsigned int idim = 0; idim < 3; idim++)
+                            for (dftfe::uInt idim = 0; idim < 3; idim++)
                               {
                                 elementalFaceForce[baseIndexFaceDofsForceVec
                                                      [3 * ibase + idim]] =
@@ -490,8 +489,8 @@ namespace dftfe
 
   // compute configurational force on the mesh nodes using linear shape function
   // generators
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -514,8 +513,7 @@ namespace dftfe
                   0); // no constraints
 
 
-    for (unsigned int cell = 0;
-         cell < dftPtr->matrix_free_data.n_cell_batches();
+    for (dftfe::uInt cell = 0; cell < dftPtr->matrix_free_data.n_cell_batches();
          ++cell)
       {
         forceEval.reinit(cell);
@@ -523,7 +521,7 @@ namespace dftfe
         eshelbyEval.read_dof_values_plain(dftPtr->d_phiExt);
         eshelbyEval.evaluate(dealii::EvaluationFlags::values |
                              dealii::EvaluationFlags::gradients);
-        for (unsigned int q = 0; q < forceEval.n_q_points; ++q)
+        for (dftfe::uInt q = 0; q < forceEval.n_q_points; ++q)
           {
             dealii::VectorizedArray<double> phiExt_q = eshelbyEval.get_value(q);
             dealii::Tensor<1, 3, dealii::VectorizedArray<double>> gradPhiExt_q =
@@ -537,8 +535,8 @@ namespace dftfe
       }
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -560,11 +558,11 @@ namespace dftfe
                   dftPtr->d_phiExtDofHandlerIndexElectro,
                   0); // no constraints
 
-    for (unsigned int iBin = 0;
+    for (dftfe::uInt iBin = 0;
          iBin < dftPtr->d_vselfBinsManager.getVselfFieldBins().size();
          iBin++)
       {
-        for (unsigned int cell = 0;
+        for (dftfe::uInt cell = 0;
              cell < dftPtr->matrix_free_data.n_cell_batches();
              ++cell)
           {
@@ -573,7 +571,7 @@ namespace dftfe
             eshelbyEval.read_dof_values_plain(
               dftPtr->d_vselfBinsManager.getVselfFieldBins()[iBin]);
             eshelbyEval.evaluate(dealii::EvaluationFlags::gradients);
-            for (unsigned int q = 0; q < forceEval.n_q_points; ++q)
+            for (dftfe::uInt q = 0; q < forceEval.n_q_points; ++q)
               {
                 dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
                   gradVself_q = eshelbyEval.get_gradient(q);

@@ -20,10 +20,10 @@
 namespace dftfe
 {
   AtomCenteredPseudoWavefunctionSpline::AtomCenteredPseudoWavefunctionSpline(
-    std::string  filename,
-    unsigned int l,
-    double       cutoff,
-    double       truncationTol)
+    std::string filename,
+    dftfe::uInt l,
+    double      cutoff,
+    double      truncationTol)
   {
     d_lQuantumNumber = l;
     std::vector<std::vector<double>> radialFunctionData(0);
@@ -33,12 +33,12 @@ namespace dftfe
     d_rMin        = 0.0;
 
 
-    unsigned int numRows = radialFunctionData.size() - 1;
+    dftfe::uInt numRows = radialFunctionData.size() - 1;
 
     std::vector<double> xData(numRows), yData(numRows);
 
-    unsigned int maxRowId = 0;
-    for (unsigned int irow = 0; irow < numRows; ++irow)
+    dftfe::uInt maxRowId = 0;
+    for (dftfe::uInt irow = 0; irow < numRows; ++irow)
       {
         xData[irow] = radialFunctionData[irow][0];
         // the input phi data is multiplied by radius and hence has to
@@ -65,7 +65,7 @@ namespace dftfe
                        0.0,
                        d_radialSplineObject);
 
-    unsigned int maxRowIndex = std::min(maxRowId + 10, numRows - 1);
+    dftfe::uInt maxRowIndex = std::min(maxRowId + 10, numRows - 1);
     if (cutoff < 1e-3)
       {
         d_cutOff = xData[maxRowIndex];

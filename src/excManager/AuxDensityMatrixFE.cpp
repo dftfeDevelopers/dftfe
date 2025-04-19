@@ -12,12 +12,12 @@ namespace dftfe
   {
     void
     fillDensityAttributeData(
-      std::vector<double>                         &attributeData,
-      const std::vector<double>                   &values,
-      const std::pair<unsigned int, unsigned int> &indexRange)
+      std::vector<double>                       &attributeData,
+      const std::vector<double>                 &values,
+      const std::pair<dftfe::uInt, dftfe::uInt> &indexRange)
     {
-      unsigned int startIndex = indexRange.first;
-      unsigned int endIndex   = indexRange.second;
+      dftfe::uInt startIndex = indexRange.first;
+      dftfe::uInt endIndex   = indexRange.second;
 
       attributeData.resize(endIndex - startIndex);
       if (startIndex > endIndex || endIndex > values.size())
@@ -27,7 +27,7 @@ namespace dftfe
           throw std::invalid_argument("Invalid index range for densityData");
         }
 
-      for (unsigned int i = startIndex; i < endIndex; ++i)
+      for (dftfe::uInt i = startIndex; i < endIndex; ++i)
         {
           attributeData[i - startIndex] = values[i];
         }
@@ -38,12 +38,12 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   AuxDensityMatrixFE<memorySpace>::applyLocalOperations(
-    const std::pair<unsigned int, unsigned int> &quadIndexRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
     std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
       &densityData)
   {
-    std::pair<unsigned int, unsigned int> indexRangeVal;
-    std::pair<unsigned int, unsigned int> indexRangeGrad;
+    std::pair<dftfe::uInt, dftfe::uInt> indexRangeVal;
+    std::pair<dftfe::uInt, dftfe::uInt> indexRangeGrad;
 
     indexRangeVal.first  = quadIndexRange.first;
     indexRangeVal.second = quadIndexRange.second;
@@ -100,11 +100,11 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   AuxDensityMatrixFE<memorySpace>::applyLocalOperations(
-    const std::pair<unsigned int, unsigned int> &quadIndexRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
     std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
       &wfcData)
   {
-    std::pair<unsigned int, unsigned int> indexRangeVal;
+    std::pair<dftfe::uInt, dftfe::uInt> indexRangeVal;
     indexRangeVal.first  = quadIndexRange.first;
     indexRangeVal.second = quadIndexRange.second;
 
@@ -166,8 +166,8 @@ namespace dftfe
     const std::unordered_map<std::string, std::vector<dataTypes::number>>
       &projectionInputsDataType,
     const std::unordered_map<std::string, std::vector<double>>
-             &projectionInputsReal,
-    const int iSpin)
+                    &projectionInputsReal,
+    const dftfe::Int iSpin)
   {
     std::string errMsg = "Not implemented";
     dftfe::utils::throwException(false, errMsg);
@@ -194,17 +194,17 @@ namespace dftfe
     const std::vector<double> &densityVals =
       projectionInputs.find("densityFunc")
         ->second; // this vector contains all spin up and spin down values
-    const unsigned int nQ = d_quadWeightsAll.size();
+    const dftfe::uInt nQ = d_quadWeightsAll.size();
     d_densityValsTotalAllQuads.resize(nQ, 0);
     d_densityValsSpinUpAllQuads.resize(nQ, 0);
     d_densityValsSpinDownAllQuads.resize(nQ, 0);
-    for (unsigned int iquad = 0; iquad < nQ; iquad++)
+    for (dftfe::uInt iquad = 0; iquad < nQ; iquad++)
       d_densityValsSpinUpAllQuads[iquad] = densityVals[iquad];
 
-    for (unsigned int iquad = 0; iquad < nQ; iquad++)
+    for (dftfe::uInt iquad = 0; iquad < nQ; iquad++)
       d_densityValsSpinDownAllQuads[iquad] = densityVals[nQ + iquad];
 
-    for (unsigned int iquad = 0; iquad < nQ; iquad++)
+    for (dftfe::uInt iquad = 0; iquad < nQ; iquad++)
       d_densityValsTotalAllQuads[iquad] = d_densityValsSpinUpAllQuads[iquad] +
                                           d_densityValsSpinDownAllQuads[iquad];
 
@@ -215,13 +215,13 @@ namespace dftfe
         d_gradDensityValsSpinUpAllQuads.resize(nQ * 3, 0);
         d_gradDensityValsSpinDownAllQuads.resize(nQ * 3, 0);
 
-        for (unsigned int iquad = 0; iquad < nQ; iquad++)
-          for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt iquad = 0; iquad < nQ; iquad++)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
             d_gradDensityValsSpinUpAllQuads[3 * iquad + idim] =
               gradDensityVals[3 * iquad + idim];
 
-        for (unsigned int iquad = 0; iquad < nQ; iquad++)
-          for (unsigned idim = 0; idim < 3; idim++)
+        for (dftfe::uInt iquad = 0; iquad < nQ; iquad++)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
             d_gradDensityValsSpinDownAllQuads[3 * iquad + idim] =
               gradDensityVals[3 * nQ + 3 * iquad + idim];
       }
@@ -233,7 +233,7 @@ namespace dftfe
         d_tauValsTotalAllQuads.resize(nQ, 0);
         d_tauValsSpinUpAllQuads.resize(nQ, 0);
         d_tauValsSpinDownAllQuads.resize(nQ, 0);
-        for (unsigned int iquad = 0; iquad < nQ; iquad++)
+        for (dftfe::uInt iquad = 0; iquad < nQ; iquad++)
           {
             d_tauValsSpinUpAllQuads[iquad]   = tauVals[iquad];
             d_tauValsSpinDownAllQuads[iquad] = tauVals[nQ + iquad];

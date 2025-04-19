@@ -114,17 +114,17 @@ namespace dftfe
       std::vector<std::vector<double>>   &domainBoundingVectors,
       const dealii::Tensor<2, 3, double> &deformationGradient)
     {
-      for (unsigned int idim = 0; idim < 3; ++idim)
+      for (dftfe::uInt idim = 0; idim < 3; ++idim)
         {
           dealii::Tensor<1, 3, double> domainVector;
-          for (unsigned int jdim = 0; jdim < 3; ++jdim)
+          for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
             {
               domainVector[jdim] = domainBoundingVectors[idim][jdim];
             }
 
           domainVector = deformationGradient * domainVector;
 
-          for (unsigned int jdim = 0; jdim < 3; ++jdim)
+          for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
             {
               domainBoundingVectors[idim][jdim] = domainVector[jdim];
             }
@@ -137,8 +137,8 @@ namespace dftfe
 #ifdef USE_PETSC
       PetscLogDouble bytes;
       PetscMemoryGetCurrentUsage(&bytes);
-      const double       maxBytes = dealii::Utilities::MPI::max(bytes, mpiComm);
-      const unsigned int taskId =
+      const double      maxBytes = dealii::Utilities::MPI::max(bytes, mpiComm);
+      const dftfe::uInt taskId =
         dealii::Utilities::MPI::this_mpi_process(mpiComm);
       if (taskId == 0)
         std::cout << std::endl
@@ -159,7 +159,7 @@ namespace dftfe
       virtualMemUsed *= memInfo.mem_unit;
       const double maxBytes =
         dealii::Utilities::MPI::max(virtualMemUsed, mpiComm);
-      const unsigned int taskId =
+      const dftfe::uInt taskId =
         dealii::Utilities::MPI::this_mpi_process(mpiComm);
       if (taskId == 0)
         std::cout << std::endl
@@ -182,17 +182,17 @@ namespace dftfe
                                      const std::string           &folderName,
                                      const std::string           &fileName)
     {
-      const unsigned int poolId =
+      const dftfe::uInt poolId =
         dealii::Utilities::MPI::this_mpi_process(kPointComm);
-      const unsigned int bandGroupId =
+      const dftfe::uInt bandGroupId =
         dealii::Utilities::MPI::this_mpi_process(bandGroupComm);
-      const unsigned int minPoolId =
+      const dftfe::uInt minPoolId =
         dealii::Utilities::MPI::min(poolId, kPointComm);
-      const unsigned int minBandGroupId =
+      const dftfe::uInt minBandGroupId =
         dealii::Utilities::MPI::min(bandGroupId, bandGroupComm);
 
 
-      unsigned int n_mpi_processes;
+      dftfe::uInt n_mpi_processes;
       if (poolId == minPoolId && bandGroupId == minBandGroupId)
         {
           /*std::vector<dealii::types::subdomain_id>
@@ -204,7 +204,7 @@ namespace dftfe
             dataOut.add_data_vector(partitioning,"partitioning");
             dataOut.build_patches();*/
 
-          const unsigned int this_mpi_process =
+          const dftfe::uInt this_mpi_process =
             dealii::Utilities::MPI::this_mpi_process(domainComm);
           n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(domainComm);
           std::string outFileName =
@@ -218,7 +218,7 @@ namespace dftfe
       if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
         {
           std::vector<std::string> filenames;
-          for (unsigned int i = 0; i < n_mpi_processes; ++i)
+          for (dftfe::uInt i = 0; i < n_mpi_processes; ++i)
             filenames.push_back(fileName + "_" +
                                 dealii::Utilities::to_string(i) + ".vtu");
           const std::string visit_master_filename =
@@ -240,20 +240,20 @@ namespace dftfe
 
     void
     createBandParallelizationIndices(
-      const MPI_Comm            &interBandGroupComm,
-      const unsigned int         numBands,
-      std::vector<unsigned int> &bandGroupLowHighPlusOneIndices)
+      const MPI_Comm           &interBandGroupComm,
+      const dftfe::uInt         numBands,
+      std::vector<dftfe::uInt> &bandGroupLowHighPlusOneIndices)
     {
       bandGroupLowHighPlusOneIndices.clear();
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int wfcBlockSizeBandGroup = numBands / numberBandGroups;
+      const dftfe::uInt wfcBlockSizeBandGroup = numBands / numberBandGroups;
       AssertThrow(
         wfcBlockSizeBandGroup != 0,
         dealii::ExcMessage(
           "DFT-FE Error: NPBAND is more than either total number of bands or total number of top states in case of spectrum splitting."));
       bandGroupLowHighPlusOneIndices.resize(numberBandGroups * 2);
-      for (unsigned int i = 0; i < numberBandGroups; i++)
+      for (dftfe::uInt i = 0; i < numberBandGroups; i++)
         {
           bandGroupLowHighPlusOneIndices[2 * i] = i * wfcBlockSizeBandGroup;
           bandGroupLowHighPlusOneIndices[2 * i + 1] =
@@ -265,17 +265,17 @@ namespace dftfe
 
     void
     createKpointParallelizationIndices(
-      const MPI_Comm   &interKptPoolComm,
-      const int         numberIndices,
-      std::vector<int> &kptGroupLowHighPlusOneIndices)
+      const MPI_Comm          &interKptPoolComm,
+      const dftfe::Int         numberIndices,
+      std::vector<dftfe::Int> &kptGroupLowHighPlusOneIndices)
     {
       kptGroupLowHighPlusOneIndices.clear();
-      const int numberKptGroups =
+      const dftfe::Int numberKptGroups =
         dealii::Utilities::MPI::n_mpi_processes(interKptPoolComm);
-      const int indicesKptGroup = numberIndices / numberKptGroups + 1;
+      const dftfe::Int indicesKptGroup = numberIndices / numberKptGroups + 1;
       kptGroupLowHighPlusOneIndices.resize(numberKptGroups * 2);
-      int indicesRemaining = numberIndices;
-      for (int i = 0; i < numberKptGroups; i++)
+      dftfe::Int indicesRemaining = numberIndices;
+      for (dftfe::Int i = 0; i < numberKptGroups; i++)
         {
           if (indicesRemaining > 0)
             {
@@ -297,18 +297,18 @@ namespace dftfe
     }
 
 
-    Pool::Pool(const MPI_Comm    &mpi_communicator,
-               const unsigned int npool,
-               const int          verbosity)
+    Pool::Pool(const MPI_Comm   &mpi_communicator,
+               const dftfe::uInt npool,
+               const dftfe::Int  verbosity)
     {
-      const unsigned int n_mpi_processes =
+      const dftfe::uInt n_mpi_processes =
         dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
       AssertThrow(
         n_mpi_processes % npool == 0,
         dealii::ExcMessage(
           "DFT-FE Error: Total number of mpi processes must be a multiple of npool. Please check that total number of mpi processes is a multiple of NPKPT*NPBAND."));
-      const unsigned int poolSize = n_mpi_processes / npool;
-      const unsigned int taskId =
+      const dftfe::uInt poolSize = n_mpi_processes / npool;
+      const dftfe::uInt taskId =
         dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
       // FIXME: any and all terminal output should be optional
@@ -319,15 +319,15 @@ namespace dftfe
         }
       MPI_Barrier(mpi_communicator);
 
-      const unsigned int color1 = taskId % poolSize;
+      const dftfe::uInt color1 = taskId % poolSize;
       MPI_Comm_split(mpi_communicator, color1, 0, &interpoolcomm);
       MPI_Barrier(mpi_communicator);
 
-      const unsigned int color2 = taskId / poolSize;
+      const dftfe::uInt color2 = taskId / poolSize;
       MPI_Comm_split(mpi_communicator, color2, 0, &intrapoolcomm);
 
       // FIXME: output should be optional
-      for (unsigned int i = 0; i < n_mpi_processes; ++i)
+      for (dftfe::uInt i = 0; i < n_mpi_processes; ++i)
         {
           if (taskId == i)
             {

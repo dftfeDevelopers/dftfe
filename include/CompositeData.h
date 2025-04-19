@@ -22,7 +22,7 @@
 #define DFTFE_COMPOSITEDATA_H
 
 #include <mpi.h>
-
+#include <TypeConfig.h>
 namespace dftfe
 {
   namespace dftUtils
@@ -38,7 +38,7 @@ namespace dftfe
       virtual void
       getMPIDataType(MPI_Datatype *mpi_datatype) = 0;
 
-      virtual int
+      virtual dftfe::Int
       getNumberCharsPerCompositeData() = 0;
     };
   } // namespace dftUtils

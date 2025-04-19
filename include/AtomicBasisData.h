@@ -18,7 +18,7 @@ namespace dftfe
     void
     evalBasisData(const std::vector<double> &quadpts,
                   const AtomicBasis         &atomicBasis,
-                  const unsigned int         maxDerOrder);
+                  const dftfe::uInt          maxDerOrder);
 
     const std::vector<double> &
     getBasisValues() const;

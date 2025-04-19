@@ -78,10 +78,10 @@ namespace dftfe
         xcRemainderOutputDataAttributes::pdeDensitySpinUp,
         xcRemainderOutputDataAttributes::pdeDensitySpinDown};
 
-    for (unsigned int i = 0; i < outputDataAttributes.size(); i++)
+    for (dftfe::uInt i = 0; i < outputDataAttributes.size(); i++)
       {
         bool isFound = false;
-        for (unsigned int j = 0; j < allowedOutputDataAttributes.size(); j++)
+        for (dftfe::uInt j = 0; j < allowedOutputDataAttributes.size(); j++)
           {
             if (outputDataAttributes[i] == allowedOutputDataAttributes[j])
               isFound = true;
@@ -97,14 +97,14 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excDensityLDAClass<memorySpace>::computeRhoTauDependentXCData(
-    AuxDensityMatrix<memorySpace>               &auxDensityMatrix,
-    const std::pair<unsigned int, unsigned int> &quadIndexRange,
+    AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
+    const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &xDataOut,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &cDataOut) const
   {
-    const unsigned int nquad = quadIndexRange.second - quadIndexRange.first;
+    const dftfe::uInt nquad = quadIndexRange.second - quadIndexRange.first;
     std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
     for (const auto &element : xDataOut)
       outputDataAttributes.push_back(element.first);
@@ -115,7 +115,7 @@ namespace dftfe
     std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
       densityDescriptorData;
 
-    for (unsigned int i = 0; i < this->d_densityDescriptorAttributesList.size();
+    for (dftfe::uInt i = 0; i < this->d_densityDescriptorAttributesList.size();
          i++)
       {
         densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
@@ -147,7 +147,7 @@ namespace dftfe
     std::vector<double> pdecDensitySpinUpValues(nquad, 0);
     std::vector<double> pdecDensitySpinDownValues(nquad, 0);
 
-    for (unsigned int i = 0; i < nquad; i++)
+    for (dftfe::uInt i = 0; i < nquad; i++)
       {
         densityValues[2 * i + 0] = densityValuesSpinUp[i];
         densityValues[2 * i + 1] = densityValuesSpinDown[i];
@@ -164,7 +164,7 @@ namespace dftfe
                    &ecValues[0],
                    &pdecDensityValuesNonNN[0]);
 
-    for (unsigned int i = 0; i < nquad; i++)
+    for (dftfe::uInt i = 0; i < nquad; i++)
       {
         exValues[i] =
           exValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
@@ -180,14 +180,14 @@ namespace dftfe
     if (d_NNLDAPtr != nullptr)
       {
         std::vector<double> excValuesFromNN(nquad, 0);
-        const unsigned int  numDescriptors = 2;
+        const dftfe::uInt   numDescriptors = 2;
         std::vector<double> pdexcDescriptorValuesFromNN(numDescriptors * nquad,
                                                         0);
         d_NNLDAPtr->evaluatevxc(&(densityValues[0]),
                                 nquad,
                                 &excValuesFromNN[0],
                                 &pdexcDescriptorValuesFromNN[0]);
-        for (unsigned int i = 0; i < nquad; i++)
+        for (dftfe::uInt i = 0; i < nquad; i++)
           {
             exValues[i] += excValuesFromNN[i] * (densityValues[2 * i + 0] +
                                                  densityValues[2 * i + 1]);
@@ -199,7 +199,7 @@ namespace dftfe
       }
 #endif
 
-    for (unsigned int i = 0; i < outputDataAttributes.size(); i++)
+    for (dftfe::uInt i = 0; i < outputDataAttributes.size(); i++)
       {
         if (outputDataAttributes[i] == xcRemainderOutputDataAttributes::e)
           {
@@ -236,9 +236,9 @@ namespace dftfe
     const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
                                                                       &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-    const unsigned int inputVecSize,
-    const unsigned int kPointIndex,
-    const unsigned int spinIndex)
+    const dftfe::uInt inputVecSize,
+    const dftfe::uInt kPointIndex,
+    const dftfe::uInt spinIndex)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -247,9 +247,9 @@ namespace dftfe
     const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
                                                                           &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
-    const unsigned int inputVecSize,
-    const unsigned int kPointIndex,
-    const unsigned int spinIndex)
+    const dftfe::uInt inputVecSize,
+    const dftfe::uInt kPointIndex,
+    const dftfe::uInt spinIndex)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -283,7 +283,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excDensityLDAClass<memorySpace>::reinitKPointDependentVariables(
-    unsigned int kPointIndex)
+    dftfe::uInt kPointIndex)
   {}
 
   template class excDensityLDAClass<dftfe::utils::MemorySpace::HOST>;

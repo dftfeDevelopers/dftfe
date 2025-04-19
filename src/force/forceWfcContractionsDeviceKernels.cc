@@ -33,34 +33,34 @@ namespace dftfe
     {
       __global__ void
       computeELocWfcEshelbyTensorContributions(
-        const unsigned int contiguousBlockSize,
-        const unsigned int numContiguousBlocks,
-        const unsigned int numQuads,
-        const double      *psiQuadValues,
-        const double      *gradPsiQuadValues,
-        const double      *eigenValues,
-        const double      *partialOccupancies,
-        double            *eshelbyTensor)
+        const dftfe::uInt contiguousBlockSize,
+        const dftfe::uInt numContiguousBlocks,
+        const dftfe::uInt numQuads,
+        const double     *psiQuadValues,
+        const double     *gradPsiQuadValues,
+        const double     *eigenValues,
+        const double     *partialOccupancies,
+        double           *eshelbyTensor)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
+        const dftfe::uInt numberEntries =
           numContiguousBlocks * contiguousBlockSize;
 
-        for (unsigned int index = globalThreadId; index < numberEntries;
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += blockDim.x * gridDim.x)
           {
-            const unsigned int blockIndex = index / contiguousBlockSize;
-            const unsigned int intraBlockIndex =
+            const dftfe::uInt blockIndex = index / contiguousBlockSize;
+            const dftfe::uInt intraBlockIndex =
               index - blockIndex * contiguousBlockSize;
-            const unsigned int blockIndex2  = blockIndex / 9;
-            const unsigned int eshelbyIndex = blockIndex - 9 * blockIndex2;
-            const unsigned int cellIndex    = blockIndex2 / numQuads;
-            const unsigned int quadId = blockIndex2 - cellIndex * numQuads;
-            const unsigned int tempIndex =
+            const dftfe::uInt blockIndex2  = blockIndex / 9;
+            const dftfe::uInt eshelbyIndex = blockIndex - 9 * blockIndex2;
+            const dftfe::uInt cellIndex    = blockIndex2 / numQuads;
+            const dftfe::uInt quadId       = blockIndex2 - cellIndex * numQuads;
+            const dftfe::uInt tempIndex =
               (cellIndex)*numQuads * contiguousBlockSize +
               quadId * contiguousBlockSize + intraBlockIndex;
-            const unsigned int tempIndex2 =
+            const dftfe::uInt tempIndex2 =
               (cellIndex)*numQuads * contiguousBlockSize * 3 +
               quadId * contiguousBlockSize + intraBlockIndex;
             const double psi      = psiQuadValues[tempIndex];
@@ -105,9 +105,9 @@ namespace dftfe
 
       __global__ void
       computeELocWfcEshelbyTensorContributions(
-        const unsigned int                       contiguousBlockSize,
-        const unsigned int                       numContiguousBlocks,
-        const unsigned int                       numQuads,
+        const dftfe::uInt                        contiguousBlockSize,
+        const dftfe::uInt                        numContiguousBlocks,
+        const dftfe::uInt                        numQuads,
         const dftfe::utils::deviceDoubleComplex *psiQuadValues,
         const dftfe::utils::deviceDoubleComplex *gradPsiQuadValues,
         const double                            *eigenValues,
@@ -118,25 +118,25 @@ namespace dftfe
         double                                  *eshelbyTensor,
         const bool                               addEk)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
+        const dftfe::uInt numberEntries =
           numContiguousBlocks * contiguousBlockSize;
 
-        for (unsigned int index = globalThreadId; index < numberEntries;
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += blockDim.x * gridDim.x)
           {
-            const unsigned int blockIndex = index / contiguousBlockSize;
-            const unsigned int intraBlockIndex =
+            const dftfe::uInt blockIndex = index / contiguousBlockSize;
+            const dftfe::uInt intraBlockIndex =
               index - blockIndex * contiguousBlockSize;
-            const unsigned int blockIndex2  = blockIndex / 9;
-            const unsigned int eshelbyIndex = blockIndex - 9 * blockIndex2;
-            const unsigned int cellIndex    = blockIndex2 / numQuads;
-            const unsigned int quadId = blockIndex2 - cellIndex * numQuads;
-            const unsigned int tempIndex =
+            const dftfe::uInt blockIndex2  = blockIndex / 9;
+            const dftfe::uInt eshelbyIndex = blockIndex - 9 * blockIndex2;
+            const dftfe::uInt cellIndex    = blockIndex2 / numQuads;
+            const dftfe::uInt quadId       = blockIndex2 - cellIndex * numQuads;
+            const dftfe::uInt tempIndex =
               (cellIndex)*numQuads * contiguousBlockSize +
               quadId * contiguousBlockSize + intraBlockIndex;
-            const unsigned int tempIndex2 =
+            const dftfe::uInt tempIndex2 =
               (cellIndex)*numQuads * contiguousBlockSize * 3 +
               quadId * contiguousBlockSize + intraBlockIndex;
             const dftfe::utils::deviceDoubleComplex psi =
@@ -335,29 +335,29 @@ namespace dftfe
 
       __global__ void
       nlpContractionContributionPsiIndexDeviceKernel(
-        const unsigned int  numPsi,
-        const unsigned int  numQuadsNLP,
-        const unsigned int  totalNonTrivialPseudoWfcs,
-        const unsigned int  startingId,
-        const double       *projectorKetTimesVectorPar,
-        const double       *gradPsiOrPsiQuadValuesNLP,
-        const double       *partialOccupancies,
-        const unsigned int *nonTrivialIdToElemIdMap,
-        const unsigned int *projecterKetTimesFlattenedVectorLocalIds,
-        double             *nlpContractionContribution)
+        const dftfe::uInt  numPsi,
+        const dftfe::uInt  numQuadsNLP,
+        const dftfe::uInt  totalNonTrivialPseudoWfcs,
+        const dftfe::uInt  startingId,
+        const double      *projectorKetTimesVectorPar,
+        const double      *gradPsiOrPsiQuadValuesNLP,
+        const double      *partialOccupancies,
+        const dftfe::uInt *nonTrivialIdToElemIdMap,
+        const dftfe::uInt *projecterKetTimesFlattenedVectorLocalIds,
+        double            *nlpContractionContribution)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
+        const dftfe::uInt numberEntries =
           totalNonTrivialPseudoWfcs * numQuadsNLP * numPsi;
 
-        for (unsigned int index = globalThreadId; index < numberEntries;
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += blockDim.x * gridDim.x)
           {
-            const unsigned int blockIndex  = index / numPsi;
-            const unsigned int wfcId       = index - blockIndex * numPsi;
-            unsigned int       pseudoWfcId = blockIndex / numQuadsNLP;
-            const unsigned int quadId = blockIndex - pseudoWfcId * numQuadsNLP;
+            const dftfe::uInt blockIndex  = index / numPsi;
+            const dftfe::uInt wfcId       = index - blockIndex * numPsi;
+            dftfe::uInt       pseudoWfcId = blockIndex / numQuadsNLP;
+            const dftfe::uInt quadId = blockIndex - pseudoWfcId * numQuadsNLP;
             pseudoWfcId += startingId;
             nlpContractionContribution[index] =
               partialOccupancies[wfcId] *
@@ -373,29 +373,29 @@ namespace dftfe
 
       __global__ void
       nlpContractionContributionPsiIndexDeviceKernel(
-        const unsigned int                       numPsi,
-        const unsigned int                       numQuadsNLP,
-        const unsigned int                       totalNonTrivialPseudoWfcs,
-        const unsigned int                       startingId,
+        const dftfe::uInt                        numPsi,
+        const dftfe::uInt                        numQuadsNLP,
+        const dftfe::uInt                        totalNonTrivialPseudoWfcs,
+        const dftfe::uInt                        startingId,
         const dftfe::utils::deviceDoubleComplex *projectorKetTimesVectorPar,
         const dftfe::utils::deviceDoubleComplex *gradPsiOrPsiQuadValuesNLP,
         const double                            *partialOccupancies,
-        const unsigned int                      *nonTrivialIdToElemIdMap,
-        const unsigned int *projecterKetTimesFlattenedVectorLocalIds,
+        const dftfe::uInt                       *nonTrivialIdToElemIdMap,
+        const dftfe::uInt *projecterKetTimesFlattenedVectorLocalIds,
         dftfe::utils::deviceDoubleComplex *nlpContractionContribution)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
-        const unsigned int numberEntries =
+        const dftfe::uInt numberEntries =
           totalNonTrivialPseudoWfcs * numQuadsNLP * numPsi;
 
-        for (unsigned int index = globalThreadId; index < numberEntries;
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += blockDim.x * gridDim.x)
           {
-            const unsigned int blockIndex  = index / numPsi;
-            const unsigned int wfcId       = index - blockIndex * numPsi;
-            unsigned int       pseudoWfcId = blockIndex / numQuadsNLP;
-            const unsigned int quadId = blockIndex - pseudoWfcId * numQuadsNLP;
+            const dftfe::uInt blockIndex  = index / numPsi;
+            const dftfe::uInt wfcId       = index - blockIndex * numPsi;
+            dftfe::uInt       pseudoWfcId = blockIndex / numQuadsNLP;
+            const dftfe::uInt quadId = blockIndex - pseudoWfcId * numQuadsNLP;
             pseudoWfcId += startingId;
 
             const dftfe::utils::deviceDoubleComplex temp = dftfe::utils::mult(
@@ -418,16 +418,16 @@ namespace dftfe
     template <typename ValueType>
     void
     nlpContractionContributionPsiIndex(
-      const unsigned int  wfcBlockSize,
-      const unsigned int  blockSizeNlp,
-      const unsigned int  numQuadsNLP,
-      const unsigned int  startingIdNlp,
-      const ValueType    *projectorKetTimesVectorPar,
-      const ValueType    *gradPsiOrPsiQuadValuesNLP,
-      const double       *partialOccupancies,
-      const unsigned int *nonTrivialIdToElemIdMap,
-      const unsigned int *projecterKetTimesFlattenedVectorLocalIds,
-      ValueType          *nlpContractionContribution)
+      const dftfe::uInt  wfcBlockSize,
+      const dftfe::uInt  blockSizeNlp,
+      const dftfe::uInt  numQuadsNLP,
+      const dftfe::uInt  startingIdNlp,
+      const ValueType   *projectorKetTimesVectorPar,
+      const ValueType   *gradPsiOrPsiQuadValuesNLP,
+      const double      *partialOccupancies,
+      const dftfe::uInt *nonTrivialIdToElemIdMap,
+      const dftfe::uInt *projecterKetTimesFlattenedVectorLocalIds,
+      ValueType         *nlpContractionContribution)
     {
 #  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       nlpContractionContributionPsiIndexDeviceKernel<<<
@@ -468,10 +468,10 @@ namespace dftfe
 
     template <typename ValueType>
     void
-    computeELocWfcEshelbyTensorContributions(const unsigned int wfcBlockSize,
-                                             const unsigned int cellsBlockSize,
-                                             const unsigned int numQuads,
-                                             const ValueType   *psiQuadValues,
+    computeELocWfcEshelbyTensorContributions(const dftfe::uInt wfcBlockSize,
+                                             const dftfe::uInt cellsBlockSize,
+                                             const dftfe::uInt numQuads,
+                                             const ValueType  *psiQuadValues,
                                              const ValueType *gradPsiQuadValues,
                                              const double    *eigenValues,
                                              const double *partialOccupancies,
@@ -541,22 +541,22 @@ namespace dftfe
 
     template void
     nlpContractionContributionPsiIndex(
-      const unsigned int       wfcBlockSize,
-      const unsigned int       blockSizeNlp,
-      const unsigned int       numQuadsNLP,
-      const unsigned int       startingIdNlp,
+      const dftfe::uInt        wfcBlockSize,
+      const dftfe::uInt        blockSizeNlp,
+      const dftfe::uInt        numQuadsNLP,
+      const dftfe::uInt        startingIdNlp,
       const dataTypes::number *projectorKetTimesVectorPar,
       const dataTypes::number *gradPsiOrPsiQuadValuesNLP,
       const double            *partialOccupancies,
-      const unsigned int      *nonTrivialIdToElemIdMap,
-      const unsigned int      *projecterKetTimesFlattenedVectorLocalIds,
+      const dftfe::uInt       *nonTrivialIdToElemIdMap,
+      const dftfe::uInt       *projecterKetTimesFlattenedVectorLocalIds,
       dataTypes::number       *nlpContractionContribution);
 
     template void
     computeELocWfcEshelbyTensorContributions(
-      const unsigned int       wfcBlockSize,
-      const unsigned int       cellsBlockSize,
-      const unsigned int       numQuads,
+      const dftfe::uInt        wfcBlockSize,
+      const dftfe::uInt        cellsBlockSize,
+      const dftfe::uInt        numQuads,
       const dataTypes::number *psiQuadValues,
       const dataTypes::number *gradPsiQuadValues,
       const double            *eigenValues,

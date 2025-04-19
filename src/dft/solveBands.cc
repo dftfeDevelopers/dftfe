@@ -27,8 +27,8 @@
 #include <dft.h>
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::solveBands()
@@ -195,7 +195,7 @@ namespace dftfe
          d_dftParamsPtr->periodicZ))
       {
         double *tempvec = densityInQuadValuesCopy.data();
-        for (unsigned int iquad = 0; iquad < densityInQuadValuesCopy.size();
+        for (dftfe::uInt iquad = 0; iquad < densityInQuadValuesCopy.size();
              iquad++)
           tempvec[iquad] += -d_dftParamsPtr->netCharge / d_domainVolume;
       }
@@ -301,7 +301,7 @@ namespace dftfe
 
     computing_timer.leave_subsection("phiTot solve");
 
-    unsigned int numberChebyshevSolvePasses = 0;
+    dftfe::uInt numberChebyshevSolvePasses = 0;
     //
     // eigen solve
     //
@@ -356,12 +356,12 @@ namespace dftfe
                              fermiEnergyDown,
                              d_auxDensityMatrixXCInPtr);
 
-    const unsigned int maxPasses = 100;
+    const dftfe::uInt maxPasses = 100;
 
 
     double maxRes = 1.0;
 
-    for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
+    for (dftfe::uInt s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
       {
         if ((d_dftParamsPtr->memOptMode && d_dftParamsPtr->spinPolarized == 1))
           {
@@ -372,9 +372,9 @@ namespace dftfe
 
             computing_timer.leave_subsection("VEff Computation");
           }
-        for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+        for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
           {
-            unsigned int count = 0;
+            dftfe::uInt count = 0;
             while (count == 0 || maxRes > chebyTol)
               {
                 if (d_dftParamsPtr->verbosity >= 2)

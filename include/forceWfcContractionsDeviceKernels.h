@@ -26,23 +26,23 @@ namespace dftfe
     template <typename ValueType>
     void
     nlpContractionContributionPsiIndex(
-      const unsigned int  wfcBlockSize,
-      const unsigned int  blockSizeNlp,
-      const unsigned int  numQuadsNLP,
-      const unsigned int  startingIdNlp,
-      const ValueType    *projectorKetTimesVectorPar,
-      const ValueType    *gradPsiOrPsiQuadValuesNLP,
-      const double       *partialOccupancies,
-      const unsigned int *nonTrivialIdToElemIdMap,
-      const unsigned int *projecterKetTimesFlattenedVectorLocalIds,
-      ValueType          *nlpContractionContribution);
+      const dftfe::uInt  wfcBlockSize,
+      const dftfe::uInt  blockSizeNlp,
+      const dftfe::uInt  numQuadsNLP,
+      const dftfe::uInt  startingIdNlp,
+      const ValueType   *projectorKetTimesVectorPar,
+      const ValueType   *gradPsiOrPsiQuadValuesNLP,
+      const double      *partialOccupancies,
+      const dftfe::uInt *nonTrivialIdToElemIdMap,
+      const dftfe::uInt *projecterKetTimesFlattenedVectorLocalIds,
+      ValueType         *nlpContractionContribution);
 
     template <typename ValueType>
     void
-    computeELocWfcEshelbyTensorContributions(const unsigned int wfcBlockSize,
-                                             const unsigned int cellsBlockSize,
-                                             const unsigned int numQuads,
-                                             const ValueType   *psiQuadValues,
+    computeELocWfcEshelbyTensorContributions(const dftfe::uInt wfcBlockSize,
+                                             const dftfe::uInt cellsBlockSize,
+                                             const dftfe::uInt numQuads,
+                                             const ValueType  *psiQuadValues,
                                              const ValueType *gradPsiQuadValues,
                                              const double    *eigenValues,
                                              const double *partialOccupancies,

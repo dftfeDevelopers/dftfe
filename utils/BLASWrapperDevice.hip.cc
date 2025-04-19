@@ -171,7 +171,7 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       copyValueType1ArrToValueType2ArrDeviceCall(
-        const dftfe::size_type             size,
+        const dftfe::uInt                  size,
         const ValueType1                  *valueType1Arr,
         ValueType2                        *valueType2Arr,
         const dftfe::utils::deviceStream_t streamId)
@@ -190,11 +190,11 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(
-      const unsigned int          n,
+      const dftfe::uInt           n,
       const std::complex<double> *x,
-      const unsigned int          incx,
+      const dftfe::uInt           incx,
       std::complex<double>       *y,
-      const unsigned int          incy) const
+      const dftfe::uInt           incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZcopy(d_deviceBlasHandle,
@@ -208,11 +208,11 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(
-      const unsigned int         n,
+      const dftfe::uInt          n,
       const std::complex<float> *x,
-      const unsigned int         incx,
+      const dftfe::uInt          incx,
       std::complex<float>       *y,
-      const unsigned int         incy) const
+      const dftfe::uInt          incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasCcopy(d_deviceBlasHandle,
@@ -226,11 +226,11 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(
-      const unsigned int n,
-      const double      *x,
-      const unsigned int incx,
-      double            *y,
-      const unsigned int incy) const
+      const dftfe::uInt n,
+      const double     *x,
+      const dftfe::uInt incx,
+      double           *y,
+      const dftfe::uInt incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasDcopy(d_deviceBlasHandle, n, x, incx, y, incy);
@@ -239,11 +239,11 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(
-      const unsigned int n,
-      const float       *x,
-      const unsigned int incx,
-      float             *y,
-      const unsigned int incy) const
+      const dftfe::uInt n,
+      const float      *x,
+      const dftfe::uInt incx,
+      float            *y,
+      const dftfe::uInt incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasScopy(d_deviceBlasHandle, n, x, incx, y, incy);
@@ -252,19 +252,19 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char         transA,
-      const char         transB,
-      const unsigned int m,
-      const unsigned int n,
-      const unsigned int k,
-      const float       *alpha,
-      const float       *A,
-      const unsigned int lda,
-      const float       *B,
-      const unsigned int ldb,
-      const float       *beta,
-      float             *C,
-      const unsigned int ldc) const
+      const char        transA,
+      const char        transB,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const dftfe::uInt k,
+      const float      *alpha,
+      const float      *A,
+      const dftfe::uInt lda,
+      const float      *B,
+      const dftfe::uInt ldb,
+      const float      *beta,
+      float            *C,
+      const dftfe::uInt ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -287,17 +287,17 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status = hipblasSgemm(d_deviceBlasHandle,
                                                              transa,
                                                              transb,
-                                                             int(m),
-                                                             int(n),
-                                                             int(k),
+                                                             dftfe::Int(m),
+                                                             dftfe::Int(n),
+                                                             dftfe::Int(k),
                                                              alpha,
                                                              A,
-                                                             int(lda),
+                                                             dftfe::Int(lda),
                                                              B,
-                                                             int(ldb),
+                                                             dftfe::Int(ldb),
                                                              beta,
                                                              C,
-                                                             int(ldc));
+                                                             dftfe::Int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -305,17 +305,17 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
       const char                 transA,
       const char                 transB,
-      const unsigned int         m,
-      const unsigned int         n,
-      const unsigned int         k,
+      const dftfe::uInt          m,
+      const dftfe::uInt          n,
+      const dftfe::uInt          k,
       const std::complex<float> *alpha,
       const std::complex<float> *A,
-      const unsigned int         lda,
+      const dftfe::uInt          lda,
       const std::complex<float> *B,
-      const unsigned int         ldb,
+      const dftfe::uInt          ldb,
       const std::complex<float> *beta,
       std::complex<float>       *C,
-      const unsigned int         ldc) const
+      const dftfe::uInt          ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -343,35 +343,35 @@ namespace dftfe
         hipblasCgemm(d_deviceBlasHandle,
                      transa,
                      transb,
-                     int(m),
-                     int(n),
-                     int(k),
+                     dftfe::Int(m),
+                     dftfe::Int(n),
+                     dftfe::Int(k),
                      dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                      dftfe::utils::makeDataTypeHipBlasCompatible(A),
-                     int(lda),
+                     dftfe::Int(lda),
                      dftfe::utils::makeDataTypeHipBlasCompatible(B),
-                     int(ldb),
+                     dftfe::Int(ldb),
                      dftfe::utils::makeDataTypeHipBlasCompatible(beta),
                      dftfe::utils::makeDataTypeHipBlasCompatible(C),
-                     int(ldc));
+                     dftfe::Int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char         transA,
-      const char         transB,
-      const unsigned int m,
-      const unsigned int n,
-      const unsigned int k,
-      const double      *alpha,
-      const double      *A,
-      const unsigned int lda,
-      const double      *B,
-      const unsigned int ldb,
-      const double      *beta,
-      double            *C,
-      const unsigned int ldc) const
+      const char        transA,
+      const char        transB,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const dftfe::uInt k,
+      const double     *alpha,
+      const double     *A,
+      const dftfe::uInt lda,
+      const double     *B,
+      const dftfe::uInt ldb,
+      const double     *beta,
+      double           *C,
+      const dftfe::uInt ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -395,17 +395,17 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status = hipblasDgemm(d_deviceBlasHandle,
                                                              transa,
                                                              transb,
-                                                             int(m),
-                                                             int(n),
-                                                             int(k),
+                                                             dftfe::Int(m),
+                                                             dftfe::Int(n),
+                                                             dftfe::Int(k),
                                                              alpha,
                                                              A,
-                                                             int(lda),
+                                                             dftfe::Int(lda),
                                                              B,
-                                                             int(ldb),
+                                                             dftfe::Int(ldb),
                                                              beta,
                                                              C,
-                                                             int(ldc));
+                                                             dftfe::Int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -413,17 +413,17 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
       const char                  transA,
       const char                  transB,
-      const unsigned int          m,
-      const unsigned int          n,
-      const unsigned int          k,
+      const dftfe::uInt           m,
+      const dftfe::uInt           n,
+      const dftfe::uInt           k,
       const std::complex<double> *alpha,
       const std::complex<double> *A,
-      const unsigned int          lda,
+      const dftfe::uInt           lda,
       const std::complex<double> *B,
-      const unsigned int          ldb,
+      const dftfe::uInt           ldb,
       const std::complex<double> *beta,
       std::complex<double>       *C,
-      const unsigned int          ldc) const
+      const dftfe::uInt           ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -452,33 +452,33 @@ namespace dftfe
         hipblasZgemm(d_deviceBlasHandle,
                      transa,
                      transb,
-                     int(m),
-                     int(n),
-                     int(k),
+                     dftfe::Int(m),
+                     dftfe::Int(n),
+                     dftfe::Int(k),
                      dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                      dftfe::utils::makeDataTypeHipBlasCompatible(A),
-                     int(lda),
+                     dftfe::Int(lda),
                      dftfe::utils::makeDataTypeHipBlasCompatible(B),
-                     int(ldb),
+                     dftfe::Int(ldb),
                      dftfe::utils::makeDataTypeHipBlasCompatible(beta),
                      dftfe::utils::makeDataTypeHipBlasCompatible(C),
-                     int(ldc));
+                     dftfe::Int(ldc));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemv(
-      const char         transA,
-      const unsigned int m,
-      const unsigned int n,
-      const double      *alpha,
-      const double      *A,
-      const unsigned int lda,
-      const double      *x,
-      const unsigned int incx,
-      const double      *beta,
-      double            *y,
-      const unsigned int incy) const
+      const char        transA,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const double     *alpha,
+      const double     *A,
+      const dftfe::uInt lda,
+      const double     *x,
+      const dftfe::uInt incx,
+      const double     *beta,
+      double           *y,
+      const dftfe::uInt incy) const
     {
       dftfe::utils::deviceBlasOperation_t transa;
       if (transA == 'N')
@@ -491,33 +491,33 @@ namespace dftfe
         }
       dftfe::utils::deviceBlasStatus_t status = hipblasDgemv(d_deviceBlasHandle,
                                                              transa,
-                                                             int(m),
-                                                             int(n),
+                                                             dftfe::Int(m),
+                                                             dftfe::Int(n),
                                                              alpha,
                                                              A,
-                                                             int(lda),
+                                                             dftfe::Int(lda),
                                                              x,
-                                                             int(incx),
+                                                             dftfe::Int(incx),
                                                              beta,
                                                              y,
-                                                             int(incy));
+                                                             dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemv(
-      const char         transA,
-      const unsigned int m,
-      const unsigned int n,
-      const float       *alpha,
-      const float       *A,
-      const unsigned int lda,
-      const float       *x,
-      const unsigned int incx,
-      const float       *beta,
-      float             *y,
-      const unsigned int incy) const
+      const char        transA,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const float      *alpha,
+      const float      *A,
+      const dftfe::uInt lda,
+      const float      *x,
+      const dftfe::uInt incx,
+      const float      *beta,
+      float            *y,
+      const dftfe::uInt incy) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -531,32 +531,32 @@ namespace dftfe
 
       dftfe::utils::deviceBlasStatus_t status = hipblasSgemv(d_deviceBlasHandle,
                                                              transa,
-                                                             int(m),
-                                                             int(n),
+                                                             dftfe::Int(m),
+                                                             dftfe::Int(n),
                                                              alpha,
                                                              A,
-                                                             int(lda),
+                                                             dftfe::Int(lda),
                                                              x,
-                                                             int(incx),
+                                                             dftfe::Int(incx),
                                                              beta,
                                                              y,
-                                                             int(incy));
+                                                             dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemv(
       const char                  transA,
-      const unsigned int          m,
-      const unsigned int          n,
+      const dftfe::uInt           m,
+      const dftfe::uInt           n,
       const std::complex<double> *alpha,
       const std::complex<double> *A,
-      const unsigned int          lda,
+      const dftfe::uInt           lda,
       const std::complex<double> *x,
-      const unsigned int          incx,
+      const dftfe::uInt           incx,
       const std::complex<double> *beta,
       std::complex<double>       *y,
-      const unsigned int          incy) const
+      const dftfe::uInt           incy) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -573,32 +573,32 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZgemv(d_deviceBlasHandle,
                      transa,
-                     int(m),
-                     int(n),
+                     dftfe::Int(m),
+                     dftfe::Int(n),
                      dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                      dftfe::utils::makeDataTypeHipBlasCompatible(A),
-                     int(lda),
+                     dftfe::Int(lda),
                      dftfe::utils::makeDataTypeHipBlasCompatible(x),
-                     int(incx),
+                     dftfe::Int(incx),
                      dftfe::utils::makeDataTypeHipBlasCompatible(beta),
                      dftfe::utils::makeDataTypeHipBlasCompatible(y),
-                     int(incy));
+                     dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemv(
       const char                 transA,
-      const unsigned int         m,
-      const unsigned int         n,
+      const dftfe::uInt          m,
+      const dftfe::uInt          n,
       const std::complex<float> *alpha,
       const std::complex<float> *A,
-      const unsigned int         lda,
+      const dftfe::uInt          lda,
       const std::complex<float> *x,
-      const unsigned int         incx,
+      const dftfe::uInt          incx,
       const std::complex<float> *beta,
       std::complex<float>       *y,
-      const unsigned int         incy) const
+      const dftfe::uInt          incy) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -615,16 +615,16 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status =
         hipblasCgemv(d_deviceBlasHandle,
                      transa,
-                     int(m),
-                     int(n),
+                     dftfe::Int(m),
+                     dftfe::Int(n),
                      dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                      dftfe::utils::makeDataTypeHipBlasCompatible(A),
-                     int(lda),
+                     dftfe::Int(lda),
                      dftfe::utils::makeDataTypeHipBlasCompatible(x),
-                     int(incx),
+                     dftfe::Int(incx),
                      dftfe::utils::makeDataTypeHipBlasCompatible(beta),
                      dftfe::utils::makeDataTypeHipBlasCompatible(y),
-                     int(incy));
+                     dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -662,35 +662,40 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xaxpy(
-      const unsigned int n,
-      const double      *alpha,
-      const double      *x,
-      const unsigned int incx,
-      double            *y,
-      const unsigned int incy) const
+      const dftfe::uInt n,
+      const double     *alpha,
+      const double     *x,
+      const dftfe::uInt incx,
+      double           *y,
+      const dftfe::uInt incy) const
     {
-      dftfe::utils::deviceBlasStatus_t status = hipblasDaxpy(
-        d_deviceBlasHandle, int(n), alpha, x, int(incx), y, int(incy));
+      dftfe::utils::deviceBlasStatus_t status = hipblasDaxpy(d_deviceBlasHandle,
+                                                             dftfe::Int(n),
+                                                             alpha,
+                                                             x,
+                                                             dftfe::Int(incx),
+                                                             y,
+                                                             dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xaxpy(
-      const unsigned int          n,
+      const dftfe::uInt           n,
       const std::complex<double> *alpha,
       const std::complex<double> *x,
-      const unsigned int          incx,
+      const dftfe::uInt           incx,
       std::complex<double>       *y,
-      const unsigned int          incy) const
+      const dftfe::uInt           incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZaxpy(d_deviceBlasHandle,
-                     int(n),
+                     dftfe::Int(n),
                      dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                      dftfe::utils::makeDataTypeHipBlasCompatible(x),
-                     int(incx),
+                     dftfe::Int(incx),
                      dftfe::utils::makeDataTypeHipBlasCompatible(y),
-                     int(incy));
+                     dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -698,11 +703,11 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpby(
-      const unsigned int n,
-      const ValueType2   alpha,
-      const ValueType1  *x,
-      const ValueType2   beta,
-      ValueType1        *y) const
+      const dftfe::uInt n,
+      const ValueType2  alpha,
+      const ValueType1 *x,
+      const ValueType2  beta,
+      ValueType1       *y) const
     {
       hipLaunchKernelGGL(axpbyDeviceKernel,
                          n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -723,13 +728,13 @@ namespace dftfe
               typename ValueType4>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(
-      const unsigned int m,
-      const unsigned int n,
-      const ValueType0   alpha,
-      const ValueType1  *A,
-      const ValueType2  *B,
-      const ValueType3  *D,
-      ValueType4        *C) const
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const ValueType0  alpha,
+      const ValueType1 *A,
+      const ValueType2 *B,
+      const ValueType3 *D,
+      ValueType4       *C) const
     {
       hipLaunchKernelGGL(ApaBDDeviceKernel,
                          (n * m / dftfe::utils::DEVICE_BLOCK_SIZE) + 1,
@@ -748,12 +753,12 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType1      *addFromVec,
-      const ValueType2      *scalingVector,
-      const ValueType2       a,
-      ValueType1            *addToVec) const
+      const dftfe::uInt contiguousBlockSize,
+      const dftfe::uInt numContiguousBlocks,
+      const ValueType1 *addFromVec,
+      const ValueType2 *scalingVector,
+      const ValueType2  a,
+      ValueType1       *addToVec) const
     {
       hipLaunchKernelGGL(stridedBlockAxpyDeviceKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -774,13 +779,13 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType1      *addFromVec,
-      const ValueType2      *scalingVector,
-      const ValueType2       a,
-      const ValueType2       b,
-      ValueType1            *addToVec) const
+      const dftfe::uInt contiguousBlockSize,
+      const dftfe::uInt numContiguousBlocks,
+      const ValueType1 *addFromVec,
+      const ValueType2 *scalingVector,
+      const ValueType2  a,
+      const ValueType2  b,
+      ValueType1       *addToVec) const
     {
       hipLaunchKernelGGL(stridedBlockAxpByDeviceKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -802,11 +807,11 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType               *addFromVec,
-      ValueType                     *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt  contiguousBlockSize,
+      const dftfe::uInt  numContiguousBlocks,
+      const ValueType   *addFromVec,
+      ValueType         *addToVec,
+      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
     {
       hipLaunchKernelGGL(axpyStridedBlockAtomicAddDeviceKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -825,13 +830,13 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2, typename ValueType3>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1               a,
-      const ValueType1              *s,
-      const ValueType2              *addFromVec,
-      ValueType3                    *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt  contiguousBlockSize,
+      const dftfe::uInt  numContiguousBlocks,
+      const ValueType1   a,
+      const ValueType1  *s,
+      const ValueType2  *addFromVec,
+      ValueType3        *addToVec,
+      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
     {
       hipLaunchKernelGGL(axpyStridedBlockAtomicAddDeviceKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -852,12 +857,12 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2, typename ValueType3>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1               a,
-      const ValueType2              *addFromVec,
-      ValueType3                    *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt  contiguousBlockSize,
+      const dftfe::uInt  numContiguousBlocks,
+      const ValueType1   a,
+      const ValueType2  *addFromVec,
+      ValueType3        *addToVec,
+      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
     {
       axpyStridedBlockAtomicAddDeviceKernel<<<
         (contiguousBlockSize * numContiguousBlocks) /
@@ -873,33 +878,42 @@ namespace dftfe
     }
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
-      const unsigned int N,
-      const double      *X,
-      const unsigned int INCX,
-      const double      *Y,
-      const unsigned int INCY,
-      double            *result) const
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(const dftfe::uInt N,
+                                                         const double     *X,
+                                                         const dftfe::uInt INCX,
+                                                         const double     *Y,
+                                                         const dftfe::uInt INCY,
+                                                         double *result) const
     {
-      dftfe::utils::deviceBlasStatus_t status = hipblasDdot(
-        d_deviceBlasHandle, int(N), X, int(INCX), Y, int(INCY), result);
+      dftfe::utils::deviceBlasStatus_t status = hipblasDdot(d_deviceBlasHandle,
+                                                            dftfe::Int(N),
+                                                            X,
+                                                            dftfe::Int(INCX),
+                                                            Y,
+                                                            dftfe::Int(INCY),
+                                                            result);
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
-      const unsigned int N,
-      const double      *X,
-      const unsigned int INCX,
-      const double      *Y,
-      const unsigned int INCY,
-      const MPI_Comm    &mpi_communicator,
-      double            *result) const
+      const dftfe::uInt N,
+      const double     *X,
+      const dftfe::uInt INCX,
+      const double     *Y,
+      const dftfe::uInt INCY,
+      const MPI_Comm   &mpi_communicator,
+      double           *result) const
     {
       double localResult                      = 0.0;
       *result                                 = 0.0;
-      dftfe::utils::deviceBlasStatus_t status = hipblasDdot(
-        d_deviceBlasHandle, int(N), X, int(INCX), Y, int(INCY), &localResult);
+      dftfe::utils::deviceBlasStatus_t status = hipblasDdot(d_deviceBlasHandle,
+                                                            dftfe::Int(N),
+                                                            X,
+                                                            dftfe::Int(INCX),
+                                                            Y,
+                                                            dftfe::Int(INCY),
+                                                            &localResult);
       DEVICEBLAS_API_CHECK(status);
       MPI_Allreduce(
         &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -907,31 +921,31 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
-      const unsigned int          N,
+      const dftfe::uInt           N,
       const std::complex<double> *X,
-      const unsigned int          INCX,
+      const dftfe::uInt           INCX,
       const std::complex<double> *Y,
-      const unsigned int          INCY,
+      const dftfe::uInt           INCY,
       std::complex<double>       *result) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZdotc(d_deviceBlasHandle,
-                     int(N),
+                     dftfe::Int(N),
                      dftfe::utils::makeDataTypeHipBlasCompatible(X),
-                     int(INCX),
+                     dftfe::Int(INCX),
                      dftfe::utils::makeDataTypeHipBlasCompatible(Y),
-                     int(INCY),
+                     dftfe::Int(INCY),
                      dftfe::utils::makeDataTypeHipBlasCompatible(result));
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
-      const unsigned int          N,
+      const dftfe::uInt           N,
       const std::complex<double> *X,
-      const unsigned int          INCX,
+      const dftfe::uInt           INCX,
       const std::complex<double> *Y,
-      const unsigned int          INCY,
+      const dftfe::uInt           INCY,
       const MPI_Comm             &mpi_communicator,
       std::complex<double>       *result) const
     {
@@ -939,11 +953,11 @@ namespace dftfe
       *result                          = 0.0;
       dftfe::utils::deviceBlasStatus_t status =
         hipblasZdotc(d_deviceBlasHandle,
-                     int(N),
+                     dftfe::Int(N),
                      dftfe::utils::makeDataTypeHipBlasCompatible(X),
-                     int(INCX),
+                     dftfe::Int(INCX),
                      dftfe::utils::makeDataTypeHipBlasCompatible(Y),
-                     int(INCY),
+                     dftfe::Int(INCY),
                      dftfe::utils::makeDataTypeHipBlasCompatible(&localResult));
       DEVICEBLAS_API_CHECK(status);
       MPI_Allreduce(&localResult,
@@ -956,23 +970,23 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmStridedBatched(
-      const char         transA,
-      const char         transB,
-      const unsigned int m,
-      const unsigned int n,
-      const unsigned int k,
-      const double      *alpha,
-      const double      *A,
-      const unsigned int lda,
-      long long int      strideA,
-      const double      *B,
-      const unsigned int ldb,
-      long long int      strideB,
-      const double      *beta,
-      double            *C,
-      const unsigned int ldc,
-      long long int      strideC,
-      const int          batchCount) const
+      const char        transA,
+      const char        transB,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const dftfe::uInt k,
+      const double     *alpha,
+      const double     *A,
+      const dftfe::uInt lda,
+      long long int     strideA,
+      const double     *B,
+      const dftfe::uInt ldb,
+      long long int     strideB,
+      const double     *beta,
+      double           *C,
+      const dftfe::uInt ldc,
+      long long int     strideC,
+      const dftfe::Int  batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -998,21 +1012,21 @@ namespace dftfe
         hipblasDgemmStridedBatched(d_deviceBlasHandle,
                                    transa,
                                    transb,
-                                   int(m),
-                                   int(n),
-                                   int(k),
+                                   dftfe::Int(m),
+                                   dftfe::Int(n),
+                                   dftfe::Int(k),
                                    alpha,
                                    A,
-                                   int(lda),
+                                   dftfe::Int(lda),
                                    strideA,
                                    B,
-                                   int(ldb),
+                                   dftfe::Int(ldb),
                                    strideB,
                                    beta,
                                    C,
-                                   int(ldc),
+                                   dftfe::Int(ldc),
                                    strideC,
-                                   int(batchCount));
+                                   dftfe::Int(batchCount));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -1021,21 +1035,21 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmStridedBatched(
       const char                  transA,
       const char                  transB,
-      const unsigned int          m,
-      const unsigned int          n,
-      const unsigned int          k,
+      const dftfe::uInt           m,
+      const dftfe::uInt           n,
+      const dftfe::uInt           k,
       const std::complex<double> *alpha,
       const std::complex<double> *A,
-      const unsigned int          lda,
+      const dftfe::uInt           lda,
       long long int               strideA,
       const std::complex<double> *B,
-      const unsigned int          ldb,
+      const dftfe::uInt           ldb,
       long long int               strideB,
       const std::complex<double> *beta,
       std::complex<double>       *C,
-      const unsigned int          ldc,
+      const dftfe::uInt           ldc,
       long long int               strideC,
-      const int                   batchCount) const
+      const dftfe::Int            batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1063,44 +1077,44 @@ namespace dftfe
         d_deviceBlasHandle,
         transa,
         transb,
-        int(m),
-        int(n),
-        int(k),
+        dftfe::Int(m),
+        dftfe::Int(n),
+        dftfe::Int(k),
         dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
         dftfe::utils::makeDataTypeHipBlasCompatible(A),
-        int(lda),
+        dftfe::Int(lda),
         strideA,
         dftfe::utils::makeDataTypeHipBlasCompatible(B),
-        int(ldb),
+        dftfe::Int(ldb),
         strideB,
         dftfe::utils::makeDataTypeHipBlasCompatible(beta),
         dftfe::utils::makeDataTypeHipBlasCompatible(C),
-        int(ldc),
+        dftfe::Int(ldc),
         strideC,
-        int(batchCount));
+        dftfe::Int(batchCount));
       DEVICEBLAS_API_CHECK(status);
     }
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmStridedBatched(
-      const char         transA,
-      const char         transB,
-      const unsigned int m,
-      const unsigned int n,
-      const unsigned int k,
-      const float       *alpha,
-      const float       *A,
-      const unsigned int lda,
-      long long int      strideA,
-      const float       *B,
-      const unsigned int ldb,
-      long long int      strideB,
-      const float       *beta,
-      float             *C,
-      const unsigned int ldc,
-      long long int      strideC,
-      const int          batchCount) const
+      const char        transA,
+      const char        transB,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const dftfe::uInt k,
+      const float      *alpha,
+      const float      *A,
+      const dftfe::uInt lda,
+      long long int     strideA,
+      const float      *B,
+      const dftfe::uInt ldb,
+      long long int     strideB,
+      const float      *beta,
+      float            *C,
+      const dftfe::uInt ldc,
+      long long int     strideC,
+      const dftfe::Int  batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1126,21 +1140,21 @@ namespace dftfe
         hipblasSgemmStridedBatched(d_deviceBlasHandle,
                                    transa,
                                    transb,
-                                   int(m),
-                                   int(n),
-                                   int(k),
+                                   dftfe::Int(m),
+                                   dftfe::Int(n),
+                                   dftfe::Int(k),
                                    alpha,
                                    A,
-                                   int(lda),
+                                   dftfe::Int(lda),
                                    strideA,
                                    B,
-                                   int(ldb),
+                                   dftfe::Int(ldb),
                                    strideB,
                                    beta,
                                    C,
-                                   int(ldc),
+                                   dftfe::Int(ldc),
                                    strideC,
-                                   int(batchCount));
+                                   dftfe::Int(batchCount));
       DEVICEBLAS_API_CHECK(status);
     }
 
@@ -1149,21 +1163,21 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmStridedBatched(
       const char                 transA,
       const char                 transB,
-      const unsigned int         m,
-      const unsigned int         n,
-      const unsigned int         k,
+      const dftfe::uInt          m,
+      const dftfe::uInt          n,
+      const dftfe::uInt          k,
       const std::complex<float> *alpha,
       const std::complex<float> *A,
-      const unsigned int         lda,
+      const dftfe::uInt          lda,
       long long int              strideA,
       const std::complex<float> *B,
-      const unsigned int         ldb,
+      const dftfe::uInt          ldb,
       long long int              strideB,
       const std::complex<float> *beta,
       std::complex<float>       *C,
-      const unsigned int         ldc,
+      const dftfe::uInt          ldc,
       long long int              strideC,
-      const int                  batchCount) const
+      const dftfe::Int           batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1191,39 +1205,39 @@ namespace dftfe
         d_deviceBlasHandle,
         transa,
         transb,
-        int(m),
-        int(n),
-        int(k),
+        dftfe::Int(m),
+        dftfe::Int(n),
+        dftfe::Int(k),
         dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
         dftfe::utils::makeDataTypeHipBlasCompatible(A),
-        int(lda),
+        dftfe::Int(lda),
         strideA,
         dftfe::utils::makeDataTypeHipBlasCompatible(B),
-        int(ldb),
+        dftfe::Int(ldb),
         strideB,
         dftfe::utils::makeDataTypeHipBlasCompatible(beta),
         dftfe::utils::makeDataTypeHipBlasCompatible(C),
-        int(ldc),
+        dftfe::Int(ldc),
         strideC,
-        int(batchCount));
+        dftfe::Int(batchCount));
       DEVICEBLAS_API_CHECK(status);
     }
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmBatched(
-      const char         transA,
-      const char         transB,
-      const unsigned int m,
-      const unsigned int n,
-      const unsigned int k,
-      const double      *alpha,
-      const double      *A[],
-      const unsigned int lda,
-      const double      *B[],
-      const unsigned int ldb,
-      const double      *beta,
-      double            *C[],
-      const unsigned int ldc,
-      const int          batchCount) const
+      const char        transA,
+      const char        transB,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const dftfe::uInt k,
+      const double     *alpha,
+      const double     *A[],
+      const dftfe::uInt lda,
+      const double     *B[],
+      const dftfe::uInt ldb,
+      const double     *beta,
+      double           *C[],
+      const dftfe::uInt ldc,
+      const dftfe::Int  batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1249,18 +1263,18 @@ namespace dftfe
         hipblasDgemmBatched(d_deviceBlasHandle,
                             transa,
                             transb,
-                            int(m),
-                            int(n),
-                            int(k),
+                            dftfe::Int(m),
+                            dftfe::Int(n),
+                            dftfe::Int(k),
                             alpha,
                             A,
-                            int(lda),
+                            dftfe::Int(lda),
                             B,
-                            int(ldb),
+                            dftfe::Int(ldb),
                             beta,
                             C,
-                            int(ldc),
-                            int(batchCount));
+                            dftfe::Int(ldc),
+                            dftfe::Int(batchCount));
 
       DEVICEBLAS_API_CHECK(status);
     }
@@ -1270,18 +1284,18 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmBatched(
       const char                  transA,
       const char                  transB,
-      const unsigned int          m,
-      const unsigned int          n,
-      const unsigned int          k,
+      const dftfe::uInt           m,
+      const dftfe::uInt           n,
+      const dftfe::uInt           k,
       const std::complex<double> *alpha,
       const std::complex<double> *A[],
-      const unsigned int          lda,
+      const dftfe::uInt           lda,
       const std::complex<double> *B[],
-      const unsigned int          ldb,
+      const dftfe::uInt           ldb,
       const std::complex<double> *beta,
       std::complex<double>       *C[],
-      const unsigned int          ldc,
-      const int                   batchCount) const
+      const dftfe::uInt           ldc,
+      const dftfe::Int            batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1309,18 +1323,18 @@ namespace dftfe
         hipblasZgemmBatched(d_deviceBlasHandle,
                             transa,
                             transb,
-                            int(m),
-                            int(n),
-                            int(k),
+                            dftfe::Int(m),
+                            dftfe::Int(n),
+                            dftfe::Int(k),
                             dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                             (const hipblasDoubleComplex **)A,
-                            int(lda),
+                            dftfe::Int(lda),
                             (const hipblasDoubleComplex **)B,
-                            int(ldb),
+                            dftfe::Int(ldb),
                             dftfe::utils::makeDataTypeHipBlasCompatible(beta),
                             (hipblasDoubleComplex **)C,
-                            int(ldc),
-                            int(batchCount));
+                            dftfe::Int(ldc),
+                            dftfe::Int(batchCount));
 
       DEVICEBLAS_API_CHECK(status);
     }
@@ -1328,20 +1342,20 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmBatched(
-      const char         transA,
-      const char         transB,
-      const unsigned int m,
-      const unsigned int n,
-      const unsigned int k,
-      const float       *alpha,
-      const float       *A[],
-      const unsigned int lda,
-      const float       *B[],
-      const unsigned int ldb,
-      const float       *beta,
-      float             *C[],
-      const unsigned int ldc,
-      const int          batchCount) const
+      const char        transA,
+      const char        transB,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const dftfe::uInt k,
+      const float      *alpha,
+      const float      *A[],
+      const dftfe::uInt lda,
+      const float      *B[],
+      const dftfe::uInt ldb,
+      const float      *beta,
+      float            *C[],
+      const dftfe::uInt ldc,
+      const dftfe::Int  batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1367,18 +1381,18 @@ namespace dftfe
         hipblasSgemmBatched(d_deviceBlasHandle,
                             transa,
                             transb,
-                            int(m),
-                            int(n),
-                            int(k),
+                            dftfe::Int(m),
+                            dftfe::Int(n),
+                            dftfe::Int(k),
                             alpha,
                             A,
-                            int(lda),
+                            dftfe::Int(lda),
                             B,
-                            int(ldb),
+                            dftfe::Int(ldb),
                             beta,
                             C,
-                            int(ldc),
-                            int(batchCount));
+                            dftfe::Int(ldc),
+                            dftfe::Int(batchCount));
 
       DEVICEBLAS_API_CHECK(status);
     }
@@ -1387,18 +1401,18 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmBatched(
       const char                 transA,
       const char                 transB,
-      const unsigned int         m,
-      const unsigned int         n,
-      const unsigned int         k,
+      const dftfe::uInt          m,
+      const dftfe::uInt          n,
+      const dftfe::uInt          k,
       const std::complex<float> *alpha,
       const std::complex<float> *A[],
-      const unsigned int         lda,
+      const dftfe::uInt          lda,
       const std::complex<float> *B[],
-      const unsigned int         ldb,
+      const dftfe::uInt          ldb,
       const std::complex<float> *beta,
       std::complex<float>       *C[],
-      const unsigned int         ldc,
-      const int                  batchCount) const
+      const dftfe::uInt          ldc,
+      const dftfe::Int           batchCount) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1426,27 +1440,27 @@ namespace dftfe
         hipblasCgemmBatched(d_deviceBlasHandle,
                             transa,
                             transb,
-                            int(m),
-                            int(n),
-                            int(k),
+                            dftfe::Int(m),
+                            dftfe::Int(n),
+                            dftfe::Int(k),
                             dftfe::utils::makeDataTypeHipBlasCompatible(alpha),
                             (const hipblasComplex **)A,
-                            int(lda),
+                            dftfe::Int(lda),
                             (const hipblasComplex **)B,
-                            int(ldb),
+                            dftfe::Int(ldb),
                             dftfe::utils::makeDataTypeHipBlasCompatible(beta),
                             (hipblasComplex **)C,
-                            int(ldc),
-                            int(batchCount));
+                            dftfe::Int(ldc),
+                            dftfe::Int(batchCount));
 
       DEVICEBLAS_API_CHECK(status);
     }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xnrm2(
-      const unsigned int          n,
+      const dftfe::uInt           n,
       const std::complex<double> *x,
-      const unsigned int          incx,
+      const dftfe::uInt           incx,
       const MPI_Comm             &mpi_communicator,
       double                     *result) const
     {
@@ -1454,9 +1468,9 @@ namespace dftfe
       *result            = 0.0;
       dftfe::utils::deviceBlasStatus_t status =
         hipblasDznrm2(d_deviceBlasHandle,
-                      int(n),
+                      dftfe::Int(n),
                       dftfe::utils::makeDataTypeHipBlasCompatible(x),
-                      int(incx),
+                      dftfe::Int(incx),
                       &localresult);
       localresult *= localresult;
       MPI_Allreduce(
@@ -1466,16 +1480,16 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xnrm2(
-      const unsigned int n,
-      const double      *x,
-      const unsigned int incx,
-      const MPI_Comm    &mpi_communicator,
-      double            *result) const
+      const dftfe::uInt n,
+      const double     *x,
+      const dftfe::uInt incx,
+      const MPI_Comm   &mpi_communicator,
+      double           *result) const
     {
-      double localresult = 0.0;
-      *result            = 0.0;
-      dftfe::utils::deviceBlasStatus_t status =
-        hipblasDnrm2(d_deviceBlasHandle, int(n), x, int(incx), &localresult);
+      double localresult                      = 0.0;
+      *result                                 = 0.0;
+      dftfe::utils::deviceBlasStatus_t status = hipblasDnrm2(
+        d_deviceBlasHandle, dftfe::Int(n), x, dftfe::Int(incx), &localresult);
       localresult *= localresult;
       MPI_Allreduce(
         &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -1485,9 +1499,9 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      ValueType1            *x,
-      const ValueType2       alpha,
-      const dftfe::size_type n) const
+      ValueType1       *x,
+      const ValueType2  alpha,
+      const dftfe::uInt n) const
     {
       hipLaunchKernelGGL(ascalDeviceKernel,
                          n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1502,7 +1516,7 @@ namespace dftfe
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyComplexArrToRealArrs(
-      const dftfe::size_type  size,
+      const dftfe::uInt       size,
       const ValueTypeComplex *complexArr,
       ValueTypeReal          *realArr,
       ValueTypeReal          *imagArr)
@@ -1523,10 +1537,10 @@ namespace dftfe
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyRealArrsToComplexArr(
-      const dftfe::size_type size,
-      const ValueTypeReal   *realArr,
-      const ValueTypeReal   *imagArr,
-      ValueTypeComplex      *complexArr)
+      const dftfe::uInt    size,
+      const ValueTypeReal *realArr,
+      const ValueTypeReal *imagArr,
+      ValueTypeComplex    *complexArr)
     {
       hipLaunchKernelGGL(copyRealArrsToComplexArrDeviceKernel,
                          size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1543,9 +1557,9 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
-      copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const ValueType1      *valueType1Arr,
-                                       ValueType2            *valueType2Arr)
+      copyValueType1ArrToValueType2Arr(const dftfe::uInt size,
+                                       const ValueType1 *valueType1Arr,
+                                       ValueType2       *valueType2Arr)
     {
       hipLaunchKernelGGL(
         copyValueType1ArrToValueType2ArrDeviceKernel,
@@ -1562,14 +1576,14 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
-        const dftfe::size_type B,
-        const dftfe::size_type DRem,
-        const dftfe::size_type D,
-        const ValueType1      *valueType1SrcArray,
-        ValueType1            *valueType1DstArray,
-        ValueType2            *valueType2DstArray)
+        const dftfe::uInt B,
+        const dftfe::uInt DRem,
+        const dftfe::uInt D,
+        const ValueType1 *valueType1SrcArray,
+        ValueType1       *valueType1DstArray,
+        ValueType2       *valueType2DstArray)
     {
-      const dftfe::size_type size = D * B;
+      const dftfe::uInt size = D * B;
       copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel<<<
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -1587,11 +1601,11 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1              *copyFromVec,
-      ValueType2                    *copyToVecBlock,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      const dftfe::uInt  contiguousBlockSize,
+      const dftfe::uInt  numContiguousBlocks,
+      const ValueType1  *copyFromVec,
+      ValueType2        *copyToVecBlock,
+      const dftfe::uInt *copyFromVecStartingContiguousBlockIds)
     {
       hipLaunchKernelGGL(
         stridedCopyToBlockDeviceKernel,
@@ -1611,12 +1625,12 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const dftfe::size_type         startingVecId,
-      const ValueType1              *copyFromVec,
-      ValueType2                    *copyToVecBlock,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      const dftfe::uInt  contiguousBlockSize,
+      const dftfe::uInt  numContiguousBlocks,
+      const dftfe::uInt  startingVecId,
+      const ValueType1  *copyFromVec,
+      ValueType2        *copyToVecBlock,
+      const dftfe::uInt *copyFromVecStartingContiguousBlockIds)
     {
       hipLaunchKernelGGL(
         stridedCopyToBlockDeviceKernel,
@@ -1638,13 +1652,13 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleCopy(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1               a,
-      const ValueType1              *s,
-      const ValueType2              *copyFromVec,
-      ValueType2                    *copyToVecBlock,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      const dftfe::uInt  contiguousBlockSize,
+      const dftfe::uInt  numContiguousBlocks,
+      const ValueType1   a,
+      const ValueType1  *s,
+      const ValueType2  *copyFromVec,
+      ValueType2        *copyToVecBlock,
+      const dftfe::uInt *copyFromVecStartingContiguousBlockIds)
     {
       hipLaunchKernelGGL(
         stridedCopyToBlockScaleDeviceKernel,
@@ -1664,11 +1678,10 @@ namespace dftfe
     }
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::add(
-      double                *y,
-      const double          *x,
-      const double           alpha,
-      const dftfe::size_type size)
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::add(double           *y,
+                                                        const double     *x,
+                                                        const double      alpha,
+                                                        const dftfe::uInt size)
     {
       xaxpy(size, &alpha, x, 1, y, 1);
     }
@@ -1677,11 +1690,11 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyFromBlock(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1              *copyFromVecBlock,
-      ValueType2                    *copyToVec,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      const dftfe::uInt  contiguousBlockSize,
+      const dftfe::uInt  numContiguousBlocks,
+      const ValueType1  *copyFromVecBlock,
+      ValueType2        *copyToVec,
+      const dftfe::uInt *copyFromVecStartingContiguousBlockIds)
     {
       hipLaunchKernelGGL(stridedCopyFromBlockDeviceKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -1702,12 +1715,12 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
-      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
-                                       const dftfe::size_type blockSizeFrom,
-                                       const dftfe::size_type numBlocks,
-                                       const dftfe::size_type startingId,
-                                       const ValueType1      *copyFromVec,
-                                       ValueType2            *copyToVec) const
+      stridedCopyToBlockConstantStride(const dftfe::uInt blockSizeTo,
+                                       const dftfe::uInt blockSizeFrom,
+                                       const dftfe::uInt numBlocks,
+                                       const dftfe::uInt startingId,
+                                       const ValueType1 *copyFromVec,
+                                       ValueType2       *copyToVec) const
     {
       hipLaunchKernelGGL(
         stridedCopyToBlockConstantStrideDeviceKernel,
@@ -1726,14 +1739,14 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyConstantStride(
-      const dftfe::size_type blockSize,
-      const dftfe::size_type strideTo,
-      const dftfe::size_type strideFrom,
-      const dftfe::size_type numBlocks,
-      const dftfe::size_type startingToId,
-      const dftfe::size_type startingFromId,
-      const ValueType1      *copyFromVec,
-      ValueType2            *copyToVec)
+      const dftfe::uInt blockSize,
+      const dftfe::uInt strideTo,
+      const dftfe::uInt strideFrom,
+      const dftfe::uInt numBlocks,
+      const dftfe::uInt startingToId,
+      const dftfe::uInt startingFromId,
+      const ValueType1 *copyFromVec,
+      ValueType2       *copyToVec)
     {
       hipLaunchKernelGGL(
         stridedCopyConstantStrideDeviceKernel,
@@ -1755,12 +1768,12 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
-      stridedCopyFromBlockConstantStride(const dftfe::size_type blockSizeTo,
-                                         const dftfe::size_type blockSizeFrom,
-                                         const dftfe::size_type numBlocks,
-                                         const dftfe::size_type startingId,
-                                         const ValueType1      *copyFromVec,
-                                         ValueType2            *copyToVec)
+      stridedCopyFromBlockConstantStride(const dftfe::uInt blockSizeTo,
+                                         const dftfe::uInt blockSizeFrom,
+                                         const dftfe::uInt numBlocks,
+                                         const dftfe::uInt startingId,
+                                         const ValueType1 *copyFromVec,
+                                         ValueType2       *copyToVec)
     {
       hipLaunchKernelGGL(
         stridedCopyFromBlockConstantStrideDeviceKernel,
@@ -1778,11 +1791,11 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType1       a,
-      const ValueType1      *s,
-      ValueType2            *x)
+      const dftfe::uInt contiguousBlockSize,
+      const dftfe::uInt numContiguousBlocks,
+      const ValueType1  a,
+      const ValueType1 *s,
+      ValueType2       *x)
     {
       hipLaunchKernelGGL(stridedBlockScaleDeviceKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -1801,10 +1814,10 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProduct(
-      const unsigned int m,
-      const ValueType   *X,
-      const ValueType   *Y,
-      ValueType         *output) const
+      const dftfe::uInt m,
+      const ValueType  *X,
+      const ValueType  *Y,
+      ValueType        *output) const
     {
       hipLaunchKernelGGL(hadamardProductKernel,
                          m / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1820,10 +1833,10 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProductWithConj(
-      const unsigned int m,
-      const ValueType   *X,
-      const ValueType   *Y,
-      ValueType         *output) const
+      const dftfe::uInt m,
+      const ValueType  *X,
+      const ValueType  *Y,
+      ValueType        *output) const
     {
       hipLaunchKernelGGL(hadamardProductWithConjKernel,
                          (m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1839,11 +1852,11 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::addVecOverContinuousIndex(
-      const dftfe::size_type numContiguousBlocks,
-      const dftfe::size_type contiguousBlockSize,
-      const ValueType       *input1,
-      const ValueType       *input2,
-      ValueType             *output)
+      const dftfe::uInt numContiguousBlocks,
+      const dftfe::uInt contiguousBlockSize,
+      const ValueType  *input1,
+      const ValueType  *input2,
+      ValueType        *output)
     {
       hipLaunchKernelGGL(addVecOverContinuousIndexKernel,
                          (numContiguousBlocks) /
@@ -1862,10 +1875,10 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleColumnWise(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType       *beta,
-      ValueType             *x)
+      const dftfe::uInt contiguousBlockSize,
+      const dftfe::uInt numContiguousBlocks,
+      const ValueType  *beta,
+      ValueType        *x)
     {
       hipLaunchKernelGGL(stridedBlockScaleColumnWiseKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -1882,12 +1895,11 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
-      stridedBlockScaleAndAddColumnWise(
-        const dftfe::size_type contiguousBlockSize,
-        const dftfe::size_type numContiguousBlocks,
-        const ValueType       *x,
-        const ValueType       *beta,
-        ValueType             *y)
+      stridedBlockScaleAndAddColumnWise(const dftfe::uInt contiguousBlockSize,
+                                        const dftfe::uInt numContiguousBlocks,
+                                        const ValueType  *x,
+                                        const ValueType  *beta,
+                                        ValueType        *y)
     {
       hipLaunchKernelGGL(stridedBlockScaleAndAddColumnWiseKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -1907,13 +1919,13 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       stridedBlockScaleAndAddTwoVecColumnWise(
-        const dftfe::size_type contiguousBlockSize,
-        const dftfe::size_type numContiguousBlocks,
-        const ValueType       *x,
-        const ValueType       *alpha,
-        const ValueType       *y,
-        const ValueType       *beta,
-        ValueType             *z)
+        const dftfe::uInt contiguousBlockSize,
+        const dftfe::uInt numContiguousBlocks,
+        const ValueType  *x,
+        const ValueType  *alpha,
+        const ValueType  *y,
+        const ValueType  *beta,
+        ValueType        *z)
     {
       hipLaunchKernelGGL(stridedBlockScaleAndAddTwoVecColumnWiseKernel,
                          (contiguousBlockSize * numContiguousBlocks) /
@@ -1934,23 +1946,23 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
-      const unsigned int contiguousBlockSize,
-      const unsigned int numContiguousBlocks,
-      const ValueType   *X,
-      const ValueType   *Y,
-      const ValueType   *onesVec,
-      ValueType         *tempVector,
-      ValueType         *tempResults,
-      ValueType         *result) const
+      const dftfe::uInt contiguousBlockSize,
+      const dftfe::uInt numContiguousBlocks,
+      const ValueType  *X,
+      const ValueType  *Y,
+      const ValueType  *onesVec,
+      ValueType        *tempVector,
+      ValueType        *tempResults,
+      ValueType        *result) const
     {
       hadamardProductWithConj(contiguousBlockSize * numContiguousBlocks,
                               X,
                               Y,
                               tempVector);
 
-      ValueType    alpha  = 1.0;
-      ValueType    beta   = 0.0;
-      unsigned int numVec = 1;
+      ValueType   alpha  = 1.0;
+      ValueType   beta   = 0.0;
+      dftfe::uInt numVec = 1;
       xgemm('N',
             'T',
             numVec,
@@ -1973,15 +1985,15 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
-      const unsigned int contiguousBlockSize,
-      const unsigned int numContiguousBlocks,
-      const ValueType   *X,
-      const ValueType   *Y,
-      const ValueType   *onesVec,
-      ValueType         *tempVector,
-      ValueType         *tempResults,
-      const MPI_Comm    &mpi_communicator,
-      ValueType         *result) const
+      const dftfe::uInt contiguousBlockSize,
+      const dftfe::uInt numContiguousBlocks,
+      const ValueType  *X,
+      const ValueType  *Y,
+      const ValueType  *onesVec,
+      ValueType        *tempVector,
+      ValueType        *tempResults,
+      const MPI_Comm   &mpi_communicator,
+      ValueType        *result) const
 
     {
       MultiVectorXDot(contiguousBlockSize,
@@ -2004,10 +2016,10 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
-      const dftfe::size_type numberofVectors,
-      const dftfe::size_type sizeOfVector,
-      ValueType1            *X,
-      ValueType2            *D)
+      const dftfe::uInt numberofVectors,
+      const dftfe::uInt sizeOfVector,
+      ValueType1       *X,
+      ValueType2       *D)
     {
       hipLaunchKernelGGL(computeRightDiagonalScaleKernel,
                          (numberofVectors +

@@ -64,21 +64,21 @@ namespace dftfe
       public:
         MPICommunicatorP2P(
           std::shared_ptr<const MPIPatternP2P<memorySpace>> mpiPatternP2P,
-          const size_type                                   blockSize);
+          const dftfe::uInt                                 blockSize);
 
         void
         updateGhostValues(MemoryStorage<ValueType, memorySpace> &dataArray,
-                          const size_type communicationChannel = 0);
+                          const dftfe::uInt communicationChannel = 0);
 
         void
         accumulateAddLocallyOwned(
           MemoryStorage<ValueType, memorySpace> &dataArray,
-          const size_type                        communicationChannel = 0);
+          const dftfe::uInt                      communicationChannel = 0);
 
 
         void
         updateGhostValuesBegin(MemoryStorage<ValueType, memorySpace> &dataArray,
-                               const size_type communicationChannel = 0);
+                               const dftfe::uInt communicationChannel = 0);
 
         void
         updateGhostValuesEnd(MemoryStorage<ValueType, memorySpace> &dataArray);
@@ -86,7 +86,7 @@ namespace dftfe
         void
         accumulateAddLocallyOwnedBegin(
           MemoryStorage<ValueType, memorySpace> &dataArray,
-          const size_type                        communicationChannel = 0);
+          const dftfe::uInt                      communicationChannel = 0);
 
         void
         accumulateAddLocallyOwnedEnd(
@@ -99,12 +99,12 @@ namespace dftfe
         void
         accumulateInsertLocallyOwned(
           MemoryStorage<ValueType, memorySpace> &dataArray,
-          const size_type                        communicationChannel = 0);
+          const dftfe::uInt                      communicationChannel = 0);
 
         void
         accumulateInsertLocallyOwnedBegin(
           MemoryStorage<ValueType, memorySpace> &dataArray,
-          const size_type                        communicationChannel = 0);
+          const dftfe::uInt                      communicationChannel = 0);
 
         void
         accumulateInsertLocallyOwnedEnd(
@@ -113,7 +113,7 @@ namespace dftfe
         std::shared_ptr<const MPIPatternP2P<memorySpace>>
         getMPIPatternP2P() const;
 
-        int
+        dftfe::Int
         getBlockSize() const;
 
         void
@@ -122,11 +122,11 @@ namespace dftfe
       private:
         std::shared_ptr<const MPIPatternP2P<memorySpace>> d_mpiPatternP2P;
 
-        size_type d_blockSize;
+        dftfe::uInt d_blockSize;
 
-        size_type d_locallyOwnedSize;
+        dftfe::uInt d_locallyOwnedSize;
 
-        size_type d_ghostSize;
+        dftfe::uInt d_ghostSize;
 
         MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 

@@ -50,16 +50,16 @@ namespace dftfe
                            const std::string  restartFilesPath,
                            const MPI_Comm    &mpi_comm_parent,
                            const bool         restart,
-                           const int          verbosity,
+                           const dftfe::Int   verbosity,
                            const bool         useDevice,
-                           const int          d_numberOfImages,
+                           const dftfe::Int   d_numberOfImages,
                            const bool         imageFreeze,
                            double             Kmax,
                            double             Kmin,
                            const double       pathThreshold,
-                           const int          maximumNEBIteration,
-                           const unsigned int _maxLineSearchIterCGPRP,
-                           const unsigned int _lbfgsNumPastSteps,
+                           const dftfe::Int   maximumNEBIteration,
+                           const dftfe::uInt  _maxLineSearchIterCGPRP,
+                           const dftfe::uInt  _lbfgsNumPastSteps,
                            const std::string &_bfgsStepMethod,
                            const double       optimizermaxIonUpdateStep,
                            const std::string &optimizationSolver,
@@ -69,9 +69,9 @@ namespace dftfe
 
     //~nudgedElasticBandClass();
 
-    double d_kmax = 0.1; // 0.1 Ha/bohr
-    double d_kmin = 0.1; // 0.1Ha/bohr
-    int    d_NEBImageno;
+    double     d_kmax = 0.1; // 0.1 Ha/bohr
+    double     d_kmin = 0.1; // 0.1Ha/bohr
+    dftfe::Int d_NEBImageno;
     /**
      * @brief Calls optimizer(nonLinearClass) solve. Prints the Final NEB energies and forces.
      * References:
@@ -80,18 +80,18 @@ namespace dftfe
      * 2.
      * https://pubs.aip.org/aip/jcp/article/128/13/134106/977389/Optimization-methods-for-finding-minimum-energy
      */
-    int
+    dftfe::Int
     findMEP();
     /**
      * @brief Returns the Normed vetor satistfying ||v||_2 = 1
      */
     void
-    ReturnNormedVector(std::vector<double> &, int);
+    ReturnNormedVector(std::vector<double> &, dftfe::Int);
     /**
      * @brief Calculates the L-norm of a vector
      */
     void
-    LNorm(double &, std::vector<double>, int, int);
+    LNorm(double &, std::vector<double>, dftfe::Int, dftfe::Int);
     /**
      * @brief Identifies the images to freeze, calculates gradient.
      * First prints the Image No., free energy and force error of each image
@@ -102,7 +102,7 @@ namespace dftfe
     /**
      * @brief Returns the total DoFs of the optimizer problem.
      */
-    unsigned int
+    dftfe::uInt
     getNumberUnknowns() const;
     /**
      * @brief Updates the positions of atoms and the total step count.
@@ -136,7 +136,7 @@ namespace dftfe
     void
     solution(std::vector<double> &solution);
     /// not implemented
-    std::vector<unsigned int>
+    std::vector<dftfe::uInt>
     getUnknownCountFlag() const;
 
   private:
@@ -145,44 +145,45 @@ namespace dftfe
     std::unique_ptr<nonLinearSolver>           d_nonLinearSolverPtr;
     // parallel communication objects
     const MPI_Comm d_mpiCommParent;
-    // const unsigned int n_mpi_processes;
-    const unsigned int d_this_mpi_process;
+    // const dftfe::uInt n_mpi_processes;
+    const dftfe::uInt d_this_mpi_process;
 
     // conditional stream object
     dealii::ConditionalOStream pcout;
 
-    int         d_verbosity;
+    dftfe::Int  d_verbosity;
     std::string d_restartFilesPath, d_solverRestartPath;
     bool        d_imageFreeze;
 
     /// total number of calls to update()
-    int          d_totalUpdateCalls;
-    int          d_startStep;
-    int          d_solver;
-    bool         d_isRestart;
-    bool         d_solverRestart;
-    unsigned int d_restartFlag;
-    unsigned int d_numberGlobalCharges;
-    double       d_maximumAtomForceToBeRelaxed;
-    unsigned int d_numberOfImages;
-    unsigned int d_countrelaxationFlags;
+    dftfe::Int  d_totalUpdateCalls;
+    dftfe::Int  d_startStep;
+    dftfe::Int  d_solver;
+    bool        d_isRestart;
+    bool        d_solverRestart;
+    dftfe::uInt d_restartFlag;
+    dftfe::uInt d_numberGlobalCharges;
+    double      d_maximumAtomForceToBeRelaxed;
+    dftfe::uInt d_numberOfImages;
+    dftfe::uInt d_countrelaxationFlags;
     // Solver Details
-    unsigned int d_maximumNEBIteration;
-    double       d_optimizertolerance;
-    unsigned int maxLineSearchIterCGPRP;
-    std::string  bfgsStepMethod;
-    double       d_optimizermaxIonUpdateStep;
-    unsigned int lbfgsNumPastSteps;
-    std::string  d_optimizationSolver;
-    std::string  d_ionRelaxFlagsFile;
+    dftfe::uInt d_maximumNEBIteration;
+    double      d_optimizertolerance;
+    dftfe::uInt maxLineSearchIterCGPRP;
+    std::string bfgsStepMethod;
+    double      d_optimizermaxIonUpdateStep;
+    dftfe::uInt lbfgsNumPastSteps;
+    std::string d_optimizationSolver;
+    std::string d_ionRelaxFlagsFile;
 
 
-    std::map<int, std::vector<std::vector<double>>> d_atomLocationsInitial;
-    std::vector<unsigned int>                       d_relaxationFlags;
-    std::vector<double>                             d_externalForceOnAtom;
-    std::vector<double>                             d_ImageError;
-    std::vector<double>                             d_Length;
-    std::string d_coordinatesFileNEB, d_domainVectorsFileNEB;
+    std::map<dftfe::Int, std::vector<std::vector<double>>>
+                             d_atomLocationsInitial;
+    std::vector<dftfe::uInt> d_relaxationFlags;
+    std::vector<double>      d_externalForceOnAtom;
+    std::vector<double>      d_ImageError;
+    std::vector<double>      d_Length;
+    std::string              d_coordinatesFileNEB, d_domainVectorsFileNEB;
     const MPI_Comm &
     getMPICommunicator();
 
@@ -190,20 +191,20 @@ namespace dftfe
      * @brief Calculate the tangent between each image
      */
     void
-    CalculatePathTangent(int, std::vector<double> &);
+    CalculatePathTangent(dftfe::Int, std::vector<double> &);
 
     /**
      * @brief Calculates the force on atom along the tangent between images
      */
     void
-    CalculateForceparallel(int,
+    CalculateForceparallel(dftfe::Int,
                            std::vector<double> &,
                            const std::vector<double> &);
     /**
      * @brief Calculates force perpendicular to the tangent
      */
     void
-    CalculateForceperpendicular(int,
+    CalculateForceperpendicular(dftfe::Int,
                                 std::vector<double> &,
                                 const std::vector<double> &,
                                 const std::vector<double> &);
@@ -213,7 +214,9 @@ namespace dftfe
      * @brief Calculates the force due to the spring.
      */
     void
-    CalculateSpringForce(int, std::vector<double> &, std::vector<double>);
+    CalculateSpringForce(dftfe::Int,
+                         std::vector<double> &,
+                         std::vector<double>);
 
     /**
      * @brief Calculates F_NEB = G_per+ F_spring
@@ -233,20 +236,20 @@ namespace dftfe
      * @brief Write Restart files
      */
     void
-    WriteRestartFiles(int step);
+    WriteRestartFiles(dftfe::Int step);
 
 
     /**
      * @brief Find spring constant based on k_max and k_min.
      */
     void
-    CalculateSpringConstant(int, double &);
+    CalculateSpringConstant(dftfe::Int, double &);
 
     /**
      * @brief Calculate F_per norm
      */
     void
-    ImageError(int image, double &Force);
+    ImageError(dftfe::Int image, double &Force);
 
     /**
      * @brief  set() initalises all the private datamembers of nudgedElasticBandClass object from the parameters declared by user.
@@ -263,7 +266,7 @@ namespace dftfe
     /**
      * @brief Check the restart files.
      */
-    int
+    dftfe::Int
     checkRestart(bool &periodic);
   };
 

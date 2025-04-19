@@ -44,8 +44,8 @@ namespace dftfe
      * sphericalFUnction class shared pointer.
      */
     void
-    init(const std::vector<unsigned int> &atomicNumbers,
-         const std::map<std::pair<unsigned int, unsigned int>,
+    init(const std::vector<dftfe::uInt> &atomicNumbers,
+         const std::map<std::pair<dftfe::uInt, dftfe::uInt>,
                         std::shared_ptr<AtomCenteredSphericalFunctionBase>>
            &listOfSphericalFunctions);
     /**
@@ -59,12 +59,12 @@ namespace dftfe
     void
     initaliseCoordinates(const std::vector<double>              &atomCoords,
                          const std::vector<std::vector<double>> &periodicCoords,
-                         const std::vector<int>                 &imageIds);
+                         const std::vector<dftfe::Int>          &imageIds);
     /**
      * @brief Returns the number of atoms present in domain
      * @return  Returns size of atomicNumbers vector
      */
-    unsigned int
+    dftfe::uInt
     getNumAtomCentersSize();
 
 
@@ -78,7 +78,7 @@ namespace dftfe
      * @brief Returns the map of atomId vs vector of image coordinates
      * @return  Returns d_periodicImageCoord
      */
-    const std::map<unsigned int, std::vector<double>> &
+    const std::map<dftfe::uInt, std::vector<double>> &
     getPeriodicImageCoordinatesList() const;
 
     // This functions returns the number of spherical functions associated with
@@ -88,24 +88,24 @@ namespace dftfe
      * @brief Returns the he number of total spherical functions indexed by {ilm} associated with  an atomic number. If the atomic number does not exist, it returns a zero.
      * @return d_numSphericalFunctions.find(atomicNumber)->size()
      */
-    unsigned int
-    getTotalNumberOfSphericalFunctionsPerAtom(unsigned int atomicNumber);
+    dftfe::uInt
+    getTotalNumberOfSphericalFunctionsPerAtom(dftfe::uInt atomicNumber);
 
     /**
      * @brief Returns the he number of radial spherical functions indexed by {i} associated with  an atomic number. If the atomic number does not exist, it returns a zero.
      * @return d_numRadialSphericalFunctions.find(atomicNumber)->size()
      */
-    unsigned int
-    getTotalNumberOfRadialSphericalFunctionsPerAtom(unsigned int atomicNumber);
+    dftfe::uInt
+    getTotalNumberOfRadialSphericalFunctionsPerAtom(dftfe::uInt atomicNumber);
     /**
      * @brief Returns the total number of total spherical functions indexed by {ilm} present in the current processor. If the atomic number does not exist, it returns a zero.
      */
-    unsigned int
+    dftfe::uInt
     getTotalNumberOfSphericalFunctionsInCurrentProcessor();
     /**
      * @brief Returns the maximum number of total spherical functions indexed by {ilm} across all atom Types present in atomNumbers vector
      */
-    unsigned int
+    dftfe::uInt
     getMaximumNumberOfSphericalFunctions();
     /**
      * @brief
@@ -121,39 +121,39 @@ namespace dftfe
      */
     void
     getTotalAtomsAndNonLocalElementsInCurrentProcessor(
-      unsigned int              &totalAtomsInCurrentProcessor,
-      unsigned int              &totalNonLocalElements,
-      std::vector<unsigned int> &numberCellsForEachAtom,
-      std::vector<unsigned int> &numberCellsAccumNonLocalAtoms,
-      std::vector<unsigned int> &iElemNonLocalToElemIndexMap);
+      dftfe::uInt              &totalAtomsInCurrentProcessor,
+      dftfe::uInt              &totalNonLocalElements,
+      std::vector<dftfe::uInt> &numberCellsForEachAtom,
+      std::vector<dftfe::uInt> &numberCellsAccumNonLocalAtoms,
+      std::vector<dftfe::uInt> &iElemNonLocalToElemIndexMap);
 
     /**
      * @brief Returns the total number of total radial-spherical functions indexed by {i} present in atomicNumbers list.
      */
-    unsigned int
+    dftfe::uInt
     getTotalNumberOfRadialSphericalFunctions();
 
     /**
      * @brief Returns the shared_ptr of AtomCenteredSphericalFunctionBase associated with std::pair(atomic Number and lQuantumNo)
      */
-    const std::map<std::pair<unsigned int, unsigned int>,
+    const std::map<std::pair<dftfe::uInt, dftfe::uInt>,
                    std::shared_ptr<AtomCenteredSphericalFunctionBase>> &
     getSphericalFunctions() const;
     /**
      * @brief Returns the vector of size Natoms of all atoms in system
      */
-    const std::vector<unsigned int> &
+    const std::vector<dftfe::uInt> &
     getAtomicNumbers() const;
     /**
      * @brief Returns the atomIds of atoms present in current processor
      */
-    const std::vector<unsigned int> &
+    const std::vector<dftfe::uInt> &
     getAtomIdsInCurrentProcess() const;
     /**
      * @brief Returns the startIndex of spherical Function alpha associated with atomic number Znum
      */
-    const unsigned int
-    getTotalSphericalFunctionIndexStart(unsigned int Znum, unsigned int alpha);
+    const dftfe::uInt
+    getTotalSphericalFunctionIndexStart(dftfe::uInt Znum, dftfe::uInt alpha);
     // COmputes the sparsity Pattern for the compact support Fn
     // cutOffVal the max/min value to consider to be part of copact support
     // cutOffType = 0 based on Fn Value, cutOffType = 1 based on Distance from
@@ -165,40 +165,40 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<NumberType,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                        &basisOperationsPtr,
-      const unsigned int quadratureIndex,
-      const double       cutOffVal  = 1.0E-8,
-      const unsigned int cutOffType = 0);
+                       &basisOperationsPtr,
+      const dftfe::uInt quadratureIndex,
+      const double      cutOffVal  = 1.0E-8,
+      const dftfe::uInt cutOffType = 0);
 
 
-    std::vector<std::vector<unsigned int>> d_elementIndexesInAtomCompactSupport;
+    std::vector<std::vector<dftfe::uInt>> d_elementIndexesInAtomCompactSupport;
     void
-    setImageCoordinates(const std::vector<int>                 &imageIds,
+    setImageCoordinates(const std::vector<dftfe::Int>          &imageIds,
                         const std::vector<std::vector<double>> &periodicCoords);
 
 
 
-    const std::vector<int> &
-    getAtomIdsInElement(unsigned int iElem);
+    const std::vector<dftfe::Int> &
+    getAtomIdsInElement(dftfe::uInt iElem);
 
-    const std::map<unsigned int, std::vector<int>> &
+    const std::map<dftfe::uInt, std::vector<dftfe::Int>> &
     getSparsityPattern();
 
     bool
-    atomSupportInElement(unsigned int iElem);
+    atomSupportInElement(dftfe::uInt iElem);
 
     void
     getDataForSparseStructure(
-      const std::map<unsigned int, std::vector<int>> &sparsityPattern,
+      const std::map<dftfe::uInt, std::vector<dftfe::Int>> &sparsityPattern,
       const std::vector<std::vector<dealii::CellId>>
         &elementIdsInAtomCompactSupport,
-      const std::vector<std::vector<unsigned int>>
-                                      &elementIndexesInAtomCompactSupport,
-      const std::vector<unsigned int> &atomIdsInCurrentProcess,
-      unsigned int                     numberElements);
+      const std::vector<std::vector<dftfe::uInt>>
+                                     &elementIndexesInAtomCompactSupport,
+      const std::vector<dftfe::uInt> &atomIdsInCurrentProcess,
+      dftfe::uInt                     numberElements);
 
-    const unsigned int
-    getOffsetLocation(const unsigned int iAtom);
+    const dftfe::uInt
+    getOffsetLocation(const dftfe::uInt iAtom);
 
   private:
     // A flattened vector that stores the coordinates of the atoms of interest
@@ -210,37 +210,37 @@ namespace dftfe
     // A vector of size = number of atoms of interest
     // the Ith atom in d_atomicNumbers has its coordinates
     // in d_atomCoords[3*I+0], d_atomCoords[3*I+1], d_atomCoords[3*I+2]
-    std::vector<unsigned int> d_atomicNumbers;
+    std::vector<dftfe::uInt> d_atomicNumbers;
 
     // This maps the atom I in the unit cell to all its image atoms.
     // number of image atoms of Ith atom = d_periodicImageCoord[I].size()/ dim
     // with dim=3 The coordinates are stored as a flattened vector
-    std::map<unsigned int, std::vector<double>> d_periodicImageCoord;
+    std::map<dftfe::uInt, std::vector<double>> d_periodicImageCoord;
 
 
     // This maps, from std::pair<atomic number, \alpha> to S_{z,\alpha},
     // where \alpha is the index for unique radial function
-    std::map<std::pair<unsigned int, unsigned int>,
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>,
              std::shared_ptr<AtomCenteredSphericalFunctionBase>>
       d_sphericalFunctionsContainer;
     // Stores the number of  distinct Radial Functions for a particular AtomType
-    std::map<unsigned int, unsigned int> d_numRadialSphericalFunctions;
+    std::map<dftfe::uInt, dftfe::uInt> d_numRadialSphericalFunctions;
     // Stores the number of  distinct  Functions include m for a particular
     // AtomType
-    std::map<unsigned int, unsigned int> d_numSphericalFunctions;
+    std::map<dftfe::uInt, dftfe::uInt> d_numSphericalFunctions;
     // This maps is between atomId in unit cell and the sparsity pattern of the
     // atom and its images in the unitcell domain.
-    std::map<unsigned int, std::vector<int>> d_sparsityPattern;
+    std::map<dftfe::uInt, std::vector<dftfe::Int>> d_sparsityPattern;
     //
     std::vector<std::vector<dealii::CellId>> d_elementIdsInAtomCompactSupport;
-    // std::vector<std::vector<unsigned int>>
+    // std::vector<std::vector<dftfe::uInt>>
     // d_elementIndexesInAtomCompactSupport;
     std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
-                              d_elementOneFieldIteratorsInAtomCompactSupport;
-    std::vector<unsigned int> d_AtomIdsInCurrentProcess;
-    std::vector<unsigned int> d_offsetLocation;
-    std::vector<std::vector<int>> d_AtomIdsInElement;
-    std::map<unsigned int, std::vector<unsigned int>>
+                             d_elementOneFieldIteratorsInAtomCompactSupport;
+    std::vector<dftfe::uInt> d_AtomIdsInCurrentProcess;
+    std::vector<dftfe::uInt> d_offsetLocation;
+    std::vector<std::vector<dftfe::Int>> d_AtomIdsInElement;
+    std::map<dftfe::uInt, std::vector<dftfe::uInt>>
       d_totalSphericalFunctionIndexStart;
 
   }; // end of class AtomCenteredSphericalFunctionContainerBase

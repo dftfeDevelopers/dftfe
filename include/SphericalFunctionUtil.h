@@ -21,7 +21,7 @@
 #define DFTFE_SPHERICALFUNCTIONUTIL_H
 
 #include <vector>
-
+#include <TypeConfig.h>
 namespace dftfe
 {
   namespace utils
@@ -55,7 +55,7 @@ namespace dftfe
                                   const double               angleTol);
 
       double
-      Clm(const int l, const int m);
+      Clm(const dftfe::Int l, const dftfe::Int m);
 
       /*
        * @brief Function to compute the azimuthal angle (phi) dependent
@@ -70,7 +70,7 @@ namespace dftfe
        * @return Value of the Qm function
        */
       double
-      Qm(const int m, const double phi);
+      Qm(const dftfe::Int m, const double phi);
 
       /*
        * @brief Function to compute derivative of the Qm(m,phi) function (defined above) with respect to phi.
@@ -81,7 +81,7 @@ namespace dftfe
        * @return Value of the derivative of Qm with respect to phi function
        */
       double
-      dQmDPhi(const int m, const double phi);
+      dQmDPhi(const dftfe::Int m, const double phi);
 
       /*
        * @brief Function to compute double derivative of the Qm(m,phi) function (defined above) with respect to phi.
@@ -92,7 +92,7 @@ namespace dftfe
        * @return Value of the double derivative of Qm with respect to phi function
        */
       double
-      d2QmDPhi2(const int m, const double phi);
+      d2QmDPhi2(const dftfe::Int m, const double phi);
 
       /*
        * @brief Function to compute the polar angle (theta) dependent
@@ -107,7 +107,7 @@ namespace dftfe
        * @return Value of the P_{l,|m|}
        */
       double
-      Plm(const int l, const int m, const double theta);
+      Plm(const dftfe::Int l, const dftfe::Int m, const double theta);
 
       /*
        * @brief Function to compute the derivative of the P_{l,|m|} function (defined above)
@@ -118,7 +118,7 @@ namespace dftfe
        * @return Value of the derivative of P_{l,|m|} with respect to theta
        */
       double
-      dPlmDTheta(const int l, const int m, const double theta);
+      dPlmDTheta(const dftfe::Int l, const dftfe::Int m, const double theta);
 
       /*
        * @brief Function to compute the double derivative of the P_{l,|m|} function (defined above)
@@ -129,7 +129,7 @@ namespace dftfe
        * @return Value of the double derivative of P_{l,|m|} with respect to theta
        */
       double
-      d2PlmDTheta2(const int l, const int m, const double theta);
+      d2PlmDTheta2(const dftfe::Int l, const dftfe::Int m, const double theta);
 
       /*
        * @brief Function to evaluate the real spherical harmonics YlmReal for a
@@ -142,7 +142,10 @@ namespace dftfe
        * @return Value of YlmReal
        */
       double
-      YlmReal(const int l, const int m, const double theta, const double phi);
+      YlmReal(const dftfe::Int l,
+              const dftfe::Int m,
+              const double     theta,
+              const double     phi);
 
       /*
        * @brief Function to evaluate the parial derivatives of the YlmReal function defined above with respect to
@@ -154,7 +157,10 @@ namespace dftfe
        * @return Vector containing the partial derivatives of YlmReal with respect to theta and phi, in that order.
        */
       std::vector<double>
-      dYlmReal(const int l, const int m, const double theta, const double phi);
+      dYlmReal(const dftfe::Int l,
+               const dftfe::Int m,
+               const double     theta,
+               const double     phi);
 
       /*
        * @brief Function to evaluate the second-order parial derivatives of the YlmReal function defined above with respect to
@@ -166,7 +172,10 @@ namespace dftfe
        * @return Vector containing the second-order partial derivatives of YlmReal with respect to theta and phi, in that order.
        */
       std::vector<double>
-      d2YlmReal(const int l, const int m, const double theta, const double phi);
+      d2YlmReal(const dftfe::Int l,
+                const dftfe::Int m,
+                const double     theta,
+                const double     phi);
 
       /*
        * @brief Function to evaluate the inverse of the Jacobian for the transform from cartesian to spherical coordinates

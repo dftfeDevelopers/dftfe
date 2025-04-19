@@ -41,7 +41,7 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE> &X2,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE> &Y2,
-      const unsigned int                                                    m,
+      const dftfe::uInt                                                     m,
       const double                                                          a,
       const double                                                          b,
       const double                                                          a0)
@@ -77,7 +77,7 @@ namespace dftfe
       //
       // polynomial loop
       //
-      for (unsigned int degree = 2; degree < m + 1; ++degree)
+      for (dftfe::uInt degree = 2; degree < m + 1; ++degree)
         {
           sigma2    = 1.0 / (gamma - sigma);
           alpha1Old = alpha1, alpha2Old = alpha2;
@@ -175,7 +175,7 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
                          &Y2_SP,
       std::vector<double> eigenvalues,
-      const unsigned int  m,
+      const dftfe::uInt   m,
       const double        a,
       const double        b,
       const double        a0,
@@ -245,7 +245,7 @@ namespace dftfe
       //
       // polynomial loop
       //
-      for (unsigned int degree = 2; degree < m + 1; ++degree)
+      for (dftfe::uInt degree = 2; degree < m + 1; ++degree)
         {
           sigma2    = 1.0 / (gamma - sigma);
           alpha1Old = alpha1, alpha2Old = alpha2;
@@ -445,8 +445,8 @@ namespace dftfe
     void
     subspaceRotationScalapack(
       dataTypes::number *X,
-      const unsigned int M,
-      const unsigned int N,
+      const dftfe::uInt  M,
+      const dftfe::uInt  N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -459,11 +459,11 @@ namespace dftfe
       const bool                                       rotationMatTranspose,
       const bool                                       isRotationMatLowerTria)
     {
-      const unsigned int maxNumLocalDofs =
+      const dftfe::uInt maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         rotationMatPar,
@@ -471,16 +471,16 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
-      const unsigned int dofsBlockSize =
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
       dftfe::utils::MemoryStorage<dataTypes::number,
@@ -509,11 +509,11 @@ namespace dftfe
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
-      const unsigned int numberBlocks =
+      const dftfe::uInt numberBlocks =
         (N / vectorsBlockSize) * (maxNumLocalDofs / dofsBlockSize + 1);
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t communEvents[numberBlocks];
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&communEvents[i]);
@@ -541,20 +541,20 @@ namespace dftfe
           tempImag.resize(vectorsBlockSize * N, 0);
         }
 
-      unsigned int blockCount = 0;
-      for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          unsigned int BDof = 0;
+          dftfe::uInt BDof = 0;
           if (M >= idof)
             BDof = std::min(dofsBlockSize, M - idof);
 
-          for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+          for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
             {
               // Correct block dimensions if block "goes off edge of" the matrix
-              const unsigned int BVec = std::min(vectorsBlockSize, N - jvec);
+              const dftfe::uInt BVec = std::min(vectorsBlockSize, N - jvec);
 
-              const unsigned int D = isRotationMatLowerTria ? (jvec + BVec) : N;
+              const dftfe::uInt D = isRotationMatLowerTria ? (jvec + BVec) : N;
 
               if ((jvec + BVec) <=
                     bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -574,17 +574,17 @@ namespace dftfe
                           if (rotationMatTranspose)
                             {
                               if (processGrid->is_process_active())
-                                for (unsigned int i = 0; i < D; ++i)
+                                for (dftfe::uInt i = 0; i < D; ++i)
                                   if (globalToLocalRowIdMap.find(i) !=
                                       globalToLocalRowIdMap.end())
                                     {
-                                      const unsigned int localRowId =
+                                      const dftfe::uInt localRowId =
                                         globalToLocalRowIdMap[i];
-                                      for (unsigned int j = 0; j < BVec; ++j)
+                                      for (dftfe::uInt j = 0; j < BVec; ++j)
                                         {
                                           std::unordered_map<
-                                            unsigned int,
-                                            unsigned int>::iterator it =
+                                            dftfe::uInt,
+                                            dftfe::uInt>::iterator it =
                                             globalToLocalColumnIdMap.find(j +
                                                                           jvec);
                                           if (it !=
@@ -599,17 +599,17 @@ namespace dftfe
                           else
                             {
                               if (processGrid->is_process_active())
-                                for (unsigned int i = 0; i < D; ++i)
+                                for (dftfe::uInt i = 0; i < D; ++i)
                                   if (globalToLocalColumnIdMap.find(i) !=
                                       globalToLocalColumnIdMap.end())
                                     {
-                                      const unsigned int localColumnId =
+                                      const dftfe::uInt localColumnId =
                                         globalToLocalColumnIdMap[i];
-                                      for (unsigned int j = 0; j < BVec; ++j)
+                                      for (dftfe::uInt j = 0; j < BVec; ++j)
                                         {
                                           std::unordered_map<
-                                            unsigned int,
-                                            unsigned int>::iterator it =
+                                            dftfe::uInt,
+                                            dftfe::uInt>::iterator it =
                                             globalToLocalRowIdMap.find(j +
                                                                        jvec);
                                           if (it != globalToLocalRowIdMap.end())
@@ -632,16 +632,16 @@ namespace dftfe
                       if (rotationMatTranspose)
                         {
                           if (processGrid->is_process_active())
-                            for (unsigned int i = 0; i < D; ++i)
+                            for (dftfe::uInt i = 0; i < D; ++i)
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
                                 {
-                                  const unsigned int localRowId =
+                                  const dftfe::uInt localRowId =
                                     globalToLocalRowIdMap[i];
-                                  for (unsigned int j = 0; j < BVec; ++j)
+                                  for (dftfe::uInt j = 0; j < BVec; ++j)
                                     {
-                                      std::unordered_map<unsigned int,
-                                                         unsigned int>::iterator
+                                      std::unordered_map<dftfe::uInt,
+                                                         dftfe::uInt>::iterator
                                         it = globalToLocalColumnIdMap.find(
                                           j + jvec);
                                       if (it != globalToLocalColumnIdMap.end())
@@ -655,16 +655,16 @@ namespace dftfe
                       else
                         {
                           if (processGrid->is_process_active())
-                            for (unsigned int i = 0; i < D; ++i)
+                            for (dftfe::uInt i = 0; i < D; ++i)
                               if (globalToLocalColumnIdMap.find(i) !=
                                   globalToLocalColumnIdMap.end())
                                 {
-                                  const unsigned int localColumnId =
+                                  const dftfe::uInt localColumnId =
                                     globalToLocalColumnIdMap[i];
-                                  for (unsigned int j = 0; j < BVec; ++j)
+                                  for (dftfe::uInt j = 0; j < BVec; ++j)
                                     {
-                                      std::unordered_map<unsigned int,
-                                                         unsigned int>::iterator
+                                      std::unordered_map<dftfe::uInt,
+                                                         dftfe::uInt>::iterator
                                         it =
                                           globalToLocalRowIdMap.find(j + jvec);
                                       if (it != globalToLocalRowIdMap.end())
@@ -844,7 +844,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(communEvents[i]);
@@ -857,8 +857,8 @@ namespace dftfe
     void
     subspaceRotationCGSMixedPrecScalapack(
       dataTypes::number *X,
-      const unsigned int M,
-      const unsigned int N,
+      const dftfe::uInt  M,
+      const dftfe::uInt  N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -870,11 +870,11 @@ namespace dftfe
       const dftParameters                             &dftParams,
       const bool                                       rotationMatTranspose)
     {
-      const unsigned int maxNumLocalDofs =
+      const dftfe::uInt maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         rotationMatPar,
@@ -882,15 +882,15 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
+      const dftfe::uInt MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         XSP(MPadded * N, dataTypes::numberFP32(0));
@@ -898,8 +898,8 @@ namespace dftfe
 
       BLASWrapperPtr->copyValueType1ArrToValueType2Arr(N * M, X, XSP.begin());
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
-      const unsigned int dofsBlockSize =
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
 
@@ -926,10 +926,10 @@ namespace dftfe
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
-      const unsigned int          numberBlocks = (N / vectorsBlockSize);
+      const dftfe::uInt           numberBlocks = (N / vectorsBlockSize);
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t communEvents[numberBlocks];
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&communEvents[i]);
@@ -958,11 +958,11 @@ namespace dftfe
       if (rotationMatTranspose)
         {
           if (processGrid->is_process_active())
-            for (unsigned int i = 0; i < N; ++i)
+            for (dftfe::uInt i = 0; i < N; ++i)
               if (globalToLocalRowIdMap.find(i) != globalToLocalRowIdMap.end())
                 {
-                  const unsigned int localRowId = globalToLocalRowIdMap[i];
-                  std::unordered_map<unsigned int, unsigned int>::iterator it =
+                  const dftfe::uInt localRowId = globalToLocalRowIdMap[i];
+                  std::unordered_map<dftfe::uInt, dftfe::uInt>::iterator it =
                     globalToLocalColumnIdMap.find(i);
                   if (it != globalToLocalColumnIdMap.end())
                     {
@@ -974,13 +974,12 @@ namespace dftfe
       else
         {
           if (processGrid->is_process_active())
-            for (unsigned int i = 0; i < N; ++i)
+            for (dftfe::uInt i = 0; i < N; ++i)
               if (globalToLocalColumnIdMap.find(i) !=
                   globalToLocalColumnIdMap.end())
                 {
-                  const unsigned int localColumnId =
-                    globalToLocalColumnIdMap[i];
-                  std::unordered_map<unsigned int, unsigned int>::iterator it =
+                  const dftfe::uInt localColumnId = globalToLocalColumnIdMap[i];
+                  std::unordered_map<dftfe::uInt, dftfe::uInt>::iterator it =
                     globalToLocalRowIdMap.find(i);
                   if (globalToLocalRowIdMap.find(i) !=
                       globalToLocalRowIdMap.end())
@@ -1016,13 +1015,13 @@ namespace dftfe
           tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
-      unsigned int blockCount = 0;
-      for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int BVec = std::min(vectorsBlockSize, N - jvec);
+          const dftfe::uInt BVec = std::min(vectorsBlockSize, N - jvec);
 
-          const unsigned int D = jvec + BVec;
+          const dftfe::uInt D = jvec + BVec;
 
           std::memset(rotationMatBlockHostSP.begin(),
                       0,
@@ -1037,16 +1036,16 @@ namespace dftfe
               if (rotationMatTranspose)
                 {
                   if (processGrid->is_process_active())
-                    for (unsigned int i = 0; i < D; ++i)
+                    for (dftfe::uInt i = 0; i < D; ++i)
                       if (globalToLocalRowIdMap.find(i) !=
                           globalToLocalRowIdMap.end())
                         {
-                          const unsigned int localRowId =
+                          const dftfe::uInt localRowId =
                             globalToLocalRowIdMap[i];
-                          for (unsigned int j = 0; j < BVec; ++j)
+                          for (dftfe::uInt j = 0; j < BVec; ++j)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
@@ -1058,8 +1057,8 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalColumnIdMap.find(i);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
@@ -1072,16 +1071,16 @@ namespace dftfe
               else
                 {
                   if (processGrid->is_process_active())
-                    for (unsigned int i = 0; i < D; ++i)
+                    for (dftfe::uInt i = 0; i < D; ++i)
                       if (globalToLocalColumnIdMap.find(i) !=
                           globalToLocalColumnIdMap.end())
                         {
-                          const unsigned int localColumnId =
+                          const dftfe::uInt localColumnId =
                             globalToLocalColumnIdMap[i];
-                          for (unsigned int j = 0; j < BVec; ++j)
+                          for (dftfe::uInt j = 0; j < BVec; ++j)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
@@ -1093,8 +1092,8 @@ namespace dftfe
 
                           if (i >= jvec && i < (jvec + BVec))
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalRowIdMap.find(i);
                               if (globalToLocalRowIdMap.find(i) !=
                                   globalToLocalRowIdMap.end())
@@ -1172,12 +1171,12 @@ namespace dftfe
                     rotationMatBlockSP.swap(rotationMatBlockSPTemp);
                 }
 
-              for (unsigned int idof = 0; idof < maxNumLocalDofs;
+              for (dftfe::uInt idof = 0; idof < maxNumLocalDofs;
                    idof += dofsBlockSize)
                 {
                   // Correct block dimensions if block "goes off edge of" the
                   // matrix
-                  unsigned int BDof = 0;
+                  dftfe::uInt BDof = 0;
                   if (M >= idof)
                     BDof = std::min(dofsBlockSize, M - idof);
 
@@ -1215,7 +1214,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(communEvents[i]);
@@ -1228,8 +1227,8 @@ namespace dftfe
     void
     subspaceRotationRRMixedPrecScalapack(
       dataTypes::number *X,
-      const unsigned int M,
-      const unsigned int N,
+      const dftfe::uInt  M,
+      const dftfe::uInt  N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -1241,18 +1240,18 @@ namespace dftfe
       const dftParameters                             &dftParams,
       const bool                                       rotationMatTranspose)
     {
-      const unsigned int maxNumLocalDofs =
+      const dftfe::uInt maxNumLocalDofs =
         dealii::Utilities::MPI::max(M, mpiCommDomain);
 
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         rotationMatPar,
         globalToLocalRowIdMap,
         globalToLocalColumnIdMap);
 
-      const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
+      const dftfe::uInt MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         XSP(MPadded * N, dataTypes::numberFP32(0));
@@ -1261,16 +1260,16 @@ namespace dftfe
       BLASWrapperPtr->copyValueType1ArrToValueType2Arr(N * M, X, XSP.begin());
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
-      const unsigned int dofsBlockSize =
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt dofsBlockSize =
         std::min(maxNumLocalDofs, dftParams.subspaceRotDofsBlockSize);
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -1296,10 +1295,10 @@ namespace dftfe
 
       // create array of compute and device direct commun events on Devices
       // for all the blocks. These are required for synchronization
-      const unsigned int          numberBlocks = (N / vectorsBlockSize);
+      const dftfe::uInt           numberBlocks = (N / vectorsBlockSize);
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t communEvents[numberBlocks];
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&communEvents[i]);
@@ -1328,11 +1327,11 @@ namespace dftfe
       if (rotationMatTranspose)
         {
           if (processGrid->is_process_active())
-            for (unsigned int i = 0; i < N; ++i)
+            for (dftfe::uInt i = 0; i < N; ++i)
               if (globalToLocalRowIdMap.find(i) != globalToLocalRowIdMap.end())
                 {
-                  const unsigned int localRowId = globalToLocalRowIdMap[i];
-                  std::unordered_map<unsigned int, unsigned int>::iterator it =
+                  const dftfe::uInt localRowId = globalToLocalRowIdMap[i];
+                  std::unordered_map<dftfe::uInt, dftfe::uInt>::iterator it =
                     globalToLocalColumnIdMap.find(i);
                   if (it != globalToLocalColumnIdMap.end())
                     {
@@ -1344,13 +1343,12 @@ namespace dftfe
       else
         {
           if (processGrid->is_process_active())
-            for (unsigned int i = 0; i < N; ++i)
+            for (dftfe::uInt i = 0; i < N; ++i)
               if (globalToLocalColumnIdMap.find(i) !=
                   globalToLocalColumnIdMap.end())
                 {
-                  const unsigned int localColumnId =
-                    globalToLocalColumnIdMap[i];
-                  std::unordered_map<unsigned int, unsigned int>::iterator it =
+                  const dftfe::uInt localColumnId = globalToLocalColumnIdMap[i];
+                  std::unordered_map<dftfe::uInt, dftfe::uInt>::iterator it =
                     globalToLocalRowIdMap.find(i);
                   if (globalToLocalRowIdMap.find(i) !=
                       globalToLocalRowIdMap.end())
@@ -1386,13 +1384,13 @@ namespace dftfe
           tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
-      unsigned int blockCount = 0;
-      for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int BVec = std::min(vectorsBlockSize, N - jvec);
+          const dftfe::uInt BVec = std::min(vectorsBlockSize, N - jvec);
 
-          const unsigned int D = N;
+          const dftfe::uInt D = N;
 
           if ((jvec + BVec) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -1407,16 +1405,16 @@ namespace dftfe
               if (rotationMatTranspose)
                 {
                   if (processGrid->is_process_active())
-                    for (unsigned int i = 0; i < D; ++i)
+                    for (dftfe::uInt i = 0; i < D; ++i)
                       if (globalToLocalRowIdMap.find(i) !=
                           globalToLocalRowIdMap.end())
                         {
-                          const unsigned int localRowId =
+                          const dftfe::uInt localRowId =
                             globalToLocalRowIdMap[i];
-                          for (unsigned int j = 0; j < BVec; ++j)
+                          for (dftfe::uInt j = 0; j < BVec; ++j)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalColumnIdMap.find(j + jvec);
                               if (it != globalToLocalColumnIdMap.end())
                                 {
@@ -1433,16 +1431,16 @@ namespace dftfe
               else
                 {
                   if (processGrid->is_process_active())
-                    for (unsigned int i = 0; i < D; ++i)
+                    for (dftfe::uInt i = 0; i < D; ++i)
                       if (globalToLocalColumnIdMap.find(i) !=
                           globalToLocalColumnIdMap.end())
                         {
-                          const unsigned int localColumnId =
+                          const dftfe::uInt localColumnId =
                             globalToLocalColumnIdMap[i];
-                          for (unsigned int j = 0; j < BVec; ++j)
+                          for (dftfe::uInt j = 0; j < BVec; ++j)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalRowIdMap.find(j + jvec);
                               if (it != globalToLocalRowIdMap.end())
                                 {
@@ -1524,12 +1522,12 @@ namespace dftfe
                     rotationMatBlockSP.swap(rotationMatBlockSPTemp);
                 }
 
-              for (unsigned int idof = 0; idof < maxNumLocalDofs;
+              for (dftfe::uInt idof = 0; idof < maxNumLocalDofs;
                    idof += dofsBlockSize)
                 {
                   // Correct block dimensions if block "goes off edge of" the
                   // matrix
-                  unsigned int BDof = 0;
+                  dftfe::uInt BDof = 0;
                   if (M >= idof)
                     BDof = std::min(dofsBlockSize, M - idof);
 
@@ -1567,7 +1565,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(communEvents[i]);
@@ -1583,8 +1581,8 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -1596,23 +1594,23 @@ namespace dftfe
       const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
         globalToLocalRowIdMap,
         globalToLocalColumnIdMap);
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
@@ -1645,22 +1643,22 @@ namespace dftfe
           tempImag.resize(vectorsBlockSize * N, 0);
         }
 
-      for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
+      for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - ivec);
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - ivec);
 
 
-          const unsigned int D = N - ivec;
+          const dftfe::uInt D = N - ivec;
 
           if ((ivec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              const unsigned int chebyBlockSize =
+              const dftfe::uInt chebyBlockSize =
                 std::min(dftParams.chebyWfcBlockSize, N);
 
-              for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+              for (dftfe::uInt k = ivec; k < ivec + B; k += chebyBlockSize)
                 {
                   BLASWrapperPtr->stridedCopyToBlockConstantStride(
                     chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -1744,17 +1742,16 @@ namespace dftfe
               // Copying only the lower triangular part to the ScaLAPACK overlap
               // matrix
               if (processGrid->is_process_active())
-                for (unsigned int i = 0; i < B; ++i)
+                for (dftfe::uInt i = 0; i < B; ++i)
                   if (globalToLocalColumnIdMap.find(i + ivec) !=
                       globalToLocalColumnIdMap.end())
                     {
-                      const unsigned int localColumnId =
+                      const dftfe::uInt localColumnId =
                         globalToLocalColumnIdMap[i + ivec];
-                      for (unsigned int j = ivec + i; j < N; ++j)
+                      for (dftfe::uInt j = ivec + i; j < N; ++j)
                         {
-                          std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                            globalToLocalRowIdMap.find(j);
+                          std::unordered_map<dftfe::uInt, dftfe::uInt>::iterator
+                            it = globalToLocalRowIdMap.find(j);
                           if (it != globalToLocalRowIdMap.end())
                             overlapMatPar.local_el(it->second, localColumnId) =
                               overlapMatrixBlockHost[i * D + j - ivec];
@@ -1805,8 +1802,8 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -1818,24 +1815,24 @@ namespace dftfe
       const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
         globalToLocalRowIdMap,
         globalToLocalColumnIdMap);
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
-      const unsigned int numberBlocks     = N / vectorsBlockSize;
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt numberBlocks     = N / vectorsBlockSize;
 
       // create separate Device streams for data movement and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
@@ -1852,7 +1849,7 @@ namespace dftfe
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&copyEvents[i]);
@@ -1893,12 +1890,12 @@ namespace dftfe
           tempImag.resize(vectorsBlockSize * N, 0);
         }
 
-      unsigned int blockCount = 0;
-      for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - ivec);
-          const unsigned int D = N - ivec;
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - ivec);
+          const dftfe::uInt D = N - ivec;
 
           if ((ivec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -1907,10 +1904,10 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock.
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  const unsigned int chebyBlockSize =
+                  const dftfe::uInt chebyBlockSize =
                     std::min(dftParams.chebyWfcBlockSize, N);
 
-                  for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+                  for (dftfe::uInt k = ivec; k < ivec + B; k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -1968,19 +1965,19 @@ namespace dftfe
                   (ivec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 overlapMatrixBlock.swap(overlapMatrixBlockNext);
 
-              const unsigned int ivecNew = ivec + vectorsBlockSize;
-              const unsigned int DNew    = N - ivecNew;
-              const unsigned int BNew = std::min(vectorsBlockSize, N - ivecNew);
+              const dftfe::uInt ivecNew = ivec + vectorsBlockSize;
+              const dftfe::uInt DNew    = N - ivecNew;
+              const dftfe::uInt BNew = std::min(vectorsBlockSize, N - ivecNew);
 
 
               // start computations on the next block
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-                  const unsigned int chebyBlockSize =
+                  const dftfe::uInt chebyBlockSize =
                     std::min(dftParams.chebyWfcBlockSize, N);
 
-                  for (unsigned int k = ivecNew; k < ivecNew + BNew;
+                  for (dftfe::uInt k = ivecNew; k < ivecNew + BNew;
                        k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
@@ -2082,16 +2079,16 @@ namespace dftfe
                   // Copying only the lower triangular part to the ScaLAPACK
                   // overlap matrix
                   if (processGrid->is_process_active())
-                    for (unsigned int i = 0; i < B; ++i)
+                    for (dftfe::uInt i = 0; i < B; ++i)
                       if (globalToLocalColumnIdMap.find(i + ivec) !=
                           globalToLocalColumnIdMap.end())
                         {
-                          const unsigned int localColumnId =
+                          const dftfe::uInt localColumnId =
                             globalToLocalColumnIdMap[i + ivec];
-                          for (unsigned int j = ivec + i; j < N; ++j)
+                          for (dftfe::uInt j = ivec + i; j < N; ++j)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalRowIdMap.find(j);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
@@ -2109,7 +2106,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(copyEvents[i]);
@@ -2134,9 +2131,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -2148,8 +2145,8 @@ namespace dftfe
       const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
@@ -2157,15 +2154,15 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -2175,7 +2172,7 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockDP(N * vectorsBlockSize, dataTypes::number(0));
 
-      const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
+      const dftfe::uInt MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         XSP(MPadded * N, dataTypes::numberFP32(0));
@@ -2233,21 +2230,21 @@ namespace dftfe
           tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
-      for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
+      for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - ivec);
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - ivec);
 
 
-          const unsigned int D = N - ivec;
+          const dftfe::uInt D = N - ivec;
 
           if ((ivec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (ivec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              const unsigned int chebyBlockSize =
+              const dftfe::uInt chebyBlockSize =
                 std::min(dftParams.chebyWfcBlockSize, N);
-              for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+              for (dftfe::uInt k = ivec; k < ivec + B; k += chebyBlockSize)
                 {
                   BLASWrapperPtr->stridedCopyToBlockConstantStride(
                     chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -2269,7 +2266,7 @@ namespace dftfe
                     OXBlock.begin(),
                     OXBlockFull.begin());
                 }
-              const unsigned int DRem = D - B;
+              const dftfe::uInt DRem = D - B;
               if (ivec + B > Noc)
                 {
                   BLASWrapperPtr->xgemm(
@@ -2449,16 +2446,16 @@ namespace dftfe
                   // Copying only the lower triangular part to the ScaLAPACK
                   // projected Hamiltonian matrix
                   if (processGrid->is_process_active())
-                    for (unsigned int j = 0; j < B; ++j)
+                    for (dftfe::uInt j = 0; j < B; ++j)
                       if (globalToLocalColumnIdMap.find(j + ivec) !=
                           globalToLocalColumnIdMap.end())
                         {
-                          const unsigned int localColumnId =
+                          const dftfe::uInt localColumnId =
                             globalToLocalColumnIdMap[j + ivec];
-                          for (unsigned int i = j + ivec; i < N; ++i)
+                          for (dftfe::uInt i = j + ivec; i < N; ++i)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalRowIdMap.find(i);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
@@ -2493,26 +2490,26 @@ namespace dftfe
                   // Copying only the lower triangular part to the ScaLAPACK
                   // projected Hamiltonian matrix
                   if (processGrid->is_process_active())
-                    for (unsigned int j = 0; j < B; ++j)
+                    for (dftfe::uInt j = 0; j < B; ++j)
                       if (globalToLocalColumnIdMap.find(j + ivec) !=
                           globalToLocalColumnIdMap.end())
                         {
-                          const unsigned int localColumnId =
+                          const dftfe::uInt localColumnId =
                             globalToLocalColumnIdMap[j + ivec];
-                          for (unsigned int i = j + ivec; i < ivec + B; ++i)
+                          for (dftfe::uInt i = j + ivec; i < ivec + B; ++i)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalRowIdMap.find(i);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
                                                        localColumnId) =
                                   overlapMatrixBlockHostDP[j * B + i - ivec];
                             }
-                          for (unsigned int i = ivec + B; i < N; ++i)
+                          for (dftfe::uInt i = ivec + B; i < N; ++i)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalRowIdMap.find(i);
                               if (it != globalToLocalRowIdMap.end())
                                 overlapMatPar.local_el(it->second,
@@ -2568,9 +2565,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -2582,8 +2579,8 @@ namespace dftfe
       const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
@@ -2591,16 +2588,16 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
-      const unsigned int numberBlocks     = N / vectorsBlockSize;
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt numberBlocks     = N / vectorsBlockSize;
 
       // create separate Device streams for Device->CPU copy and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
@@ -2617,7 +2614,7 @@ namespace dftfe
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&copyEvents[i]);
@@ -2637,7 +2634,7 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         overlapMatrixBlockDPNext(N * vectorsBlockSize, dataTypes::number(0));
 
-      const unsigned int MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
+      const dftfe::uInt MPadded = std::ceil(M * 1.0 / 8.0) * 8.0 + 0.5;
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         XSP(MPadded * N, dataTypes::numberFP32(0));
@@ -2695,13 +2692,13 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         OXBlockFullFP32(vectorsBlockSize * M, dataTypes::numberFP32(0.0));
 
-      unsigned int blockCount = 0;
-      for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - ivec);
-          const unsigned int D = N - ivec;
-          const unsigned int chebyBlockSize =
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - ivec);
+          const dftfe::uInt D = N - ivec;
+          const dftfe::uInt chebyBlockSize =
             std::min(dftParams.chebyWfcBlockSize, N);
           if ((ivec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -2710,7 +2707,7 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+                  for (dftfe::uInt k = ivec; k < ivec + B; k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -2770,7 +2767,7 @@ namespace dftfe
                         overlapMatrixBlockDP.begin(),
                         B);
 
-                      const unsigned int DRem = D - B;
+                      const dftfe::uInt DRem = D - B;
 
                       if (DRem != 0)
                         {
@@ -2822,16 +2819,16 @@ namespace dftfe
                   overlapMatrixBlockSP.swap(overlapMatrixBlockSPNext);
                 }
 
-              const unsigned int DRem = D - B;
+              const dftfe::uInt DRem = D - B;
 
-              const unsigned int ivecNew = ivec + vectorsBlockSize;
-              const unsigned int DNew    = N - ivecNew;
-              const unsigned int BNew = std::min(vectorsBlockSize, N - ivecNew);
+              const dftfe::uInt ivecNew = ivec + vectorsBlockSize;
+              const dftfe::uInt DNew    = N - ivecNew;
+              const dftfe::uInt BNew = std::min(vectorsBlockSize, N - ivecNew);
 
               if (ivecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-                  for (unsigned int k = ivecNew; k < ivecNew + BNew;
+                  for (dftfe::uInt k = ivecNew; k < ivecNew + BNew;
                        k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
@@ -2894,7 +2891,7 @@ namespace dftfe
                         overlapMatrixBlockDPNext.begin(),
                         BNew);
 
-                      const unsigned int DRemNew = DNew - BNew;
+                      const dftfe::uInt DRemNew = DNew - BNew;
 
                       if (DRemNew != 0)
                         {
@@ -3054,17 +3051,17 @@ namespace dftfe
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
                       if (processGrid->is_process_active())
-                        for (unsigned int j = 0; j < B; ++j)
+                        for (dftfe::uInt j = 0; j < B; ++j)
                           if (globalToLocalColumnIdMap.find(j + ivec) !=
                               globalToLocalColumnIdMap.end())
                             {
-                              const unsigned int localColumnId =
+                              const dftfe::uInt localColumnId =
                                 globalToLocalColumnIdMap[j + ivec];
-                              for (unsigned int i = j + ivec; i < N; ++i)
+                              for (dftfe::uInt i = j + ivec; i < N; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     overlapMatPar.local_el(it->second,
                                                            localColumnId) =
@@ -3099,28 +3096,28 @@ namespace dftfe
                       // Copying only the lower triangular part to the ScaLAPACK
                       // overlap matrix
                       if (processGrid->is_process_active())
-                        for (unsigned int j = 0; j < B; ++j)
+                        for (dftfe::uInt j = 0; j < B; ++j)
                           if (globalToLocalColumnIdMap.find(j + ivec) !=
                               globalToLocalColumnIdMap.end())
                             {
-                              const unsigned int localColumnId =
+                              const dftfe::uInt localColumnId =
                                 globalToLocalColumnIdMap[j + ivec];
-                              for (unsigned int i = j + ivec; i < ivec + B; ++i)
+                              for (dftfe::uInt i = j + ivec; i < ivec + B; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     overlapMatPar.local_el(it->second,
                                                            localColumnId) =
                                       overlapMatrixBlockHostDP[j * B + i -
                                                                ivec];
                                 }
-                              for (unsigned int i = ivec + B; i < N; ++i)
+                              for (dftfe::uInt i = ivec + B; i < N; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     overlapMatPar.local_el(it->second,
                                                            localColumnId) =
@@ -3140,7 +3137,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(copyEvents[i]);
@@ -3165,9 +3162,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -3179,8 +3176,8 @@ namespace dftfe
       const dftParameters                             &dftParams)
     {
       // get global to local index maps for Scalapack matrix
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         overlapMatPar,
@@ -3188,16 +3185,16 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
-      const unsigned int numberBlocks     = N / vectorsBlockSize;
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt numberBlocks     = N / vectorsBlockSize;
 
       // create separate Device streams for data movement and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
@@ -3214,7 +3211,7 @@ namespace dftfe
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&copyEvents[i]);
@@ -3286,12 +3283,12 @@ namespace dftfe
           tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
-      unsigned int blockCount = 0;
-      for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - ivec);
-          const unsigned int D = N - ivec;
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - ivec);
+          const dftfe::uInt D = N - ivec;
 
           if ((ivec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -3300,10 +3297,10 @@ namespace dftfe
               // Compute local XTrunc^{T}*XcBlock.
               if (ivec == bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  const unsigned int chebyBlockSize =
+                  const dftfe::uInt chebyBlockSize =
                     std::min(dftParams.chebyWfcBlockSize, N);
 
-                  for (unsigned int k = ivec; k < ivec + B; k += chebyBlockSize)
+                  for (dftfe::uInt k = ivec; k < ivec + B; k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -3363,9 +3360,9 @@ namespace dftfe
                   (ivec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 projOverlapMatrixBlock.swap(projOverlapMatrixBlockNext);
 
-              const unsigned int ivecNew = ivec + vectorsBlockSize;
-              const unsigned int DNew    = N - ivecNew;
-              const unsigned int BNew = std::min(vectorsBlockSize, N - ivecNew);
+              const dftfe::uInt ivecNew = ivec + vectorsBlockSize;
+              const dftfe::uInt DNew    = N - ivecNew;
+              const dftfe::uInt BNew = std::min(vectorsBlockSize, N - ivecNew);
 
 
               // start computations on the next block
@@ -3373,10 +3370,10 @@ namespace dftfe
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
                   // evaluate X^{T} times XBlock
-                  const unsigned int chebyBlockSize =
+                  const dftfe::uInt chebyBlockSize =
                     std::min(dftParams.chebyWfcBlockSize, N);
 
-                  for (unsigned int k = ivecNew; k < ivecNew + B;
+                  for (dftfe::uInt k = ivecNew; k < ivecNew + B;
                        k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
@@ -3424,7 +3421,7 @@ namespace dftfe
                 }
 
 
-              const unsigned int DRem = D - B;
+              const dftfe::uInt DRem = D - B;
               copyFromOverlapMatBlockToDPSPBlocks(
                 B,
                 D,
@@ -3555,17 +3552,17 @@ namespace dftfe
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
                       if (processGrid->is_process_active())
-                        for (unsigned int j = 0; j < B; ++j)
+                        for (dftfe::uInt j = 0; j < B; ++j)
                           if (globalToLocalColumnIdMap.find(j + ivec) !=
                               globalToLocalColumnIdMap.end())
                             {
-                              const unsigned int localColumnId =
+                              const dftfe::uInt localColumnId =
                                 globalToLocalColumnIdMap[j + ivec];
-                              for (unsigned int i = j + ivec; i < N; ++i)
+                              for (dftfe::uInt i = j + ivec; i < N; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     overlapMatPar.local_el(it->second,
                                                            localColumnId) =
@@ -3599,27 +3596,27 @@ namespace dftfe
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
                       if (processGrid->is_process_active())
-                        for (unsigned int i = 0; i < B; ++i)
+                        for (dftfe::uInt i = 0; i < B; ++i)
                           if (globalToLocalColumnIdMap.find(i + ivec) !=
                               globalToLocalColumnIdMap.end())
                             {
-                              const unsigned int localColumnId =
+                              const dftfe::uInt localColumnId =
                                 globalToLocalColumnIdMap[i + ivec];
-                              for (unsigned int j = i + ivec; j < ivec + B; ++j)
+                              for (dftfe::uInt j = i + ivec; j < ivec + B; ++j)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(j);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(j);
                                   if (it != globalToLocalRowIdMap.end())
                                     overlapMatPar.local_el(it->second,
                                                            localColumnId) =
                                       projOverlapBlockHost[i * B + j - ivec];
                                 }
-                              for (unsigned int j = ivec + B; j < N; ++j)
+                              for (dftfe::uInt j = ivec + B; j < N; ++j)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(j);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(j);
                                   if (it != globalToLocalRowIdMap.end())
                                     overlapMatPar.local_el(it->second,
                                                            localColumnId) =
@@ -3638,7 +3635,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(copyEvents[i]);
@@ -3663,8 +3660,8 @@ namespace dftfe
       dataTypes::number                                   *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &HXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       const std::vector<double>                           &eigenValues,
       const MPI_Comm                                      &mpiCommParent,
       const MPI_Comm                                      &mpiCommDomain,
@@ -3677,16 +3674,16 @@ namespace dftfe
       const bool           useBandParal)
     {
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
 
-      const unsigned int vectorsBlockSize = dftParams.wfcBlockSize;
+      const dftfe::uInt vectorsBlockSize = dftParams.wfcBlockSize;
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         residualNormSquareDevice(N, 0);
       dftfe::utils::MemoryStorage<dataTypes::number,
@@ -3708,10 +3705,10 @@ namespace dftfe
       const double scalar    = 1.0;
       const double alpha = 1.0, beta = 0;
 
-      for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - jvec);
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - jvec);
 
 
           if (((jvec + B) <=
@@ -3720,10 +3717,10 @@ namespace dftfe
                  bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]) ||
               !useBandParal)
             {
-              const unsigned int chebyBlockSize =
+              const dftfe::uInt chebyBlockSize =
                 std::min(dftParams.chebyWfcBlockSize, N);
 
-              for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
+              for (dftfe::uInt k = jvec; k < jvec + B; k += chebyBlockSize)
                 {
                   BLASWrapperPtr->stridedCopyToBlockConstantStride(
                     chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -3803,12 +3800,12 @@ namespace dftfe
           if (dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
             std::cout << "L-2 Norm of residue   :" << std::endl;
         }
-      for (unsigned int iWave = 0; iWave < N; ++iWave)
+      for (dftfe::uInt iWave = 0; iWave < N; ++iWave)
         residualNorm[iWave] = std::sqrt(residualNorm[iWave]);
 
       if (dftParams.verbosity >= 4 &&
           dealii::Utilities::MPI::this_mpi_process(mpiCommParent) == 0)
-        for (unsigned int iWave = 0; iWave < N; ++iWave)
+        for (dftfe::uInt iWave = 0; iWave < N; ++iWave)
           std::cout << "eigen vector " << iWave << ": " << residualNorm[iWave]
                     << std::endl;
 
@@ -3823,8 +3820,8 @@ namespace dftfe
          const dataTypes::number                             *X,
          distributedDeviceVec<dataTypes::number>             &XBlock,
          distributedDeviceVec<dataTypes::number>             &HXBlock,
-         const unsigned int                                   M,
-         const unsigned int                                   N,
+         const dftfe::uInt                                    M,
+         const dftfe::uInt                                    N,
          std::shared_ptr<
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                          &BLASWrapperPtr,
@@ -3836,8 +3833,8 @@ namespace dftfe
          const dftParameters     &dftParams,
          const bool               onlyHPrimePartForFirstOrderDensityMatResponse)
     {
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         projHamPar,
@@ -3845,17 +3842,17 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
 
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST_PINNED>
@@ -3872,19 +3869,19 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlock(vectorsBlockSize * N, dataTypes::number(0.0));
 
-      for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - jvec);
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - jvec);
 
           if ((jvec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              const unsigned int chebyBlockSize =
+              const dftfe::uInt chebyBlockSize =
                 std::min(dftParams.chebyWfcBlockSize, N);
 
-              for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
+              for (dftfe::uInt k = jvec; k < jvec + B; k += chebyBlockSize)
                 {
                   BLASWrapperPtr->stridedCopyToBlockConstantStride(
                     chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -3910,7 +3907,7 @@ namespace dftfe
               // Comptute local XTrunc^{T}*HConj*XConj.
               const dataTypes::number alpha = dataTypes::number(1.0),
                                       beta  = dataTypes::number(0.0);
-              const unsigned int D          = N - jvec;
+              const dftfe::uInt D           = N - jvec;
               BLASWrapperPtr->xgemm(
                 'N',
                 std::is_same<dataTypes::number, std::complex<double>>::value ?
@@ -3946,17 +3943,16 @@ namespace dftfe
               // Copying only the lower triangular part to the ScaLAPACK
               // projected Hamiltonian matrix
               if (processGrid->is_process_active())
-                for (unsigned int j = 0; j < B; ++j)
+                for (dftfe::uInt j = 0; j < B; ++j)
                   if (globalToLocalColumnIdMap.find(j + jvec) !=
                       globalToLocalColumnIdMap.end())
                     {
-                      const unsigned int localColumnId =
+                      const dftfe::uInt localColumnId =
                         globalToLocalColumnIdMap[j + jvec];
-                      for (unsigned int i = j + jvec; i < N; ++i)
+                      for (dftfe::uInt i = j + jvec; i < N; ++i)
                         {
-                          std::unordered_map<unsigned int,
-                                             unsigned int>::iterator it =
-                            globalToLocalRowIdMap.find(i);
+                          std::unordered_map<dftfe::uInt, dftfe::uInt>::iterator
+                            it = globalToLocalRowIdMap.find(i);
                           if (it != globalToLocalRowIdMap.end())
                             projHamPar.local_el(it->second, localColumnId) =
                               projHamBlockHost[j * D + i - jvec];
@@ -3983,8 +3979,8 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &HXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -4024,8 +4020,8 @@ namespace dftfe
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         projHamPar,
@@ -4033,18 +4029,18 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
 
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
-      const unsigned int numberBlocks     = N / vectorsBlockSize;
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt numberBlocks     = N / vectorsBlockSize;
 
       // create separate Device streams for Device->CPU copy and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
@@ -4061,7 +4057,7 @@ namespace dftfe
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&copyEvents[i]);
@@ -4097,22 +4093,22 @@ namespace dftfe
           tempImag.resize(vectorsBlockSize * N, 0);
         }
 
-      unsigned int blockCount = 0;
-      for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - jvec);
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - jvec);
 
           if ((jvec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              const unsigned int chebyBlockSize =
+              const dftfe::uInt chebyBlockSize =
                 std::min(dftParams.chebyWfcBlockSize, N);
 
               const dataTypes::number alpha = dataTypes::number(1.0),
                                       beta  = dataTypes::number(0.0);
-              const unsigned int D          = N - jvec;
+              const dftfe::uInt D           = N - jvec;
 
               // handle edge case for the first block or the first block in the
               // band group in case of band parallelization
@@ -4120,7 +4116,7 @@ namespace dftfe
                 {
                   // compute HXBlockFull in an inner loop over blocks of B
                   // wavefunction vectors
-                  for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
+                  for (dftfe::uInt k = jvec; k < jvec + B; k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -4180,14 +4176,14 @@ namespace dftfe
                   (jvec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 projHamBlock.swap(projHamBlockNext);
 
-              const unsigned int jvecNew = jvec + vectorsBlockSize;
-              const unsigned int DNew    = N - jvecNew;
+              const dftfe::uInt jvecNew = jvec + vectorsBlockSize;
+              const dftfe::uInt DNew    = N - jvecNew;
 
               // start computations on the next block
               if (jvecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-                  for (unsigned int k = jvecNew; k < jvecNew + B;
+                  for (dftfe::uInt k = jvecNew; k < jvecNew + B;
                        k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
@@ -4289,16 +4285,16 @@ namespace dftfe
                   // Copying only the lower triangular part to the ScaLAPACK
                   // projected Hamiltonian matrix
                   if (processGrid->is_process_active())
-                    for (unsigned int j = 0; j < B; ++j)
+                    for (dftfe::uInt j = 0; j < B; ++j)
                       if (globalToLocalColumnIdMap.find(j + jvec) !=
                           globalToLocalColumnIdMap.end())
                         {
-                          const unsigned int localColumnId =
+                          const dftfe::uInt localColumnId =
                             globalToLocalColumnIdMap[j + jvec];
-                          for (unsigned int i = j + jvec; i < N; ++i)
+                          for (dftfe::uInt i = j + jvec; i < N; ++i)
                             {
-                              std::unordered_map<unsigned int,
-                                                 unsigned int>::iterator it =
+                              std::unordered_map<dftfe::uInt,
+                                                 dftfe::uInt>::iterator it =
                                 globalToLocalRowIdMap.find(i);
                               if (it != globalToLocalRowIdMap.end())
                                 projHamPar.local_el(it->second, localColumnId) =
@@ -4314,7 +4310,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(copyEvents[i]);
@@ -4367,9 +4363,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &HXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -4381,26 +4377,26 @@ namespace dftfe
       const dftParameters                             &dftParams,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse)
     {
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         projHamPar,
         globalToLocalRowIdMap,
         globalToLocalColumnIdMap);
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
 
-      const unsigned int numberBlocks = N / vectorsBlockSize;
+      const dftfe::uInt numberBlocks = N / vectorsBlockSize;
 
       // create device compute and copy streams
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
@@ -4417,7 +4413,7 @@ namespace dftfe
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&copyEvents[i]);
@@ -4486,17 +4482,17 @@ namespace dftfe
           tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
-      unsigned int blockCount = 0;
-      for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - jvec);
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - jvec);
 
           if ((jvec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              const unsigned int chebyBlockSize =
+              const dftfe::uInt chebyBlockSize =
                 std::min(dftParams.chebyWfcBlockSize, N);
 
               const dataTypes::number alpha = dataTypes::number(1.0),
@@ -4504,7 +4500,7 @@ namespace dftfe
               const dataTypes::numberFP32 alphaFP32 =
                                             dataTypes::numberFP32(1.0),
                                           betaFP32 = dataTypes::numberFP32(0.0);
-              const unsigned int D                 = N - jvec;
+              const dftfe::uInt D                  = N - jvec;
 
               // handle edge case for the first block or the first block in the
               // band group in case of band parallelization
@@ -4512,7 +4508,7 @@ namespace dftfe
                 {
                   // compute HXBlockFull or HXBlockFullFP32 in an inner loop
                   // over blocks of B wavefunction vectors
-                  for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
+                  for (dftfe::uInt k = jvec; k < jvec + B; k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -4537,7 +4533,7 @@ namespace dftfe
 
                   // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
                   // HXBlockFullFP32Conj
-                  const unsigned int DRem = D - B;
+                  const dftfe::uInt DRem = D - B;
                   if (jvec + B > Noc)
                     {
                       BLASWrapperPtr->xgemm(
@@ -4631,16 +4627,16 @@ namespace dftfe
                       projHamBlockFP32.swap(projHamBlockFP32Next);
                     }
                 }
-              const unsigned int DRem    = D - B;
-              const unsigned int jvecNew = jvec + vectorsBlockSize;
-              const unsigned int DNew    = N - jvecNew;
-              const unsigned int BNew = std::min(vectorsBlockSize, N - jvecNew);
+              const dftfe::uInt DRem    = D - B;
+              const dftfe::uInt jvecNew = jvec + vectorsBlockSize;
+              const dftfe::uInt DNew    = N - jvecNew;
+              const dftfe::uInt BNew = std::min(vectorsBlockSize, N - jvecNew);
               if (jvecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
                   // compute HXBlockFull or HXBlockFullFP32 in an inner loop
                   // over blocks of B wavefunction vectors
-                  for (unsigned int k = jvecNew; k < jvecNew + BNew;
+                  for (dftfe::uInt k = jvecNew; k < jvecNew + BNew;
                        k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
@@ -4666,7 +4662,7 @@ namespace dftfe
 
                   // evaluate X^{T} times HXBlockFullConj or XFP32^{T} times
                   // HXBlockFullFP32Conj
-                  const unsigned int DRemNew = DNew - BNew;
+                  const dftfe::uInt DRemNew = DNew - BNew;
                   if (jvecNew + BNew > Noc)
                     {
                       BLASWrapperPtr->xgemm(
@@ -4862,17 +4858,17 @@ namespace dftfe
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
                       if (processGrid->is_process_active())
-                        for (unsigned int j = 0; j < B; ++j)
+                        for (dftfe::uInt j = 0; j < B; ++j)
                           if (globalToLocalColumnIdMap.find(j + jvec) !=
                               globalToLocalColumnIdMap.end())
                             {
-                              const unsigned int localColumnId =
+                              const dftfe::uInt localColumnId =
                                 globalToLocalColumnIdMap[j + jvec];
-                              for (unsigned int i = j + jvec; i < N; ++i)
+                              for (dftfe::uInt i = j + jvec; i < N; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
@@ -4906,27 +4902,27 @@ namespace dftfe
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
                       if (processGrid->is_process_active())
-                        for (unsigned int j = 0; j < B; ++j)
+                        for (dftfe::uInt j = 0; j < B; ++j)
                           if (globalToLocalColumnIdMap.find(j + jvec) !=
                               globalToLocalColumnIdMap.end())
                             {
-                              const unsigned int localColumnId =
+                              const dftfe::uInt localColumnId =
                                 globalToLocalColumnIdMap[j + jvec];
-                              for (unsigned int i = j + jvec; i < jvec + B; ++i)
+                              for (dftfe::uInt i = j + jvec; i < jvec + B; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
                                       projHamBlockHost[j * B + i - jvec];
                                 }
-                              for (unsigned int i = jvec + B; i < N; ++i)
+                              for (dftfe::uInt i = jvec + B; i < N; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
@@ -4944,7 +4940,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(copyEvents[i]);
@@ -4969,9 +4965,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &HXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -5011,8 +5007,8 @@ namespace dftfe
       /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-      std::unordered_map<unsigned int, unsigned int> globalToLocalColumnIdMap;
-      std::unordered_map<unsigned int, unsigned int> globalToLocalRowIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalColumnIdMap;
+      std::unordered_map<dftfe::uInt, dftfe::uInt> globalToLocalRowIdMap;
       linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(
         processGrid,
         projHamPar,
@@ -5020,18 +5016,18 @@ namespace dftfe
         globalToLocalColumnIdMap);
 
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
 
 
-      const unsigned int vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
-      const unsigned int numberBlocks     = N / vectorsBlockSize;
+      const dftfe::uInt vectorsBlockSize = std::min(dftParams.wfcBlockSize, N);
+      const dftfe::uInt numberBlocks     = N / vectorsBlockSize;
 
       // create separate Device streams for Device->CPU copy and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
@@ -5048,7 +5044,7 @@ namespace dftfe
       dftfe::utils::deviceEvent_t computeEvents[numberBlocks];
       dftfe::utils::deviceEvent_t copyEvents[numberBlocks];
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventCreate(&computeEvents[i]);
           dftfe::utils::deviceEventCreate(&copyEvents[i]);
@@ -5110,22 +5106,22 @@ namespace dftfe
           tempImagFP32.resize(vectorsBlockSize * N, 0);
         }
 
-      unsigned int blockCount = 0;
-      for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      dftfe::uInt blockCount = 0;
+      for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
-          const unsigned int B = std::min(vectorsBlockSize, N - jvec);
+          const dftfe::uInt B = std::min(vectorsBlockSize, N - jvec);
 
           if ((jvec + B) <=
                 bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
               (jvec + B) > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
             {
-              const unsigned int chebyBlockSize =
+              const dftfe::uInt chebyBlockSize =
                 std::min(dftParams.chebyWfcBlockSize, N);
 
               const dataTypes::number alpha = dataTypes::number(1.0),
                                       beta  = dataTypes::number(0.0);
-              const unsigned int D          = N - jvec;
+              const dftfe::uInt D           = N - jvec;
 
               // handle edge case for the first block or the first block in the
               // band group in case of band parallelization
@@ -5133,7 +5129,7 @@ namespace dftfe
                 {
                   // compute HXBlockFull in an inner loop over blocks of B
                   // wavefunction vectors
-                  for (unsigned int k = jvec; k < jvec + B; k += chebyBlockSize)
+                  for (dftfe::uInt k = jvec; k < jvec + B; k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
                         chebyBlockSize, N, M, k, X, XBlock.begin());
@@ -5193,14 +5189,14 @@ namespace dftfe
                   (jvec > bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId]))
                 projHamBlock.swap(projHamBlockNext);
 
-              const unsigned int jvecNew = jvec + vectorsBlockSize;
-              const unsigned int DNew    = N - jvecNew;
+              const dftfe::uInt jvecNew = jvec + vectorsBlockSize;
+              const dftfe::uInt DNew    = N - jvecNew;
 
               // start computations on the next block
               if (jvecNew <
                   bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1])
                 {
-                  for (unsigned int k = jvecNew; k < jvecNew + B;
+                  for (dftfe::uInt k = jvecNew; k < jvecNew + B;
                        k += chebyBlockSize)
                     {
                       BLASWrapperPtr->stridedCopyToBlockConstantStride(
@@ -5247,7 +5243,7 @@ namespace dftfe
                   dftfe::utils::deviceEventRecord(computeEvents[blockCount + 1],
                                                   streamCompute);
                 }
-              const unsigned int DRem = D - B;
+              const dftfe::uInt DRem = D - B;
               if (!(jvec + B > Noc) && DRem != 0)
                 {
                   BLASWrapperPtr->setStream(streamDataMove);
@@ -5391,17 +5387,17 @@ namespace dftfe
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
                       if (processGrid->is_process_active())
-                        for (unsigned int j = 0; j < B; ++j)
+                        for (dftfe::uInt j = 0; j < B; ++j)
                           if (globalToLocalColumnIdMap.find(j + jvec) !=
                               globalToLocalColumnIdMap.end())
                             {
-                              const unsigned int localColumnId =
+                              const dftfe::uInt localColumnId =
                                 globalToLocalColumnIdMap[j + jvec];
-                              for (unsigned int i = j + jvec; i < N; ++i)
+                              for (dftfe::uInt i = j + jvec; i < N; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
@@ -5435,27 +5431,27 @@ namespace dftfe
                       // Copying only the lower triangular part to the ScaLAPACK
                       // projected Hamiltonian matrix
                       if (processGrid->is_process_active())
-                        for (unsigned int j = 0; j < B; ++j)
+                        for (dftfe::uInt j = 0; j < B; ++j)
                           if (globalToLocalColumnIdMap.find(j + jvec) !=
                               globalToLocalColumnIdMap.end())
                             {
-                              const unsigned int localColumnId =
+                              const dftfe::uInt localColumnId =
                                 globalToLocalColumnIdMap[j + jvec];
-                              for (unsigned int i = j + jvec; i < jvec + B; ++i)
+                              for (dftfe::uInt i = j + jvec; i < jvec + B; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
                                       projHamBlockHost[j * B + i - jvec];
                                 }
-                              for (unsigned int i = jvec + B; i < N; ++i)
+                              for (dftfe::uInt i = jvec + B; i < N; ++i)
                                 {
-                                  std::unordered_map<unsigned int,
-                                                     unsigned int>::iterator
-                                    it = globalToLocalRowIdMap.find(i);
+                                  std::unordered_map<dftfe::uInt,
+                                                     dftfe::uInt>::iterator it =
+                                    globalToLocalRowIdMap.find(i);
                                   if (it != globalToLocalRowIdMap.end())
                                     projHamPar.local_el(it->second,
                                                         localColumnId) =
@@ -5473,7 +5469,7 @@ namespace dftfe
       // return deviceblas handle to default stream
       BLASWrapperPtr->setStream(NULL);
 
-      for (int i = 0; i < numberBlocks; ++i)
+      for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
           dftfe::utils::deviceEventDestroy(computeEvents[i]);
           dftfe::utils::deviceEventDestroy(copyEvents[i]);
@@ -5516,7 +5512,7 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
                          &Y2_SP,
       std::vector<double> eigenvalues,
-      const unsigned int  m,
+      const dftfe::uInt   m,
       const double        a,
       const double        b,
       const double        a0,
@@ -5549,7 +5545,7 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
                          &Y2_SP,
       std::vector<double> eigenvalues,
-      const unsigned int  m,
+      const dftfe::uInt   m,
       const double        a,
       const double        b,
       const double        a0,

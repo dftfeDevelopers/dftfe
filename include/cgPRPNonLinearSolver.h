@@ -47,14 +47,14 @@ namespace dftfe
      * @param lineSearchDampingParameter scales the initial line search step
      */
     cgPRPNonLinearSolver(
-      const unsigned int maxNumberIterations,
-      const unsigned int debugLevel,
-      const MPI_Comm    &mpi_comm_parent,
-      const double       lineSearchTolerance                        = 1.0e-6,
-      const unsigned int lineSearchMaxIterations                    = 10,
-      const double       lineSeachDampingParameter                  = 1.0,
-      const double       maxIncrementSolLinf                        = 1e+6,
-      const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
+      const dftfe::uInt maxNumberIterations,
+      const dftfe::uInt debugLevel,
+      const MPI_Comm   &mpi_comm_parent,
+      const double      lineSearchTolerance                        = 1.0e-6,
+      const dftfe::uInt lineSearchMaxIterations                    = 10,
+      const double      lineSeachDampingParameter                  = 1.0,
+      const double      maxIncrementSolLinf                        = 1e+6,
+      const bool        isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.
@@ -111,10 +111,10 @@ namespace dftfe
     nonLinearSolver::ReturnValueType
     lineSearch(nonlinearSolverProblem &problem,
                const double            tolerance,
-               const unsigned int      maxNumberIterations,
-               const unsigned int      debugLevel,
+               const dftfe::uInt       maxNumberIterations,
+               const dftfe::uInt       debugLevel,
                const std::string       checkpointFileName  = "",
-               const int               startingIter        = -1,
+               const dftfe::Int        startingIter        = -1,
                const bool              isCheckpointRestart = false);
 
     /**
@@ -159,7 +159,7 @@ namespace dftfe
      *
      * @return Number of unknowns in all processors.
      */
-    unsigned int
+    dftfe::uInt
     computeTotalNumberUnknowns() const;
 
     /**
@@ -211,10 +211,10 @@ namespace dftfe
     double d_gradMax;
 
     /// storage for number of unknowns to be solved for in the nonlinear problem
-    unsigned int d_numberUnknowns;
+    dftfe::uInt d_numberUnknowns;
 
     /// storage for current nonlinear cg iteration count
-    unsigned int d_iter;
+    dftfe::uInt d_iter;
 
     /**
      * Storage for vector of flags (0 or 1) with size equal to the size of the
@@ -222,13 +222,13 @@ namespace dftfe
      * index in the vector, the corresponding entry in the solution vector is
      * allowed to be updated and vice-versa if flag value is 0 for an index.
      */
-    std::vector<unsigned int> d_unknownCountFlag;
+    std::vector<dftfe::uInt> d_unknownCountFlag;
 
     /// line search stopping tolerance
     const double d_lineSearchTolerance;
 
     /// maximum number of line search iterations
-    const unsigned int d_lineSearchMaxIterations;
+    const dftfe::uInt d_lineSearchMaxIterations;
 
     /// damping parameter (0,1] to be multiplied with the steepest descent
     /// direction, which controls the initial guess to the line search
@@ -265,7 +265,7 @@ namespace dftfe
     double d_functionalValueAfterAlphUpdateChk;
 
     /// line search iter
-    int d_lineSearchRestartIterChk;
+    dftfe::Int d_lineSearchRestartIterChk;
 
     ///
     bool d_useSingleAtomSolutionsInitialGuess;
@@ -275,8 +275,8 @@ namespace dftfe
 
     // parallel objects
     MPI_Comm                   mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
   };
 

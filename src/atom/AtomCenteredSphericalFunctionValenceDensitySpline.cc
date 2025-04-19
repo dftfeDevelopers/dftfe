@@ -26,18 +26,18 @@ namespace dftfe
   {
     d_lQuantumNumber = 0;
     std::vector<std::vector<double>> radialFunctionData(0);
-    unsigned int                     fileReadFlag =
+    dftfe::uInt                      fileReadFlag =
       dftUtils::readPsiFile(2, radialFunctionData, filename);
     d_DataPresent = fileReadFlag;
     d_cutOff      = 0.0;
     d_rMin        = 0.0;
     if (fileReadFlag)
       {
-        unsigned int        numRows = radialFunctionData.size() - 1;
+        dftfe::uInt         numRows = radialFunctionData.size() - 1;
         std::vector<double> xData(numRows), yData(numRows);
 
-        unsigned int maxRowId = 0;
-        for (unsigned int irow = 0; irow < numRows; ++irow)
+        dftfe::uInt maxRowId = 0;
+        for (dftfe::uInt irow = 0; irow < numRows; ++irow)
           {
             xData[irow] = radialFunctionData[irow][0];
             yData[irow] = radialFunctionData[irow][1];

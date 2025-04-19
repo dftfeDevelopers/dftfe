@@ -22,6 +22,8 @@
 
 #include <vector>
 #include <boost/math/quadrature/gauss_kronrod.hpp>
+#include <TypeConfig.h>
+
 namespace dftfe
 {
   class AtomCenteredSphericalFunctionBase
@@ -41,7 +43,7 @@ namespace dftfe
      * @brief returns the l-quantum number associated with the spherical function
      * @return Quantum number l
      */
-    unsigned int
+    dftfe::uInt
     getQuantumNumberl() const;
 
     /**
@@ -72,9 +74,9 @@ namespace dftfe
     getDerivativeValue(double r) const = 0;
 
   protected:
-    double       d_cutOff;
-    unsigned int d_lQuantumNumber;
-    bool         d_DataPresent;
+    double      d_cutOff;
+    dftfe::uInt d_lQuantumNumber;
+    bool        d_DataPresent;
 
 
   }; // end of class AtomCenteredSphericalFunctionBase

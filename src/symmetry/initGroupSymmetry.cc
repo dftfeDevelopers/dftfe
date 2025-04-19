@@ -34,8 +34,8 @@ namespace dftfe
   //================================================================================================================================================
   //							Class constructor
   //================================================================================================================================================
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   symmetryClass<FEOrder, FEOrderElectro, memorySpace>::symmetryClass(
     dftClass<FEOrder, FEOrderElectro, memorySpace> *_dftPtr,
@@ -59,8 +59,8 @@ namespace dftfe
   //================================================================================================================================================
   //					Wiping out mapping tables; needed between relaxation steps
   //================================================================================================================================================
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   symmetryClass<FEOrder, FEOrderElectro, memorySpace>::clearMaps()
@@ -91,8 +91,8 @@ namespace dftfe
   // communicate mapping tables
   //================================================================================================================================================
   //================================================================================================================================================
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   symmetryClass<FEOrder, FEOrderElectro, memorySpace>::initSymmetry()
@@ -106,7 +106,7 @@ namespace dftfe
                                     dealii::update_gradients |
                                     dealii::update_JxW_values |
                                     dealii::update_quadrature_points);
-    const unsigned int   num_quad_points = quadrature.size();
+    const dftfe::uInt    num_quad_points = quadrature.size();
     dealii::Point<3>     p, ptemp, p0;
     dealii::MappingQ1<3> mapping;
     char                 buffer[100];
@@ -114,20 +114,20 @@ namespace dftfe
     std::pair<typename dealii::parallel::distributed::Triangulation<
                 3>::active_cell_iterator,
               dealii::Point<3>>
-                                              mapped_cell;
-    std::tuple<int, std::vector<double>, int> tupleTemp;
-    std::tuple<int, int, int>                 tupleTemp2;
-    std::map<dealii::CellId, int>             groupId;
-    std::vector<double>                       mappedPoint(3);
-    std::vector<int> countGroupPerProc(dftPtr->n_mpi_processes),
+                                                            mapped_cell;
+    std::tuple<dftfe::Int, std::vector<double>, dftfe::Int> tupleTemp;
+    std::tuple<dftfe::Int, dftfe::Int, dftfe::Int>          tupleTemp2;
+    std::map<dealii::CellId, dftfe::Int>                    groupId;
+    std::vector<double>                                     mappedPoint(3);
+    std::vector<dftfe::Int> countGroupPerProc(dftPtr->n_mpi_processes),
       countPointPerProc(dftPtr->n_mpi_processes);
-    std::vector<std::vector<int>> countPointsPerGroupPerProc(
+    std::vector<std::vector<dftfe::Int>> countPointsPerGroupPerProc(
       dftPtr->n_mpi_processes);
-    std::vector<std::vector<int>> tailofGroup(dftPtr->n_mpi_processes);
+    std::vector<std::vector<dftfe::Int>> tailofGroup(dftPtr->n_mpi_processes);
     //
-    unsigned int                  count = 0, cell_id = 0, ownerProcId;
-    unsigned int                  mappedPointId;
-    std::map<dealii::CellId, int> globalCellId_parallel;
+    dftfe::uInt                          count = 0, cell_id = 0, ownerProcId;
+    dftfe::uInt                          mappedPointId;
+    std::map<dealii::CellId, dftfe::Int> globalCellId_parallel;
     //
     clearMaps();
     //================================================================================================================================================
@@ -165,29 +165,31 @@ namespace dftfe
       }
     //
     ownerProcGlobal.resize(cell_id);
-    std::vector<int> ownerProc(cell_id, 0);
-    for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+    std::vector<dftfe::Int> ownerProc(cell_id, 0);
+    for (dftfe::uInt iSymm = 0; iSymm < numSymm; ++iSymm)
       {
-        mappedGroup[iSymm] =
-          std::vector<std::vector<std::tuple<int, int, int>>>(cell_id);
+        mappedGroup[iSymm] = std::vector<
+          std::vector<std::tuple<dftfe::Int, dftfe::Int, dftfe::Int>>>(cell_id);
         mappedGroupSend0[iSymm] =
-          std::vector<std::vector<std::vector<int>>>(cell_id);
+          std::vector<std::vector<std::vector<dftfe::Int>>>(cell_id);
         mappedGroupSend2[iSymm] =
-          std::vector<std::vector<std::vector<int>>>(cell_id);
+          std::vector<std::vector<std::vector<dftfe::Int>>>(cell_id);
         mappedGroupSend1[iSymm] =
           std::vector<std::vector<std::vector<std::vector<double>>>>(cell_id);
-        mappedGroupRecvd0[iSymm] = std::vector<std::vector<int>>(cell_id);
-        mappedGroupRecvd2[iSymm] = std::vector<std::vector<int>>(cell_id);
+        mappedGroupRecvd0[iSymm] =
+          std::vector<std::vector<dftfe::Int>>(cell_id);
+        mappedGroupRecvd2[iSymm] =
+          std::vector<std::vector<dftfe::Int>>(cell_id);
         mappedGroupRecvd1[iSymm] =
           std::vector<std::vector<std::vector<double>>>(cell_id);
         send_buf_size[iSymm] =
-          std::vector<std::vector<std::vector<int>>>(cell_id);
+          std::vector<std::vector<std::vector<dftfe::Int>>>(cell_id);
         recv_buf_size[iSymm] =
-          std::vector<std::vector<std::vector<int>>>(cell_id);
+          std::vector<std::vector<std::vector<dftfe::Int>>>(cell_id);
         rhoRecvd[iSymm] =
           std::vector<std::vector<std::vector<double>>>(cell_id);
         groupOffsets[iSymm] =
-          std::vector<std::vector<std::vector<int>>>(cell_id);
+          std::vector<std::vector<std::vector<dftfe::Int>>>(cell_id);
         if (isGradDensityDataRequired)
           gradRhoRecvd[iSymm] =
             std::vector<std::vector<std::vector<double>>>(cell_id);
@@ -227,7 +229,7 @@ namespace dftfe
     MPI_Allreduce(&ownerProc[0],
                   &ownerProcGlobal[0],
                   cell_id,
-                  MPI_INT,
+                  dftfe::dataTypes::mpi_type_id(ownerProc.data()),
                   MPI_SUM,
                   mpi_communicator);
     //================================================================================================================================================
@@ -242,16 +244,17 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+            for (dftfe::uInt iSymm = 0; iSymm < numSymm; ++iSymm)
               {
                 mappedGroup[iSymm][globalCellId_parallel[cell->id()]] =
-                  std::vector<std::tuple<int, int, int>>(num_quad_points);
+                  std::vector<std::tuple<dftfe::Int, dftfe::Int, dftfe::Int>>(
+                    num_quad_points);
                 mappedGroupRecvd1[iSymm][globalCellId_parallel[cell->id()]] =
                   std::vector<std::vector<double>>(3);
                 rhoRecvd[iSymm][globalCellId_parallel[cell->id()]] =
                   std::vector<std::vector<double>>(dftPtr->n_mpi_processes);
               }
-            for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+            for (dftfe::uInt iSymm = 0; iSymm < numSymm; ++iSymm)
               {
                 count = 0;
                 std::fill(countGroupPerProc.begin(),
@@ -259,43 +262,43 @@ namespace dftfe
                           0);
                 //
                 send_buf_size[iSymm][globalCellId_parallel[cell->id()]] =
-                  std::vector<std::vector<int>>(dftPtr->n_mpi_processes);
+                  std::vector<std::vector<dftfe::Int>>(dftPtr->n_mpi_processes);
                 //
                 mappedGroupSend0[iSymm][globalCellId_parallel[cell->id()]] =
-                  std::vector<std::vector<int>>(dftPtr->n_mpi_processes);
+                  std::vector<std::vector<dftfe::Int>>(dftPtr->n_mpi_processes);
                 mappedGroupSend2[iSymm][globalCellId_parallel[cell->id()]] =
-                  std::vector<std::vector<int>>(dftPtr->n_mpi_processes);
+                  std::vector<std::vector<dftfe::Int>>(dftPtr->n_mpi_processes);
                 mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]] =
                   std::vector<std::vector<std::vector<double>>>(
                     dftPtr->n_mpi_processes);
                 //
-                for (int i = 0; i < dftPtr->n_mpi_processes; ++i)
+                for (dftfe::Int i = 0; i < dftPtr->n_mpi_processes; ++i)
                   {
                     send_buf_size[iSymm][globalCellId_parallel[cell->id()]][i] =
-                      std::vector<int>(3, 0);
+                      std::vector<dftfe::Int>(3, 0);
                     mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]]
                                     [i] = std::vector<std::vector<double>>(3);
                   }
                 recv_buf_size[iSymm][globalCellId_parallel[cell->id()]] =
-                  std::vector<std::vector<int>>(3);
+                  std::vector<std::vector<dftfe::Int>>(3);
                 recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][0] =
-                  std::vector<int>(dftPtr->n_mpi_processes);
+                  std::vector<dftfe::Int>(dftPtr->n_mpi_processes);
                 recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1] =
-                  std::vector<int>(dftPtr->n_mpi_processes);
+                  std::vector<dftfe::Int>(dftPtr->n_mpi_processes);
                 recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][2] =
-                  std::vector<int>(dftPtr->n_mpi_processes);
+                  std::vector<dftfe::Int>(dftPtr->n_mpi_processes);
                 //
                 groupOffsets[iSymm][globalCellId_parallel[cell->id()]] =
-                  std::vector<std::vector<int>>(3);
+                  std::vector<std::vector<dftfe::Int>>(3);
                 groupOffsets[iSymm][globalCellId_parallel[cell->id()]][0] =
-                  std::vector<int>(dftPtr->n_mpi_processes);
+                  std::vector<dftfe::Int>(dftPtr->n_mpi_processes);
                 groupOffsets[iSymm][globalCellId_parallel[cell->id()]][1] =
-                  std::vector<int>(dftPtr->n_mpi_processes);
+                  std::vector<dftfe::Int>(dftPtr->n_mpi_processes);
                 groupOffsets[iSymm][globalCellId_parallel[cell->id()]][2] =
-                  std::vector<int>(dftPtr->n_mpi_processes);
+                  std::vector<dftfe::Int>(dftPtr->n_mpi_processes);
                 //
                 fe_values.reinit(cell);
-                for (unsigned int q_point = 0; q_point < num_quad_points;
+                for (dftfe::uInt q_point = 0; q_point < num_quad_points;
                      ++q_point)
                   {
                     p  = fe_values.quadrature_point(q_point);
@@ -315,7 +318,7 @@ namespace dftfe
                     ptemp[1] = ptemp[1] + translation[iSymm][1];
                     ptemp[2] = ptemp[2] + translation[iSymm][2];
                     //
-                    for (unsigned int i = 0; i < 3; ++i)
+                    for (dftfe::uInt i = 0; i < 3; ++i)
                       {
                         while (ptemp[i] > 0.5)
                           ptemp[i] = ptemp[i] - 1.0;
@@ -378,14 +381,16 @@ namespace dftfe
                 std::fill(countPointPerProc.begin(),
                           countPointPerProc.end(),
                           0);
-                for (std::map<
-                       dealii::CellId,
-                       std::vector<std::tuple<int, std::vector<double>, int>>>::
-                       iterator iter = cellMapTable.begin();
+                for (std::map<dealii::CellId,
+                              std::vector<std::tuple<dftfe::Int,
+                                                     std::vector<double>,
+                                                     dftfe::Int>>>::iterator
+                       iter = cellMapTable.begin();
                      iter != cellMapTable.end();
                      ++iter)
                   {
-                    std::vector<std::tuple<int, std::vector<double>, int>>
+                    std::vector<
+                      std::tuple<dftfe::Int, std::vector<double>, dftfe::Int>>
                                    value = iter->second;
                     dealii::CellId key   = iter->first;
                     ownerProcId          = ownerProcGlobal[globalCellId[key]];
@@ -401,10 +406,10 @@ namespace dftfe
                                    [ownerProcId][0] +
                       1;
                     //
-                    for (unsigned int i = 0; i < value.size(); ++i)
+                    for (dftfe::uInt i = 0; i < value.size(); ++i)
                       {
-                        mappedPoint = std::get<1>(value[i]);
-                        int q_point = std::get<2>(value[i]);
+                        mappedPoint        = std::get<1>(value[i]);
+                        dftfe::Int q_point = std::get<2>(value[i]);
                         //
                         tupleTemp2 =
                           std::make_tuple(ownerProcId,
@@ -442,9 +447,9 @@ namespace dftfe
     // transformed points and 			     then scatters them back to the
     // processors from which the points came from.
     //================================================================================================================================================
-    int recvDataSize0 = 0, recvDataSize1 = 0, send_size0, send_size1,
-        send_size2;
-    std::vector<int>                 send_data0, send_data2, send_data3;
+    dftfe::Int recvDataSize0 = 0, recvDataSize1 = 0, send_size0, send_size1,
+               send_size2;
+    std::vector<dftfe::Int>          send_data0, send_data2, send_data3;
     std::vector<std::vector<double>> send_data1;
     std::vector<double>              send_data, recvdData;
     mpi_offsets0.resize(dftPtr->n_mpi_processes, 0);
@@ -456,7 +461,7 @@ namespace dftfe
     recvdData1.resize(3);
     send_data1.resize(3);
     //
-    for (unsigned int proc = 0; proc < dftPtr->n_mpi_processes; ++proc)
+    for (dftfe::uInt proc = 0; proc < dftPtr->n_mpi_processes; ++proc)
       {
         send_size1 = 0;
         send_size0 = 0;
@@ -465,9 +470,9 @@ namespace dftfe
           {
             if (cell->is_locally_owned())
               {
-                for (unsigned int iSymm = 0; iSymm < numSymm; iSymm++)
+                for (dftfe::uInt iSymm = 0; iSymm < numSymm; iSymm++)
                   {
-                    for (unsigned int iPoint = 0;
+                    for (dftfe::uInt iPoint = 0;
                          iPoint <
                          send_buf_size[iSymm][globalCellId_parallel[cell->id()]]
                                       [proc][1];
@@ -491,7 +496,7 @@ namespace dftfe
                       send_buf_size[iSymm][globalCellId_parallel[cell->id()]]
                                    [proc][1];
                     //
-                    for (unsigned int i = 0;
+                    for (dftfe::uInt i = 0;
                          i <
                          send_buf_size[iSymm][globalCellId_parallel[cell->id()]]
                                       [proc][0];
@@ -524,24 +529,24 @@ namespace dftfe
         //
         MPI_Gather(&send_size0,
                    1,
-                   MPI_INT,
+                   dftfe::dataTypes::mpi_type_id(&send_size0),
                    &(recv_size0[0]),
                    1,
-                   MPI_INT,
+                   dftfe::dataTypes::mpi_type_id(recv_size0.data()),
                    proc,
                    mpi_communicator);
         MPI_Gather(&send_size1,
                    1,
-                   MPI_INT,
+                   dftfe::dataTypes::mpi_type_id(&send_size1),
                    &(recv_size1[0]),
                    1,
-                   MPI_INT,
+                   dftfe::dataTypes::mpi_type_id(recv_size1.data()),
                    proc,
                    mpi_communicator);
         //
         if (proc == this_mpi_process)
           {
-            for (int i = 1; i < dftPtr->n_mpi_processes; i++)
+            for (dftfe::Int i = 1; i < dftPtr->n_mpi_processes; i++)
               {
                 mpi_offsets0[i] = recv_size0[i - 1] + mpi_offsets0[i - 1];
                 mpi_offsets1[i] = recv_size1[i - 1] + mpi_offsets1[i - 1];
@@ -560,38 +565,38 @@ namespace dftfe
                               &recv_size1[dftPtr->n_mpi_processes],
                               0);
             recvdData.resize(recvDataSize1, 0.0);
-            for (unsigned int ipol = 0; ipol < 3; ++ipol)
+            for (dftfe::uInt ipol = 0; ipol < 3; ++ipol)
               recvdData1[ipol].resize(recvDataSize1, 0.0);
           }
         //
         MPI_Gatherv(&(send_data0[0]),
                     send_size0,
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(send_data0.data()),
                     &(recvdData0[0]),
                     &(recv_size0[0]),
                     &(mpi_offsets0[0]),
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(recvdData0.data()),
                     proc,
                     mpi_communicator);
         MPI_Gatherv(&(send_data2[0]),
                     send_size0,
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(send_data2.data()),
                     &(recvdData2[0]),
                     &(recv_size0[0]),
                     &(mpi_offsets0[0]),
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(recvdData2.data()),
                     proc,
                     mpi_communicator);
         MPI_Gatherv(&(send_data3[0]),
                     send_size0,
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(send_data3.data()),
                     &(recvdData3[0]),
                     &(recv_size0[0]),
                     &(mpi_offsets0[0]),
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(recvdData3.data()),
                     proc,
                     mpi_communicator);
-        for (unsigned int ipol = 0; ipol < 3; ++ipol)
+        for (dftfe::uInt ipol = 0; ipol < 3; ++ipol)
           {
             send_data = send_data1[ipol];
             MPI_Gatherv(&(send_data[0]),
@@ -631,11 +636,11 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+            for (dftfe::uInt iSymm = 0; iSymm < numSymm; ++iSymm)
               {
                 rhoRecvd[iSymm][globalCellId_parallel[cell->id()]] =
                   std::vector<std::vector<double>>(dftPtr->n_mpi_processes);
-                for (unsigned int proc = 0; proc < dftPtr->n_mpi_processes;
+                for (dftfe::uInt proc = 0; proc < dftPtr->n_mpi_processes;
                      ++proc)
                   {
                     recv_size[proc] =
@@ -653,7 +658,7 @@ namespace dftfe
           }
       }
     //
-    for (int i = 0; i < dftPtr->n_mpi_processes; i++)
+    for (dftfe::Int i = 0; i < dftPtr->n_mpi_processes; i++)
       {
         recv_size1[i] =
           (1 + dftPtr->getParametersObject().spinPolarized) * recv_size1[i];
@@ -664,7 +669,7 @@ namespace dftfe
     if (isGradDensityDataRequired)
       {
         cell = (dftPtr->dofHandlerEigen).begin_active();
-        for (int i = 0; i < dftPtr->n_mpi_processes; i++)
+        for (dftfe::Int i = 0; i < dftPtr->n_mpi_processes; i++)
           {
             recvGrad_size1[i]   = 3 * recv_size1[i];
             mpiGrad_offsets1[i] = 3 * mpi_offsets1[i];
@@ -674,11 +679,11 @@ namespace dftfe
           {
             if (cell->is_locally_owned())
               {
-                for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+                for (dftfe::uInt iSymm = 0; iSymm < numSymm; ++iSymm)
                   {
                     gradRhoRecvd[iSymm][globalCellId_parallel[cell->id()]] =
                       std::vector<std::vector<double>>(dftPtr->n_mpi_processes);
-                    for (unsigned int proc = 0; proc < dftPtr->n_mpi_processes;
+                    for (dftfe::uInt proc = 0; proc < dftPtr->n_mpi_processes;
                          ++proc)
                       gradRhoRecvd
                         [iSymm][globalCellId_parallel[cell->id()]][proc]
@@ -716,13 +721,13 @@ namespace dftfe
   // cartesian and flag==-1 does the other way around.
   //================================================================================================================================================
   //================================================================================================================================================
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   dealii::Point<3>
   symmetryClass<FEOrder, FEOrderElectro, memorySpace>::crys2cart(
     dealii::Point<3> p,
-    int              flag)
+    dftfe::Int       flag)
   {
     dealii::Point<3> ptemp;
     if (flag == 1)
@@ -750,10 +755,10 @@ namespace dftfe
         //----------------------------------------
         std::vector<std::vector<double>> reciprocalLatticeVectors(
           3, std::vector<double>(3, 0.0));
-        unsigned int        periodicitySum = 0;
+        dftfe::uInt         periodicitySum = 0;
         std::vector<double> cross(3, 0.0);
         double              scalarConst;
-        for (unsigned int i = 0; i < 2; ++i)
+        for (dftfe::uInt i = 0; i < 2; ++i)
           {
             cross =
               cross_product((dftPtr->d_domainBoundingVectors)[i + 1],
@@ -761,7 +766,7 @@ namespace dftfe
             scalarConst = (dftPtr->d_domainBoundingVectors)[i][0] * cross[0] +
                           (dftPtr->d_domainBoundingVectors)[i][1] * cross[1] +
                           (dftPtr->d_domainBoundingVectors)[i][2] * cross[2];
-            for (unsigned int d = 0; d < 3; ++d)
+            for (dftfe::uInt d = 0; d < 3; ++d)
               reciprocalLatticeVectors[i][d] = (1.0 / scalarConst) * cross[d];
           }
         //
@@ -770,7 +775,7 @@ namespace dftfe
         scalarConst = (dftPtr->d_domainBoundingVectors)[2][0] * cross[0] +
                       (dftPtr->d_domainBoundingVectors)[2][1] * cross[1] +
                       (dftPtr->d_domainBoundingVectors)[2][2] * cross[2];
-        for (unsigned int d = 0; d < 3; ++d)
+        for (dftfe::uInt d = 0; d < 3; ++d)
           reciprocalLatticeVectors[2][d] = (1.0 / scalarConst) * cross[d];
         //
         ptemp[0] = p[0] * reciprocalLatticeVectors[0][0] +

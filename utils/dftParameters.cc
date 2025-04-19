@@ -1483,7 +1483,7 @@ namespace dftfe
                                   const bool         printParams,
                                   const std::string  mode,
                                   const std::string  restartFilesPath,
-                                  const int          _verbosity,
+                                  const dftfe::Int   _verbosity,
                                   const bool         _useDevice)
   {
     dealii::ParameterHandler prm;

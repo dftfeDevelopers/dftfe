@@ -50,9 +50,9 @@ namespace dftfe
                                                oncvClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       dftParameters                           *dftParamsPtr,
-      const unsigned int                       densityQuadratureID,
-      const unsigned int                       lpspQuadratureID,
-      const unsigned int                       feOrderPlusOneQuadratureID,
+      const dftfe::uInt                        densityQuadratureID,
+      const dftfe::uInt                        lpspQuadratureID,
+      const dftfe::uInt                        feOrderPlusOneQuadratureID,
       const MPI_Comm                          &mpi_comm_parent,
       const MPI_Comm                          &mpi_comm_domain);
 
@@ -84,13 +84,13 @@ namespace dftfe
     }
 
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &
-    getScratchFEMultivector(const unsigned int numVectors,
-                            const unsigned int index);
+    getScratchFEMultivector(const dftfe::uInt numVectors,
+                            const dftfe::uInt index);
 
 
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &
-    getScratchFEMultivectorSinglePrec(const unsigned int numVectors,
-                                      const unsigned int index);
+    getScratchFEMultivectorSinglePrec(const dftfe::uInt numVectors,
+                                      const dftfe::uInt index);
 
 
     /**
@@ -103,8 +103,8 @@ namespace dftfe
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         auxDensityXCRepresentationPtr,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                        &phiValues,
-      const unsigned int spinIndex = 0);
+                       &phiValues,
+      const dftfe::uInt spinIndex = 0);
 
     /**
      * @brief Sets the V-eff potential
@@ -115,8 +115,8 @@ namespace dftfe
     setVEff(
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                        &vKS_quadValues,
-      const unsigned int spinIndex);
+                       &vKS_quadValues,
+      const dftfe::uInt spinIndex);
 
     void
     computeVEffExternalPotCorr(
@@ -134,8 +134,8 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradRhoPrimeValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                        &phiPrimeValues,
-      const unsigned int spinIndex);
+                       &phiPrimeValues,
+      const dftfe::uInt spinIndex);
 
     /**
      * @brief sets the data member to appropriate kPoint and spin Index
@@ -143,11 +143,11 @@ namespace dftfe
      * @param kPointIndex  k-point Index to set
      */
     void
-    reinitkPointSpinIndex(const unsigned int kPointIndex,
-                          const unsigned int spinIndex);
+    reinitkPointSpinIndex(const dftfe::uInt kPointIndex,
+                          const dftfe::uInt spinIndex);
 
     void
-    reinitNumberWavefunctions(const unsigned int numWfc);
+    reinitNumberWavefunctions(const dftfe::uInt numWfc);
 
     const dftfe::utils::MemoryStorage<double, memorySpace> &
     getInverseSqrtMassVector();
@@ -405,21 +405,21 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace> tempHamMatrixRealBlock;
     dftfe::utils::MemoryStorage<double, memorySpace> tempHamMatrixImagBlock;
 
-    const unsigned int         d_densityQuadratureID;
-    const unsigned int         d_lpspQuadratureID;
-    const unsigned int         d_feOrderPlusOneQuadratureID;
-    unsigned int               d_kPointIndex;
-    unsigned int               d_spinIndex;
-    unsigned int               d_HamiltonianIndex;
+    const dftfe::uInt          d_densityQuadratureID;
+    const dftfe::uInt          d_lpspQuadratureID;
+    const dftfe::uInt          d_feOrderPlusOneQuadratureID;
+    dftfe::uInt                d_kPointIndex;
+    dftfe::uInt                d_spinIndex;
+    dftfe::uInt                d_HamiltonianIndex;
     bool                       d_isExternalPotCorrHamiltonianComputed;
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             d_mpiCommDomain;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
-    unsigned int               d_cellsBlockSizeHamiltonianConstruction;
-    unsigned int               d_cellsBlockSizeHX;
-    unsigned int               d_numVectorsInternal;
-    unsigned int               d_nOMPThreads;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
+    dftfe::uInt                d_cellsBlockSizeHamiltonianConstruction;
+    dftfe::uInt                d_cellsBlockSizeHX;
+    dftfe::uInt                d_numVectorsInternal;
+    dftfe::uInt                d_nOMPThreads;
     dealii::ConditionalOStream pcout;
 
     // compute-time logger
@@ -437,8 +437,7 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
       d_dstNonLocalTempSinglePrec;
 
-    dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-      d_mapNodeIdToProcId;
+    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> d_mapNodeIdToProcId;
   };
 } // namespace dftfe
 #endif

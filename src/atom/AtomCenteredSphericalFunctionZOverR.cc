@@ -20,9 +20,9 @@
 namespace dftfe
 {
   AtomCenteredSphericalFunctionOneOverR::AtomCenteredSphericalFunctionSpline(
-    double       Zval,
-    double       Rtail,
-    unsigned int l)
+    double      Zval,
+    double      Rtail,
+    dftfe::uInt l)
   {
     d_Zval           = Zval;
     d_cutOff         = Rtail;

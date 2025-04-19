@@ -52,11 +52,11 @@ namespace dftfe
      * @param[in]  consider0thEntry whether to replace the 0th fn value with the
      * 1st value in the data.
      */
-    AtomCenteredSphericalFunctionProjectorSpline(std::string  filename,
-                                                 unsigned int l,
-                                                 int          radialPower,
-                                                 int          colIndex,
-                                                 int          totalColSize,
+    AtomCenteredSphericalFunctionProjectorSpline(std::string filename,
+                                                 dftfe::uInt l,
+                                                 dftfe::Int  radialPower,
+                                                 dftfe::Int  colIndex,
+                                                 dftfe::Int  totalColSize,
                                                  double truncationTol  = 1E-10,
                                                  bool consider0thEntry = true);
   };

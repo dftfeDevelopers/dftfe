@@ -90,7 +90,7 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE> &X2,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE> &Y2,
-      const unsigned int                                                    m,
+      const dftfe::uInt                                                     m,
       const double                                                          a,
       const double                                                          b,
       const double                                                          a0);
@@ -118,7 +118,7 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<T2, dftfe::utils::MemorySpace::DEVICE>
                          &Y2_SP,
       std::vector<double> eigenvalues,
-      const unsigned int  m,
+      const dftfe::uInt   m,
       const double        a,
       const double        b,
       const double        a0,
@@ -134,8 +134,8 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -158,8 +158,8 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -182,9 +182,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -205,9 +205,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -228,9 +228,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &OXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -252,8 +252,8 @@ namespace dftfe
       dataTypes::number                                   *X,
       distributedDeviceVec<dataTypes::number>             &Xb,
       distributedDeviceVec<dataTypes::number>             &HXb,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       const MPI_Comm                                      &mpiCommParent,
       const MPI_Comm                                      &mpiCommDomain,
       utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -267,8 +267,8 @@ namespace dftfe
     void
     subspaceRotationScalapack(
       dataTypes::number *X,
-      const unsigned int M,
-      const unsigned int N,
+      const dftfe::uInt  M,
+      const dftfe::uInt  N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -286,8 +286,8 @@ namespace dftfe
     void
     subspaceRotationCGSMixedPrecScalapack(
       dataTypes::number *X,
-      const unsigned int M,
-      const unsigned int N,
+      const dftfe::uInt  M,
+      const dftfe::uInt  N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -303,8 +303,8 @@ namespace dftfe
     void
     subspaceRotationRRMixedPrecScalapack(
       dataTypes::number *X,
-      const unsigned int M,
-      const unsigned int N,
+      const dftfe::uInt  M,
+      const dftfe::uInt  N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -324,8 +324,8 @@ namespace dftfe
       dataTypes::number                                   *X,
       distributedDeviceVec<dataTypes::number>             &Xb,
       distributedDeviceVec<dataTypes::number>             &HXb,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       const MPI_Comm                                      &mpiCommParent,
       const MPI_Comm                                      &mpiCommDomain,
       utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -344,8 +344,8 @@ namespace dftfe
       dataTypes::number                                   *X,
       distributedDeviceVec<dataTypes::number>             &Xb,
       distributedDeviceVec<dataTypes::number>             &HXb,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       const MPI_Comm                                      &mpiCommParent,
       const MPI_Comm                                      &mpiCommDomain,
       utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -365,8 +365,8 @@ namespace dftfe
       dataTypes::number                                   *X,
       distributedDeviceVec<dataTypes::number>             &Xb,
       distributedDeviceVec<dataTypes::number>             &HXb,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       const MPI_Comm                                      &mpiCommParent,
       const MPI_Comm                                      &mpiCommDomain,
       utils::DeviceCCLWrapper   &devicecclMpiCommDomain,
@@ -386,8 +386,8 @@ namespace dftfe
       dataTypes::number                                   *X,
       distributedDeviceVec<dataTypes::number>             &Xb,
       distributedDeviceVec<dataTypes::number>             &HXb,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       const std::vector<double>                           &eigenValues,
       const MPI_Comm                                      &mpiCommParent,
       const MPI_Comm                                      &mpiCommDomain,
@@ -404,8 +404,8 @@ namespace dftfe
          const dataTypes::number                             *X,
          distributedDeviceVec<dataTypes::number>             &XBlock,
          distributedDeviceVec<dataTypes::number>             &HXBlock,
-         const unsigned int                                   M,
-         const unsigned int                                   N,
+         const dftfe::uInt                                    M,
+         const dftfe::uInt                                    N,
          std::shared_ptr<
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                          &BLASWrapperPtr,
@@ -423,9 +423,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &HXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -443,8 +443,8 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &HXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,
@@ -462,9 +462,9 @@ namespace dftfe
       const dataTypes::number                             *X,
       distributedDeviceVec<dataTypes::number>             &XBlock,
       distributedDeviceVec<dataTypes::number>             &HXBlock,
-      const unsigned int                                   M,
-      const unsigned int                                   N,
-      const unsigned int                                   Noc,
+      const dftfe::uInt                                    M,
+      const dftfe::uInt                                    N,
+      const dftfe::uInt                                    Noc,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                                       &BLASWrapperPtr,

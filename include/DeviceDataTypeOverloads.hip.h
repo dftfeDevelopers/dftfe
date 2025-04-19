@@ -596,6 +596,19 @@ namespace dftfe
       return a;
     }
 
+    inline long long int *
+    makeDataTypeDeviceCompatible(long long int *a)
+    {
+      return a;
+    }
+
+    inline const long long int *
+    makeDataTypeDeviceCompatible(const long long int *a)
+    {
+      return a;
+    }
+
+
     inline unsigned int *
     makeDataTypeDeviceCompatible(unsigned int *a)
     {
@@ -616,6 +629,18 @@ namespace dftfe
 
     inline const unsigned long int *
     makeDataTypeDeviceCompatible(const unsigned long int *a)
+    {
+      return a;
+    }
+
+    inline unsigned long long int *
+    makeDataTypeDeviceCompatible(unsigned long long int *a)
+    {
+      return a;
+    }
+
+    inline const unsigned long long int *
+    makeDataTypeDeviceCompatible(const unsigned long long int *a)
     {
       return a;
     }

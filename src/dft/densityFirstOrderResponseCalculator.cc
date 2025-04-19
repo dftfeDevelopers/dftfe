@@ -31,15 +31,15 @@ namespace dftfe
   computeRhoFirstOrderResponse(
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> &X,
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> &XPrime,
-    const unsigned int                      totalNumWaveFunctions,
+    const dftfe::uInt                       totalNumWaveFunctions,
     const std::vector<std::vector<double>> &densityMatDerFermiEnergy,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                               &BLASWrapperPtr,
-    const unsigned int         matrixFreeDofhandlerIndex,
-    const unsigned int         quadratureIndex,
+    const dftfe::uInt          matrixFreeDofhandlerIndex,
+    const dftfe::uInt          quadratureIndex,
     const std::vector<double> &kPointWeights,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -59,40 +59,40 @@ namespace dftfe
       dftfe::utils::deviceSynchronize();
 #endif
     MPI_Barrier(mpiCommParent);
-    double             computeRho_time = MPI_Wtime();
-    const unsigned int numKPoints      = kPointWeights.size();
-    const unsigned int numLocalDofs    = basisOperationsPtr->nOwnedDofs();
-    const unsigned int totalLocallyOwnedCells = basisOperationsPtr->nCells();
-    const unsigned int numNodesPerElement = basisOperationsPtr->nDofsPerCell();
+    double            computeRho_time        = MPI_Wtime();
+    const dftfe::uInt numKPoints             = kPointWeights.size();
+    const dftfe::uInt numLocalDofs           = basisOperationsPtr->nOwnedDofs();
+    const dftfe::uInt totalLocallyOwnedCells = basisOperationsPtr->nCells();
+    const dftfe::uInt numNodesPerElement = basisOperationsPtr->nDofsPerCell();
     // band group parallelization data structures
-    const unsigned int numberBandGroups =
+    const dftfe::uInt numberBandGroups =
       dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-    const unsigned int bandGroupTaskId =
+    const dftfe::uInt bandGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
     dftUtils::createBandParallelizationIndices(interBandGroupComm,
                                                totalNumWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
 
-    const unsigned int BVec =
+    const dftfe::uInt BVec =
       std::min(dftParams.chebyWfcBlockSize, bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
       (dftParams.spinPolarized == 1) ? 1.0 : 2.0;
-    const unsigned int numSpinComponents =
+    const dftfe::uInt numSpinComponents =
       (dftParams.spinPolarized == 1) ? 2 : 1;
 
     const NumberType zero                = 0;
     const NumberType scalarCoeffAlphaRho = 1.0;
     const NumberType scalarCoeffBetaRho  = 1.0;
 
-    const unsigned int cellsBlockSize =
+    const dftfe::uInt cellsBlockSize =
       memorySpace == dftfe::utils::MemorySpace::DEVICE ? 50 : 1;
-    const unsigned int numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
-    const unsigned int remCellBlockSize =
+    const dftfe::uInt numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
+    const dftfe::uInt remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
     basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
-    const unsigned int numQuadPoints = basisOperationsPtr->nQuadsPerCell();
+    const dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcPrimeQuadPointData;
@@ -150,20 +150,19 @@ namespace dftfe
     std::vector<dftfe::linearAlgebra::MultiVector<NumberType, memorySpace> *>
       flattenedArrayBlock(2);
 
-    for (unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
-      for (unsigned int spinIndex = 0; spinIndex < numSpinComponents;
+    for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
+      for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents;
            ++spinIndex)
         {
           wfcQuadPointData.setValue(zero);
           wfcPrimeQuadPointData.setValue(zero);
           rhoResponseHamWfcContributions.setValue(0.0);
           rhoResponseFermiEnergyWfcContributions.setValue(0.0);
-          for (unsigned int jvec = 0; jvec < totalNumWaveFunctions;
-               jvec += BVec)
+          for (dftfe::uInt jvec = 0; jvec < totalNumWaveFunctions; jvec += BVec)
             {
-              const unsigned int currentBlockSize =
+              const dftfe::uInt currentBlockSize =
                 std::min(BVec, totalNumWaveFunctions - jvec);
-              for (unsigned int icomp = 0; icomp < flattenedArrayBlock.size();
+              for (dftfe::uInt icomp = 0; icomp < flattenedArrayBlock.size();
                    ++icomp)
                 flattenedArrayBlock[icomp] = &(
                   basisOperationsPtr->getMultiVector(currentBlockSize, icomp));
@@ -173,7 +172,7 @@ namespace dftfe
                   (jvec + currentBlockSize) >
                     bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId])
                 {
-                  for (unsigned int iEigenVec = 0; iEigenVec < currentBlockSize;
+                  for (dftfe::uInt iEigenVec = 0; iEigenVec < currentBlockSize;
                        ++iEigenVec)
                     {
                       *(partialOccupPrimeVecHost.begin() + iEigenVec) =
@@ -185,7 +184,7 @@ namespace dftfe
                   partialOccupPrimeVec.copyFrom(partialOccupPrimeVecHost);
 #endif
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
-                    for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
+                    for (dftfe::uInt iNode = 0; iNode < numLocalDofs; ++iNode)
                       std::memcpy(flattenedArrayBlock[0]->data() +
                                     iNode * currentBlockSize,
                                   X.data() +
@@ -206,7 +205,7 @@ namespace dftfe
 #endif
 
                   if (memorySpace == dftfe::utils::MemorySpace::HOST)
-                    for (unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
+                    for (dftfe::uInt iNode = 0; iNode < numLocalDofs; ++iNode)
                       std::memcpy(flattenedArrayBlock[1]->data() +
                                     iNode * currentBlockSize,
                                   XPrime.data() +
@@ -232,7 +231,7 @@ namespace dftfe
                                              false);
 
 
-                  for (unsigned int icomp = 0;
+                  for (dftfe::uInt icomp = 0;
                        icomp < flattenedArrayBlock.size();
                        ++icomp)
                     {
@@ -241,21 +240,22 @@ namespace dftfe
                         *(flattenedArrayBlock[icomp]));
                     }
 
-                  for (int iblock = 0; iblock < (numCellBlocks + 1); iblock++)
+                  for (dftfe::Int iblock = 0; iblock < (numCellBlocks + 1);
+                       iblock++)
                     {
-                      const unsigned int currentCellsBlockSize =
+                      const dftfe::uInt currentCellsBlockSize =
                         (iblock == numCellBlocks) ? remCellBlockSize :
                                                     cellsBlockSize;
                       if (currentCellsBlockSize > 0)
                         {
-                          const unsigned int startingCellId =
+                          const dftfe::uInt startingCellId =
                             iblock * cellsBlockSize;
 
                           basisOperationsPtr->interpolateKernel(
                             *(flattenedArrayBlock[0]),
                             wfcQuadPointData.data(),
                             NULL,
-                            std::pair<unsigned int, unsigned int>(
+                            std::pair<dftfe::uInt, dftfe::uInt>(
                               startingCellId,
                               startingCellId + currentCellsBlockSize));
 
@@ -263,17 +263,17 @@ namespace dftfe
                             *(flattenedArrayBlock[1]),
                             wfcPrimeQuadPointData.data(),
                             NULL,
-                            std::pair<unsigned int, unsigned int>(
+                            std::pair<dftfe::uInt, dftfe::uInt>(
                               startingCellId,
                               startingCellId + currentCellsBlockSize));
 
 
                           computeRhoResponseFromInterpolatedValues(
                             BLASWrapperPtr,
-                            std::pair<unsigned int, unsigned int>(
+                            std::pair<dftfe::uInt, dftfe::uInt>(
                               startingCellId,
                               startingCellId + currentCellsBlockSize),
-                            std::pair<unsigned int, unsigned int>(
+                            std::pair<dftfe::uInt, dftfe::uInt>(
                               jvec, jvec + currentBlockSize),
                             numQuadPoints,
                             onesVec.data(),
@@ -406,25 +406,24 @@ namespace dftfe
   computeRhoResponseFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                                               &BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    const unsigned int                          nQuadsPerCell,
-    double                                     *onesVec,
-    double                                     *partialOccupVecPrime,
-    NumberType                                 *wfcQuadPointData,
-    NumberType                                 *wfcPrimeQuadPointData,
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *onesVec,
+    double                                   *partialOccupVecPrime,
+    NumberType                               *wfcQuadPointData,
+    NumberType                               *wfcPrimeQuadPointData,
     double *rhoResponseHamCellsWfcContributions,
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,
     double *rhoResponseFermiEnergy)
   {
-    const unsigned int cellsBlockSize   = cellRange.second - cellRange.first;
-    const unsigned int vectorsBlockSize = vecRange.second - vecRange.first;
-    for (unsigned int iCell = cellRange.first; iCell < cellRange.second;
-         ++iCell)
-      for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
-        for (unsigned int iWave = 0; iWave < vecRange.second - vecRange.first;
+    const dftfe::uInt cellsBlockSize   = cellRange.second - cellRange.first;
+    const dftfe::uInt vectorsBlockSize = vecRange.second - vecRange.first;
+    for (dftfe::uInt iCell = cellRange.first; iCell < cellRange.second; ++iCell)
+      for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+        for (dftfe::uInt iWave = 0; iWave < vecRange.second - vecRange.first;
              ++iWave)
           {
             const NumberType psi =
@@ -452,7 +451,7 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::DEVICE>
                                            &XPrime,
-    const unsigned int                      totalNumWaveFunctions,
+    const dftfe::uInt                       totalNumWaveFunctions,
     const std::vector<std::vector<double>> &densityMatDerFermiEnergy,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
@@ -462,8 +461,8 @@ namespace dftfe
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                               &BLASWrapperPtr,
-    const unsigned int         matrixFreeDofhandlerIndex,
-    const unsigned int         quadratureIndex,
+    const dftfe::uInt          matrixFreeDofhandlerIndex,
+    const dftfe::uInt          quadratureIndex,
     const std::vector<double> &kPointWeights,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -483,7 +482,7 @@ namespace dftfe
                                       dftfe::utils::MemorySpace::HOST> &X,
     const dftfe::utils::MemoryStorage<dataTypes::number,
                                       dftfe::utils::MemorySpace::HOST> &XPrime,
-    const unsigned int                      totalNumWaveFunctions,
+    const dftfe::uInt                       totalNumWaveFunctions,
     const std::vector<std::vector<double>> &densityMatDerFermiEnergy,
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
@@ -493,8 +492,8 @@ namespace dftfe
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                               &BLASWrapperPtr,
-    const unsigned int         matrixFreeDofhandlerIndex,
-    const unsigned int         quadratureIndex,
+    const dftfe::uInt          matrixFreeDofhandlerIndex,
+    const dftfe::uInt          quadratureIndex,
     const std::vector<double> &kPointWeights,
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>

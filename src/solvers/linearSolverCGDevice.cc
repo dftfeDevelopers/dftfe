@@ -48,8 +48,8 @@ namespace dftfe
   void
   linearSolverCGDevice::solve(linearSolverProblemDevice &problem,
                               const double               absTolerance,
-                              const unsigned int         maxNumberIterations,
-                              const int                  debugLevel,
+                              const dftfe::uInt          maxNumberIterations,
+                              const dftfe::Int           debugLevel,
                               bool                       distributeFlag)
   {
     int this_process;
@@ -88,9 +88,9 @@ namespace dftfe
     d_devSumPtr = d_devSum.data();
     d_xLocalDof = x.locallyOwnedSize() * x.numVectors();
 
-    double res = 0.0, initial_res = 0.0;
-    bool   conv = false;
-    int    it   = 0;
+    double     res = 0.0, initial_res = 0.0;
+    bool       conv = false;
+    dftfe::Int it   = 0;
 
     try
       {

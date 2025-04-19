@@ -31,7 +31,7 @@ namespace dftfe
   {
     // Utility functions to read external files relevant to DFT
     void
-    readFile(const unsigned int                numColumns,
+    readFile(const dftfe::uInt                 numColumns,
              std::vector<std::vector<double>> &data,
              const std::string                &fileName)
     {
@@ -52,7 +52,7 @@ namespace dftfe
       //
       // column index
       //
-      int columnCount;
+      dftfe::Int columnCount;
 
       if (readFile.is_open())
         {
@@ -81,8 +81,8 @@ namespace dftfe
       std::stringstream s;
       s << line;
 
-      int    numColumns = 0;
-      double value;
+      dftfe::Int numColumns = 0;
+      double     value;
 
       while (s >> value)
         numColumns++; // while there's something in the line, increase the
@@ -106,7 +106,7 @@ namespace dftfe
       //
       // column index
       //
-      int columnCount;
+      dftfe::Int columnCount;
 
       if (readFile.is_open())
         {
@@ -125,8 +125,8 @@ namespace dftfe
       readFile.close();
     }
 
-    int
-    readPsiFile(const unsigned int                numColumns,
+    dftfe::Int
+    readPsiFile(const dftfe::uInt                 numColumns,
                 std::vector<std::vector<double>> &data,
                 const std::string                &fileName)
     {
@@ -149,7 +149,7 @@ namespace dftfe
       //
       // column index
       //
-      int columnCount;
+      dftfe::Int columnCount;
 
       if (readFile.is_open())
         {
@@ -170,14 +170,14 @@ namespace dftfe
     }
 
     void
-    readRelaxationFlagsFile(const unsigned int                numColumns,
-                            std::vector<std::vector<int>>    &data,
-                            std::vector<std::vector<double>> &forceData,
-                            const std::string                &fileName)
+    readRelaxationFlagsFile(const dftfe::uInt                     numColumns,
+                            std::vector<std::vector<dftfe::Int>> &data,
+                            std::vector<std::vector<double>>     &forceData,
+                            const std::string                    &fileName)
     {
-      std::vector<int>    rowData(3, 0);
-      std::vector<double> rowForceData(3, 0.0);
-      std::ifstream       readFile(fileName.c_str());
+      std::vector<dftfe::Int> rowData(3, 0);
+      std::vector<double>     rowForceData(3, 0.0);
+      std::ifstream           readFile(fileName.c_str());
       if (readFile.fail())
         {
           std::cerr << "Error opening file: " << fileName.c_str() << std::endl;
@@ -192,7 +192,7 @@ namespace dftfe
       //
       // column index
       //
-      int columnCount;
+      dftfe::Int columnCount;
 
       if (readFile.is_open())
         {
@@ -225,7 +225,7 @@ namespace dftfe
     void
     moveFile(const std::string &old_name, const std::string &new_name)
     {
-      int error = system(("mv " + old_name + " " + new_name).c_str());
+      dftfe::Int error = system(("mv " + old_name + " " + new_name).c_str());
 
       // If the above call failed, e.g. because there is no command-line
       // available, try with internal functions.
@@ -256,7 +256,7 @@ namespace dftfe
     copyFile(const std::string &pathold, const std::string &pathnew)
     {
       // std::filesystem::copy_file(pathold,pathnew);
-      int error = system(("cp -f " + pathold + " " + pathnew).c_str());
+      dftfe::Int error = system(("cp -f " + pathold + " " + pathnew).c_str());
       if (error != 0)
         {
           std::cout << "Copy failed: " << error << " From: " << pathold
@@ -302,9 +302,9 @@ namespace dftfe
           std::ofstream outFile(fileName);
           if (outFile.is_open())
             {
-              for (unsigned int irow = 0; irow < data.size(); ++irow)
+              for (dftfe::uInt irow = 0; irow < data.size(); ++irow)
                 {
-                  for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
+                  for (dftfe::uInt icol = 0; icol < data[irow].size(); ++icol)
                     {
                       outFile << std::setprecision(
                                    std::numeric_limits<double>::max_digits10)
@@ -330,9 +330,9 @@ namespace dftfe
       std::ofstream outFile(fileName);
       if (outFile.is_open())
         {
-          for (unsigned int irow = 0; irow < data.size(); ++irow)
+          for (dftfe::uInt irow = 0; irow < data.size(); ++irow)
             {
-              for (unsigned int icol = 0; icol < data[irow].size(); ++icol)
+              for (dftfe::uInt icol = 0; icol < data[irow].size(); ++icol)
                 {
                   outFile << std::setprecision(
                                std::numeric_limits<double>::max_digits10)

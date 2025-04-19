@@ -57,7 +57,7 @@ namespace dftfe
 
       public:
         virtual ~MPIRequestersBase() = default;
-        virtual std::vector<size_type>
+        virtual std::vector<dftfe::uInt>
         getRequestingRankIds() = 0;
       };
 

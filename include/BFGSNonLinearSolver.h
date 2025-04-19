@@ -47,15 +47,15 @@ namespace dftfe
      * @param trustRadius_minimum mimimum trust region radius (will reset BFGS).
      */
     BFGSNonLinearSolver(
-      const bool         usePreconditioner,
-      const bool         useRFOStep,
-      const unsigned int maxNumberIterations,
-      const unsigned int debugLevel,
-      const MPI_Comm    &mpi_comm_parent,
-      const double       trustRadius_maximum                        = 0.5,
-      const double       trustRadius_initial                        = 0.02,
-      const double       trustRadius_minimum                        = 1.0e-4,
-      const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
+      const bool        usePreconditioner,
+      const bool        useRFOStep,
+      const dftfe::uInt maxNumberIterations,
+      const dftfe::uInt debugLevel,
+      const MPI_Comm   &mpi_comm_parent,
+      const double      trustRadius_maximum                        = 0.5,
+      const double      trustRadius_initial                        = 0.02,
+      const double      trustRadius_minimum                        = 1.0e-4,
+      const bool        isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.
@@ -173,10 +173,10 @@ namespace dftfe
 
     /// storage for number of unknowns to be solved for in the nonlinear
     /// problem.
-    unsigned int d_numberUnknowns;
+    dftfe::uInt d_numberUnknowns;
 
     /// storage for current bfgs iteration count
-    unsigned int d_iter;
+    dftfe::uInt d_iter;
 
     /// storage for the S matrix in RFO framework, initialized to starting.
     /// Hessian Guess
@@ -207,7 +207,7 @@ namespace dftfe
     /// Flag to store the reset state, 0 if step is accepted, 1 if reset occured
     /// and no steps are accepted, 2 if two resets occur without step being
     /// accepted (failure of BFGS).
-    int d_isReset;
+    dftfe::Int d_isReset;
 
     bool       d_useSingleAtomSolutionsInitialGuess;
     const bool d_useRFOStep, d_usePreconditioner;

@@ -20,7 +20,7 @@
 
 namespace dftfe
 {
-  unsigned int
+  dftfe::uInt
   AtomCenteredSphericalFunctionBase::getQuantumNumberl() const
   {
     return d_lQuantumNumber;

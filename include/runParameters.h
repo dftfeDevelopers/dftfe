@@ -24,6 +24,8 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <TypeConfig.h>
+
 namespace dftfe
 {
   /**
@@ -34,24 +36,24 @@ namespace dftfe
   class runParameters
   {
   public:
-    int         verbosity;
+    dftfe::Int  verbosity;
     std::string solvermode;
     bool        restart;
     std::string restartFilesPath;
-    int         numberOfImages;
+    dftfe::Int  numberOfImages;
     bool        imageFreeze;
     double      Kmax;
     double      Kmin;
     double      pathThreshold;
-    int         maximumNEBiteration;
+    dftfe::Int  maximumNEBiteration;
     bool        useDevice;
 
-    unsigned int maxLineSearchIterCGPRP;
-    std::string  bfgsStepMethod;
-    double       optimizermaxIonUpdateStep;
-    unsigned int lbfgsNumPastSteps;
-    std::string  optimizationSolver;
-    std::string  ionRelaxFlagsFile;
+    dftfe::uInt maxLineSearchIterCGPRP;
+    std::string bfgsStepMethod;
+    double      optimizermaxIonUpdateStep;
+    dftfe::uInt lbfgsNumPastSteps;
+    std::string optimizationSolver;
+    std::string ionRelaxFlagsFile;
 
     std::string coordinatesFileNEB, domainVectorsFileNEB;
     runParameters() = default;

@@ -7,35 +7,39 @@
 
 namespace dftfe
 {
-  template <typename Type, int M, int N, int K, int dim>
+  template <typename Type,
+            dftfe::Int M,
+            dftfe::Int N,
+            dftfe::Int K,
+            dftfe::Int dim>
   struct matrixFreeDeviceKernels
   {
     static void
-    computeAXDevicePoisson(const int   blocks,
-                           const int   threads,
-                           const int   smem,
-                           Type       *V,
-                           const Type *U,
-                           const Type *P,
-                           const Type *J,
-                           const int  *map);
+    computeAXDevicePoisson(const dftfe::Int  blocks,
+                           const dftfe::Int  threads,
+                           const dftfe::Int  smem,
+                           Type             *V,
+                           const Type       *U,
+                           const Type       *P,
+                           const Type       *J,
+                           const dftfe::Int *map);
 
     static void
-    computeAXDeviceHelmholtz(const int   blocks,
-                             const int   threads,
-                             const int   smem,
-                             Type       *V,
-                             const Type *U,
-                             const Type *P,
-                             const Type *J,
-                             const int  *map,
-                             const Type  coeffHelmholtz);
+    computeAXDeviceHelmholtz(const dftfe::Int  blocks,
+                             const dftfe::Int  threads,
+                             const dftfe::Int  smem,
+                             Type             *V,
+                             const Type       *U,
+                             const Type       *P,
+                             const Type       *J,
+                             const dftfe::Int *map,
+                             const Type        coeffHelmholtz);
 
     static void
-    computeAXDevicePoissonSetAttributes(const int smem);
+    computeAXDevicePoissonSetAttributes(const dftfe::Int smem);
 
     static void
-    computeAXDeviceHelmholtzSetAttributes(const int smem);
+    computeAXDeviceHelmholtzSetAttributes(const dftfe::Int smem);
   };
 
 } // namespace dftfe

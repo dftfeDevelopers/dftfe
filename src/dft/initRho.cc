@@ -29,8 +29,8 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::clearRhoData()
@@ -46,8 +46,8 @@ namespace dftfe
     d_fvSpin1containerVals.clear();
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initRho()
@@ -60,15 +60,15 @@ namespace dftfe
     // Reading single atom rho initial guess
     pcout << std::endl
           << "Reading initial guess for electron-density....." << std::endl;
-    std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
-    std::map<unsigned int, std::vector<std::vector<double>>>
-                                   singleAtomElectronDensity;
-    std::map<unsigned int, double> outerMostPointDen;
-    const double                   truncationTol = 1e-10;
-    double                         maxRhoTail    = 0.0;
+    std::map<dftfe::uInt, alglib::spline1dinterpolant> denSpline;
+    std::map<dftfe::uInt, std::vector<std::vector<double>>>
+                                  singleAtomElectronDensity;
+    std::map<dftfe::uInt, double> outerMostPointDen;
+    const double                  truncationTol = 1e-10;
+    double                        maxRhoTail    = 0.0;
 
     // loop over atom types
-    for (std::set<unsigned int>::iterator it = atomTypes.begin();
+    for (std::set<dftfe::uInt>::iterator it = atomTypes.begin();
          it != atomTypes.end();
          it++)
       {
@@ -83,11 +83,11 @@ namespace dftfe
 
 
             dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
-            unsigned int numRows = singleAtomElectronDensity[*it].size() - 1;
+            dftfe::uInt numRows = singleAtomElectronDensity[*it].size() - 1;
             std::vector<double> xData(numRows), yData(numRows);
 
-            unsigned int maxRowId = 0;
-            for (unsigned int irow = 0; irow < numRows; ++irow)
+            dftfe::uInt maxRowId = 0;
+            for (dftfe::uInt irow = 0; irow < numRows; ++irow)
               {
                 xData[irow] = singleAtomElectronDensity[*it][irow][0];
                 yData[irow] = singleAtomElectronDensity[*it][irow][1];
@@ -128,12 +128,12 @@ namespace dftfe
 
     // Initialize electron density table storage for rhoIn
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
-    const unsigned int n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
-    const unsigned int nCells     = d_basisOperationsPtrHost->nCells();
+    const dftfe::uInt n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
+    const dftfe::uInt nCells     = d_basisOperationsPtrHost->nCells();
     d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
     // below resize is unnecessary as the same is
     // done in "interpolateDensityNodalDataToQuadratureDataGeneral" function
-    for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
       d_densityInQuadValues[iComp].resize(n_q_points * nCells);
 
 
@@ -149,7 +149,7 @@ namespace dftfe
       {
         d_gradDensityInQuadValues.resize(
           d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-        for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size();
              ++iComp)
           d_gradDensityInQuadValues[iComp].resize(3 * n_q_points * nCells);
       }
@@ -177,8 +177,8 @@ namespace dftfe
     //
     // get number of image charges used only for periodic
     //
-    const int numberImageCharges  = d_imageIdsTrunc.size();
-    const int numberGlobalCharges = atomLocations.size();
+    const dftfe::Int numberImageCharges  = d_imageIdsTrunc.size();
+    const dftfe::Int numberGlobalCharges = atomLocations.size();
 
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
@@ -189,7 +189,7 @@ namespace dftfe
           d_dofHandlerRhoNodal.locally_owned_dofs();
         std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs;
         locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
-        unsigned int numberDofs = locallyOwnedDOFs.size();
+        dftfe::uInt numberDofs = locallyOwnedDOFs.size();
         std::map<dealii::types::global_dof_index, dealii::Point<3>>
           supportPointsRhoNodal;
         dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
@@ -205,12 +205,12 @@ namespace dftfe
 
         std::vector<double> atomsImagesPositions;
         std::vector<double> atomsImagesChargeIds;
-        for (unsigned int iAtom = 0;
+        for (dftfe::uInt iAtom = 0;
              iAtom < numberGlobalCharges + numberImageCharges;
              iAtom++)
           {
             dealii::Point<3> atomCoord;
-            int              chargeId;
+            dftfe::Int       chargeId;
             if (iAtom < numberGlobalCharges)
               {
                 atomCoord[0] = atomLocations[iAtom][2];
@@ -220,7 +220,7 @@ namespace dftfe
               }
             else
               {
-                const unsigned int iImageCharge = iAtom - numberGlobalCharges;
+                const dftfe::uInt iImageCharge = iAtom - numberGlobalCharges;
                 atomCoord[0] = d_imagePositionsTrunc[iImageCharge][0];
                 atomCoord[1] = d_imagePositionsTrunc[iImageCharge][1];
                 atomCoord[2] = d_imagePositionsTrunc[iImageCharge][2];
@@ -244,24 +244,24 @@ namespace dftfe
             }
           }
 
-        const unsigned int numberMagComponents =
+        const dftfe::uInt numberMagComponents =
           d_densityInNodalValues.size() - 1;
         // kpoint group parallelization data structures
-        const unsigned int numberKptGroups =
+        const dftfe::uInt numberKptGroups =
           dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
 
-        const unsigned int kptGroupTaskId =
+        const dftfe::uInt kptGroupTaskId =
           dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-        std::vector<int> kptGroupLowHighPlusOneIndices;
+        std::vector<dftfe::Int> kptGroupLowHighPlusOneIndices;
 
         if (numberDofs > 0)
           dftUtils::createKpointParallelizationIndices(
             interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndices);
-        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           d_densityInNodalValues[iComp] = 0;
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
-        for (unsigned int dof = 0; dof < numberDofs; ++dof)
+        for (dftfe::uInt dof = 0; dof < numberDofs; ++dof)
           {
             if (dof < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
                 dof >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
@@ -274,16 +274,16 @@ namespace dftfe
                   {
                     // loop over atoms and superimpose electron-density at a
                     // given dof from all atoms
-                    double rhoNodalValue  = 0.0;
-                    double magZNodalValue = 0.0;
-                    int    chargeId;
-                    double distanceToAtom;
-                    double diffx;
-                    double diffy;
-                    double diffz;
+                    double     rhoNodalValue  = 0.0;
+                    double     magZNodalValue = 0.0;
+                    dftfe::Int chargeId;
+                    double     distanceToAtom;
+                    double     diffx;
+                    double     diffy;
+                    double     diffz;
 
 
-                    for (unsigned int iAtom = 0;
+                    for (dftfe::uInt iAtom = 0;
                          iAtom < atomsImagesChargeIds.size();
                          ++iAtom)
                       {
@@ -398,7 +398,7 @@ namespace dftfe
                                  d_densityInNodalValues[0])
                   << std::endl;
           }
-        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           interpolateDensityNodalDataToQuadratureDataGeneral(
             d_basisOperationsPtrElectroHost,
@@ -417,7 +417,7 @@ namespace dftfe
             !d_dftParamsPtr->useAtomicMagnetizationGuessConstraintMag)
           {
 #pragma omp parallel for num_threads(d_nOMPThreads)
-            for (unsigned int dof = 0; dof < numberDofs; ++dof)
+            for (dftfe::uInt dof = 0; dof < numberDofs; ++dof)
               {
                 const dealii::types::global_dof_index dofID =
                   locallyOwnedDOFs[dof];
@@ -485,7 +485,7 @@ namespace dftfe
       }
     else
       {
-        const unsigned int numberMagComponents =
+        const dftfe::uInt numberMagComponents =
           d_densityInQuadValues.size() - 1;
         // loop over elements
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
@@ -504,7 +504,7 @@ namespace dftfe
             const double *quadPointPtr =
               d_basisOperationsPtrHost->quadPoints().data() +
               iCell * n_q_points * 3;
-            for (unsigned int q = 0; q < n_q_points; ++q)
+            for (dftfe::uInt q = 0; q < n_q_points; ++q)
               {
                 const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
                                                  quadPointPtr[q * 3 + 1],
@@ -513,7 +513,7 @@ namespace dftfe
                 double                 magZValueAtQuadPt = 0.0;
 
                 // loop over atoms
-                for (unsigned int n = 0; n < atomLocations.size(); n++)
+                for (dftfe::uInt n = 0; n < atomLocations.size(); n++)
                   {
                     dealii::Point<3> atom(atomLocations[n][2],
                                           atomLocations[n][3],
@@ -571,16 +571,17 @@ namespace dftfe
                   }
 
                 // loop over image charges
-                for (int iImageCharge = 0; iImageCharge < numberImageCharges;
+                for (dftfe::Int iImageCharge = 0;
+                     iImageCharge < numberImageCharges;
                      ++iImageCharge)
                   {
                     dealii::Point<3> imageAtom(
                       d_imagePositionsTrunc[iImageCharge][0],
                       d_imagePositionsTrunc[iImageCharge][1],
                       d_imagePositionsTrunc[iImageCharge][2]);
-                    double distanceToAtom = quadPoint.distance(imageAtom);
-                    int    masterAtomId   = d_imageIdsTrunc[iImageCharge];
-                    double rhoAtomFactor = 1.0, magZAtomFactor = 1.0;
+                    double     distanceToAtom = quadPoint.distance(imageAtom);
+                    dftfe::Int masterAtomId   = d_imageIdsTrunc[iImageCharge];
+                    double     rhoAtomFactor = 1.0, magZAtomFactor = 1.0;
                     if (numberMagComponents == 1)
                       {
                         if (atomLocations[masterAtomId].size() == 5)
@@ -651,7 +652,7 @@ namespace dftfe
         if (isGradDensityDataDependent)
           {
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(denSpline)
-            for (unsigned int iCell = 0;
+            for (dftfe::uInt iCell = 0;
                  iCell < d_basisOperationsPtrHost->nCells();
                  ++iCell)
               {
@@ -668,7 +669,7 @@ namespace dftfe
                 const double *quadPointPtr =
                   d_basisOperationsPtrHost->quadPoints().data() +
                   iCell * n_q_points * 3;
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt q = 0; q < n_q_points; ++q)
                   {
                     const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
                                                      quadPointPtr[q * 3 + 1],
@@ -680,7 +681,7 @@ namespace dftfe
                     double                 gradMagZYValueAtQuadPt = 0.0;
                     double                 gradMagZZValueAtQuadPt = 0.0;
                     // loop over atoms
-                    for (unsigned int n = 0; n < atomLocations.size(); n++)
+                    for (dftfe::uInt n = 0; n < atomLocations.size(); n++)
                       {
                         dealii::Point<3> atom(atomLocations[n][2],
                                               atomLocations[n][3],
@@ -766,7 +767,7 @@ namespace dftfe
                           }
                       }
 
-                    for (int iImageCharge = 0;
+                    for (dftfe::Int iImageCharge = 0;
                          iImageCharge < numberImageCharges;
                          ++iImageCharge)
                       {
@@ -780,8 +781,8 @@ namespace dftfe
                             distanceToAtom < 1.0e-3)
                           continue;
 
-                        int    masterAtomId  = d_imageIdsTrunc[iImageCharge];
-                        double rhoAtomFactor = 1.0, magZAtomFactor = 1.0;
+                        dftfe::Int masterAtomId = d_imageIdsTrunc[iImageCharge];
+                        double     rhoAtomFactor = 1.0, magZAtomFactor = 1.0;
                         if (numberMagComponents == 1)
                           {
                             if (atomLocations[masterAtomId].size() == 5)
@@ -861,7 +862,7 @@ namespace dftfe
                           }
                       }
 
-                    int signRho = 0;
+                    dftfe::Int signRho = 0;
                     /*
                        if (std::abs((*rhoInValues)[cellid][q] )
                        > 1.0E-7) signRho =
@@ -922,14 +923,14 @@ namespace dftfe
               (3.0 / 10.0) * std::pow(3 * C_pi * C_pi, 2.0 / 3.0);
             d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                           1);
-            for (unsigned int iComp = 0; iComp < d_tauInQuadValues.size();
+            for (dftfe::uInt iComp = 0; iComp < d_tauInQuadValues.size();
                  iComp++)
               {
                 d_tauInQuadValues[iComp].resize(n_q_points * nCells);
               }
-            for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+            for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
               {
-                for (unsigned int iQuad = 0; iQuad < n_q_points; ++iQuad)
+                for (dftfe::uInt iQuad = 0; iQuad < n_q_points; ++iQuad)
                   {
                     if (d_dftParamsPtr->spinPolarized == 0)
                       {
@@ -978,8 +979,8 @@ namespace dftfe
   //
   //
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::computeRhoInitialGuessFromPSI(
@@ -995,8 +996,8 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     dealii::FEValues<3> fe_values(
       FEEigen, quadrature, dealii::update_values | dealii::update_gradients);
-    const unsigned int num_quad_points = quadrature.size();
-    const unsigned int numCells        = matrix_free_data.n_physical_cells();
+    const dftfe::uInt num_quad_points = quadrature.size();
+    const dftfe::uInt numCells        = matrix_free_data.n_physical_cells();
 
     // Initialize electron density table storage
     d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
@@ -1037,9 +1038,9 @@ namespace dftfe
 
     // loop over locally owned elements
     typename dealii::DoFHandler<3>::active_cell_iterator
-      cell             = dofHandlerEigen.begin_active(),
-      endc             = dofHandlerEigen.end();
-    unsigned int iCell = 0;
+      cell            = dofHandlerEigen.begin_active(),
+      endc            = dofHandlerEigen.end();
+    dftfe::uInt iCell = 0;
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
@@ -1057,7 +1058,7 @@ namespace dftfe
 #ifdef USE_COMPLEX
           std::vector<dealii::Vector<double>> tempPsi(num_quad_points),
             tempPsi2(num_quad_points);
-          for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+          for (dftfe::uInt q_point = 0; q_point < num_quad_points; ++q_point)
             {
               tempPsi[q_point].reinit(2);
               tempPsi2[q_point].reinit(2);
@@ -1081,7 +1082,7 @@ namespace dftfe
 #ifdef USE_COMPLEX
               std::vector<std::vector<dealii::Tensor<1, 3, double>>>
                 tempGradPsi(num_quad_points), tempGradPsi2(num_quad_points);
-              for (unsigned int q_point = 0; q_point < num_quad_points;
+              for (dftfe::uInt q_point = 0; q_point < num_quad_points;
                    ++q_point)
                 {
                   tempGradPsi[q_point].resize(2);
@@ -1094,9 +1095,10 @@ namespace dftfe
 #endif
 
 
-              for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+              for (dftfe::Int kPoint = 0; kPoint < d_kPointWeights.size();
+                   ++kPoint)
                 {
-                  for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                  for (dftfe::uInt i = 0; i < d_numEigenValues; ++i)
                     {
                       fe_values.get_function_values(
                         eigenVectors[(1 + d_dftParamsPtr->spinPolarized) *
@@ -1120,7 +1122,7 @@ namespace dftfe
                                        1][i],
                           tempGradPsi2);
 
-                      for (unsigned int q_point = 0; q_point < num_quad_points;
+                      for (dftfe::uInt q_point = 0; q_point < num_quad_points;
                            ++q_point)
                         {
                           double factor =
@@ -1276,7 +1278,7 @@ namespace dftfe
                 }
 
               //  gather density from all pools
-              int numPoint = num_quad_points;
+              dftfe::Int numPoint = num_quad_points;
               MPI_Allreduce(&rhoTemp[0],
                             &rhoIn[0],
                             numPoint,
@@ -1308,7 +1310,7 @@ namespace dftfe
               //
 
 
-              for (unsigned int q_point = 0; q_point < num_quad_points;
+              for (dftfe::uInt q_point = 0; q_point < num_quad_points;
                    ++q_point)
                 {
                   if (d_dftParamsPtr->spinPolarized == 1)
@@ -1321,13 +1323,13 @@ namespace dftfe
                                                q_point] =
                         rhoInSpinPolarized[2 * q_point] -
                         rhoInSpinPolarized[2 * q_point + 1];
-                      for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                         d_gradDensityInQuadValues[0][iCell * num_quad_points *
                                                        3 +
                                                      3 * q_point + iDim] =
                           gradRhoInSpinPolarized[6 * q_point + iDim] +
                           gradRhoInSpinPolarized[6 * q_point + iDim + 3];
-                      for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                         d_gradDensityInQuadValues[1][iCell * num_quad_points *
                                                        3 +
                                                      3 * q_point + iDim] =
@@ -1338,7 +1340,7 @@ namespace dftfe
                     {
                       d_densityInQuadValues[0][iCell * num_quad_points +
                                                q_point] = rhoIn[q_point];
-                      for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                         d_gradDensityInQuadValues[0][iCell * num_quad_points *
                                                        3 +
                                                      3 * q_point + iDim] =
@@ -1348,9 +1350,10 @@ namespace dftfe
             }
           else
             {
-              for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+              for (dftfe::Int kPoint = 0; kPoint < d_kPointWeights.size();
+                   ++kPoint)
                 {
-                  for (unsigned int i = 0; i < d_numEigenValues; ++i)
+                  for (dftfe::uInt i = 0; i < d_numEigenValues; ++i)
                     {
                       fe_values.get_function_values(
                         eigenVectors[(1 + d_dftParamsPtr->spinPolarized) *
@@ -1363,7 +1366,7 @@ namespace dftfe
                                        1][i],
                           tempPsi2);
 
-                      for (unsigned int q_point = 0; q_point < num_quad_points;
+                      for (dftfe::uInt q_point = 0; q_point < num_quad_points;
                            ++q_point)
                         {
                           double factor =
@@ -1422,7 +1425,7 @@ namespace dftfe
                     }
                 }
               //  gather density from all pools
-              int numPoint = num_quad_points;
+              dftfe::Int numPoint = num_quad_points;
               MPI_Allreduce(&rhoTemp[0],
                             &rhoIn[0],
                             numPoint,
@@ -1437,7 +1440,7 @@ namespace dftfe
                               MPI_SUM,
                               interpoolcomm);
               //
-              for (unsigned int q_point = 0; q_point < num_quad_points;
+              for (dftfe::uInt q_point = 0; q_point < num_quad_points;
                    ++q_point)
                 {
                   if (d_dftParamsPtr->spinPolarized == 1)
@@ -1468,17 +1471,17 @@ namespace dftfe
   //
   // Normalize rho
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::normalizeRhoInQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
-    const unsigned int n_q_points = quadrature_formula.size();
-    const unsigned int nCells     = matrix_free_data.n_physical_cells();
-    const double       charge =
+    const dftfe::uInt n_q_points = quadrature_formula.size();
+    const dftfe::uInt nCells     = matrix_free_data.n_physical_cells();
+    const double      charge =
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[0]);
     const double scaling = ((double)numElectrons) / charge;
 
@@ -1492,18 +1495,18 @@ namespace dftfe
         << charge << std::endl;
 
     // scaling rho
-    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+    for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
       {
-        for (unsigned int q = 0; q < n_q_points; ++q)
+        for (dftfe::uInt q = 0; q < n_q_points; ++q)
           {
-            for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size();
+            for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size();
                  ++iComp)
               d_densityInQuadValues[iComp][iCell * n_q_points + q] *= scaling;
             if (isGradDensityDataDependent)
-              for (unsigned int iComp = 0;
+              for (dftfe::uInt iComp = 0;
                    iComp < d_gradDensityInQuadValues.size();
                    ++iComp)
-                for (unsigned int idim = 0; idim < 3; ++idim)
+                for (dftfe::uInt idim = 0; idim < 3; ++idim)
                   d_gradDensityInQuadValues[iComp][3 * iCell * n_q_points +
                                                    3 * q + idim] *= scaling;
           }
@@ -1520,8 +1523,8 @@ namespace dftfe
   //
   // Normalize rho mag
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -1529,9 +1532,9 @@ namespace dftfe
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
-    const unsigned int n_q_points = quadrature_formula.size();
-    const unsigned int nCells     = matrix_free_data.n_physical_cells();
-    const double       netMag =
+    const dftfe::uInt n_q_points = quadrature_formula.size();
+    const dftfe::uInt nCells     = matrix_free_data.n_physical_cells();
+    const double      netMag =
       totalCharge(d_dofHandlerRhoNodal, d_densityInQuadValues[1]);
 
     const double shift =
@@ -1547,13 +1550,13 @@ namespace dftfe
             << std::endl;
 
     // shift rho mag
-    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
-      for (unsigned int q = 0; q < n_q_points; ++q)
+    for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+      for (dftfe::uInt q = 0; q < n_q_points; ++q)
         {
           d_densityInQuadValues[1][iCell * n_q_points + q] +=
             shift * d_densityInQuadValues[0][iCell * n_q_points + q];
           if (isGradDensityDataDependent)
-            for (unsigned int idim = 0; idim < 3; ++idim)
+            for (dftfe::uInt idim = 0; idim < 3; ++idim)
               d_gradDensityInQuadValues[1][3 * iCell * n_q_points + 3 * q +
                                            idim] +=
                 shift * d_gradDensityInQuadValues[0][3 * iCell * n_q_points +
@@ -1571,16 +1574,16 @@ namespace dftfe
   //
   // Normalize rho
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::normalizeRhoOutQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
-    const unsigned int n_q_points = quadrature_formula.size();
-    const unsigned int nCells     = matrix_free_data.n_physical_cells();
+    const dftfe::uInt n_q_points = quadrature_formula.size();
+    const dftfe::uInt nCells     = matrix_free_data.n_physical_cells();
 
     const double charge =
       totalCharge(d_dofHandlerRhoNodal, d_densityOutQuadValues[0]);
@@ -1595,18 +1598,18 @@ namespace dftfe
        densityFamilyType::GGA);
 
     // scaling rho
-    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+    for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
       {
-        for (unsigned int q = 0; q < n_q_points; ++q)
+        for (dftfe::uInt q = 0; q < n_q_points; ++q)
           {
-            for (unsigned int iComp = 0; iComp < d_densityOutQuadValues.size();
+            for (dftfe::uInt iComp = 0; iComp < d_densityOutQuadValues.size();
                  ++iComp)
               d_densityOutQuadValues[iComp][iCell * n_q_points + q] *= scaling;
             if (isGradDensityDataDependent)
-              for (unsigned int iComp = 0;
+              for (dftfe::uInt iComp = 0;
                    iComp < d_gradDensityOutQuadValues.size();
                    ++iComp)
-                for (unsigned int idim = 0; idim < 3; ++idim)
+                for (dftfe::uInt idim = 0; idim < 3; ++idim)
                   d_gradDensityOutQuadValues[iComp][3 * iCell * n_q_points +
                                                     3 * q + idim] *= scaling;
           }
@@ -1618,8 +1621,8 @@ namespace dftfe
       pcout << "Total charge out after scaling: " << chargeAfterScaling
             << std::endl;
   }
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -1631,10 +1634,10 @@ namespace dftfe
           << std::endl;
     // Initialize electron density table storage for rhoIn
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
-    const unsigned int n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
-    const unsigned int nCells     = d_basisOperationsPtrHost->nCells();
+    const dftfe::uInt n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
+    const dftfe::uInt nCells     = d_basisOperationsPtrHost->nCells();
     d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
       d_densityInQuadValues[iComp].resize(n_q_points * nCells);
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
@@ -1645,7 +1648,7 @@ namespace dftfe
     if (isTauMGGA)
       {
         d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-        for (unsigned int iComp = 0; iComp < d_tauInQuadValues.size(); iComp++)
+        for (dftfe::uInt iComp = 0; iComp < d_tauInQuadValues.size(); iComp++)
           {
             d_tauInQuadValues[iComp].resize(n_q_points * nCells);
           }
@@ -1671,13 +1674,13 @@ namespace dftfe
       {
         d_gradDensityInQuadValues.resize(
           d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-        for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size();
              ++iComp)
           d_gradDensityInQuadValues[iComp].resize(3 * n_q_points * nCells);
       }
     std::vector<std::string> field     = {"RHO", "MAG_Z"};
     std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
-    for (int i = 0; i < d_densityInQuadValues.size(); i++)
+    for (dftfe::Int i = 0; i < d_densityInQuadValues.size(); i++)
       {
         if (!(i == 1 && d_dftParamsPtr->restartSpinFromNoSpin))
           loadQuadratureData(d_basisOperationsPtrHost,
@@ -1692,8 +1695,7 @@ namespace dftfe
                              interBandGroupComm);
         else
           {
-            for (long unsigned int index = 0;
-                 index < d_densityInQuadValues[i].size();
+            for (dftfe::uInt index = 0; index < d_densityInQuadValues[i].size();
                  index++)
               d_densityInQuadValues[i][index] =
                 d_dftParamsPtr->tot_magnetization *
@@ -1714,7 +1716,7 @@ namespace dftfe
                                  interBandGroupComm);
             else
               {
-                for (long unsigned int index = 0;
+                for (dftfe::uInt index = 0;
                      index < d_gradDensityInQuadValues[i].size();
                      index++)
                   d_gradDensityInQuadValues[i][index] =
@@ -1726,7 +1728,7 @@ namespace dftfe
     std::vector<std::string> field2 = {"TAU", "TAUMAG_Z"};
     if (isTauMGGA)
       {
-        for (int i = 0; i < d_tauInQuadValues.size(); i++)
+        for (dftfe::Int i = 0; i < d_tauInQuadValues.size(); i++)
           {
             if (!(i == 1 && d_dftParamsPtr->restartSpinFromNoSpin))
               loadQuadratureData(d_basisOperationsPtrHost,
@@ -1741,8 +1743,7 @@ namespace dftfe
                                  interBandGroupComm);
             else
               {
-                for (long unsigned int index = 0;
-                     index < d_tauInQuadValues[i].size();
+                for (dftfe::uInt index = 0; index < d_tauInQuadValues[i].size();
                      index++)
                   d_tauInQuadValues[i][index] =
                     d_dftParamsPtr->tot_magnetization *
@@ -1759,7 +1760,7 @@ namespace dftfe
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
-        for (unsigned int iComp = 0; iComp < d_densityInQuadValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size();
              ++iComp)
           {
             l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
@@ -1779,12 +1780,12 @@ namespace dftfe
         const double scalingFactor = ((double)numElectrons) / charge;
 
         // scale nodal vector with scalingFactor
-        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           d_densityInNodalValues[iComp] *= scalingFactor;
 
         // interpolate nodal rhoOut data to quadrature data
-        for (unsigned int iComp = 0; iComp < d_densityInNodalValues.size();
+        for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
           interpolateDensityNodalDataToQuadratureDataGeneral(
             d_basisOperationsPtrElectroHost,

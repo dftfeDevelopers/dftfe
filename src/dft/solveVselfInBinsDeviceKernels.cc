@@ -7,35 +7,35 @@ namespace dftfe
     namespace
     {
       __global__ void
-      diagScaleKernel(const unsigned int blockSize,
-                      const unsigned int numContiguousBlocks,
-                      const double      *srcArray,
-                      const double      *scalingVector,
-                      double            *dstArray)
+      diagScaleKernel(const dftfe::uInt blockSize,
+                      const dftfe::uInt numContiguousBlocks,
+                      const double     *srcArray,
+                      const double     *scalingVector,
+                      double           *dstArray)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
 
-        for (unsigned int index = globalThreadId;
+        for (dftfe::uInt index = globalThreadId;
              index < numContiguousBlocks * blockSize;
              index += blockDim.x * gridDim.x)
           {
-            const unsigned int blockIndex = index / blockSize;
+            const dftfe::uInt blockIndex = index / blockSize;
             *(dstArray + index) =
               *(srcArray + index) * (*(scalingVector + blockIndex));
           }
       }
 
       __global__ void
-      dotProductContributionBlockedKernel(const unsigned int numEntries,
-                                          const double      *vec1,
-                                          const double      *vec2,
-                                          double            *vecTemp)
+      dotProductContributionBlockedKernel(const dftfe::uInt numEntries,
+                                          const double     *vec1,
+                                          const double     *vec2,
+                                          double           *vecTemp)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
 
-        for (unsigned int index = globalThreadId; index < numEntries;
+        for (dftfe::uInt index = globalThreadId; index < numEntries;
              index += blockDim.x * gridDim.x)
           {
             vecTemp[index] = vec1[index] * vec2[index];
@@ -43,32 +43,32 @@ namespace dftfe
       }
 
       __global__ void
-      scaleBlockedKernel(const unsigned int blockSize,
-                         const unsigned int numContiguousBlocks,
-                         double            *xArray,
-                         const double      *scalingVector)
+      scaleBlockedKernel(const dftfe::uInt blockSize,
+                         const dftfe::uInt numContiguousBlocks,
+                         double           *xArray,
+                         const double     *scalingVector)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
 
-        for (unsigned int index = globalThreadId;
+        for (dftfe::uInt index = globalThreadId;
              index < numContiguousBlocks * blockSize;
              index += blockDim.x * gridDim.x)
           {
-            const unsigned int intraBlockIndex = index % blockSize;
+            const dftfe::uInt intraBlockIndex = index % blockSize;
             *(xArray + index) *= (*(scalingVector + intraBlockIndex));
           }
       }
 
       __global__ void
-      scaleKernel(const unsigned int numEntries,
-                  double            *xArray,
-                  const double      *scalingVector)
+      scaleKernel(const dftfe::uInt numEntries,
+                  double           *xArray,
+                  const double     *scalingVector)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
 
-        for (unsigned int index = globalThreadId; index < numEntries;
+        for (dftfe::uInt index = globalThreadId; index < numEntries;
              index += blockDim.x * gridDim.x)
           {
             xArray[index] *= scalingVector[index];
@@ -77,21 +77,21 @@ namespace dftfe
 
       // y=alpha*x+y
       __global__ void
-      daxpyBlockedKernel(const unsigned int blockSize,
-                         const unsigned int numContiguousBlocks,
-                         const double      *x,
-                         const double      *alpha,
-                         double            *y)
+      daxpyBlockedKernel(const dftfe::uInt blockSize,
+                         const dftfe::uInt numContiguousBlocks,
+                         const double     *x,
+                         const double     *alpha,
+                         double           *y)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
 
-        for (unsigned int index = globalThreadId;
+        for (dftfe::uInt index = globalThreadId;
              index < numContiguousBlocks * blockSize;
              index += blockDim.x * gridDim.x)
           {
-            const unsigned int blockIndex      = index / blockSize;
-            const unsigned int intraBlockIndex = index - blockIndex * blockSize;
+            const dftfe::uInt blockIndex      = index / blockSize;
+            const dftfe::uInt intraBlockIndex = index - blockIndex * blockSize;
             y[index] += alpha[intraBlockIndex] * x[index];
           }
       }
@@ -99,31 +99,31 @@ namespace dftfe
 
       // y=-alpha*x+y
       __global__ void
-      dmaxpyBlockedKernel(const unsigned int blockSize,
-                          const unsigned int numContiguousBlocks,
-                          const double      *x,
-                          const double      *alpha,
-                          double            *y)
+      dmaxpyBlockedKernel(const dftfe::uInt blockSize,
+                          const dftfe::uInt numContiguousBlocks,
+                          const double     *x,
+                          const double     *alpha,
+                          double           *y)
       {
-        const unsigned int globalThreadId =
+        const dftfe::uInt globalThreadId =
           blockIdx.x * blockDim.x + threadIdx.x;
 
-        for (unsigned int index = globalThreadId;
+        for (dftfe::uInt index = globalThreadId;
              index < numContiguousBlocks * blockSize;
              index += blockDim.x * gridDim.x)
           {
-            const unsigned int blockIndex      = index / blockSize;
-            const unsigned int intraBlockIndex = index - blockIndex * blockSize;
+            const dftfe::uInt blockIndex      = index / blockSize;
+            const dftfe::uInt intraBlockIndex = index - blockIndex * blockSize;
             y[index] += -alpha[intraBlockIndex] * x[index];
           }
       }
     } // namespace
     void
-    diagScale(const unsigned int blockSize,
-              const unsigned int numContiguousBlocks,
-              const double      *srcArray,
-              const double      *scalingVector,
-              double            *dstArray)
+    diagScale(const dftfe::uInt blockSize,
+              const dftfe::uInt numContiguousBlocks,
+              const double     *srcArray,
+              const double     *scalingVector,
+              double           *dstArray)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       diagScaleKernel<<<(blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -146,10 +146,10 @@ namespace dftfe
 #endif
     }
     void
-    dotProductContributionBlocked(const unsigned int numEntries,
-                                  const double      *vec1,
-                                  const double      *vec2,
-                                  double            *vecTemp)
+    dotProductContributionBlocked(const dftfe::uInt numEntries,
+                                  const double     *vec1,
+                                  const double     *vec2,
+                                  double           *vecTemp)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dotProductContributionBlockedKernel<<<
@@ -171,10 +171,10 @@ namespace dftfe
     }
 
     void
-    scaleBlocked(const unsigned int blockSize,
-                 const unsigned int numContiguousBlocks,
-                 double            *xArray,
-                 const double      *scalingVector)
+    scaleBlocked(const dftfe::uInt blockSize,
+                 const dftfe::uInt numContiguousBlocks,
+                 double           *xArray,
+                 const double     *scalingVector)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       scaleBlockedKernel<<<(blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -198,9 +198,9 @@ namespace dftfe
     }
 
     void
-    scale(const unsigned int numEntries,
-          double            *xArray,
-          const double      *scalingVector)
+    scale(const dftfe::uInt numEntries,
+          double           *xArray,
+          const double     *scalingVector)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       scaleKernel<<<(numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -223,11 +223,11 @@ namespace dftfe
 
     // y=alpha*x+y
     void
-    daxpyBlocked(const unsigned int blockSize,
-                 const unsigned int numContiguousBlocks,
-                 const double      *x,
-                 const double      *alpha,
-                 double            *y)
+    daxpyBlocked(const dftfe::uInt blockSize,
+                 const dftfe::uInt numContiguousBlocks,
+                 const double     *x,
+                 const double     *alpha,
+                 double           *y)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       daxpyBlockedKernel<<<(blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -254,11 +254,11 @@ namespace dftfe
 
     // y=-alpha*x+y
     void
-    dmaxpyBlocked(const unsigned int blockSize,
-                  const unsigned int numContiguousBlocks,
-                  const double      *x,
-                  const double      *alpha,
-                  double            *y)
+    dmaxpyBlocked(const dftfe::uInt blockSize,
+                  const dftfe::uInt numContiguousBlocks,
+                  const double     *x,
+                  const double     *alpha,
+                  double           *y)
     {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
       dmaxpyBlockedKernel<<<

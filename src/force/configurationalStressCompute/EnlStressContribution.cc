@@ -22,23 +22,23 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     stressEnlElementalContribution(
       dealii::Tensor<2, 3, double>        &stressContribution,
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   numQuadPoints,
+      const dftfe::uInt                    numQuadPoints,
       const std::vector<double>           &jxwQuadsSubCells,
-      const unsigned int                   cell,
-      const unsigned int                   numNonLocalAtomsCurrentProcess,
+      const dftfe::uInt                    cell,
+      const dftfe::uInt                    numNonLocalAtomsCurrentProcess,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-                                       nonLocalOp,
-      const std::vector<unsigned int> &numberPseudoWaveFunctionsPerAtom,
-      const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
+                                      nonLocalOp,
+      const std::vector<dftfe::uInt> &numberPseudoWaveFunctionsPerAtom,
+      const std::map<dealii::CellId, dftfe::uInt> &cellIdToCellNumberMap,
       const std::vector<dataTypes::number> &zetalmDeltaVlProductDistImageAtoms,
 #ifdef USE_COMPLEX
       const std::vector<dataTypes::number>
@@ -48,8 +48,8 @@ namespace dftfe
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
       const bool isSpinPolarized)
   {
-    const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-    const unsigned int numSubCells =
+    const dftfe::uInt numberGlobalAtoms = dftPtr->atomLocations.size();
+    const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
 
     const double spinPolarizedFactor = isSpinPolarized ? 0.5 : 1.0;
@@ -57,20 +57,20 @@ namespace dftfe
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor3;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       {
         zeroTensor3[idim] = dealii::make_vectorized_array(0.0);
       }
 
-    for (int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
+    for (dftfe::Int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
       {
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
-            bool               isPseudoWfcsAtomInCell = false;
-            const unsigned int elementId =
+            bool              isPseudoWfcsAtomInCell = false;
+            const dftfe::uInt elementId =
               cellIdToCellNumberMap.find(subCellPtr->id())->second;
-            for (unsigned int i = 0;
+            for (dftfe::uInt i = 0;
                  i < (nonLocalOp->getCellIdToAtomIdsLocalCompactSupportMap())
                        .find(elementId)
                        ->second.size();
@@ -85,7 +85,7 @@ namespace dftfe
 
             if (isPseudoWfcsAtomInCell)
               {
-                for (unsigned int kPoint = 0;
+                for (dftfe::uInt kPoint = 0;
                      kPoint < dftPtr->d_kPointWeights.size();
                      ++kPoint)
                   {
@@ -94,7 +94,7 @@ namespace dftfe
                     kcoord[1] = dftPtr->d_kPointCoordinates[kPoint * 3 + 1];
                     kcoord[2] = dftPtr->d_kPointCoordinates[kPoint * 3 + 2];
 
-                    const unsigned int startingPseudoWfcIdFlattened =
+                    const dftfe::uInt startingPseudoWfcIdFlattened =
                       kPoint *
                         (nonLocalOp
                            ->getTotalNonTrivialSphericalFnsOverAllCells()) *
@@ -108,17 +108,17 @@ namespace dftfe
                           ->second[elementId] *
                         numQuadPoints;
 
-                    const unsigned int numberPseudoWaveFunctions =
+                    const dftfe::uInt numberPseudoWaveFunctions =
                       numberPseudoWaveFunctionsPerAtom[iAtom];
                     std::vector<dataTypes::number> temp1(3);
                     std::vector<dataTypes::number> temp2(3);
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                       {
                         // row major storage
                         std::vector<dataTypes::number> E(
                           9, dataTypes::number(0.0));
 
-                        for (unsigned int iPseudoWave = 0;
+                        for (dftfe::uInt iPseudoWave = 0;
                              iPseudoWave < numberPseudoWaveFunctions;
                              ++iPseudoWave)
                           {
@@ -150,16 +150,16 @@ namespace dftfe
                               projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened
                                 [startingPseudoWfcIdFlattened +
                                  iPseudoWave * numQuadPoints + q];
-                            for (unsigned int idim = 0; idim < 3; ++idim)
-                              for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                            for (dftfe::uInt idim = 0; idim < 3; ++idim)
+                              for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
                                 E[idim * 3 + jdim] -=
                                   2.0 * (temp2[idim] * temp1[jdim] -
                                          dataTypes::number(0.0, 1.0) * temp3 *
                                            temp1[idim] *
                                            dataTypes::number(kcoord[jdim]));
 #else
-                            for (unsigned int idim = 0; idim < 3; ++idim)
-                              for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                            for (dftfe::uInt idim = 0; idim < 3; ++idim)
+                              for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
                                 E[idim * 3 + jdim] -=
                                   2.0 * (temp2[idim] * temp1[jdim]);
 #endif
@@ -170,8 +170,8 @@ namespace dftfe
                           dftPtr->d_kPointWeights[kPoint] *
                           jxwQuadsSubCells[iSubCell * numQuadPoints + q];
 
-                        for (unsigned int idim = 0; idim < 3; ++idim)
-                          for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                        for (dftfe::uInt idim = 0; idim < 3; ++idim)
+                          for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
                             stressContribution[idim][jdim] +=
                               factor * 2.0 *
                               dftfe::utils::realPart(E[idim * 3 + jdim]);

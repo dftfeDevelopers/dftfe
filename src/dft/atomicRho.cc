@@ -25,8 +25,8 @@ namespace dftfe
   // Initialize rho by reading in single-atom electron-density and fit a spline
   //
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initAtomicRho()
@@ -46,15 +46,15 @@ namespace dftfe
     // Reading single atom rho initial guess
     pcout << std::endl
           << "Reading initial guess for electron-density....." << std::endl;
-    std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
-    std::map<unsigned int, std::vector<std::vector<double>>>
-                                   singleAtomElectronDensity;
-    std::map<unsigned int, double> outerMostPointDen;
-    const double                   truncationTol = 1e-10;
-    double                         maxRhoTail    = 0.0;
+    std::map<dftfe::uInt, alglib::spline1dinterpolant> denSpline;
+    std::map<dftfe::uInt, std::vector<std::vector<double>>>
+                                  singleAtomElectronDensity;
+    std::map<dftfe::uInt, double> outerMostPointDen;
+    const double                  truncationTol = 1e-10;
+    double                        maxRhoTail    = 0.0;
 
     // loop over atom types
-    for (std::set<unsigned int>::iterator it = atomTypes.begin();
+    for (std::set<dftfe::uInt>::iterator it = atomTypes.begin();
          it != atomTypes.end();
          it++)
       {
@@ -70,11 +70,11 @@ namespace dftfe
 
 
             dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
-            unsigned int numRows = singleAtomElectronDensity[*it].size() - 1;
+            dftfe::uInt numRows = singleAtomElectronDensity[*it].size() - 1;
             std::vector<double> xData(numRows), yData(numRows);
 
-            unsigned int maxRowId = 0;
-            for (unsigned int irow = 0; irow < numRows; ++irow)
+            dftfe::uInt maxRowId = 0;
+            for (dftfe::uInt irow = 0; irow < numRows; ++irow)
               {
                 xData[irow] = singleAtomElectronDensity[*it][irow][0];
                 yData[irow] = singleAtomElectronDensity[*it][irow][1];
@@ -121,26 +121,26 @@ namespace dftfe
     dealii::FEValues<3> fe_values(FE,
                                   quadrature_formula,
                                   dealii::update_quadrature_points);
-    const unsigned int  n_q_points = quadrature_formula.size();
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
 
     //
     // get number of global charges
     //
-    const int numberGlobalCharges = atomLocations.size();
+    const dftfe::Int numberGlobalCharges = atomLocations.size();
 
     //
     // get number of image charges used only for periodic
     //
-    const int numberImageCharges = d_imageIdsTrunc.size();
+    const dftfe::Int numberImageCharges = d_imageIdsTrunc.size();
 
     dealii::Tensor<1, 3, double> zeroTensor1;
-    for (unsigned int i = 0; i < 3; i++)
+    for (dftfe::uInt i = 0; i < 3; i++)
       zeroTensor1[i] = 0.0;
 
     dealii::Tensor<2, 3, double> zeroTensor2;
 
-    for (unsigned int i = 0; i < 3; i++)
-      for (unsigned int j = 0; j < 3; j++)
+    for (dftfe::uInt i = 0; i < 3; i++)
+      for (dftfe::uInt j = 0; j < 3; j++)
         zeroTensor2[i][j] = 0.0;
 
     // loop over elements
@@ -174,7 +174,7 @@ namespace dftfe
 
 
             // loop over atoms
-            for (unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+            for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
               {
                 dealii::Point<3> atom(atomLocations[iAtom][2],
                                       atomLocations[iAtom][3],
@@ -185,7 +185,7 @@ namespace dftfe
                   continue;
 
                 // loop over quad points
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt q = 0; q < n_q_points; ++q)
                   {
                     dealii::Point<3> quadPoint = fe_values.quadrature_point(q);
                     dealii::Tensor<1, 3, double> diff = quadPoint - atom;
@@ -246,9 +246,9 @@ namespace dftfe
 
                     if (isGradDensityDataDependent)
                       {
-                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                           {
-                            for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                               {
                                 double temp = (radialDensitySecondDerivative -
                                                radialDensityFirstDerivative /
@@ -282,7 +282,7 @@ namespace dftfe
                     if (isGradDensityDataDependent)
                       hessianRhoAtomCell.resize(n_q_points * 9, 0.0);
 
-                    for (unsigned int q = 0; q < n_q_points; ++q)
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
                       {
                         gradRhoAtomCell[3 * q + 0] = gradRhoAtom[q][0];
                         gradRhoAtomCell[3 * q + 1] = gradRhoAtom[q][1];
@@ -290,9 +290,9 @@ namespace dftfe
 
                         if (isGradDensityDataDependent)
                           {
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                               {
-                                for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                                for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                                   {
                                     hessianRhoAtomCell[9 * q + 3 * iDim +
                                                        jDim] =
@@ -305,11 +305,11 @@ namespace dftfe
               }         // loop over atoms
 
             // loop over image charges
-            for (unsigned int iImageCharge = 0;
+            for (dftfe::uInt iImageCharge = 0;
                  iImageCharge < numberImageCharges;
                  ++iImageCharge)
               {
-                const int masterAtomId = d_imageIdsTrunc[iImageCharge];
+                const dftfe::Int masterAtomId = d_imageIdsTrunc[iImageCharge];
 
                 dealii::Point<3> imageAtom(
                   d_imagePositionsTrunc[iImageCharge][0],
@@ -322,7 +322,7 @@ namespace dftfe
                 bool isRhoDataInCell = false;
 
                 // loop over quad points
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt q = 0; q < n_q_points; ++q)
                   {
                     dealii::Point<3> quadPoint = fe_values.quadrature_point(q);
                     dealii::Tensor<1, 3, double> diff = quadPoint - imageAtom;
@@ -380,9 +380,9 @@ namespace dftfe
 
                     if (isGradDensityDataDependent)
                       {
-                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                           {
-                            for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                               {
                                 double temp = (radialDensitySecondDerivative -
                                                radialDensityFirstDerivative /
@@ -417,7 +417,7 @@ namespace dftfe
                     if (isGradDensityDataDependent)
                       hessianRhoAtomCell.resize(n_q_points * 9);
 
-                    for (unsigned int q = 0; q < n_q_points; ++q)
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
                       {
                         gradRhoAtomCell[3 * q + 0] = gradRhoAtom[q][0];
                         gradRhoAtomCell[3 * q + 1] = gradRhoAtom[q][1];
@@ -425,9 +425,9 @@ namespace dftfe
 
                         if (isGradDensityDataDependent)
                           {
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                               {
-                                for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                                for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                                   {
                                     hessianRhoAtomCell[9 * q + 3 * iDim +
                                                        jDim] =
@@ -451,8 +451,8 @@ namespace dftfe
   //
   // Normalize rho
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::normalizeAtomicRhoQuadValues()
@@ -471,27 +471,27 @@ namespace dftfe
 
     for (auto it1 = d_rhoAtomsValues.begin(); it1 != d_rhoAtomsValues.end();
          ++it1)
-      for (unsigned int i = 0; i < (it1->second).size(); ++i)
+      for (dftfe::uInt i = 0; i < (it1->second).size(); ++i)
         (it1->second)[i] *= scaling;
 
     for (auto it1 = d_gradRhoAtomsValues.begin();
          it1 != d_gradRhoAtomsValues.end();
          ++it1)
-      for (unsigned int i = 0; i < (it1->second).size(); ++i)
+      for (dftfe::uInt i = 0; i < (it1->second).size(); ++i)
         (it1->second)[i] *= scaling;
 
     for (auto it1 = d_rhoAtomsValuesSeparate.begin();
          it1 != d_rhoAtomsValuesSeparate.end();
          ++it1)
       for (auto it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-        for (unsigned int i = 0; i < (it2->second).size(); ++i)
+        for (dftfe::uInt i = 0; i < (it2->second).size(); ++i)
           (it2->second)[i] *= scaling;
 
     for (auto it1 = d_gradRhoAtomsValuesSeparate.begin();
          it1 != d_gradRhoAtomsValuesSeparate.end();
          ++it1)
       for (auto it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-        for (unsigned int i = 0; i < (it2->second).size(); ++i)
+        for (dftfe::uInt i = 0; i < (it2->second).size(); ++i)
           (it2->second)[i] *= scaling;
 
     if (isGradDensityDataDependent)
@@ -499,14 +499,14 @@ namespace dftfe
         for (auto it1 = d_hessianRhoAtomsValues.begin();
              it1 != d_hessianRhoAtomsValues.end();
              ++it1)
-          for (unsigned int i = 0; i < (it1->second).size(); ++i)
+          for (dftfe::uInt i = 0; i < (it1->second).size(); ++i)
             (it1->second)[i] *= scaling;
 
         for (auto it1 = d_hessianRhoAtomsValuesSeparate.begin();
              it1 != d_hessianRhoAtomsValuesSeparate.end();
              ++it1)
           for (auto it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
-            for (unsigned int i = 0; i < (it2->second).size(); ++i)
+            for (dftfe::uInt i = 0; i < (it2->second).size(); ++i)
               (it2->second)[i] *= scaling;
       }
 
@@ -520,8 +520,8 @@ namespace dftfe
   //
   //
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -533,16 +533,15 @@ namespace dftfe
       const bool isConsiderGradData)
   {
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
-    const unsigned int nQuadsPerCell =
-      d_basisOperationsPtrHost->nQuadsPerCell();
-    const unsigned int nCells = d_basisOperationsPtrHost->nCells();
+    const dftfe::uInt nQuadsPerCell = d_basisOperationsPtrHost->nQuadsPerCell();
+    const dftfe::uInt nCells        = d_basisOperationsPtrHost->nCells();
 
-    for (unsigned int iCell = 0; iCell < nCells; ++iCell)
+    for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
       {
         const std::vector<double> &rhoAtomicValues =
           d_rhoAtomsValues.find(d_basisOperationsPtrHost->cellID(iCell))
             ->second;
-        for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+        for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
           quadratureValueData[iCell * nQuadsPerCell + iQuad] +=
             rhoAtomicValues[iQuad];
 
@@ -552,7 +551,7 @@ namespace dftfe
               d_gradRhoAtomsValues
                 .find(d_basisOperationsPtrHost->cellID(iCell))
                 ->second;
-            for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+            for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
               {
                 quadratureGradValueData[iCell * nQuadsPerCell * 3 + 3 * iQuad +
                                         0] +=
@@ -571,8 +570,8 @@ namespace dftfe
   //
   // compute l2 projection of quad data to nodal data
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -582,20 +581,20 @@ namespace dftfe
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
                                               &basisOperationsPtr,
       const dealii::AffineConstraints<double> &constraintMatrix,
-      const unsigned int                       dofHandlerId,
-      const unsigned int                       quadratureId,
+      const dftfe::uInt                        dofHandlerId,
+      const dftfe::uInt                        quadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                                 &quadratureValueData,
       distributedCPUVec<double> &nodalField)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
-    const unsigned int nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+    const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
     std::function<
       double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-             const unsigned int                                          q)>
+             const dftfe::uInt                                           q)>
       funcRho =
         [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-            const unsigned int                                          q) {
+            const dftfe::uInt                                           q) {
           return (
             quadratureValueData[basisOperationsPtr->cellIndex(cell->id()) *
                                   nQuadsPerCell +

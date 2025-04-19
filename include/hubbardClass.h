@@ -37,14 +37,14 @@ namespace dftfe
   struct hubbardSpecies
   {
   public:
-    unsigned int              atomicNumber;
-    double                    hubbardValue;
-    unsigned int              numProj;
-    unsigned int              numberSphericalFunc;
-    unsigned int              numberSphericalFuncSq;
-    double                    initialOccupation;
-    std::vector<unsigned int> nQuantumNum;
-    std::vector<unsigned int> lQuantumNum;
+    dftfe::uInt              atomicNumber;
+    double                   hubbardValue;
+    dftfe::uInt              numProj;
+    dftfe::uInt              numberSphericalFunc;
+    dftfe::uInt              numberSphericalFuncSq;
+    double                   initialOccupation;
+    std::vector<dftfe::uInt> nQuantumNum;
+    std::vector<dftfe::uInt> lQuantumNum;
   };
 
   /**
@@ -117,18 +117,18 @@ namespace dftfe
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                               BLASWrapperHostPtr,
-      const unsigned int                      matrixFreeVectorComponent,
-      const unsigned int                      densityQuadratureId,
-      const unsigned int                      sparsityPatternQuadratureId,
-      const unsigned int                      numberWaveFunctions,
-      const unsigned int                      numSpins,
+      const dftfe::uInt                       matrixFreeVectorComponent,
+      const dftfe::uInt                       densityQuadratureId,
+      const dftfe::uInt                       sparsityPatternQuadratureId,
+      const dftfe::uInt                       numberWaveFunctions,
+      const dftfe::uInt                       numSpins,
       const dftParameters                    &dftParam,
       const std::string                      &scratchFolderName,
       const bool                              singlePrecNonLocalOperator,
       const bool                              updateNonlocalSparsity,
       const std::vector<std::vector<double>> &atomLocations,
       const std::vector<std::vector<double>> &atomLocationsFrac,
-      const std::vector<int>                 &imageIds,
+      const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &imagePositions,
       const std::vector<double>              &kPointCoordinates,
       const std::vector<double>              &kPointWeights,
@@ -166,9 +166,9 @@ namespace dftfe
     applyPotentialDueToHubbardCorrection(
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>       &dst,
-      const unsigned int inputVecSize,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex);
+      const dftfe::uInt inputVecSize,
+      const dftfe::uInt kPointIndex,
+      const dftfe::uInt spinIndex);
 
     void
     applyPotentialDueToHubbardCorrection(
@@ -177,16 +177,16 @@ namespace dftfe
         memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<
         typename dftfe::dataTypes::singlePrecType<ValueType>::type,
-        memorySpace>    &dst,
-      const unsigned int inputVecSize,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex);
+        memorySpace>   &dst,
+      const dftfe::uInt inputVecSize,
+      const dftfe::uInt kPointIndex,
+      const dftfe::uInt spinIndex);
 
     void
-    initialiseOperatorActionOnX(unsigned int kPointIndex);
+    initialiseOperatorActionOnX(dftfe::uInt kPointIndex);
 
     void
-    initialiseFlattenedDataStructure(unsigned int numVectors);
+    initialiseFlattenedDataStructure(dftfe::uInt numVectors);
 
 
     /*
@@ -196,7 +196,7 @@ namespace dftfe
      *
      */
     const dftfe::utils::MemoryStorage<ValueType, memorySpace> &
-    getCouplingMatrix(unsigned int spinIndex);
+    getCouplingMatrix(dftfe::uInt spinIndex);
 
     /*
      * @brief Functions that returns the occupation matrices.
@@ -249,11 +249,11 @@ namespace dftfe
       AtomicCenteredNonLocalOperator<ValueType, memorySpace>>
     getNonLocalOperator();
 
-    unsigned int
-    getTotalNumberOfSphericalFunctionsForAtomId(unsigned int iAtom);
+    dftfe::uInt
+    getTotalNumberOfSphericalFunctionsForAtomId(dftfe::uInt iAtom);
 
-    unsigned int
-    getGlobalAtomId(unsigned int iAtom);
+    dftfe::uInt
+    getGlobalAtomId(dftfe::uInt iAtom);
 
 
     /*
@@ -272,17 +272,17 @@ namespace dftfe
 
 
   private:
-    std::map<unsigned int, unsigned int> d_mapHubbardAtomToGlobalAtomId;
+    std::map<dftfe::uInt, dftfe::uInt> d_mapHubbardAtomToGlobalAtomId;
 
-    unsigned int d_totalNumHubbAtoms;
+    dftfe::uInt d_totalNumHubbAtoms;
     void
     computeCouplingMatrix();
 
     void
-    computeHubbardOccNumberFromCTransOnX(const bool         isOccOut,
-                                         const unsigned int vectorBlockSize,
-                                         const unsigned int spinIndex,
-                                         const unsigned int kpointIndex);
+    computeHubbardOccNumberFromCTransOnX(const bool        isOccOut,
+                                         const dftfe::uInt vectorBlockSize,
+                                         const dftfe::uInt spinIndex,
+                                         const dftfe::uInt kpointIndex);
 
     void
     setInitialOccMatrix();
@@ -295,7 +295,7 @@ namespace dftfe
 
     void
     readHubbardInput(const std::vector<std::vector<double>> &atomLocations,
-                     const std::vector<int>                 &imageIds,
+                     const std::vector<dftfe::Int>          &imageIds,
                      const std::vector<std::vector<double>> &imagePositions);
 
 
@@ -321,9 +321,9 @@ namespace dftfe
 
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                                           d_BLASWrapperHostPtr;
-    std::map<unsigned int, hubbardSpecies> d_hubbardSpeciesData;
-    std::map<std::pair<unsigned int, unsigned int>,
+                                          d_BLASWrapperHostPtr;
+    std::map<dftfe::uInt, hubbardSpecies> d_hubbardSpeciesData;
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>,
              std::shared_ptr<AtomCenteredSphericalFunctionBase>>
       d_atomicProjectorFnsMap;
 
@@ -335,7 +335,7 @@ namespace dftfe
     const dftParameters             *d_dftParamsPtr;
     std::vector<double>              d_kPointCoordinates;
 
-    unsigned int d_numKPoints;
+    dftfe::uInt d_numKPoints;
 
     double d_atomOrbitalMaxLength;
 
@@ -344,25 +344,25 @@ namespace dftfe
     const MPI_Comm d_mpi_comm_interPool;
     const MPI_Comm d_mpi_comm_interBand;
 
-    unsigned int n_mpi_processes, this_mpi_process;
+    dftfe::uInt n_mpi_processes, this_mpi_process;
 
-    std::vector<unsigned int> d_bandGroupLowHighPlusOneIndices;
+    std::vector<dftfe::uInt> d_bandGroupLowHighPlusOneIndices;
 
-    unsigned int              d_numSpins;
-    std::vector<unsigned int> d_procLocalAtomId;
+    dftfe::uInt              d_numSpins;
+    std::vector<dftfe::uInt> d_procLocalAtomId;
 
     dealii::ConditionalOStream pcout;
 
     std::vector<double>              d_atomicCoords;
     std::vector<double>              d_initialAtomicSpin;
     std::vector<std::vector<double>> d_periodicImagesCoords;
-    std::vector<int>                 d_imageIds;
-    std::vector<unsigned int>        d_mapAtomToHubbardIds;
-    std::vector<unsigned int>        d_mapAtomToAtomicNumber;
+    std::vector<dftfe::Int>          d_imageIds;
+    std::vector<dftfe::uInt>         d_mapAtomToHubbardIds;
+    std::vector<dftfe::uInt>         d_mapAtomToAtomicNumber;
 
-    double       d_spinPolarizedFactor;
-    unsigned int d_noOfSpin;
-    std::string  d_dftfeScratchFolderName;
+    double      d_spinPolarizedFactor;
+    dftfe::uInt d_noOfSpin;
+    std::string d_dftfeScratchFolderName;
 
     std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>
       d_couplingMatrixEntries;
@@ -374,13 +374,13 @@ namespace dftfe
     std::map<
       HubbardOccFieldType,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-                 d_occupationMatrix;
-    unsigned int d_noSpecies;
+                d_occupationMatrix;
+    dftfe::uInt d_noSpecies;
 
-    unsigned int d_densityQuadratureId, d_numberWaveFunctions;
+    dftfe::uInt d_densityQuadratureId, d_numberWaveFunctions;
 
-    unsigned int              d_numTotalOccMatrixEntriesPerSpin;
-    std::vector<unsigned int> d_OccMatrixEntryStartForAtom;
+    dftfe::uInt              d_numTotalOccMatrixEntriesPerSpin;
+    std::vector<dftfe::uInt> d_OccMatrixEntryStartForAtom;
 
     dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
       d_hubbNonLocalProjectorTimesVectorBlock;
@@ -391,8 +391,8 @@ namespace dftfe
       d_hubbNonLocalProjectorTimesVectorBlockSinglePrec;
 
 
-    unsigned int d_cellsBlockSizeApply;
-    unsigned int d_verbosity;
+    dftfe::uInt d_cellsBlockSizeApply;
+    dftfe::uInt d_verbosity;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_hubbOccMatAfterMixing;
@@ -400,7 +400,7 @@ namespace dftfe
     double d_hubbardEnergy;
     double d_expectationOfHubbardPotential;
 
-    unsigned int d_maxOccMatSizePerAtom;
+    dftfe::uInt d_maxOccMatSizePerAtom;
   };
 } // namespace dftfe
 

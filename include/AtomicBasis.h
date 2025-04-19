@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <string>
 #include <utility>
-
+#include <TypeConfig.h>
 namespace dftfe
 {
   class AtomicBasis
@@ -47,19 +47,19 @@ namespace dftfe
       const std::unordered_map<std::string, std::string>
         &atomBasisFileNames) = 0;
 
-    virtual int
+    virtual dftfe::Int
     getNumBasis() const = 0;
 
     virtual std::vector<double>
-    getBasisValue(const unsigned int         basisId,
+    getBasisValue(const dftfe::uInt          basisId,
                   const std::vector<double> &x) const = 0;
 
     virtual std::vector<double>
-    getBasisGradient(const unsigned int         basisId,
+    getBasisGradient(const dftfe::uInt          basisId,
                      const std::vector<double> &x) const = 0;
 
     virtual std::vector<double>
-    getBasisLaplacian(const unsigned int         basisId,
+    getBasisLaplacian(const dftfe::uInt          basisId,
                       const std::vector<double> &x) const = 0;
   };
 } // namespace dftfe

@@ -24,13 +24,13 @@ namespace dftfe
 {
   //(locally used function) compute FPSPLocal contibution due to Gamma(Rj) for
   // given set of cells
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     FPSPLocalGammaAtomsElementalContribution(
-      std::map<unsigned int, std::vector<double>>
+      std::map<dftfe::uInt, std::vector<double>>
                                           &forceContributionFPSPLocalGammaAtoms,
       dealii::FEValues<3>                 &feValues,
       dealii::FEFaceValues<3>             &feFaceValues,
@@ -39,38 +39,36 @@ namespace dftfe
                            C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
                            3>             &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   phiTotDofHandlerIndexElectro,
-      const unsigned int                   cell,
+      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
+      const dftfe::uInt                    cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>> &rhoQuads,
       const dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                                       &pseudoVLocAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
-      const std::vector<std::map<dealii::CellId, unsigned int>>
+      const std::vector<std::map<dealii::CellId, dftfe::uInt>>
         &cellsVselfBallsClosestAtomIdDofHandler)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
     dealii::Tensor<1, 3, double> zeroTensorNonvect;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       zeroTensorNonvect[idim] = 0.0;
 
-    const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
-    const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
-    const unsigned int totalNumberAtoms =
-      numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells =
+    const dftfe::uInt numberGlobalAtoms  = dftPtr->atomLocations.size();
+    const dftfe::uInt numberImageCharges = dftPtr->d_imageIdsTrunc.size();
+    const dftfe::uInt totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+    const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
-    const unsigned int numQuadPoints = forceEval.n_q_points;
-    const unsigned int dofs_per_cell =
+    const dftfe::uInt numQuadPoints = forceEval.n_q_points;
+    const dftfe::uInt dofs_per_cell =
       matrixFreeData.get_dof_handler(0).get_fe().dofs_per_cell;
 
-    const unsigned int faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
-    const unsigned int numFaceQuadPoints = feFaceValues.get_quadrature().size();
+    const dftfe::uInt faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
+    const dftfe::uInt numFaceQuadPoints = feFaceValues.get_quadrature().size();
 
     dealii::AlignedVector<dealii::Tensor<1, 3, double>> surfaceIntegralSubcells(
       numSubCells);
@@ -88,7 +86,7 @@ namespace dftfe
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+    for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
       {
         subCellPtr =
           matrixFreeData.get_cell_iterator(cell,
@@ -97,11 +95,11 @@ namespace dftfe
         feValues.reinit(subCellPtr);
 
         std::vector<dealii::Point<3>> &temp = quadPointsSubCells[iSubCell];
-        for (unsigned int q = 0; q < numQuadPoints; ++q)
+        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
           temp[q] = feValues.quadrature_point(q);
       }
 
-    for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
         bool isLocalDomainOutsideVselfBall = false;
         bool isLocalDomainOutsidePspTail   = false;
@@ -109,7 +107,7 @@ namespace dftfe
           isLocalDomainOutsidePspTail = true;
 
         double           atomCharge;
-        unsigned int     atomId = iAtom;
+        dftfe::uInt      atomId = iAtom;
         dealii::Point<3> atomLocation;
         if (iAtom < numberGlobalAtoms)
           {
@@ -123,16 +121,16 @@ namespace dftfe
           }
         else
           {
-            const int imageId = iAtom - numberGlobalAtoms;
-            atomId            = dftPtr->d_imageIdsTrunc[imageId];
-            atomCharge        = dftPtr->d_imageChargesTrunc[imageId];
-            atomLocation[0]   = dftPtr->d_imagePositionsTrunc[imageId][0];
-            atomLocation[1]   = dftPtr->d_imagePositionsTrunc[imageId][1];
-            atomLocation[2]   = dftPtr->d_imagePositionsTrunc[imageId][2];
+            const dftfe::Int imageId = iAtom - numberGlobalAtoms;
+            atomId                   = dftPtr->d_imageIdsTrunc[imageId];
+            atomCharge               = dftPtr->d_imageChargesTrunc[imageId];
+            atomLocation[0] = dftPtr->d_imagePositionsTrunc[imageId][0];
+            atomLocation[1] = dftPtr->d_imagePositionsTrunc[imageId][1];
+            atomLocation[2] = dftPtr->d_imagePositionsTrunc[imageId][2];
           }
 
-        unsigned int                                         binIdiAtom;
-        std::map<unsigned int, unsigned int>::const_iterator it1 =
+        dftfe::uInt                                        binIdiAtom;
+        std::map<dftfe::uInt, dftfe::uInt>::const_iterator it1 =
           vselfBinsManager.getAtomIdBinIdMapLocalAllImages().find(atomId);
         if (it1 == vselfBinsManager.getAtomIdBinIdMapLocalAllImages().end())
           isLocalDomainOutsideVselfBall = true;
@@ -158,7 +156,7 @@ namespace dftfe
                   zeroTensor1);
 
         bool isTrivial = true;
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr =
               matrixFreeData.get_cell_iterator(cell,
@@ -170,17 +168,17 @@ namespace dftfe
             bool isCellOutsideVselfBall = true;
             if (!isLocalDomainOutsideVselfBall)
               {
-                std::map<dealii::CellId, unsigned int>::const_iterator it2 =
+                std::map<dealii::CellId, dftfe::uInt>::const_iterator it2 =
                   cellsVselfBallsClosestAtomIdDofHandler[binIdiAtom].find(
                     subCellId);
                 if (it2 !=
                     cellsVselfBallsClosestAtomIdDofHandler[binIdiAtom].end())
                   {
-                    dealii::Point<3>   closestAtomLocation;
-                    const unsigned int closestAtomId = it2->second;
+                    dealii::Point<3>  closestAtomLocation;
+                    const dftfe::uInt closestAtomId = it2->second;
                     if (it2->second >= numberGlobalAtoms)
                       {
-                        const unsigned int imageIdTrunc =
+                        const dftfe::uInt imageIdTrunc =
                           closestAtomId - numberGlobalAtoms;
                         closestAtomLocation[0] =
                           dftPtr->d_imagePositionsTrunc[imageIdTrunc][0];
@@ -209,14 +207,14 @@ namespace dftfe
                           {
                             std::vector<double> vselfDerRQuadsSubCell(
                               numQuadPoints);
-                            for (unsigned int idim = 0; idim < 3; ++idim)
+                            for (dftfe::uInt idim = 0; idim < 3; ++idim)
                               {
                                 feValues.get_function_values(
                                   vselfBinsManager
                                     .getVselfFieldDerRBins()[3 * binIdiAtom +
                                                              idim],
                                   vselfDerRQuadsSubCell);
-                                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                                for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                                   vselfDerRQuads[q][idim][iSubCell] =
                                     vselfDerRQuadsSubCell[q];
                               }
@@ -224,7 +222,7 @@ namespace dftfe
                         else if (!d_dftParams.floatingNuclearCharges &&
                                  d_dftParams.smearedNuclearCharges)
                           {
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
+                            for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                               {
                                 dealii::Point<3> quadPoint =
                                   feValues.quadrature_point(q);
@@ -250,7 +248,7 @@ namespace dftfe
                             feValues.get_function_gradients(
                               vselfBinsManager.getVselfFieldBins()[binIdiAtom],
                               gradVselfQuadsSubCell);
-                            for (unsigned int q = 0; q < numQuadPoints; ++q)
+                            for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                               {
                                 vselfDerRQuads[q][0][iSubCell] =
                                   -gradVselfQuadsSubCell[q][0];
@@ -273,7 +271,7 @@ namespace dftfe
                 if (it != pseudoVLocAtoms.find(iAtom)->second.end())
                   {
                     isCellOutsidePspTail = false;
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                       pseudoVLocAtomsQuads[q][iSubCell] = (it->second)[q];
                   }
               }
@@ -281,7 +279,7 @@ namespace dftfe
               {
                 std::vector<dealii::Point<3>> &temp =
                   quadPointsSubCells[iSubCell];
-                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                   {
                     dealii::Tensor<1, 3, double> dispAtom =
                       temp[q] - atomLocation;
@@ -294,7 +292,7 @@ namespace dftfe
               {
                 std::vector<dealii::Point<3>> &temp =
                   quadPointsSubCells[iSubCell];
-                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                   {
                     dealii::Tensor<1, 3, double> dispAtom =
                       temp[q] - atomLocation;
@@ -309,20 +307,19 @@ namespace dftfe
                   surfaceIntegralSubcells[iSubCell];
 
                 const std::map<dealii::DoFHandler<3>::active_cell_iterator,
-                               std::vector<unsigned int>>
+                               std::vector<dftfe::uInt>>
                   &cellsVselfBallSurfacesDofHandler =
                     d_cellFacesVselfBallSurfacesDofHandlerElectro[binIdiAtom];
 
                 if (cellsVselfBallSurfacesDofHandler.find(subCellPtr) !=
                     cellsVselfBallSurfacesDofHandler.end())
                   {
-                    const std::vector<unsigned int> &dirichletFaceIds =
+                    const std::vector<dftfe::uInt> &dirichletFaceIds =
                       cellsVselfBallSurfacesDofHandler.find(subCellPtr)->second;
-                    for (unsigned int index = 0;
-                         index < dirichletFaceIds.size();
+                    for (dftfe::uInt index = 0; index < dirichletFaceIds.size();
                          index++)
                       {
-                        const unsigned int faceId = dirichletFaceIds[index];
+                        const dftfe::uInt faceId = dirichletFaceIds[index];
 
                         feFaceValues.reinit(
                           d_cellIdToActiveCellIteratorMapDofHandlerRhoNodalElectro
@@ -331,8 +328,7 @@ namespace dftfe
                           faceId);
                         feFaceValues.get_function_values(
                           dftPtr->d_rhoOutNodalValuesDistributed, rhoFaceQuads);
-                        for (unsigned int qPoint = 0;
-                             qPoint < numFaceQuadPoints;
+                        for (dftfe::uInt qPoint = 0; qPoint < numFaceQuadPoints;
                              ++qPoint)
                           {
                             const dealii::Point<3> quadPoint =
@@ -355,8 +351,8 @@ namespace dftfe
             if (isCellOutsideVselfBall && !isCellOutsidePspTail)
               {
                 isTrivial = false;
-                for (unsigned int q = 0; q < numQuadPoints; ++q)
-                  for (unsigned int idim = 0; idim < 3; idim++)
+                for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
+                  for (dftfe::uInt idim = 0; idim < 3; idim++)
                     totalContribution[q][idim][iSubCell] =
                       -gradRhoQuads[q][idim][iSubCell] *
                         vselfQuads[q][iSubCell] +
@@ -366,8 +362,8 @@ namespace dftfe
             else if (!isCellOutsideVselfBall)
               {
                 isTrivial = false;
-                for (unsigned int q = 0; q < numQuadPoints; ++q)
-                  for (unsigned int idim = 0; idim < 3; idim++)
+                for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
+                  for (dftfe::uInt idim = 0; idim < 3; idim++)
                     totalContribution[q][idim][iSubCell] =
                       -rhoQuads[q][iSubCell] *
                         vselfDerRQuads[q][idim][iSubCell] +
@@ -379,7 +375,7 @@ namespace dftfe
         if (isTrivial)
           continue;
 
-        for (unsigned int q = 0; q < numQuadPoints; ++q)
+        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
           forceEval.submit_value(totalContribution[q], q);
 
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
@@ -390,8 +386,8 @@ namespace dftfe
             forceContributionFPSPLocalGammaAtoms.end())
           forceContributionFPSPLocalGammaAtoms[atomId] =
             std::vector<double>(3, 0.0);
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-          for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
             {
               forceContributionFPSPLocalGammaAtoms[atomId][idim] +=
                 forceContributionFPSPLocalGammaiAtomCells[idim][iSubCell] +
@@ -403,24 +399,24 @@ namespace dftfe
   //(locally used function) accumulate and distribute FPSPLocal contibution due
   // to
   // Gamma(Rj)
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     distributeForceContributionFPSPLocalGammaAtoms(
-      const std::map<unsigned int, std::vector<double>>
+      const std::map<dftfe::uInt, std::vector<double>>
         &forceContributionFPSPLocalGammaAtoms,
-      const std::map<std::pair<unsigned int, unsigned int>, unsigned int>
+      const std::map<std::pair<dftfe::uInt, dftfe::uInt>, dftfe::uInt>
                                               &atomsForceDofs,
       const dealii::AffineConstraints<double> &constraintsNoneForce,
       distributedCPUVec<double>               &configForceVectorLinFE)
   {
-    for (unsigned int iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
       {
         bool doesAtomIdExistOnLocallyOwnedNode = false;
         if (atomsForceDofs.find(
-              std::pair<unsigned int, unsigned int>(iAtom, 0)) !=
+              std::pair<dftfe::uInt, dftfe::uInt>(iAtom, 0)) !=
             atomsForceDofs.end())
           {
             doesAtomIdExistOnLocallyOwnedNode = true;
@@ -445,10 +441,10 @@ namespace dftfe
           {
             std::vector<dealii::types::global_dof_index> forceLocalDofIndices(
               3);
-            for (unsigned int idim = 0; idim < 3; idim++)
+            for (dftfe::uInt idim = 0; idim < 3; idim++)
               forceLocalDofIndices[idim] =
                 atomsForceDofs
-                  .find(std::pair<unsigned int, unsigned int>(iAtom, idim))
+                  .find(std::pair<dftfe::uInt, dftfe::uInt>(iAtom, idim))
                   ->second;
 
             constraintsNoneForce.distribute_local_to_global(

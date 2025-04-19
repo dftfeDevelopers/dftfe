@@ -100,8 +100,8 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excTauMGGAClass<memorySpace>::computeRhoTauDependentXCData(
-    AuxDensityMatrix<memorySpace>               &auxDensityMatrix,
-    const std::pair<unsigned int, unsigned int> &quadIndexRange,
+    AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
+    const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &xDataOut,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -111,7 +111,7 @@ namespace dftfe
     double rhoThresholdMgga = 1e-9;
     // double sigmaThresholdMgga   = 1e-24;
 
-    const unsigned int nquad = quadIndexRange.second - quadIndexRange.first;
+    const dftfe::uInt nquad = quadIndexRange.second - quadIndexRange.first;
     std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
 
     for (const auto &element : xDataOut)
@@ -353,9 +353,9 @@ namespace dftfe
     const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
                                                                       &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-    const unsigned int inputVecSize,
-    const unsigned int kPointIndex,
-    const unsigned int spinIndex)
+    const dftfe::uInt inputVecSize,
+    const dftfe::uInt kPointIndex,
+    const dftfe::uInt spinIndex)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -364,9 +364,9 @@ namespace dftfe
     const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
                                                                           &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
-    const unsigned int inputVecSize,
-    const unsigned int kPointIndex,
-    const unsigned int spinIndex)
+    const dftfe::uInt inputVecSize,
+    const dftfe::uInt kPointIndex,
+    const dftfe::uInt spinIndex)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -401,7 +401,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excTauMGGAClass<memorySpace>::reinitKPointDependentVariables(
-    unsigned int kPointIndex)
+    dftfe::uInt kPointIndex)
   {}
 
   template class excTauMGGAClass<dftfe::utils::MemorySpace::HOST>;

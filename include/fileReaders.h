@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <mpi.h>
+#include <TypeConfig.h>
 
 namespace dftfe
 {
@@ -38,7 +39,7 @@ namespace dftfe
      * @param[in] fileName
      */
     void
-    readFile(const unsigned int                numColumns,
+    readFile(const dftfe::uInt                 numColumns,
              std::vector<std::vector<double>> &data,
              const std::string                &fileName);
 
@@ -54,8 +55,8 @@ namespace dftfe
     /**
      * @brief Read from file containing only double data in columns.
      */
-    int
-    readPsiFile(const unsigned int                numColumns,
+    dftfe::Int
+    readPsiFile(const dftfe::uInt                 numColumns,
                 std::vector<std::vector<double>> &data,
                 const std::string                &fileName);
 
@@ -85,10 +86,10 @@ namespace dftfe
      * @brief Read from file containing only integer data in columns.
      */
     void
-    readRelaxationFlagsFile(const unsigned int                numColumns,
-                            std::vector<std::vector<int>>    &data,
-                            std::vector<std::vector<double>> &forceData,
-                            const std::string                &fileName);
+    readRelaxationFlagsFile(const dftfe::uInt                     numColumns,
+                            std::vector<std::vector<dftfe::Int>> &data,
+                            std::vector<std::vector<double>>     &forceData,
+                            const std::string                    &fileName);
 
     /**
      * @brief Move/rename checkpoint file.

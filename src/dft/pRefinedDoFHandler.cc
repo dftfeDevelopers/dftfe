@@ -26,8 +26,8 @@ namespace dftfe
   //
   // compute total charge using quad point values
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::createpRefinedDofHandler(
@@ -59,7 +59,7 @@ namespace dftfe
     std::vector<std::vector<double>> unitVectorsXYZ;
     unitVectorsXYZ.resize(3);
 
-    for (unsigned int i = 0; i < 3; ++i)
+    for (dftfe::uInt i = 0; i < 3; ++i)
       {
         unitVectorsXYZ[i].resize(3, 0.0);
         unitVectorsXYZ[i][i] = 0.0;
@@ -69,20 +69,20 @@ namespace dftfe
     // resize offset vectors
     offsetVectors.resize(3);
 
-    for (unsigned int i = 0; i < 3; ++i)
-      for (unsigned int j = 0; j < 3; ++j)
+    for (dftfe::uInt i = 0; i < 3; ++i)
+      for (dftfe::uInt j = 0; j < 3; ++j)
         offsetVectors[i][j] =
           unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
 
     std::vector<dealii::GridTools::PeriodicFacePair<
       typename dealii::DoFHandler<3>::cell_iterator>>
-                                      periodicity_vector2;
-    const std::array<unsigned int, 3> periodic = {d_dftParamsPtr->periodicX,
-                                                  d_dftParamsPtr->periodicY,
-                                                  d_dftParamsPtr->periodicZ};
+                                     periodicity_vector2;
+    const std::array<dftfe::uInt, 3> periodic = {d_dftParamsPtr->periodicX,
+                                                 d_dftParamsPtr->periodicY,
+                                                 d_dftParamsPtr->periodicZ};
 
-    std::vector<int> periodicDirectionVector;
-    for (unsigned int d = 0; d < 3; ++d)
+    std::vector<dftfe::Int> periodicDirectionVector;
+    for (dftfe::uInt d = 0; d < 3; ++d)
       {
         if (periodic[d] == 1)
           {
@@ -90,7 +90,7 @@ namespace dftfe
           }
       }
 
-    for (unsigned int i = 0;
+    for (dftfe::uInt i = 0;
          i < std::accumulate(periodic.begin(), periodic.end(), 0);
          ++i)
       dealii::GridTools::collect_periodic_faces(
@@ -133,7 +133,7 @@ namespace dftfe
     std::vector<dealii::GridTools::PeriodicFacePair<
       typename dealii::DoFHandler<3>::cell_iterator>>
       periodicity_vector_rhonodal;
-    for (unsigned int i = 0;
+    for (dftfe::uInt i = 0;
          i < std::accumulate(periodic.begin(), periodic.end(), 0);
          ++i)
       dealii::GridTools::collect_periodic_faces(
@@ -180,8 +180,8 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initpRefinedObjects(
@@ -362,7 +362,7 @@ namespace dftfe
     matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerRhoNodal);
     matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerRhoNodal);
 
-    for (unsigned int i = 3; i < d_constraintsVectorElectro.size(); ++i)
+    for (dftfe::uInt i = 3; i < d_constraintsVectorElectro.size(); ++i)
       matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerPRefined);
 
     forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
@@ -424,7 +424,7 @@ namespace dftfe
                 dftfe::basis::update_gradients :
                 dftfe::basis::update_default;
 
-            std::vector<unsigned int> quadratureIndices{
+            std::vector<dftfe::uInt> quadratureIndices{
               d_densityQuadratureIdElectro,
               d_lpspQuadratureIdElectro,
               d_smearedChargeQuadratureIdElectro,
@@ -463,7 +463,7 @@ namespace dftfe
               dftfe::basis::update_inversejacobians | dftfe::basis::update_jxw |
               dftfe::basis::update_gradients;
 
-            std::vector<unsigned int> quadratureIndices{
+            std::vector<dftfe::uInt> quadratureIndices{
               d_phiTotAXQuadratureIdElectro};
             std::vector<dftfe::basis::UpdateFlags> updateFlags{
               updateFlagsGradientsAndInvJacobians};
@@ -495,8 +495,8 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::updatePRefinedConstraints()

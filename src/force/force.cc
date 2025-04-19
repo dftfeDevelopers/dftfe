@@ -74,7 +74,7 @@ namespace dftfe
       std::vector<std::vector<double>> unitVectorsXYZ;
       unitVectorsXYZ.resize(3);
 
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         {
           unitVectorsXYZ[i].resize(3, 0.0);
           unitVectorsXYZ[i][i] = 0.0;
@@ -84,9 +84,9 @@ namespace dftfe
       // resize offset vectors
       offsetVectors.resize(3);
 
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         {
-          for (int j = 0; j < 3; ++j)
+          for (dftfe::Int j = 0; j < 3; ++j)
             {
               offsetVectors[i][j] =
                 unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
@@ -97,14 +97,14 @@ namespace dftfe
         typename dealii::DoFHandler<3>::cell_iterator>>
         periodicity_vectorForce;
 
-      const std::array<int, 3> periodic = {dftParams.periodicX,
-                                           dftParams.periodicY,
-                                           dftParams.periodicZ};
+      const std::array<dftfe::Int, 3> periodic = {dftParams.periodicX,
+                                                  dftParams.periodicY,
+                                                  dftParams.periodicZ};
 
 
-      std::vector<int> periodicDirectionVector;
+      std::vector<dftfe::Int> periodicDirectionVector;
 
-      for (unsigned int d = 0; d < 3; ++d)
+      for (dftfe::uInt d = 0; d < 3; ++d)
         {
           if (periodic[d] == 1)
             {
@@ -112,7 +112,8 @@ namespace dftfe
             }
         }
 
-      for (int i = 0; i < std::accumulate(periodic.begin(), periodic.end(), 0);
+      for (dftfe::Int i = 0;
+           i < std::accumulate(periodic.begin(), periodic.end(), 0);
            ++i)
         {
           dealii::GridTools::collect_periodic_faces(
@@ -150,8 +151,8 @@ namespace dftfe
   //
   // constructor
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   forceClass<FEOrder, FEOrderElectro, memorySpace>::forceClass(
     dftClass<FEOrder, FEOrderElectro, memorySpace> *_dftPtr,
@@ -173,8 +174,8 @@ namespace dftfe
   //
   // initialize forceClass object
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::initUnmoved(
@@ -212,8 +213,8 @@ namespace dftfe
 
 
   // reinitialize force class object after mesh update
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::initMoved(
@@ -248,9 +249,9 @@ namespace dftfe
                                    d_locally_owned_dofsForce,
                                    d_atomsForceDofs);
 
-        const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
+        const dftfe::uInt numberGlobalAtoms = dftPtr->atomLocations.size();
         std::vector<dealii::Point<3>> atomPoints;
-        for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
           {
             dealii::Point<3> atomCoor;
             atomCoor[0] = dftPtr->atomLocations[iAtom][2];
@@ -264,8 +265,8 @@ namespace dftfe
   //
   // initialize pseudopotential data for force computation
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::initPseudoData()
@@ -275,18 +276,18 @@ namespace dftfe
   }
 
   // compute forces on atoms corresponding to a Gaussian generator
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::computeAtomsForces(
     const dealii::MatrixFree<3, double> &matrixFreeData,
     const dispersionCorrection          &dispersionCorr,
-    const unsigned int                   eigenDofHandlerIndex,
-    const unsigned int                   smearedChargeQuadratureId,
-    const unsigned int                   lpspQuadratureIdElectro,
+    const dftfe::uInt                    eigenDofHandlerIndex,
+    const dftfe::uInt                    smearedChargeQuadratureId,
+    const dftfe::uInt                    lpspQuadratureIdElectro,
     const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-    const unsigned int                   phiTotDofHandlerIndexElectro,
+    const dftfe::uInt                    phiTotDofHandlerIndexElectro,
     const distributedCPUVec<double>     &phiTotRhoOutElectro,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -301,12 +302,12 @@ namespace dftfe
     const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
     const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
-    const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
       &gradRhoCoreAtoms,
-    const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                                         &hessianRhoCoreAtoms,
     const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-    const std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                             &pseudoVLocAtomsElectro,
     const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
     const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
@@ -356,9 +357,9 @@ namespace dftfe
 
     if (d_dftParams.dc_dispersioncorrectiontype != 0)
       {
-        for (unsigned int iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
+        for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
           {
-            for (unsigned int idim = 0; idim < 3; idim++)
+            for (dftfe::uInt idim = 0; idim < 3; idim++)
               {
                 d_globalAtomsForces[iAtom * 3 + idim] +=
                   dispersionCorr.getForceCorrection(iAtom, idim);
@@ -374,8 +375,8 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::configForceLinFEInit(
@@ -401,15 +402,15 @@ namespace dftfe
     d_forceAtomsFloatingKPoints.clear();
 #endif
 
-    const int numberGlobalAtoms = dftPtr->atomLocations.size();
+    const dftfe::Int numberGlobalAtoms = dftPtr->atomLocations.size();
     d_forceAtomsFloating.resize(3 * numberGlobalAtoms, 0.0);
 #ifdef USE_COMPLEX
     d_forceAtomsFloatingKPoints.resize(3 * numberGlobalAtoms, 0.0);
 #endif
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::configForceLinFEFinalize()
@@ -452,18 +453,18 @@ namespace dftfe
   // cases. Also both LDA and GGA exchange correlation are handled. For details
   // of the configurational force expressions refer to the Configurational force
   // paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535)
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     computeConfigurationalForceTotalLinFE(
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   eigenDofHandlerIndex,
-      const unsigned int                   smearedChargeQuadratureId,
-      const unsigned int                   lpspQuadratureIdElectro,
+      const dftfe::uInt                    eigenDofHandlerIndex,
+      const dftfe::uInt                    smearedChargeQuadratureId,
+      const dftfe::uInt                    lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const unsigned int                   phiTotDofHandlerIndexElectro,
+      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -478,15 +479,12 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &gradRhoCoreAtoms,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                                           &hessianRhoCoreAtoms,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                                       &pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
@@ -540,12 +538,12 @@ namespace dftfe
         << vselfforce_time << std::endl;
 
 #ifdef DEBUG
-    std::map<std::pair<unsigned int, unsigned int>,
-             unsigned int>::const_iterator it;
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>, dftfe::uInt>::const_iterator
+      it;
     for (it = d_atomsForceDofs.begin(); it != d_atomsForceDofs.end(); ++it)
       {
-        const std::pair<unsigned int, unsigned int> &atomIdPair   = it->first;
-        const unsigned int                           atomForceDof = it->second;
+        const std::pair<dftfe::uInt, dftfe::uInt> &atomIdPair   = it->first;
+        const dftfe::uInt                          atomForceDof = it->second;
         if (d_dftParams.verbosity == 2)
           std::cout << "procid: " << this_mpi_process
                     << " atomId: " << atomIdPair.first
@@ -566,8 +564,8 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   std::vector<double> &
   forceClass<FEOrder, FEOrderElectro, memorySpace>::getAtomsForces()
@@ -575,8 +573,8 @@ namespace dftfe
     return d_globalAtomsForces;
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   dealii::Tensor<2, 3, double> &
   forceClass<FEOrder, FEOrderElectro, memorySpace>::getStress()
@@ -585,13 +583,13 @@ namespace dftfe
   }
 
   /*
-     template<unsigned int FEOrder,unsigned int FEOrderElectro>
+     template<dftfe::uInt FEOrder,dftfe::uInt FEOrderElectro>
      double  forceClass<FEOrder>::getGaussianGeneratorParameter() const
      {
      return d_gaussianConstant;
      }
 
-     template<unsigned int FEOrder,unsigned int FEOrderElectro>
+     template<dftfe::uInt FEOrder,dftfe::uInt FEOrderElectro>
      void  forceClass<FEOrder>::updateGaussianConstant(const double
      newGaussianConstant)
      {

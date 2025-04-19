@@ -52,7 +52,7 @@ namespace dftfe
       // recenter vertex about corner
       //
       std::vector<double> recenteredPoint(3);
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         recenteredPoint[i] = point[i] - corner[i];
 
       std::vector<double> latticeVectorsDup = latticeVectors;
@@ -137,9 +137,9 @@ namespace dftfe
       std::vector<double> Q(3, 0.0);
       std::vector<double> R(3);
 
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         {
-          for (int j = 0; j < 3; ++j)
+          for (dftfe::Int j = 0; j < 3; ++j)
             {
               P[i] += latticeVectors[3 * j + i] * xred1[j];
               Q[i] += latticeVectors[3 * j + i] * xred2[j];
@@ -159,7 +159,7 @@ namespace dftfe
 
 
       std::vector<double> nearestPtCoords(3);
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         nearestPtCoords[i] = P[i] + t * surfaceNormal[i];
 
       //
@@ -195,7 +195,7 @@ namespace dftfe
 
       std::vector<double> returnValue(3);
 
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         returnValue[i] = roundToCell(nearestPtCoords[i]);
 
       return returnValue;
@@ -252,11 +252,11 @@ namespace dftfe
           // compute distance between fracPtA (closest point on surface A) and
           // xreduced
           //
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             dFrac[i] = xreduced[i] - fracPtA[i];
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distA =
@@ -273,14 +273,14 @@ namespace dftfe
           std::vector<double> fracPtB = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface2Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtB[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distB =
@@ -297,14 +297,14 @@ namespace dftfe
           std::vector<double> fracPtC = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface3Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtC[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distC =
@@ -321,14 +321,14 @@ namespace dftfe
           std::vector<double> fracPtD = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface1Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtD[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distD =
@@ -345,14 +345,14 @@ namespace dftfe
           std::vector<double> fracPtE = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface2Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtE[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distE =
@@ -370,14 +370,14 @@ namespace dftfe
           std::vector<double> fracPtF = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface3Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtF[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distF =
@@ -394,22 +394,22 @@ namespace dftfe
   // Configurational force on atoms corresponding to Gaussian generator.
   // Generator is discretized using linear FE shape functions. Configurational
   // force on nodes due to linear FE shape functions precomputed
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms)
   {
-    unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
+    dftfe::uInt vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     const std::vector<std::vector<double>> &atomLocations =
       dftPtr->atomLocations;
     const std::vector<std::vector<double>> &imagePositions =
       dftPtr->d_imagePositionsTrunc;
-    const std::vector<int> &imageIds           = dftPtr->d_imageIdsTrunc;
-    const int               numberGlobalAtoms  = atomLocations.size();
-    const int               numberImageCharges = imageIds.size();
-    const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+    const std::vector<dftfe::Int> &imageIds           = dftPtr->d_imageIdsTrunc;
+    const dftfe::Int               numberGlobalAtoms  = atomLocations.size();
+    const dftfe::Int               numberImageCharges = imageIds.size();
+    const dftfe::Int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
     std::vector<double> globalAtomsGaussianForcesLocalPart(numberGlobalAtoms *
                                                              3,
                                                            0);
@@ -425,12 +425,12 @@ namespace dftfe
     tempDisp[2]                      = val;
 
     std::vector<dealii::Point<3>> nontrivialAtomCoords;
-    std::vector<unsigned int>     nontrivialAtomIds;
-    std::vector<unsigned int>     nontrivialAtomChargeIds;
-    for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
+    std::vector<dftfe::uInt>      nontrivialAtomIds;
+    std::vector<dftfe::uInt>      nontrivialAtomChargeIds;
+    for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
         dealii::Point<3> atomCoor;
-        int              atomId = iAtom;
+        dftfe::Int       atomId = iAtom;
         if (iAtom < numberGlobalAtoms)
           {
             atomCoor[0] = atomLocations[iAtom][2];
@@ -475,18 +475,17 @@ namespace dftfe
       {
         if (cell->is_locally_owned())
           {
-            for (unsigned int i = 0; i < vertices_per_cell; ++i)
+            for (dftfe::uInt i = 0; i < vertices_per_cell; ++i)
               {
-                const unsigned global_vertex_no = cell->vertex_index(i);
+                const dftfe::uInt global_vertex_no = cell->vertex_index(i);
 
                 if (vertex_touched[global_vertex_no])
                   continue;
                 vertex_touched[global_vertex_no] = true;
                 dealii::Point<3> nodalCoor       = cell->vertex(i);
 
-                int overlappedAtomId = -1;
-                for (unsigned int jAtom = 0;
-                     jAtom < nontrivialAtomCoords.size();
+                dftfe::Int overlappedAtomId = -1;
+                for (dftfe::uInt jAtom = 0; jAtom < nontrivialAtomCoords.size();
                      jAtom++)
                   {
                     const dealii::Point<3> &jAtomCoor =
@@ -499,8 +498,7 @@ namespace dftfe
                       }
                   } // j atom loop
 
-                for (unsigned int iAtom = 0;
-                     iAtom < nontrivialAtomCoords.size();
+                for (dftfe::uInt iAtom = 0; iAtom < nontrivialAtomCoords.size();
                      iAtom++)
                   {
                     if (overlappedAtomId != iAtom && overlappedAtomId != -1 &&
@@ -508,8 +506,9 @@ namespace dftfe
                       continue;
                     const dealii::Point<3> &atomCoor =
                       nontrivialAtomCoords[iAtom];
-                    const int atomId       = nontrivialAtomIds[iAtom];
-                    const int atomChargeId = nontrivialAtomChargeIds[iAtom];
+                    const dftfe::Int atomId = nontrivialAtomIds[iAtom];
+                    const dftfe::Int atomChargeId =
+                      nontrivialAtomChargeIds[iAtom];
 
                     const double r = (nodalCoor - atomCoor).norm();
 
@@ -524,9 +523,9 @@ namespace dftfe
                           dftPtr->d_gaussianConstantsForce[atomChargeId],
                           d_dftParams.gaussianOrderForce);
 
-                    for (unsigned int idim = 0; idim < 3; idim++)
+                    for (dftfe::uInt idim = 0; idim < 3; idim++)
                       {
-                        const unsigned int globalDofIndex =
+                        const dftfe::uInt globalDofIndex =
                           cell->vertex_dof_index(i, idim);
                         if (!d_constraintsNoneForce.is_constrained(
                               globalDofIndex) &&
@@ -560,17 +559,17 @@ namespace dftfe
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
-          for (unsigned int i = 0; i < vertices_per_cell; ++i)
+          for (dftfe::uInt i = 0; i < vertices_per_cell; ++i)
             {
-              const unsigned global_vertex_no = cell->vertex_index(i);
+              const dftfe::uInt global_vertex_no = cell->vertex_index(i);
 
               if (vertex_touched[global_vertex_no])
                 continue;
               vertex_touched[global_vertex_no] = true;
               dealii::Point<3> nodalCoor       = cell->vertex(i);
 
-              int overlappedAtomId = -1;
-              for (unsigned int jAtom = 0; jAtom < nontrivialAtomCoords.size();
+              dftfe::Int overlappedAtomId = -1;
+              for (dftfe::uInt jAtom = 0; jAtom < nontrivialAtomCoords.size();
                    jAtom++)
                 {
                   const dealii::Point<3> &jAtomCoor =
@@ -583,7 +582,7 @@ namespace dftfe
                     }
                 } // j atom loop
 
-              for (unsigned int iAtom = 0; iAtom < nontrivialAtomCoords.size();
+              for (dftfe::uInt iAtom = 0; iAtom < nontrivialAtomCoords.size();
                    iAtom++)
                 {
                   if (overlappedAtomId != iAtom && overlappedAtomId != -1 &&
@@ -592,8 +591,9 @@ namespace dftfe
 
                   const dealii::Point<3> &atomCoor =
                     nontrivialAtomCoords[iAtom];
-                  const int atomId       = nontrivialAtomIds[iAtom];
-                  const int atomChargeId = nontrivialAtomChargeIds[iAtom];
+                  const dftfe::Int atomId = nontrivialAtomIds[iAtom];
+                  const dftfe::Int atomChargeId =
+                    nontrivialAtomChargeIds[iAtom];
 
                   const double r = (nodalCoor - atomCoor).norm();
                   double       gaussianWeight =
@@ -606,9 +606,9 @@ namespace dftfe
                         r,
                         dftPtr->d_gaussianConstantsForce[atomChargeId],
                         d_dftParams.gaussianOrderForce);
-                  for (unsigned int idim = 0; idim < 3; idim++)
+                  for (dftfe::uInt idim = 0; idim < 3; idim++)
                     {
-                      const unsigned int globalDofIndex =
+                      const dftfe::uInt globalDofIndex =
                         cell->vertex_dof_index(i, idim);
 
                       if (!d_constraintsNoneForceElectro.is_constrained(
@@ -675,9 +675,9 @@ namespace dftfe
                   dftPtr->interpoolcomm);
 
     // add to total Gaussian force
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
       {
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
             d_globalAtomsForces[iAtom * 3 + idim] +=
               globalAtomsGaussianForcesKPoints[iAtom * 3 + idim];
@@ -686,13 +686,13 @@ namespace dftfe
 #endif
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::printAtomsForces()
   {
-    const int numberGlobalAtoms = dftPtr->atomLocations.size();
+    const dftfe::Int numberGlobalAtoms = dftPtr->atomLocations.size();
     if (!d_dftParams.reproducible_output)
       pcout << std::endl << "Ion forces (Hartree/Bohr)" << std::endl;
     else
@@ -709,10 +709,10 @@ namespace dftfe
     double                           maxForce           = -1.0;
     double                           sumAbsValForceComp = 0;
     std::vector<double>              sumForce(3);
-    unsigned int                     maxForceAtomId = 0;
+    dftfe::uInt                      maxForceAtomId = 0;
     std::vector<std::vector<double>> forceData(numberGlobalAtoms,
                                                std::vector<double>(3, 0.0));
-    for (unsigned int i = 0; i < numberGlobalAtoms; i++)
+    for (dftfe::uInt i = 0; i < numberGlobalAtoms; i++)
       {
         if (!d_dftParams.reproducible_output)
           pcout << std::setw(4) << i << "     " << std::scientific
@@ -722,7 +722,7 @@ namespace dftfe
         else
           {
             std::vector<double> truncatedForce(3);
-            for (unsigned int idim = 0; idim < 3; idim++)
+            for (dftfe::uInt idim = 0; idim < 3; idim++)
               truncatedForce[idim] = std::fabs(
                 std::floor(10000000 * (-d_globalAtomsForces[3 * i + idim])) /
                 10000000.0);
@@ -737,7 +737,7 @@ namespace dftfe
         forceData[i][2] = -d_globalAtomsForces[3 * i + 2];
 
         double absForce = 0.0;
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
             absForce += d_globalAtomsForces[3 * i + idim] *
                         d_globalAtomsForces[3 * i + idim];

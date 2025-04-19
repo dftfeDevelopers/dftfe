@@ -42,7 +42,7 @@ namespace dftfe
                               const std::string restartFilesPath,
                               const MPI_Comm   &mpi_comm_parent,
                               const bool        restart,
-                              const int         verbosity,
+                              const dftfe::Int  verbosity,
                               const bool        useDevice);
 
 
@@ -67,9 +67,9 @@ namespace dftfe
     // restart parameters
     const bool        d_isRestart;
     const std::string d_restartFilesPath;
-    const int         d_verbosity;
+    const dftfe::Int  d_verbosity;
     // status parameters
-    int d_status, d_cycle, d_optMode;
+    dftfe::Int d_status, d_cycle, d_optMode;
     // parallel communication objects
     const MPI_Comm d_mpiCommParent;
 

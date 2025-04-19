@@ -21,8 +21,8 @@ namespace dftfe
 
     void
     computeRhoTauDependentXCData(
-      AuxDensityMatrix<memorySpace>               &auxDensityMatrix,
-      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
         &xDataOut,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -38,9 +38,9 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
                                                                         &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const unsigned int inputVecSize,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex) override;
+      const dftfe::uInt inputVecSize,
+      const dftfe::uInt kPointIndex,
+      const dftfe::uInt spinIndex) override;
 
     /*
      * @brief The apply function that will be called in HXCheby() with single precision.
@@ -57,10 +57,10 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
                                               memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-                        &dst,
-      const unsigned int inputVecSize,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex) override;
+                       &dst,
+      const dftfe::uInt inputVecSize,
+      const dftfe::uInt kPointIndex,
+      const dftfe::uInt spinIndex) override;
 
 
     void
@@ -80,7 +80,7 @@ namespace dftfe
     getExpectationOfWaveFunctionDependentExcFuncDerWrtPsi() override;
 
     void
-    reinitKPointDependentVariables(unsigned int kPointIndex) override;
+    reinitKPointDependentVariables(dftfe::uInt kPointIndex) override;
 
   private:
     std::shared_ptr<xc_func_type> d_funcXPtr;
