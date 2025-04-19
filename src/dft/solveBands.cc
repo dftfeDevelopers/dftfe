@@ -33,8 +33,8 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::solveBands()
   {
-    KohnShamDFTBaseOperator<memorySpace> &KohnShamDFTEigenOperator =
-      *d_KohnShamDFTOperatorPtr;
+    KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
+      *d_kohnShamDFTOperatorPtr;
 
     // set up linear solver
     dealiiLinearSolver CGSolver(d_mpiCommParent,
@@ -145,7 +145,7 @@ namespace dftfe
                                  d_phiExt,
                                  d_pseudoVLoc,
                                  d_pseudoVLocAtoms);
-        KohnShamDFTEigenOperator.computeVEffExternalPotCorr(d_pseudoVLoc);
+        kohnShamDFTEigenOperator.computeVEffExternalPotCorr(d_pseudoVLoc);
         computingTimerStandard.leave_subsection("Init local PSP");
       }
 
@@ -366,7 +366,7 @@ namespace dftfe
         if ((d_dftParamsPtr->memOptMode && d_dftParamsPtr->spinPolarized == 1))
           {
             computing_timer.enter_subsection("VEff Computation");
-            KohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
+            kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
                                                  d_phiInQuadValues,
                                                  s);
 
@@ -381,12 +381,12 @@ namespace dftfe
                   pcout << "Beginning Chebyshev filter pass " << 1 + count
                         << " for spin " << s + 1 << std::endl;
 
-                KohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
+                kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
                 if (d_dftParamsPtr->memOptMode)
                   {
                     computing_timer.enter_subsection(
                       "Hamiltonian Matrix Computation");
-                    KohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
+                    kohnShamDFTEigenOperator.computeCellHamiltonianMatrix();
                     computing_timer.leave_subsection(
                       "Hamiltonian Matrix Computation");
                   }
@@ -395,7 +395,7 @@ namespace dftfe
                 if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
                   kohnShamEigenSpaceCompute(s,
                                             kPoint,
-                                            KohnShamDFTEigenOperator,
+                                            kohnShamDFTEigenOperator,
                                             *d_elpaScala,
                                             d_subspaceIterationSolverDevice,
                                             residualNormWaveFunctions,
@@ -407,7 +407,7 @@ namespace dftfe
                 if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
                   kohnShamEigenSpaceCompute(s,
                                             kPoint,
-                                            KohnShamDFTEigenOperator,
+                                            kohnShamDFTEigenOperator,
                                             *d_elpaScala,
                                             d_subspaceIterationSolver,
                                             residualNormWaveFunctions,
