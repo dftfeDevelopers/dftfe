@@ -51,6 +51,10 @@ namespace dftfe
     inverseOverlapEntries
   };
 
+  // pseudopotentialBaseClass contains the getter functions to obtain the
+  // pseudoPotential coupling matrix, single precision coupling matrix,
+  // non-local operator and non-local operator single precision.
+
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   class pseudopotentialBaseClass
   {
