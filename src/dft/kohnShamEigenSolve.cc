@@ -131,14 +131,14 @@ namespace dftfe
     // // create kohnShamDFTOperatorClass object
     // //
     // kohnShamDFTOperatorClass<FEOrder, FEOrderElectro, memorySpace>
-    //   KohnShamDFTEigenOperator(this, d_mpiCommParent, mpi_communicator);
-    // KohnShamDFTEigenOperator.init();
+    //   kohnShamDFTEigenOperator(this, d_mpiCommParent, mpi_communicator);
+    // kohnShamDFTEigenOperator.init();
 
     // //
     // // precompute shapeFunctions and shapeFunctionGradients and
     // // shapeFunctionGradientIntegrals
     // //
-    // KohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(
+    // kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(
     //   d_lpspQuadratureId);
 
     // //
@@ -161,7 +161,7 @@ namespace dftfe
     //      }
     // if (!isGradDensityDataDependent)
     //   {
-    //     KohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
+    //     kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
     //                                          phiInValues,
     //                                          d_pseudoVLoc,
     //                                          d_rhoCore,
@@ -169,7 +169,7 @@ namespace dftfe
     //   }
     // else if (isGradDensityDataDependent)
     //   {
-    //     KohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
+    //     kohnShamDFTEigenOperator.computeVEff(d_densityInQuadValues,
     //                                          d_gradDensityInQuadValues,
     //                                          phiInValues,
     //                                          d_pseudoVLoc,
@@ -181,7 +181,7 @@ namespace dftfe
     // //
     // // compute Hamiltonian matrix
     // //
-    // KohnShamDFTEigenOperator.computeHamiltonianMatrix(0, 0);
+    // kohnShamDFTEigenOperator.computeHamiltonianMatrix(0, 0);
 
     // //
     // // scale the eigenVectors (initial guess of single atom wavefunctions or
@@ -189,7 +189,7 @@ namespace dftfe
     // multiply
     // // by M^{1/2}
     // internal::pointWiseScaleWithDiagonal(
-    //   KohnShamDFTEigenOperator.d_sqrtMassVector,
+    //   kohnShamDFTEigenOperator.d_sqrtMassVector,
     //   d_numEigenValues,
     //   matrix_free_data.get_vector_partitioner()->locally_owned_size(),
     //   d_eigenVectorsFlattenedHost.data());
@@ -201,7 +201,7 @@ namespace dftfe
     // std::vector<dataTypes::number> ProjHam;
 
     // dftfe::linearAlgebraOperations::XtHX(
-    //   KohnShamDFTEigenOperator,
+    //   kohnShamDFTEigenOperator,
     //   d_eigenVectorsFlattenedHost.data(),
     //   d_numEigenValues,
     //   matrix_free_data.get_vector_partitioner()->locally_owned_size(),
@@ -215,7 +215,7 @@ namespace dftfe
     // // the usual FE basis
     // //
     // internal::pointWiseScaleWithDiagonal(
-    //   KohnShamDFTEigenOperator.getInverseSqrtMassVector().data(),
+    //   kohnShamDFTEigenOperator.getInverseSqrtMassVector().data(),
     //   d_numEigenValues,
     //   matrix_free_data.get_vector_partitioner()->locally_owned_size(),
     //   d_eigenVectorsFlattenedHost.data());
@@ -241,21 +241,21 @@ namespace dftfe
     //     // create kohnShamDFTOperatorClass object
     //     //
     //     kohnShamDFTOperatorClass<FEOrder, FEOrderElectro, memorySpace>
-    //       KohnShamDFTEigenOperator(this, d_mpiCommParent, mpi_communicator);
-    //     KohnShamDFTEigenOperator.init();
+    //       kohnShamDFTEigenOperator(this, d_mpiCommParent, mpi_communicator);
+    //     kohnShamDFTEigenOperator.init();
 
     //     //
     //     // precompute shapeFunctions and shapeFunctionGradients and
     //     // shapeFunctionGradientIntegrals
     //     //
-    //     KohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(
+    //     kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals(
     //       d_lpspQuadratureId);
 
 
     //     //
     //     // compute Hamiltonian matrix
     //     //
-    //     KohnShamDFTEigenOperator.computeKineticMatrix();
+    //     kohnShamDFTEigenOperator.computeKineticMatrix();
 
     //     //
     //     // scale the eigenVectors (initial guess of single atom wavefunctions
@@ -264,7 +264,7 @@ namespace dftfe
     //     multiply
     //     // by M^{1/2}
     //     internal::pointWiseScaleWithDiagonal(
-    //       KohnShamDFTEigenOperator.d_sqrtMassVector,
+    //       kohnShamDFTEigenOperator.d_sqrtMassVector,
     //       d_numEigenValues,
     //       matrix_free_data.get_vector_partitioner()->locally_owned_size(),
     //       d_eigenVectorsFlattenedHost.data());
@@ -285,7 +285,7 @@ namespace dftfe
     //     std::vector<dataTypes::number> ProjHam;
 
     //     dftfe::linearAlgebraOperations::XtHX(
-    //       KohnShamDFTEigenOperator,
+    //       kohnShamDFTEigenOperator,
     //       d_eigenVectorsFlattenedHost.data(),
     //       d_numEigenValues,
     //       matrix_free_data.get_vector_partitioner()->locally_owned_size(),
@@ -300,7 +300,7 @@ namespace dftfe
     //     // the usual FE basis
     //     //
     //     internal::pointWiseScaleWithDiagonal(
-    //       KohnShamDFTEigenOperator.getInverseSqrtMassVector().data(),
+    //       kohnShamDFTEigenOperator.getInverseSqrtMassVector().data(),
     //       d_numEigenValues,
     //       matrix_free_data.get_vector_partitioner()->locally_owned_size(),
     //       d_eigenVectorsFlattenedHost.data());
@@ -329,7 +329,7 @@ namespace dftfe
     const dftfe::uInt spinType,
     const dftfe::uInt kPointIndex,
     KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
-                                                   &KohnShamDFTEigenOperator,
+                                                   &kohnShamDFTEigenOperator,
     elpaScalaManager                               &elpaScala,
     chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
     std::vector<double>                            &residualNormWaveFunctions,
@@ -364,11 +364,11 @@ namespace dftfe
         std::pair<double, double> bounds = linearAlgebraOperations::
           generalisedLanczosLowerUpperBoundEigenSpectrum(
             d_BLASWrapperPtrHost,
-            KohnShamDFTEigenOperator,
-            KohnShamDFTEigenOperator.getScratchFEMultivector(1, 0),
-            KohnShamDFTEigenOperator.getScratchFEMultivector(1, 1),
-            KohnShamDFTEigenOperator.getScratchFEMultivector(1, 2),
-            KohnShamDFTEigenOperator.getScratchFEMultivector(1, 3),
+            kohnShamDFTEigenOperator,
+            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 0),
+            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 1),
+            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 2),
+            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 3),
             *d_dftParamsPtr);
 
         const double upperBoundUnwantedSpectrum = bounds.second;
@@ -387,7 +387,7 @@ namespace dftfe
           lowerBoundWantedSpectrum,
           lowerBoundWantedSpectrum +
             (upperBoundUnwantedSpectrum - lowerBoundWantedSpectrum) /
-              KohnShamDFTEigenOperator.getScratchFEMultivector(1, 0)
+              kohnShamDFTEigenOperator.getScratchFEMultivector(1, 0)
                 .globalSize() *
               d_numEigenValues *
               (d_dftParamsPtr->reproducible_output ? 10.0 : 200.0),
@@ -402,11 +402,11 @@ namespace dftfe
             std::pair<double, double> bounds = linearAlgebraOperations::
               generalisedLanczosLowerUpperBoundEigenSpectrum(
                 d_BLASWrapperPtrHost,
-                KohnShamDFTEigenOperator,
-                KohnShamDFTEigenOperator.getScratchFEMultivector(1, 0),
-                KohnShamDFTEigenOperator.getScratchFEMultivector(1, 1),
-                KohnShamDFTEigenOperator.getScratchFEMultivector(1, 2),
-                KohnShamDFTEigenOperator.getScratchFEMultivector(1, 3),
+                kohnShamDFTEigenOperator,
+                kohnShamDFTEigenOperator.getScratchFEMultivector(1, 0),
+                kohnShamDFTEigenOperator.getScratchFEMultivector(1, 1),
+                kohnShamDFTEigenOperator.getScratchFEMultivector(1, 2),
+                kohnShamDFTEigenOperator.getScratchFEMultivector(1, 3),
                 *d_dftParamsPtr);
 
             d_upperBoundUnwantedSpectrumValues
@@ -428,7 +428,7 @@ namespace dftfe
           d_numEigenValues *
           matrix_free_data.get_vector_partitioner()->locally_owned_size();
     subspaceIterationSolver.solve(
-      KohnShamDFTEigenOperator,
+      kohnShamDFTEigenOperator,
       d_BLASWrapperPtrHost,
       elpaScala,
       d_eigenVectorsFlattenedHost.data() + wfcStartIndex,
@@ -487,7 +487,7 @@ namespace dftfe
     const dftfe::uInt spinType,
     const dftfe::uInt kPointIndex,
     KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
-                     &KohnShamDFTEigenOperator,
+                     &kohnShamDFTEigenOperator,
     elpaScalaManager &elpaScala,
     chebyshevOrthogonalizedSubspaceIterationSolverDevice
                         &subspaceIterationSolverDevice,
@@ -531,7 +531,7 @@ namespace dftfe
                                          kPointIndex +
                                        spinType] =
       subspaceIterationSolverDevice.solve(
-        KohnShamDFTEigenOperator,
+        kohnShamDFTEigenOperator,
         d_BLASWrapperPtr,
         elpaScala,
         d_eigenVectorsFlattenedDevice.begin() + wfcStartIndex,
@@ -589,7 +589,7 @@ namespace dftfe
       const dftfe::uInt spinType,
       const dftfe::uInt kPointIndex,
       KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
-                       &KohnShamDFTEigenOperator,
+                       &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala)
   {
     if (d_dftParamsPtr->verbosity >= 2)
@@ -604,7 +604,7 @@ namespace dftfe
     // scale the eigenVectors to convert into Lowden Orthonormalized FE basis
     // multiply by M^{1/2}
     // internal::pointWiseScaleWithDiagonal(
-    //   KohnShamDFTEigenOperator.getSqrtMassVector().data(),
+    //   kohnShamDFTEigenOperator.getSqrtMassVector().data(),
     //   d_numEigenValues,
     //   matrix_free_data.get_vector_partitioner()->locally_owned_size(),
     //   d_eigenVectorsDensityMatrixPrimeHost.data() +
@@ -624,7 +624,7 @@ namespace dftfe
       fermiEnergyInput = spinType == 0 ? fermiEnergyUp : fermiEnergyDown;
 
     linearAlgebraOperations::densityMatrixEigenBasisFirstOrderResponse(
-      KohnShamDFTEigenOperator,
+      kohnShamDFTEigenOperator,
       d_BLASWrapperPtrHost,
       d_eigenVectorsDensityMatrixPrimeHost.data() +
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
@@ -633,7 +633,7 @@ namespace dftfe
       d_numEigenValues,
       matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       d_mpiCommParent,
-      KohnShamDFTEigenOperator.getMPICommunicatorDomain(),
+      kohnShamDFTEigenOperator.getMPICommunicatorDomain(),
       interBandGroupComm,
       eigenValuesTemp,
       fermiEnergyInput,
@@ -649,7 +649,7 @@ namespace dftfe
     // the usual FE basis
     //
     // internal::pointWiseScaleWithDiagonal(
-    //   KohnShamDFTEigenOperator.getInverseSqrtMassVector().data(),
+    //   kohnShamDFTEigenOperator.getInverseSqrtMassVector().data(),
     //   d_numEigenValues,
     //   matrix_free_data.get_vector_partitioner()->locally_owned_size(),
     //   d_eigenVectorsDensityMatrixPrimeHost.data() +
@@ -669,7 +669,7 @@ namespace dftfe
       const dftfe::uInt spinType,
       const dftfe::uInt kPointIndex,
       KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
-                       &KohnShamDFTEigenOperator,
+                       &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
       chebyshevOrthogonalizedSubspaceIterationSolverDevice
         &subspaceIterationSolverDevice)
@@ -694,7 +694,7 @@ namespace dftfe
       fermiEnergyInput = spinType == 0 ? fermiEnergyUp : fermiEnergyDown;
 
     subspaceIterationSolverDevice.densityMatrixEigenBasisFirstOrderResponse(
-      KohnShamDFTEigenOperator,
+      kohnShamDFTEigenOperator,
       d_BLASWrapperPtr,
       d_eigenVectorsDensityMatrixPrimeFlattenedDevice.begin() +
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *

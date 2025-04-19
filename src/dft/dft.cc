@@ -2132,7 +2132,7 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE
     if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
-      d_KohnShamDFTOperatorPtr =
+      d_kohnShamDFTOperatorPtr =
         new KohnShamDFTStandardEigenOperator<memorySpace>(
           d_BLASWrapperPtr,
           d_basisOperationsPtrDevice,
@@ -2147,7 +2147,7 @@ namespace dftfe
           mpi_communicator);
     else
 #endif
-      d_KohnShamDFTOperatorPtr =
+      d_kohnShamDFTOperatorPtr =
         new KohnShamDFTStandardEigenOperator<memorySpace>(
           d_BLASWrapperPtrHost,
           d_basisOperationsPtrHost,
@@ -2163,7 +2163,7 @@ namespace dftfe
 
 
     KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
-      *d_KohnShamDFTOperatorPtr;
+      *d_kohnShamDFTOperatorPtr;
 
     kohnShamDFTEigenOperator.init(d_kPointCoordinates, d_kPointWeights);
 
@@ -2251,7 +2251,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     reInitializeKohnShamDFTOperator()
   {
-    d_KohnShamDFTOperatorPtr->resetKohnShamOp();
+    d_kohnShamDFTOperatorPtr->resetKohnShamOp();
   }
 
   //
@@ -2265,7 +2265,7 @@ namespace dftfe
   {
     if (d_kohnShamDFTOperatorsInitialized)
       {
-        delete d_KohnShamDFTOperatorPtr;
+        delete d_kohnShamDFTOperatorPtr;
         d_kohnShamDFTOperatorsInitialized = false;
       }
   }
@@ -2283,7 +2283,7 @@ namespace dftfe
     const bool isRestartGroundStateCalcFromChk)
   {
     KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
-      *d_KohnShamDFTOperatorPtr;
+      *d_kohnShamDFTOperatorPtr;
 
 
     // computingTimerStandard.enter_subsection("Total scf solve");
@@ -4098,7 +4098,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::computeStress()
   {
     KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
-      *d_KohnShamDFTOperatorPtr;
+      *d_kohnShamDFTOperatorPtr;
 
     if (d_dftParamsPtr->isPseudopotential ||
         d_dftParamsPtr->smearedNuclearCharges)
@@ -5294,7 +5294,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     getKohnShamDFTBaseOperatorClass()
   {
-    return d_KohnShamDFTOperatorPtr;
+    return d_kohnShamDFTOperatorPtr;
   }
 
   template <dftfe::uInt               FEOrder,
