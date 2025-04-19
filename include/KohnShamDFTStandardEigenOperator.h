@@ -32,8 +32,8 @@
 namespace dftfe
 {
   // KohnShamDFTStandardEigenOperator is derived from KohnShamDFTBaseOperator
-  // base class. This class is used where the continuous PDE is of the
-  // standardized eigen value problem form. Currently used for the all-electron
+  // base class. This class is used where the underlying PDE is a
+  // standard eigen value problem. Currently used for the all-electron
   // and norm conserving pseudopotential
   template <dftfe::utils::MemorySpace memorySpace>
   class KohnShamDFTStandardEigenOperator
