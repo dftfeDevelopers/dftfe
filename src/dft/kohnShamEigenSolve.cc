@@ -667,7 +667,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     kohnShamEigenSpaceFirstOrderDensityMatResponse(
       const dftfe::uInt spinType,
-      const dftfe::uInt kPointIndex,
+      const dftfe::uInt kPointIndex, 
       KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
                        &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
