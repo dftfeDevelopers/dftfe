@@ -20,32 +20,11 @@
 #ifndef DFTFE_ONCVCLASS_H
 #define DFTFE_ONCVCLASS_H
 
-#include "vector"
-#include "map"
-#include "AtomCenteredSphericalFunctionValenceDensitySpline.h"
-#include "AtomCenteredSphericalFunctionCoreDensitySpline.h"
-#include "AtomCenteredSphericalFunctionLocalPotentialSpline.h"
-#include "AtomCenteredSphericalFunctionProjectorSpline.h"
-#include "AtomCenteredSphericalFunctionContainer.h"
-#include "AtomicCenteredNonLocalOperator.h"
-#include <memory>
-#include <MemorySpaceType.h>
-#include <headers.h>
-#include <TypeConfig.h>
-#include <dftUtils.h>
-#include "FEBasisOperations.h"
-#include <BLASWrapper.h>
-#include <xc.h>
-#include <excManager.h>
-#ifdef _OPENMP
-#  include <omp.h>
-#else
-#  define omp_get_thread_num() 0
-#endif
+#include <pseudopotentialBaseClass.h>
 namespace dftfe
 {
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
-  class oncvClass
+  class oncvClass : public pseudopotentialBaseClass<ValueType, memorySpace>
   {
   public:
     oncvClass(const MPI_Comm               &mpi_comm_parent,
@@ -197,7 +176,8 @@ namespace dftfe
 
 
     const dftfe::utils::MemoryStorage<ValueType, memorySpace> &
-    getCouplingMatrix();
+    getCouplingMatrix(
+      CouplingType couplingtype = CouplingType::HamiltonianEntries);
 
 
     const std::shared_ptr<
@@ -207,7 +187,8 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<
       typename dftfe::dataTypes::singlePrecType<ValueType>::type,
       memorySpace> &
-    getCouplingMatrixSinglePrec();
+    getCouplingMatrixSinglePrec(
+      CouplingType couplingtype = CouplingType::HamiltonianEntries);
 
 
     const std::shared_ptr<AtomicCenteredNonLocalOperator<

@@ -33,7 +33,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::solveBands()
   {
-    KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
+    KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
       *d_kohnShamDFTOperatorPtr;
 
     // set up linear solver

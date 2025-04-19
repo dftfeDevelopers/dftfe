@@ -102,7 +102,8 @@ SET(TARGET_SRC
   ./src/poisson/poissonSolverProblem.cc
   ./src/poisson/MultiVectorPoissonLinearSolverProblem.cpp
   ./src/helmholtz/kerkerSolverProblem.cc
-  ./src/dftOperator/KohnShamHamiltonianOperator.cc
+  ./src/dftOperator/KohnShamDFTBaseOperator.cc
+  ./src/dftOperator/KohnShamDFTStandardEigenOperator.cc
   ./src/dftOperator/veffPrimeForLRDM.cc
   ./src/force/force.cc
   ./src/force/forceWfcContractions.cc

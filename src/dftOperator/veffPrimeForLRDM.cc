@@ -16,13 +16,13 @@
 //
 // @author Sambit Das, Nikhil Kodali
 //
-#include <KohnShamHamiltonianOperator.h>
+#include <KohnShamDFTBaseOperator.h>
 #include <AuxDensityMatrixFE.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  KohnShamHamiltonianOperator<memorySpace>::computeVEffPrime(
+  KohnShamDFTBaseOperator<memorySpace>::computeVEffPrime(
     std::shared_ptr<AuxDensityMatrix<memorySpace>>
       auxDensityXCRepresentationPtr,
     const std::vector<
@@ -369,8 +369,8 @@ namespace dftfe
       d_invJacderExcWithSigmaTimesGradRhoJxWHost);
 #endif
   }
-  template class KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>;
+  template class KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>;
 #if defined(DFTFE_WITH_DEVICE)
-  template class KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::DEVICE>;
+  template class KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>;
 #endif
 } // namespace dftfe
