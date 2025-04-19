@@ -956,19 +956,20 @@ namespace dftfe
     const double scalarX,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
     const bool onlyHPrimePartForFirstOrderDensityMatResponse)
-  {    const unsigned int numCells       = d_basisOperationsPtr->nCells();
+  {
+    const unsigned int numCells       = d_basisOperationsPtr->nCells();
     const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
     const unsigned int numberWavefunctions = src.numVectors();
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
-      #if defined(DFTFE_WITH_DEVICE)
-      if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-        {
-          if (d_dftParamsPtr->tensorOpType == "TF32")
-            d_BLASWrapperPtr->setTensorOpDataType(
-              dftfe::linearAlgebra::tensorOpDataType::tf32);
-        }
-  #endif
+#if defined(DFTFE_WITH_DEVICE)
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      {
+        if (d_dftParamsPtr->tensorOpType == "TF32")
+          d_BLASWrapperPtr->setTensorOpDataType(
+            dftfe::linearAlgebra::tensorOpDataType::tf32);
+      }
+#endif
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
       d_basisOperationsPtr->reinit(numberWavefunctions,
                                    d_cellsBlockSizeHX,
@@ -981,9 +982,10 @@ namespace dftfe
                             scalarY,
                             dst.data());
     src.updateGhostValues();
-    d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID].distribute(src);
+    d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+      .distribute(src);
     const dataTypes::numberFP32 scalarCoeffAlpha = dataTypes::numberFP32(1.0),
-                            scalarCoeffBeta  = dataTypes::numberFP32(0.0);
+                                scalarCoeffBeta  = dataTypes::numberFP32(0.0);
     if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
       {
         if (d_dftParamsPtr->isPseudopotential)
@@ -1026,9 +1028,11 @@ namespace dftfe
     if (d_dftParamsPtr->isPseudopotential &&
         !onlyHPrimePartForFirstOrderDensityMatResponse)
       {
-        d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec.setValue(0);
-        d_pseudopotentialNonLocalOperatorSinglePrec->applyAllReduceOnCconjtransX(
-          d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
+        d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec.setValue(
+          0);
+        d_pseudopotentialNonLocalOperatorSinglePrec
+          ->applyAllReduceOnCconjtransX(
+            d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
         d_pseudopotentialNonLocalOperatorSinglePrec->applyVOnCconjtransX(
           CouplingStructure::diagonal,
           d_pseudopotentialClassPtr->getCouplingMatrixSinglePrec(),
@@ -1100,7 +1104,9 @@ namespace dftfe
                                 1);
 
         d_srcNonLocalTempSinglePrec.updateGhostValues();
-        d_basisOperationsPtr->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID].distribute(d_srcNonLocalTempSinglePrec);
+        d_basisOperationsPtr
+          ->d_constraintInfo[d_basisOperationsPtr->d_dofHandlerID]
+          .distribute(d_srcNonLocalTempSinglePrec);
 
         d_dstNonLocalTempSinglePrec.setValue(0.0);
         d_excManagerPtr->getExcSSDFunctionalObj()

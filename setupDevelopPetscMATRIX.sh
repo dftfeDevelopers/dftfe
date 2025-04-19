@@ -17,16 +17,16 @@ SRC=`dirname $0` # location of source directory
 # and optimization flag
 
 #Paths for required external libraries
-dealiiPetscRealDir="/storage/dftfeDependencies/dealii/installReal"
-dealiiPetscComplexDir="/storage/dftfeDependencies/dealii/installComplex"
-alglibDir="/storage/dftfeDependencies/alglib/install"
-libxcDir="/storage/dftfeDependencies/libxc/install"
-spglibDir="/storage/dftfeDependencies/spglib/install"
+dealiiPetscRealDir="/storage/dftfeDependenciesNoMKL/dealii/installReal"
+dealiiPetscComplexDir="/storage/dftfeDependenciesNoMKL/dealii/installComplex"
+alglibDir="/storage/dftfeDependenciesNoMKL/alglib/install"
+libxcDir="/storage/dftfeDependenciesNoMKL/libxc/install"
+spglibDir="/storage/dftfeDependenciesNoMKL/spglib/install"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib/x86_64-linux-gnu"
-ELPA_PATH="/storage/dftfeDependencies/elpa/install"
-dftdpath="/storage/dftfeDependencies/dftd/install"
-numdiffdir="/storage/dftfeDependencies/numdiff/install"
+ELPA_PATH="/storage/dftfeDependenciesNoMKL/elpa/install"
+dftdpath="/storage/dftfeDependenciesNoMKL/dftd/install"
+numdiffdir="/storage/dftfeDependenciesNoMKL/numdiff/install"
 
 
 #Paths for optional external libraries

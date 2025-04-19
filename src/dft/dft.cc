@@ -5489,7 +5489,8 @@ namespace dftfe
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   KohnShamDFTBaseOperator<memorySpace> *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getKohnShamDFTBaseOperatorClass()
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::
+    getKohnShamDFTBaseOperatorClass()
   {
     return d_KohnShamDFTOperatorPtr;
   }
