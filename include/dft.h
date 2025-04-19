@@ -1671,7 +1671,7 @@ namespace dftfe
 
     bool d_kohnShamDFTOperatorsInitialized;
 
-    KohnShamDFTBaseOperator<memorySpace> *d_KohnShamDFTOperatorPtr;
+    KohnShamDFTBaseOperator<memorySpace> *d_kohnShamDFTOperatorPtr;
 
     const std::string d_dftfeScratchFolderName;
 
