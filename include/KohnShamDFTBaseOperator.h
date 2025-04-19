@@ -16,15 +16,15 @@
 //
 
 
-#ifndef kohnShamHamiltonianOperatorClass_H_
-#define kohnShamHamiltonianOperatorClass_H_
+#ifndef KohnShamDFTBaseOperatorClass_H_
+#define KohnShamDFTBaseOperatorClass_H_
 #include <constants.h>
 #include <constraintMatrixInfo.h>
 #include <headers.h>
 #include <operator.h>
 #include <BLASWrapper.h>
 #include <FEBasisOperations.h>
-#include <oncvClass.h>
+#include <pseudopotentialBaseClass.h>
 #include <AuxDensityMatrix.h>
 
 #include "hubbardClass.h"
@@ -32,10 +32,10 @@
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
-  class KohnShamHamiltonianOperator : public operatorDFTClass<memorySpace>
+  class KohnShamDFTBaseOperator : public operatorDFTClass<memorySpace>
   {
   public:
-    KohnShamHamiltonianOperator(
+    KohnShamDFTBaseOperator(
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         BLASWrapperPtr,
       std::shared_ptr<
@@ -46,8 +46,9 @@ namespace dftfe
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
         basisOperationsPtrHost,
-      std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
-                                               oncvClassPtr,
+      std::shared_ptr<
+        dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
+                                               pseudopotentialClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       dftParameters                           *dftParamsPtr,
       const dftfe::uInt                        densityQuadratureID,
@@ -180,7 +181,25 @@ namespace dftfe
        dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
-
+    /**
+     * @brief Computing Y = scalarHX*HX + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarHX scalar for HX
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+     */
+    void
+    HX(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+                   &src,
+       const double scalarHX,
+       const double scalarY,
+       const double scalarX,
+       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+                 &dst,
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
     /**
      * @brief Computing Y = scalarHX*M^{1/2}HM^{1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision. Used for TD-DFT and Inverse DFT calc.
      *
@@ -200,125 +219,126 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
-    /**
-     * @brief Computing Y = scalarOX*OX + scalarX*X + scalarY*Y for a given X and Y in full precision
-     *
-     * @param src X vector
-     * @param scalarHX scalar for OX
-     * @param scalarY scalar for Y
-     * @param scalarX scalar for X
-     * @param dst Y vector
-     * @param useApproximateMatrixEntries flag to use approximate overlap matrix
-     */
-    void
-    overlapMatrixTimesX(
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-      const double scalarOX,
-      const double scalarY,
-      const double scalarX,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const bool useApproximateMatrixEntries = true);
+    // /**
+    //  * @brief Computing Y = scalarOX*OX + scalarX*X + scalarY*Y for a given X and Y in full precision
+    //  *
+    //  * @param src X vector
+    //  * @param scalarHX scalar for OX
+    //  * @param scalarY scalar for Y
+    //  * @param scalarX scalar for X
+    //  * @param dst Y vector
+    //  * @param useApproximateMatrixEntries flag to use approximate overlap matrix
+    //  */
+    // void
+    // overlapMatrixTimesX(
+    //   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+    //   const double scalarOX,
+    //   const double scalarY,
+    //   const double scalarX,
+    //   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+    //   const bool useApproximateMatrixEntries = true);
 
 
 
-    /**
-     * @brief Computing Y = scalarOinvX*O^{-1}X + scalarX*X + scalarY*Y for a given X and Y in full precision
-     *
-     * @param src X vector
-     * @param scalarOinvX scalar for O^{-1}X
-     * @param scalarY scalar for Y
-     * @param scalarX scalar for X
-     * @param dst Y vector
-     */
-    void
-    overlapInverseMatrixTimesX(
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-      const double scalarOinvX,
-      const double scalarY,
-      const double scalarX,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst);
+    // /**
+    //  * @brief Computing Y = scalarOinvX*O^{-1}X + scalarX*X + scalarY*Y for a given X and Y in full precision
+    //  *
+    //  * @param src X vector
+    //  * @param scalarOinvX scalar for O^{-1}X
+    //  * @param scalarY scalar for Y
+    //  * @param scalarX scalar for X
+    //  * @param dst Y vector
+    //  */
+    // void
+    // overlapInverseMatrixTimesX(
+    //   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+    //   const double scalarOinvX,
+    //   const double scalarY,
+    //   const double scalarX,
+    //   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
+    //   &dst);
 
-    /**
-     * @brief Computing Y = scalarOinvX*O^{-1}X + scalarX*X + scalarY*Y for a given X and Y in Reduced precision
-     *
-     * @param src X vector
-     * @param scalarOinvX scalar for O^{-1}X
-     * @param scalarY scalar for Y
-     * @param scalarX scalar for X
-     * @param dst Y vector
-     */
-    void
-    overlapInverseMatrixTimesX(
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-                  &src,
-      const double scalarOinvX,
-      const double scalarY,
-      const double scalarX,
-      dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-        &dst);
+    // /**
+    //  * @brief Computing Y = scalarOinvX*O^{-1}X + scalarX*X + scalarY*Y for a given X and Y in Reduced precision
+    //  *
+    //  * @param src X vector
+    //  * @param scalarOinvX scalar for O^{-1}X
+    //  * @param scalarY scalar for Y
+    //  * @param scalarX scalar for X
+    //  * @param dst Y vector
+    //  */
+    // void
+    // overlapInverseMatrixTimesX(
+    //   dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+    //     &          src,
+    //   const double scalarOinvX,
+    //   const double scalarY,
+    //   const double scalarX,
+    //   dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
+    //     &dst);
 
-    /**
-     * @brief Computing Y = scalarHX*HM^{-1}X + scalarX*X + scalarY*Y for a given X and Y in reduced precision
-     *
-     * @param src X vector
-     * @param scalarHX scalar for HX
-     * @param scalarY scalar for Y
-     * @param scalarX scalar for X
-     * @param dst Y vector
-     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
-     * @param skip1 flag to skip extraction
-     * @param skip2 flag to skip nonLoal All Reduce
-     * @param skip3 flag to skip local HX and Assembly
-     */
+    // /**
+    //  * @brief Computing Y = scalarHX*HM^{-1}X + scalarX*X + scalarY*Y for a given X and Y in reduced precision
+    //  *
+    //  * @param src X vector
+    //  * @param scalarHX scalar for HX
+    //  * @param scalarY scalar for Y
+    //  * @param scalarX scalar for X
+    //  * @param dst Y vector
+    //  * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+    //  * @param skip1 flag to skip extraction
+    //  * @param skip2 flag to skip nonLoal All Reduce
+    //  * @param skip3 flag to skip local HX and Assembly
+    //  */
 
-    void
-    HXCheby(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                              memorySpace> &src,
-            const double                                    scalarHX,
-            const double                                    scalarY,
-            const double                                    scalarX,
-            dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
-                                              memorySpace> &dst,
-            const bool onlyHPrimePartForFirstOrderDensityMatResponse,
-            const bool skip1,
-            const bool skip2,
-            const bool skip3);
+    // void
+    // HXCheby(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+    //                                           memorySpace> &src,
+    //         const double                                    scalarHX,
+    //         const double                                    scalarY,
+    //         const double                                    scalarX,
+    //         dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
+    //                                           memorySpace> &dst,
+    //         const bool onlyHPrimePartForFirstOrderDensityMatResponse,
+    //         const bool skip1,
+    //         const bool skip2,
+    //         const bool skip3);
 
-    /**
-     * @brief Computing Y = scalarHX*M^{-1}HX + scalarX*X + scalarY*Y for a given X and Y in full precision
-     *
-     * @param src X vector
-     * @param scalarHX scalar for HX
-     * @param scalarY scalar for Y
-     * @param scalarX scalar for X
-     * @param dst Y vector
-     * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
-     * @param skip1 flag to skip extraction
-     * @param skip2 flag to skip nonLoal All Reduce
-     * @param skip3 flag to skip local HX and Assembly
-     */
+    // /**
+    //  * @brief Computing Y = scalarHX*M^{-1}HX + scalarX*X + scalarY*Y for a given X and Y in full precision
+    //  *
+    //  * @param src X vector
+    //  * @param scalarHX scalar for HX
+    //  * @param scalarY scalar for Y
+    //  * @param scalarX scalar for X
+    //  * @param dst Y vector
+    //  * @param onlyHPrimePartForFirstOrderDensityMatResponse flag to compute only HPrime part for first order density matrix response
+    //  * @param skip1 flag to skip extraction
+    //  * @param skip2 flag to skip nonLoal All Reduce
+    //  * @param skip3 flag to skip local HX and Assembly
+    //  */
 
-    void
-    HXCheby(
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
-      const double scalarHX,
-      const double scalarY,
-      const double scalarX,
-      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
-      const bool skip1                                         = false,
-      const bool skip2                                         = false,
-      const bool skip3                                         = false);
+    // void
+    // HXCheby(
+    //   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+    //   const double scalarHX,
+    //   const double scalarY,
+    //   const double scalarX,
+    //   dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
+    //   const bool onlyHPrimePartForFirstOrderDensityMatResponse = false,
+    //   const bool skip1                                         = false,
+    //   const bool skip2                                         = false,
+    //   const bool skip3                                         = false);
 
 
 
     void
     setVEffExternalPotCorrToZero();
 
-  private:
+  protected:
     std::shared_ptr<
       AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-      d_ONCVnonLocalOperator;
+      d_pseudopotentialNonLocalOperator;
 
 
     /*
@@ -333,7 +353,7 @@ namespace dftfe
 
     std::shared_ptr<
       AtomicCenteredNonLocalOperator<dataTypes::numberFP32, memorySpace>>
-      d_ONCVnonLocalOperatorSinglePrec;
+      d_pseudopotentialNonLocalOperatorSinglePrec;
 
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
       d_BLASWrapperPtr;
@@ -345,8 +365,9 @@ namespace dftfe
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
       d_basisOperationsPtrHost;
-    std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
-                                             d_oncvClassPtr;
+    std::shared_ptr<
+      dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
+                                             d_pseudopotentialClassPtr;
     std::shared_ptr<excManager<memorySpace>> d_excManagerPtr;
     dftParameters                           *d_dftParamsPtr;
 
@@ -369,9 +390,9 @@ namespace dftfe
       d_cellWaveFunctionMatrixDstSinglePrec;
 
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      d_ONCVNonLocalProjectorTimesVectorBlock;
+      d_pseudopotentialNonLocalProjectorTimesVectorBlock;
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-      d_ONCVNonLocalProjectorTimesVectorBlockSinglePrec;
+      d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec;
 
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       d_tempBlockVectorOverlapInvX;

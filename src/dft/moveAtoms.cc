@@ -28,14 +28,14 @@ namespace dftfe
       // lapack Ax=b
       //
       void
-      dgesv_(dftfe::Int *N,
-             dftfe::Int *NRHS,
-             double     *A,
-             dftfe::Int *LDA,
-             dftfe::Int *IPIV,
-             double     *B,
-             dftfe::Int *LDB,
-             dftfe::Int *INFO);
+      dgesv_(int    *N,
+             int    *NRHS,
+             double *A,
+             int    *LDA,
+             int    *IPIV,
+             double *B,
+             int    *LDB,
+             int    *INFO);
     }
 
 
@@ -57,11 +57,11 @@ namespace dftfe
       // to get the fractionalCoords, solve a linear
       // system of equations
       //
-      dftfe::Int N    = 3;
-      dftfe::Int NRHS = 1;
-      dftfe::Int LDA  = 3;
-      dftfe::Int IPIV[3];
-      dftfe::Int info;
+      int N    = 3;
+      int NRHS = 1;
+      int LDA  = 3;
+      int IPIV[3];
+      int info;
 
       dgesv_(&N,
              &NRHS,

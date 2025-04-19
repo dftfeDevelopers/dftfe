@@ -447,8 +447,8 @@ namespace dftfe
     // transformed points and 			     then scatters them back to the
     // processors from which the points came from.
     //================================================================================================================================================
-    dftfe::Int recvDataSize0 = 0, recvDataSize1 = 0, send_size0, send_size1,
-               send_size2;
+    int recvDataSize0 = 0, recvDataSize1 = 0, send_size0, send_size1,
+        send_size2;
     std::vector<dftfe::Int>          send_data0, send_data2, send_data3;
     std::vector<std::vector<double>> send_data1;
     std::vector<double>              send_data, recvdData;
