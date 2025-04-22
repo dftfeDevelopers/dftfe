@@ -362,15 +362,12 @@ namespace dftfe
 
     for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
       {
-        if ((d_dftParamsPtr->memOptMode && d_dftParamsPtr->spinPolarized == 1))
-          {
-            computing_timer.enter_subsection("VEff Computation");
-            kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
-                                                 d_phiInQuadValues,
-                                                 s);
+        computing_timer.enter_subsection("VEff Computation");
+        kohnShamDFTEigenOperator.computeVEff(d_auxDensityMatrixXCInPtr,
+                                             d_phiInQuadValues,
+                                             s);
 
-            computing_timer.leave_subsection("VEff Computation");
-          }
+        computing_timer.leave_subsection("VEff Computation");
         for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
           {
             unsigned int count = 0;

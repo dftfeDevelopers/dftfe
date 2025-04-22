@@ -1,0 +1,62 @@
+number of atoms: 2
+number of atoms types: 2
+Total number of k-points 27
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : -5.432631739999999709e+00 0.000000000000000000e+00 5.432631739999999709e+00
+v2 : 0.000000000000000000e+00 5.432631739999999709e+00 5.432631739999999709e+00
+v3 : -5.432631739999999709e+00 5.432631739999999709e+00 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  7.500000000000000000e-01 7.500000000000000000e-01 7.500000000000000000e-01
+-----------------------------------------------------------------------------------------
+Number Image Charges  1158
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 5
+FE interpolating polynomial order for electrostatics solve: 5
+FE interpolating polynomial order for nodal electron density computation: 7
+number of elements: 1000
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 132651
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+=============================================================================================================================
+number of electrons: 2.800000000000000000e+01
+number of eigen values: 34
+=============================================================================================================================
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+Saving Quad data in progress...
+Saving Qud data completed...
+Saving Quad data in progress...
+Saving Qud data completed...
+Saving Quad data in progress...
+Saving Qud data completed...
+Saving Quad data in progress...
+Saving Qud data completed...
+SCF iterations converged to the specified tolerance after: 15 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:        -182.54065616
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.000001,0.000001,0.000001
+AtomId    1:  0.000001,0.000001,0.000001
+--------------------------------------------------------------------------------------------
+
+Absolute value of cell stress (Hartree/Bohr^3)
+------------------------------------------------------------------------
+0.000007  0.000025  0.000025
+0.000025  0.000007  0.000025
+0.000025  0.000025  0.000007
+------------------------------------------------------------------------

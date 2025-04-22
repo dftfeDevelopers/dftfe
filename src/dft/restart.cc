@@ -756,7 +756,7 @@ namespace dftfe
         outFile.close();
 
       } // Pool ==0 and bandGroup == 0
-    pcout << "Saving Qud data completed..." << std::endl;
+    pcout << "Saving Quad data completed..." << std::endl;
   }
 
 #include "dft.inst.cc"
