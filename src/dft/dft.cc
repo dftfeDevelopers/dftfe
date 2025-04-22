@@ -2642,16 +2642,10 @@ namespace dftfe
                   pcout << d_dftParamsPtr->mixingMethod
                         << " mixing, L2 norm of electron-density difference: "
                         << norm << std::endl;
-                // if (isTauMGGA)
-                //   {
-                //   }
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
                      d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
               {
-                // if (isTauMGGA)
-                //   {
-                //   }
                 // Fill in New Kerker framework here
                 std::vector<double> norms(
                   d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
@@ -2822,7 +2816,6 @@ namespace dftfe
                         if (scfIter == 1)
                           d_tauResidualQuadValues[iComp].resize(
                             d_tauOutQuadValues[iComp].size());
-                        // why this reinit is required now?
                         d_basisOperationsPtrElectroHost->reinit(
                           0, 0, d_densityQuadratureIdElectro, false);
                         double normTau;
@@ -4004,10 +3997,6 @@ namespace dftfe
                                        interBandGroupComm);
                   }
               }
-            // const bool isTauMGGA =
-            //   (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType()
-            //   ==
-            //    ExcFamilyType::TauMGGA);
             if (isTauMGGA)
               for (int i = 0; i < d_tauOutQuadValues.size(); i++)
                 {
@@ -6016,8 +6005,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &                                                  tauQuadValues,
     const std::map<dealii::CellId, std::vector<double>> &rhoCore,
-    const std::map<dealii::CellId, std::vector<double>>
-      &gradRhoCore, // is tauCore needed?
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoCore,
     const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       &                                     eigenVectorsFlattenedMemSpace,
     const std::vector<std::vector<double>> &eigenValues_,
@@ -6036,7 +6024,6 @@ namespace dftfe
       (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
        ExcFamilyType::TauMGGA);
 
-    // why reinit required here? whe do we do reinit
 
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
     const unsigned int totalLocallyOwnedCells =
@@ -6058,8 +6045,6 @@ namespace dftfe
             for (unsigned int iCell = 0; iCell < totalLocallyOwnedCells;
                  ++iCell)
               {
-                // in this case rho_up = rho_down
-                // densityQuadValues has length = 1 but it's vec<vec> type
                 const double *cellRhoValues =
                   densityQuadValues[0].data() + iCell * nQuadsPerCell;
 

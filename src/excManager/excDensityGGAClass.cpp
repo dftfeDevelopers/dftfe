@@ -122,8 +122,6 @@ namespace dftfe
     std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
       densityDescriptorData;
 
-    // since resize is done inside "fillDensityAttributeData", do
-    // we need to resize in the below cases as well?
     for (size_t i = 0; i < this->d_densityDescriptorAttributesList.size(); i++)
       {
         if (this->d_densityDescriptorAttributesList[i] ==

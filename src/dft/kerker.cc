@@ -55,7 +55,7 @@ namespace dftfe
       d_densityResidualQuadValues[0],
       dummy,
       dummy,
-      dummy, // review this
+      dummy,
       false);
 
     // initialize helmholtz solver function object with the quantity required

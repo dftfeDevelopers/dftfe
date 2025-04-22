@@ -80,7 +80,7 @@ namespace dftfe
       charge,
       dummy,
       dummy,
-      dummy, // review this one
+      dummy,
       false,
       false,
       false);
@@ -189,7 +189,7 @@ namespace dftfe
       v,
       rhoPrimeValues[0],
       gradRhoPrimeValues[0],
-      dummy, // review this one
+      dummy,
       dummy,
       isGradDensityDataDependent,
       (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -215,7 +215,7 @@ namespace dftfe
           vSpin0,
           vSpin0Values,
           gradvSpin0Values,
-          dummy, // review this one
+          dummy,
           dummy,
           isGradDensityDataDependent,
           (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
@@ -229,7 +229,7 @@ namespace dftfe
           vSpin1,
           vSpin1Values,
           gradvSpin1Values,
-          dummy, // review this one
+          dummy,
           dummy,
           isGradDensityDataDependent,
           (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==

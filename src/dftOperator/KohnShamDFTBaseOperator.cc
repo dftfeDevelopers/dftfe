@@ -14,7 +14,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Nikhil Kodali, Srinibas Nandi
+// @author Nikhil Kodali
 //
 
 #include <KohnShamDFTBaseOperator.h>

@@ -18,7 +18,6 @@
 //
 #include <dft.h>
 #include <dftUtils.h>
-#include <densityCalculator.h>
 
 namespace dftfe
 {
