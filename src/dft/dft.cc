@@ -2140,35 +2140,37 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE
     if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
-      d_kohnShamDFTOperatorPtr = new KohnShamHamiltonianOperator<memorySpace>(
-        d_BLASWrapperPtr,
-        d_basisOperationsPtrDevice,
-        d_basisOperationsPtrHost,
-        d_oncvClassPtr,
-        d_excManagerPtr,
-        d_dftParamsPtr,
-        d_densityQuadratureId,
-        d_lpspQuadratureId,
-        d_feOrderPlusOneQuadratureId,
-        d_mpiCommParent,
-        mpi_communicator);
+      d_kohnShamDFTOperatorPtr =
+        new KohnShamDFTStandardEigenOperator<memorySpace>(
+          d_BLASWrapperPtr,
+          d_basisOperationsPtrDevice,
+          d_basisOperationsPtrHost,
+          d_oncvClassPtr,
+          d_excManagerPtr,
+          d_dftParamsPtr,
+          d_densityQuadratureId,
+          d_lpspQuadratureId,
+          d_feOrderPlusOneQuadratureId,
+          d_mpiCommParent,
+          mpi_communicator);
     else
 #endif
-      d_kohnShamDFTOperatorPtr = new KohnShamHamiltonianOperator<memorySpace>(
-        d_BLASWrapperPtrHost,
-        d_basisOperationsPtrHost,
-        d_basisOperationsPtrHost,
-        d_oncvClassPtr,
-        d_excManagerPtr,
-        d_dftParamsPtr,
-        d_densityQuadratureId,
-        d_lpspQuadratureId,
-        d_feOrderPlusOneQuadratureId,
-        d_mpiCommParent,
-        mpi_communicator);
+      d_kohnShamDFTOperatorPtr =
+        new KohnShamDFTStandardEigenOperator<memorySpace>(
+          d_BLASWrapperPtrHost,
+          d_basisOperationsPtrHost,
+          d_basisOperationsPtrHost,
+          d_oncvClassPtr,
+          d_excManagerPtr,
+          d_dftParamsPtr,
+          d_densityQuadratureId,
+          d_lpspQuadratureId,
+          d_feOrderPlusOneQuadratureId,
+          d_mpiCommParent,
+          mpi_communicator);
 
 
-    KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
+    KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
       *d_kohnShamDFTOperatorPtr;
 
     kohnShamDFTEigenOperator.init(d_kPointCoordinates, d_kPointWeights);
@@ -2288,7 +2290,7 @@ namespace dftfe
     const bool computestress,
     const bool isRestartGroundStateCalcFromChk)
   {
-    KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
+    KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
       *d_kohnShamDFTOperatorPtr;
 
 
@@ -4466,7 +4468,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::computeStress()
   {
-    KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
+    KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
       *d_kohnShamDFTOperatorPtr;
 
     if (d_dftParamsPtr->isPseudopotential ||
@@ -5657,8 +5659,9 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  KohnShamHamiltonianOperator<memorySpace> *
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getOperatorClass()
+  KohnShamDFTBaseOperator<memorySpace> *
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::
+    getKohnShamDFTBaseOperatorClass()
   {
     return d_kohnShamDFTOperatorPtr;
   }

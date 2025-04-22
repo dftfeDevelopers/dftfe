@@ -37,7 +37,7 @@ namespace dftfe
   {
     computing_timer.enter_subsection("Output density direction derivative");
 
-    KohnShamHamiltonianOperator<memorySpace> &kohnShamDFTEigenOperator =
+    KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
       *d_kohnShamDFTOperatorPtr;
 
     const dealii::Quadrature<3> &quadrature =

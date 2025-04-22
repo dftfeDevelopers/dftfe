@@ -657,7 +657,8 @@ namespace dftfe
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   const dftfe::utils::MemoryStorage<ValueType, memorySpace> &
-  oncvClass<ValueType, memorySpace>::getCouplingMatrix()
+  oncvClass<ValueType, memorySpace>::getCouplingMatrix(
+    CouplingType couplingtype)
   {
     std::vector<ValueType> Entries;
     if (!d_HamiltonianCouplingMatrixEntriesUpdated)
@@ -716,9 +717,10 @@ namespace dftfe
   const dftfe::utils::MemoryStorage<
     typename dftfe::dataTypes::singlePrecType<ValueType>::type,
     memorySpace> &
-  oncvClass<ValueType, memorySpace>::getCouplingMatrixSinglePrec()
+  oncvClass<ValueType, memorySpace>::getCouplingMatrixSinglePrec(
+    CouplingType couplingtype)
   {
-    getCouplingMatrix();
+    getCouplingMatrix(couplingtype);
     if (!d_HamiltonianCouplingMatrixSinglePrecEntriesUpdated)
       {
         d_couplingMatrixEntriesSinglePrec.resize(

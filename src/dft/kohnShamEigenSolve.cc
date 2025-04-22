@@ -328,7 +328,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::kohnShamEigenSpaceCompute(
     const unsigned int spinType,
     const unsigned int kPointIndex,
-    KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
+    KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
       &                                             kohnShamDFTEigenOperator,
     elpaScalaManager &                              elpaScala,
     chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
@@ -484,7 +484,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::kohnShamEigenSpaceCompute(
     const unsigned int spinType,
     const unsigned int kPointIndex,
-    KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::DEVICE>
+    KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
       &               kohnShamDFTEigenOperator,
     elpaScalaManager &elpaScala,
     chebyshevOrthogonalizedSubspaceIterationSolverDevice
@@ -583,7 +583,7 @@ namespace dftfe
     kohnShamEigenSpaceFirstOrderDensityMatResponse(
       const unsigned int spinType,
       const unsigned int kPointIndex,
-      KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
+      KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
         &               kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala)
   {
@@ -663,7 +663,7 @@ namespace dftfe
     kohnShamEigenSpaceFirstOrderDensityMatResponse(
       const unsigned int spinType,
       const unsigned int kPointIndex,
-      KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::DEVICE>
+      KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
         &               kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
       chebyshevOrthogonalizedSubspaceIterationSolverDevice
@@ -717,7 +717,7 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::kohnShamEigenSpaceComputeNSCF(
     const unsigned int spinType,
     const unsigned int kPointIndex,
-    KohnShamHamiltonianOperator<dftfe::utils::MemorySpace::HOST>
+    KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
       &                                             kohnShamDFTEigenOperator,
     chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
     std::vector<double> &                           residualNormWaveFunctions,
