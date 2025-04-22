@@ -397,7 +397,6 @@ namespace dftfe
     double dky = 0.0;
     double dkz = 0.0;
     //
-    //
     std::vector<double> del(3);
     dftfe::uInt         maxkPoints = (nkx * nky) * nkz;
     pcout << "Total number of k-points " << maxkPoints << std::endl;

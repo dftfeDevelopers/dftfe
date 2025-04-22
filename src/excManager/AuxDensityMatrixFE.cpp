@@ -192,8 +192,7 @@ namespace dftfe
     d_quadPointsAll  = projectionInputs.find("quadpts")->second;
     d_quadWeightsAll = projectionInputs.find("quadWt")->second;
     const std::vector<double> &densityVals =
-      projectionInputs.find("densityFunc")
-        ->second; // this vector contains all spin up and spin down values
+      projectionInputs.find("densityFunc")->second;
     const dftfe::uInt nQ = d_quadWeightsAll.size();
     d_densityValsTotalAllQuads.resize(nQ, 0);
     d_densityValsSpinUpAllQuads.resize(nQ, 0);
