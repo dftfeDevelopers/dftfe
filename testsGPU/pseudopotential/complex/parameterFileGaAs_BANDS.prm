@@ -1,0 +1,65 @@
+set SOLVER MODE = BANDS
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT=true
+set MEM OPT MODE = true
+set USE GPU = true
+set RESTART FOLDER = GaAs
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=2
+  set ATOMIC COORDINATES FILE      = coordinatesGaAs.inp 
+  set DOMAIN VECTORS FILE = domainVectorsGaAs.inp
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+  set FLOATING NUCLEAR CHARGES           = true
+end
+subsection Brillouin zone k point sampling options
+  set kPOINT RULE FILE           = kPointFileGaAs.inp
+  set USE GROUP SYMMETRY         = false
+  set USE TIME REVERSAL SYMMETRY = false
+end
+subsection Parallelization
+  set BAND PARAL OPT           = true
+  set MPI ALLREDUCE BLOCK SIZE = 100.0
+  set NPBAND                   = 1
+  set NPKPT                    = 6
+end
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = GGA-PBE
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudoGaAs.inp
+end
+
+subsection SCF parameters
+  subsection Eigen-solver parameters
+    set CHEBYSHEV FILTER TOLERANCE = 1e-8
+    set USE SINGLE PREC CHEBY = true
+    set HIGHEST STATE OF INTEREST FOR CHEBYSHEV FILTERING    = 18
+  end
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=5
+  set POLYNOMIAL ORDER ELECTROSTATICS = 0
+  subsection Auto mesh generation parameters
+    set ATOM BALL RADIUS = 6
+    set MESH SIZE AROUND ATOM  = 0.8
+  end
+end
+
+subsection Poisson problem parameters
+  set GPU MODE           = true
+  set MAXIMUM ITERATIONS = 20000
+  set TOLERANCE          = 1e-10
+  set VSELF GPU MODE     = true
+end
+
+subsection SCF Checkpointing and Restart
+  set LOAD QUAD DATA = true
+end

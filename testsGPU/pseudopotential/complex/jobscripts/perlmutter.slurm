@@ -43,5 +43,7 @@ srun ./dftfe parameterFileBccFe_scf.prm > outputBccFe_scf
 srun ./dftfe parameterFileBccFe_scfConstraintMag.prm > outputBccFe_scfConstraintMag
 srun ./dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
 srun ./dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
+srun ./dftfe parameterFileGaAs.prm > outputGaAs
+srun ./dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
 srun ./dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
 srun ./dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
