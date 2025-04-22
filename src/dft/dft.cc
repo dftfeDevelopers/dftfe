@@ -4002,9 +4002,10 @@ namespace dftfe
                                        interBandGroupComm);
                   }
               }
-            const bool isTauMGGA =
-              (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-               ExcFamilyType::TauMGGA);
+            // const bool isTauMGGA =
+            //   (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType()
+            //   ==
+            //    ExcFamilyType::TauMGGA);
             if (isTauMGGA)
               for (int i = 0; i < d_tauOutQuadValues.size(); i++)
                 {
@@ -4040,6 +4041,7 @@ namespace dftfe
       {
         std::vector<std::string> field     = {"RHO", "MAG_Z"};
         std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
+        std::vector<std::string> field2    = {"TAU", "TAUMAG_Z"};
         for (int i = 0; i < d_densityOutQuadValues.size(); i++)
           {
             saveQuadratureData(d_basisOperationsPtrHost,
@@ -4069,6 +4071,20 @@ namespace dftfe
                                    interBandGroupComm);
               }
           }
+        if (isTauMGGA)
+          for (int i = 0; i < d_tauOutQuadValues.size(); i++)
+            {
+              saveQuadratureData(d_basisOperationsPtrHost,
+                                 d_densityQuadratureId,
+                                 d_tauOutQuadValues[i],
+                                 1,
+                                 field2[i],
+                                 d_dftParamsPtr->restartFolder,
+                                 d_mpiCommParent,
+                                 mpi_communicator,
+                                 interpoolcomm,
+                                 interBandGroupComm);
+            }
         if (d_useHubbard)
           {
             d_hubbardClassPtr->writeHubbOccToFile();
