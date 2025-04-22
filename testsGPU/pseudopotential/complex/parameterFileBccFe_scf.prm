@@ -74,3 +74,6 @@ subsection Poisson problem parameters
   set MAXIMUM ITERATIONS = 20000
   set TOLERANCE          = 1e-10
 end
+subsection Post-processing Options
+  set PRINT KINETIC ENERGY = true
+end

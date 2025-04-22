@@ -25,16 +25,12 @@ LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$WD/env2/lib
 LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$WD/env2/lib64
 
 srun ./dftfe parameterFileMg2x_1.prm > outputMg2x_1
-srun ./dftfe parameterFileMg2x_2.prm > outputMg2x_2
-srun ./dftfe parameterFileMg2x_3.prm > outputMg2x_3
-srun ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
 srun ./dftfe parameterFileMg2x_5.prm > outputMg2x_5
 srun ./dftfe parameterFileMg2x_6.prm > outputMg2x_6
-srun ./dftfe parameterFileMg2x_7.prm > outputMg2x_7
 srun ./dftfe parameterFileMg2x_8.prm > outputMg2x_8
-srun ./dftfe parameterFileMg2x_9.prm > outputMg2x_9
 srun ./dftfe parameterFileMg2x_10.prm > outputMg2x_10
 srun ./dftfe parameterFileBe.prm > outputBe
+srun ./dftfe parameterFileBeMixedPrec.prm > outputBeMixedPrec
 srun ./dftfe parameterFileTiAl.prm > outputTiAl_hubbard
 srun ./dftfe parameterFileTiAl_mixedPrec.prm > outputTiAl_hubbard_mixedPrec_mpi6
 srun ./dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
@@ -44,4 +40,3 @@ srun ./dftfe parameterFileBccFe_scfConstraintMag.prm > outputBccFe_scfConstraint
 srun ./dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
 srun ./dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
 srun ./dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
-srun ./dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
