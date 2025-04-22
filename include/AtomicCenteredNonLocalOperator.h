@@ -753,6 +753,9 @@ namespace dftfe
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesVectorAllCellsReductionDevice;
 
+    std::vector<dftfe::uInt> d_mapSphericalFnTimesVectorAllCellsReduction;
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
+      d_mapSphericalFnTimesVectorAllCellsReductionDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_couplingMatrixTimesVectorDevice;
 

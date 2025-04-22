@@ -896,6 +896,10 @@ namespace dftfe
           d_totalNonlocalElems * d_maxSingleAtomContribution *
             d_totalNonLocalEntries,
           ValueType(0.0));
+        d_mapSphericalFnTimesVectorAllCellsReduction.clear();
+        d_mapSphericalFnTimesVectorAllCellsReduction.resize(
+          d_totalNonlocalElems * d_maxSingleAtomContribution,
+          d_totalNonLocalEntries + 1);
         d_cellNodeIdMapNonLocalToLocal.clear();
         d_cellNodeIdMapNonLocalToLocal.resize(d_totalNonlocalElems *
                                               d_numberNodesPerElement);
@@ -1033,6 +1037,14 @@ namespace dftfe
                                                               columnRowId] =
                       ValueType(1.0);
                   }
+                for (dftfe::uInt alpha = 0; alpha < numberSphericalFunctions;
+                     ++alpha)
+                  {
+                    const dftfe::uInt index =
+                      countElem * d_maxSingleAtomContribution + alpha;
+                    d_mapSphericalFnTimesVectorAllCellsReduction[index] =
+                      numShapeFnsAccum + alpha;
+                  }
 
                 countElem++;
               }
@@ -1086,6 +1098,12 @@ namespace dftfe
           d_sphericalFnTimesVectorAllCellsReduction.size());
         d_sphericalFnTimesVectorAllCellsReductionDevice.copyFrom(
           d_sphericalFnTimesVectorAllCellsReduction);
+
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.clear();
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.resize(
+          d_mapSphericalFnTimesVectorAllCellsReduction.size());
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.copyFrom(
+          d_mapSphericalFnTimesVectorAllCellsReduction);
 
         d_cellNodeIdMapNonLocalToLocalDevice.clear();
         d_cellNodeIdMapNonLocalToLocalDevice.resize(
@@ -2320,23 +2338,31 @@ namespace dftfe
           // devicePointerCDaggerOutTemp.data() + cellRange.first,
           d_numberWaveFunctions,
           d_totalNonlocalElems);
+        d_sphericalFnTimesWavefunctionMatrix.setValue(ValueType(0.0));
+        dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
+          assembleAtomLevelContributionsFromCellLevel(
+            d_numberWaveFunctions,
+            d_totalNonlocalElems,
+            d_maxSingleAtomContribution,
+            d_totalNonLocalEntries,
+            d_sphericalFnTimesVectorAllCellsDevice,
+            d_mapSphericalFnTimesVectorAllCellsReductionDevice,
+            d_sphericalFnTimesWavefunctionMatrix);
 
-
-
-        d_BLASWrapperPtr->xgemm(
-          'N',
-          'N',
-          d_numberWaveFunctions,
-          d_totalNonLocalEntries,
-          d_totalNonlocalElems * d_maxSingleAtomContribution,
-          &scalarCoeffAlpha,
-          d_sphericalFnTimesVectorAllCellsDevice.begin(),
-          d_numberWaveFunctions,
-          d_sphericalFnTimesVectorAllCellsReductionDevice.begin(),
-          d_totalNonlocalElems * d_maxSingleAtomContribution,
-          &scalarCoeffBeta,
-          d_sphericalFnTimesWavefunctionMatrix.begin(),
-          d_numberWaveFunctions);
+        // d_BLASWrapperPtr->xgemm(
+        //   'N',
+        //   'N',
+        //   d_numberWaveFunctions,
+        //   d_totalNonLocalEntries,
+        //   d_totalNonlocalElems * d_maxSingleAtomContribution,
+        //   &scalarCoeffAlpha,
+        //   d_sphericalFnTimesVectorAllCellsDevice.begin(),
+        //   d_numberWaveFunctions,
+        //   d_sphericalFnTimesVectorAllCellsReductionDevice.begin(),
+        //   d_totalNonlocalElems * d_maxSingleAtomContribution,
+        //   &scalarCoeffBeta,
+        //   d_sphericalFnTimesWavefunctionMatrix.begin(),
+        //   d_numberWaveFunctions);
       }
 #endif
   }
@@ -3237,6 +3263,10 @@ namespace dftfe
           d_totalNonlocalElems * d_maxSingleAtomContribution *
             d_totalNonLocalEntries,
           ValueType(0.0));
+        d_mapSphericalFnTimesVectorAllCellsReduction.clear();
+        d_mapSphericalFnTimesVectorAllCellsReduction.resize(
+          d_totalNonlocalElems * d_maxSingleAtomContribution,
+          d_totalNonLocalEntries + 1);
         d_cellNodeIdMapNonLocalToLocal.clear();
         d_cellNodeIdMapNonLocalToLocal.resize(d_totalNonlocalElems *
                                               d_numberNodesPerElement);
@@ -3374,7 +3404,14 @@ namespace dftfe
                                                               columnRowId] =
                       ValueType(1.0);
                   }
-
+                for (dftfe::uInt alpha = 0; alpha < numberSphericalFunctions;
+                     ++alpha)
+                  {
+                    const dftfe::uInt index =
+                      countElem * d_maxSingleAtomContribution + alpha;
+                    d_mapSphericalFnTimesVectorAllCellsReduction[index] =
+                      numShapeFnsAccum + alpha;
+                  }
                 countElem++;
               }
 
@@ -3402,7 +3439,11 @@ namespace dftfe
           d_sphericalFnTimesVectorAllCellsReduction.size());
         d_sphericalFnTimesVectorAllCellsReductionDevice.copyFrom(
           d_sphericalFnTimesVectorAllCellsReduction);
-
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.clear();
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.resize(
+          d_mapSphericalFnTimesVectorAllCellsReduction.size());
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.copyFrom(
+          d_mapSphericalFnTimesVectorAllCellsReduction);
         d_cellNodeIdMapNonLocalToLocalDevice.clear();
         d_cellNodeIdMapNonLocalToLocalDevice.resize(
           d_cellNodeIdMapNonLocalToLocal.size());
@@ -3899,6 +3940,10 @@ namespace dftfe
           d_totalNonlocalElems * d_maxSingleAtomContribution *
             d_totalNonLocalEntries,
           ValueType(0.0));
+        d_mapSphericalFnTimesVectorAllCellsReduction.clear();
+        d_mapSphericalFnTimesVectorAllCellsReduction.resize(
+          d_totalNonlocalElems * d_maxSingleAtomContribution,
+          d_totalNonLocalEntries + 1);
         d_cellNodeIdMapNonLocalToLocal.clear();
         d_cellNodeIdMapNonLocalToLocal.resize(d_totalNonlocalElems *
                                               d_numberNodesPerElement);
@@ -4029,7 +4074,14 @@ namespace dftfe
                                                               columnRowId] =
                       ValueType(1.0);
                   }
-
+                for (dftfe::uInt alpha = 0; alpha < numberSphericalFunctions;
+                     ++alpha)
+                  {
+                    const dftfe::uInt index =
+                      countElem * d_maxSingleAtomContribution + alpha;
+                    d_mapSphericalFnTimesVectorAllCellsReduction[index] =
+                      numShapeFnsAccum + alpha;
+                  }
                 countElem++;
               }
 
@@ -4079,7 +4131,11 @@ namespace dftfe
           d_sphericalFnTimesVectorAllCellsReduction.size());
         d_sphericalFnTimesVectorAllCellsReductionDevice.copyFrom(
           d_sphericalFnTimesVectorAllCellsReduction);
-
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.clear();
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.resize(
+          d_mapSphericalFnTimesVectorAllCellsReduction.size());
+        d_mapSphericalFnTimesVectorAllCellsReductionDevice.copyFrom(
+          d_mapSphericalFnTimesVectorAllCellsReduction);
         d_cellNodeIdMapNonLocalToLocalDevice.clear();
         d_cellNodeIdMapNonLocalToLocalDevice.resize(
           d_cellNodeIdMapNonLocalToLocal.size());

@@ -314,6 +314,123 @@ namespace dftfe
               xVec[index]);
         }
     }
+    __global__ void
+    assembleAtomLevelContributionsFromCellLevelKernel(
+      const dftfe::uInt  numWfc,
+      const dftfe::uInt  totalNonLocalElements,
+      const dftfe::uInt  maxSingleAtomSphericalFn,
+      const dftfe::uInt  totalNonLocalEntries,
+      const double      *sphericalFnTimesXCellLevel,
+      const dftfe::uInt *mappingCellLevelToAtomLevel,
+      double            *sphericalFnTimesX)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numberEntries =
+        totalNonLocalElements * maxSingleAtomSphericalFn * numWfc;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const dftfe::uInt blockIndex      = index / (numWfc);
+          const dftfe::uInt intraBlockIndex = index % numWfc;
+
+          const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
+
+          if (toIndex < totalNonLocalEntries)
+            atomicAdd(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
+                      sphericalFnTimesXCellLevel[index]);
+        }
+    }
+
+
+    __global__ void
+    assembleAtomLevelContributionsFromCellLevelKernel(
+      const dftfe::uInt  numWfc,
+      const dftfe::uInt  totalNonLocalElements,
+      const dftfe::uInt  maxSingleAtomSphericalFn,
+      const dftfe::uInt  totalNonLocalEntries,
+      const float       *sphericalFnTimesXCellLevel,
+      const dftfe::uInt *mappingCellLevelToAtomLevel,
+      float             *sphericalFnTimesX)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numberEntries =
+        totalNonLocalElements * maxSingleAtomSphericalFn * numWfc;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const dftfe::uInt blockIndex      = index / (numWfc);
+          const dftfe::uInt intraBlockIndex = index % numWfc;
+
+          const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
+          if (toIndex < totalNonLocalEntries)
+            atomicAdd(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
+                      sphericalFnTimesXCellLevel[index]);
+        }
+    }
+
+    __global__ void
+    assembleAtomLevelContributionsFromCellLevelKernel(
+      const dftfe::uInt                        numWfc,
+      const dftfe::uInt                        totalNonLocalElements,
+      const dftfe::uInt                        maxSingleAtomSphericalFn,
+      const dftfe::uInt                        totalNonLocalEntries,
+      const dftfe::utils::deviceDoubleComplex *sphericalFnTimesXCellLevel,
+      const dftfe::uInt                       *mappingCellLevelToAtomLevel,
+      dftfe::utils::deviceDoubleComplex       *sphericalFnTimesX)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numberEntries =
+        totalNonLocalElements * maxSingleAtomSphericalFn * numWfc;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const dftfe::uInt blockIndex      = index / (numWfc);
+          const dftfe::uInt intraBlockIndex = index % numWfc;
+
+          const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
+          if (toIndex < totalNonLocalEntries)
+            {
+              atomicAdd(
+                &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex].x,
+                sphericalFnTimesXCellLevel[index].x);
+              atomicAdd(
+                &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex].y,
+                sphericalFnTimesXCellLevel[index].y);
+            }
+        }
+    }
+
+    __global__ void
+    assembleAtomLevelContributionsFromCellLevelKernel(
+      const dftfe::uInt                       numWfc,
+      const dftfe::uInt                       totalNonLocalElements,
+      const dftfe::uInt                       maxSingleAtomSphericalFn,
+      const dftfe::uInt                       totalNonLocalEntries,
+      const dftfe::utils::deviceFloatComplex *sphericalFnTimesXCellLevel,
+      const dftfe::uInt                      *mappingCellLevelToAtomLevel,
+      dftfe::utils::deviceFloatComplex       *sphericalFnTimesX)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numberEntries =
+        totalNonLocalElements * maxSingleAtomSphericalFn * numWfc;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const dftfe::uInt blockIndex      = index / (numWfc);
+          const dftfe::uInt intraBlockIndex = index % numWfc;
+
+          const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
+          if (toIndex < totalNonLocalEntries)
+            {
+              atomicAdd(
+                &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex].x,
+                sphericalFnTimesXCellLevel[index].x);
+              atomicAdd(
+                &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex].y,
+                sphericalFnTimesXCellLevel[index].y);
+            }
+        }
+    }
 
   } // namespace
 
@@ -611,7 +728,57 @@ namespace dftfe
 #endif
     }
 
-
+    template <typename ValueType>
+    void
+    assembleAtomLevelContributionsFromCellLevel(
+      const dftfe::uInt numberWaveFunctions,
+      const dftfe::uInt totalNonlocalElems,
+      const dftfe::uInt maxSingleAtomContribution,
+      const dftfe::uInt totalNonlocalEntries,
+      const dftfe::utils::MemoryStorage<ValueType,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesVectorAllCellsDevice,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &mapSphericalFnTimesVectorAllCellsReductionDevice,
+      dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesWavefunctionMatrix)
+    {
+      const dftfe::uInt totalEntries =
+        totalNonlocalElems * numberWaveFunctions * maxSingleAtomContribution;
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+      assembleAtomLevelContributionsFromCellLevelKernel<<<
+        (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
+        numberWaveFunctions,
+        totalNonlocalElems,
+        maxSingleAtomContribution,
+        totalNonlocalEntries,
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          sphericalFnTimesVectorAllCellsDevice.begin()),
+        mapSphericalFnTimesVectorAllCellsReductionDevice.begin(),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          sphericalFnTimesWavefunctionMatrix.begin()));
+#elif DFTFE_WITH_DEVICE_LANG_HIP
+      hipLaunchKernelGGL(
+        assembleAtomLevelContributionsFromCellLevelKernel,
+        (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        0,
+        numberWaveFunctions,
+        totalNonlocalElems,
+        maxSingleAtomContribution,
+        totalNonlocalEntries,
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          sphericalFnTimesVectorAllCellsDevice.begin()),
+        mapSphericalFnTimesVectorAllCellsReductionDevice.begin(),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          sphericalFnTimesWavefunctionMatrix.begin()));
+#endif
+    }
 
     template void
     copyToDealiiParallelNonLocalVec(
@@ -750,7 +917,37 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
                         &nonLocalContribution,
       dataTypes::number *TotalContribution);
+    template void
+    assembleAtomLevelContributionsFromCellLevel(
+      const dftfe::uInt numberWaveFunctions,
+      const dftfe::uInt totalNonlocalElems,
+      const dftfe::uInt maxSingleAtomContribution,
+      const dftfe::uInt totalNonlocalEntries,
+      const dftfe::utils::MemoryStorage<dataTypes::number,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesVectorAllCellsDevice,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &mapSphericalFnTimesVectorAllCellsReductionDevice,
+      dftfe::utils::MemoryStorage<dataTypes::number,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesWavefunctionMatrix);
 
+    template void
+    assembleAtomLevelContributionsFromCellLevel(
+      const dftfe::uInt numberWaveFunctions,
+      const dftfe::uInt totalNonlocalElems,
+      const dftfe::uInt maxSingleAtomContribution,
+      const dftfe::uInt totalNonlocalEntries,
+      const dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesVectorAllCellsDevice,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &mapSphericalFnTimesVectorAllCellsReductionDevice,
+      dftfe::utils::MemoryStorage<dataTypes::numberFP32,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesWavefunctionMatrix);
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice
 
 } // namespace dftfe
