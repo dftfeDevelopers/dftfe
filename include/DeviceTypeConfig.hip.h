@@ -40,9 +40,9 @@ namespace dftfe
     typedef hipblasComputeType_t deviceBlasComputeType_t;
     typedef hipDataType          deviceDataType_t;
 
-    static const hipblasOperation_t  DEVICEBLAS_OP_N = HIPBLAS_OP_N;
-    static const hipblasOperation_t  DEVICEBLAS_OP_T = HIPBLAS_OP_T;
-    static const hipblasOperation_t  DEVICEBLAS_OP_C = HIPBLAS_OP_C;
+    static const hipblasOperation_t   DEVICEBLAS_OP_N = HIPBLAS_OP_N;
+    static const hipblasOperation_t   DEVICEBLAS_OP_T = HIPBLAS_OP_T;
+    static const hipblasOperation_t   DEVICEBLAS_OP_C = HIPBLAS_OP_C;
     static const hipblasComputeType_t DEVICEBLAS_COMPUTE_32F =
       HIPBLAS_COMPUTE_32F;
     static const hipblasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_TF32 =

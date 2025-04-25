@@ -22,7 +22,7 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #ifdef DFTFE_WITH_DEVICE_AMD
-#define HIPBLAS_V2
+#  define HIPBLAS_V2
 #  include <rocblas.h>
 #  include <hipblas.h>
 #  include <hipblas/hipblas-version.h>
