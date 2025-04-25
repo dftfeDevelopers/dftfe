@@ -97,7 +97,7 @@ namespace dftfe
       {
         AssertThrow(
           matrix_free_data.get_vector_partitioner()->locally_owned_size() <
-            INT_MAX / d_numEigenValues,
+            std::numeric_limits<dftfe::Int>::max() / d_numEigenValues,
           dealii::ExcMessage(
             "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
         d_eigenVectorsFlattenedHost.resize(
@@ -110,7 +110,7 @@ namespace dftfe
         AssertThrow(
           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size() *
               matrix_free_data.get_vector_partitioner()->locally_owned_size() <
-            INT_MAX / d_numEigenValues,
+            std::numeric_limits<dftfe::Int>::max() / d_numEigenValues,
           dealii::ExcMessage(
             "DFT-FE error: size of local wavefunctions storage exceeds integer bounds. Please increase number of MPI tasks"));
         d_eigenVectorsFlattenedHost.resize(
