@@ -48,10 +48,10 @@
 {\it Default:} GS
 
 
-{\it Description:} [Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calculation at the k-points specified.  If FUNCTIONAL\_TEST: tests if the different functionalities of the software are running as expected.
+{\it Description:} [Standard] DFT-FE SOLVER MODE: If GS: performs GroundState calculations. If MD: performs Molecular Dynamics Simulation. If NEB: performs a NEB calculation. If GEOOPT: performs an ion and/or cell optimization calculation. If NONE: the density is initialised with superposition of atomic densities and is written to file along with mesh data. If NSCF: The density from the restart files of the GS run are used to perform NSCF calculation with the given MP grid of k-points for the specified number of states. If BANDS: The density from the restart files of the GS run are used to perform BANDS calculation with the given list of k-points for the specified number of states. If FUNCTIONAL\_TEST: tests if the different functionalities of the software are running as expected.
 
 
-{\it Possible values:} Any one of GS, MD, NEB, GEOOPT, NONE, NSCF, FUNCTIONAL\_TEST
+{\it Possible values:} Any one of GS, MD, NEB, GEOOPT, NONE, NSCF, BANDS, FUNCTIONAL\_TEST
 \item {\it Parameter name:} {\tt USE GPU}
 \phantomsection\label{parameters:USE GPU}
 \label{parameters:USE_20GPU}
@@ -2309,23 +2309,6 @@
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE BANDS}
-\phantomsection\label{parameters:Post_2dprocessing Options/WRITE BANDS}
-\label{parameters:Post_2dprocessing_20Options/WRITE_20BANDS}
-
-
-\index[prmindex]{WRITE BANDS}
-\index[prmindexfull]{Post-processing Options!WRITE BANDS}
-{\it Value:} false
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Write bands for every k-point to an outputfile called 'bands.out' in the units of Ha. This can be used after GS (Ground-state) or NSCF (Non-Self consistent field iteration) modes of solve. If it is set to true, Fermi energy is obtained from 'fermiEnergy.out' file, created from previous GS calculation with 'SAVE RHO DATA' set to true. Outputs a file name 'bands.out'. The first line has 2 entries with first one denoting the number of k-points and second entry denoting the number of eigenvalues(bands) for each k-point. Subsequent lines have 4 columns with first column indicating the k-point index, second column indicating band index, third column indicating corresponding eigenvalue and fourth column indicating the corresponding occupation number.
-
-
-{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt WRITE DENSITY FE MESH}
 \phantomsection\label{parameters:Post_2dprocessing Options/WRITE DENSITY FE MESH}
 \label{parameters:Post_2dprocessing_20Options/WRITE_20DENSITY_20FE_20MESH}
@@ -2920,7 +2903,7 @@ For colinear, spin-polarized case, the columns has format 'E sumPDOS\_up sumPDOS
 {\it Default:} 0
 
 
-{\it Description:} [Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in a NSCF calculation. By default, this is set to the state corresponding to Fermi energy. It is strongly encouraged to have 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the SCF calculation. For DOS/PDOS calculations, the value of this parameter should be large enough to ensure sufficient number of buffer states beyond the 'Fermi level'.
+{\it Description:} [Standard] The highest state till which the Kohn Sham wavefunctions are computed accurately during Chebyshev filtering in NSCF/BANDS calculations. By default, this is set to N/2*1.05 where N is the number of electrons. It is strongly encouraged to have at least 10-15 percent buffer between this parameter and the total number of wavefunctions employed for the NSCF/BANDS calculation.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
