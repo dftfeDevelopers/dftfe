@@ -246,7 +246,7 @@ SET(DEVICE_SRC
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.cu.cc
-  ./utils/BLASWrapperDevice.cu.cc
+  ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./utils/matrixFreeDeviceKernels.cc
@@ -266,7 +266,7 @@ SET(DEVICE_SRC
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.hip.cc
-  ./utils/BLASWrapperDevice.hip.cc
+  ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./utils/matrixFreeDeviceKernels.cc
@@ -352,6 +352,10 @@ ENDIF()
 
 IF (HIGHERQUAD_PSP)
   ADD_DEFINITIONS(-DDFTFE_WITH_HIGHERQUAD_PSP)
+ENDIF()
+
+IF (USE_64BIT_INT)
+  ADD_DEFINITIONS(-DDFTFE_WITH_64BIT_INT)
 ENDIF()
 
 #

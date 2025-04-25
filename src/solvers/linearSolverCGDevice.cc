@@ -115,10 +115,9 @@ namespace dftfe
             problem.computeAX(d_rvec, x);
 
             // r = Ax - rhs
-            d_BLASWrapperPtr->add(d_rvec.begin(),
-                                  rhsDevice.begin(),
-                                  -1,
-                                  d_xLocalDof);
+            double mOne = -1.0;
+            d_BLASWrapperPtr->xaxpy(
+              d_xLocalDof, &mOne, rhsDevice.begin(), 1, d_rvec.begin(), 1);
             // res = r.r
 
 

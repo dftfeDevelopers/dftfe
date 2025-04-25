@@ -519,10 +519,12 @@ namespace dftfe
 
 
 
-    d_BLASWrapperPtr->add(vec.begin(),
-                          d_meanValueConstraintDeviceVec.begin(),
-                          constrainedNodeValue,
-                          d_xLocalDof);
+    d_BLASWrapperPtr->xaxpy(d_xLocalDof,
+                            &constrainedNodeValue,
+                            d_meanValueConstraintDeviceVec.begin(),
+                            1,
+                            vec.begin(),
+                            1);
 
     // meanValueConstraintSetZero
     if (d_isMeanValueConstraintComputed)

@@ -1007,15 +1007,6 @@ namespace dftfe
     }
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::add(double           *y,
-                                                      const double     *x,
-                                                      const double      alpha,
-                                                      const dftfe::uInt size)
-    {
-      xaxpy(size, &alpha, x, 1, y, 1);
-    }
-
-    void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
       const char        transA,
       const char        transB,
