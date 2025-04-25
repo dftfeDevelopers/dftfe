@@ -822,15 +822,11 @@ namespace dftfe
          ->ghost_indices())
         .fill_index_vector(ghostIndices);
 
-      const std::pair<dftfe::uInt, dftfe::uInt> locallyOwnedRangeTemp(
-        locallyOwnedRange.first, locallyOwnedRange.second);
-      std::vector<dftfe::uInt> ghostIndicesTemp(ghostIndices.begin(),
-                                                ghostIndices.end());
-
       mpiPatternP2P =
         std::make_shared<dftfe::utils::mpi::MPIPatternP2P<memorySpace>>(
-          locallyOwnedRangeTemp,
-          ghostIndices,
+          std::pair<dftfe::uInt, dftfe::uInt>(locallyOwnedRange.first,
+                                              locallyOwnedRange.second),
+          std::vector<dftfe::uInt>(ghostIndices.begin(), ghostIndices.end()),
           d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
             ->get_mpi_communicator());
     }

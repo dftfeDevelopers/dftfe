@@ -170,9 +170,11 @@ namespace dftfe
       const dftfe::uInt                         totalNumberComponents,
       const dftfe::uInt                         localVectorSize,
       const std::pair<dftfe::uInt, dftfe::uInt> componentIndexRange,
-      const std::vector<dftfe::uInt>           &localProcDofIndicesReal,
-      const std::vector<dftfe::uInt>           &localProcDofIndicesImag,
-      std::vector<distributedCPUVec<double>>   &componentVectors);
+      const std::vector<dealii::types::global_dof_index>
+        &localProcDofIndicesReal,
+      const std::vector<dealii::types::global_dof_index>
+                                             &localProcDofIndicesImag,
+      std::vector<distributedCPUVec<double>> &componentVectors);
 
     void
     copyFlattenedSTLVecToSingleCompVec(
@@ -244,9 +246,11 @@ namespace dftfe
       const distributedCPUVec<std::complex<double>> &flattenedArray,
       const dftfe::uInt                              totalNumberComponents,
       const std::pair<dftfe::uInt, dftfe::uInt>      componentIndexRange,
-      const std::vector<dftfe::uInt>                &localProcDofIndicesReal,
-      const std::vector<dftfe::uInt>                &localProcDofIndicesImag,
-      std::vector<distributedCPUVec<double>>        &componentVectors,
+      const std::vector<dealii::types::global_dof_index>
+        &localProcDofIndicesReal,
+      const std::vector<dealii::types::global_dof_index>
+                                             &localProcDofIndicesImag,
+      std::vector<distributedCPUVec<double>> &componentVectors,
       const bool isFlattenedDealiiGhostValuesUpdated = false);
 
 #else
@@ -307,11 +311,13 @@ namespace dftfe
      */
     void
     copySingleCompVecToFlattenedDealiiVec(
-      distributedCPUVec<std::complex<double>>      &flattenedArray,
-      const dftfe::uInt                             totalNumberComponents,
-      const std::pair<dftfe::uInt, dftfe::uInt>     componentIndexRange,
-      const std::vector<dftfe::uInt>               &localProcDofIndicesReal,
-      const std::vector<dftfe::uInt>               &localProcDofIndicesImag,
+      distributedCPUVec<std::complex<double>>  &flattenedArray,
+      const dftfe::uInt                         totalNumberComponents,
+      const std::pair<dftfe::uInt, dftfe::uInt> componentIndexRange,
+      const std::vector<dealii::types::global_dof_index>
+        &localProcDofIndicesReal,
+      const std::vector<dealii::types::global_dof_index>
+                                                   &localProcDofIndicesImag,
       const std::vector<distributedCPUVec<double>> &componentVectors);
 
 #else
@@ -368,11 +374,13 @@ namespace dftfe
      */
     void
     copySingleCompVecToFlattenedSTLVec(
-      std::vector<std::complex<double>>            &flattenedArray,
-      const dftfe::uInt                             totalNumberComponents,
-      const std::pair<dftfe::uInt, dftfe::uInt>     componentIndexRange,
-      const std::vector<dftfe::uInt>               &localProcDofIndicesReal,
-      const std::vector<dftfe::uInt>               &localProcDofIndicesImag,
+      std::vector<std::complex<double>>        &flattenedArray,
+      const dftfe::uInt                         totalNumberComponents,
+      const std::pair<dftfe::uInt, dftfe::uInt> componentIndexRange,
+      const std::vector<dealii::types::global_dof_index>
+        &localProcDofIndicesReal,
+      const std::vector<dealii::types::global_dof_index>
+                                                   &localProcDofIndicesImag,
       const std::vector<distributedCPUVec<double>> &componentVectors);
 
 #else

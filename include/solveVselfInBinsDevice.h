@@ -66,7 +66,7 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &inhomoIdsColoredVecFlattenedD,
-      const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::DEVICE>
                                    &cellLocalProcIndexIdMapD,
       const dftfe::uInt             localSize,
