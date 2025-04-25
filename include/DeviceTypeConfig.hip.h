@@ -16,7 +16,7 @@
 //
 #ifndef dftfeDeviceTypeConfig_hiph
 #define dftfeDeviceTypeConfig_hiph
-
+#define HIPBLAS_V2
 #include <hip/hip_runtime.h>
 #include <hip/hip_complex.h>
 #include <hipblas.h>
@@ -43,13 +43,13 @@ namespace dftfe
     static const hipblasOperation_t  DEVICEBLAS_OP_N = HIPBLAS_OP_N;
     static const hipblasOperation_t  DEVICEBLAS_OP_T = HIPBLAS_OP_T;
     static const hipblasOperation_t  DEVICEBLAS_OP_C = HIPBLAS_OP_C;
-    static const cublasComputeType_t DEVICEBLAS_COMPUTE_32F =
+    static const hipblasComputeType_t DEVICEBLAS_COMPUTE_32F =
       HIPBLAS_COMPUTE_32F;
-    static const cublasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_TF32 =
+    static const hipblasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_TF32 =
       HIPBLAS_COMPUTE_32F_FAST_TF32;
-    static const cublasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_16BF =
+    static const hipblasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_16BF =
       HIPBLAS_COMPUTE_32F_FAST_16BF;
-    static const cublasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_16F =
+    static const hipblasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_16F =
       HIPBLAS_COMPUTE_32F_FAST_16F;
     static const hipblasGemmAlgo_t DEVICEBLAS_GEMM_DEFAULT =
       HIPBLAS_GEMM_DEFAULT;

@@ -22,9 +22,10 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #ifdef DFTFE_WITH_DEVICE_AMD
+#define HIPBLAS_V2
 #  include <rocblas.h>
 #  include <hipblas.h>
-#  include <hip/hip_version.h>
+#  include <hipblas/hipblas-version.h>
 #endif
 #ifdef DFTFE_WITH_DEVICE_NVIDIA
 #  include <cublas_v2.h>
@@ -65,7 +66,7 @@ namespace dftfe
 {
   namespace utils
   {
-#if ROCM_VERSION >= 50701 || defined(DFTFE_WITH_DEVICE_NVIDIA)
+#if hipblasVersionMajor >= 2 || defined(DFTFE_WITH_DEVICE_NVIDIA)
     template <typename T>
     inline auto
     makeDataTypeDeviceBlasCompatible(T &&x)
