@@ -34,11 +34,6 @@
 #include "BLASWrapperDeviceKernels.cc"
 
 #ifdef DFTFE_WITH_DEVICE_NVIDIA
-#  define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
-    do                                                                  \
-      {                                                                 \
-        kernel<<<grid, block, shared, stream>>>(__VA_ARGS__);           \
-    } while (0)
 #  ifdef DFTFE_WITH_64BIT_INT
 #    define DFTFE_DEVICE_BLAS_INT(name) cublas##name##_64
 #  else
@@ -46,11 +41,6 @@
 #  endif
 #  define DFTFE_DEVICE_BLAS(name) cublas##name
 #elif defined(DFTFE_WITH_DEVICE_AMD)
-#  define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...)       \
-    do                                                                        \
-      {                                                                       \
-        hipLaunchKernelGGL(kernel, grid, block, shared, stream, __VA_ARGS__); \
-    } while (0)
 #  ifdef DFTFE_WITH_64BIT_INT
 #    define DFTFE_DEVICE_BLAS_INT(name) hipblas##name##_64
 #  else

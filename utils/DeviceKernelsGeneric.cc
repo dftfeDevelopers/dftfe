@@ -155,26 +155,16 @@ namespace dftfe
                                      ValueTypeReal          *realArr,
                                      ValueTypeReal          *imagArr)
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-        copyComplexArrToRealArrsDeviceKernel<<<
-          size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          size,
-          dftfe::utils::makeDataTypeDeviceCompatible(complexArr),
-          realArr,
-          imagArr);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-        hipLaunchKernelGGL(copyComplexArrToRealArrsDeviceKernel,
-                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                           0,
-                           0,
-                           size,
-                           dftfe::utils::makeDataTypeDeviceCompatible(
-                             complexArr),
-                           realArr,
-                           imagArr);
-#endif
+        DFTFE_LAUNCH_KERNEL(copyComplexArrToRealArrsDeviceKernel,
+                            size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                            0,
+                            0,
+                            size,
+                            dftfe::utils::makeDataTypeDeviceCompatible(
+                              complexArr),
+                            realArr,
+                            imagArr);
       }
 
 
@@ -186,26 +176,16 @@ namespace dftfe
                                      const ValueTypeReal *imagArr,
                                      ValueTypeComplex    *complexArr)
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-        copyRealArrsToComplexArrDeviceKernel<<<
-          size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          size,
-          realArr,
-          imagArr,
-          dftfe::utils::makeDataTypeDeviceCompatible(complexArr));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-        hipLaunchKernelGGL(copyRealArrsToComplexArrDeviceKernel,
-                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                           0,
-                           0,
-                           size,
-                           realArr,
-                           imagArr,
-                           dftfe::utils::makeDataTypeDeviceCompatible(
-                             complexArr));
-#endif
+        DFTFE_LAUNCH_KERNEL(copyRealArrsToComplexArrDeviceKernel,
+                            size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                            0,
+                            0,
+                            size,
+                            realArr,
+                            imagArr,
+                            dftfe::utils::makeDataTypeDeviceCompatible(
+                              complexArr));
       }
 
 
@@ -220,22 +200,15 @@ namespace dftfe
         const dftfe::uInt gridSize =
           (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
           (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-        saddKernel<<<gridSize, dftfe::utils::DEVICE_BLOCK_SIZE>>>(y,
-                                                                  x,
-                                                                  beta,
-                                                                  size);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-        hipLaunchKernelGGL(saddKernel,
-                           gridSize,
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                           0,
-                           0,
-                           y,
-                           x,
-                           beta,
-                           size);
-#endif
+        DFTFE_LAUNCH_KERNEL(saddKernel,
+                            gridSize,
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                            0,
+                            0,
+                            y,
+                            x,
+                            beta,
+                            size);
       }
 
 
@@ -253,21 +226,7 @@ namespace dftfe
         const ValueType2 *parentNodalValues,
         ValueType2       *quadValues)
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-        interpolateNodalDataToQuadDeviceKernel<<<
-          (numQuadPoints * numVecs) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-          dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numDofsPerElem,
-          numQuadPoints,
-          numVecs,
-          dftfe::utils::makeDataTypeDeviceCompatible(parentShapeFunc),
-          dftfe::utils::makeDataTypeDeviceCompatible(mapPointToCellIndex),
-          dftfe::utils::makeDataTypeDeviceCompatible(mapPointToProcLocal),
-          dftfe::utils::makeDataTypeDeviceCompatible(mapPointToShapeFuncIndex),
-          dftfe::utils::makeDataTypeDeviceCompatible(parentNodalValues),
-          dftfe::utils::makeDataTypeDeviceCompatible(quadValues));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-        hipLaunchKernelGGL(
+        DFTFE_LAUNCH_KERNEL(
           interpolateNodalDataToQuadDeviceKernel,
           (numQuadPoints * numVecs) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -282,7 +241,6 @@ namespace dftfe
           dftfe::utils::makeDataTypeDeviceCompatible(mapPointToShapeFuncIndex),
           dftfe::utils::makeDataTypeDeviceCompatible(parentNodalValues),
           dftfe::utils::makeDataTypeDeviceCompatible(quadValues));
-#endif
       }
 
 

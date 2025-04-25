@@ -229,26 +229,19 @@ namespace dftfe
   {
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    applyPreconditionAndComputeDotProductKernel<double,
-                                                dftfe::utils::DEVICE_BLOCK_SIZE>
-      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        d_dvec, d_devSum, d_rvec, d_jacobi, N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(
-                         applyPreconditionAndComputeDotProductKernel<
-                           double,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>),
-                       blocks,
-                       dftfe::utils::DEVICE_BLOCK_SIZE,
-                       0,
-                       0,
-                       d_dvec,
-                       d_devSum,
-                       d_rvec,
-                       d_jacobi,
-                       N);
-#endif
+    DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
+                          applyPreconditionAndComputeDotProductKernel<
+                            double,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>),
+                        blocks,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        0,
+                        0,
+                        d_dvec,
+                        d_devSum,
+                        d_rvec,
+                        d_jacobi,
+                        N);
   }
 
 
@@ -263,27 +256,19 @@ namespace dftfe
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    applyPreconditionComputeDotProductAndSaddKernel<
-      double,
-      dftfe::utils::DEVICE_BLOCK_SIZE>
-      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        d_qvec, d_devSum, d_rvec, d_jacobi, N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(
-                         applyPreconditionComputeDotProductAndSaddKernel<
-                           double,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>),
-                       blocks,
-                       dftfe::utils::DEVICE_BLOCK_SIZE,
-                       0,
-                       0,
-                       d_qvec,
-                       d_devSum,
-                       d_rvec,
-                       d_jacobi,
-                       N);
-#endif
+    DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
+                          applyPreconditionComputeDotProductAndSaddKernel<
+                            double,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>),
+                        blocks,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        0,
+                        0,
+                        d_qvec,
+                        d_devSum,
+                        d_rvec,
+                        d_jacobi,
+                        N);
   }
 
 
@@ -300,13 +285,8 @@ namespace dftfe
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>
-      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        x, d_rvec, d_devSum, d_qvec, d_dvec, alpha, N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
-      HIP_KERNEL_NAME(
+    DFTFE_LAUNCH_KERNEL(
+      DFTFE_KERNEL_NAME(
         scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>),
       blocks,
       dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -319,7 +299,6 @@ namespace dftfe
       d_dvec,
       alpha,
       N);
-#endif
   }
 
 } // namespace dftfe

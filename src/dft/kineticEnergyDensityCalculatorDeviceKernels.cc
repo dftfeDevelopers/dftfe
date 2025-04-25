@@ -150,22 +150,7 @@ namespace dftfe
     kCoordStdVec[1] = kcoord[1];
     kCoordStdVec[2] = kcoord[2];
     kCoordDevice.copyFrom(kCoordStdVec);
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    computeKedGradKedFromInterpolatedValues<<<
-      (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-        dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
-      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      vectorsBlockSize,
-      cellsBlockSize,
-      nQuadsPerCell,
-      kcoordSq,
-      dftfe::utils::makeDataTypeDeviceCompatible(kCoordDevice.data()),
-      dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        kineticEnergyDensityCellsWfcContributions));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
+    DFTFE_LAUNCH_KERNEL(
       computeKedGradKedFromInterpolatedValues,
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
@@ -181,7 +166,6 @@ namespace dftfe
       dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
       dftfe::utils::makeDataTypeDeviceCompatible(
         kineticEnergyDensityCellsWfcContributions));
-#endif
     BLASWrapperPtr.xgemm('T',
                          'N',
                          cellsBlockSize * nQuadsPerCell,

@@ -341,22 +341,7 @@ namespace dftfe
         MemoryStorage<ValueTypeComm, utils::MemorySpace::DEVICE> &sendBuffer,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      gatherSendBufferDeviceKernel<<<(ownedLocalIndicesForTargetProcs.size() *
-                                      blockSize) /
-                                         dftfe::utils::DEVICE_BLOCK_SIZE +
-                                       1,
-                                     dftfe::utils::DEVICE_BLOCK_SIZE,
-                                     0,
-                                     deviceCommStream>>>(
-        ownedLocalIndicesForTargetProcs.size() * blockSize,
-        blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          ownedLocalIndicesForTargetProcs.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      DFTFE_LAUNCH_KERNEL(
         gatherSendBufferDeviceKernel,
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -370,7 +355,6 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
-#  endif
     }
 
     template <typename ValueType>
@@ -388,22 +372,7 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      accumAddFromRecvBufferDeviceKernel<<<
-        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream>>>(
-        ownedLocalIndicesForTargetProcs.size() * blockSize,
-        blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          ownedLocalIndicesForTargetProcs.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      DFTFE_LAUNCH_KERNEL(
         accumAddFromRecvBufferDeviceKernel,
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -417,7 +386,6 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
-#  endif
     }
 
     template <typename ValueType>
@@ -435,22 +403,7 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      accumInsertFromRecvBufferDeviceKernel<<<
-        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream>>>(
-        ownedLocalIndicesForTargetProcs.size() * blockSize,
-        blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          ownedLocalIndicesForTargetProcs.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      DFTFE_LAUNCH_KERNEL(
         accumInsertFromRecvBufferDeviceKernel,
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -464,7 +417,6 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
-#  endif
     }
 
     template <typename ValueType>

@@ -47,6 +47,23 @@ namespace dftfe
 } // namespace dftfe
 
 #    endif
-
+#    ifdef DFTFE_WITH_DEVICE_NVIDIA
+#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
+        do                                                                  \
+          {                                                                 \
+            kernel<<<grid, block, shared, stream>>>(__VA_ARGS__);           \
+        } while (0)
+#    elif defined(DFTFE_WITH_DEVICE_AMD)
+#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
+        do                                                                  \
+          {                                                                 \
+            hipLaunchKernelGGL(                                             \
+              kernel, grid, block, shared, stream, __VA_ARGS__);            \
+        } while (0)
+#    else
+#      error \
+        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD)"
+#    endif
+#    define DFTFE_KERNEL_NAME(...) __VA_ARGS__
 #  endif // dftfeDeviceKernelLauncherConstants_h
 #endif   // DFTFE_WITH_DEVICE
