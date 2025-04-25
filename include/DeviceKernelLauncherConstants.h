@@ -57,8 +57,12 @@ namespace dftfe
 #      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
         do                                                                  \
           {                                                                 \
-            hipLaunchKernelGGL(                                             \
-              kernel, grid, block, shared, stream, __VA_ARGS__);            \
+            hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel),                     \
+                               grid,                                        \
+                               block,                                       \
+                               shared,                                      \
+                               stream,                                      \
+                               __VA_ARGS__);                                \
         } while (0)
 #    else
 #      error \
