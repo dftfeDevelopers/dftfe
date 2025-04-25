@@ -56,7 +56,7 @@ namespace dftfe
       return 1250;
     }
     void
-    pointWiseScaleWithDiagonal(const double *     diagonal,
+    pointWiseScaleWithDiagonal(const double      *diagonal,
                                const unsigned int numberFields,
                                const unsigned int numberDofs,
                                dataTypes::number *fieldsArrayFlattened)
@@ -87,8 +87,8 @@ namespace dftfe
   //
   chebyshevOrthogonalizedSubspaceIterationSolver::
     chebyshevOrthogonalizedSubspaceIterationSolver(
-      const MPI_Comm &     mpi_comm_parent,
-      const MPI_Comm &     mpi_comm_domain,
+      const MPI_Comm      &mpi_comm_parent,
+      const MPI_Comm      &mpi_comm_domain,
       double               lowerBoundWantedSpectrum,
       double               lowerBoundUnWantedSpectrum,
       double               upperBoundUnWantedSpectrum,
@@ -143,15 +143,15 @@ namespace dftfe
     operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-      &                  BLASWrapperPtr,
-    elpaScalaManager &   elpaScala,
-    dataTypes::number *  eigenVectorsFlattened,
+                        &BLASWrapperPtr,
+    elpaScalaManager    &elpaScala,
+    dataTypes::number   *eigenVectorsFlattened,
     const unsigned int   totalNumberWaveFunctions,
     const unsigned int   localVectorSize,
     std::vector<double> &eigenValues,
     std::vector<double> &residualNorms,
-    const MPI_Comm &     interBandGroupComm,
-    const MPI_Comm &     mpiCommDomain,
+    const MPI_Comm      &interBandGroupComm,
+    const MPI_Comm      &mpiCommDomain,
     const bool           isFirstFilteringCall,
     const bool           computeResidual,
     const bool           useMixedPrec,
@@ -650,9 +650,9 @@ namespace dftfe
   void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(
     operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
-    std::vector<distributedCPUVec<double>> &           eigenVectors,
-    std::vector<double> &                              eigenValues,
-    std::vector<double> &                              residualNorms)
+    std::vector<distributedCPUVec<double>>            &eigenVectors,
+    std::vector<double>                               &eigenValues,
+    std::vector<double>                               &residualNorms)
   {}
 
 } // namespace dftfe

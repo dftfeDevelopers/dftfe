@@ -25,12 +25,13 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  void forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  void
+  forceClass<FEOrder, FEOrderElectro, memorySpace>::
     stressEnlElementalContribution(
-      dealii::Tensor<2, 3, double> &       stressContribution,
+      dealii::Tensor<2, 3, double>        &stressContribution,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   numQuadPoints,
-      const std::vector<double> &          jxwQuadsSubCells,
+      const std::vector<double>           &jxwQuadsSubCells,
       const unsigned int                   cell,
       const unsigned int                   numNonLocalAtomsCurrentProcess,
       const std::shared_ptr<

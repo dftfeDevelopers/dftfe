@@ -33,13 +33,13 @@ namespace dftfe
   {
     std::vector<double>
     getFractionalCoordinates(const std::vector<double> &latticeVectors,
-                             const dealii::Point<3> &   point,
-                             const dealii::Point<3> &   corner);
+                             const dealii::Point<3>    &point,
+                             const dealii::Point<3>    &corner);
     std::vector<double>
-    wrapAtomsAcrossPeriodicBc(const dealii::Point<3> &   cellCenteredCoord,
-                              const dealii::Point<3> &   corner,
+    wrapAtomsAcrossPeriodicBc(const dealii::Point<3>    &cellCenteredCoord,
+                              const dealii::Point<3>    &corner,
                               const std::vector<double> &latticeVectors,
-                              const std::vector<bool> &  periodicBc);
+                              const std::vector<bool>   &periodicBc);
   } // namespace internal
 
   template <unsigned int              FEOrder,
@@ -461,17 +461,17 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
-      &                basisOperationsPtr,
+                      &basisOperationsPtr,
     const unsigned int quadratureId,
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                quadratureValueData,
+                      &quadratureValueData,
     const unsigned int fieldDimension,
     const std::string &fieldName,
     const std::string &folderPath,
-    const MPI_Comm &   mpi_comm_parent,
-    const MPI_Comm &   mpi_comm_domain,
-    const MPI_Comm &   interpoolcomm,
-    const MPI_Comm &   interBandGroupComm)
+    const MPI_Comm    &mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_domain,
+    const MPI_Comm    &interpoolcomm,
+    const MPI_Comm    &interBandGroupComm)
   {
     pcout << "Reading Quad data from checkpoint in progress..." << std::endl;
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
@@ -481,7 +481,7 @@ namespace dftfe
     const dealii::DoFHandler<3> &dofHandlerTemp =
       basisOperationsPtr->getDofHandler();
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &         quadPoints = basisOperationsPtr->quadPoints();
+               &quadPoints = basisOperationsPtr->quadPoints();
     std::string masterFileName =
       folderPath + "/MasterFile_" + fieldName + "_.chk";
 
@@ -611,17 +611,17 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
-      &                basisOperationsPtr,
+                      &basisOperationsPtr,
     const unsigned int quadratureId,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                quadratureValueData,
+                      &quadratureValueData,
     const unsigned int fieldDimension,
     const std::string &fieldName,
     const std::string &folderPath,
-    const MPI_Comm &   mpi_comm_parent,
-    const MPI_Comm &   mpi_comm_domain,
-    const MPI_Comm &   interpoolcomm,
-    const MPI_Comm &   interBandGroupComm)
+    const MPI_Comm    &mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_domain,
+    const MPI_Comm    &interpoolcomm,
+    const MPI_Comm    &interBandGroupComm)
   {
     pcout << "Saving Quad data in progress..." << std::endl;
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
@@ -756,7 +756,7 @@ namespace dftfe
         outFile.close();
 
       } // Pool ==0 and bandGroup == 0
-    pcout << "Saving Qud data completed..." << std::endl;
+    pcout << "Saving Quad data completed..." << std::endl;
   }
 
 #include "dft.inst.cc"

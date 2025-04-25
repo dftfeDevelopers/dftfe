@@ -33,8 +33,8 @@ namespace dftfe
     public:
       static void
       writeData(const std::vector<CompositeData *> &data,
-                const std::string &                 fileName,
-                const MPI_Comm &                    mpiComm);
+                const std::string                  &fileName,
+                const MPI_Comm                     &mpiComm);
     };
   } // namespace dftUtils
 } // namespace dftfe

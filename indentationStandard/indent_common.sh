@@ -1,18 +1,18 @@
 #!/bin/bash
-## ---------------------------------------------------------------------
+## ------------------------------------------------------------------------
 ##
-## Copyright (C) 2018 - 2020 by the deal.II authors
+## SPDX-License-Identifier: LGPL-2.1-or-later
+## Copyright (C) 2018 - 2024 by the deal.II authors
 ##
 ## This file is part of the deal.II library.
 ##
-## The deal.II library is free software; you can use it, redistribute
-## it, and/or modify it under the terms of the GNU Lesser General
-## Public License as published by the Free Software Foundation; either
-## version 2.1 of the License, or (at your option) any later version.
-## The full text of the license can be found in the file LICENSE at
-## the top level of the deal.II distribution.
+## Part of the source code is dual licensed under Apache-2.0 WITH
+## LLVM-exception OR LGPL-2.1-or-later. Detailed license information
+## governing the source code and code contributions can be found in
+## LICENSE.md and CONTRIBUTING.md at the top level directory of deal.II.
 ##
-## This file is adapted by Sambit Das for use with DFT-FE code
+## ------------------------------------------------------------------------
+## This file is adapted by Sambit Das and Nikhil Kodali for use with DFT-FE code
 ## -------------------------------------------------------------------------------------
 
 #
@@ -40,11 +40,11 @@ checks() {
 
   # Add the location 'download_clang_format' or 'compile_clang_format'
   # installs clang-format to the local PATH.
-  CLANG_FORMAT_PATH="$(cd "$(dirname "$0")" && pwd)/programs/clang-6/bin"
+  CLANG_FORMAT_PATH="$(cd "$(dirname "$0")" && pwd)/programs/clang-16/bin"
   export PATH="${CLANG_FORMAT_PATH}:${PATH}"
 
   if ! [ -x "$(command -v "${DEAL_II_CLANG_FORMAT}")" ]; then
-    echo "***   No clang-format program found."
+    echo "***   No clang-format program found, or found with the wrong version."
     echo "***"
     echo "***   You can run the './contrib/utilities/download_clang_format'"
     echo "***   script, or the './contrib/utilities/compile_clang_format' script "
@@ -58,8 +58,8 @@ checks() {
   CLANG_FORMAT_MAJOR_VERSION=$(echo "${CLANG_FORMAT_VERSION}" | sed 's/^[^0-9]*\([0-9]*\).*$/\1/g')
   CLANG_FORMAT_MINOR_VERSION=$(echo "${CLANG_FORMAT_VERSION}" | sed 's/^[^0-9]*[0-9]*\.\([0-9]*\).*$/\1/g')
 
-  if [ "${CLANG_FORMAT_MAJOR_VERSION}" -ne 6 ] || [ "${CLANG_FORMAT_MINOR_VERSION}" -ne 0 ]; then
-    echo "***   This indent script requires clang-format version 6.0,"
+  if [ "${CLANG_FORMAT_MAJOR_VERSION}" -ne 16 ] || [ "${CLANG_FORMAT_MINOR_VERSION}" -ne 0 ]; then
+    echo "***   This indent script requires clang-format version 16.0,"
     echo "***   but version ${CLANG_FORMAT_MAJOR_VERSION}.${CLANG_FORMAT_MINOR_VERSION} was found instead."
     echo "***"
     echo "***   You can run the './contrib/utilities/download_clang_format'"
@@ -146,7 +146,7 @@ fix_or_report()
 export -f fix_or_report
 
 #
-# In order to format .cc and .h files we have to make sure that we override
+# In order to format .cc and .h files we have to make sure that we overwrite
 # the source/header file only if the actual contents changed.
 # Unfortunately, clang-format isn't exactly helpful there. Thus, use a
 # temporary file and diff as a workaround.
@@ -229,7 +229,7 @@ dos_to_unix()
   tr -d '\015' <"${file}" >"${tmpfile}"
 
   fix_or_report "${file}" "${tmpfile}" "file has non-unix line-ending '\\r\\n'"
-  rm -f "${tmpfile}" "${tmpfile}"
+  rm -f "${tmpfile}"
 }
 export -f dos_to_unix
 
@@ -284,11 +284,11 @@ process()
   case "${OSTYPE}" in
     darwin*)
       find -E ${directories} -regex "${2}" -print0 |
-        xargs -0 -n 1 -P 10 -I {} bash -c "${3} {}"
+        xargs -0 -P 10 -I {} bash -c "${3} {}"
       ;;
     *)
       find ${directories} -regextype egrep -regex "${2}" -print0 |
-        xargs -0 -n 1 -P 10 -I {} bash -c "${3} {}"
+        xargs -0 -P 10 -I {} bash -c "${3} {}"
       ;;
   esac
 }
@@ -320,7 +320,7 @@ process_changed()
       sort -u |
       xargs -n 1 ls -d 2>/dev/null |
       grep -E "^${2}$" |
-      ${XARGS} '\n' -n 1 -P 10 -I {} bash -c "${3} {}"
+      ${XARGS} '\n' -P 10 -I {} bash -c "${3} {}"
 }
 
 #
@@ -328,24 +328,10 @@ process_changed()
 #
 ensure_single_trailing_newline()
 {
-  f=$1
+  file="${1}"
 
-  # Remove newlines at end of file
-  # Check that the current line only contains newlines
-  # If it doesn't match, print it
-  # If it does match and we're not at the end of the file,
-  # append the next line to the current line and repeat the check
-  # If it does match and we're at the end of the file,
-  # remove the line.
-  sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba' $f >$f.tmpi
-
-  # Then add a newline to the end of the file
-  # '$' denotes the end of file
-  # 'a\' appends the following text (which in this case is nothing)
-  # on a new line
-  sed -e '$a\' $f.tmpi >$f.tmp
-
-  diff -q $f $f.tmp >/dev/null || mv $f.tmp $f
-  rm -f $f.tmp $f.tmpi
+  if test $(tail -c1 "$file") ; then
+    echo '' >> "$file"
+  fi
 }
 export -f ensure_single_trailing_newline

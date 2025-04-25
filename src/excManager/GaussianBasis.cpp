@@ -119,7 +119,7 @@ namespace dftfe
     }
 
     double
-    getContractedGaussianValue(const ContractedGaussian * cg,
+    getContractedGaussianValue(const ContractedGaussian  *cg,
                                const std::vector<double> &x,
                                const double               rTol,
                                const double               angleTol)
@@ -144,7 +144,7 @@ namespace dftfe
     }
 
     std::vector<double>
-    getContractedGaussianGradient(const ContractedGaussian * cg,
+    getContractedGaussianGradient(const ContractedGaussian  *cg,
                                   const std::vector<double> &x,
                                   double                     rTol,
                                   double                     angleTol)
@@ -291,7 +291,7 @@ namespace dftfe
 
 
     double
-    getContractedGaussianLaplacian(const ContractedGaussian * cg,
+    getContractedGaussianLaplacian(const ContractedGaussian  *cg,
                                    const std::vector<double> &x,
                                    double                     rTol,
                                    double                     angleTol)
@@ -574,7 +574,7 @@ namespace dftfe
     d_gaussianBasisInfo.resize(0);
     for (unsigned int i = 0; i < natoms; ++i)
       {
-        const std::string &        atomSymbol = d_atomSymbolsAndCoords[i].first;
+        const std::string         &atomSymbol = d_atomSymbolsAndCoords[i].first;
         const std::vector<double> &atomCenter =
           d_atomSymbolsAndCoords[i].second;
         unsigned int n = d_atomToContractedGaussiansPtr[atomSymbol].size();
@@ -600,8 +600,8 @@ namespace dftfe
   GaussianBasis::getBasisValue(const unsigned int         basisId,
                                const std::vector<double> &x) const
   {
-    const GaussianBasisInfo & info    = d_gaussianBasisInfo[basisId];
-    const double *            x0      = info.center;
+    const GaussianBasisInfo  &info    = d_gaussianBasisInfo[basisId];
+    const double             *x0      = info.center;
     const ContractedGaussian *cg      = info.cg;
     unsigned int              nPoints = round(x.size() / 3);
     std::vector<double>       returnValue(nPoints, 0.0);
@@ -624,8 +624,8 @@ namespace dftfe
   GaussianBasis::getBasisGradient(const unsigned int         basisId,
                                   const std::vector<double> &x) const
   {
-    const GaussianBasisInfo & info    = d_gaussianBasisInfo[basisId];
-    const double *            x0      = info.center;
+    const GaussianBasisInfo  &info    = d_gaussianBasisInfo[basisId];
+    const double             *x0      = info.center;
     const ContractedGaussian *cg      = info.cg;
     unsigned int              nPoints = round(x.size() / 3);
     std::vector<double>       returnValue(3 * nPoints, 0.0);
@@ -648,8 +648,8 @@ namespace dftfe
   GaussianBasis::getBasisLaplacian(const unsigned int         basisId,
                                    const std::vector<double> &x) const
   {
-    const GaussianBasisInfo & info    = d_gaussianBasisInfo[basisId];
-    const double *            x0      = info.center;
+    const GaussianBasisInfo  &info    = d_gaussianBasisInfo[basisId];
+    const double             *x0      = info.center;
     const ContractedGaussian *cg      = info.cg;
     unsigned int              nPoints = round(x.size() / 3);
     std::vector<double>       returnValue(nPoints, 0.0);

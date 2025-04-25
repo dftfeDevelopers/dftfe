@@ -28,7 +28,7 @@ namespace dftfe
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     accumulateForceContributionGammaAtomsFloating(
       const std::map<unsigned int, std::vector<double>>
-        &                  forceContributionLocalGammaAtoms,
+                          &forceContributionLocalGammaAtoms,
       std::vector<double> &accumForcesVector)
   {
     for (unsigned int iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)

@@ -34,8 +34,8 @@ namespace dftfe
      *  @param mpi_comm_parent parent mpi communicator
      *  @param mpi_comm_domain mpi communicator domain decomposition
      */
-    meshMovementAffineTransform(const MPI_Comm &     mpi_comm_parent,
-                                const MPI_Comm &     mpi_comm_domain,
+    meshMovementAffineTransform(const MPI_Comm      &mpi_comm_parent,
+                                const MPI_Comm      &mpi_comm_domain,
                                 const dftParameters &dftParams);
 
     /** @brief Performs affine transformation of the triangulation
@@ -52,7 +52,7 @@ namespace dftfe
     std::pair<bool, double>
     moveMesh(const std::vector<dealii::Point<3>> &controlPointLocations,
              const std::vector<dealii::Tensor<1, 3, double>>
-               &          controlPointDisplacements,
+                         &controlPointDisplacements,
              const double controllingParameter,
              const bool   moveSubdivided = false);
 

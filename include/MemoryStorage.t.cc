@@ -155,8 +155,8 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MemoryStorage<ValueType, memorySpace> &
-    MemoryStorage<ValueType, memorySpace>::
-    operator=(const MemoryStorage<ValueType, memorySpace> &rhs)
+    MemoryStorage<ValueType, memorySpace>::operator=(
+      const MemoryStorage<ValueType, memorySpace> &rhs)
     {
       if (&rhs != this)
         {
@@ -173,8 +173,8 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     MemoryStorage<ValueType, memorySpace> &
-    MemoryStorage<ValueType, memorySpace>::
-    operator=(MemoryStorage<ValueType, memorySpace> &&rhs) noexcept
+    MemoryStorage<ValueType, memorySpace>::operator=(
+      MemoryStorage<ValueType, memorySpace> &&rhs) noexcept
     {
       if (&rhs != this)
         {
@@ -189,7 +189,7 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     typename MemoryStorage<ValueType, memorySpace>::reference
-      MemoryStorage<ValueType, memorySpace>::operator[](const std::size_t i)
+    MemoryStorage<ValueType, memorySpace>::operator[](const std::size_t i)
     {
       // throwException<InvalidArgument>(
       //   memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -200,8 +200,7 @@ namespace dftfe
 
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     typename MemoryStorage<ValueType, memorySpace>::const_reference
-      MemoryStorage<ValueType, memorySpace>::
-      operator[](const std::size_t i) const
+    MemoryStorage<ValueType, memorySpace>::operator[](const std::size_t i) const
     {
       // throwException<InvalidArgument>(
       //   memorySpace != dftfe::utils::MemorySpace::DEVICE,
@@ -215,7 +214,7 @@ namespace dftfe
     MemoryStorage<ValueType, memorySpace>::swap(
       MemoryStorage<ValueType, memorySpace> &rhs)
     {
-      ValueType *       tempData = d_data;
+      ValueType        *tempData = d_data;
       const std::size_t tempSize = d_size;
       d_data                     = rhs.d_data;
       d_size                     = rhs.d_size;
@@ -325,7 +324,7 @@ namespace dftfe
     template <dftfe::utils::MemorySpace memorySpaceDst>
     void
     MemoryStorage<ValueType, memorySpace>::copyTo(
-      ValueType *       dst,
+      ValueType        *dst,
       const std::size_t N,
       const std::size_t srcOffset,
       const std::size_t dstOffset) const
@@ -352,7 +351,7 @@ namespace dftfe
     template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
     template <dftfe::utils::MemorySpace memorySpaceSrc>
     void
-    MemoryStorage<ValueType, memorySpace>::copyFrom(const ValueType * src,
+    MemoryStorage<ValueType, memorySpace>::copyFrom(const ValueType  *src,
                                                     const std::size_t N,
                                                     const std::size_t srcOffset,
                                                     const std::size_t dstOffset)

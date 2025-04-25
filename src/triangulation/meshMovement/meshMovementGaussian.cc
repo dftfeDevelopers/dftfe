@@ -23,18 +23,18 @@
 namespace dftfe
 {
   meshMovementGaussianClass::meshMovementGaussianClass(
-    const MPI_Comm &     mpi_comm_parent,
-    const MPI_Comm &     mpi_comm_domain,
+    const MPI_Comm      &mpi_comm_parent,
+    const MPI_Comm      &mpi_comm_domain,
     const dftParameters &dftParams)
     : meshMovementClass(mpi_comm_parent, mpi_comm_domain, dftParams)
   {}
 
   std::pair<bool, double>
   meshMovementGaussianClass::moveMesh(
-    const std::vector<dealii::Point<3>> &            controlPointLocations,
+    const std::vector<dealii::Point<3>>             &controlPointLocations,
     const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
-    const std::vector<double> &                      gaussianWidthParameter,
-    const std::vector<double> &                      flatTopWidthParameter,
+    const std::vector<double>                       &gaussianWidthParameter,
+    const std::vector<double>                       &flatTopWidthParameter,
     const bool                                       moveSubdivided)
   {
     // writeMesh("meshUnmoved.vtu");
@@ -69,7 +69,7 @@ namespace dftfe
     const std::vector<dealii::Tensor<1, 3, double>>
       &controlPointDisplacementsInitialMove,
     const std::vector<dealii::Tensor<1, 3, double>>
-      &                        controlPointDisplacementsCurrentMove,
+                              &controlPointDisplacementsCurrentMove,
     const std::vector<double> &controllingParameterInitialMove,
     const std::vector<double> &controllingParameterCurrentMove,
     const std::vector<double> &flatTopWidthParameter,
@@ -117,7 +117,7 @@ namespace dftfe
     const std::vector<dealii::Tensor<1, 3, double>>
       &controlPointDisplacementsInitialMove,
     const std::vector<dealii::Tensor<1, 3, double>>
-      &                        controlPointDisplacementsCurrentMove,
+                              &controlPointDisplacementsCurrentMove,
     const std::vector<double> &controllingParameterInitialMove,
     const std::vector<double> &controllingParameterCurrentMove,
     const std::vector<double> &flatTopWidthParameter)
@@ -287,10 +287,10 @@ namespace dftfe
   // words for those nodes we don't consider overlapping Gaussians
   void
   meshMovementGaussianClass::computeIncrement(
-    const std::vector<dealii::Point<3>> &            controlPointLocations,
+    const std::vector<dealii::Point<3>>             &controlPointLocations,
     const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
-    const std::vector<double> &                      gaussianWidthParameter,
-    const std::vector<double> &                      flatTopWidthParameter)
+    const std::vector<double>                       &gaussianWidthParameter,
+    const std::vector<double>                       &flatTopWidthParameter)
   {
     unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     std::vector<bool> vertex_touched(

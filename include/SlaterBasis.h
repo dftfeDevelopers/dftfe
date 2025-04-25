@@ -38,8 +38,8 @@ namespace dftfe
 
   struct SlaterBasisInfo
   {
-    const std::string *    symbol; // atom symbol
-    const double *         center; // atom center coordinates
+    const std::string     *symbol; // atom symbol
+    const double          *center; // atom center coordinates
     const SlaterPrimitive *sp;     // pointer to the SlaterPrimitive
   };
 
@@ -54,7 +54,7 @@ namespace dftfe
     virtual void
     constructBasisSet(
       const std::vector<std::pair<std::string, std::vector<double>>>
-        &                                                 atomCoords,
+                                                         &atomCoords,
       const std::unordered_map<std::string, std::string> &atomBasisFileNames)
       override;
 

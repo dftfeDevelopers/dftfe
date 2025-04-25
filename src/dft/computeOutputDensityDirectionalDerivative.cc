@@ -31,9 +31,9 @@ namespace dftfe
       const distributedCPUVec<double> &v,
       const distributedCPUVec<double> &vSpin0,
       const distributedCPUVec<double> &vSpin1,
-      distributedCPUVec<double> &      fv,
-      distributedCPUVec<double> &      fvSpin0,
-      distributedCPUVec<double> &      fvSpin1)
+      distributedCPUVec<double>       &fv,
+      distributedCPUVec<double>       &fvSpin0,
+      distributedCPUVec<double>       &fvSpin1)
   {
     computing_timer.enter_subsection("Output density direction derivative");
 

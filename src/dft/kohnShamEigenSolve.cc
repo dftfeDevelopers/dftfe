@@ -26,7 +26,7 @@ namespace dftfe
   namespace internal
   {
     void
-    pointWiseScaleWithDiagonal(const double *     diagonal,
+    pointWiseScaleWithDiagonal(const double      *diagonal,
                                const unsigned int numberFields,
                                const unsigned int numberDofs,
                                dataTypes::number *fieldsArrayFlattened)
@@ -329,10 +329,10 @@ namespace dftfe
     const unsigned int spinType,
     const unsigned int kPointIndex,
     KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
-      &                                             kohnShamDFTEigenOperator,
-    elpaScalaManager &                              elpaScala,
+                                                   &kohnShamDFTEigenOperator,
+    elpaScalaManager                               &elpaScala,
     chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
-    std::vector<double> &                           residualNormWaveFunctions,
+    std::vector<double>                            &residualNormWaveFunctions,
     const bool                                      computeResidual,
     const bool                                      useMixedPrec,
     const bool                                      isFirstScf)
@@ -421,15 +421,17 @@ namespace dftfe
           d_upperBoundUnwantedSpectrumValues
             [(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType]);
       }
-
+    const unsigned int wfcStartIndex =
+      d_dftParamsPtr->solverMode == "BANDS" ?
+        0 :
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size();
     subspaceIterationSolver.solve(
       kohnShamDFTEigenOperator,
       d_BLASWrapperPtrHost,
       elpaScala,
-      d_eigenVectorsFlattenedHost.data() +
-        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValues *
-          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+      d_eigenVectorsFlattenedHost.data() + wfcStartIndex,
       d_numEigenValues,
       matrix_free_data.get_vector_partitioner()->locally_owned_size(),
       eigenValuesTemp,
@@ -485,10 +487,10 @@ namespace dftfe
     const unsigned int spinType,
     const unsigned int kPointIndex,
     KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
-      &               kohnShamDFTEigenOperator,
+                     &kohnShamDFTEigenOperator,
     elpaScalaManager &elpaScala,
     chebyshevOrthogonalizedSubspaceIterationSolverDevice
-      &                  subspaceIterationSolverDevice,
+                        &subspaceIterationSolverDevice,
     std::vector<double> &residualNormWaveFunctions,
     const bool           computeResidual,
     const unsigned int   numberRayleighRitzAvoidancePasses,
@@ -518,6 +520,12 @@ namespace dftfe
                                          spinType]);
 
 
+    const unsigned int wfcStartIndex =
+      d_dftParamsPtr->solverMode == "BANDS" ?
+        0 :
+        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
+          d_numEigenValues *
+          matrix_free_data.get_vector_partitioner()->locally_owned_size();
 
     d_upperBoundUnwantedSpectrumValues[(1 + d_dftParamsPtr->spinPolarized) *
                                          kPointIndex +
@@ -526,10 +534,7 @@ namespace dftfe
         kohnShamDFTEigenOperator,
         d_BLASWrapperPtr,
         elpaScala,
-        d_eigenVectorsFlattenedDevice.begin() +
-          ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-            d_numEigenValues *
-            matrix_free_data.get_vector_partitioner()->locally_owned_size(),
+        d_eigenVectorsFlattenedDevice.begin() + wfcStartIndex,
         d_numEigenValues *
           matrix_free_data.get_vector_partitioner()->locally_owned_size(),
         d_numEigenValues,
@@ -584,7 +589,7 @@ namespace dftfe
       const unsigned int spinType,
       const unsigned int kPointIndex,
       KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
-        &               kohnShamDFTEigenOperator,
+                       &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala)
   {
     if (d_dftParamsPtr->verbosity >= 2)
@@ -664,7 +669,7 @@ namespace dftfe
       const unsigned int spinType,
       const unsigned int kPointIndex,
       KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
-        &               kohnShamDFTEigenOperator,
+                       &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
       chebyshevOrthogonalizedSubspaceIterationSolverDevice
         &subspaceIterationSolverDevice)
@@ -709,179 +714,6 @@ namespace dftfe
   }
 #endif
 
-  // chebyshev solver
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::kohnShamEigenSpaceComputeNSCF(
-    const unsigned int spinType,
-    const unsigned int kPointIndex,
-    KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
-      &                                             kohnShamDFTEigenOperator,
-    chebyshevOrthogonalizedSubspaceIterationSolver &subspaceIterationSolver,
-    std::vector<double> &                           residualNormWaveFunctions,
-    unsigned int                                    ipass)
-  {
-    computing_timer.enter_subsection("Chebyshev solve");
-
-    if (d_dftParamsPtr->verbosity == 2)
-      {
-        pcout << "kPoint: " << kPointIndex << std::endl;
-        pcout << "spin: " << spinType + 1 << std::endl;
-      }
-
-    //
-    // scale the eigenVectors (initial guess of single atom wavefunctions or
-    // previous guess) to convert into Lowden Orthonormalized FE basis multiply
-    // by M^{1/2}
-    // if (ipass == 1)
-    //   internal::pointWiseScaleWithDiagonal(
-    //     kohnShamDFTEigenOperator.getInverseSqrtMassVector().data(),
-    //     d_numEigenValues,
-    //     matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-    //     d_eigenVectorsFlattenedHost.data() +
-    //       ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-    //         d_numEigenValues *
-    //         matrix_free_data.get_vector_partitioner()->locally_owned_size());
-
-
-    std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
-    if (d_dftParamsPtr->useSinglePrecCheby ||
-        d_dftParamsPtr->useReformulatedChFSI)
-      for (unsigned int i = 0; i < d_numEigenValues; i++)
-        {
-          eigenValuesTemp[i] =
-            eigenValues[kPointIndex][spinType * d_numEigenValues + i];
-        }
-
-
-    if (d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) *
-                                 kPointIndex +
-                               spinType])
-      {
-        computing_timer.enter_subsection("Lanczos k-step Upper Bound");
-
-        std::pair<double, double> bounds = linearAlgebraOperations::
-          generalisedLanczosLowerUpperBoundEigenSpectrum(
-            d_BLASWrapperPtrHost,
-            kohnShamDFTEigenOperator,
-            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 0),
-            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 1),
-            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 2),
-            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 3),
-            *d_dftParamsPtr);
-        const double upperBoundUnwantedSpectrum = bounds.second;
-        const double lowerBoundWantedSpectrum   = bounds.first;
-        a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
-          lowerBoundWantedSpectrum;
-        computing_timer.leave_subsection("Lanczos k-step Upper Bound");
-
-        subspaceIterationSolver.reinitSpectrumBounds(
-          lowerBoundWantedSpectrum,
-          lowerBoundWantedSpectrum +
-            (upperBoundUnwantedSpectrum - lowerBoundWantedSpectrum) /
-              kohnShamDFTEigenOperator.getScratchFEMultivector(1, 0)
-                .globalSize() *
-              d_numEigenValues *
-              (d_dftParamsPtr->reproducible_output ? 10.0 : 200.0),
-          upperBoundUnwantedSpectrum);
-      }
-    else
-      {
-        computing_timer.enter_subsection("Lanczos k-step Upper Bound");
-
-        std::pair<double, double> bounds = linearAlgebraOperations::
-          generalisedLanczosLowerUpperBoundEigenSpectrum(
-            d_BLASWrapperPtrHost,
-            kohnShamDFTEigenOperator,
-            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 0),
-            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 1),
-            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 2),
-            kohnShamDFTEigenOperator.getScratchFEMultivector(1, 3),
-            *d_dftParamsPtr);
-        const double upperBoundUnwantedSpectrum = bounds.second;
-        computing_timer.leave_subsection("Lanczos k-step Upper Bound");
-
-        subspaceIterationSolver.reinitSpectrumBounds(
-          a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType],
-          bLow[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType],
-          upperBoundUnwantedSpectrum);
-      }
-
-
-    subspaceIterationSolver.solve(
-      kohnShamDFTEigenOperator,
-      d_BLASWrapperPtrHost,
-      *d_elpaScala,
-      d_eigenVectorsFlattenedHost.data() +
-        ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
-          d_numEigenValues *
-          matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-      d_numEigenValues,
-      matrix_free_data.get_vector_partitioner()->locally_owned_size(),
-      eigenValuesTemp,
-      residualNormWaveFunctions,
-      interBandGroupComm,
-      mpi_communicator,
-      d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
-                             spinType],
-      true,
-      false);
-
-    if (d_dftParamsPtr->verbosity >= 5)
-      {
-#ifdef USE_PETSC
-        PetscLogDouble bytes;
-        PetscMemoryGetCurrentUsage(&bytes);
-        FILE *       dummy;
-        unsigned int this_mpi_process =
-          dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
-        PetscSynchronizedPrintf(
-          mpi_communicator,
-          "[%d] Memory after recreating STL vector and exiting from subspaceIteration solver  %e\n",
-          this_mpi_process,
-          bytes);
-        PetscSynchronizedFlush(mpi_communicator, dummy);
-#endif
-      }
-
-
-
-    //
-    // copy the eigenValues and corresponding residual norms back to data
-    // members
-    //
-    for (unsigned int i = 0; i < d_numEigenValues; i++)
-      {
-        // if(d_dftParamsPtr->verbosity==2)
-        //    pcout<<"eigen value "<< std::setw(3) <<i <<":
-        //    "<<eigenValuesTemp[i]
-        //    <<std::endl;
-
-        eigenValues[kPointIndex][spinType * d_numEigenValues + i] =
-          eigenValuesTemp[i];
-      }
-
-    // if (d_dftParamsPtr->verbosity==2)
-    //   pcout <<std::endl;
-
-
-    // set a0 and bLow
-    a0[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
-      eigenValuesTemp[0];
-    bLow[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType] =
-      eigenValuesTemp.back();
-    d_isFirstFilteringCall[(1 + d_dftParamsPtr->spinPolarized) * kPointIndex +
-                           spinType] = false;
-    //
-
-
-    computing_timer.leave_subsection("Chebyshev solve");
-  }
-
-
-
   // compute the maximum of the residual norm of the highest state of interest
   // across all K points
   template <unsigned int              FEOrder,
@@ -893,22 +725,24 @@ namespace dftfe
       const std::vector<std::vector<double>>
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-      const unsigned int                      highestState)
+      const unsigned int                      highestState,
+      std::vector<double>                    &maxResidualsAllkPoints)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
+    maxResidualsAllkPoints.clear();
+    maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size());
     for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
-        if (residualNormWaveFunctionsAllkPoints[kPoint][highestState] >
-            maxHighestOccupiedStateResNorm)
-          {
-            maxHighestOccupiedStateResNorm =
-              residualNormWaveFunctionsAllkPoints[kPoint][highestState];
-          }
+        maxResidualsAllkPoints[kPoint] = *std::max_element(
+          residualNormWaveFunctionsAllkPoints[kPoint].begin(),
+          residualNormWaveFunctionsAllkPoints[kPoint].begin() + highestState);
       }
+    maxHighestOccupiedStateResNorm =
+      *std::max_element(maxResidualsAllkPoints.begin(),
+                        maxResidualsAllkPoints.end());
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);
-    d_highestStateForResidualComputation = highestState;
     return maxHighestOccupiedStateResNorm;
   }
   // compute the maximum of the residual norm of the highest occupied state
@@ -922,9 +756,12 @@ namespace dftfe
       const std::vector<std::vector<double>>
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-      const double                            fermiEnergy)
+      const double                            fermiEnergy,
+      std::vector<double>                    &maxResidualsAllkPoints)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
+    maxResidualsAllkPoints.clear();
+    maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size(), -1e+6);
     for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
         unsigned int highestOccupiedState = 0;
@@ -935,18 +772,19 @@ namespace dftfe
               highestOccupiedState = i;
           }
 
-        d_highestStateForResidualComputation = highestOccupiedState;
-
-        for (unsigned int i = 0; i <= d_highestStateForResidualComputation; i++)
+        for (unsigned int i = 0; i <= highestOccupiedState; i++)
           {
             if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
-                maxHighestOccupiedStateResNorm)
+                maxResidualsAllkPoints[kPoint])
               {
-                maxHighestOccupiedStateResNorm =
+                maxResidualsAllkPoints[kPoint] =
                   residualNormWaveFunctionsAllkPoints[kPoint][i];
               }
           }
       }
+    maxHighestOccupiedStateResNorm =
+      *std::max_element(maxResidualsAllkPoints.begin(),
+                        maxResidualsAllkPoints.end());
     maxHighestOccupiedStateResNorm =
       dealii::Utilities::MPI::max(maxHighestOccupiedStateResNorm,
                                   interpoolcomm);

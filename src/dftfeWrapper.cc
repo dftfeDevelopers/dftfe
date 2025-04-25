@@ -69,13 +69,13 @@ namespace dftfe
 
     template <int n1, int n2, dftfe::utils::MemorySpace memory>
     void
-    create_dftfe(const MPI_Comm &      mpi_comm_parent,
-                 const MPI_Comm &      mpi_comm_domain,
-                 const MPI_Comm &      interpoolcomm,
-                 const MPI_Comm &      interBandGroupComm,
-                 const std::string &   scratchFolderName,
+    create_dftfe(const MPI_Comm       &mpi_comm_parent,
+                 const MPI_Comm       &mpi_comm_domain,
+                 const MPI_Comm       &interpoolcomm,
+                 const MPI_Comm       &interBandGroupComm,
+                 const std::string    &scratchFolderName,
                  dftfe::dftParameters &dftParams,
-                 dftBase **            dftfeBaseDoublePtr)
+                 dftBase             **dftfeBaseDoublePtr)
     {
       *dftfeBaseDoublePtr =
         new dftfe::dftClass<n1, n2, memory>(mpi_comm_parent,
@@ -93,13 +93,13 @@ namespace dftfe
     //
     //  Also note element 0 is order 1.
     //
-    typedef void (*create_fnHost)(const MPI_Comm &      mpi_comm_parent,
-                                  const MPI_Comm &      mpi_comm_domain,
-                                  const MPI_Comm &      interpoolcomm,
-                                  const MPI_Comm &      interBandGroupComm,
-                                  const std::string &   scratchFolderName,
+    typedef void (*create_fnHost)(const MPI_Comm       &mpi_comm_parent,
+                                  const MPI_Comm       &mpi_comm_domain,
+                                  const MPI_Comm       &interpoolcomm,
+                                  const MPI_Comm       &interBandGroupComm,
+                                  const std::string    &scratchFolderName,
                                   dftfe::dftParameters &dftParams,
-                                  dftBase **            dftBaseDoublePtr);
+                                  dftBase             **dftBaseDoublePtr);
 
     static create_fnHost order_listHost[] = {
 #ifdef DFTFE_MINIMAL_COMPILE
@@ -160,13 +160,13 @@ namespace dftfe
 #endif
     };
 #ifdef DFTFE_WITH_DEVICE
-    typedef void (*create_fnDevice)(const MPI_Comm &      mpi_comm_parent,
-                                    const MPI_Comm &      mpi_comm_domain,
-                                    const MPI_Comm &      interpoolcomm,
-                                    const MPI_Comm &      interBandGroupComm,
-                                    const std::string &   scratchFolderName,
+    typedef void (*create_fnDevice)(const MPI_Comm       &mpi_comm_parent,
+                                    const MPI_Comm       &mpi_comm_domain,
+                                    const MPI_Comm       &interpoolcomm,
+                                    const MPI_Comm       &interBandGroupComm,
+                                    const std::string    &scratchFolderName,
                                     dftfe::dftParameters &dftParams,
-                                    dftBase **            dftBaseDoublePtr);
+                                    dftBase             **dftBaseDoublePtr);
 
     static create_fnDevice order_listDevice[] = {
 #  ifdef DFTFE_MINIMAL_COMPILE
@@ -278,7 +278,7 @@ namespace dftfe
   // constructor
   //
   dftfeWrapper::dftfeWrapper(const std::string parameter_file,
-                             const MPI_Comm &  mpi_comm_parent,
+                             const MPI_Comm   &mpi_comm_parent,
                              const bool        printParams,
                              const bool setDeviceToMPITaskBindingInternally,
                              const std::string mode,
@@ -307,7 +307,7 @@ namespace dftfe
   dftfeWrapper::dftfeWrapper(const std::string parameter_file,
                              const std::string restartCoordsFile,
                              const std::string restartDomainVectorsFile,
-                             const MPI_Comm &  mpi_comm_parent,
+                             const MPI_Comm   &mpi_comm_parent,
                              const bool        printParams,
                              const bool setDeviceToMPITaskBindingInternally,
                              const std::string mode,
@@ -339,7 +339,7 @@ namespace dftfe
   // constructor
   //
   dftfeWrapper::dftfeWrapper(
-    const MPI_Comm &                       mpi_comm_parent,
+    const MPI_Comm                        &mpi_comm_parent,
     const bool                             useDevice,
     const std::vector<std::vector<double>> atomicPositionsCart,
     const std::vector<unsigned int>        atomicNumbers,
@@ -386,7 +386,7 @@ namespace dftfe
 
   void
   dftfeWrapper::reinit(const std::string parameter_file,
-                       const MPI_Comm &  mpi_comm_parent,
+                       const MPI_Comm   &mpi_comm_parent,
                        const bool        printParams,
                        const bool        setDeviceToMPITaskBindingInternally,
                        const std::string mode,
@@ -418,7 +418,7 @@ namespace dftfe
   dftfeWrapper::reinit(const std::string parameter_file,
                        const std::string restartCoordsFile,
                        const std::string restartDomainVectorsFile,
-                       const MPI_Comm &  mpi_comm_parent,
+                       const MPI_Comm   &mpi_comm_parent,
                        const bool        printParams,
                        const bool        setDeviceToMPITaskBindingInternally,
                        const std::string mode,
@@ -454,7 +454,7 @@ namespace dftfe
 
   void
   dftfeWrapper::reinit(
-    const MPI_Comm &                       mpi_comm_parent,
+    const MPI_Comm                        &mpi_comm_parent,
     const bool                             useDevice,
     const std::vector<std::vector<double>> atomicPositionsCart,
     const std::vector<unsigned int>        atomicNumbers,

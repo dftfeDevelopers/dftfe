@@ -22,8 +22,8 @@
 namespace dftfe
 {
   // constructor
-  dealiiLinearSolver::dealiiLinearSolver(const MPI_Comm & mpi_comm_parent,
-                                         const MPI_Comm & mpi_comm_domain,
+  dealiiLinearSolver::dealiiLinearSolver(const MPI_Comm  &mpi_comm_parent,
+                                         const MPI_Comm  &mpi_comm_domain,
                                          const solverType type)
     : d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)

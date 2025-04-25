@@ -20,7 +20,7 @@ namespace dftfe
     void
     setDensityMatrixComponents(
       const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-        &                                     eigenVectorsFlattenedMemSpace,
+                                             &eigenVectorsFlattenedMemSpace,
       const std::vector<std::vector<double>> &fractionalOccupancies);
 
 
@@ -44,7 +44,7 @@ namespace dftfe
       const std::unordered_map<std::string, std::vector<dataTypes::number>>
         &projectionInputsDataType,
       const std::unordered_map<std::string, std::vector<double>>
-        &       projectionInputsReal,
+               &projectionInputsReal,
       const int iSpin) override;
 
     void

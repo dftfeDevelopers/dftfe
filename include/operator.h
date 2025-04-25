@@ -82,12 +82,12 @@ namespace dftfe
 
     virtual void
     HX(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-         &          src,
+                   &src,
        const double scalarHX,
        const double scalarY,
        const double scalarX,
        dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-         &        dst,
+                 &dst,
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false) = 0;
 
     virtual void
@@ -120,7 +120,7 @@ namespace dftfe
     virtual void
     overlapInverseMatrixTimesX(
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-        &          src,
+                  &src,
       const double scalarOinvX,
       const double scalarY,
       const double scalarX,

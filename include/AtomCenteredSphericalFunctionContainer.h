@@ -57,9 +57,9 @@ namespace dftfe
      * input
      */
     void
-    initaliseCoordinates(const std::vector<double> &             atomCoords,
+    initaliseCoordinates(const std::vector<double>              &atomCoords,
                          const std::vector<std::vector<double>> &periodicCoords,
-                         const std::vector<int> &                imageIds);
+                         const std::vector<int>                 &imageIds);
     /**
      * @brief Returns the number of atoms present in domain
      * @return  Returns size of atomicNumbers vector
@@ -121,8 +121,8 @@ namespace dftfe
      */
     void
     getTotalAtomsAndNonLocalElementsInCurrentProcessor(
-      unsigned int &             totalAtomsInCurrentProcessor,
-      unsigned int &             totalNonLocalElements,
+      unsigned int              &totalAtomsInCurrentProcessor,
+      unsigned int              &totalNonLocalElements,
       std::vector<unsigned int> &numberCellsForEachAtom,
       std::vector<unsigned int> &numberCellsAccumNonLocalAtoms,
       std::vector<unsigned int> &iElemNonLocalToElemIndexMap);
@@ -165,7 +165,7 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<NumberType,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-        &                basisOperationsPtr,
+                        &basisOperationsPtr,
       const unsigned int quadratureIndex,
       const double       cutOffVal  = 1.0E-8,
       const unsigned int cutOffType = 0);
@@ -173,7 +173,7 @@ namespace dftfe
 
     std::vector<std::vector<unsigned int>> d_elementIndexesInAtomCompactSupport;
     void
-    setImageCoordinates(const std::vector<int> &                imageIds,
+    setImageCoordinates(const std::vector<int>                 &imageIds,
                         const std::vector<std::vector<double>> &periodicCoords);
 
 
@@ -193,7 +193,7 @@ namespace dftfe
       const std::vector<std::vector<dealii::CellId>>
         &elementIdsInAtomCompactSupport,
       const std::vector<std::vector<unsigned int>>
-        &                              elementIndexesInAtomCompactSupport,
+                                      &elementIndexesInAtomCompactSupport,
       const std::vector<unsigned int> &atomIdsInCurrentProcess,
       unsigned int                     numberElements);
 
@@ -236,9 +236,9 @@ namespace dftfe
     // std::vector<std::vector<unsigned int>>
     // d_elementIndexesInAtomCompactSupport;
     std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
-                                  d_elementOneFieldIteratorsInAtomCompactSupport;
-    std::vector<unsigned int>     d_AtomIdsInCurrentProcess;
-    std::vector<unsigned int>     d_offsetLocation;
+                              d_elementOneFieldIteratorsInAtomCompactSupport;
+    std::vector<unsigned int> d_AtomIdsInCurrentProcess;
+    std::vector<unsigned int> d_offsetLocation;
     std::vector<std::vector<int>> d_AtomIdsInElement;
     std::map<unsigned int, std::vector<unsigned int>>
       d_totalSphericalFunctionIndexStart;

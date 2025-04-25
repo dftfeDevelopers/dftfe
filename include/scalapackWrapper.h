@@ -231,7 +231,7 @@ namespace dftfe
     mult(const NumberType                   b,
          const ScaLAPACKMatrix<NumberType> &B,
          const NumberType                   c,
-         ScaLAPACKMatrix<NumberType> &      C,
+         ScaLAPACKMatrix<NumberType>       &C,
          const bool                         transpose_A = false,
          const bool                         transpose_B = false) const;
 
@@ -260,7 +260,7 @@ namespace dftfe
     zmult(const NumberType                   b,
           const ScaLAPACKMatrix<NumberType> &B,
           const NumberType                   c,
-          ScaLAPACKMatrix<NumberType> &      C,
+          ScaLAPACKMatrix<NumberType>       &C,
           const bool                         conjugate_transpose_A = false,
           const bool conjugate_transpose_B = false) const;
 
@@ -283,7 +283,7 @@ namespace dftfe
      * $NB_A=MB_B$ and $NB_B=NB_C$.
      */
     void
-    mmult(ScaLAPACKMatrix<NumberType> &      C,
+    mmult(ScaLAPACKMatrix<NumberType>       &C,
           const ScaLAPACKMatrix<NumberType> &B,
           const bool                         adding = false) const;
 
@@ -305,7 +305,7 @@ namespace dftfe
      * $NB_A=MB_C$ and $NB_B=NB_C$.
      */
     void
-    Tmmult(ScaLAPACKMatrix<NumberType> &      C,
+    Tmmult(ScaLAPACKMatrix<NumberType>       &C,
            const ScaLAPACKMatrix<NumberType> &B,
            const bool                         adding = false) const;
 
@@ -327,7 +327,7 @@ namespace dftfe
      * $NB_A=NB_B$ and $MB_B=NB_C$.
      */
     void
-    mTmult(ScaLAPACKMatrix<NumberType> &      C,
+    mTmult(ScaLAPACKMatrix<NumberType>       &C,
            const ScaLAPACKMatrix<NumberType> &B,
            const bool                         adding = false) const;
 
@@ -351,7 +351,7 @@ namespace dftfe
      * $NB_A=MB_C$ and $MB_B=NB_C$.
      */
     void
-    TmTmult(ScaLAPACKMatrix<NumberType> &      C,
+    TmTmult(ScaLAPACKMatrix<NumberType>       &C,
             const ScaLAPACKMatrix<NumberType> &B,
             const bool                         adding = false) const;
 
@@ -374,7 +374,7 @@ namespace dftfe
      * $NB_A=MB_B$ and $NB_B=NB_C$.
      */
     void
-    zmmult(ScaLAPACKMatrix<NumberType> &      C,
+    zmmult(ScaLAPACKMatrix<NumberType>       &C,
            const ScaLAPACKMatrix<NumberType> &B,
            const bool                         adding = false) const;
 
@@ -396,7 +396,7 @@ namespace dftfe
      * $NB_A=MB_C$ and $NB_B=NB_C$.
      */
     void
-    zCmmult(ScaLAPACKMatrix<NumberType> &      C,
+    zCmmult(ScaLAPACKMatrix<NumberType>       &C,
             const ScaLAPACKMatrix<NumberType> &B,
             const bool                         adding = false) const;
 
@@ -419,7 +419,7 @@ namespace dftfe
      * $NB_A=NB_B$ and $MB_B=NB_C$.
      */
     void
-    zmCmult(ScaLAPACKMatrix<NumberType> &      C,
+    zmCmult(ScaLAPACKMatrix<NumberType>       &C,
             const ScaLAPACKMatrix<NumberType> &B,
             const bool                         adding = false) const;
 
@@ -444,7 +444,7 @@ namespace dftfe
      * $NB_A=MB_C$ and $MB_B=NB_C$.
      */
     void
-    zCmCmult(ScaLAPACKMatrix<NumberType> &      C,
+    zCmCmult(ScaLAPACKMatrix<NumberType>       &C,
              const ScaLAPACKMatrix<NumberType> &B,
              const bool                         adding = false) const;
 

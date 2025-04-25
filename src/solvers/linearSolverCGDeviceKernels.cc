@@ -4,8 +4,8 @@ namespace dftfe
 {
   template <typename Type, int blockSize>
   __global__ void
-  applyPreconditionAndComputeDotProductKernel(Type *      d_dvec,
-                                              Type *      d_devSum,
+  applyPreconditionAndComputeDotProductKernel(Type       *d_dvec,
+                                              Type       *d_devSum,
                                               const Type *d_rvec,
                                               const Type *d_jacobi,
                                               const int   N)
@@ -76,8 +76,8 @@ namespace dftfe
 
   template <typename Type, int blockSize>
   __global__ void
-  applyPreconditionComputeDotProductAndSaddKernel(Type *      d_qvec,
-                                                  Type *      d_devSum,
+  applyPreconditionComputeDotProductAndSaddKernel(Type       *d_qvec,
+                                                  Type       *d_devSum,
                                                   const Type *d_rvec,
                                                   const Type *d_jacobi,
                                                   const int   N)
@@ -147,9 +147,9 @@ namespace dftfe
 
   template <typename Type, int blockSize>
   __global__ void
-  scaleXRandComputeNormKernel(Type *      x,
-                              Type *      d_rvec,
-                              Type *      d_devSum,
+  scaleXRandComputeNormKernel(Type       *x,
+                              Type       *d_rvec,
+                              Type       *d_devSum,
                               const Type *d_qvec,
                               const Type *d_dvec,
                               const Type  alpha,
@@ -221,8 +221,8 @@ namespace dftfe
       atomicAdd(&d_devSum[0], localSum);
   }
   void
-  applyPreconditionAndComputeDotProductDevice(double *      d_dvec,
-                                              double *      d_devSum,
+  applyPreconditionAndComputeDotProductDevice(double       *d_dvec,
+                                              double       *d_devSum,
                                               const double *d_rvec,
                                               const double *d_jacobi,
                                               const int     N)
@@ -253,8 +253,8 @@ namespace dftfe
 
 
   void
-  applyPreconditionComputeDotProductAndSaddDevice(double *      d_qvec,
-                                                  double *      d_devSum,
+  applyPreconditionComputeDotProductAndSaddDevice(double       *d_qvec,
+                                                  double       *d_devSum,
                                                   const double *d_rvec,
                                                   const double *d_jacobi,
                                                   const int     N)
@@ -288,9 +288,9 @@ namespace dftfe
 
 
   void
-  scaleXRandComputeNormDevice(double *      x,
-                              double *      d_rvec,
-                              double *      d_devSum,
+  scaleXRandComputeNormDevice(double       *x,
+                              double       *d_rvec,
+                              double       *d_devSum,
                               const double *d_qvec,
                               const double *d_dvec,
                               const double  alpha,

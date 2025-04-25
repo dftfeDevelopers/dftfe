@@ -49,12 +49,12 @@ namespace dftfe
       dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
                                              pseudopotentialClassPtr,
     std::shared_ptr<excManager<memorySpace>> excManagerPtr,
-    dftParameters *                          dftParamsPtr,
+    dftParameters                           *dftParamsPtr,
     const unsigned int                       densityQuadratureID,
     const unsigned int                       lpspQuadratureID,
     const unsigned int                       feOrderPlusOneQuadratureID,
-    const MPI_Comm &                         mpi_comm_parent,
-    const MPI_Comm &                         mpi_comm_domain)
+    const MPI_Comm                          &mpi_comm_parent,
+    const MPI_Comm                          &mpi_comm_domain)
     : d_kPointIndex(0)
     , d_spinIndex(0)
     , d_HamiltonianIndex(0)
@@ -116,9 +116,9 @@ namespace dftfe
         pseudopotentialClassPtr->getNonLocalOperatorSinglePrec();
     d_cellsBlockSizeHamiltonianConstruction =
       memorySpace == dftfe::utils::MemorySpace::HOST ? 1 : 50;
-    d_cellsBlockSizeHX = memorySpace == dftfe::utils::MemorySpace::HOST ?
-                           1 :
-                           d_basisOperationsPtr->nCells();
+    d_cellsBlockSizeHX   = memorySpace == dftfe::utils::MemorySpace::HOST ?
+                             1 :
+                             d_basisOperationsPtr->nCells();
     d_numVectorsInternal = 0;
 
     d_useHubbard = false;
@@ -293,7 +293,7 @@ namespace dftfe
   KohnShamDFTBaseOperator<memorySpace>::computeVEff(
     std::shared_ptr<AuxDensityMatrix<memorySpace>> auxDensityXCRepresentation,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &                phiValues,
+                      &phiValues,
     const unsigned int spinIndex)
   {
     bool isIntegrationByPartsGradDensityDependenceVxc =
@@ -490,7 +490,7 @@ namespace dftfe
   KohnShamDFTBaseOperator<memorySpace>::setVEff(
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      &                vKS_quadValues,
+                      &vKS_quadValues,
     const unsigned int spinIndex)
   {
     const unsigned int spinPolarizedFactor = 1 + d_dftParamsPtr->spinPolarized;

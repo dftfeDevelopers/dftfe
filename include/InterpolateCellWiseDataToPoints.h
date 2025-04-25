@@ -73,9 +73,9 @@ namespace dftfe
         std::shared_ptr<InterpolateFromCellToLocalPoints<memorySpace>>>
                                               interpolateLocalObj,
       const std::vector<std::vector<double>> &targetPts,
-      const std::vector<unsigned int> &       numDofsPerElem,
+      const std::vector<unsigned int>        &numDofsPerElem,
       const unsigned int                      verbosity,
-      const MPI_Comm &                        mpiComm);
+      const MPI_Comm                         &mpiComm);
     /**
      * @brief This function interpolates from the data to the points passed to the constructor.
      * The function copies the nodal data to cell wise data and then
@@ -105,11 +105,11 @@ namespace dftfe
     void
     interpolateSrcDataToTargetPoints(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                      BLASWrapperPtr,
+                                                              &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<T, memorySpace> &inputVec,
       const unsigned int                                       numberOfVectors,
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-        &                                          mapVecToCells,
+                                                  &mapVecToCells,
       dftfe::utils::MemoryStorage<T, memorySpace> &outputData,
       const unsigned int                           blockSizeOfInputData,
       const unsigned int                           blockSizeOfOutputData,
@@ -141,14 +141,14 @@ namespace dftfe
     interpolateSrcDataToTargetPoints(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                         BLASWrapperPtr,
+                                 &BLASWrapperPtr,
       const distributedCPUVec<T> &inputVec,
       const unsigned int          numberOfVectors,
       const dftfe::utils::MemoryStorage<dftfe::global_size_type,
                                         dftfe::utils::MemorySpace::HOST>
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
-        &                outputData,
+                        &outputData,
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,

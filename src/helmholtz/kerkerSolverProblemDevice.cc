@@ -47,9 +47,9 @@ namespace dftfe
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
-      &                                basisOperationsPtr,
+                                      &basisOperationsPtr,
     dealii::AffineConstraints<double> &constraintMatrixPRefined,
-    distributedCPUVec<double> &        x,
+    distributedCPUVec<double>         &x,
     double                             kerkerMixingParameter,
     const unsigned int                 matrixFreeVectorComponent,
     const unsigned int                 matrixFreeQuadratureComponent)

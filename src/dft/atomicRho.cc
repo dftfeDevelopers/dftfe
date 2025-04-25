@@ -529,7 +529,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &quadratureValueData,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &        quadratureGradValueData,
+                &quadratureGradValueData,
       const bool isConsiderGradData)
   {
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
@@ -580,12 +580,12 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                                      basisOperationsPtr,
+                                              &basisOperationsPtr,
       const dealii::AffineConstraints<double> &constraintMatrix,
       const unsigned int                       dofHandlerId,
       const unsigned int                       quadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                        quadratureValueData,
+                                &quadratureValueData,
       distributedCPUVec<double> &nodalField)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);

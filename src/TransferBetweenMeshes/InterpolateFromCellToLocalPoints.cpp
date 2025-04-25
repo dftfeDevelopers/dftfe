@@ -60,10 +60,10 @@ namespace dftfe
   void
   InterpolateFromCellToLocalPoints<memorySpace>::interpolate(
     const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      &                      BLASWrapperPtr,
+                            &BLASWrapperPtr,
     unsigned int             numberOfVectors,
     const dataTypes::number *parentNodalMemSpacePtr,
-    dataTypes::number *      outputMemSpacePtr)
+    dataTypes::number       *outputMemSpacePtr)
   {
     const dataTypes::number scalarCoeffAlpha = 1.0;
     const dataTypes::number scalarCoeffBeta  = 0.0;
@@ -106,10 +106,10 @@ namespace dftfe
   InterpolateFromCellToLocalPoints<memorySpace>::interpolate(
     const std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-      &                                   BLASWrapperPtr,
+                                         &BLASWrapperPtr,
     unsigned int                          numberOfVectors,
     const std::vector<dataTypes::number> &parentNodalHost,
-    std::vector<dataTypes::number> &      outputHost)
+    std::vector<dataTypes::number>       &outputHost)
   {
     const dataTypes::number scalarCoeffAlpha = 1.0;
     const dataTypes::number scalarCoeffBeta  = 0.0;

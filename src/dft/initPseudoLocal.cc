@@ -31,16 +31,16 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initLocalPseudoPotential(
-    const dealii::DoFHandler<3> &            _dofHandler,
+    const dealii::DoFHandler<3>             &_dofHandler,
     const unsigned int                       lpspQuadratureId,
-    const dealii::MatrixFree<3, double> &    _matrix_free_data,
+    const dealii::MatrixFree<3, double>     &_matrix_free_data,
     const unsigned int                       _phiExtDofHandlerIndex,
     const dealii::AffineConstraints<double> &_phiExtConstraintMatrix,
     const std::map<dealii::types::global_dof_index, dealii::Point<3>>
-      &                                              _supportPoints,
+                                                    &_supportPoints,
     const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinManager,
-    distributedCPUVec<double> &                      phiExt,
-    std::map<dealii::CellId, std::vector<double>> &  _pseudoValues,
+    distributedCPUVec<double>                       &phiExt,
+    std::map<dealii::CellId, std::vector<double>>   &_pseudoValues,
     std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
       &_pseudoValuesAtoms)
   {
@@ -115,7 +115,7 @@ namespace dftfe
     init_1 = MPI_Wtime();
 
     const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-      &                partitioner = phiExt.get_partitioner();
+                      &partitioner = phiExt.get_partitioner();
     const unsigned int localSize   = partitioner->locally_owned_size();
     const unsigned int n_ghosts    = partitioner->n_ghost_indices();
     const unsigned int totalSize   = localSize + n_ghosts;
@@ -543,7 +543,7 @@ namespace dftfe
             dealii::Point<3> atom;
             int              atomicNumber;
             double           atomCharge;
-            const double *   quadPointPtr =
+            const double    *quadPointPtr =
               d_basisOperationsPtrElectroHost->quadPoints().data() +
               iCell * n_q_points * 3;
 

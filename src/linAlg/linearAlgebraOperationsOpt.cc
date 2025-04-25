@@ -104,8 +104,8 @@ namespace dftfe
     void
     reformulatedChebyshevFilter(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                 BLASWrapperPtr,
-      operatorDFTClass<memorySpace> &                     operatorMatrix,
+                                                         &BLASWrapperPtr,
+      operatorDFTClass<memorySpace>                      &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<T1, memorySpace> &X,
       dftfe::linearAlgebra::MultiVector<T1, memorySpace> &Y,
       dftfe::linearAlgebra::MultiVector<T2, memorySpace> &Residual,
@@ -225,13 +225,13 @@ namespace dftfe
     std::pair<double, double>
     generalisedLanczosLowerUpperBoundEigenSpectrum(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                BLASWrapperPtr,
-      operatorDFTClass<memorySpace> &                    operatorMatrix,
+                                                        &BLASWrapperPtr,
+      operatorDFTClass<memorySpace>                     &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Z,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &tempVec,
-      const dftParameters &                              dftParams)
+      const dftParameters                               &dftParams)
     {
       const unsigned int this_mpi_process =
         dealii::Utilities::MPI::this_mpi_process(
@@ -257,7 +257,7 @@ namespace dftfe
         local_size, T(0.0));
       T *XHostDataPtr = XHost.data();
 #else
-      T *                 XHostDataPtr = X.data();
+      T                  *XHostDataPtr = X.data();
 #endif
 
 
@@ -478,7 +478,7 @@ namespace dftfe
     reformulatedChebyshevFilter(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                                BLASWrapperPtr,
+                                                        &BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::HOST> &X,
@@ -489,7 +489,7 @@ namespace dftfe
         &Residual,
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
                                         dftfe::utils::MemorySpace::HOST>
-        &                 ResidualNew,
+                         &ResidualNew,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,
@@ -500,7 +500,7 @@ namespace dftfe
     reformulatedChebyshevFilter(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                                BLASWrapperPtr,
+                                                        &BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::HOST> &X,
@@ -511,7 +511,7 @@ namespace dftfe
         &Residual,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::HOST>
-        &                 ResidualNew,
+                         &ResidualNew,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,
@@ -537,7 +537,7 @@ namespace dftfe
     reformulatedChebyshevFilter(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                                  BLASWrapperPtr,
+                                                          &BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE> &X,
@@ -548,7 +548,7 @@ namespace dftfe
         &Residual,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &                 ResidualNew,
+                         &ResidualNew,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,
@@ -560,7 +560,7 @@ namespace dftfe
     reformulatedChebyshevFilter(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                                  BLASWrapperPtr,
+                                                          &BLASWrapperPtr,
       operatorDFTClass<dftfe::utils::MemorySpace::DEVICE> &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<dataTypes::number,
                                         dftfe::utils::MemorySpace::DEVICE> &X,
@@ -571,7 +571,7 @@ namespace dftfe
         &Residual,
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
                                         dftfe::utils::MemorySpace::DEVICE>
-        &                 ResidualNew,
+                         &ResidualNew,
       std::vector<double> eigenvalues,
       const unsigned int  m,
       const double        a,

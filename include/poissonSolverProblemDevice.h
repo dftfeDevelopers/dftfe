@@ -65,8 +65,8 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                                      basisOperationsPtr,
-      distributedCPUVec<double> &              x,
+                                              &basisOperationsPtr,
+      distributedCPUVec<double>               &x,
       const dealii::AffineConstraints<double> &constraintMatrix,
       const unsigned int                       matrixFreeVectorComponent,
       const unsigned int matrixFreeQuadratureComponentRhsDensity,
@@ -139,13 +139,13 @@ namespace dftfe
     /// preconditioning
     void
     subscribe(std::atomic<bool> *const validity,
-              const std::string &      identifier = "") const {};
+              const std::string       &identifier = "") const {};
 
     /// function needed by dealii to mimic SparseMatrix for Jacobi
     /// preconditioning
     void
     unsubscribe(std::atomic<bool> *const validity,
-                const std::string &      identifier = "") const {};
+                const std::string       &identifier = "") const {};
 
     /// function needed by dealii to mimic SparseMatrix
     bool
@@ -229,7 +229,7 @@ namespace dftfe
     const dealii::MatrixFree<3, double> *d_matrixFreeDataPtr;
 
     /// pointer to the x vector being solved for
-    distributedCPUVec<double> *  d_xPtr;
+    distributedCPUVec<double>   *d_xPtr;
     distributedDeviceVec<double> d_xDevice;
 
     // number of cells local to each mpi task, number of degrees of freedom
@@ -238,14 +238,14 @@ namespace dftfe
 
     // shape function value, gradient, jacobian and map for matrixfree
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-                                                                        d_shapeFunction, d_jacobianFactor;
+      d_shapeFunction, d_jacobianFactor;
     dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE> d_map;
 
     // Pointers to shape function value, gradient, jacobian and map for
     // matrixfree
     double *d_shapeFunctionPtr;
     double *d_jacobianFactorPtr;
-    int *   d_mapPtr;
+    int    *d_mapPtr;
 
 
     // constraints

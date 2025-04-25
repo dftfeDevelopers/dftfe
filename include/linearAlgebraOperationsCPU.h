@@ -49,10 +49,10 @@ namespace dftfe
      */
     template <typename T>
     void
-    gramSchmidtOrthogonalization(T *                X,
+    gramSchmidtOrthogonalization(T                 *X,
                                  const unsigned int numberComponents,
                                  const unsigned int numberDofs,
-                                 const MPI_Comm &   mpiComm);
+                                 const MPI_Comm    &mpiComm);
 
 
     /** @brief Orthogonalize given subspace using Lowden orthogonalization for double data-type
@@ -67,8 +67,8 @@ namespace dftfe
     unsigned int
     lowdenOrthogonalization(std::vector<dataTypes::number> &X,
                             const unsigned int              numberComponents,
-                            const MPI_Comm &                mpiComm,
-                            const dftParameters &           dftParams);
+                            const MPI_Comm                 &mpiComm,
+                            const dftParameters            &dftParams);
 
 
     /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
@@ -90,13 +90,13 @@ namespace dftfe
       elpaScalaManager &elpaScala,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                  BLASWrapperPtr,
-      T *                  X,
+                          &BLASWrapperPtr,
+      T                   *X,
       const unsigned int   numberComponents,
       const unsigned int   numberDofs,
-      const MPI_Comm &     mpiCommParent,
-      const MPI_Comm &     interBandGroupComm,
-      const MPI_Comm &     mpiCommDomain,
+      const MPI_Comm      &mpiCommParent,
+      const MPI_Comm      &interBandGroupComm,
+      const MPI_Comm      &mpiCommDomain,
       const bool           useMixedPrec,
       const dftParameters &dftParams);
 
@@ -120,14 +120,14 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                  BLASWrapperPtr,
-      elpaScalaManager &   elpaScala,
-      T *                  X,
+                          &BLASWrapperPtr,
+      elpaScalaManager    &elpaScala,
+      T                   *X,
       const unsigned int   numberComponents,
       const unsigned int   numberDofs,
-      const MPI_Comm &     mpiCommParent,
-      const MPI_Comm &     interBandGroupComm,
-      const MPI_Comm &     mpiCommDomain,
+      const MPI_Comm      &mpiCommParent,
+      const MPI_Comm      &interBandGroupComm,
+      const MPI_Comm      &mpiCommDomain,
       std::vector<double> &eigenValues,
       const bool           useMixedPrec,
       const dftParameters &dftParams);
@@ -152,14 +152,14 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                  BLASWrapperPtr,
-      elpaScalaManager &   elpaScala,
-      T *                  X,
+                          &BLASWrapperPtr,
+      elpaScalaManager    &elpaScala,
+      T                   *X,
       const unsigned int   numberComponents,
       const unsigned int   numberDofs,
-      const MPI_Comm &     mpiCommParent,
-      const MPI_Comm &     interBandGroupComm,
-      const MPI_Comm &     mpiCommDomain,
+      const MPI_Comm      &mpiCommParent,
+      const MPI_Comm      &interBandGroupComm,
+      const MPI_Comm      &mpiCommDomain,
       std::vector<double> &eigenValues,
       const dftParameters &dftParams,
       const bool           doCommAfterBandParal = true);
@@ -181,16 +181,16 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                        BLASWrapperPtr,
-      T *                        X,
+                                &BLASWrapperPtr,
+      T                         *X,
       const std::vector<double> &eigenValues,
       const unsigned int         numberComponents,
       const unsigned int         numberDofs,
-      const MPI_Comm &           mpiCommParent,
-      const MPI_Comm &           mpiCommDomain,
-      const MPI_Comm &           interBandGroupComm,
-      std::vector<double> &      residualNorm,
-      const dftParameters &      dftParams);
+      const MPI_Comm            &mpiCommParent,
+      const MPI_Comm            &mpiCommDomain,
+      const MPI_Comm            &interBandGroupComm,
+      std::vector<double>       &residualNorm,
+      const dftParameters       &dftParams);
 
     /** @brief Compute first order response in density matrix with respect to perturbation in the Hamiltonian.
      * Perturbation is computed in the eigenbasis.
@@ -201,18 +201,18 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                        BLASWrapperPtr,
-      T *                        X,
+                                &BLASWrapperPtr,
+      T                         *X,
       const unsigned int         N,
       const unsigned int         numberLocalDofs,
-      const MPI_Comm &           mpiCommParent,
-      const MPI_Comm &           mpiCommDomain,
-      const MPI_Comm &           interBandGroupComm,
+      const MPI_Comm            &mpiCommParent,
+      const MPI_Comm            &mpiCommDomain,
+      const MPI_Comm            &interBandGroupComm,
       const std::vector<double> &eigenValues,
       const double               fermiEnergy,
-      std::vector<double> &      densityMatDerFermiEnergy,
-      elpaScalaManager &         elpaScala,
-      const dftParameters &      dftParams);
+      std::vector<double>       &densityMatDerFermiEnergy,
+      elpaScalaManager          &elpaScala,
+      const dftParameters       &dftParams);
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
@@ -225,13 +225,13 @@ namespace dftfe
     XtHX(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
          const std::shared_ptr<
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-           &                             BLASWrapperPtr,
-         const dataTypes::number *       X,
+                                        &BLASWrapperPtr,
+         const dataTypes::number        *X,
          const unsigned int              numberComponents,
          const unsigned int              numberLocalDofs,
-         const MPI_Comm &                mpiCommDomain,
-         const MPI_Comm &                interBandGroupComm,
-         const dftParameters &           dftParams,
+         const MPI_Comm                 &mpiCommDomain,
+         const MPI_Comm                 &interBandGroupComm,
+         const dftParameters            &dftParams,
          std::vector<dataTypes::number> &ProjHam);
 
     /**
@@ -247,15 +247,15 @@ namespace dftfe
     XtHX(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
          const std::shared_ptr<
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-           &                                              BLASWrapperPtr,
-         const dataTypes::number *                        X,
+                                                         &BLASWrapperPtr,
+         const dataTypes::number                         *X,
          const unsigned int                               numberComponents,
          const unsigned int                               numberLocalDofs,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-         const MPI_Comm &                                 mpiCommDomain,
-         const MPI_Comm &                                 interBandGroupComm,
-         const dftParameters &                            dftParams,
-         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+         const MPI_Comm                                  &mpiCommDomain,
+         const MPI_Comm                                  &interBandGroupComm,
+         const dftParameters                             &dftParams,
+         dftfe::ScaLAPACKMatrix<dataTypes::number>       &projHamPar,
          const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
@@ -272,15 +272,15 @@ namespace dftfe
     XtOX(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
          const std::shared_ptr<
            dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-           &                                              BLASWrapperPtr,
-         const dataTypes::number *                        X,
+                                                         &BLASWrapperPtr,
+         const dataTypes::number                         *X,
          const unsigned int                               numberComponents,
          const unsigned int                               numberLocalDofs,
          const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-         const MPI_Comm &                                 mpiCommDomain,
-         const MPI_Comm &                                 interBandGroupComm,
-         const dftParameters &                            dftParams,
-         dftfe::ScaLAPACKMatrix<dataTypes::number> &      projOverlapPar);
+         const MPI_Comm                                  &mpiCommDomain,
+         const MPI_Comm                                  &interBandGroupComm,
+         const dftParameters                             &dftParams,
+         dftfe::ScaLAPACKMatrix<dataTypes::number>       &projOverlapPar);
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis HProjConj=X^{T}*HConj*XConj
@@ -300,16 +300,16 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                              BLASWrapperPtr,
-      const dataTypes::number *                        X,
+                                                      &BLASWrapperPtr,
+      const dataTypes::number                         *X,
       const unsigned int                               totalNumberComponents,
       const unsigned int                               singlePrecComponents,
       const unsigned int                               numberLocalDofs,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const MPI_Comm &                                 mpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
-      const dftParameters &                            dftParams,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
+      const MPI_Comm                                  &mpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
+      const dftParameters                             &dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &projHamPar,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
 
@@ -331,16 +331,16 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                              BLASWrapperPtr,
-      const dataTypes::number *                        X,
+                                                      &BLASWrapperPtr,
+      const dataTypes::number                         *X,
       const unsigned int                               totalNumberComponents,
       const unsigned int                               singlePrecComponents,
       const unsigned int                               numberLocalDofs,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const MPI_Comm &                                 mpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
-      const dftParameters &                            dftParams,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projOverlapPar);
+      const MPI_Comm                                  &mpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
+      const dftParameters                             &dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &projOverlapPar);
 
     /**
      * @brief Computes the projection of Hamiltonian and Overlap with only a single extraction.
@@ -357,14 +357,14 @@ namespace dftfe
     void
     XtHXXtOX(operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
              const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
-               dftfe::utils::MemorySpace::HOST>> &              BLASWrapperPtr,
-             const dataTypes::number *                          X,
+               dftfe::utils::MemorySpace::HOST>>               &BLASWrapperPtr,
+             const dataTypes::number                           *X,
              const unsigned int                               numberComponents,
              const unsigned int                               numberLocalDofs,
              const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-             const MPI_Comm &                                 mpiCommDomain,
-             const MPI_Comm &                           interBandGroupComm,
-             const dftParameters &                      dftParams,
+             const MPI_Comm                                  &mpiCommDomain,
+             const MPI_Comm                            &interBandGroupComm,
+             const dftParameters                       &dftParams,
              dftfe::ScaLAPACKMatrix<dataTypes::number> &projHamPar,
              dftfe::ScaLAPACKMatrix<dataTypes::number> &projOverlapPar,
              const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
@@ -388,17 +388,17 @@ namespace dftfe
       operatorDFTClass<dftfe::utils::MemorySpace::HOST> &operatorMatrix,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                              BLASWrapperPtr,
-      const dataTypes::number *                        X,
+                                                      &BLASWrapperPtr,
+      const dataTypes::number                         *X,
       const unsigned int                               totalNumberComponents,
       const unsigned int                               singlePrecComponents,
       const unsigned int                               numberLocalDofs,
       const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-      const MPI_Comm &                                 mpiCommDomain,
-      const MPI_Comm &                                 interBandGroupComm,
-      const dftParameters &                            dftParams,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projHamPar,
-      dftfe::ScaLAPACKMatrix<dataTypes::number> &      projOverlapPar,
+      const MPI_Comm                                  &mpiCommDomain,
+      const MPI_Comm                                  &interBandGroupComm,
+      const dftParameters                             &dftParams,
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &projHamPar,
+      dftfe::ScaLAPACKMatrix<dataTypes::number>       &projOverlapPar,
       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
 
   } // namespace linearAlgebraOperations

@@ -28,13 +28,13 @@ namespace dftfe
   namespace utils
   {
     __forceinline__ __device__ hipDoubleComplex
-                               makeComplex(double realPart, double imagPart)
+    makeComplex(double realPart, double imagPart)
     {
       return make_hipDoubleComplex(realPart, imagPart);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               makeComplex(float realPart, float imagPart)
+    makeComplex(float realPart, float imagPart)
     {
       return make_hipFloatComplex(realPart, imagPart);
     }
@@ -43,25 +43,25 @@ namespace dftfe
     // copyValue for homogeneous types
     //
     __forceinline__ __device__ void
-                    copyValue(double *a, const double b)
+    copyValue(double *a, const double b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-                    copyValue(float *a, const float b)
+    copyValue(float *a, const float b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-                    copyValue(hipDoubleComplex *a, const hipDoubleComplex b)
+    copyValue(hipDoubleComplex *a, const hipDoubleComplex b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-                    copyValue(hipFloatComplex *a, const hipFloatComplex b)
+    copyValue(hipFloatComplex *a, const hipFloatComplex b)
     {
       *a = b;
     }
@@ -70,49 +70,49 @@ namespace dftfe
     // copyValue for heteregenous types
     //
     __forceinline__ __device__ void
-                    copyValue(float *a, const double b)
+    copyValue(float *a, const double b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-                    copyValue(double *a, const float b)
+    copyValue(double *a, const float b)
     {
       *a = b;
     }
 
     __forceinline__ __device__ void
-                    copyValue(hipDoubleComplex *a, const hipFloatComplex b)
+    copyValue(hipDoubleComplex *a, const hipFloatComplex b)
     {
       *a = make_hipDoubleComplex(b.x, b.y);
     }
 
     __forceinline__ __device__ void
-                    copyValue(hipFloatComplex *a, const hipDoubleComplex b)
+    copyValue(hipFloatComplex *a, const hipDoubleComplex b)
     {
       *a = make_hipFloatComplex(b.x, b.y);
     }
 
     __forceinline__ __device__ void
-                    copyValue(hipDoubleComplex *a, const double b)
+    copyValue(hipDoubleComplex *a, const double b)
     {
       *a = make_hipDoubleComplex(b, 0);
     }
 
     __forceinline__ __device__ void
-                    copyValue(hipFloatComplex *a, const float b)
+    copyValue(hipFloatComplex *a, const float b)
     {
       *a = make_hipFloatComplex(b, 0);
     }
 
     __forceinline__ __device__ void
-                    copyValue(hipDoubleComplex *a, const float b)
+    copyValue(hipDoubleComplex *a, const float b)
     {
       *a = make_hipDoubleComplex(b, 0);
     }
 
     __forceinline__ __device__ void
-                    copyValue(hipFloatComplex *a, const double b)
+    copyValue(hipFloatComplex *a, const double b)
     {
       *a = make_hipFloatComplex(b, 0);
     }
@@ -120,25 +120,25 @@ namespace dftfe
     // real part obverloads
 
     __forceinline__ __device__ double
-                    realPartDevice(double a)
+    realPartDevice(double a)
     {
       return a;
     }
 
     __forceinline__ __device__ float
-                    realPartDevice(float a)
+    realPartDevice(float a)
     {
       return a;
     }
 
     __forceinline__ __device__ double
-                    realPartDevice(hipDoubleComplex a)
+    realPartDevice(hipDoubleComplex a)
     {
       return a.x;
     }
 
     __forceinline__ __device__ float
-                    realPartDevice(hipFloatComplex a)
+    realPartDevice(hipFloatComplex a)
     {
       return a.x;
     }
@@ -146,25 +146,25 @@ namespace dftfe
     // imag part obverloads
 
     __forceinline__ __device__ double
-                    imagPartDevice(double a)
+    imagPartDevice(double a)
     {
       return 0;
     }
 
     __forceinline__ __device__ float
-                    imagPartDevice(float a)
+    imagPartDevice(float a)
     {
       return 0;
     }
 
     __forceinline__ __device__ double
-                    imagPartDevice(hipDoubleComplex a)
+    imagPartDevice(hipDoubleComplex a)
     {
       return a.y;
     }
 
     __forceinline__ __device__ float
-                    imagPartDevice(hipFloatComplex a)
+    imagPartDevice(hipFloatComplex a)
     {
       return a.y;
     }
@@ -172,25 +172,25 @@ namespace dftfe
     // abs obverloads
 
     __forceinline__ __device__ double
-                    abs(double a)
+    abs(double a)
     {
       return fabs(a);
     }
 
     __forceinline__ __device__ float
-                    abs(float a)
+    abs(float a)
     {
       return fabs(a);
     }
 
     __forceinline__ __device__ double
-                    abs(hipDoubleComplex a)
+    abs(hipDoubleComplex a)
     {
       return hipCabs(a);
     }
 
     __forceinline__ __device__ float
-                    abs(hipFloatComplex a)
+    abs(hipFloatComplex a)
     {
       return hipCabsf(a);
     }
@@ -200,42 +200,42 @@ namespace dftfe
     //
 
     __forceinline__ __device__ unsigned int
-                    conj(unsigned int a)
+    conj(unsigned int a)
     {
       return a;
     }
 
     __forceinline__ __device__ unsigned long int
-                    conj(unsigned long int a)
+    conj(unsigned long int a)
     {
       return a;
     }
 
     __forceinline__ __device__ int
-                    conj(int a)
+    conj(int a)
     {
       return a;
     }
 
     __forceinline__ __device__ float
-                    conj(float a)
+    conj(float a)
     {
       return a;
     }
     __forceinline__ __device__ double
-                    conj(double a)
+    conj(double a)
     {
       return a;
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               conj(hipDoubleComplex a)
+    conj(hipDoubleComplex a)
     {
       return hipConj(a);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               conj(hipFloatComplex a)
+    conj(hipFloatComplex a)
     {
       return hipConjf(a);
     }
@@ -245,43 +245,43 @@ namespace dftfe
     // mult for real homogeneous types e.g. (double, double)
     //
     __forceinline__ __device__ unsigned int
-                    mult(unsigned int a, unsigned int b)
+    mult(unsigned int a, unsigned int b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ unsigned long int
-                    mult(unsigned long int a, unsigned long int b)
+    mult(unsigned long int a, unsigned long int b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ int
-                    mult(int a, int b)
+    mult(int a, int b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ double
-                    mult(double a, double b)
+    mult(double a, double b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ float
-                    mult(float a, float b)
+    mult(float a, float b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ double
-                    mult(float a, double b)
+    mult(float a, double b)
     {
       return a * b;
     }
 
     __forceinline__ __device__ double
-                    mult(double a, float b)
+    mult(double a, float b)
     {
       return a * b;
     }
@@ -291,13 +291,13 @@ namespace dftfe
     // (e.g., hipDoubleComplex and hipDoubleComplex)
     //
     __forceinline__ __device__ hipDoubleComplex
-                               mult(hipDoubleComplex a, hipDoubleComplex b)
+    mult(hipDoubleComplex a, hipDoubleComplex b)
     {
       return hipCmul(a, b);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               mult(hipFloatComplex a, hipFloatComplex b)
+    mult(hipFloatComplex a, hipFloatComplex b)
     {
       return hipCmulf(a, b);
     }
@@ -308,13 +308,13 @@ namespace dftfe
     // hipFloatComplex)
     //
     __forceinline__ __device__ hipDoubleComplex
-                               mult(hipFloatComplex a, hipDoubleComplex b)
+    mult(hipFloatComplex a, hipDoubleComplex b)
     {
       return hipCmul(make_hipDoubleComplex(a.x, a.y), b);
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               mult(hipDoubleComplex a, hipFloatComplex b)
+    mult(hipDoubleComplex a, hipFloatComplex b)
     {
       return hipCmul(a, make_hipDoubleComplex(b.x, b.y));
     }
@@ -324,191 +324,191 @@ namespace dftfe
     // mult for real-complex heterogeneous types e.g. (double, hipFloatComplex)
     //
     __forceinline__ __device__ hipDoubleComplex
-                               mult(double a, hipDoubleComplex b)
+    mult(double a, hipDoubleComplex b)
     {
       return make_hipDoubleComplex(a * b.x, a * b.y);
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               mult(hipDoubleComplex a, double b)
+    mult(hipDoubleComplex a, double b)
     {
       return make_hipDoubleComplex(b * a.x, b * a.y);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               mult(float a, hipFloatComplex b)
+    mult(float a, hipFloatComplex b)
     {
       return make_hipFloatComplex(a * b.x, a * b.y);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               mult(hipFloatComplex a, float b)
+    mult(hipFloatComplex a, float b)
     {
       return make_hipFloatComplex(b * a.x, b * a.y);
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               mult(double a, hipFloatComplex b)
+    mult(double a, hipFloatComplex b)
     {
       return make_hipDoubleComplex(a * b.x, a * b.y);
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               mult(hipFloatComplex a, double b)
+    mult(hipFloatComplex a, double b)
     {
       return make_hipDoubleComplex(b * a.x, b * a.y);
     }
 
 
     __forceinline__ __device__ unsigned int
-                    add(unsigned int a, unsigned int b)
+    add(unsigned int a, unsigned int b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ unsigned long int
-                    add(unsigned long int a, unsigned long int b)
+    add(unsigned long int a, unsigned long int b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ int
-                    add(int a, int b)
+    add(int a, int b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ double
-                    add(double a, double b)
+    add(double a, double b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ float
-                    add(float a, float b)
+    add(float a, float b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               add(hipDoubleComplex a, hipDoubleComplex b)
+    add(hipDoubleComplex a, hipDoubleComplex b)
     {
       return hipCadd(a, b);
     }
 
 
     __forceinline__ __device__ hipFloatComplex
-                               add(hipFloatComplex a, hipFloatComplex b)
+    add(hipFloatComplex a, hipFloatComplex b)
     {
       return hipCaddf(a, b);
     }
 
     __forceinline__ __device__ double
-                    add(double a, float b)
+    add(double a, float b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ double
-                    add(float a, double b)
+    add(float a, double b)
     {
       return a + b;
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               add(hipDoubleComplex a, hipFloatComplex b)
+    add(hipDoubleComplex a, hipFloatComplex b)
     {
       return hipCadd(a, make_hipDoubleComplex(b.x, b.y));
     }
 
 
     __forceinline__ __device__ hipDoubleComplex
-                               add(hipFloatComplex a, hipDoubleComplex b)
+    add(hipFloatComplex a, hipDoubleComplex b)
     {
       return hipCadd(make_hipDoubleComplex(a.x, a.y), b);
     }
 
 
     __forceinline__ __device__ unsigned int
-                    sub(unsigned int a, unsigned int b)
+    sub(unsigned int a, unsigned int b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ unsigned long int
-                    sub(unsigned long int a, unsigned long int b)
+    sub(unsigned long int a, unsigned long int b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ int
-                    sub(int a, int b)
+    sub(int a, int b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ double
-                    sub(double a, double b)
+    sub(double a, double b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ float
-                    sub(float a, float b)
+    sub(float a, float b)
     {
       return a - b;
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               sub(hipDoubleComplex a, hipDoubleComplex b)
+    sub(hipDoubleComplex a, hipDoubleComplex b)
     {
       return hipCsub(a, b);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               sub(hipFloatComplex a, hipFloatComplex b)
+    sub(hipFloatComplex a, hipFloatComplex b)
     {
       return hipCsubf(a, b);
     }
 
     __forceinline__ __device__ unsigned int
-                    div(unsigned int a, unsigned int b)
+    div(unsigned int a, unsigned int b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ unsigned long int
-                    div(unsigned long int a, unsigned long int b)
+    div(unsigned long int a, unsigned long int b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ int
-                    div(int a, int b)
+    div(int a, int b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ double
-                    div(double a, double b)
+    div(double a, double b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ float
-                    div(float a, float b)
+    div(float a, float b)
     {
       return a / b;
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               div(hipDoubleComplex a, hipDoubleComplex b)
+    div(hipDoubleComplex a, hipDoubleComplex b)
     {
       return hipCdiv(a, b);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               div(hipFloatComplex a, hipFloatComplex b)
+    div(hipFloatComplex a, hipFloatComplex b)
     {
       return hipCdivf(a, b);
     }
@@ -518,13 +518,13 @@ namespace dftfe
     // hipFloatComplex)
     //
     __forceinline__ __device__ hipDoubleComplex
-                               div(hipFloatComplex a, hipDoubleComplex b)
+    div(hipFloatComplex a, hipDoubleComplex b)
     {
       return hipCdiv(make_hipDoubleComplex(a.x, a.y), b);
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               div(hipDoubleComplex a, hipFloatComplex b)
+    div(hipDoubleComplex a, hipFloatComplex b)
     {
       return hipCdiv(a, make_hipDoubleComplex(b.x, b.y));
     }
@@ -534,37 +534,37 @@ namespace dftfe
     // div for real-complex heterogeneous types e.g. (double, hipFloatComplex)
     //
     __forceinline__ __device__ hipDoubleComplex
-                               div(double a, hipDoubleComplex b)
+    div(double a, hipDoubleComplex b)
     {
       return make_hipDoubleComplex(a / b.x, a / b.y);
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               div(hipDoubleComplex a, double b)
+    div(hipDoubleComplex a, double b)
     {
       return make_hipDoubleComplex(b / a.x, b / a.y);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               div(float a, hipFloatComplex b)
+    div(float a, hipFloatComplex b)
     {
       return make_hipFloatComplex(a / b.x, a / b.y);
     }
 
     __forceinline__ __device__ hipFloatComplex
-                               div(hipFloatComplex a, float b)
+    div(hipFloatComplex a, float b)
     {
       return make_hipFloatComplex(b / a.x, b / a.y);
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               div(double a, hipFloatComplex b)
+    div(double a, hipFloatComplex b)
     {
       return make_hipDoubleComplex(a / b.x, a / b.y);
     }
 
     __forceinline__ __device__ hipDoubleComplex
-                               div(hipFloatComplex a, double b)
+    div(hipFloatComplex a, double b)
     {
       return make_hipDoubleComplex(b / a.x, b / a.y);
     }

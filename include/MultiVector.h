@@ -245,8 +245,8 @@ namespace dftfe
        */
       MultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const std::vector<global_size_type> &               ghostIndices,
-        const MPI_Comm &                                    mpiComm,
+        const std::vector<global_size_type>                &ghostIndices,
+        const MPI_Comm                                     &mpiComm,
         const size_type                                     numVectors,
         ValueType                                           initVal = 0);
 
@@ -269,7 +269,7 @@ namespace dftfe
        */
       MultiVector(
         const std::pair<global_size_type, global_size_type> locallyOwnedRange,
-        const MPI_Comm &                                    mpiComm,
+        const MPI_Comm                                     &mpiComm,
         const size_type                                     numVectors,
         const ValueType                                     initVal = 0);
 
@@ -292,7 +292,7 @@ namespace dftfe
        * initialized
        */
       MultiVector(const global_size_type globalSize,
-                  const MPI_Comm &       mpiComm,
+                  const MPI_Comm        &mpiComm,
                   const size_type        numVectors,
                   const ValueType        initVal = 0);
 
@@ -438,13 +438,13 @@ namespace dftfe
       void
       addAndScale(const ValueBaseType1 valScale,
                   const ValueBaseType2 valAdd,
-                  const MultiVector &  u);
+                  const MultiVector   &u);
 
       template <typename ValueBaseType1, typename ValueBaseType2>
       void
       scaleAndAdd(const ValueBaseType1 valScale,
                   const ValueBaseType2 valAdd,
-                  const MultiVector &  u);
+                  const MultiVector   &u);
 
       void
       dot(const MultiVector &u, ValueType *dotVec);
@@ -519,7 +519,7 @@ namespace dftfe
     void
     createMultiVectorFromDealiiPartitioner(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                                  partitioner,
+                                          &partitioner,
       const size_type                      numVectors,
       MultiVector<ValueType, memorySpace> &multiVector);
 

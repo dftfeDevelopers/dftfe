@@ -48,9 +48,9 @@ namespace dftfe
        */
       void
       convertCartesianToSpherical(const std::vector<double> &x,
-                                  double &                   r,
-                                  double &                   theta,
-                                  double &                   phi,
+                                  double                    &r,
+                                  double                    &theta,
+                                  double                    &phi,
                                   const double               rTol,
                                   const double               angleTol);
 

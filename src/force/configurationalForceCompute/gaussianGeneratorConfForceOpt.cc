@@ -32,21 +32,21 @@ namespace dftfe
       // lapack Ax=b
       //
       void
-      dgesv_(int *   N,
-             int *   NRHS,
+      dgesv_(int    *N,
+             int    *NRHS,
              double *A,
-             int *   LDA,
-             int *   IPIV,
+             int    *LDA,
+             int    *IPIV,
              double *B,
-             int *   LDB,
-             int *   INFO);
+             int    *LDB,
+             int    *INFO);
     }
 
 
     std::vector<double>
     getFractionalCoordinates(const std::vector<double> &latticeVectors,
-                             const dealii::Point<3> &   point,
-                             const dealii::Point<3> &   corner)
+                             const dealii::Point<3>    &point,
+                             const dealii::Point<3>    &corner)
     {
       //
       // recenter vertex about corner
@@ -598,10 +598,10 @@ namespace dftfe
                   const double r = (nodalCoor - atomCoor).norm();
                   double       gaussianWeight =
                     d_dftParams.reproducible_output ?
-                      std::exp(-std::pow(
+                            std::exp(-std::pow(
                         r / dftPtr->d_gaussianConstantsForce[atomChargeId],
                         2)) :
-                      dftUtils::getCompositeGeneratorVal(
+                            dftUtils::getCompositeGeneratorVal(
                         dftPtr->d_generatorFlatTopWidths[atomChargeId],
                         r,
                         dftPtr->d_gaussianConstantsForce[atomChargeId],

@@ -27,8 +27,8 @@ namespace dftfe
     FermiDiracFunctionValue(const double                            x,
                             const std::vector<std::vector<double>> &eigenValues,
                             const std::vector<double> &kPointWeights,
-                            const double &             TVal,
-                            const dftParameters &      dftParams)
+                            const double              &TVal,
+                            const dftParameters       &dftParams)
     {
       int    numberkPoints     = eigenValues.size();
       int    numberEigenValues = eigenValues[0].size();
@@ -63,9 +63,9 @@ namespace dftfe
     FermiDiracFunctionDerivativeValue(
       const double                            x,
       const std::vector<std::vector<double>> &eigenValues,
-      const std::vector<double> &             kPointWeights,
-      const double &                          TVal,
-      const dftParameters &                   dftParams)
+      const std::vector<double>              &kPointWeights,
+      const double                           &TVal,
+      const dftParameters                    &dftParams)
     {
       int    numberkPoints      = eigenValues.size();
       int    numberEigenValues  = eigenValues[0].size();

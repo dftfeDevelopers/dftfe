@@ -83,7 +83,8 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  void dftClass<FEOrder, FEOrderElectro, memorySpace>::moveMeshToAtoms(
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::moveMeshToAtoms(
     dealii::Triangulation<3, 3> &triangulationMove,
     dealii::Triangulation<3, 3> &triangulationSerial,
     bool                         reuseClosestTriaVertices,

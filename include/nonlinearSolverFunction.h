@@ -37,8 +37,8 @@ namespace dftfe
 
     virtual void
     getForceVector(const std::vector<distributedCPUVec<double>> &x,
-                   std::vector<distributedCPUVec<double>> &      force,
-                   std::vector<double> &                         loss) = 0;
+                   std::vector<distributedCPUVec<double>>       &force,
+                   std::vector<double>                          &loss) = 0;
 
     virtual void
     setSolution(const std::vector<distributedCPUVec<double>> &x) = 0;

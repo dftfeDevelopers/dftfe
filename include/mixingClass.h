@@ -47,8 +47,8 @@ namespace dftfe
   class MixingScheme
   {
   public:
-    MixingScheme(const MPI_Comm &   mpi_comm_parent,
-                 const MPI_Comm &   mpi_comm_domain,
+    MixingScheme(const MPI_Comm    &mpi_comm_parent,
+                 const MPI_Comm    &mpi_comm_domain,
                  const unsigned int verbosity);
 
     unsigned int
@@ -95,7 +95,7 @@ namespace dftfe
     addMixingVariable(
       const mixingVariable mixingVariableList,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &          weightDotProducts,
+                  &weightDotProducts,
       const bool   performMPIReduce,
       const double mixingValue,
       const bool   adaptMixingValue);
@@ -106,7 +106,7 @@ namespace dftfe
      */
     void
     addVariableToInHist(const mixingVariable mixingVariableName,
-                        const double *       inputVariableToInHist,
+                        const double        *inputVariableToInHist,
                         const unsigned int   length);
 
     /**
@@ -115,7 +115,7 @@ namespace dftfe
      */
     void
     addVariableToResidualHist(const mixingVariable mixingVariableName,
-                              const double *       inputVariableToResidualHist,
+                              const double        *inputVariableToResidualHist,
                               const unsigned int   length);
 
     /**
@@ -124,20 +124,20 @@ namespace dftfe
      */
     void
     mixVariable(const mixingVariable mixingVariableName,
-                double *             outputVariable,
+                double              *outputVariable,
                 const unsigned int   lenVar);
 
 
     void
     getOptimizedResidual(const mixingVariable mixingVariableName,
-                         double *             outputVariable,
+                         double              *outputVariable,
                          const unsigned int   lenVar);
 
 
     void
     mixPreconditionedResidual(const mixingVariable mixingVariableName,
-                              double *             inputVariable,
-                              double *             outputVariable,
+                              double              *inputVariable,
+                              double              *outputVariable,
                               const unsigned int   lenVar);
 
 
@@ -156,7 +156,7 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &outHist,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                  weightDotProducts,
+                          &weightDotProducts,
       const bool           isPerformMixing,
       const bool           isMPIAllReduce,
       std::vector<double> &A,

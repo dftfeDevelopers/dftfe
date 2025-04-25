@@ -34,430 +34,430 @@ namespace dftfe
   extern "C"
   {
     void
-    dgemv_(const char *        TRANS,
+    dgemv_(const char         *TRANS,
            const unsigned int *M,
            const unsigned int *N,
-           const double *      alpha,
-           const double *      A,
+           const double       *alpha,
+           const double       *A,
            const unsigned int *LDA,
-           const double *      X,
+           const double       *X,
            const unsigned int *INCX,
-           const double *      beta,
-           double *            C,
+           const double       *beta,
+           double             *C,
            const unsigned int *INCY);
 
     void
-    sgemv_(const char *        TRANS,
+    sgemv_(const char         *TRANS,
            const unsigned int *M,
            const unsigned int *N,
-           const float *       alpha,
-           const float *       A,
+           const float        *alpha,
+           const float        *A,
            const unsigned int *LDA,
-           const float *       X,
+           const float        *X,
            const unsigned int *INCX,
-           const float *       beta,
-           float *             C,
+           const float        *beta,
+           float              *C,
            const unsigned int *INCY);
 
     void
-    zgemv_(const char *                TRANS,
-           const unsigned int *        M,
-           const unsigned int *        N,
+    zgemv_(const char                 *TRANS,
+           const unsigned int         *M,
+           const unsigned int         *N,
            const std::complex<double> *alpha,
            const std::complex<double> *A,
-           const unsigned int *        LDA,
+           const unsigned int         *LDA,
            const std::complex<double> *X,
-           const unsigned int *        INCX,
+           const unsigned int         *INCX,
            const std::complex<double> *beta,
-           std::complex<double> *      C,
-           const unsigned int *        INCY);
+           std::complex<double>       *C,
+           const unsigned int         *INCY);
 
     void
-    cgemv_(const char *               TRANS,
-           const unsigned int *       M,
-           const unsigned int *       N,
+    cgemv_(const char                *TRANS,
+           const unsigned int        *M,
+           const unsigned int        *N,
            const std::complex<float> *alpha,
            const std::complex<float> *A,
-           const unsigned int *       LDA,
+           const unsigned int        *LDA,
            const std::complex<float> *X,
-           const unsigned int *       INCX,
+           const unsigned int        *INCX,
            const std::complex<float> *beta,
-           std::complex<float> *      C,
-           const unsigned int *       INCY);
+           std::complex<float>       *C,
+           const unsigned int        *INCY);
     void
-    dsymv_(const char *        UPLO,
+    dsymv_(const char         *UPLO,
            const unsigned int *N,
-           const double *      alpha,
-           const double *      A,
+           const double       *alpha,
+           const double       *A,
            const unsigned int *LDA,
-           const double *      X,
+           const double       *X,
            const unsigned int *INCX,
-           const double *      beta,
-           double *            C,
+           const double       *beta,
+           double             *C,
            const unsigned int *INCY);
     void
-    dgesv_(int *   n,
-           int *   nrhs,
+    dgesv_(int    *n,
+           int    *nrhs,
            double *a,
-           int *   lda,
-           int *   ipiv,
+           int    *lda,
+           int    *ipiv,
            double *b,
-           int *   ldb,
-           int *   info);
+           int    *ldb,
+           int    *info);
     void
     dsysv_(const char *UPLO,
-           const int * n,
-           const int * nrhs,
-           double *    a,
-           const int * lda,
-           int *       ipiv,
-           double *    b,
-           const int * ldb,
-           double *    work,
-           const int * lwork,
-           int *       info);
+           const int  *n,
+           const int  *nrhs,
+           double     *a,
+           const int  *lda,
+           int        *ipiv,
+           double     *b,
+           const int  *ldb,
+           double     *work,
+           const int  *lwork,
+           int        *info);
     void
     dscal_(const unsigned int *n,
-           const double *      alpha,
-           double *            x,
+           const double       *alpha,
+           double             *x,
            const unsigned int *inc);
     void
     sscal_(const unsigned int *n,
-           const float *       alpha,
-           float *             x,
+           const float        *alpha,
+           float              *x,
            const unsigned int *inc);
     void
-    zscal_(const unsigned int *        n,
+    zscal_(const unsigned int         *n,
            const std::complex<double> *alpha,
-           std::complex<double> *      x,
-           const unsigned int *        inc);
+           std::complex<double>       *x,
+           const unsigned int         *inc);
     void
-    zdscal_(const unsigned int *  n,
-            const double *        alpha,
+    zdscal_(const unsigned int   *n,
+            const double         *alpha,
             std::complex<double> *x,
-            const unsigned int *  inc);
+            const unsigned int   *inc);
     void
     daxpy_(const unsigned int *n,
-           const double *      alpha,
-           const double *      x,
+           const double       *alpha,
+           const double       *x,
            const unsigned int *incx,
-           double *            y,
+           double             *y,
            const unsigned int *incy);
     void
     saxpy_(const unsigned int *n,
-           const float *       alpha,
-           const float *       x,
+           const float        *alpha,
+           const float        *x,
            const unsigned int *incx,
-           float *             y,
+           float              *y,
            const unsigned int *incy);
     void
-    dgemm_(const char *        transA,
-           const char *        transB,
+    dgemm_(const char         *transA,
+           const char         *transB,
            const unsigned int *m,
            const unsigned int *n,
            const unsigned int *k,
-           const double *      alpha,
-           const double *      A,
+           const double       *alpha,
+           const double       *A,
            const unsigned int *lda,
-           const double *      B,
+           const double       *B,
            const unsigned int *ldb,
-           const double *      beta,
-           double *            C,
+           const double       *beta,
+           double             *C,
            const unsigned int *ldc);
     void
-    sgemm_(const char *        transA,
-           const char *        transB,
+    sgemm_(const char         *transA,
+           const char         *transB,
            const unsigned int *m,
            const unsigned int *n,
            const unsigned int *k,
-           const float *       alpha,
-           const float *       A,
+           const float        *alpha,
+           const float        *A,
            const unsigned int *lda,
-           const float *       B,
+           const float        *B,
            const unsigned int *ldb,
-           const float *       beta,
-           float *             C,
+           const float        *beta,
+           float              *C,
            const unsigned int *ldc);
     void
-    dsyevd_(const char *        jobz,
-            const char *        uplo,
+    dsyevd_(const char         *jobz,
+            const char         *uplo,
             const unsigned int *n,
-            double *            A,
+            double             *A,
             const unsigned int *lda,
-            double *            w,
-            double *            work,
+            double             *w,
+            double             *work,
             const unsigned int *lwork,
-            int *               iwork,
+            int                *iwork,
             const unsigned int *liwork,
-            int *               info);
+            int                *info);
     void
-    dsygvx_(const int *   itype,
-            const char *  jobz,
-            const char *  range,
-            const char *  uplo,
-            const int *   n,
-            double *      a,
-            const int *   lda,
-            double *      b,
-            const int *   ldb,
+    dsygvx_(const int    *itype,
+            const char   *jobz,
+            const char   *range,
+            const char   *uplo,
+            const int    *n,
+            double       *a,
+            const int    *lda,
+            double       *b,
+            const int    *ldb,
             const double *vl,
             const double *vu,
-            const int *   il,
-            const int *   iu,
+            const int    *il,
+            const int    *iu,
             const double *abstol,
-            int *         m,
-            double *      w,
-            double *      z,
-            const int *   ldz,
-            double *      work,
-            const int *   lwork,
-            int *         iwork,
-            int *         ifail,
-            int *         info);
+            int          *m,
+            double       *w,
+            double       *z,
+            const int    *ldz,
+            double       *work,
+            const int    *lwork,
+            int          *iwork,
+            int          *ifail,
+            int          *info);
     void
-    dsyevx_(const char *  jobz,
-            const char *  range,
-            const char *  uplo,
-            const int *   n,
-            double *      a,
-            const int *   lda,
+    dsyevx_(const char   *jobz,
+            const char   *range,
+            const char   *uplo,
+            const int    *n,
+            double       *a,
+            const int    *lda,
             const double *vl,
             const double *vu,
-            const int *   il,
-            const int *   iu,
+            const int    *il,
+            const int    *iu,
             const double *abstol,
-            int *         m,
-            double *      w,
-            double *      z,
-            const int *   ldz,
-            double *      work,
-            const int *   lwork,
-            int *         iwork,
-            int *         ifail,
-            int *         info);
+            int          *m,
+            double       *w,
+            double       *z,
+            const int    *ldz,
+            double       *work,
+            const int    *lwork,
+            int          *iwork,
+            int          *ifail,
+            int          *info);
     double
     dlamch_(const char *cmach);
     void
-    dsyevr_(const char *        jobz,
-            const char *        range,
-            const char *        uplo,
+    dsyevr_(const char         *jobz,
+            const char         *range,
+            const char         *uplo,
             const unsigned int *n,
-            double *            A,
+            double             *A,
             const unsigned int *lda,
-            const double *      vl,
-            const double *      vu,
+            const double       *vl,
+            const double       *vu,
             const unsigned int *il,
             const unsigned int *iu,
-            const double *      abstol,
+            const double       *abstol,
             const unsigned int *m,
-            double *            w,
-            double *            Z,
+            double             *w,
+            double             *Z,
             const unsigned int *ldz,
-            unsigned int *      isuppz,
-            double *            work,
-            const int *         lwork,
-            int *               iwork,
-            const int *         liwork,
-            int *               info);
+            unsigned int       *isuppz,
+            double             *work,
+            const int          *lwork,
+            int                *iwork,
+            const int          *liwork,
+            int                *info);
     void
-    dsyrk_(const char *        uplo,
-           const char *        trans,
+    dsyrk_(const char         *uplo,
+           const char         *trans,
            const unsigned int *n,
            const unsigned int *k,
-           const double *      alpha,
-           const double *      A,
+           const double       *alpha,
+           const double       *A,
            const unsigned int *lda,
-           const double *      beta,
-           double *            C,
+           const double       *beta,
+           double             *C,
            const unsigned int *ldc);
     void
-    dsyr_(const char *        uplo,
+    dsyr_(const char         *uplo,
           const unsigned int *n,
-          const double *      alpha,
-          const double *      X,
+          const double       *alpha,
+          const double       *X,
           const unsigned int *incx,
-          double *            A,
+          double             *A,
           const unsigned int *lda);
     void
-    dsyr2_(const char *        uplo,
+    dsyr2_(const char         *uplo,
            const unsigned int *n,
-           const double *      alpha,
-           const double *      x,
+           const double       *alpha,
+           const double       *x,
            const unsigned int *incx,
-           const double *      y,
+           const double       *y,
            const unsigned int *incy,
-           double *            a,
+           double             *a,
            const unsigned int *lda);
     void
     dcopy_(const unsigned int *n,
-           const double *      x,
+           const double       *x,
            const unsigned int *incx,
-           double *            y,
+           double             *y,
            const unsigned int *incy);
     void
     scopy_(const unsigned int *n,
-           const float *       x,
+           const float        *x,
            const unsigned int *incx,
-           float *             y,
+           float              *y,
            const unsigned int *incy);
     void
-    zgemm_(const char *                transA,
-           const char *                transB,
-           const unsigned int *        m,
-           const unsigned int *        n,
-           const unsigned int *        k,
+    zgemm_(const char                 *transA,
+           const char                 *transB,
+           const unsigned int         *m,
+           const unsigned int         *n,
+           const unsigned int         *k,
            const std::complex<double> *alpha,
            const std::complex<double> *A,
-           const unsigned int *        lda,
+           const unsigned int         *lda,
            const std::complex<double> *B,
-           const unsigned int *        ldb,
+           const unsigned int         *ldb,
            const std::complex<double> *beta,
-           std::complex<double> *      C,
-           const unsigned int *        ldc);
+           std::complex<double>       *C,
+           const unsigned int         *ldc);
     void
-    cgemm_(const char *               transA,
-           const char *               transB,
-           const unsigned int *       m,
-           const unsigned int *       n,
-           const unsigned int *       k,
+    cgemm_(const char                *transA,
+           const char                *transB,
+           const unsigned int        *m,
+           const unsigned int        *n,
+           const unsigned int        *k,
            const std::complex<float> *alpha,
            const std::complex<float> *A,
-           const unsigned int *       lda,
+           const unsigned int        *lda,
            const std::complex<float> *B,
-           const unsigned int *       ldb,
+           const unsigned int        *ldb,
            const std::complex<float> *beta,
-           std::complex<float> *      C,
-           const unsigned int *       ldc);
+           std::complex<float>       *C,
+           const unsigned int        *ldc);
     void
-    zheevd_(const char *          jobz,
-            const char *          uplo,
-            const unsigned int *  n,
+    zheevd_(const char           *jobz,
+            const char           *uplo,
+            const unsigned int   *n,
             std::complex<double> *A,
-            const unsigned int *  lda,
-            double *              w,
+            const unsigned int   *lda,
+            double               *w,
             std::complex<double> *work,
-            const unsigned int *  lwork,
-            double *              rwork,
-            const unsigned int *  lrwork,
-            int *                 iwork,
-            const unsigned int *  liwork,
-            int *                 info);
+            const unsigned int   *lwork,
+            double               *rwork,
+            const unsigned int   *lrwork,
+            int                  *iwork,
+            const unsigned int   *liwork,
+            int                  *info);
     void
-    zheevr_(const char *          jobz,
-            const char *          range,
-            const char *          uplo,
-            const unsigned int *  n,
+    zheevr_(const char           *jobz,
+            const char           *range,
+            const char           *uplo,
+            const unsigned int   *n,
             std::complex<double> *A,
-            const unsigned int *  lda,
-            const double *        vl,
-            const double *        vu,
-            const unsigned int *  il,
-            const unsigned int *  iu,
-            const double *        abstol,
-            const unsigned int *  m,
-            double *              w,
+            const unsigned int   *lda,
+            const double         *vl,
+            const double         *vu,
+            const unsigned int   *il,
+            const unsigned int   *iu,
+            const double         *abstol,
+            const unsigned int   *m,
+            double               *w,
             std::complex<double> *Z,
-            const unsigned int *  ldz,
-            unsigned int *        isuppz,
+            const unsigned int   *ldz,
+            unsigned int         *isuppz,
             std::complex<double> *work,
-            const int *           lwork,
-            double *              rwork,
-            const int *           lrwork,
-            int *                 iwork,
-            const int *           liwork,
-            int *                 info);
+            const int            *lwork,
+            double               *rwork,
+            const int            *lrwork,
+            int                  *iwork,
+            const int            *liwork,
+            int                  *info);
     void
-    zherk_(const char *                uplo,
-           const char *                trans,
-           const unsigned int *        n,
-           const unsigned int *        k,
-           const double *              alpha,
+    zherk_(const char                 *uplo,
+           const char                 *trans,
+           const unsigned int         *n,
+           const unsigned int         *k,
+           const double               *alpha,
            const std::complex<double> *A,
-           const unsigned int *        lda,
-           const double *              beta,
-           std::complex<double> *      C,
-           const unsigned int *        ldc);
+           const unsigned int         *lda,
+           const double               *beta,
+           std::complex<double>       *C,
+           const unsigned int         *ldc);
     void
-    zcopy_(const unsigned int *        n,
+    zcopy_(const unsigned int         *n,
            const std::complex<double> *x,
-           const unsigned int *        incx,
-           std::complex<double> *      y,
-           const unsigned int *        incy);
+           const unsigned int         *incx,
+           std::complex<double>       *y,
+           const unsigned int         *incy);
 
     void
-    ccopy_(const unsigned int *       n,
+    ccopy_(const unsigned int        *n,
            const std::complex<float> *x,
-           const unsigned int *       incx,
-           std::complex<float> *      y,
-           const unsigned int *       incy);
+           const unsigned int        *incx,
+           std::complex<float>       *y,
+           const unsigned int        *incy);
 
     std::complex<double>
-    zdotc_(const unsigned int *        N,
+    zdotc_(const unsigned int         *N,
            const std::complex<double> *X,
-           const unsigned int *        INCX,
+           const unsigned int         *INCX,
            const std::complex<double> *Y,
-           const unsigned int *        INCY);
+           const unsigned int         *INCY);
     double
     ddot_(const unsigned int *N,
-          const double *      X,
+          const double       *X,
           const unsigned int *INCX,
-          const double *      Y,
+          const double       *Y,
           const unsigned int *INCY);
 
     double
     dnrm2_(const unsigned int *n, const double *x, const unsigned int *incx);
 
     double
-    dznrm2_(const unsigned int *        n,
+    dznrm2_(const unsigned int         *n,
             const std::complex<double> *x,
-            const unsigned int *        incx);
+            const unsigned int         *incx);
     void
-    zaxpy_(const unsigned int *        n,
+    zaxpy_(const unsigned int         *n,
            const std::complex<double> *alpha,
            const std::complex<double> *x,
-           const unsigned int *        incx,
-           std::complex<double> *      y,
-           const unsigned int *        incy);
+           const unsigned int         *incx,
+           std::complex<double>       *y,
+           const unsigned int         *incy);
     void
-    caxpy_(const unsigned int *       n,
+    caxpy_(const unsigned int        *n,
            const std::complex<float> *alpha,
            const std::complex<float> *x,
-           const unsigned int *       incx,
-           std::complex<float> *      y,
-           const unsigned int *       incy);
+           const unsigned int        *incx,
+           std::complex<float>       *y,
+           const unsigned int        *incy);
     void
-    dpotrf_(const char *        uplo,
+    dpotrf_(const char         *uplo,
             const unsigned int *n,
-            double *            a,
+            double             *a,
             const unsigned int *lda,
-            int *               info);
+            int                *info);
     void
-    dpotri_(const char *        uplo,
+    dpotri_(const char         *uplo,
             const unsigned int *n,
-            double *            A,
+            double             *A,
             const unsigned int *lda,
-            int *               info);
+            int                *info);
 
     void
-    zpotrf_(const char *          uplo,
-            const unsigned int *  n,
+    zpotrf_(const char           *uplo,
+            const unsigned int   *n,
             std::complex<double> *a,
-            const unsigned int *  lda,
-            int *                 info);
+            const unsigned int   *lda,
+            int                  *info);
     void
-    dtrtri_(const char *        uplo,
-            const char *        diag,
+    dtrtri_(const char         *uplo,
+            const char         *diag,
             const unsigned int *n,
-            double *            a,
+            double             *a,
             const unsigned int *lda,
-            int *               info);
+            int                *info);
     void
-    ztrtri_(const char *          uplo,
-            const char *          diag,
-            const unsigned int *  n,
+    ztrtri_(const char           *uplo,
+            const char           *diag,
+            const unsigned int   *n,
             std::complex<double> *a,
-            const unsigned int *  lda,
-            int *                 info);
+            const unsigned int   *lda,
+            int                  *info);
 
     // LU decomoposition of a general matrix
     void
@@ -465,31 +465,31 @@ namespace dftfe
 
     // generate inverse of a matrix given its LU decomposition
     void
-    dgetri_(int *   N,
+    dgetri_(int    *N,
             double *A,
-            int *   lda,
-            int *   IPIV,
+            int    *lda,
+            int    *IPIV,
             double *WORK,
-            int *   lwork,
-            int *   INFO);
+            int    *lwork,
+            int    *INFO);
     // LU decomoposition of a general matrix
     void
-    zgetrf_(int *                 M,
-            int *                 N,
+    zgetrf_(int                  *M,
+            int                  *N,
             std::complex<double> *A,
-            int *                 lda,
-            int *                 IPIV,
-            int *                 INFO);
+            int                  *lda,
+            int                  *IPIV,
+            int                  *INFO);
 
     // generate inverse of a matrix given its LU decomposition
     void
-    zgetri_(int *                 N,
+    zgetri_(int                  *N,
             std::complex<double> *A,
-            int *                 lda,
-            int *                 IPIV,
+            int                  *lda,
+            int                  *IPIV,
             std::complex<double> *WORK,
-            int *                 lwork,
-            int *                 INFO);
+            int                  *lwork,
+            int                  *INFO);
   }
 #endif
 
@@ -522,13 +522,13 @@ namespace dftfe
     std::pair<double, double>
     generalisedLanczosLowerUpperBoundEigenSpectrum(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                BLASWrapperPtr,
-      operatorDFTClass<memorySpace> &                    operatorMatrix,
+                                                        &BLASWrapperPtr,
+      operatorDFTClass<memorySpace>                     &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &Z,
       dftfe::linearAlgebra::MultiVector<T, memorySpace> &tempVec,
-      const dftParameters &                              dftParams);
+      const dftParameters                               &dftParams);
 
 
 
@@ -572,8 +572,8 @@ namespace dftfe
     void
     reformulatedChebyshevFilter(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                 BLASWrapperPtr,
-      operatorDFTClass<memorySpace> &                     operatorMatrix,
+                                                         &BLASWrapperPtr,
+      operatorDFTClass<memorySpace>                      &operatorMatrix,
       dftfe::linearAlgebra::MultiVector<T1, memorySpace> &X,
       dftfe::linearAlgebra::MultiVector<T1, memorySpace> &Y,
       dftfe::linearAlgebra::MultiVector<T2, memorySpace> &Residual,

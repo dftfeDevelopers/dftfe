@@ -35,7 +35,7 @@ namespace dftfe
       const unsigned int                   matrixFreeMesh2VectorComponent,
       const unsigned int                   matrixFreeMesh2QuadratureComponent,
       const unsigned int                   verbosity,
-      const MPI_Comm &                     mpiComm,
+      const MPI_Comm                      &mpiComm,
       const bool                           useMemOptForCellWiseInterpolation)
     : d_mpiComm(mpiComm)
   {
@@ -224,14 +224,14 @@ namespace dftfe
   TransferDataBetweenMeshesIncompatiblePartitioning<memorySpace>::
     interpolateMesh1DataToMesh2QuadPoints(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                   BLASWrapperPtr,
+                                                           &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<dftfe::dataTypes::number,
                                               memorySpace> &inputVec,
       const unsigned int                                    numberOfVectors,
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-        &                outputQuadData,
+                        &outputQuadData,
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,
@@ -254,14 +254,14 @@ namespace dftfe
   TransferDataBetweenMeshesIncompatiblePartitioning<memorySpace>::
     interpolateMesh2DataToMesh1QuadPoints(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                                                   BLASWrapperPtr,
+                                                           &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<dftfe::dataTypes::number,
                                               memorySpace> &inputVec,
       const unsigned int                                    numberOfVectors,
       const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh2,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-        &                outputQuadData,
+                        &outputQuadData,
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,
@@ -285,7 +285,7 @@ namespace dftfe
     interpolateMesh2DataToMesh1QuadPoints(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                                BLASWrapperPtr,
+                                                        &BLASWrapperPtr,
       const distributedCPUVec<dftfe::dataTypes::number> &inputVec,
       const unsigned int                                 numberOfVectors,
       const dftfe::utils::MemoryStorage<dftfe::global_size_type,
@@ -293,7 +293,7 @@ namespace dftfe
         &mapVecToCells,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-        &                outputQuadData,
+                        &outputQuadData,
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,
@@ -316,7 +316,7 @@ namespace dftfe
     interpolateMesh1DataToMesh2QuadPoints(
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                                                BLASWrapperPtr,
+                                                        &BLASWrapperPtr,
       const distributedCPUVec<dftfe::dataTypes::number> &inputVec,
       const unsigned int                                 numberOfVectors,
       const dftfe::utils::MemoryStorage<dftfe::global_size_type,
@@ -324,7 +324,7 @@ namespace dftfe
         &fullFlattenedArrayCellLocalProcIndexIdMapParent,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-        &                outputQuadData,
+                        &outputQuadData,
       const unsigned int blockSizeOfInputData,
       const unsigned int blockSizeOfOutputData,
       const unsigned int startIndexOfInputData,

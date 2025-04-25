@@ -32,8 +32,8 @@ namespace dftfe
   {
     void
     MPIWriteOnFile::writeData(const std::vector<CompositeData *> &data,
-                              const std::string &                 fileName,
-                              const MPI_Comm &                    mpiComm)
+                              const std::string                  &fileName,
+                              const MPI_Comm                     &mpiComm)
     {
       // Get the rank and size in the original communicator
       int world_rank, world_size;

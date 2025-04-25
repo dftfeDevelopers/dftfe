@@ -70,11 +70,11 @@ namespace dftfe
   {
     double              Value = 0.0;
     std::vector<double> q1    = {3.141592653589793 / d_Rc,
-                              4.493409457909095 / d_Rc,
-                              5.76345919689455 / d_Rc};
+                                 4.493409457909095 / d_Rc,
+                                 5.76345919689455 / d_Rc};
     std::vector<double> q2    = {6.283185307179586 / d_Rc,
-                              7.7252518369375 / d_Rc,
-                              9.095011330476355 / d_Rc};
+                                 7.7252518369375 / d_Rc,
+                                 9.095011330476355 / d_Rc};
     // double alpha = -q1[d_lQuantumNumber] / q2[d_lQuantumNumber] *
     //                (std::sph_bessel(d_lQuantumNumber, q1[d_lQuantumNumber] *
     //                d_Rc)) / (std::sph_bessel(d_lQuantumNumber,

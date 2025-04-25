@@ -46,8 +46,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       copyValueType1ArrToValueType2ArrDeviceCall(
         const dftfe::size_type             size,
-        const ValueType1 *                 valueType1Arr,
-        ValueType2 *                       valueType2Arr,
+        const ValueType1                  *valueType1Arr,
+        ValueType2                        *valueType2Arr,
         const dftfe::utils::deviceStream_t streamId)
     {
       copyValueType1ArrToValueType2ArrDeviceKernel<<<
@@ -65,7 +65,7 @@ namespace dftfe
       const unsigned int          n,
       const std::complex<double> *x,
       const unsigned int          incx,
-      std::complex<double> *      y,
+      std::complex<double>       *y,
       const unsigned int          incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
@@ -83,7 +83,7 @@ namespace dftfe
       const unsigned int         n,
       const std::complex<float> *x,
       const unsigned int         incx,
-      std::complex<float> *      y,
+      std::complex<float>       *y,
       const unsigned int         incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
@@ -99,9 +99,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(
       const unsigned int n,
-      const double *     x,
+      const double      *x,
       const unsigned int incx,
-      double *           y,
+      double            *y,
       const unsigned int incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
@@ -112,9 +112,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(
       const unsigned int n,
-      const float *      x,
+      const float       *x,
       const unsigned int incx,
-      float *            y,
+      float             *y,
       const unsigned int incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
@@ -129,13 +129,13 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const float *      alpha,
-      const float *      A,
+      const float       *alpha,
+      const float       *A,
       const unsigned int lda,
-      const float *      B,
+      const float       *B,
       const unsigned int ldb,
-      const float *      beta,
-      float *            C,
+      const float       *beta,
+      float             *C,
       const unsigned int ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
@@ -199,7 +199,7 @@ namespace dftfe
       const std::complex<float> *B,
       const unsigned int         ldb,
       const std::complex<float> *beta,
-      std::complex<float> *      C,
+      std::complex<float>       *C,
       const unsigned int         ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
@@ -263,13 +263,13 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const double *     alpha,
-      const double *     A,
+      const double      *alpha,
+      const double      *A,
       const unsigned int lda,
-      const double *     B,
+      const double      *B,
       const unsigned int ldb,
-      const double *     beta,
-      double *           C,
+      const double      *beta,
+      double            *C,
       const unsigned int ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
@@ -325,7 +325,7 @@ namespace dftfe
       const std::complex<double> *B,
       const unsigned int          ldb,
       const std::complex<double> *beta,
-      std::complex<double> *      C,
+      std::complex<double>       *C,
       const unsigned int          ldc) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
@@ -374,13 +374,13 @@ namespace dftfe
       const char         transA,
       const unsigned int m,
       const unsigned int n,
-      const double *     alpha,
-      const double *     A,
+      const double      *alpha,
+      const double      *A,
       const unsigned int lda,
-      const double *     x,
+      const double      *x,
       const unsigned int incx,
-      const double *     beta,
-      double *           y,
+      const double      *beta,
+      double            *y,
       const unsigned int incy) const
     {
       dftfe::utils::deviceBlasOperation_t transa;
@@ -413,13 +413,13 @@ namespace dftfe
       const char         transA,
       const unsigned int m,
       const unsigned int n,
-      const float *      alpha,
-      const float *      A,
+      const float       *alpha,
+      const float       *A,
       const unsigned int lda,
-      const float *      x,
+      const float       *x,
       const unsigned int incx,
-      const float *      beta,
-      float *            y,
+      const float       *beta,
+      float             *y,
       const unsigned int incy) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
@@ -458,7 +458,7 @@ namespace dftfe
       const std::complex<double> *x,
       const unsigned int          incx,
       const std::complex<double> *beta,
-      std::complex<double> *      y,
+      std::complex<double>       *y,
       const unsigned int          incy) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
@@ -500,7 +500,7 @@ namespace dftfe
       const std::complex<float> *x,
       const unsigned int         incx,
       const std::complex<float> *beta,
-      std::complex<float> *      y,
+      std::complex<float>       *y,
       const unsigned int         incy) const
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
@@ -573,10 +573,10 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xaxpy(
       const unsigned int n,
-      const double *     alpha,
-      const double *     x,
+      const double      *alpha,
+      const double      *x,
       const unsigned int incx,
-      double *           y,
+      double            *y,
       const unsigned int incy) const
     {
       dftfe::utils::deviceBlasStatus_t status = cublasDaxpy(
@@ -590,7 +590,7 @@ namespace dftfe
       const std::complex<double> *alpha,
       const std::complex<double> *x,
       const unsigned int          incx,
-      std::complex<double> *      y,
+      std::complex<double>       *y,
       const unsigned int          incy) const
     {
       dftfe::utils::deviceBlasStatus_t status =
@@ -609,9 +609,9 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpby(
       const unsigned int n,
       const ValueType2   alpha,
-      const ValueType1 * x,
+      const ValueType1  *x,
       const ValueType2   beta,
-      ValueType1 *       y) const
+      ValueType1        *y) const
     {
       axpbyDeviceKernel<<<(n / dftfe::utils::DEVICE_BLOCK_SIZE) + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
@@ -632,10 +632,10 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const ValueType0   alpha,
-      const ValueType1 * A,
-      const ValueType2 * B,
-      const ValueType3 * D,
-      ValueType4 *       C) const
+      const ValueType1  *A,
+      const ValueType2  *B,
+      const ValueType3  *D,
+      ValueType4        *C) const
     {
       ApaBDDeviceKernel<<<(n * m / dftfe::utils::DEVICE_BLOCK_SIZE) + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
@@ -654,8 +654,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const ValueType *              addFromVec,
-      ValueType *                    addToVec,
+      const ValueType               *addFromVec,
+      ValueType                     *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
     {
       axpyStridedBlockAtomicAddDeviceKernel<<<
@@ -677,9 +677,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const ValueType1               a,
-      const ValueType1 *             s,
-      const ValueType2 *             addFromVec,
-      ValueType3 *                   addToVec,
+      const ValueType1              *s,
+      const ValueType2              *addFromVec,
+      ValueType3                    *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
     {
       axpyStridedBlockAtomicAddDeviceKernel<<<
@@ -703,8 +703,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const ValueType1               a,
-      const ValueType2 *             addFromVec,
-      ValueType3 *                   addToVec,
+      const ValueType2              *addFromVec,
+      ValueType3                    *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
     {
       axpyStridedBlockAtomicAddDeviceKernel<<<
@@ -724,12 +724,12 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
       const unsigned int N,
-      const double *     X,
+      const double      *X,
       const unsigned int INCX,
-      const double *     Y,
+      const double      *Y,
       const unsigned int INCY,
-      const MPI_Comm &   mpi_communicator,
-      double *           result) const
+      const MPI_Comm    &mpi_communicator,
+      double            *result) const
     {
       double localResult                      = 0.0;
       *result                                 = 0.0;
@@ -743,11 +743,11 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
       const unsigned int N,
-      const double *     X,
+      const double      *X,
       const unsigned int INCX,
-      const double *     Y,
+      const double      *Y,
       const unsigned int INCY,
-      double *           result) const
+      double            *result) const
     {
       dftfe::utils::deviceBlasStatus_t status = cublasDdot(
         d_deviceBlasHandle, int(N), X, int(INCX), Y, int(INCY), result);
@@ -762,7 +762,7 @@ namespace dftfe
       const unsigned int          INCX,
       const std::complex<double> *Y,
       const unsigned int          INCY,
-      std::complex<double> *      result) const
+      std::complex<double>       *result) const
     {
       dftfe::utils::deviceBlasStatus_t status =
         cublasZdotc(d_deviceBlasHandle,
@@ -782,8 +782,8 @@ namespace dftfe
       const unsigned int          INCX,
       const std::complex<double> *Y,
       const unsigned int          INCY,
-      const MPI_Comm &            mpi_communicator,
-      std::complex<double> *      result) const
+      const MPI_Comm             &mpi_communicator,
+      std::complex<double>       *result) const
     {
       std::complex<double> localResult = 0.0;
       *result                          = 0.0;
@@ -808,9 +808,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProduct(
       const unsigned int m,
-      const ValueType *  X,
-      const ValueType *  Y,
-      ValueType *        output) const
+      const ValueType   *X,
+      const ValueType   *Y,
+      ValueType         *output) const
     {
       hadamardProductKernel<<<(m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                               dftfe::utils::DEVICE_BLOCK_SIZE>>>(
@@ -824,9 +824,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProductWithConj(
       const unsigned int m,
-      const ValueType *  X,
-      const ValueType *  Y,
-      ValueType *        output) const
+      const ValueType   *X,
+      const ValueType   *Y,
+      ValueType         *output) const
     {
       hadamardProductWithConjKernel<<<(m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                                       dftfe::utils::DEVICE_BLOCK_SIZE>>>(
@@ -841,12 +841,12 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
       const unsigned int contiguousBlockSize,
       const unsigned int numContiguousBlocks,
-      const ValueType *  X,
-      const ValueType *  Y,
-      const ValueType *  onesVec,
-      ValueType *        tempVector,
-      ValueType *        tempResults,
-      ValueType *        result) const
+      const ValueType   *X,
+      const ValueType   *Y,
+      const ValueType   *onesVec,
+      ValueType         *tempVector,
+      ValueType         *tempResults,
+      ValueType         *result) const
     {
       hadamardProductWithConj(contiguousBlockSize * numContiguousBlocks,
                               X,
@@ -881,13 +881,13 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
       const unsigned int contiguousBlockSize,
       const unsigned int numContiguousBlocks,
-      const ValueType *  X,
-      const ValueType *  Y,
-      const ValueType *  onesVec,
-      ValueType *        tempVector,
-      ValueType *        tempResults,
-      const MPI_Comm &   mpi_communicator,
-      ValueType *        result) const
+      const ValueType   *X,
+      const ValueType   *Y,
+      const ValueType   *onesVec,
+      ValueType         *tempVector,
+      ValueType         *tempResults,
+      const MPI_Comm    &mpi_communicator,
+      ValueType         *result) const
 
     {
       MultiVectorXDot(contiguousBlockSize,
@@ -915,15 +915,15 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const double *     alpha,
-      const double *     A,
+      const double      *alpha,
+      const double      *A,
       const unsigned int lda,
       long long int      strideA,
-      const double *     B,
+      const double      *B,
       const unsigned int ldb,
       long long int      strideB,
-      const double *     beta,
-      double *           C,
+      const double      *beta,
+      double            *C,
       const unsigned int ldc,
       long long int      strideC,
       const int          batchCount) const
@@ -986,7 +986,7 @@ namespace dftfe
       const unsigned int          ldb,
       long long int               strideB,
       const std::complex<double> *beta,
-      std::complex<double> *      C,
+      std::complex<double>       *C,
       const unsigned int          ldc,
       long long int               strideC,
       const int                   batchCount) const
@@ -1043,15 +1043,15 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const float *      alpha,
-      const float *      A,
+      const float       *alpha,
+      const float       *A,
       const unsigned int lda,
       long long int      strideA,
-      const float *      B,
+      const float       *B,
       const unsigned int ldb,
       long long int      strideB,
-      const float *      beta,
-      float *            C,
+      const float       *beta,
+      float             *C,
       const unsigned int ldc,
       long long int      strideC,
       const int          batchCount) const
@@ -1126,7 +1126,7 @@ namespace dftfe
       const unsigned int         ldb,
       long long int              strideB,
       const std::complex<float> *beta,
-      std::complex<float> *      C,
+      std::complex<float>       *C,
       const unsigned int         ldc,
       long long int              strideC,
       const int                  batchCount) const
@@ -1193,13 +1193,13 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const double *     alpha,
-      const double *     A[],
+      const double      *alpha,
+      const double      *A[],
       const unsigned int lda,
-      const double *     B[],
+      const double      *B[],
       const unsigned int ldb,
-      const double *     beta,
-      double *           C[],
+      const double      *beta,
+      double            *C[],
       const unsigned int ldc,
       const int          batchCount) const
     {
@@ -1257,7 +1257,7 @@ namespace dftfe
       const std::complex<double> *B[],
       const unsigned int          ldb,
       const std::complex<double> *beta,
-      std::complex<double> *      C[],
+      std::complex<double>       *C[],
       const unsigned int          ldc,
       const int                   batchCount) const
     {
@@ -1311,13 +1311,13 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const float *      alpha,
-      const float *      A[],
+      const float       *alpha,
+      const float       *A[],
       const unsigned int lda,
-      const float *      B[],
+      const float       *B[],
       const unsigned int ldb,
-      const float *      beta,
-      float *            C[],
+      const float       *beta,
+      float             *C[],
       const unsigned int ldc,
       const int          batchCount) const
     {
@@ -1386,7 +1386,7 @@ namespace dftfe
       const std::complex<float> *B[],
       const unsigned int         ldb,
       const std::complex<float> *beta,
-      std::complex<float> *      C[],
+      std::complex<float>       *C[],
       const unsigned int         ldc,
       const int                  batchCount) const
     {
@@ -1449,8 +1449,8 @@ namespace dftfe
       const unsigned int          n,
       const std::complex<double> *x,
       const unsigned int          incx,
-      const MPI_Comm &            mpi_communicator,
-      double *                    result) const
+      const MPI_Comm             &mpi_communicator,
+      double                     *result) const
     {
       double localresult = 0.0;
       *result            = 0.0;
@@ -1469,10 +1469,10 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xnrm2(
       const unsigned int n,
-      const double *     x,
+      const double      *x,
       const unsigned int incx,
-      const MPI_Comm &   mpi_communicator,
-      double *           result) const
+      const MPI_Comm    &mpi_communicator,
+      double            *result) const
     {
       double localresult = 0.0;
       *result            = 0.0;
@@ -1487,8 +1487,8 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::add(
-      double *               y,
-      const double *         x,
+      double                *y,
+      const double          *x,
       const double           alpha,
       const dftfe::size_type size)
     {
@@ -1500,9 +1500,9 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::addVecOverContinuousIndex(
       const dftfe::size_type numContiguousBlocks,
       const dftfe::size_type contiguousBlockSize,
-      const ValueType *      input1,
-      const ValueType *      input2,
-      ValueType *            output)
+      const ValueType       *input1,
+      const ValueType       *input2,
+      ValueType             *output)
     {
       addVecOverContinuousIndexKernel<<<
         (numContiguousBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1518,7 +1518,7 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      ValueType1 *           x,
+      ValueType1            *x,
       const ValueType2       alpha,
       const dftfe::size_type n) const
     {
@@ -1534,8 +1534,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyComplexArrToRealArrs(
       const dftfe::size_type  size,
       const ValueTypeComplex *complexArr,
-      ValueTypeReal *         realArr,
-      ValueTypeReal *         imagArr)
+      ValueTypeReal          *realArr,
+      ValueTypeReal          *imagArr)
     {
       copyComplexArrToRealArrsDeviceKernel<<<
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1552,9 +1552,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyRealArrsToComplexArr(
       const dftfe::size_type size,
-      const ValueTypeReal *  realArr,
-      const ValueTypeReal *  imagArr,
-      ValueTypeComplex *     complexArr)
+      const ValueTypeReal   *realArr,
+      const ValueTypeReal   *imagArr,
+      ValueTypeComplex      *complexArr)
     {
       copyRealArrsToComplexArrDeviceKernel<<<
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1569,8 +1569,8 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const ValueType1 *     valueType1Arr,
-                                       ValueType2 *           valueType2Arr)
+                                       const ValueType1      *valueType1Arr,
+                                       ValueType2            *valueType2Arr)
     {
       copyValueType1ArrToValueType2ArrDeviceKernel<<<
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1589,9 +1589,9 @@ namespace dftfe
         const dftfe::size_type B,
         const dftfe::size_type DRem,
         const dftfe::size_type D,
-        const ValueType1 *     valueType1SrcArray,
-        ValueType1 *           valueType1DstArray,
-        ValueType2 *           valueType2DstArray)
+        const ValueType1      *valueType1SrcArray,
+        ValueType1            *valueType1DstArray,
+        ValueType2            *valueType2DstArray)
     {
       const dftfe::size_type size = D * B;
       copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel<<<
@@ -1614,8 +1614,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const ValueType1 *             copyFromVec,
-      ValueType2 *                   copyToVecBlock,
+      const ValueType1              *copyFromVec,
+      ValueType2                    *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       stridedCopyToBlockDeviceKernel<<<(contiguousBlockSize *
@@ -1636,8 +1636,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const dftfe::size_type         startingVecId,
-      const ValueType1 *             copyFromVec,
-      ValueType2 *                   copyToVecBlock,
+      const ValueType1              *copyFromVec,
+      ValueType2                    *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       stridedCopyToBlockDeviceKernel<<<(contiguousBlockSize *
@@ -1660,8 +1660,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyFromBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const ValueType1 *             copyFromVecBlock,
-      ValueType2 *                   copyToVec,
+      const ValueType1              *copyFromVecBlock,
+      ValueType2                    *copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       stridedCopyFromBlockDeviceKernel<<<(contiguousBlockSize *
@@ -1684,8 +1684,8 @@ namespace dftfe
                                        const dftfe::size_type blockSizeFrom,
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
-                                       const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec) const
+                                       const ValueType1      *copyFromVec,
+                                       ValueType2            *copyToVec) const
     {
       stridedCopyToBlockConstantStrideDeviceKernel<<<
         (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1707,8 +1707,8 @@ namespace dftfe
       const dftfe::size_type numBlocks,
       const dftfe::size_type startingToId,
       const dftfe::size_type startingFromId,
-      const ValueType1 *     copyFromVec,
-      ValueType2 *           copyToVec)
+      const ValueType1      *copyFromVec,
+      ValueType2            *copyToVec)
     {
       stridedCopyConstantStrideDeviceKernel<<<
         (blockSize * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1731,8 +1731,8 @@ namespace dftfe
                                          const dftfe::size_type blockSizeFrom,
                                          const dftfe::size_type numBlocks,
                                          const dftfe::size_type startingId,
-                                         const ValueType1 *     copyFromVec,
-                                         ValueType2 *           copyToVec)
+                                         const ValueType1      *copyFromVec,
+                                         ValueType2            *copyToVec)
     {
       stridedCopyFromBlockConstantStrideDeviceKernel<<<
         (blockSizeFrom * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -1751,9 +1751,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const ValueType1               a,
-      const ValueType1 *             s,
-      const ValueType2 *             copyFromVec,
-      ValueType2 *                   copyToVecBlock,
+      const ValueType1              *s,
+      const ValueType2              *copyFromVec,
+      ValueType2                    *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       stridedCopyToBlockScaleDeviceKernel<<<
@@ -1776,8 +1776,8 @@ namespace dftfe
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
       const ValueType1       a,
-      const ValueType1 *     s,
-      ValueType2 *           x)
+      const ValueType1      *s,
+      ValueType2            *x)
     {
       stridedBlockScaleDeviceKernel<<<(contiguousBlockSize *
                                        numContiguousBlocks) /
@@ -1797,8 +1797,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleColumnWise(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType *      beta,
-      ValueType *            x)
+      const ValueType       *beta,
+      ValueType             *x)
     {
       stridedBlockScaleColumnWiseKernel<<<(contiguousBlockSize *
                                            numContiguousBlocks) /
@@ -1816,9 +1816,9 @@ namespace dftfe
       stridedBlockScaleAndAddColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const ValueType *      x,
-        const ValueType *      beta,
-        ValueType *            y)
+        const ValueType       *x,
+        const ValueType       *beta,
+        ValueType             *y)
     {
       stridedBlockScaleAndAddColumnWiseKernel<<<
         (contiguousBlockSize * numContiguousBlocks) /
@@ -1837,10 +1837,10 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType1 *     addFromVec,
-      const ValueType2 *     scalingVector,
+      const ValueType1      *addFromVec,
+      const ValueType2      *scalingVector,
       const ValueType2       a,
-      ValueType1 *           addToVec) const
+      ValueType1            *addToVec) const
     {
       stridedBlockAxpyDeviceKernel<<<(contiguousBlockSize *
                                       numContiguousBlocks) /
@@ -1860,11 +1860,11 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType1 *     addFromVec,
-      const ValueType2 *     scalingVector,
+      const ValueType1      *addFromVec,
+      const ValueType2      *scalingVector,
       const ValueType2       a,
       const ValueType2       b,
-      ValueType1 *           addToVec) const
+      ValueType1            *addToVec) const
     {
       stridedBlockAxpByDeviceKernel<<<(contiguousBlockSize *
                                        numContiguousBlocks) /
@@ -1886,11 +1886,11 @@ namespace dftfe
       stridedBlockScaleAndAddTwoVecColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const ValueType *      x,
-        const ValueType *      alpha,
-        const ValueType *      y,
-        const ValueType *      beta,
-        ValueType *            z)
+        const ValueType       *x,
+        const ValueType       *alpha,
+        const ValueType       *y,
+        const ValueType       *beta,
+        ValueType             *z)
     {
       stridedBlockScaleAndAddTwoVecColumnWiseKernel<<<
         (contiguousBlockSize * numContiguousBlocks) /
@@ -1911,8 +1911,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
       const dftfe::size_type numberofVectors,
       const dftfe::size_type sizeOfVector,
-      ValueType1 *           X,
-      ValueType2 *           D)
+      ValueType1            *X,
+      ValueType2            *D)
     {
       computeRightDiagonalScaleKernel<<<
         (numberofVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /

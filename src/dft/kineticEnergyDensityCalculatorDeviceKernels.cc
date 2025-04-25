@@ -29,8 +29,8 @@ namespace dftfe
                                             const unsigned int numCells,
                                             const unsigned int nQuadsPerCell,
                                             const double       kCoordSq,
-                                            double *           kCoord,
-                                            double *           wfcContributions,
+                                            double            *kCoord,
+                                            double            *wfcContributions,
                                             double *gradwfcContributions,
                                             double *kedCellsWfcContributions)
     {
@@ -71,10 +71,10 @@ namespace dftfe
       const unsigned int                 numCells,
       const unsigned int                 nQuadsPerCell,
       const double                       kCoordSq,
-      double *                           kCoord,
+      double                            *kCoord,
       dftfe::utils::deviceDoubleComplex *wfcContributions,
       dftfe::utils::deviceDoubleComplex *gradwfcContributions,
-      double *                           kedCellsWfcContributions)
+      double                            *kedCellsWfcContributions)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
       const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
@@ -124,16 +124,16 @@ namespace dftfe
   void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    partialOccupVec,
-    double *                                    kcoord,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                gradWfcQuadPointData,
-    double *        kineticEnergyDensityCellsWfcContributions,
-    double *        kineticEnergyDensity,
+    double                                     *partialOccupVec,
+    double                                     *kcoord,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *gradWfcQuadPointData,
+    double         *kineticEnergyDensityCellsWfcContributions,
+    double         *kineticEnergyDensity,
     const MPI_Comm &mpiCommDomain)
   {
     const unsigned int cellsBlockSize      = cellRange.second - cellRange.first;
@@ -199,16 +199,16 @@ namespace dftfe
   template void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    partialOccupVec,
-    double *                                    kcoord,
-    dataTypes::number *                         wfcQuadPointData,
-    dataTypes::number *                         gradWfcQuadPointData,
-    double *        kineticEnergyCellsWfcContributions,
-    double *        kineticEnergyDensity,
+    double                                     *partialOccupVec,
+    double                                     *kcoord,
+    dataTypes::number                          *wfcQuadPointData,
+    dataTypes::number                          *gradWfcQuadPointData,
+    double         *kineticEnergyCellsWfcContributions,
+    double         *kineticEnergyDensity,
     const MPI_Comm &mpiCommDomain);
 
 } // namespace dftfe

@@ -50,12 +50,12 @@ namespace dftfe
         dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
                                                pseudopotentialClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
-      dftParameters *                          dftParamsPtr,
+      dftParameters                           *dftParamsPtr,
       const unsigned int                       densityQuadratureID,
       const unsigned int                       lpspQuadratureID,
       const unsigned int                       feOrderPlusOneQuadratureID,
-      const MPI_Comm &                         mpi_comm_parent,
-      const MPI_Comm &                         mpi_comm_domain);
+      const MPI_Comm                          &mpi_comm_parent,
+      const MPI_Comm                          &mpi_comm_domain);
 
     void
     init(const std::vector<double> &kPointCoordinates,
@@ -104,7 +104,7 @@ namespace dftfe
       std::shared_ptr<AuxDensityMatrix<memorySpace>>
         auxDensityXCRepresentationPtr,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                phiValues,
+                        &phiValues,
       const unsigned int spinIndex = 0);
 
     /**
@@ -116,7 +116,7 @@ namespace dftfe
     setVEff(
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &                vKS_quadValues,
+                        &vKS_quadValues,
       const unsigned int spinIndex);
 
     void
@@ -135,7 +135,7 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &gradRhoPrimeValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &                phiPrimeValues,
+                        &phiPrimeValues,
       const unsigned int spinIndex);
 
     /**
@@ -193,12 +193,12 @@ namespace dftfe
      */
     void
     HX(dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-         &          src,
+                   &src,
        const double scalarHX,
        const double scalarY,
        const double scalarX,
        dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-         &        dst,
+                 &dst,
        const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
     /**
      * @brief Computing Y = scalarHX*M^{1/2}HM^{1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision. Used for TD-DFT and Inverse DFT calc.
@@ -369,7 +369,7 @@ namespace dftfe
       dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
                                              d_pseudopotentialClassPtr;
     std::shared_ptr<excManager<memorySpace>> d_excManagerPtr;
-    dftParameters *                          d_dftParamsPtr;
+    dftParameters                           *d_dftParamsPtr;
 
     std::vector<dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>>
       d_cellHamiltonianMatrix;

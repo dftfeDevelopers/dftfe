@@ -111,11 +111,11 @@ namespace dftfe
 
     void
     excSpinUnpolarized(
-      const double *                       rho,
-      const double *                       sigma,
+      const double                        *rho,
+      const double                        *sigma,
       const unsigned int                   numPoints,
-      double *                             exc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol,
       const double                         sThreshold)
@@ -179,11 +179,11 @@ namespace dftfe
 
     void
     excSpinPolarized(
-      const double *                       rho,
-      const double *                       sigma,
+      const double                        *rho,
+      const double                        *sigma,
       const unsigned int                   numPoints,
-      double *                             exc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol,
       const double                         sThreshold)
@@ -251,12 +251,12 @@ namespace dftfe
 
     void
     dexcSpinUnpolarized(
-      const double *                       rho,
-      const double *                       sigma,
+      const double                        *rho,
+      const double                        *sigma,
       const unsigned int                   numPoints,
-      double *                             exc,
-      double *                             dexc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      double                              *dexc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol,
       const double                         sThreshold)
@@ -317,7 +317,7 @@ namespace dftfe
       auto excTensor   = model->forward(input).toTensor();
       auto grad_output = torch::ones_like(excTensor);
       auto vxcTensor   = torch::autograd::grad({excTensor},
-                                             {rhoTensor},
+                                               {rhoTensor},
                                              /*grad_outputs=*/{grad_output},
                                              /*create_graph=*/true)[0];
       for (unsigned int i = 0; i < numPoints; ++i)
@@ -332,12 +332,12 @@ namespace dftfe
 
     void
     dexcSpinPolarized(
-      const double *                       rho,
-      const double *                       sigma,
+      const double                        *rho,
+      const double                        *sigma,
       const unsigned int                   numPoints,
-      double *                             exc,
-      double *                             dexc,
-      torch::jit::script::Module *         model,
+      double                              *exc,
+      double                              *dexc,
+      torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
       const double                         rhoTol,
       const double                         sThreshold)
@@ -399,7 +399,7 @@ namespace dftfe
       auto excTensor   = model->forward(input).toTensor();
       auto grad_output = torch::ones_like(excTensor);
       auto vxcTensor   = torch::autograd::grad({excTensor},
-                                             {rhoTensor},
+                                               {rhoTensor},
                                              /*grad_outputs=*/{grad_output},
                                              /*create_graph=*/true)[0];
       for (unsigned int i = 0; i < numPoints; ++i)
@@ -464,10 +464,10 @@ namespace dftfe
   }
 
   void
-  NNGGA::evaluateexc(const double *     rho,
-                     const double *     sigma,
+  NNGGA::evaluateexc(const double      *rho,
+                     const double      *sigma,
                      const unsigned int numPoints,
-                     double *           exc)
+                     double            *exc)
   {
     if (!d_isSpinPolarized)
       excSpinUnpolarized(rho,
@@ -490,11 +490,11 @@ namespace dftfe
   }
 
   void
-  NNGGA::evaluatevxc(const double *     rho,
-                     const double *     sigma,
+  NNGGA::evaluatevxc(const double      *rho,
+                     const double      *sigma,
                      const unsigned int numPoints,
-                     double *           exc,
-                     double *           dexc)
+                     double            *exc,
+                     double            *dexc)
   {
     if (!d_isSpinPolarized)
       dexcSpinUnpolarized(rho,

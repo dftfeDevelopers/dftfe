@@ -39,7 +39,7 @@ namespace dftfe
       const unsigned int                   lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,
@@ -62,7 +62,7 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              hessianRhoCoreAtoms,
+                                                      &hessianRhoCoreAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     int this_process;
@@ -580,7 +580,7 @@ namespace dftfe
           gradRhoSpin0QuadsVect(numQuadPoints, zeroTensor3);
         dealii::AlignedVector<
           dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-                                                               gradRhoSpin1QuadsVect(numQuadPoints, zeroTensor3);
+          gradRhoSpin1QuadsVect(numQuadPoints, zeroTensor3);
         dealii::AlignedVector<dealii::VectorizedArray<double>> excQuads(
           numQuadPoints, dealii::make_vectorized_array(0.0));
         dealii::AlignedVector<dealii::VectorizedArray<double>>
@@ -928,7 +928,7 @@ namespace dftfe
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -940,7 +940,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtomsElectro,
+                                                      &pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
     dealii::FEEvaluation<

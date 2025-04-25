@@ -33,44 +33,44 @@ namespace dftfe
 
     void
     callaxpy(const unsigned int *n,
-             const double *      alpha,
-             double *            x,
+             const double       *alpha,
+             double             *x,
              const unsigned int *incx,
-             double *            y,
+             double             *y,
              const unsigned int *incy)
     {
       daxpy_(n, alpha, x, incx, y, incy);
     }
 
     void
-    callaxpy(const unsigned int *        n,
+    callaxpy(const unsigned int         *n,
              const std::complex<double> *alpha,
-             std::complex<double> *      x,
-             const unsigned int *        incx,
-             std::complex<double> *      y,
-             const unsigned int *        incy)
+             std::complex<double>       *x,
+             const unsigned int         *incx,
+             std::complex<double>       *y,
+             const unsigned int         *incy)
     {
       zaxpy_(n, alpha, x, incx, y, incy);
     }
 
     void
     callaxpy(const unsigned int *n,
-             const float *       alpha,
-             float *             x,
+             const float        *alpha,
+             float              *x,
              const unsigned int *incx,
-             float *             y,
+             float              *y,
              const unsigned int *incy)
     {
       saxpy_(n, alpha, x, incx, y, incy);
     }
 
     void
-    callaxpy(const unsigned int *       n,
+    callaxpy(const unsigned int        *n,
              const std::complex<float> *alpha,
-             std::complex<float> *      x,
-             const unsigned int *       incx,
-             std::complex<float> *      y,
-             const unsigned int *       incy)
+             std::complex<float>       *x,
+             const unsigned int        *incx,
+             std::complex<float>       *y,
+             const unsigned int        *incy)
     {
       caxpy_(n, alpha, x, incx, y, incy);
     }
@@ -99,7 +99,7 @@ namespace dftfe
     void
     constraintMatrixInfo<memorySpace>::initialize(
       const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-        &                                      partitioner,
+                                              &partitioner,
       const dealii::AffineConstraints<double> &constraintMatrixData)
 
     {

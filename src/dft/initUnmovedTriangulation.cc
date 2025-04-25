@@ -86,7 +86,8 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  void dftClass<FEOrder, FEOrderElectro, memorySpace>::initUnmovedTriangulation(
+  void
+  dftClass<FEOrder, FEOrderElectro, memorySpace>::initUnmovedTriangulation(
     dealii::parallel::distributed::Triangulation<3> &triangulation)
   {
     computing_timer.enter_subsection("unmoved setup");
@@ -369,7 +370,8 @@ namespace dftfe
           std::make_shared<AuxDensityMatrixFE<memorySpace>>();
       }
     else if (d_dftParamsPtr->auxBasisTypeXC == "SLATER")
-      {}
+      {
+      }
 
     computing_timer.leave_subsection("unmoved setup");
   }

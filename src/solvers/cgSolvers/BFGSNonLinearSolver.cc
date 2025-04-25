@@ -30,7 +30,7 @@ namespace dftfe
     const bool         useRFOStep,
     const unsigned int maxNumberIterations,
     const unsigned int debugLevel,
-    const MPI_Comm &   mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_parent,
     const double       trustRadius_maximum,
     const double       trustRadius_initial,
     const double       trustRadius_minimum,
@@ -186,7 +186,7 @@ namespace dftfe
     // Compute rank one symmetric update  P=P+faa^T.
     //
     void
-    computeSymmetricRankOneUpdate(double &             f,
+    computeSymmetricRankOneUpdate(double              &f,
                                   std::vector<double> &a,
                                   std::vector<double> &P)
     {
@@ -686,7 +686,7 @@ namespace dftfe
   //
   bool
   BFGSNonLinearSolver::updateSolution(const std::vector<double> &step,
-                                      nonlinearSolverProblem &   problem)
+                                      nonlinearSolverProblem    &problem)
   {
     std::vector<double> incrementVector;
 

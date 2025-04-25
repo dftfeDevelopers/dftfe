@@ -278,7 +278,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &                sphericalFunctionKetTimesVectorParFlattened,
+                        &sphericalFunctionKetTimesVectorParFlattened,
       const bool         flagCopyResultsToMatrix = true,
       const unsigned int kPointIndex             = 0);
 
@@ -302,7 +302,7 @@ namespace dftfe
     void
     applyAllReduceOnCconjtransX(
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
+                &sphericalFunctionKetTimesVectorParFlattened,
       const bool skipComm = false);
 
     /**
@@ -312,7 +312,7 @@ namespace dftfe
      * elements
      */
     void
-    applyCconjtransOnX(const ValueType *                           X,
+    applyCconjtransOnX(const ValueType                            *X,
                        const std::pair<unsigned int, unsigned int> cellRange);
 
 
@@ -354,7 +354,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
+                &sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
 
 
@@ -389,7 +389,7 @@ namespace dftfe
      * elements
      */
     void
-    applyCOnVCconjtransX(ValueType *                                 Xout,
+    applyCOnVCconjtransX(ValueType                                  *Xout,
                          const std::pair<unsigned int, unsigned int> cellRange);
 
 
@@ -420,7 +420,7 @@ namespace dftfe
      */
     void
     paddingCouplingMatrix(const std::vector<ValueType> &entries,
-                          std::vector<ValueType> &      entriesPadded,
+                          std::vector<ValueType>       &entriesPadded,
                           const CouplingStructure       couplingtype);
 
     /**
@@ -462,7 +462,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
+                &sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
 
     /**
@@ -485,7 +485,7 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &        sphericalFunctionKetTimesVectorParFlattened,
+                &sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
 
     bool                d_AllReduceCompleted;
@@ -652,7 +652,7 @@ namespace dftfe
     std::vector<dftfe::global_size_type>
       d_flattenedNonLocalCellDofIndexToProcessDofIndexVector;
     dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-                              d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
+      d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
     std::vector<unsigned int> d_nonlocalElemIdToCellIdVector;
     bool                      d_computeSphericalFnTimesX;
     bool                      d_useGlobalCMatrix;
@@ -726,7 +726,7 @@ namespace dftfe
                 d_sphericalFnTimesWavefunctionMatrix;
     ValueType **hostPointerCDagger, **hostPointerCDaggeOutTemp,
       **hostWfcPointers;
-    ValueType * d_wfcStartPointer;
+    ValueType  *d_wfcStartPointer;
     ValueType **devicePointerCDagger, **devicePointerCDaggerOutTemp,
       **deviceWfcPointers;
     std::vector<unsigned int> d_nonlocalElemIdToLocalElemIdMap;
@@ -739,7 +739,7 @@ namespace dftfe
     // Data structures moved from KSOperatorDevice
     std::vector<ValueType> d_cellHamiltonianMatrixNonLocalFlattenedConjugate;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                           d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice;
+      d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice;
     std::vector<ValueType> d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice;
@@ -762,7 +762,7 @@ namespace dftfe
                      d_sphericalFnIdsPaddedParallelNumberingMapDevice;
     std::vector<int> d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec;
     dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE>
-                              d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice;
+      d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice;
     std::vector<unsigned int> d_cellNodeIdMapNonLocalToLocal;
 
     dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>

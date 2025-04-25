@@ -45,9 +45,9 @@ namespace dftfe
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                                basisOperationsPtr,
+                                      &basisOperationsPtr,
     dealii::AffineConstraints<double> &constraintMatrixPRefined,
-    distributedCPUVec<double> &        x,
+    distributedCPUVec<double>         &x,
     double                             kerkerMixingParameter,
     const unsigned int                 matrixFreeVectorComponent,
     const unsigned int                 matrixFreeQuadratureComponent)
@@ -150,7 +150,7 @@ namespace dftfe
   template <unsigned int FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::precondition_Jacobi(
-    distributedCPUVec<double> &      dst,
+    distributedCPUVec<double>       &dst,
     const distributedCPUVec<double> &src,
     const double                     omega) const
   {
@@ -222,9 +222,9 @@ namespace dftfe
   template <unsigned int FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::AX(
-    const dealii::MatrixFree<3, double> &        matrixFreeData,
-    distributedCPUVec<double> &                  dst,
-    const distributedCPUVec<double> &            src,
+    const dealii::MatrixFree<3, double>         &matrixFreeData,
+    distributedCPUVec<double>                   &dst,
+    const distributedCPUVec<double>             &src,
     const std::pair<unsigned int, unsigned int> &cell_range) const
   {
     dealii::FEEvaluation<3, FEOrderElectro, C_num1DQuad<FEOrderElectro>()>

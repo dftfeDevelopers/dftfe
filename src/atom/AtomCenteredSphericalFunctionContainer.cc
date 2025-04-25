@@ -76,9 +76,9 @@ namespace dftfe
   }
   void
   AtomCenteredSphericalFunctionContainer::initaliseCoordinates(
-    const std::vector<double> &             atomCoords,
+    const std::vector<double>              &atomCoords,
     const std::vector<std::vector<double>> &periodicCoords,
-    const std::vector<int> &                imageIds)
+    const std::vector<int>                 &imageIds)
   {
     d_atomCoords = atomCoords;
     setImageCoordinates(imageIds, periodicCoords);
@@ -93,7 +93,7 @@ namespace dftfe
 
   void
   AtomCenteredSphericalFunctionContainer::setImageCoordinates(
-    const std::vector<int> &                imageIds,
+    const std::vector<int>                 &imageIds,
     const std::vector<std::vector<double>> &periodicCoords)
   {
     d_periodicImageCoord.clear();
@@ -212,8 +212,8 @@ namespace dftfe
   void
   AtomCenteredSphericalFunctionContainer::
     getTotalAtomsAndNonLocalElementsInCurrentProcessor(
-      unsigned int &             totalAtomsInCurrentProcessor,
-      unsigned int &             totalNonLocalElements,
+      unsigned int              &totalAtomsInCurrentProcessor,
+      unsigned int              &totalNonLocalElements,
       std::vector<unsigned int> &numberCellsForEachAtom,
       std::vector<unsigned int> &numberCellsAccumNonLocalAtoms,
       std::vector<unsigned int> &iElemNonLocalToElemIndexMap)
@@ -301,7 +301,7 @@ namespace dftfe
     const std::vector<std::vector<dealii::CellId>>
       &elementIdsInAtomCompactSupport,
     const std::vector<std::vector<unsigned int>>
-      &                              elementIndexesInAtomCompactSupport,
+                                    &elementIndexesInAtomCompactSupport,
     const std::vector<unsigned int> &atomIdsInCurrentProcess,
     unsigned int                     numberElements)
   {
@@ -336,7 +336,7 @@ namespace dftfe
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<NumberType, double, dftfe::utils::MemorySpace::HOST>>
-      &                basisOperationsPtr,
+                      &basisOperationsPtr,
     const unsigned int quadratureIndex,
     const double       cutOffVal,
     const unsigned int cutOffType)
@@ -568,7 +568,7 @@ namespace dftfe
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                basisOperationsPtr,
+                      &basisOperationsPtr,
     const unsigned int quadratureIndex,
     const double       cutOffVal,
     const unsigned int cutOffType);
@@ -579,7 +579,7 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<std::complex<double>,
                                       double,
                                       dftfe::utils::MemorySpace::HOST>>
-      &                basisOperationsPtr,
+                      &basisOperationsPtr,
     const unsigned int quadratureIndex,
     const double       cutOffVal,
     const unsigned int cutOffType);

@@ -31,9 +31,9 @@ namespace dftfe
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     computeConfigurationalForceEselfLinFE(
-      const dealii::DoFHandler<3> &                    dofHandlerElectro,
+      const dealii::DoFHandler<3>                     &dofHandlerElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const dealii::MatrixFree<3, double> &            matrixFreeDataElectro,
+      const dealii::MatrixFree<3, double>             &matrixFreeDataElectro,
       const unsigned int smearedChargeQuadratureId)
   {
     const std::vector<std::vector<double>> &atomLocations =

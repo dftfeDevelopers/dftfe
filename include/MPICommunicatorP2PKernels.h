@@ -69,7 +69,7 @@ namespace dftfe
       static void
       accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
         const MemoryStorage<ValueTypeComm, memorySpace> &recvBuffer,
-        const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
+        const SizeTypeVector                  &ownedLocalIndicesForTargetProcs,
         const size_type                        blockSize,
         const size_type                        locallyOwnedSize,
         const size_type                        ghostSize,
@@ -88,7 +88,7 @@ namespace dftfe
       static void
       accumInsertLocallyOwnedContrRecvBufferFromTargetProcs(
         const MemoryStorage<ValueTypeComm, memorySpace> &recvBuffer,
-        const SizeTypeVector &                 ownedLocalIndicesForTargetProcs,
+        const SizeTypeVector                  &ownedLocalIndicesForTargetProcs,
         const size_type                        blockSize,
         const size_type                        locallyOwnedSize,
         const size_type                        ghostSize,
@@ -104,7 +104,7 @@ namespace dftfe
       static void
       copyValueType1ArrToValueType2Arr(const size_type   blockSize,
                                        const ValueType1 *type1Array,
-                                       ValueType2 *      type2Array);
+                                       ValueType2       *type2Array);
     };
 
 #ifdef DFTFE_WITH_DEVICE
@@ -119,10 +119,10 @@ namespace dftfe
         const MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
           &dataArray,
         const MemoryStorage<size_type, dftfe::utils::MemorySpace::DEVICE>
-          &             ownedLocalIndicesForTargetProcs,
+                       &ownedLocalIndicesForTargetProcs,
         const size_type blockSize,
         MemoryStorage<ValueTypeComm, dftfe::utils::MemorySpace::DEVICE>
-          &                          sendBuffer,
+                                    &sendBuffer,
         dftfe::utils::deviceStream_t deviceCommStream);
 
       template <typename ValueTypeComm>
@@ -131,7 +131,7 @@ namespace dftfe
         const MemoryStorage<ValueTypeComm, dftfe::utils::MemorySpace::DEVICE>
           &recvBuffer,
         const MemoryStorage<size_type, dftfe::utils::MemorySpace::DEVICE>
-          &             ownedLocalIndicesForTargetProcs,
+                       &ownedLocalIndicesForTargetProcs,
         const size_type blockSize,
         const size_type locallyOwnedSize,
         const size_type ghostSize,
@@ -153,7 +153,7 @@ namespace dftfe
         const MemoryStorage<ValueTypeComm, dftfe::utils::MemorySpace::DEVICE>
           &recvBuffer,
         const MemoryStorage<size_type, dftfe::utils::MemorySpace::DEVICE>
-          &             ownedLocalIndicesForTargetProcs,
+                       &ownedLocalIndicesForTargetProcs,
         const size_type blockSize,
         const size_type locallyOwnedSize,
         const size_type ghostSize,
@@ -170,8 +170,8 @@ namespace dftfe
       static void
       copyValueType1ArrToValueType2Arr(
         const size_type              blockSize,
-        const ValueType1 *           type1Array,
-        ValueType2 *                 type2Array,
+        const ValueType1            *type1Array,
+        ValueType2                  *type2Array,
         dftfe::utils::deviceStream_t deviceCommStream);
     };
 #endif

@@ -78,7 +78,8 @@ namespace dftfe
      * @param [in] p  point that is to be transformed
      * @param [in] flag type of coordinate transformation, 1 takes crys. to cart. -1 takes cart. to crys.
      */
-    dealii::Point<3> crys2cart(dealii::Point<3> p, int flag);
+    dealii::Point<3>
+    crys2cart(dealii::Point<3> p, int flag);
 
 
   private:
@@ -128,9 +129,9 @@ namespace dftfe
     std::vector<std::vector<std::vector<int>>> mappedGroupRecvd0;
     std::vector<std::vector<std::vector<int>>> mappedGroupRecvd2;
     std::vector<std::vector<std::vector<std::vector<double>>>>
-                                                               mappedGroupRecvd1;
-    std::vector<std::vector<std::vector<std::vector<int>>>>    send_buf_size;
-    std::vector<std::vector<std::vector<std::vector<int>>>>    recv_buf_size;
+                                                            mappedGroupRecvd1;
+    std::vector<std::vector<std::vector<std::vector<int>>>> send_buf_size;
+    std::vector<std::vector<std::vector<std::vector<int>>>> recv_buf_size;
     std::vector<std::vector<std::vector<std::vector<double>>>> rhoRecvd,
       gradRhoRecvd;
     std::vector<std::vector<std::vector<std::vector<int>>>> groupOffsets;

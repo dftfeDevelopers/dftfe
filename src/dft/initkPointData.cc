@@ -875,6 +875,6 @@ namespace dftfe
                  interpoolcomm);
     //
   }
-  //#include "dft.inst.cc"
+  // #include "dft.inst.cc"
 
 } // namespace dftfe

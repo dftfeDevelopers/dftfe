@@ -72,8 +72,8 @@ namespace dftfe
     const unsigned int                                    feOrder,
     const unsigned int                                    nComponents,
     const std::vector<const distributedCPUVec<double> *> &solutionVectors,
-    const MPI_Comm &                                      interpoolComm,
-    const MPI_Comm &                                      interBandGroupComm)
+    const MPI_Comm                                       &interpoolComm,
+    const MPI_Comm                                       &interBandGroupComm)
   {
     const unsigned int poolId =
       dealii::Utilities::MPI::this_mpi_process(interpoolComm);

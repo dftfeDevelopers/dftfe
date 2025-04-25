@@ -27,9 +27,9 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::createBinObjectsForce(
-    const dealii::DoFHandler<3> &                    dofHandler,
-    const dealii::DoFHandler<3> &                    dofHandlerForce,
-    const dealii::AffineConstraints<double> &        hangingPlusPBCConstraints,
+    const dealii::DoFHandler<3>                     &dofHandler,
+    const dealii::DoFHandler<3>                     &dofHandlerForce,
+    const dealii::AffineConstraints<double>         &hangingPlusPBCConstraints,
     const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
     std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
       &cellsVselfBallsDofHandler,
@@ -80,7 +80,7 @@ namespace dftfe
               {
                 std::vector<unsigned int> dirichletFaceIds;
                 std::vector<unsigned int>
-                                          faceIdsWithAtleastOneSolvedNonHangingNode;
+                  faceIdsWithAtleastOneSolvedNonHangingNode;
                 std::vector<unsigned int> allFaceIdsOfCell;
                 unsigned int              closestAtomIdSum          = 0;
                 unsigned int              closestAtomId             = 0;

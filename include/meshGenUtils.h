@@ -66,7 +66,7 @@ namespace dftfe
     }
 
     inline void
-    computeOffsetVectors(std::vector<std::vector<double>> & latticeVectors,
+    computeOffsetVectors(std::vector<std::vector<double>>  &latticeVectors,
                          std::vector<dealii::Tensor<1, 3>> &offsetVectors)
     {
       // create unitVectorsXYZ
@@ -93,8 +93,8 @@ namespace dftfe
     }
 
 
-    inline double getCosineAngle(dealii::Tensor<1, 3> &Vector1,
-                                 std::vector<double> & Vector2)
+    inline double
+    getCosineAngle(dealii::Tensor<1, 3> &Vector1, std::vector<double> &Vector2)
     {
       double dotProduct = Vector1[0] * Vector2[0] + Vector1[1] * Vector2[1] +
                           Vector1[2] * Vector2[2];
@@ -129,11 +129,12 @@ namespace dftfe
     }
 
 
-    inline void markPeriodicFacesNonOrthogonal(
-      dealii::Triangulation<3, 3> &     triangulation,
+    inline void
+    markPeriodicFacesNonOrthogonal(
+      dealii::Triangulation<3, 3>      &triangulation,
       std::vector<std::vector<double>> &latticeVectors,
-      const MPI_Comm &                  mpiCommParent,
-      const dftParameters &             dftParams)
+      const MPI_Comm                   &mpiCommParent,
+      const dftParameters              &dftParams)
     {
       dealii::ConditionalOStream pcout(
         std::cout,

@@ -31,7 +31,7 @@ namespace dftfe
     void
     solve(MultiVectorLinearSolverProblem<memorySpace> &problem,
           std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                                                  BLASWrapperPtr,
+            BLASWrapperPtr,
           dftfe::linearAlgebra::MultiVector<double, memorySpace> &xMemSpace,
           dftfe::linearAlgebra::MultiVector<double, memorySpace> &NDBCVec,
           unsigned int                                            locallyOwned,

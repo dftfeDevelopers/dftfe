@@ -94,7 +94,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excDensityLLMGGAClass<memorySpace>::computeRhoTauDependentXCData(
-    AuxDensityMatrix<memorySpace> &              auxDensityMatrix,
+    AuxDensityMatrix<memorySpace>               &auxDensityMatrix,
     const std::pair<unsigned int, unsigned int> &quadIndexRange,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &xDataOut,
@@ -622,7 +622,7 @@ namespace dftfe
   void
   excDensityLLMGGAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
     const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      &                                                                src,
+                                                                      &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
@@ -633,7 +633,7 @@ namespace dftfe
   void
   excDensityLLMGGAClass<memorySpace>::applyWaveFunctionDependentFuncDerWrtPsi(
     const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-      &                                                                    src,
+                                                                          &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
     const unsigned int inputVecSize,
     const unsigned int kPointIndex,
@@ -644,13 +644,13 @@ namespace dftfe
   void
   excDensityLLMGGAClass<memorySpace>::updateWaveFunctionDependentFuncDerWrtPsi(
     const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
-    const std::vector<double> &                           kPointWeights)
+    const std::vector<double>                            &kPointWeights)
   {}
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excDensityLLMGGAClass<memorySpace>::computeWaveFunctionDependentExcEnergy(
     const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
-    const std::vector<double> &                           kPointWeights)
+    const std::vector<double>                            &kPointWeights)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>

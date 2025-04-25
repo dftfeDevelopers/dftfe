@@ -62,7 +62,7 @@ namespace dftfe
      * number of cores
      * in the @p mpi_communicator.
      */
-    ProcessGrid(const MPI_Comm &   mpi_communicator,
+    ProcessGrid(const MPI_Comm    &mpi_communicator,
                 const unsigned int n_rows,
                 const unsigned int n_columns);
 
@@ -83,7 +83,7 @@ namespace dftfe
      * and the @p mpi_communicator with 11 cores will result in the $3x3$
      * process grid.
      */
-    ProcessGrid(const MPI_Comm &   mpi_communicator,
+    ProcessGrid(const MPI_Comm    &mpi_communicator,
                 const unsigned int n_rows_matrix,
                 const unsigned int n_columns_matrix,
                 const unsigned int row_block_size,
@@ -149,7 +149,7 @@ namespace dftfe
      * A private constructor which takes grid dimensions as an
      * <code>std::pair</code>.
      */
-    ProcessGrid(const MPI_Comm &                             mpi_communicator,
+    ProcessGrid(const MPI_Comm                              &mpi_communicator,
                 const std::pair<unsigned int, unsigned int> &grid_dimensions);
 
     /**

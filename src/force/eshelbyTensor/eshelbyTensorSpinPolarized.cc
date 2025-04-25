@@ -27,7 +27,7 @@ namespace dftfe
     getELocXcEshelbyTensor(
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin0,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoSpin1,
-      const dealii::VectorizedArray<double> &                      exc,
+      const dealii::VectorizedArray<double>                       &exc,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
         &derExcGradRhoSpin0,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
@@ -54,7 +54,7 @@ namespace dftfe
         &derExcGradRhoSpin1,
       const dealii::Tensor<1, 3, dealii::VectorizedArray<double>> &gradRhoCore,
       const dealii::Tensor<2, 3, dealii::VectorizedArray<double>>
-        &        hessianRhoCore,
+                &hessianRhoCore,
       const bool isXCGGA)
     {
       dealii::Tensor<1, 3, dealii::VectorizedArray<double>> temp;

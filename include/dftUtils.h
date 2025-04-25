@@ -38,14 +38,14 @@ namespace dftfe
       // lapack Ax=b
       //
       void
-      dgesv_(int *   N,
-             int *   NRHS,
+      dgesv_(int    *N,
+             int    *NRHS,
              double *A,
-             int *   LDA,
-             int *   IPIV,
+             int    *LDA,
+             int    *IPIV,
              double *B,
-             int *   LDB,
-             int *   INFO);
+             int    *LDB,
+             int    *INFO);
     }
 
     inline double
@@ -210,7 +210,7 @@ namespace dftfe
     void
     cross_product(const std::vector<double> &a,
                   const std::vector<double> &b,
-                  std::vector<double> &      crossProductVector);
+                  std::vector<double>       &crossProductVector);
 
 
     /** @brief Applies an affine transformation to the domain bounding vectors
@@ -221,7 +221,7 @@ namespace dftfe
      */
     void
     transformDomainBoundingVectors(
-      std::vector<std::vector<double>> &  domainBoundingVectors,
+      std::vector<std::vector<double>>   &domainBoundingVectors,
       const dealii::Tensor<2, 3, double> &deformationGradient);
 
     /** @brief Writes to vtu file only from the lowest pool id
@@ -235,11 +235,11 @@ namespace dftfe
      */
     void
     writeDataVTUParallelLowestPoolId(const dealii::DoFHandler<3> &dofHandler,
-                                     const dealii::DataOut<3> &   dataOut,
-                                     const MPI_Comm &             mpiCommParent,
-                                     const MPI_Comm &             mpiCommDomain,
-                                     const MPI_Comm &             interpoolcomm,
-                                     const MPI_Comm &   interBandGroupComm,
+                                     const dealii::DataOut<3>    &dataOut,
+                                     const MPI_Comm              &mpiCommParent,
+                                     const MPI_Comm              &mpiCommDomain,
+                                     const MPI_Comm              &interpoolcomm,
+                                     const MPI_Comm    &interBandGroupComm,
                                      const std::string &folderName,
                                      const std::string &fileName);
 
@@ -251,13 +251,13 @@ namespace dftfe
      */
     void
     createBandParallelizationIndices(
-      const MPI_Comm &           interBandGroupComm,
+      const MPI_Comm            &interBandGroupComm,
       const unsigned int         numBands,
       std::vector<unsigned int> &bandGroupLowHighPlusOneIndices);
 
     void
     createKpointParallelizationIndices(
-      const MPI_Comm &  interKptPoolComm,
+      const MPI_Comm   &interKptPoolComm,
       const int         numberIndices,
       std::vector<int> &kptGroupLowHighPlusOneIndices);
 
@@ -278,7 +278,7 @@ namespace dftfe
     class Pool
     {
     public:
-      Pool(const MPI_Comm &   mpi_communicator,
+      Pool(const MPI_Comm    &mpi_communicator,
            const unsigned int n_pools,
            const int          verbosity);
 

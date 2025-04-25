@@ -31,7 +31,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       std::copy(src, src + size, dst);
@@ -42,7 +42,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::HOST, MemorySpace::HOST_PINNED>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       std::copy(src, src + size, dst);
@@ -52,7 +52,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::HOST, MemorySpace::DEVICE>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       memoryTransferKernelsDevice::deviceMemcpyD2H(dst,
@@ -64,7 +64,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       std::copy(src, src + size, dst);
@@ -74,7 +74,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::HOST_PINNED>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       std::copy(src, src + size, dst);
@@ -84,7 +84,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::HOST_PINNED, MemorySpace::DEVICE>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       memoryTransferKernelsDevice::deviceMemcpyD2H(dst,
@@ -96,7 +96,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       memoryTransferKernelsDevice::deviceMemcpyH2D(dst,
@@ -108,7 +108,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::DEVICE, MemorySpace::HOST_PINNED>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       memoryTransferKernelsDevice::deviceMemcpyH2D(dst,
@@ -120,7 +120,7 @@ namespace dftfe
     void
     MemoryTransfer<MemorySpace::DEVICE, MemorySpace::DEVICE>::copy(
       std::size_t      size,
-      ValueType *      dst,
+      ValueType       *dst,
       const ValueType *src)
     {
       memoryTransferKernelsDevice::deviceMemcpyD2D(dst,

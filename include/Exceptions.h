@@ -117,8 +117,7 @@ template parameter instead. Available typedefs LogicError - std::logic_error
           printf("Failed: MPI error %s:%d '%d'\n", __FILE__, __LINE__, e); \
           exit(EXIT_FAILURE);                                              \
         }                                                                  \
-    }                                                                      \
-  while (0)
+  } while (0)
 
 namespace dftfe
 {

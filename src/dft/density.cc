@@ -173,7 +173,7 @@ namespace dftfe
       {
         d_rhoOutNodalValuesSplit = d_densityOutNodalValues[0];
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                                     rhoOutValuesCopy = d_densityOutQuadValues[0];
+          rhoOutValuesCopy = d_densityOutQuadValues[0];
         const dealii::Quadrature<3> &quadrature_formula =
           matrix_free_data.get_quadrature(d_densityQuadratureId);
         const unsigned int n_q_points = quadrature_formula.size();

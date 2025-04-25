@@ -37,8 +37,8 @@ namespace dftfe
      * @param[in] mpi_comm_parent parent mpi communicator
      *  @param[in] mpi_comm_domain mpi communicator for domain decomposition
      */
-    meshMovementClass(const MPI_Comm &     mpi_comm_parent,
-                      const MPI_Comm &     mpi_comm_domain,
+    meshMovementClass(const MPI_Comm      &mpi_comm_parent,
+                      const MPI_Comm      &mpi_comm_domain,
                       const dftParameters &dftParams);
 
     virtual ~meshMovementClass()
@@ -53,9 +53,10 @@ namespace dftfe
      *  @param[in] domainBoundingVectors domain vectors of the domain
      * corresponding to the triangulation object.
      */
-    void init(dealii::Triangulation<3, 3> &           triangulation,
-              dealii::Triangulation<3, 3> &           serialTriangulation,
-              const std::vector<std::vector<double>> &domainBoundingVectors);
+    void
+    init(dealii::Triangulation<3, 3>            &triangulation,
+         dealii::Triangulation<3, 3>            &serialTriangulation,
+         const std::vector<std::vector<double>> &domainBoundingVectors);
 
     /** @brief Re-initializes the required data-structures for a given triangulation
      *
@@ -118,7 +119,7 @@ namespace dftfe
     dealii::FESystem<3>                              FEMoveMesh;
     dealii::DoFHandler<3>                            d_dofHandlerMoveMesh;
     dealii::parallel::distributed::Triangulation<3> *d_triaPtr;
-    dealii::Triangulation<3, 3> *                    d_triaPtrSerial;
+    dealii::Triangulation<3, 3>                     *d_triaPtrSerial;
     dealii::IndexSet                                 d_locally_owned_dofs;
     dealii::IndexSet                                 d_locally_relevant_dofs;
     dealii::AffineConstraints<double>                d_constraintsMoveMesh;

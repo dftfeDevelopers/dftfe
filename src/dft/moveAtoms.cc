@@ -28,21 +28,21 @@ namespace dftfe
       // lapack Ax=b
       //
       void
-      dgesv_(int *   N,
-             int *   NRHS,
+      dgesv_(int    *N,
+             int    *NRHS,
              double *A,
-             int *   LDA,
-             int *   IPIV,
+             int    *LDA,
+             int    *IPIV,
              double *B,
-             int *   LDB,
-             int *   INFO);
+             int    *LDB,
+             int    *INFO);
     }
 
 
     std::vector<double>
     getFractionalCoordinates(const std::vector<double> &latticeVectors,
-                             const dealii::Point<3> &   point,
-                             const dealii::Point<3> &   corner)
+                             const dealii::Point<3>    &point,
+                             const dealii::Point<3>    &corner)
     {
       //
       // recenter vertex about corner
@@ -78,10 +78,10 @@ namespace dftfe
     }
 
     std::vector<double>
-    wrapAtomsAcrossPeriodicBc(const dealii::Point<3> &   cellCenteredCoord,
-                              const dealii::Point<3> &   corner,
+    wrapAtomsAcrossPeriodicBc(const dealii::Point<3>    &cellCenteredCoord,
+                              const dealii::Point<3>    &corner,
                               const std::vector<double> &latticeVectors,
-                              const std::vector<bool> &  periodicBc)
+                              const std::vector<bool>   &periodicBc)
     {
       const double        tol = 1e-8;
       std::vector<double> fracCoord =

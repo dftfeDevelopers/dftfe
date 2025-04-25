@@ -25,9 +25,9 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::applyMultipoleDirichletBC(
-    const dealii::DoFHandler<3> &            _dofHandler,
+    const dealii::DoFHandler<3>             &_dofHandler,
     const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
-    dealii::AffineConstraints<double> &      constraintMatrix)
+    dealii::AffineConstraints<double>       &constraintMatrix)
 
   {
     dealii::IndexSet locallyRelevantDofs;

@@ -60,9 +60,9 @@ namespace dftfe
       std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>
-        &                                basisOperationsPtr,
+                                        &basisOperationsPtr,
       dealii::AffineConstraints<double> &constraintMatrix,
-      distributedCPUVec<double> &        x,
+      distributedCPUVec<double>         &x,
       double                             kerkerMixingParameter,
       const unsigned int                 matrixFreeVectorComponent,
       const unsigned int                 matrixFreeQuadratureComponent);
@@ -143,14 +143,14 @@ namespace dftfe
     /// preconditioning
     void
     subscribe(std::atomic<bool> *const validity,
-              const std::string &      identifier = "") const {};
+              const std::string       &identifier = "") const {};
 
 
     /// function needed by dealii to mimic SparseMatrix for Jacobi
     /// preconditioning
     void
     unsubscribe(std::atomic<bool> *const validity,
-                const std::string &      identifier = "") const {};
+                const std::string       &identifier = "") const {};
 
 
     /// function needed by dealii to mimic SparseMatrix
@@ -203,14 +203,14 @@ namespace dftfe
 
     // shape function value, gradient, jacobian and map for matrixfree
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
-                                                                        d_shapeFunction, d_jacobianFactor;
+      d_shapeFunction, d_jacobianFactor;
     dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE> d_map;
 
     // Pointers to shape function value, gradient, jacobian and map for
     // matrixfree
     double *d_shapeFunctionPtr;
     double *d_jacobianFactorPtr;
-    int *   d_mapPtr;
+    int    *d_mapPtr;
 
     // constraints
     dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
@@ -226,10 +226,10 @@ namespace dftfe
 
     /// pointer to electron density cell and grad residual data
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      *                                      d_residualQuadValuesPtr;
-    const dealii::DoFHandler<3> *            d_dofHandlerPRefinedPtr;
+                                            *d_residualQuadValuesPtr;
+    const dealii::DoFHandler<3>             *d_dofHandlerPRefinedPtr;
     const dealii::AffineConstraints<double> *d_constraintMatrixPRefinedPtr;
-    const dealii::MatrixFree<3, double> *    d_matrixFreeDataPRefinedPtr;
+    const dealii::MatrixFree<3, double>     *d_matrixFreeDataPRefinedPtr;
     std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::DEVICE>>

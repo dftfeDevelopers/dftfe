@@ -42,16 +42,16 @@ namespace dftfe
       dftfe::basis::FEBasisOperations<NumberType, double, memorySpace>>
       &basisOperationsPtr,
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-      &                            BLASWrapperPtr,
+                                  &BLASWrapperPtr,
     const unsigned int             matrixFreeDofhandlerIndex,
     const unsigned int             quadratureIndex,
-    const std::vector<double> &    kPointWeights,
+    const std::vector<double>     &kPointWeights,
     AuxDensityMatrix<memorySpace> &auxDensityMatrixRepresentation,
-    const MPI_Comm &               mpiCommParent,
-    const MPI_Comm &               domainComm,
-    const MPI_Comm &               interpoolcomm,
-    const MPI_Comm &               interBandGroupComm,
-    const dftParameters &          dftParams)
+    const MPI_Comm                &mpiCommParent,
+    const MPI_Comm                &domainComm,
+    const MPI_Comm                &interpoolcomm,
+    const MPI_Comm                &interBandGroupComm,
+    const dftParameters           &dftParams)
   {
     int this_process;
     MPI_Comm_rank(mpiCommParent, &this_process);
@@ -332,16 +332,16 @@ namespace dftfe
       &basisOperationsPtr,
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                        BLASWrapperPtr,
+                              &BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
     AuxDensityMatrix<dftfe::utils::MemorySpace::DEVICE>
-      &                  auxDensityMatrixRepresentation,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     domainComm,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
+                        &auxDensityMatrixRepresentation,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &domainComm,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
     const dftParameters &dftParams);
 #endif
   template void
@@ -357,15 +357,15 @@ namespace dftfe
       &basisOperationsPtr,
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-      &                        BLASWrapperPtr,
+                              &BLASWrapperPtr,
     const unsigned int         matrixFreeDofhandlerIndex,
     const unsigned int         quadratureIndex,
     const std::vector<double> &kPointWeights,
     AuxDensityMatrix<dftfe::utils::MemorySpace::HOST>
-      &                  auxDensityMatrixRepresentation,
-    const MPI_Comm &     mpiCommParent,
-    const MPI_Comm &     domainComm,
-    const MPI_Comm &     interpoolcomm,
-    const MPI_Comm &     interBandGroupComm,
+                        &auxDensityMatrixRepresentation,
+    const MPI_Comm      &mpiCommParent,
+    const MPI_Comm      &domainComm,
+    const MPI_Comm      &interpoolcomm,
+    const MPI_Comm      &interBandGroupComm,
     const dftParameters &dftParams);
 } // namespace dftfe

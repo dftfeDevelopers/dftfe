@@ -330,7 +330,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   MultiVectorPoissonLinearSolverProblem<memorySpace>::precondition_JacobiSqrt(
-    dftfe::linearAlgebra::MultiVector<double, memorySpace> &      dst,
+    dftfe::linearAlgebra::MultiVector<double, memorySpace>       &dst,
     const dftfe::linearAlgebra::MultiVector<double, memorySpace> &src,
     const double                                                  omega) const
   {
@@ -348,7 +348,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   MultiVectorPoissonLinearSolverProblem<memorySpace>::precondition_Jacobi(
-    dftfe::linearAlgebra::MultiVector<double, memorySpace> &      dst,
+    dftfe::linearAlgebra::MultiVector<double, memorySpace>       &dst,
     const dftfe::linearAlgebra::MultiVector<double, memorySpace> &src,
     const double                                                  omega) const
   {

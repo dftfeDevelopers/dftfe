@@ -31,18 +31,18 @@ namespace dftfe
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     FnlGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
-        &                                  forceContributionFnlGammaAtoms,
+                                          &forceContributionFnlGammaAtoms,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       dealii::FEEvaluation<3,
                            1,
                            C_num1DQuadNLPSP<FEOrder>() *
                              C_numCopies1DQuadNLPSP(),
-                           3> &            forceEvalNLP,
+                           3>             &forceEvalNLP,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
                                        nonLocalOp,
       unsigned int                     numNonLocalAtomsCurrentProcess,
-      const std::vector<int> &         globalChargeIdNonLocalAtoms,
+      const std::vector<int>          &globalChargeIdNonLocalAtoms,
       const std::vector<unsigned int> &numberPseudoWaveFunctionsPerAtom,
       const unsigned int               cell,
       const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
@@ -226,21 +226,22 @@ namespace dftfe
   template <unsigned int              FEOrder,
             unsigned int              FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
-  void forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  void
+  forceClass<FEOrder, FEOrderElectro, memorySpace>::
     FnlGammaxElementalContribution(
       dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &FVectQuads,
-      const dealii::MatrixFree<3, double> &                     matrixFreeData,
+      const dealii::MatrixFree<3, double>                      &matrixFreeData,
       const unsigned int                                        numQuadPoints,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
                                        nonLocalOp,
       const unsigned int               numNonLocalAtomsCurrentProcess,
-      const std::vector<int> &         globalChargeIdNonLocalAtoms,
+      const std::vector<int>          &globalChargeIdNonLocalAtoms,
       const std::vector<unsigned int> &numberPseudoWaveFunctionsPerAtom,
       const unsigned int               cell,
       const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
-      const std::vector<dataTypes::number> &        zetaDeltaVQuadsFlattened,
+      const std::vector<dataTypes::number>         &zetaDeltaVQuadsFlattened,
       const std::vector<dataTypes::number>
         &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened)
   {

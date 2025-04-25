@@ -60,9 +60,9 @@ namespace dftfe
      *  @param mpi_comm_domain domain decomposition mpi_communicator
      */
     forceClass(dftClass<FEOrder, FEOrderElectro, memorySpace> *_dftPtr,
-               const MPI_Comm &                                mpi_comm_parent,
-               const MPI_Comm &                                mpi_comm_domain,
-               const dftParameters &                           dftParams);
+               const MPI_Comm                                 &mpi_comm_parent,
+               const MPI_Comm                                 &mpi_comm_domain,
+               const dftParameters                            &dftParams);
 
     /** @brief initializes data structures inside forceClass assuming unmoved triangulation.
      *
@@ -81,8 +81,8 @@ namespace dftfe
      *  @return void.
      */
     void
-    initUnmoved(const dealii::Triangulation<3, 3> &     triangulation,
-                const dealii::Triangulation<3, 3> &     serialTriangulation,
+    initUnmoved(const dealii::Triangulation<3, 3>      &triangulation,
+                const dealii::Triangulation<3, 3>      &serialTriangulation,
                 const std::vector<std::vector<double>> &domainBoundingVectors,
                 const bool                              isElectrostaticsMesh);
 
@@ -101,7 +101,7 @@ namespace dftfe
     initMoved(
       std::vector<const dealii::DoFHandler<3> *> &dofHandlerVectorMatrixFree,
       std::vector<const dealii::AffineConstraints<double> *>
-        &        constraintsVectorMatrixFree,
+                &constraintsVectorMatrixFree,
       const bool isElectrostaticsMesh);
 
     /** @brief initializes and precomputes pseudopotential related data structuers required for configurational force
@@ -130,13 +130,13 @@ namespace dftfe
     void
     computeAtomsForces(
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dispersionCorrection &         dispersionCorr,
+      const dispersionCorrection          &dispersionCorr,
       const unsigned int                   eigenDofHandlerIndex,
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,
@@ -155,11 +155,11 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                                  hessianRhoCoreAtoms,
+                                                          &hessianRhoCoreAtoms,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                      pseudoVLocAtomsElectro,
+                                              &pseudoVLocAtomsElectro,
       const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
@@ -198,13 +198,13 @@ namespace dftfe
     void
     computeStress(
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dispersionCorrection &         dispersionCorr,
+      const dispersionCorrection          &dispersionCorr,
       const unsigned int                   eigenDofHandlerIndex,
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,
@@ -227,7 +227,7 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                      hessianRhoCoreAtoms,
+                                              &hessianRhoCoreAtoms,
       const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
@@ -267,8 +267,8 @@ namespace dftfe
 
     void
     createBinObjectsForce(
-      const dealii::DoFHandler<3> &            dofHandler,
-      const dealii::DoFHandler<3> &            dofHandlerForce,
+      const dealii::DoFHandler<3>             &dofHandler,
+      const dealii::DoFHandler<3>             &dofHandlerForce,
       const dealii::AffineConstraints<double> &hangingPlusPBCConstraints,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
       std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
@@ -301,7 +301,7 @@ namespace dftfe
       const unsigned int                   lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,
@@ -320,11 +320,11 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                                  hessianRhoCoreAtoms,
+                                                          &hessianRhoCoreAtoms,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtomsElectro,
+                                                      &pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
@@ -333,7 +333,7 @@ namespace dftfe
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -345,7 +345,7 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtomsElectro,
+                                                      &pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
@@ -353,9 +353,9 @@ namespace dftfe
 
     void
     computeConfigurationalForceEselfLinFE(
-      const dealii::DoFHandler<3> &                    dofHandlerElectro,
+      const dealii::DoFHandler<3>                     &dofHandlerElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const dealii::MatrixFree<3, double> &            matrixFreeDataElectro,
+      const dealii::MatrixFree<3, double>             &matrixFreeDataElectro,
       const unsigned int smearedChargeQuadratureId);
 
     void
@@ -369,7 +369,7 @@ namespace dftfe
       const unsigned int                   lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,
@@ -388,23 +388,23 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                                  hessianRhoCoreAtoms,
+                                                          &hessianRhoCoreAtoms,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtomsElectro,
+                                                      &pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
     FPSPLocalGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
-        &                                  forceContributionFPSPLocalGammaAtoms,
-      dealii::FEValues<3> &                feValues,
-      dealii::FEFaceValues<3> &            feFaceValues,
+                                          &forceContributionFPSPLocalGammaAtoms,
+      dealii::FEValues<3>                 &feValues,
+      dealii::FEFaceValues<3>             &feFaceValues,
       dealii::FEEvaluation<3,
                            1,
                            C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                           3> &            forceEval,
+                           3>             &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const unsigned int                   cell,
@@ -413,7 +413,7 @@ namespace dftfe
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtoms,
+                                                      &pseudoVLocAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
       const std::vector<std::map<dealii::CellId, unsigned int>>
         &cellsVselfBallsClosestAtomIdDofHandler);
@@ -422,7 +422,7 @@ namespace dftfe
     FPhiTotSmearedChargesGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
         &forceContributionSmearedChargesGammaAtoms,
-      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<
@@ -436,12 +436,12 @@ namespace dftfe
     FVselfSmearedChargesGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
         &forceContributionSmearedChargesGammaAtoms,
-      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-        &                              gradVselfBinQuads,
+                                      &gradVselfBinQuads,
       const std::vector<unsigned int> &nonTrivialAtomIdsMacroCell,
       const std::map<dealii::CellId, std::vector<int>> &bQuadAtomIdsAllAtoms,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
@@ -455,7 +455,7 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
@@ -472,7 +472,7 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<
@@ -489,7 +489,7 @@ namespace dftfe
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
@@ -507,7 +507,7 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &        hessianRhoCoreAtoms,
+                &hessianRhoCoreAtoms,
       const bool isXCGGA = false);
 
     void
@@ -515,32 +515,32 @@ namespace dftfe
       const std::map<unsigned int, std::vector<double>>
         &forceContributionFPSPLocalGammaAtoms,
       const std::map<std::pair<unsigned int, unsigned int>, unsigned int>
-        &                                      atomsForceDofs,
+                                              &atomsForceDofs,
       const dealii::AffineConstraints<double> &constraintsNoneForce,
-      distributedCPUVec<double> &              configForceVectorLinFE);
+      distributedCPUVec<double>               &configForceVectorLinFE);
 
     void
     accumulateForceContributionGammaAtomsFloating(
       const std::map<unsigned int, std::vector<double>>
-        &                  forceContributionLocalGammaAtoms,
+                          &forceContributionLocalGammaAtoms,
       std::vector<double> &accumForcesVector);
 
 
     void
     FnlGammaAtomsElementalContribution(
       std::map<unsigned int, std::vector<double>>
-        &                                  forceContributionFnlGammaAtoms,
+                                          &forceContributionFnlGammaAtoms,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       dealii::FEEvaluation<3,
                            1,
                            C_num1DQuadNLPSP<FEOrder>() *
                              C_numCopies1DQuadNLPSP(),
-                           3> &            forceEvalNLP,
+                           3>             &forceEvalNLP,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
                                        nonLocalOp,
       unsigned int                     numNonLocalAtomsCurrentProcess,
-      const std::vector<int> &         globalChargeIdNonLocalAtoms,
+      const std::vector<int>          &globalChargeIdNonLocalAtoms,
       const std::vector<unsigned int> &numberPseudoWaveFunctionsPerAtom,
       const unsigned int               cell,
       const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
@@ -553,20 +553,21 @@ namespace dftfe
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
 
-    void FnlGammaxElementalContribution(
+    void
+    FnlGammaxElementalContribution(
       dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &FVectQuads,
-      const dealii::MatrixFree<3, double> &                     matrixFreeData,
+      const dealii::MatrixFree<3, double>                      &matrixFreeData,
       const unsigned int                                        numQuadPoints,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
                                        nonLocalOp,
       const unsigned int               numNonLocalAtomsCurrentProcess,
-      const std::vector<int> &         globalChargeIdNonLocalAtoms,
+      const std::vector<int>          &globalChargeIdNonLocalAtoms,
       const std::vector<unsigned int> &numberPseudoWaveFunctionsPerAtom,
       const unsigned int               cell,
       const std::map<dealii::CellId, unsigned int> &cellIdToCellNumberMap,
-      const std::vector<dataTypes::number> &        zetaDeltaVQuadsFlattened,
+      const std::vector<dataTypes::number>         &zetaDeltaVQuadsFlattened,
       const std::vector<dataTypes::number> &
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened);
 
@@ -575,11 +576,12 @@ namespace dftfe
       const std::map<unsigned int, std::vector<double>>
         &forceContributionFnlGammaAtoms);
 
-    void stressEnlElementalContribution(
-      dealii::Tensor<2, 3, double> &       stressContribution,
+    void
+    stressEnlElementalContribution(
+      dealii::Tensor<2, 3, double>        &stressContribution,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   numQuadPoints,
-      const std::vector<double> &          jxwQuadsSubCells,
+      const std::vector<double>           &jxwQuadsSubCells,
       const unsigned int                   cell,
       const unsigned int                   numNonLocalAtomsCurrentProcess,
       const std::shared_ptr<
@@ -605,9 +607,9 @@ namespace dftfe
 
     void
     computeStressEself(
-      const dealii::DoFHandler<3> &                    dofHandlerElectro,
+      const dealii::DoFHandler<3>                     &dofHandlerElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const dealii::MatrixFree<3, double> &            matrixFreeDataElectro,
+      const dealii::MatrixFree<3, double>             &matrixFreeDataElectro,
       const unsigned int smearedChargeQuadratureId);
 
     void
@@ -618,7 +620,7 @@ namespace dftfe
       const unsigned int                   lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const unsigned int                   phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,
@@ -641,7 +643,7 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              hessianRhoCoreAtoms,
+                                                      &hessianRhoCoreAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
     void
@@ -650,7 +652,7 @@ namespace dftfe
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const unsigned int                   smearedChargeQuadratureId,
       const unsigned int                   lpspQuadratureIdElectro,
-      const distributedCPUVec<double> &    phiTotRhoOutElectro,
+      const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValues,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -662,16 +664,17 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtomsElectro,
+                                                      &pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro);
 
-    void addEPSPStressContribution(
-      dealii::FEValues<3> &                feValues,
-      dealii::FEFaceValues<3> &            feFaceValues,
+    void
+    addEPSPStressContribution(
+      dealii::FEValues<3>                 &feValues,
+      dealii::FEFaceValues<3>             &feFaceValues,
       dealii::FEEvaluation<3,
                            1,
                            C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                           3> &            forceEval,
+                           3>             &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   phiTotDofHandlerIndexElectro,
       const unsigned int                   cell,
@@ -680,17 +683,18 @@ namespace dftfe
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &                                              pseudoVLocAtoms,
+                                                      &pseudoVLocAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
       const std::vector<std::map<dealii::CellId, unsigned int>>
         &cellsVselfBallsClosestAtomIdDofHandler);
 
-    void addENonlinearCoreCorrectionStressContribution(
+    void
+    addENonlinearCoreCorrectionStressContribution(
       dealii::FEEvaluation<
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
@@ -703,12 +707,13 @@ namespace dftfe
                      std::map<dealii::CellId, std::vector<double>>>
         &hessianRhoCoreAtoms);
 
-    void addENonlinearCoreCorrectionStressContributionSpinPolarized(
+    void
+    addENonlinearCoreCorrectionStressContributionSpinPolarized(
       dealii::FEEvaluation<
         3,
         1,
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3> &                               forceEval,
+        3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
@@ -726,11 +731,12 @@ namespace dftfe
         &gradRhoCoreAtoms,
       const std::map<unsigned int,
                      std::map<dealii::CellId, std::vector<double>>>
-        &        hessianRhoCoreAtoms,
+                &hessianRhoCoreAtoms,
       const bool isXCGGA = false);
 
-    void addEPhiTotSmearedStressContribution(
-      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+    void
+    addEPhiTotSmearedStressContribution(
+      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<
@@ -741,8 +747,9 @@ namespace dftfe
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
         &smearedbQuads);
 
-    void addEVselfSmearedStressContribution(
-      dealii::FEEvaluation<3, -1, 1, 3> &  forceEval,
+    void
+    addEVselfSmearedStressContribution(
+      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const unsigned int                   cell,
       const dealii::AlignedVector<

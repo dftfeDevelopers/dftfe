@@ -34,8 +34,8 @@ namespace dftfe
     relativeErrorEstimateSpin(
       const std::deque<distributedCPUVec<double>> &fvcontainerSpin0,
       const std::deque<distributedCPUVec<double>> &fvcontainerSpin1,
-      const distributedCPUVec<double> &            residualVecSpin0,
-      const distributedCPUVec<double> &            residualVecSpin1,
+      const distributedCPUVec<double>             &residualVecSpin0,
+      const distributedCPUVec<double>             &residualVecSpin1,
       const double                                 k0)
     {
       const unsigned int rank = fvcontainerSpin0.size();
@@ -108,11 +108,11 @@ namespace dftfe
       const std::deque<distributedCPUVec<double>> &fvcontainerSpin1,
       const std::deque<distributedCPUVec<double>> &vcontainerSpin0,
       const std::deque<distributedCPUVec<double>> &vcontainerSpin1,
-      const distributedCPUVec<double> &            xSpin0,
-      const distributedCPUVec<double> &            xSpin1,
+      const distributedCPUVec<double>             &xSpin0,
+      const distributedCPUVec<double>             &xSpin1,
       const double                                 k0,
-      distributedCPUVec<double> &                  ySpin0,
-      distributedCPUVec<double> &                  ySpin1)
+      distributedCPUVec<double>                   &ySpin0,
+      distributedCPUVec<double>                   &ySpin1)
     {
       const unsigned int rank = fvcontainerSpin0.size();
 
@@ -163,10 +163,10 @@ namespace dftfe
       const std::deque<distributedCPUVec<double>> &fvcontainerSpin1,
       const std::deque<distributedCPUVec<double>> &vcontainerSpin0,
       const std::deque<distributedCPUVec<double>> &vcontainerSpin1,
-      const distributedCPUVec<double> &            xSpin0,
-      const distributedCPUVec<double> &            xSpin1,
-      distributedCPUVec<double> &                  ySpin0,
-      distributedCPUVec<double> &                  ySpin1)
+      const distributedCPUVec<double>             &xSpin0,
+      const distributedCPUVec<double>             &xSpin1,
+      distributedCPUVec<double>                   &ySpin0,
+      distributedCPUVec<double>                   &ySpin1)
     {
       const unsigned int rank = fvcontainerSpin0.size();
 
@@ -218,10 +218,10 @@ namespace dftfe
       const std::deque<distributedCPUVec<double>> &fvSpin1container,
       const std::deque<distributedCPUVec<double>> &vSpin0container,
       const std::deque<distributedCPUVec<double>> &vSpin1container,
-      const distributedCPUVec<double> &            xSpin0,
-      const distributedCPUVec<double> &            xSpin1,
-      distributedCPUVec<double> &                  ySpin0,
-      distributedCPUVec<double> &                  ySpin1)
+      const distributedCPUVec<double>             &xSpin0,
+      const distributedCPUVec<double>             &xSpin1,
+      distributedCPUVec<double>                   &ySpin0,
+      distributedCPUVec<double>                   &ySpin1)
     {
       const unsigned int rank = fvSpin0container.size();
 
@@ -250,9 +250,9 @@ namespace dftfe
       const std::deque<distributedCPUVec<double>> &lowrankFvSpin1container,
       const std::deque<distributedCPUVec<double>> &lowrankVSpin0container,
       const std::deque<distributedCPUVec<double>> &lowrankVSpin1container,
-      const distributedCPUVec<double> &            xSpin0,
-      const distributedCPUVec<double> &            xSpin1,
-      const dealii::AffineConstraints<double> &    constraintsRhoNodal)
+      const distributedCPUVec<double>             &xSpin0,
+      const distributedCPUVec<double>             &xSpin1,
+      const dealii::AffineConstraints<double>     &constraintsRhoNodal)
     {
       const double tol = 1.0e-6;
 
@@ -336,9 +336,9 @@ namespace dftfe
       const std::deque<distributedCPUVec<double>> &lowrankFvSpin1container,
       const std::deque<distributedCPUVec<double>> &lowrankVSpin0container,
       const std::deque<distributedCPUVec<double>> &lowrankVSpin1container,
-      const distributedCPUVec<double> &            xSpin0,
-      const distributedCPUVec<double> &            xSpin1,
-      const dealii::AffineConstraints<double> &    constraintsRhoNodal)
+      const distributedCPUVec<double>             &xSpin0,
+      const distributedCPUVec<double>             &xSpin1,
+      const dealii::AffineConstraints<double>     &constraintsRhoNodal)
     {
       const double tol = 1.0e-6;
 

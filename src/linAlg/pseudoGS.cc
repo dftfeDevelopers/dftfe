@@ -32,13 +32,13 @@ namespace dftfe
       elpaScalaManager &elpaScala,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &                  BLASWrapperPtr,
-      T *                  X,
+                          &BLASWrapperPtr,
+      T                   *X,
       const unsigned int   numberVectors,
       const unsigned int   numLocalDofs,
-      const MPI_Comm &     mpiCommParent,
-      const MPI_Comm &     interBandGroupComm,
-      const MPI_Comm &     mpiComm,
+      const MPI_Comm      &mpiCommParent,
+      const MPI_Comm      &interBandGroupComm,
+      const MPI_Comm      &mpiComm,
       const bool           useMixedPrec,
       const dftParameters &dftParams)
 

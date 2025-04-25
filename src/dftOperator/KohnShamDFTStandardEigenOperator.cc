@@ -47,12 +47,12 @@ namespace dftfe
         dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
                                                pseudopotentialClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
-      dftParameters *                          dftParamsPtr,
+      dftParameters                           *dftParamsPtr,
       const unsigned int                       densityQuadratureID,
       const unsigned int                       lpspQuadratureID,
       const unsigned int                       feOrderPlusOneQuadratureID,
-      const MPI_Comm &                         mpi_comm_parent,
-      const MPI_Comm &                         mpi_comm_domain)
+      const MPI_Comm                          &mpi_comm_parent,
+      const MPI_Comm                          &mpi_comm_domain)
     : KohnShamDFTBaseOperator<memorySpace>(BLASWrapperPtr,
                                            basisOperationsPtr,
                                            basisOperationsPtrHost,

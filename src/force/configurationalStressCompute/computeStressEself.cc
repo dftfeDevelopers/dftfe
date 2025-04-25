@@ -29,9 +29,9 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::computeStressEself(
-    const dealii::DoFHandler<3> &                    dofHandlerElectro,
+    const dealii::DoFHandler<3>                     &dofHandlerElectro,
     const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-    const dealii::MatrixFree<3, double> &            matrixFreeDataElectro,
+    const dealii::MatrixFree<3, double>             &matrixFreeDataElectro,
     const unsigned int                               smearedChargeQuadratureId)
   {
 #ifdef DEBUG
@@ -263,7 +263,7 @@ namespace dftfe
                      ++cell)
                   {
                     std::set<unsigned int>
-                                       nonTrivialSmearedChargeAtomImageIdsMacroCell;
+                      nonTrivialSmearedChargeAtomImageIdsMacroCell;
                     const unsigned int numSubCells =
                       matrixFreeDataElectro.n_active_entries_per_cell_batch(
                         cell);

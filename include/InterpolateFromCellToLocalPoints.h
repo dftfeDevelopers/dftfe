@@ -47,17 +47,17 @@ namespace dftfe
     void
     interpolate(
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-        &                      BLASWrapperPtr,
+                              &BLASWrapperPtr,
       unsigned int             numberOfVectors,
       const dataTypes::number *parentNodalMemSpacePtr,
-      dataTypes::number *      outputMemSpacePtr);
+      dataTypes::number       *outputMemSpacePtr);
 
     void
     interpolate(const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
-                  dftfe::utils::MemorySpace::HOST>> & BLASWrapperPtr,
+                  dftfe::utils::MemorySpace::HOST>>  &BLASWrapperPtr,
                 unsigned int                          numberOfVectors,
                 const std::vector<dataTypes::number> &parentNodalHost,
-                std::vector<dataTypes::number> &      outputHost);
+                std::vector<dataTypes::number>       &outputHost);
 
   private:
     std::shared_ptr<const dftfe::utils::FECell<3>> d_srcCell;

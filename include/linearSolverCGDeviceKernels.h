@@ -11,8 +11,8 @@ namespace dftfe
    *
    */
   void
-  applyPreconditionAndComputeDotProductDevice(double *      d_dvec,
-                                              double *      d_devSum,
+  applyPreconditionAndComputeDotProductDevice(double       *d_dvec,
+                                              double       *d_devSum,
                                               const double *d_rvec,
                                               const double *d_jacobi,
                                               const int     N);
@@ -22,8 +22,8 @@ namespace dftfe
    *
    */
   void
-  applyPreconditionComputeDotProductAndSaddDevice(double *      d_qvec,
-                                                  double *      d_devSum,
+  applyPreconditionComputeDotProductAndSaddDevice(double       *d_qvec,
+                                                  double       *d_devSum,
                                                   const double *d_rvec,
                                                   const double *d_jacobi,
                                                   const int     N);
@@ -33,9 +33,9 @@ namespace dftfe
    *
    */
   void
-  scaleXRandComputeNormDevice(double *      x,
-                              double *      d_rvec,
-                              double *      d_devSum,
+  scaleXRandComputeNormDevice(double       *x,
+                              double       *d_rvec,
+                              double       *d_devSum,
                               const double *d_qvec,
                               const double *d_dvec,
                               const double  alpha,

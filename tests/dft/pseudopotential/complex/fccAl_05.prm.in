@@ -22,7 +22,14 @@ end
 
 subsection Brillouin zone k point sampling options
   set USE TIME REVERSAL SYMMETRY = false
-  set kPOINT RULE FILE = @SOURCE_DIR@/kPoint2x2x2File
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 1
+    set SAMPLING SHIFT 2  = 1
+    set SAMPLING SHIFT 3  = 1
+  end
 end
 
 subsection SCF Checkpointing and Restart

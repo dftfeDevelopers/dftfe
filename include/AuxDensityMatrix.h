@@ -67,7 +67,7 @@ namespace dftfe
       const std::unordered_map<std::string, std::vector<dataTypes::number>>
         &projectionInputsDataType,
       const std::unordered_map<std::string, std::vector<double>>
-        &       projectionInputsReal,
+               &projectionInputsReal,
       const int iSpin) = 0;
 
     /**

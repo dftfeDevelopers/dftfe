@@ -49,7 +49,7 @@ namespace dftfe
     cgPRPNonLinearSolver(
       const unsigned int maxNumberIterations,
       const unsigned int debugLevel,
-      const MPI_Comm &   mpi_comm_parent,
+      const MPI_Comm    &mpi_comm_parent,
       const double       lineSearchTolerance                        = 1.0e-6,
       const unsigned int lineSearchMaxIterations                    = 10,
       const double       lineSeachDampingParameter                  = 1.0,
@@ -175,7 +175,7 @@ namespace dftfe
     bool
     updateSolution(const double               alpha,
                    const std::vector<double> &direction,
-                   nonlinearSolverProblem &   problem);
+                   nonlinearSolverProblem    &problem);
 
     /**
      * @brief Load cg solver state from checkpoint file.

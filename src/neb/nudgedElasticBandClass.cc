@@ -27,7 +27,7 @@ namespace dftfe
   nudgedElasticBandClass::nudgedElasticBandClass(
     const std::string  parameter_file,
     const std::string  restartFilesPath,
-    const MPI_Comm &   mpi_comm_parent,
+    const MPI_Comm    &mpi_comm_parent,
     const bool         restart,
     const int          verbosity,
     const bool         useDevice,
@@ -650,7 +650,7 @@ namespace dftfe
   void
   nudgedElasticBandClass::CalculateForceparallel(
     int                        image,
-    std::vector<double> &      Forceparallel,
+    std::vector<double>       &Forceparallel,
     const std::vector<double> &tangent)
   {
     if (true)
@@ -684,7 +684,7 @@ namespace dftfe
   void
   nudgedElasticBandClass::CalculateForceperpendicular(
     int                        image,
-    std::vector<double> &      Forceperpendicular,
+    std::vector<double>       &Forceperpendicular,
     const std::vector<double> &Forceparallel,
     const std::vector<double> &tangent)
   {
@@ -930,7 +930,7 @@ namespace dftfe
 
 
   void
-  nudgedElasticBandClass::LNorm(double &            norm,
+  nudgedElasticBandClass::LNorm(double             &norm,
                                 std::vector<double> v,
                                 int                 L,
                                 int                 len)
@@ -1114,7 +1114,7 @@ namespace dftfe
   nudgedElasticBandClass::CalculateForceonImage(
     const std::vector<double> &Forceperpendicular,
     const std::vector<double> &SpringForce,
-    std::vector<double> &      ForceonImage)
+    std::vector<double>       &ForceonImage)
   {
     unsigned int count = 0;
 
@@ -1217,7 +1217,7 @@ namespace dftfe
 
 
   void
-  nudgedElasticBandClass::precondition(std::vector<double> &      s,
+  nudgedElasticBandClass::precondition(std::vector<double>       &s,
                                        const std::vector<double> &gradient)
   {
     s.clear();

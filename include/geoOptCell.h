@@ -37,7 +37,7 @@ namespace dftfe
      *  @param _dftPtr pointer to dftClass
      *  @param mpi_comm_parent parent mpi_communicator
      */
-    geoOptCell(dftBase *       dftPtr,
+    geoOptCell(dftBase        *dftPtr,
                const MPI_Comm &mpi_comm_parent,
                const bool      restart = false);
 
@@ -149,7 +149,7 @@ namespace dftfe
     dealii::Tensor<2, 3, double> d_strainEpsilon;
 
     /// pointer to dft class
-    dftBase *                        d_dftPtr;
+    dftBase                         *d_dftPtr;
     std::unique_ptr<nonLinearSolver> d_nonLinearSolverPtr;
 
     /// parallel communication objects

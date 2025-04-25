@@ -71,8 +71,8 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                                      basisOperationsPtr,
-    distributedCPUVec<double> &              x,
+                                            &basisOperationsPtr,
+    distributedCPUVec<double>               &x,
     const dealii::AffineConstraints<double> &constraintMatrix,
     const unsigned int                       matrixFreeVectorComponent,
     const unsigned int matrixFreeQuadratureComponentRhsDensity,
@@ -312,7 +312,7 @@ namespace dftfe
            ++it)
         {
           std::vector<dealii::AffineConstraints<double>::size_type>
-                                 local_dof_indices_origin(1, it->first); // atomic node
+            local_dof_indices_origin(1, it->first); // atomic node
           dealii::Vector<double> cell_rhs_origin(1);
           cell_rhs_origin(0) = -(it->second); // atomic charge
 

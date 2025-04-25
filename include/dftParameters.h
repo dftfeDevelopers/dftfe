@@ -60,8 +60,7 @@ namespace dftfe
 
     bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm,
       timeReversal, pseudoTestsFlag, constraintMagnetization, writeDosFile,
-      writeLdosFile, writeBandsFile, writeLocalizationLengths, pinnedNodeForPBC,
-      writePdosFile;
+      writeLdosFile, writeLocalizationLengths, pinnedNodeForPBC, writePdosFile;
 
     bool pureState;
 
@@ -222,7 +221,7 @@ namespace dftfe
      */
     void
     parse_parameters(const std::string &parameter_file,
-                     const MPI_Comm &   mpi_comm_parent,
+                     const MPI_Comm    &mpi_comm_parent,
                      const bool         printParams      = false,
                      const std::string  mode             = "GS",
                      const std::string  restartFilesPath = ".",

@@ -6,7 +6,7 @@ namespace dftfe
 {
   void
   AtomicBasisData::evalBasisData(const std::vector<double> &quadpts,
-                                 const AtomicBasis &        atomicBasis,
+                                 const AtomicBasis         &atomicBasis,
                                  const unsigned int         maxDerOrder)
   {
     int nQuad  = quadpts.size() / 3;

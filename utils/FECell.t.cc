@@ -7,7 +7,7 @@ namespace dftfe
     template <unsigned int dim>
     FECell<dim>::FECell(
       typename dealii::DoFHandler<dim>::active_cell_iterator dealiiFECellIter,
-      const dealii::FiniteElement<dim, dim> &                fe)
+      const dealii::FiniteElement<dim, dim>                 &fe)
       : d_mappingQ1()
       , d_feCell(fe)
     {
@@ -147,7 +147,7 @@ namespace dftfe
     void
     FECell<dim>::getShapeFuncValuesFromParametricPoints(
       unsigned int                    numPointsInCell,
-      const std::vector<double> &     parametricPoints,
+      const std::vector<double>      &parametricPoints,
       std::vector<dataTypes::number> &shapeFuncValues,
       unsigned int                    cellShapeFuncStartIndex,
       unsigned int                    numDofsPerElement) const
@@ -172,7 +172,7 @@ namespace dftfe
     void
     FECell<dim>::getShapeFuncValues(
       unsigned int                    numPointsInCell,
-      const std::vector<double> &     coordinatesOfPointsInCell,
+      const std::vector<double>      &coordinatesOfPointsInCell,
       std::vector<dataTypes::number> &shapeFuncValues,
       unsigned int                    cellShapeFuncStartIndex,
       unsigned int                    numDofsPerElement) const

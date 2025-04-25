@@ -12,8 +12,8 @@ namespace dftfe
   {
     void
     fillDensityAttributeData(
-      std::vector<double> &                        attributeData,
-      const std::vector<double> &                  values,
+      std::vector<double>                         &attributeData,
+      const std::vector<double>                   &values,
       const std::pair<unsigned int, unsigned int> &indexRange)
     {
       unsigned int startIndex = indexRange.first;
@@ -103,7 +103,7 @@ namespace dftfe
   void
   AuxDensityMatrixFE<memorySpace>::setDensityMatrixComponents(
     const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      &                                     eigenVectorsFlattenedMemSpace,
+                                           &eigenVectorsFlattenedMemSpace,
     const std::vector<std::vector<double>> &fractionalOccupancies)
   {
     d_eigenVectorsFlattenedMemSpacePtr = &(eigenVectorsFlattenedMemSpace);
@@ -135,7 +135,7 @@ namespace dftfe
     const std::unordered_map<std::string, std::vector<dataTypes::number>>
       &projectionInputsDataType,
     const std::unordered_map<std::string, std::vector<double>>
-      &       projectionInputsReal,
+             &projectionInputsReal,
     const int iSpin)
   {
     std::string errMsg = "Not implemented";

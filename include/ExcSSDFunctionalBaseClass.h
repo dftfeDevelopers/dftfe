@@ -106,7 +106,7 @@ namespace dftfe
     virtual void
     applyWaveFunctionDependentFuncDerWrtPsi(
       const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-        &                                                                src,
+                                                                        &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
@@ -127,7 +127,7 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
                                               memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-        &                dst,
+                        &dst,
       const unsigned int inputVecSize,
       const unsigned int kPointIndex,
       const unsigned int spinIndex) = 0;
@@ -139,7 +139,7 @@ namespace dftfe
     virtual void
     updateWaveFunctionDependentFuncDerWrtPsi(
       const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrixPtr,
-      const std::vector<double> &                           kPointWeights) = 0;
+      const std::vector<double>                            &kPointWeights) = 0;
 
 
     /*
@@ -149,7 +149,7 @@ namespace dftfe
     virtual void
     computeWaveFunctionDependentExcEnergy(
       const std::shared_ptr<AuxDensityMatrix<memorySpace>> &auxDensityMatrix,
-      const std::vector<double> &                           kPointWeights) = 0;
+      const std::vector<double>                            &kPointWeights) = 0;
 
     /*
      * @brief Returns the Wavefunction dependent part of the Exc energy.
@@ -176,7 +176,7 @@ namespace dftfe
      */
     virtual void
     computeRhoTauDependentXCData(
-      AuxDensityMatrix<memorySpace> &              auxDensityMatrix,
+      AuxDensityMatrix<memorySpace>               &auxDensityMatrix,
       const std::pair<unsigned int, unsigned int> &quadIndexRange,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
         &xDataOut,

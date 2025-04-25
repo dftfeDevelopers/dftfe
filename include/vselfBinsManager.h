@@ -41,9 +41,9 @@ namespace dftfe
      * @param mpi_comm_parent parent mpi communicator
      * @param mpi_comm_domain domain decomposition mpi communicator
      */
-    vselfBinsManager(const MPI_Comm &     mpi_comm_parent,
-                     const MPI_Comm &     mpi_comm_domain,
-                     const MPI_Comm &     mpi_intercomm_kpts,
+    vselfBinsManager(const MPI_Comm      &mpi_comm_parent,
+                     const MPI_Comm      &mpi_comm_domain,
+                     const MPI_Comm      &mpi_intercomm_kpts,
                      const dftParameters &dftParams);
 
 
@@ -67,12 +67,12 @@ namespace dftfe
     createAtomBins(
       std::vector<const dealii::AffineConstraints<double> *> &constraintsVector,
       const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
-      const dealii::DoFHandler<3> &            dofHandler,
+      const dealii::DoFHandler<3>             &dofHandler,
       const dealii::AffineConstraints<double> &constraintMatrix,
-      const std::vector<std::vector<double>> & atomLocations,
-      const std::vector<std::vector<double>> & imagePositions,
-      const std::vector<int> &                 imageIds,
-      const std::vector<double> &              imageCharges,
+      const std::vector<std::vector<double>>  &atomLocations,
+      const std::vector<std::vector<double>>  &imagePositions,
+      const std::vector<int>                  &imageIds,
+      const std::vector<double>               &imageCharges,
       const double                             radiusAtomBall);
 
     /**
@@ -94,12 +94,12 @@ namespace dftfe
     updateBinsBc(
       std::vector<const dealii::AffineConstraints<double> *> &constraintsVector,
       const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
-      const dealii::DoFHandler<3> &            dofHandler,
+      const dealii::DoFHandler<3>             &dofHandler,
       const dealii::AffineConstraints<double> &constraintMatrix,
-      const std::vector<std::vector<double>> & atomLocations,
-      const std::vector<std::vector<double>> & imagePositions,
-      const std::vector<int> &                 imageIds,
-      const std::vector<double> &              imageCharges,
+      const std::vector<std::vector<double>>  &atomLocations,
+      const std::vector<std::vector<double>>  &imagePositions,
+      const std::vector<int>                  &imageIds,
+      const std::vector<double>               &imageCharges,
       const bool vselfPerturbationUpdateForStress = false);
 
 
@@ -123,17 +123,17 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                                      basisOperationsPtr,
+                                              &basisOperationsPtr,
       const unsigned int                       offset,
       const unsigned int                       matrixFreeQuadratureIdAX,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
-      const std::vector<std::vector<double>> & imagePositions,
-      const std::vector<int> &                 imageIds,
-      const std::vector<double> &              imageCharges,
-      std::vector<std::vector<double>> &       localVselfs,
+      const std::vector<std::vector<double>>  &imagePositions,
+      const std::vector<int>                  &imageIds,
+      const std::vector<double>               &imageCharges,
+      std::vector<std::vector<double>>        &localVselfs,
       std::map<dealii::CellId, std::vector<double>> &bQuadValuesAllAtoms,
-      std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtoms,
-      std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtomsImages,
+      std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtoms,
+      std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtomsImages,
       std::map<dealii::CellId, std::vector<unsigned int>>
         &bCellNonTrivialAtomIds,
       std::vector<std::map<dealii::CellId, std::vector<unsigned int>>>
@@ -141,9 +141,9 @@ namespace dftfe
       std::map<dealii::CellId, std::vector<unsigned int>>
         &bCellNonTrivialAtomImageIds,
       std::vector<std::map<dealii::CellId, std::vector<unsigned int>>>
-        &                        bCellNonTrivialAtomImageIdsBins,
+                                &bCellNonTrivialAtomImageIdsBins,
       const std::vector<double> &smearingWidths,
-      std::vector<double> &      smearedChargeScaling,
+      std::vector<double>       &smearedChargeScaling,
       const unsigned int         smearedChargeQuadratureId,
       const bool                 useSmearedCharges        = false,
       const bool                 isVselfPerturbationSolve = false);
@@ -169,7 +169,7 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                basisOperationsPtr,
+                        &basisOperationsPtr,
       const unsigned int mfBaseDofHandlerIndex,
       const unsigned int matrixFreeQuadratureIdAX,
       const unsigned int offset,
@@ -178,15 +178,15 @@ namespace dftfe
         &cellGradNIGradNJIntergralDevice,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        &                                      BLASWrapperPtr,
+                                              &BLASWrapperPtr,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
-      const std::vector<std::vector<double>> & imagePositions,
-      const std::vector<int> &                 imageIds,
-      const std::vector<double> &              imageCharges,
-      std::vector<std::vector<double>> &       localVselfs,
+      const std::vector<std::vector<double>>  &imagePositions,
+      const std::vector<int>                  &imageIds,
+      const std::vector<double>               &imageCharges,
+      std::vector<std::vector<double>>        &localVselfs,
       std::map<dealii::CellId, std::vector<double>> &bQuadValuesAllAtoms,
-      std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtoms,
-      std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtomsImages,
+      std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtoms,
+      std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtomsImages,
       std::map<dealii::CellId, std::vector<unsigned int>>
         &bCellNonTrivialAtomIds,
       std::vector<std::map<dealii::CellId, std::vector<unsigned int>>>
@@ -194,9 +194,9 @@ namespace dftfe
       std::map<dealii::CellId, std::vector<unsigned int>>
         &bCellNonTrivialAtomImageIds,
       std::vector<std::map<dealii::CellId, std::vector<unsigned int>>>
-        &                        bCellNonTrivialAtomImageIdsBins,
+                                &bCellNonTrivialAtomImageIdsBins,
       const std::vector<double> &smearingWidths,
-      std::vector<double> &      smearedChargeScaling,
+      std::vector<double>       &smearedChargeScaling,
       const unsigned int         smearedChargeQuadratureId,
       const bool                 useSmearedCharges        = false,
       const bool                 isVselfPerturbationSolve = false);
@@ -213,7 +213,7 @@ namespace dftfe
       const std::shared_ptr<
         dftfe::basis::
           FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-        &                basisOperationsPtr,
+                        &basisOperationsPtr,
       const unsigned int mfBaseDofHandlerIndex,
       const unsigned int matrixFreeQuadratureIdAX,
       const unsigned int offset,
@@ -226,10 +226,10 @@ namespace dftfe
         &BLASWrapperPtr,
 #  endif
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
-      const std::vector<std::vector<double>> & imagePositions,
-      const std::vector<int> &                 imageIds,
-      const std::vector<double> &              imageCharges,
-      const std::vector<double> &              smearingWidths,
+      const std::vector<std::vector<double>>  &imagePositions,
+      const std::vector<int>                  &imageIds,
+      const std::vector<double>               &imageCharges,
+      const std::vector<double>               &smearingWidths,
       const unsigned int                       smearedChargeQuadratureId,
       const bool                               useSmearedCharges = false);
 
@@ -299,7 +299,7 @@ namespace dftfe
      */
     void
     createAtomBinsSanityCheck(
-      const dealii::DoFHandler<3> &            dofHandler,
+      const dealii::DoFHandler<3>             &dofHandler,
       const dealii::AffineConstraints<double> &onlyHangingNodeConstraints);
 
     /// storage for input atomLocations argument in createAtomBins function

@@ -36,20 +36,20 @@ namespace dftfe
     //
     void
     smearedNuclearCharges(
-      const dealii::DoFHandler<3> &        dofHandlerOfField,
-      const dealii::Quadrature<3> &        quadrature_formula,
+      const dealii::DoFHandler<3>         &dofHandlerOfField,
+      const dealii::Quadrature<3>         &quadrature_formula,
       const std::vector<dealii::Point<3>> &atomLocations,
-      const std::vector<double> &          atomCharges,
+      const std::vector<double>           &atomCharges,
       const unsigned int                   numberDomainAtomsInBin,
-      const std::vector<int> &             imageIdToDomainAtomIdMapCurrentBin,
-      const std::vector<int> &             binAtomIdToGlobalAtomIdMapCurrentBin,
-      const MPI_Comm &                     mpi_communicator,
-      const std::vector<double> &          rc,
+      const std::vector<int>              &imageIdToDomainAtomIdMapCurrentBin,
+      const std::vector<int>              &binAtomIdToGlobalAtomIdMapCurrentBin,
+      const MPI_Comm                      &mpi_communicator,
+      const std::vector<double>           &rc,
       const std::map<dealii::CellId, std::pair<dealii::Point<3>, double>>
                                                      enclosingBallCells,
       std::map<dealii::CellId, std::vector<double>> &bQuadValues,
-      std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtoms,
-      std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtomsImages,
+      std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtoms,
+      std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtomsImages,
       std::map<dealii::CellId, std::vector<unsigned int>>
         &bCellNonTrivialAtomIdsAllAtoms,
       std::map<dealii::CellId, std::vector<unsigned int>>
@@ -57,7 +57,7 @@ namespace dftfe
       std::map<dealii::CellId, std::vector<unsigned int>>
         &bCellNonTrivialAtomImageIdsAllAtoms,
       std::map<dealii::CellId, std::vector<unsigned int>>
-        &                  bCellNonTrivialAtomImageIdsBin,
+                          &bCellNonTrivialAtomImageIdsBin,
       std::vector<double> &smearedChargeScaling)
     {
       // dealii::FESystem<3>
@@ -245,7 +245,7 @@ namespace dftfe
         if (cell->is_locally_owned())
           {
             std::vector<double> &bQuadValuesCell = bQuadValues[cell->id()];
-            std::vector<int> &   bQuadAtomIdsCell =
+            std::vector<int>    &bQuadAtomIdsCell =
               bQuadAtomIdsAllAtoms[cell->id()];
             std::vector<int> &bQuadAtomImageIdsCell =
               bQuadAtomIdsAllAtomsImages[cell->id()];
@@ -321,26 +321,26 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                                      basisOperationsPtr,
+                                            &basisOperationsPtr,
     const unsigned int                       offset,
     const unsigned int                       matrixFreeQuadratureIdAX,
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
-    const std::vector<std::vector<double>> & imagePositions,
-    const std::vector<int> &                 imageIds,
-    const std::vector<double> &              imageCharges,
-    std::vector<std::vector<double>> &       localVselfs,
+    const std::vector<std::vector<double>>  &imagePositions,
+    const std::vector<int>                  &imageIds,
+    const std::vector<double>               &imageCharges,
+    std::vector<std::vector<double>>        &localVselfs,
     std::map<dealii::CellId, std::vector<double>> &bQuadValuesAllAtoms,
-    std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtoms,
-    std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtomsImages,
+    std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtoms,
+    std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtomsImages,
     std::map<dealii::CellId, std::vector<unsigned int>> &bCellNonTrivialAtomIds,
     std::vector<std::map<dealii::CellId, std::vector<unsigned int>>>
       &bCellNonTrivialAtomIdsBins,
     std::map<dealii::CellId, std::vector<unsigned int>>
       &bCellNonTrivialAtomImageIds,
     std::vector<std::map<dealii::CellId, std::vector<unsigned int>>>
-      &                        bCellNonTrivialAtomImageIdsBins,
+                              &bCellNonTrivialAtomImageIdsBins,
     const std::vector<double> &smearingWidths,
-    std::vector<double> &      smearedChargeScaling,
+    std::vector<double>       &smearedChargeScaling,
     const unsigned int         smearedChargeQuadratureId,
     const bool                 useSmearedCharges,
     const bool                 isVselfPerturbationSolve)
@@ -449,8 +449,8 @@ namespace dftfe
         init_time = MPI_Wtime();
 
 
-        std::set<int> &    atomsInBinSet       = d_bins[iBin];
-        std::set<int> &    atomsImagesInBinSet = d_binsImages[iBin];
+        std::set<int>     &atomsInBinSet       = d_bins[iBin];
+        std::set<int>     &atomsImagesInBinSet = d_binsImages[iBin];
         std::vector<int>   atomsInCurrentBin(atomsInBinSet.begin(),
                                            atomsInBinSet.end());
         const unsigned int numberGlobalAtomsInBin = atomsInCurrentBin.size();
@@ -822,7 +822,7 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                basisOperationsPtr,
+                      &basisOperationsPtr,
     const unsigned int mfBaseDofHandlerIndex,
     const unsigned int matrixFreeQuadratureIdAX,
     const unsigned int offset,
@@ -830,24 +830,24 @@ namespace dftfe
       &cellGradNIGradNJIntergralDevice,
     const std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                      BLASWrapperPtr,
+                                            &BLASWrapperPtr,
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
-    const std::vector<std::vector<double>> & imagePositions,
-    const std::vector<int> &                 imageIds,
-    const std::vector<double> &              imageCharges,
-    std::vector<std::vector<double>> &       localVselfs,
+    const std::vector<std::vector<double>>  &imagePositions,
+    const std::vector<int>                  &imageIds,
+    const std::vector<double>               &imageCharges,
+    std::vector<std::vector<double>>        &localVselfs,
     std::map<dealii::CellId, std::vector<double>> &bQuadValuesAllAtoms,
-    std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtoms,
-    std::map<dealii::CellId, std::vector<int>> &   bQuadAtomIdsAllAtomsImages,
+    std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtoms,
+    std::map<dealii::CellId, std::vector<int>>    &bQuadAtomIdsAllAtomsImages,
     std::map<dealii::CellId, std::vector<unsigned int>> &bCellNonTrivialAtomIds,
     std::vector<std::map<dealii::CellId, std::vector<unsigned int>>>
       &bCellNonTrivialAtomIdsBins,
     std::map<dealii::CellId, std::vector<unsigned int>>
       &bCellNonTrivialAtomImageIds,
     std::vector<std::map<dealii::CellId, std::vector<unsigned int>>>
-      &                        bCellNonTrivialAtomImageIdsBins,
+                              &bCellNonTrivialAtomImageIdsBins,
     const std::vector<double> &smearingWidths,
-    std::vector<double> &      smearedChargeScaling,
+    std::vector<double>       &smearedChargeScaling,
     const unsigned int         smearedChargeQuadratureId,
     const bool                 useSmearedCharges,
     const bool                 isVselfPerturbationSolve)
@@ -983,8 +983,8 @@ namespace dftfe
         MPI_Barrier(d_mpiCommParent);
         smeared_init_time = MPI_Wtime();
 
-        std::set<int> &    atomsInBinSet       = d_bins[iBin];
-        std::set<int> &    atomsImagesInBinSet = d_binsImages[iBin];
+        std::set<int>     &atomsInBinSet       = d_bins[iBin];
+        std::set<int>     &atomsImagesInBinSet = d_binsImages[iBin];
         std::vector<int>   atomsInCurrentBin(atomsInBinSet.begin(),
                                            atomsInBinSet.end());
         const unsigned int numberGlobalAtomsInBin = atomsInCurrentBin.size();
@@ -1169,7 +1169,7 @@ namespace dftfe
                ++it)
             {
               std::vector<dealii::AffineConstraints<double>::size_type>
-                                     local_dof_indices_origin(1, it->first); // atomic node
+                local_dof_indices_origin(1, it->first); // atomic node
               dealii::Vector<double> cell_rhs_origin(1);
               cell_rhs_origin(0) = -(it->second); // atomic charge
 
@@ -1644,7 +1644,7 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-      &                basisOperationsPtr,
+                      &basisOperationsPtr,
     const unsigned int mfBaseDofHandlerIndex,
     const unsigned int matrixFreeQuadratureIdAX,
     const unsigned int offset,
@@ -1656,10 +1656,10 @@ namespace dftfe
       &BLASWrapperPtr,
 #endif
     const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
-    const std::vector<std::vector<double>> & imagePositions,
-    const std::vector<int> &                 imageIds,
-    const std::vector<double> &              imageCharges,
-    const std::vector<double> &              smearingWidths,
+    const std::vector<std::vector<double>>  &imagePositions,
+    const std::vector<int>                  &imageIds,
+    const std::vector<double>               &imageCharges,
+    const std::vector<double>               &smearingWidths,
     const unsigned int                       smearedChargeQuadratureId,
     const bool                               useSmearedCharges)
   {

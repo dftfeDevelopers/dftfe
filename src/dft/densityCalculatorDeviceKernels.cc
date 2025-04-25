@@ -29,10 +29,10 @@ namespace dftfe
       const unsigned int numVectors,
       const unsigned int numCells,
       const unsigned int nQuadsPerCell,
-      double *           wfcContributions,
-      double *           gradwfcContributions,
-      double *           rhoCellsWfcContributions,
-      double *           gradRhoCellsWfcContributions,
+      double            *wfcContributions,
+      double            *gradwfcContributions,
+      double            *rhoCellsWfcContributions,
+      double            *gradRhoCellsWfcContributions,
       const bool         isEvaluateGradRho)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -84,8 +84,8 @@ namespace dftfe
       const unsigned int                 nQuadsPerCell,
       dftfe::utils::deviceDoubleComplex *wfcContributions,
       dftfe::utils::deviceDoubleComplex *gradwfcContributions,
-      double *                           rhoCellsWfcContributions,
-      double *                           gradRhoCellsWfcContributions,
+      double                            *rhoCellsWfcContributions,
+      double                            *gradRhoCellsWfcContributions,
       const bool                         isEvaluateGradRho)
     {
       const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -135,17 +135,17 @@ namespace dftfe
   computeRhoGradRhoFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    partialOccupVec,
-    NumberType *                                wfcQuadPointData,
-    NumberType *                                gradWfcQuadPointData,
-    double *                                    rhoCellsWfcContributions,
-    double *                                    gradRhoCellsWfcContributions,
-    double *                                    rho,
-    double *                                    gradRho,
+    double                                     *partialOccupVec,
+    NumberType                                 *wfcQuadPointData,
+    NumberType                                 *gradWfcQuadPointData,
+    double                                     *rhoCellsWfcContributions,
+    double                                     *gradRhoCellsWfcContributions,
+    double                                     *rho,
+    double                                     *gradRho,
     const bool                                  isEvaluateGradRho)
   {
     const unsigned int cellsBlockSize      = cellRange.second - cellRange.first;
@@ -216,17 +216,17 @@ namespace dftfe
   computeRhoGradRhoFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      &                                         BLASWrapperPtr,
+                                               &BLASWrapperPtr,
     const std::pair<unsigned int, unsigned int> cellRange,
     const std::pair<unsigned int, unsigned int> vecRange,
     const unsigned int                          nQuadsPerCell,
-    double *                                    partialOccupVec,
-    dataTypes::number *                         wfcQuadPointData,
-    dataTypes::number *                         gradWfcQuadPointData,
-    double *                                    rhoCellsWfcContributions,
-    double *                                    gradRhoCellsWfcContributions,
-    double *                                    rho,
-    double *                                    gradRho,
+    double                                     *partialOccupVec,
+    dataTypes::number                          *wfcQuadPointData,
+    dataTypes::number                          *gradWfcQuadPointData,
+    double                                     *rhoCellsWfcContributions,
+    double                                     *gradRhoCellsWfcContributions,
+    double                                     *rho,
+    double                                     *gradRho,
     const bool                                  isEvaluateGradRho);
 
 } // namespace dftfe

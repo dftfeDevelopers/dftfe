@@ -104,8 +104,7 @@ namespace dftfe
           }
         switch (d_dftParams.dc_dispersioncorrectiontype)
           {
-            case 1:
-              {
+              case 1: {
 #ifdef DFTFE_WITH_DFTD3
                 dftd3_error     error = dftd3_new_error();
                 dftd3_structure mol   = NULL;
@@ -284,8 +283,7 @@ namespace dftfe
                               "DFTFE has not been compiled with s-dftd3")));
 #endif
               }
-            case 2:
-              {
+              case 2: {
 #ifdef DFTFE_WITH_DFTD4
                 dftd4_error     error  = dftd4_new_error();
                 dftd4_structure mol    = NULL;
@@ -399,10 +397,10 @@ namespace dftfe
 
 
   dispersionCorrection::dispersionCorrection(
-    const MPI_Comm &     mpi_comm_parent,
-    const MPI_Comm &     mpi_comm_domain,
-    const MPI_Comm &     interpool_comm,
-    const MPI_Comm &     interbandgroup_comm,
+    const MPI_Comm      &mpi_comm_parent,
+    const MPI_Comm      &mpi_comm_domain,
+    const MPI_Comm      &interpool_comm,
+    const MPI_Comm      &interbandgroup_comm,
     const dftParameters &dftParams)
     : mpi_communicator_global(mpi_comm_parent)
     , mpi_communicator_domain(mpi_comm_domain)

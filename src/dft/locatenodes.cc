@@ -143,9 +143,9 @@ namespace dftfe
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::locatePeriodicPinnedNodes(
-    const dealii::DoFHandler<3> &            _dofHandler,
+    const dealii::DoFHandler<3>             &_dofHandler,
     const dealii::AffineConstraints<double> &constraintsBase,
-    dealii::AffineConstraints<double> &      constraints)
+    dealii::AffineConstraints<double>       &constraints)
   {
     // pin a node away from all atoms in case of full PBC for total
     // electrostatic potential solve

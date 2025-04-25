@@ -27,8 +27,8 @@ namespace dftfe
   class oncvClass : public pseudopotentialBaseClass<ValueType, memorySpace>
   {
   public:
-    oncvClass(const MPI_Comm &              mpi_comm_parent,
-              const std::string &           scratchFolderName,
+    oncvClass(const MPI_Comm               &mpi_comm_parent,
+              const std::string            &scratchFolderName,
               const std::set<unsigned int> &atomTypes,
               const bool                    floatingNuclearCharges,
               const unsigned int            nOMPThreads,
@@ -80,7 +80,7 @@ namespace dftfe
       unsigned int                             nlpspQuadratureId,
       unsigned int                             densityQuadratureIdElectro,
       std::shared_ptr<excManager<memorySpace>> excFunctionalPtr,
-      const std::vector<std::vector<double>> & atomLocations,
+      const std::vector<std::vector<double>>  &atomLocations,
       unsigned int                             numEigenValues,
       const bool                               singlePrecNonLocalOperator,
       const bool computeSphericalFnTimesXNonLocalOperator = true);
@@ -104,26 +104,26 @@ namespace dftfe
     void
     initialiseNonLocalContribution(
       const std::vector<std::vector<double>> &atomLocations,
-      const std::vector<int> &                imageIds,
+      const std::vector<int>                 &imageIds,
       const std::vector<std::vector<double>> &periodicCoords,
-      const std::vector<double> &             kPointWeights,
-      const std::vector<double> &             kPointCoordinates,
+      const std::vector<double>              &kPointWeights,
+      const std::vector<double>              &kPointCoordinates,
       const bool                              updateNonlocalSparsity);
 
 
     void
     initialiseNonLocalContribution(
-      const std::vector<std::vector<double>> &        atomLocations,
-      const std::vector<int> &                        imageIds,
-      const std::vector<std::vector<double>> &        periodicCoords,
-      const std::vector<double> &                     kPointWeights,
-      const std::vector<double> &                     kPointCoordinates,
+      const std::vector<std::vector<double>>         &atomLocations,
+      const std::vector<int>                         &imageIds,
+      const std::vector<std::vector<double>>         &periodicCoords,
+      const std::vector<double>                      &kPointWeights,
+      const std::vector<double>                      &kPointCoordinates,
       const bool                                      updateNonlocalSparsity,
       const std::map<unsigned int, std::vector<int>> &sparsityPattern,
       const std::vector<std::vector<dealii::CellId>>
         &elementIdsInAtomCompactSupport,
       const std::vector<std::vector<unsigned int>>
-        &                              elementIndexesInAtomCompactSupport,
+                                      &elementIndexesInAtomCompactSupport,
       const std::vector<unsigned int> &atomIdsInCurrentProcess,
       unsigned int                     numberElements);
 
@@ -207,9 +207,9 @@ namespace dftfe
      */
     void
     setImageCoordinates(const std::vector<std::vector<double>> &atomLocations,
-                        const std::vector<int> &                imageIds,
+                        const std::vector<int>                 &imageIds,
                         const std::vector<std::vector<double>> &periodicCoords,
-                        std::vector<unsigned int> &             imageIdsTemp,
+                        std::vector<unsigned int>              &imageIdsTemp,
                         std::vector<double> &imageCoordsTemp);
     /**
      * @brief Creating Density splines for all atomTypes
@@ -234,7 +234,7 @@ namespace dftfe
 #endif
     std::vector<std::vector<double>> d_nonLocalPseudoPotentialConstants;
     std::map<unsigned int, std::vector<double>>
-                                                        d_atomicNonLocalPseudoPotentialConstants;
+      d_atomicNonLocalPseudoPotentialConstants;
     dftfe::utils::MemoryStorage<ValueType, memorySpace> d_couplingMatrixEntries;
     dftfe::utils::MemoryStorage<
       typename dftfe::dataTypes::singlePrecType<ValueType>::type,

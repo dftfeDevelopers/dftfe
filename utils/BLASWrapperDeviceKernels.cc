@@ -20,8 +20,8 @@ namespace dftfe
   {
     template <typename ValueType>
     __global__ void
-    saddKernel(ValueType *            y,
-               ValueType *            x,
+    saddKernel(ValueType             *y,
+               ValueType             *x,
                const ValueType        beta,
                const dftfe::size_type size)
     {
@@ -40,8 +40,8 @@ namespace dftfe
     __global__ void
     copyComplexArrToRealArrsDeviceKernel(const dftfe::size_type  size,
                                          const ValueTypeComplex *complexArr,
-                                         ValueTypeReal *         realArr,
-                                         ValueTypeReal *         imagArr)
+                                         ValueTypeReal          *realArr,
+                                         ValueTypeReal          *imagArr)
     {
       const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -56,9 +56,9 @@ namespace dftfe
     template <typename ValueTypeComplex, typename ValueTypeReal>
     __global__ void
     copyRealArrsToComplexArrDeviceKernel(const dftfe::size_type size,
-                                         const ValueTypeReal *  realArr,
-                                         const ValueTypeReal *  imagArr,
-                                         ValueTypeComplex *     complexArr)
+                                         const ValueTypeReal   *realArr,
+                                         const ValueTypeReal   *imagArr,
+                                         ValueTypeComplex      *complexArr)
     {
       const dftfe::size_type globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -74,8 +74,8 @@ namespace dftfe
     __global__ void
     copyValueType1ArrToValueType2ArrDeviceKernel(
       const dftfe::size_type size,
-      const ValueType1 *     valueType1Arr,
-      ValueType2 *           valueType2Arr)
+      const ValueType1      *valueType1Arr,
+      ValueType2            *valueType2Arr)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -90,9 +90,9 @@ namespace dftfe
       const dftfe::size_type B,
       const dftfe::size_type DRem,
       const dftfe::size_type D,
-      const ValueType1 *     valueType1SrcArray,
-      ValueType1 *           valueType1DstArray,
-      ValueType2 *           valueType2DstArray)
+      const ValueType1      *valueType1SrcArray,
+      ValueType1            *valueType1DstArray,
+      ValueType2            *valueType2DstArray)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -117,8 +117,8 @@ namespace dftfe
     stridedCopyToBlockDeviceKernel(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const ValueType1 *             copyFromVec,
-      ValueType2 *                   copyToVec,
+      const ValueType1              *copyFromVec,
+      ValueType2                    *copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -145,8 +145,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const dftfe::size_type         stratingVecId,
-      const ValueType1 *             copyFromVec,
-      ValueType2 *                   copyToVec,
+      const ValueType1              *copyFromVec,
+      ValueType2                    *copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -173,9 +173,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const ValueType1               a,
-      const ValueType1 *             s,
-      const ValueType2 *             copyFromVec,
-      ValueType2 *                   copyToVec,
+      const ValueType1              *s,
+      const ValueType2              *copyFromVec,
+      ValueType2                    *copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -205,8 +205,8 @@ namespace dftfe
     stridedCopyFromBlockDeviceKernel(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const ValueType1 *             copyFromVec,
-      ValueType2 *                   copyToVec,
+      const ValueType1              *copyFromVec,
+      ValueType2                    *copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -235,8 +235,8 @@ namespace dftfe
       const dftfe::size_type blockSizeFrom,
       const dftfe::size_type numBlocks,
       const dftfe::size_type startingId,
-      const ValueType1 *     copyFromVec,
-      ValueType2 *           copyToVec)
+      const ValueType1      *copyFromVec,
+      ValueType2            *copyToVec)
     {
       {
         const dftfe::size_type globalThreadId =
@@ -262,8 +262,8 @@ namespace dftfe
       const dftfe::size_type blockSizeFrom,
       const dftfe::size_type numBlocks,
       const dftfe::size_type startingId,
-      const ValueType1 *     copyFromVec,
-      ValueType2 *           copyToVec)
+      const ValueType1      *copyFromVec,
+      ValueType2            *copyToVec)
     {
       {
         const dftfe::size_type globalThreadId =
@@ -291,8 +291,8 @@ namespace dftfe
                                           const dftfe::size_type numBlocks,
                                           const dftfe::size_type startingToId,
                                           const dftfe::size_type startingFromId,
-                                          const ValueType1 *     copyFromVec,
-                                          ValueType2 *           copyToVec)
+                                          const ValueType1      *copyFromVec,
+                                          ValueType2            *copyToVec)
     {
       {
         const dftfe::size_type globalThreadId =
@@ -317,9 +317,9 @@ namespace dftfe
     __global__ void
     addVecOverContinuousIndexKernel(const dftfe::size_type numContiguousBlocks,
                                     const dftfe::size_type contiguousBlockSize,
-                                    const ValueType *      input1,
-                                    const ValueType *      input2,
-                                    ValueType *            output)
+                                    const ValueType       *input1,
+                                    const ValueType       *input2,
+                                    ValueType             *output)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -352,7 +352,7 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     __global__ void
     ascalDeviceKernel(const dftfe::size_type n,
-                      ValueType1 *           x,
+                      ValueType1            *x,
                       const ValueType2       a)
     {
       for (dftfe::size_type i = blockIdx.x * blockDim.x + threadIdx.x; i < n;
@@ -368,8 +368,8 @@ namespace dftfe
     stridedBlockScaleDeviceKernel(const dftfe::size_type contiguousBlockSize,
                                   const dftfe::size_type numContiguousBlocks,
                                   const ValueType1       a,
-                                  const ValueType1 *     s,
-                                  ValueType2 *           x)
+                                  const ValueType1      *s,
+                                  ValueType2            *x)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -394,8 +394,8 @@ namespace dftfe
     stridedBlockScaleColumnWiseKernel(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType *      beta,
-      ValueType *            x)
+      const ValueType       *beta,
+      ValueType             *x)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -423,9 +423,9 @@ namespace dftfe
     stridedBlockScaleAndAddColumnWiseKernel(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType *      x,
-      const ValueType *      beta,
-      ValueType *            y)
+      const ValueType       *x,
+      const ValueType       *beta,
+      ValueType             *y)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -454,11 +454,11 @@ namespace dftfe
     stridedBlockScaleAndAddTwoVecColumnWiseKernel(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType *      x,
-      const ValueType *      alpha,
-      const ValueType *      y,
-      const ValueType *      beta,
-      ValueType *            z)
+      const ValueType       *x,
+      const ValueType       *alpha,
+      const ValueType       *y,
+      const ValueType       *beta,
+      ValueType             *z)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -483,8 +483,8 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     __global__ void
     axpbyDeviceKernel(const dftfe::size_type n,
-                      const ValueType1 *     x,
-                      ValueType1 *           y,
+                      const ValueType1      *x,
+                      ValueType1            *y,
                       const ValueType2       a,
                       const ValueType2       b)
     {
@@ -499,8 +499,8 @@ namespace dftfe
     axpyStridedBlockAtomicAddDeviceKernel(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const double *                 addFromVec,
-      double *                       addToVec,
+      const double                  *addFromVec,
+      double                        *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -524,9 +524,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const double *                 addFromVec,
-      double *                       addToVec,
+      const double                  *s,
+      const double                  *addFromVec,
+      double                        *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -551,8 +551,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 addFromVec,
-      double *                       addToVec,
+      const double                  *addFromVec,
+      double                        *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -578,9 +578,9 @@ namespace dftfe
       const dftfe::size_type                   contiguousBlockSize,
       const dftfe::size_type                   numContiguousBlocks,
       const double                             a,
-      const double *                           s,
+      const double                            *s,
       const dftfe::utils::deviceDoubleComplex *addFromVec,
-      dftfe::utils::deviceDoubleComplex *      addToVec,
+      dftfe::utils::deviceDoubleComplex       *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -611,7 +611,7 @@ namespace dftfe
       const dftfe::size_type                   numContiguousBlocks,
       const double                             a,
       const dftfe::utils::deviceDoubleComplex *addFromVec,
-      dftfe::utils::deviceDoubleComplex *      addToVec,
+      dftfe::utils::deviceDoubleComplex       *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -641,9 +641,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const float *                  addFromVec,
-      double *                       addToVec,
+      const double                  *s,
+      const float                   *addFromVec,
+      double                        *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -668,8 +668,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const float *                  addFromVec,
-      double *                       addToVec,
+      const float                   *addFromVec,
+      double                        *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -694,9 +694,9 @@ namespace dftfe
       const dftfe::size_type                  contiguousBlockSize,
       const dftfe::size_type                  numContiguousBlocks,
       const double                            a,
-      const double *                          s,
+      const double                           *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
-      dftfe::utils::deviceDoubleComplex *     addToVec,
+      dftfe::utils::deviceDoubleComplex      *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -726,7 +726,7 @@ namespace dftfe
       const dftfe::size_type                  numContiguousBlocks,
       const double                            a,
       const dftfe::utils::deviceFloatComplex *addFromVec,
-      dftfe::utils::deviceDoubleComplex *     addToVec,
+      dftfe::utils::deviceDoubleComplex      *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -755,9 +755,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const float *                  addFromVec,
-      float *                        addToVec,
+      const double                  *s,
+      const float                   *addFromVec,
+      float                         *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -781,8 +781,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const float *                  addFromVec,
-      float *                        addToVec,
+      const float                   *addFromVec,
+      float                         *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -807,9 +807,9 @@ namespace dftfe
       const dftfe::size_type                  contiguousBlockSize,
       const dftfe::size_type                  numContiguousBlocks,
       const double                            a,
-      const double *                          s,
+      const double                           *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
-      dftfe::utils::deviceFloatComplex *      addToVec,
+      dftfe::utils::deviceFloatComplex       *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -840,7 +840,7 @@ namespace dftfe
       const dftfe::size_type                  numContiguousBlocks,
       const double                            a,
       const dftfe::utils::deviceFloatComplex *addFromVec,
-      dftfe::utils::deviceFloatComplex *      addToVec,
+      dftfe::utils::deviceFloatComplex       *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -870,9 +870,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const float                    a,
-      const float *                  s,
-      const float *                  addFromVec,
-      float *                        addToVec,
+      const float                   *s,
+      const float                   *addFromVec,
+      float                         *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -897,8 +897,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const float                    a,
-      const float *                  addFromVec,
-      float *                        addToVec,
+      const float                   *addFromVec,
+      float                         *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -923,9 +923,9 @@ namespace dftfe
       const dftfe::size_type                  contiguousBlockSize,
       const dftfe::size_type                  numContiguousBlocks,
       const float                             a,
-      const float *                           s,
+      const float                            *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
-      dftfe::utils::deviceFloatComplex *      addToVec,
+      dftfe::utils::deviceFloatComplex       *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -956,7 +956,7 @@ namespace dftfe
       const dftfe::size_type                  numContiguousBlocks,
       const float                             a,
       const dftfe::utils::deviceFloatComplex *addFromVec,
-      dftfe::utils::deviceFloatComplex *      addToVec,
+      dftfe::utils::deviceFloatComplex       *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -986,7 +986,7 @@ namespace dftfe
       const dftfe::size_type                   contiguousBlockSize,
       const dftfe::size_type                   numContiguousBlocks,
       const dftfe::utils::deviceDoubleComplex *addFromVec,
-      dftfe::utils::deviceDoubleComplex *      addToVec,
+      dftfe::utils::deviceDoubleComplex       *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -1015,9 +1015,9 @@ namespace dftfe
     axpyStridedBlockAtomicAddDeviceKernel(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const double *                 addFromVec,
-      double *                       addToVecReal,
-      double *                       addToVecImag,
+      const double                  *addFromVec,
+      double                        *addToVecReal,
+      double                        *addToVecImag,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -1046,8 +1046,8 @@ namespace dftfe
       const dftfe::size_type                   contiguousBlockSize,
       const dftfe::size_type                   numContiguousBlocks,
       const dftfe::utils::deviceDoubleComplex *addFromVec,
-      double *                                 addToVecReal,
-      double *                                 addToVecImag,
+      double                                  *addToVecReal,
+      double                                  *addToVecImag,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
     {
       const dftfe::size_type globalThreadId =
@@ -1073,9 +1073,9 @@ namespace dftfe
 
     __global__ void
     hadamardProductKernel(const dftfe::size_type vecSize,
-                          const float *          xVec,
-                          const float *          yVec,
-                          float *                outputVec)
+                          const float           *xVec,
+                          const float           *yVec,
+                          float                 *outputVec)
     {
       for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < vecSize;
            i += blockDim.x * gridDim.x)
@@ -1086,9 +1086,9 @@ namespace dftfe
 
     __global__ void
     hadamardProductKernel(const dftfe::size_type vecSize,
-                          const double *         xVec,
-                          const double *         yVec,
-                          double *               outputVec)
+                          const double          *xVec,
+                          const double          *yVec,
+                          double                *outputVec)
     {
       for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < vecSize;
            i += blockDim.x * gridDim.x)
@@ -1101,7 +1101,7 @@ namespace dftfe
     hadamardProductKernel(const dftfe::size_type                   vecSize,
                           const dftfe::utils::deviceDoubleComplex *xVec,
                           const dftfe::utils::deviceDoubleComplex *yVec,
-                          dftfe::utils::deviceDoubleComplex *      outputVec)
+                          dftfe::utils::deviceDoubleComplex       *outputVec)
     {
       for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < vecSize;
            i += blockDim.x * gridDim.x)
@@ -1113,9 +1113,9 @@ namespace dftfe
 
     __global__ void
     hadamardProductWithConjKernel(const dftfe::size_type vecSize,
-                                  const float *          xVec,
-                                  const float *          yVec,
-                                  float *                outputVec)
+                                  const float           *xVec,
+                                  const float           *yVec,
+                                  float                 *outputVec)
     {
       for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < vecSize;
            i += blockDim.x * gridDim.x)
@@ -1126,9 +1126,9 @@ namespace dftfe
 
     __global__ void
     hadamardProductWithConjKernel(const dftfe::size_type vecSize,
-                                  const double *         xVec,
-                                  const double *         yVec,
-                                  double *               outputVec)
+                                  const double          *xVec,
+                                  const double          *yVec,
+                                  double                *outputVec)
     {
       for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < vecSize;
            i += blockDim.x * gridDim.x)
@@ -1160,10 +1160,10 @@ namespace dftfe
     ApaBDDeviceKernel(const dftfe::size_type nRows,
                       const dftfe::size_type nCols,
                       const ValueType0       alpha,
-                      const ValueType1 *     A,
-                      const ValueType2 *     B,
-                      const ValueType3 *     D,
-                      ValueType4 *           C)
+                      const ValueType1      *A,
+                      const ValueType2      *B,
+                      const ValueType3      *D,
+                      ValueType4            *C)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -1185,9 +1185,9 @@ namespace dftfe
     stridedBlockAxpyDeviceKernel(const dftfe::size_type contiguousBlockSize,
                                  const dftfe::size_type numContiguousBlocks,
                                  const ValueType2       a,
-                                 const ValueType2 *     s,
-                                 const ValueType1 *     addFromVec,
-                                 ValueType1 *           addToVec)
+                                 const ValueType2      *s,
+                                 const ValueType1      *addFromVec,
+                                 ValueType1            *addToVec)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -1211,9 +1211,9 @@ namespace dftfe
                                   const dftfe::size_type numContiguousBlocks,
                                   const ValueType2       a,
                                   const ValueType2       b,
-                                  const ValueType2 *     s,
-                                  const ValueType1 *     addFromVec,
-                                  ValueType1 *           addToVec)
+                                  const ValueType2      *s,
+                                  const ValueType1      *addFromVec,
+                                  ValueType1            *addToVec)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -1237,9 +1237,9 @@ namespace dftfe
       const dftfe::size_type                  contiguousBlockSize,
       const dftfe::size_type                  numContiguousBlocks,
       const double                            a,
-      const double *                          s,
+      const double                           *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
-      dftfe::utils::deviceFloatComplex *      addToVec)
+      dftfe::utils::deviceFloatComplex       *addToVec)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -1266,9 +1266,9 @@ namespace dftfe
       const dftfe::size_type                  numContiguousBlocks,
       const double                            a,
       const double                            b,
-      const double *                          s,
+      const double                           *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
-      dftfe::utils::deviceFloatComplex *      addToVec)
+      dftfe::utils::deviceFloatComplex       *addToVec)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -1292,8 +1292,8 @@ namespace dftfe
 
 
     __global__ void
-    computeRightDiagonalScaleKernel(const double *     diagValues,
-                                    double *           X,
+    computeRightDiagonalScaleKernel(const double      *diagValues,
+                                    double            *X,
                                     const unsigned int N,
                                     const unsigned int M)
     {
@@ -1329,7 +1329,7 @@ namespace dftfe
     __global__ void
     computeRightDiagonalScaleKernel(
       const dftfe::utils::deviceDoubleComplex *diagValues,
-      dftfe::utils::deviceDoubleComplex *      X,
+      dftfe::utils::deviceDoubleComplex       *X,
       const unsigned int                       N,
       const unsigned int                       M)
     {

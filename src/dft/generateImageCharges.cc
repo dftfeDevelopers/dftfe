@@ -344,8 +344,8 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::generateImageCharges(
     const double                      pspCutOff,
-    std::vector<int> &                imageIds,
-    std::vector<double> &             imageCharges,
+    std::vector<int>                 &imageIds,
+    std::vector<double>              &imageCharges,
     std::vector<std::vector<double>> &imagePositions)
   {
     const double tol       = 1e-4;
@@ -644,9 +644,9 @@ namespace dftfe
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     createMasterChargeIdToImageIdMaps(
       const double                            pspCutOff,
-      const std::vector<int> &                imageIds,
+      const std::vector<int>                 &imageIds,
       const std::vector<std::vector<double>> &imagePositions,
-      std::vector<std::vector<int>> &         globalChargeIdToImageIdMap)
+      std::vector<std::vector<int>>          &globalChargeIdToImageIdMap)
   {
     const unsigned int numImageCharges     = imageIds.size();
     const unsigned int numberGlobalCharges = atomLocations.size();

@@ -51,34 +51,34 @@ namespace dftfe
       deviceBlasStatus_t
       copy(deviceBlasHandle_t handle,
            int                n,
-           const double *     x,
+           const double      *x,
            int                incx,
-           double *           y,
+           double            *y,
            int                incy);
 
       deviceBlasStatus_t
       nrm2(deviceBlasHandle_t handle,
            int                n,
-           const double *     x,
+           const double      *x,
            int                incx,
-           double *           result);
+           double            *result);
 
       deviceBlasStatus_t
       dot(deviceBlasHandle_t handle,
           int                n,
-          const double *     x,
+          const double      *x,
           int                incx,
-          const double *     y,
+          const double      *y,
           int                incy,
-          double *           result);
+          double            *result);
 
       deviceBlasStatus_t
       axpy(deviceBlasHandle_t handle,
            int                n,
-           const double *     alpha,
-           const double *     x,
+           const double      *alpha,
+           const double      *x,
            int                incx,
-           double *           y,
+           double            *y,
            int                incy);
 
       deviceBlasStatus_t
@@ -88,13 +88,13 @@ namespace dftfe
            int                   m,
            int                   n,
            int                   k,
-           const double *        alpha,
-           const double *        A,
+           const double         *alpha,
+           const double         *A,
            int                   lda,
-           const double *        B,
+           const double         *B,
            int                   ldb,
-           const double *        beta,
-           double *              C,
+           const double         *beta,
+           double               *C,
            int                   ldc);
 
       deviceBlasStatus_t
@@ -104,13 +104,13 @@ namespace dftfe
            int                   m,
            int                   n,
            int                   k,
-           const float *         alpha,
-           const float *         A,
+           const float          *alpha,
+           const float          *A,
            int                   lda,
-           const float *         B,
+           const float          *B,
            int                   ldb,
-           const float *         beta,
-           float *               C,
+           const float          *beta,
+           float                *C,
            int                   ldc);
 
       deviceBlasStatus_t
@@ -126,7 +126,7 @@ namespace dftfe
            const std::complex<double> *B,
            int                         ldb,
            const std::complex<double> *beta,
-           std::complex<double> *      C,
+           std::complex<double>       *C,
            int                         ldc);
 
       deviceBlasStatus_t
@@ -142,7 +142,7 @@ namespace dftfe
            const std::complex<float> *B,
            int                        ldb,
            const std::complex<float> *beta,
-           std::complex<float> *      C,
+           std::complex<float>       *C,
            int                        ldc);
 
       deviceBlasStatus_t
@@ -152,13 +152,13 @@ namespace dftfe
                   int                   m,
                   int                   n,
                   int                   k,
-                  const double *        alpha,
-                  const double *        Aarray[],
+                  const double         *alpha,
+                  const double         *Aarray[],
                   int                   lda,
-                  const double *        Barray[],
+                  const double         *Barray[],
                   int                   ldb,
-                  const double *        beta,
-                  double *              Carray[],
+                  const double         *beta,
+                  double               *Carray[],
                   int                   ldc,
                   int                   batchCount);
 
@@ -175,7 +175,7 @@ namespace dftfe
                   const std::complex<double> *Barray[],
                   int                         ldb,
                   const std::complex<double> *beta,
-                  std::complex<double> *      Carray[],
+                  std::complex<double>       *Carray[],
                   int                         ldc,
                   int                         batchCount);
 
@@ -186,15 +186,15 @@ namespace dftfe
                          int                   m,
                          int                   n,
                          int                   k,
-                         const double *        alpha,
-                         const double *        A,
+                         const double         *alpha,
+                         const double         *A,
                          int                   lda,
                          long long int         strideA,
-                         const double *        B,
+                         const double         *B,
                          int                   ldb,
                          long long int         strideB,
-                         const double *        beta,
-                         double *              C,
+                         const double         *beta,
+                         double               *C,
                          int                   ldc,
                          long long int         strideC,
                          int                   batchCount);
@@ -207,15 +207,15 @@ namespace dftfe
                          int                   m,
                          int                   n,
                          int                   k,
-                         const float *         alpha,
-                         const float *         A,
+                         const float          *alpha,
+                         const float          *A,
                          int                   lda,
                          long long int         strideA,
-                         const float *         B,
+                         const float          *B,
                          int                   ldb,
                          long long int         strideB,
-                         const float *         beta,
-                         float *               C,
+                         const float          *beta,
+                         float                *C,
                          int                   ldc,
                          long long int         strideC,
                          int                   batchCount);
@@ -235,7 +235,7 @@ namespace dftfe
                          int                         ldb,
                          long long int               strideB,
                          const std::complex<double> *beta,
-                         std::complex<double> *      C,
+                         std::complex<double>       *C,
                          int                         ldc,
                          long long int               strideC,
                          int                         batchCount);
@@ -255,7 +255,7 @@ namespace dftfe
                          int                        ldb,
                          long long int              strideB,
                          const std::complex<float> *beta,
-                         std::complex<float> *      C,
+                         std::complex<float>       *C,
                          int                        ldc,
                          long long int              strideC,
                          int                        batchCount);
@@ -265,13 +265,13 @@ namespace dftfe
            deviceBlasOperation_t trans,
            int                   m,
            int                   n,
-           const double *        alpha,
-           const double *        A,
+           const double         *alpha,
+           const double         *A,
            int                   lda,
-           const double *        x,
+           const double         *x,
            int                   incx,
-           const double *        beta,
-           double *              y,
+           const double         *beta,
+           double               *y,
            int                   incy);
 
       deviceBlasStatus_t
@@ -279,13 +279,13 @@ namespace dftfe
            deviceBlasOperation_t trans,
            int                   m,
            int                   n,
-           const float *         alpha,
-           const float *         A,
+           const float          *alpha,
+           const float          *A,
            int                   lda,
-           const float *         x,
+           const float          *x,
            int                   incx,
-           const float *         beta,
-           float *               y,
+           const float          *beta,
+           float                *y,
            int                   incy);
 
       deviceBlasStatus_t
@@ -299,7 +299,7 @@ namespace dftfe
            const std::complex<double> *x,
            int                         incx,
            const std::complex<double> *beta,
-           std::complex<double> *      y,
+           std::complex<double>       *y,
            int                         incy);
 
       deviceBlasStatus_t
@@ -313,7 +313,7 @@ namespace dftfe
            const std::complex<float> *x,
            int                        incx,
            const std::complex<float> *beta,
-           std::complex<float> *      y,
+           std::complex<float>       *y,
            int                        incy);
 
 

@@ -27,8 +27,8 @@ namespace dftfe
     reshapeFromNonAffineDeviceKernel(const dftfe::size_type numVecs,
                                      const dftfe::size_type numQuads,
                                      const dftfe::size_type numCells,
-                                     const ValueType *      copyFromVec,
-                                     ValueType *            copyToVec)
+                                     const ValueType       *copyFromVec,
+                                     ValueType             *copyToVec)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -54,8 +54,8 @@ namespace dftfe
     reshapeToNonAffineDeviceKernel(const dftfe::size_type numVecs,
                                    const dftfe::size_type numQuads,
                                    const dftfe::size_type numCells,
-                                   const ValueType *      copyFromVec,
-                                   ValueType *            copyToVec)
+                                   const ValueType       *copyFromVec,
+                                   ValueType             *copyToVec)
     {
       const dftfe::size_type globalThreadId =
         blockIdx.x * blockDim.x + threadIdx.x;
@@ -87,8 +87,8 @@ namespace dftfe
       reshapeFromNonAffineLayoutDevice(const dftfe::size_type numVecs,
                                        const dftfe::size_type numQuads,
                                        const dftfe::size_type numCells,
-                                       const ValueType *      copyFromVec,
-                                       ValueType *            copyToVec)
+                                       const ValueType       *copyFromVec,
+                                       ValueType             *copyToVec)
       {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         reshapeFromNonAffineDeviceKernel<<<(numVecs * numCells * numQuads * 3) /
@@ -121,8 +121,8 @@ namespace dftfe
       reshapeToNonAffineLayoutDevice(const dftfe::size_type numVecs,
                                      const dftfe::size_type numQuads,
                                      const dftfe::size_type numCells,
-                                     const ValueType *      copyFromVec,
-                                     ValueType *            copyToVec)
+                                     const ValueType       *copyFromVec,
+                                     ValueType             *copyToVec)
       {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
         reshapeToNonAffineDeviceKernel<<<(numVecs * numCells * numQuads * 3) /
@@ -154,27 +154,27 @@ namespace dftfe
       reshapeFromNonAffineLayoutDevice(const dftfe::size_type numVecs,
                                        const dftfe::size_type numQuads,
                                        const dftfe::size_type numCells,
-                                       const double *         copyFromVec,
-                                       double *               copyToVec);
+                                       const double          *copyFromVec,
+                                       double                *copyToVec);
       template void
       reshapeFromNonAffineLayoutDevice(const dftfe::size_type      numVecs,
                                        const dftfe::size_type      numQuads,
                                        const dftfe::size_type      numCells,
                                        const std::complex<double> *copyFromVec,
-                                       std::complex<double> *      copyToVec);
+                                       std::complex<double>       *copyToVec);
 
       template void
       reshapeToNonAffineLayoutDevice(const dftfe::size_type numVecs,
                                      const dftfe::size_type numQuads,
                                      const dftfe::size_type numCells,
-                                     const double *         copyFromVec,
-                                     double *               copyToVec);
+                                     const double          *copyFromVec,
+                                     double                *copyToVec);
       template void
       reshapeToNonAffineLayoutDevice(const dftfe::size_type      numVecs,
                                      const dftfe::size_type      numQuads,
                                      const dftfe::size_type      numCells,
                                      const std::complex<double> *copyFromVec,
-                                     std::complex<double> *      copyToVec);
+                                     std::complex<double>       *copyToVec);
 
     } // namespace FEBasisOperationsKernelsInternal
   }   // namespace basis

@@ -317,7 +317,7 @@ namespace dftfe
                         union_n_process_columns);
 
         const NumberType *loc_vals_source = nullptr;
-        NumberType *      loc_vals_dest   = nullptr;
+        NumberType       *loc_vals_dest   = nullptr;
 
         if (this->grid->mpi_process_is_active && (this->values.size() > 0))
           {
@@ -363,7 +363,7 @@ namespace dftfe
     else
       // process is active in the process grid
       if (this->grid->mpi_process_is_active)
-      dest.values = this->values;
+        dest.values = this->values;
 
     dest.state    = state;
     dest.property = property;
@@ -516,7 +516,7 @@ namespace dftfe
   ScaLAPACKMatrix<NumberType>::mult(const NumberType                   b,
                                     const ScaLAPACKMatrix<NumberType> &B,
                                     const NumberType                   c,
-                                    ScaLAPACKMatrix<NumberType> &      C,
+                                    ScaLAPACKMatrix<NumberType>       &C,
                                     const bool transpose_A,
                                     const bool transpose_B) const
   {
@@ -644,7 +644,7 @@ namespace dftfe
   ScaLAPACKMatrix<NumberType>::zmult(const NumberType                   b,
                                      const ScaLAPACKMatrix<NumberType> &B,
                                      const NumberType                   c,
-                                     ScaLAPACKMatrix<NumberType> &      C,
+                                     ScaLAPACKMatrix<NumberType>       &C,
                                      const bool conjugate_transpose_A,
                                      const bool conjugate_transpose_B) const
   {
@@ -777,7 +777,7 @@ namespace dftfe
 
   template <typename NumberType>
   void
-  ScaLAPACKMatrix<NumberType>::mmult(ScaLAPACKMatrix<NumberType> &      C,
+  ScaLAPACKMatrix<NumberType>::mmult(ScaLAPACKMatrix<NumberType>       &C,
                                      const ScaLAPACKMatrix<NumberType> &B,
                                      const bool adding) const
   {
@@ -791,7 +791,7 @@ namespace dftfe
 
   template <typename NumberType>
   void
-  ScaLAPACKMatrix<NumberType>::Tmmult(ScaLAPACKMatrix<NumberType> &      C,
+  ScaLAPACKMatrix<NumberType>::Tmmult(ScaLAPACKMatrix<NumberType>       &C,
                                       const ScaLAPACKMatrix<NumberType> &B,
                                       const bool adding) const
   {
@@ -805,7 +805,7 @@ namespace dftfe
 
   template <typename NumberType>
   void
-  ScaLAPACKMatrix<NumberType>::mTmult(ScaLAPACKMatrix<NumberType> &      C,
+  ScaLAPACKMatrix<NumberType>::mTmult(ScaLAPACKMatrix<NumberType>       &C,
                                       const ScaLAPACKMatrix<NumberType> &B,
                                       const bool adding) const
   {
@@ -819,7 +819,7 @@ namespace dftfe
 
   template <typename NumberType>
   void
-  ScaLAPACKMatrix<NumberType>::TmTmult(ScaLAPACKMatrix<NumberType> &      C,
+  ScaLAPACKMatrix<NumberType>::TmTmult(ScaLAPACKMatrix<NumberType>       &C,
                                        const ScaLAPACKMatrix<NumberType> &B,
                                        const bool adding) const
   {
@@ -832,7 +832,7 @@ namespace dftfe
 
   template <typename NumberType>
   void
-  ScaLAPACKMatrix<NumberType>::zmmult(ScaLAPACKMatrix<NumberType> &      C,
+  ScaLAPACKMatrix<NumberType>::zmmult(ScaLAPACKMatrix<NumberType>       &C,
                                       const ScaLAPACKMatrix<NumberType> &B,
                                       const bool adding) const
   {
@@ -846,7 +846,7 @@ namespace dftfe
 
   template <typename NumberType>
   void
-  ScaLAPACKMatrix<NumberType>::zCmmult(ScaLAPACKMatrix<NumberType> &      C,
+  ScaLAPACKMatrix<NumberType>::zCmmult(ScaLAPACKMatrix<NumberType>       &C,
                                        const ScaLAPACKMatrix<NumberType> &B,
                                        const bool adding) const
   {
@@ -860,7 +860,7 @@ namespace dftfe
 
   template <typename NumberType>
   void
-  ScaLAPACKMatrix<NumberType>::zmCmult(ScaLAPACKMatrix<NumberType> &      C,
+  ScaLAPACKMatrix<NumberType>::zmCmult(ScaLAPACKMatrix<NumberType>       &C,
                                        const ScaLAPACKMatrix<NumberType> &B,
                                        const bool adding) const
   {
@@ -874,7 +874,7 @@ namespace dftfe
 
   template <typename NumberType>
   void
-  ScaLAPACKMatrix<NumberType>::zCmCmult(ScaLAPACKMatrix<NumberType> &      C,
+  ScaLAPACKMatrix<NumberType>::zCmCmult(ScaLAPACKMatrix<NumberType>       &C,
                                         const ScaLAPACKMatrix<NumberType> &B,
                                         const bool adding) const
   {
@@ -1099,7 +1099,7 @@ namespace dftfe
   ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian(
     const bool                                   compute_eigenvectors,
     const std::pair<unsigned int, unsigned int> &eigenvalue_idx,
-    const std::pair<double, double> &            eigenvalue_limits)
+    const std::pair<double, double>             &eigenvalue_limits)
   {
     Assert(state == dftfe::LAPACKSupport::matrix,
            dealii::ExcMessage(
@@ -1419,7 +1419,7 @@ namespace dftfe
   ScaLAPACKMatrix<NumberType>::eigenpairs_hermitian_MRRR(
     const bool                                   compute_eigenvectors,
     const std::pair<unsigned int, unsigned int> &eigenvalue_idx,
-    const std::pair<double, double> &            eigenvalue_limits)
+    const std::pair<double, double>             &eigenvalue_limits)
   {
     Assert(state == dftfe::LAPACKSupport::matrix,
            dealii::ExcMessage(

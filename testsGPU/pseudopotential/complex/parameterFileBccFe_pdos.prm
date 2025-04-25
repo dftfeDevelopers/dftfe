@@ -1,6 +1,6 @@
 set SOLVER MODE = NSCF
 set USE GPU   = true
-set VERBOSITY = 0
+set VERBOSITY = 4
 set REPRODUCIBLE OUTPUT = true
 set RESTART FOLDER = ./bcc_fe
 subsection Geometry
@@ -17,10 +17,11 @@ subsection Boundary conditions
 end
 
 subsection Brillouin zone k point sampling options
+  set USE TIME REVERSAL SYMMETRY = true
   subsection Monkhorst-Pack (MP) grid generation
-    set SAMPLING POINTS 1 = 2
-    set SAMPLING POINTS 2 = 2
-    set SAMPLING POINTS 3 = 2
+    set SAMPLING POINTS 1 = 6
+    set SAMPLING POINTS 2 = 6
+    set SAMPLING POINTS 3 = 6
     set SAMPLING SHIFT 1  = 0
     set SAMPLING SHIFT 2  = 0
     set SAMPLING SHIFT 3  = 0
@@ -61,7 +62,7 @@ end
 
 subsection SCF parameters
   subsection Eigen-solver parameters
-      set CHEBYSHEV FILTER TOLERANCE  = 1e-12
+      set CHEBYSHEV FILTER TOLERANCE  = 1e-6
   end
 end
 

@@ -28,9 +28,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProduct(
       const unsigned int m,
-      const ValueType *  X,
-      const ValueType *  Y,
-      ValueType *        output) const
+      const ValueType   *X,
+      const ValueType   *Y,
+      ValueType         *output) const
     {
       for (unsigned int i = 0; i < m; i++)
         {
@@ -42,9 +42,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProductWithConj(
       const unsigned int m,
-      const ValueType *  X,
-      const ValueType *  Y,
-      ValueType *        output) const
+      const ValueType   *X,
+      const ValueType   *Y,
+      ValueType         *output) const
     {
       for (unsigned int i = 0; i < m; i++)
         {
@@ -59,7 +59,7 @@ namespace dftfe
       const unsigned int          m,
       const std::complex<double> *X,
       const std::complex<double> *Y,
-      std::complex<double> *      output) const
+      std::complex<double>       *output) const
     {
       for (unsigned int i = 0; i < m; i++)
         {
@@ -73,7 +73,7 @@ namespace dftfe
       const unsigned int         m,
       const std::complex<float> *X,
       const std::complex<float> *Y,
-      std::complex<float> *      output) const
+      std::complex<float>       *output) const
     {
       for (unsigned int i = 0; i < m; i++)
         {
@@ -88,13 +88,13 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const float *      alpha,
-      const float *      A,
+      const float       *alpha,
+      const float       *A,
       const unsigned int lda,
-      const float *      B,
+      const float       *B,
       const unsigned int ldb,
-      const float *      beta,
-      float *            C,
+      const float       *beta,
+      float             *C,
       const unsigned int ldc) const
     {
       sgemm_(
@@ -108,13 +108,13 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const double *     alpha,
-      const double *     A,
+      const double      *alpha,
+      const double      *A,
       const unsigned int lda,
-      const double *     B,
+      const double      *B,
       const unsigned int ldb,
-      const double *     beta,
-      double *           C,
+      const double      *beta,
+      double            *C,
       const unsigned int ldc) const
     {
       dgemm_(
@@ -127,9 +127,9 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::addVecOverContinuousIndex(
       const dftfe::size_type numContiguousBlocks,
       const dftfe::size_type contiguousBlockSize,
-      const ValueType *      input1,
-      const ValueType *      input2,
-      ValueType *            output)
+      const ValueType       *input1,
+      const ValueType       *input2,
+      ValueType             *output)
     {
       for (dftfe::size_type iIndex = 0; iIndex < numContiguousBlocks; iIndex++)
         {
@@ -146,9 +146,9 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::addVecOverContinuousIndex(
       const dftfe::size_type numContiguousBlocks,
       const dftfe::size_type contiguousBlockSize,
-      const double *         input1,
-      const double *         input2,
-      double *               output);
+      const double          *input1,
+      const double          *input2,
+      double                *output);
     template <typename ValueType0,
               typename ValueType1,
               typename ValueType2,
@@ -179,10 +179,10 @@ namespace dftfe
       const unsigned int          m,
       const unsigned int          n,
       const double                alpha,
-      const std::complex<float> * A,
+      const std::complex<float>  *A,
       const std::complex<double> *B,
-      const double *              D,
-      std::complex<float> *       C) const
+      const double               *D,
+      std::complex<float>        *C) const
     {
       for (unsigned int iRow = 0; iRow < m; ++iRow)
         {
@@ -200,10 +200,10 @@ namespace dftfe
       const unsigned int          m,
       const unsigned int          n,
       const double                alpha,
-      const std::complex<float> * A,
+      const std::complex<float>  *A,
       const std::complex<double> *B,
-      const double *              D,
-      std::complex<double> *      C) const
+      const double               *D,
+      std::complex<double>       *C) const
     {
       for (unsigned int iRow = 0; iRow < m; ++iRow)
         {
@@ -218,7 +218,7 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      ValueType1 *           x,
+      ValueType1            *x,
       const ValueType2       alpha,
       const dftfe::size_type n) const
     {
@@ -227,31 +227,31 @@ namespace dftfe
     // for xscal
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      double *               x,
+      double                *x,
       const double           a,
       const dftfe::size_type n) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      float *                x,
+      float                 *x,
       const float            a,
       const dftfe::size_type n) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      std::complex<double> *     x,
+      std::complex<double>      *x,
       const std::complex<double> a,
       const dftfe::size_type     n) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      std::complex<double> * x,
+      std::complex<double>  *x,
       const double           a,
       const dftfe::size_type n) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xscal(
-      std::complex<float> *     x,
+      std::complex<float>      *x,
       const std::complex<float> a,
       const dftfe::size_type    n) const;
 
@@ -259,67 +259,67 @@ namespace dftfe
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProduct(
       const unsigned int m,
-      const double *     X,
-      const double *     Y,
-      double *           output) const;
+      const double      *X,
+      const double      *Y,
+      double            *output) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProduct(
       const unsigned int m,
-      const float *      X,
-      const float *      Y,
-      float *            output) const;
+      const float       *X,
+      const float       *Y,
+      float             *output) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProduct(
       const unsigned int          m,
       const std::complex<double> *X,
       const std::complex<double> *Y,
-      std::complex<double> *      output) const;
+      std::complex<double>       *output) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProduct(
       const unsigned int         m,
       const std::complex<float> *X,
       const std::complex<float> *Y,
-      std::complex<float> *      output) const;
+      std::complex<float>       *output) const;
 
     // hadamard product with conj
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProductWithConj(
       const unsigned int m,
-      const double *     X,
-      const double *     Y,
-      double *           output) const;
+      const double      *X,
+      const double      *Y,
+      double            *output) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProductWithConj(
       const unsigned int m,
-      const float *      X,
-      const float *      Y,
-      float *            output) const;
+      const float       *X,
+      const float       *Y,
+      float             *output) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProductWithConj(
       const unsigned int          m,
       const std::complex<double> *X,
       const std::complex<double> *Y,
-      std::complex<double> *      output) const;
+      std::complex<double>       *output) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::hadamardProductWithConj(
       const unsigned int         m,
       const std::complex<float> *X,
       const std::complex<float> *Y,
-      std::complex<float> *      output) const;
+      std::complex<float>       *output) const;
 
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
       const unsigned int n,
-      const double *     x,
+      const double      *x,
       const unsigned int incx,
-      double *           y,
+      double            *y,
       const unsigned int incy) const
     {
       dcopy_(&n, x, &incx, y, &incy);
@@ -328,9 +328,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xcopy(
       const unsigned int n,
-      const float *      x,
+      const float       *x,
       const unsigned int incx,
-      float *            y,
+      float             *y,
       const unsigned int incy) const
     {
       scopy_(&n, x, &incx, y, &incy);
@@ -349,7 +349,7 @@ namespace dftfe
       const std::complex<float> *B,
       const unsigned int         ldb,
       const std::complex<float> *beta,
-      std::complex<float> *      C,
+      std::complex<float>       *C,
       const unsigned int         ldc) const
     {
       cgemm_(
@@ -369,7 +369,7 @@ namespace dftfe
       const std::complex<double> *B,
       const unsigned int          ldb,
       const std::complex<double> *beta,
-      std::complex<double> *      C,
+      std::complex<double>       *C,
       const unsigned int          ldc) const
     {
       zgemm_(
@@ -381,13 +381,13 @@ namespace dftfe
       const char         transA,
       const unsigned int m,
       const unsigned int n,
-      const double *     alpha,
-      const double *     A,
+      const double      *alpha,
+      const double      *A,
       const unsigned int lda,
-      const double *     x,
+      const double      *x,
       const unsigned int incx,
-      const double *     beta,
-      double *           y,
+      const double      *beta,
+      double            *y,
       const unsigned int incy) const
     {
       dgemv_(&transA, &m, &n, alpha, A, &lda, x, &incx, beta, y, &incy);
@@ -399,13 +399,13 @@ namespace dftfe
       const char         transA,
       const unsigned int m,
       const unsigned int n,
-      const float *      alpha,
-      const float *      A,
+      const float       *alpha,
+      const float       *A,
       const unsigned int lda,
-      const float *      x,
+      const float       *x,
       const unsigned int incx,
-      const float *      beta,
-      float *            y,
+      const float       *beta,
+      float             *y,
       const unsigned int incy) const
     {
       sgemv_(&transA, &m, &n, alpha, A, &lda, x, &incx, beta, y, &incy);
@@ -422,7 +422,7 @@ namespace dftfe
       const std::complex<double> *x,
       const unsigned int          incx,
       const std::complex<double> *beta,
-      std::complex<double> *      y,
+      std::complex<double>       *y,
       const unsigned int          incy) const
     {
       zgemv_(&transA, &m, &n, alpha, A, &lda, x, &incx, beta, y, &incy);
@@ -439,7 +439,7 @@ namespace dftfe
       const std::complex<float> *x,
       const unsigned int         incx,
       const std::complex<float> *beta,
-      std::complex<float> *      y,
+      std::complex<float>       *y,
       const unsigned int         incy) const
     {
       cgemv_(&transA, &m, &n, alpha, A, &lda, x, &incx, beta, y, &incy);
@@ -451,7 +451,7 @@ namespace dftfe
       const unsigned int          n,
       const std::complex<double> *x,
       const unsigned int          incx,
-      std::complex<double> *      y,
+      std::complex<double>       *y,
       const unsigned int          incy) const
     {
       zcopy_(&n, x, &incx, y, &incy);
@@ -462,7 +462,7 @@ namespace dftfe
       const unsigned int         n,
       const std::complex<float> *x,
       const unsigned int         incx,
-      std::complex<float> *      y,
+      std::complex<float>       *y,
       const unsigned int         incy) const
     {
       ccopy_(&n, x, &incx, y, &incy);
@@ -471,10 +471,10 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xnrm2(
       const unsigned int n,
-      const double *     x,
+      const double      *x,
       const unsigned int incx,
-      const MPI_Comm &   mpi_communicator,
-      double *           result) const
+      const MPI_Comm    &mpi_communicator,
+      double            *result) const
     {
       double localresult = dnrm2_(&n, x, &incx);
       *result            = 0.0;
@@ -489,8 +489,8 @@ namespace dftfe
       const unsigned int          n,
       const std::complex<double> *x,
       const unsigned int          incx,
-      const MPI_Comm &            mpi_communicator,
-      double *                    result) const
+      const MPI_Comm             &mpi_communicator,
+      double                     *result) const
     {
       double localresult = dznrm2_(&n, x, &incx);
       *result            = 0.0;
@@ -503,9 +503,9 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(const unsigned int N,
-                                                       const double *     X,
+                                                       const double      *X,
                                                        const unsigned int INCX,
-                                                       const double *     Y,
+                                                       const double      *Y,
                                                        const unsigned int INCY,
                                                        double *result) const
     {
@@ -518,7 +518,7 @@ namespace dftfe
       const unsigned int          INCX,
       const std::complex<double> *Y,
       const unsigned int          INCY,
-      std::complex<double> *      result) const
+      std::complex<double>       *result) const
     {
       *result = zdotc_(&N, X, &INCX, Y, &INCY);
     }
@@ -526,12 +526,12 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(
       const unsigned int N,
-      const double *     X,
+      const double      *X,
       const unsigned int INCX,
-      const double *     Y,
+      const double      *Y,
       const unsigned int INCY,
-      const MPI_Comm &   mpi_communicator,
-      double *           result) const
+      const MPI_Comm    &mpi_communicator,
+      double            *result) const
     {
       double localResult = 0.0;
       *result            = 0.0;
@@ -550,8 +550,8 @@ namespace dftfe
       const unsigned int          INCX,
       const std::complex<double> *Y,
       const unsigned int          INCY,
-      const MPI_Comm &            mpi_communicator,
-      std::complex<double> *      result) const
+      const MPI_Comm             &mpi_communicator,
+      std::complex<double>       *result) const
     {
       std::complex<double> localResult = 0.0;
       *result                          = 0.0;
@@ -575,12 +575,12 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::MultiVectorXDot(
       const unsigned int contiguousBlockSize,
       const unsigned int numContiguousBlocks,
-      const ValueType *  X,
-      const ValueType *  Y,
-      const ValueType *  onesVec,
-      ValueType *        tempVector,
-      ValueType *        tempResults,
-      ValueType *        result) const
+      const ValueType   *X,
+      const ValueType   *Y,
+      const ValueType   *onesVec,
+      ValueType         *tempVector,
+      ValueType         *tempResults,
+      ValueType         *result) const
     {
       hadamardProductWithConj(contiguousBlockSize * numContiguousBlocks,
                               X,
@@ -610,13 +610,13 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::MultiVectorXDot(
       const unsigned int contiguousBlockSize,
       const unsigned int numContiguousBlocks,
-      const ValueType *  X,
-      const ValueType *  Y,
-      const ValueType *  onesVec,
-      ValueType *        tempVector,
-      ValueType *        tempResults,
-      const MPI_Comm &   mpi_communicator,
-      ValueType *        result) const
+      const ValueType   *X,
+      const ValueType   *Y,
+      const ValueType   *onesVec,
+      ValueType         *tempVector,
+      ValueType         *tempResults,
+      const MPI_Comm    &mpi_communicator,
+      ValueType         *result) const
     {
       MultiVectorXDot(contiguousBlockSize,
                       numContiguousBlocks,
@@ -639,10 +639,10 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
       const unsigned int n,
-      const double *     alpha,
-      const double *     x,
+      const double      *alpha,
+      const double      *x,
       const unsigned int incx,
-      double *           y,
+      double            *y,
       const unsigned int incy) const
     {
       daxpy_(&n, alpha, x, &incx, y, &incy);
@@ -651,10 +651,10 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xaxpy(
       const unsigned int n,
-      const float *      alpha,
-      const float *      x,
+      const float       *alpha,
+      const float       *x,
       const unsigned int incx,
-      float *            y,
+      float             *y,
       const unsigned int incy) const
     {
       saxpy_(&n, alpha, x, &incx, y, &incy);
@@ -667,7 +667,7 @@ namespace dftfe
       const std::complex<double> *alpha,
       const std::complex<double> *x,
       const unsigned int          incx,
-      std::complex<double> *      y,
+      std::complex<double>       *y,
       const unsigned int          incy) const
     {
       zaxpy_(&n, alpha, x, &incx, y, &incy);
@@ -680,7 +680,7 @@ namespace dftfe
       const std::complex<float> *alpha,
       const std::complex<float> *x,
       const unsigned int         incx,
-      std::complex<float> *      y,
+      std::complex<float>       *y,
       const unsigned int         incy) const
     {
       caxpy_(&n, alpha, x, &incx, y, &incy);
@@ -691,8 +691,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::axpyStridedBlockAtomicAdd(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const ValueType *              addFromVec,
-      ValueType *                    addToVec,
+      const ValueType               *addFromVec,
+      ValueType                     *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
@@ -709,9 +709,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const ValueType1               a,
-      const ValueType1 *             s,
-      const ValueType2 *             addFromVec,
-      ValueType3 *                   addToVec,
+      const ValueType1              *s,
+      const ValueType2              *addFromVec,
+      ValueType3                    *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
@@ -731,8 +731,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const ValueType1               a,
-      const ValueType2 *             addFromVec,
-      ValueType3 *                   addToVec,
+      const ValueType2              *addFromVec,
+      ValueType3                    *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
@@ -751,9 +751,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const std::complex<float> *    addFromVec,
-      std::complex<float> *          addToVec,
+      const double                  *s,
+      const std::complex<float>     *addFromVec,
+      std::complex<float>           *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
@@ -776,8 +776,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const std::complex<float> *    addFromVec,
-      std::complex<float> *          addToVec,
+      const std::complex<float>     *addFromVec,
+      std::complex<float>           *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
@@ -813,7 +813,7 @@ namespace dftfe
       const double               alpha,
       const std::complex<float> *x,
       const double               beta,
-      std::complex<float> *      y) const
+      std::complex<float>       *y) const
     {
       std::transform(x, x + n, y, y, [&alpha, &beta](auto &p, auto &q) {
         return alpha * std::complex<double>(p) + beta * std::complex<double>(q);
@@ -824,13 +824,13 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xsymv(
       const char         UPLO,
       const unsigned int N,
-      const double *     alpha,
-      const double *     A,
+      const double      *alpha,
+      const double      *A,
       const unsigned int LDA,
-      const double *     X,
+      const double      *X,
       const unsigned int INCX,
-      const double *     beta,
-      double *           C,
+      const double      *beta,
+      double            *C,
       const unsigned int INCY) const
     {
       dsymv_(&UPLO, &N, alpha, A, &LDA, X, &INCX, beta, C, &INCY);
@@ -838,8 +838,8 @@ namespace dftfe
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::add(
-      double *               y,
-      const double *         x,
+      double                *y,
+      const double          *x,
       const double           alpha,
       const dftfe::size_type size)
     {
@@ -853,13 +853,13 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const double *     alpha,
-      const double *     A[],
+      const double      *alpha,
+      const double      *A[],
       const unsigned int lda,
-      const double *     B[],
+      const double      *B[],
       const unsigned int ldb,
-      const double *     beta,
-      double *           C[],
+      const double      *beta,
+      double            *C[],
       const unsigned int ldc,
       const int          batchCount) const
     {
@@ -881,7 +881,7 @@ namespace dftfe
       const std::complex<double> *B[],
       const unsigned int          ldb,
       const std::complex<double> *beta,
-      std::complex<double> *      C[],
+      std::complex<double>       *C[],
       const unsigned int          ldc,
       const int                   batchCount) const
     {
@@ -896,15 +896,15 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const double *     alpha,
-      const double *     A,
+      const double      *alpha,
+      const double      *A,
       const unsigned int lda,
       long long int      strideA,
-      const double *     B,
+      const double      *B,
       const unsigned int ldb,
       long long int      strideB,
-      const double *     beta,
-      double *           C,
+      const double      *beta,
+      double            *C,
       const unsigned int ldc,
       long long int      strideC,
       const int          batchCount) const
@@ -943,7 +943,7 @@ namespace dftfe
       const unsigned int          ldb,
       long long int               strideB,
       const std::complex<double> *beta,
-      std::complex<double> *      C,
+      std::complex<double>       *C,
       const unsigned int          ldc,
       long long int               strideC,
       const int                   batchCount) const
@@ -973,15 +973,15 @@ namespace dftfe
       const unsigned int m,
       const unsigned int n,
       const unsigned int k,
-      const float *      alpha,
-      const float *      A,
+      const float       *alpha,
+      const float       *A,
       const unsigned int lda,
       long long int      strideA,
-      const float *      B,
+      const float       *B,
       const unsigned int ldb,
       long long int      strideB,
-      const float *      beta,
-      float *            C,
+      const float       *beta,
+      float             *C,
       const unsigned int ldc,
       long long int      strideC,
       const int          batchCount) const
@@ -1020,7 +1020,7 @@ namespace dftfe
       const unsigned int         ldb,
       long long int              strideB,
       const std::complex<float> *beta,
-      std::complex<float> *      C,
+      std::complex<float>       *C,
       const unsigned int         ldc,
       long long int              strideC,
       const int                  batchCount) const
@@ -1048,8 +1048,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::copyComplexArrToRealArrs(
       const dftfe::size_type  size,
       const ValueTypeComplex *complexArr,
-      ValueTypeReal *         realArr,
-      ValueTypeReal *         imagArr)
+      ValueTypeReal          *realArr,
+      ValueTypeReal          *imagArr)
     {
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
@@ -1060,9 +1060,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::copyRealArrsToComplexArr(
       const dftfe::size_type size,
-      const ValueTypeReal *  realArr,
-      const ValueTypeReal *  imagArr,
-      ValueTypeComplex *     complexArr)
+      const ValueTypeReal   *realArr,
+      const ValueTypeReal   *imagArr,
+      ValueTypeComplex      *complexArr)
     {
       std::transform(realArr,
                      realArr + size,
@@ -1075,8 +1075,8 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const ValueType1 *     valueType1Arr,
-                                       ValueType2 *           valueType2Arr)
+                                       const ValueType1      *valueType1Arr,
+                                       ValueType2            *valueType2Arr)
     {
       for (unsigned int i = 0; i < size; ++i)
         valueType2Arr[i] = valueType1Arr[i];
@@ -1087,8 +1087,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const ValueType1 *             copyFromVec,
-      ValueType2 *                   copyToVecBlock,
+      const ValueType1              *copyFromVec,
+      ValueType2                    *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
@@ -1106,8 +1106,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const dftfe::size_type         startingVecId,
-      const ValueType1 *             copyFromVec,
-      ValueType2 *                   copyToVecBlock,
+      const ValueType1              *copyFromVec,
+      ValueType2                    *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
@@ -1127,8 +1127,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyFromBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const ValueType1 *             copyFromVecBlock,
-      ValueType2 *                   copyToVec,
+      const ValueType1              *copyFromVecBlock,
+      ValueType2                    *copyToVec,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
@@ -1142,8 +1142,8 @@ namespace dftfe
                                        const dftfe::size_type blockSizeFrom,
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
-                                       const ValueType1 *     copyFromVec,
-                                       ValueType2 *           copyToVec) const
+                                       const ValueType1      *copyFromVec,
+                                       ValueType2            *copyToVec) const
     {
       for (dftfe::size_type iIndex = 0; iIndex < numBlocks; iIndex++)
         {
@@ -1161,8 +1161,8 @@ namespace dftfe
                                        const dftfe::size_type blockSizeFrom,
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
-                                       const double *         copyFromVec,
-                                       double *               copyToVec) const;
+                                       const double          *copyFromVec,
+                                       double                *copyToVec) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
@@ -1179,8 +1179,8 @@ namespace dftfe
                                        const dftfe::size_type blockSizeFrom,
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
-                                       const float *          copyFromVec,
-                                       float *                copyToVec) const;
+                                       const float           *copyFromVec,
+                                       float                 *copyToVec) const;
 
 
     template void
@@ -1198,16 +1198,16 @@ namespace dftfe
                                        const dftfe::size_type blockSizeFrom,
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
-                                       const double *         copyFromVec,
-                                       float *                copyToVec) const;
+                                       const double          *copyFromVec,
+                                       float                 *copyToVec) const;
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
                                        const dftfe::size_type blockSizeFrom,
                                        const dftfe::size_type numBlocks,
                                        const dftfe::size_type startingId,
-                                       const float *          copyFromVec,
-                                       double *               copyToVec) const;
+                                       const float           *copyFromVec,
+                                       double                *copyToVec) const;
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
@@ -1234,8 +1234,8 @@ namespace dftfe
       const dftfe::size_type numBlocks,
       const dftfe::size_type startingToId,
       const dftfe::size_type startingFromId,
-      const ValueType1 *     copyFromVec,
-      ValueType2 *           copyToVec)
+      const ValueType1      *copyFromVec,
+      ValueType2            *copyToVec)
     {
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
@@ -1248,8 +1248,8 @@ namespace dftfe
                                          const dftfe::size_type blockSizeFrom,
                                          const dftfe::size_type numBlocks,
                                          const dftfe::size_type startingId,
-                                         const ValueType1 *     copyFromVec,
-                                         ValueType2 *           copyToVec)
+                                         const ValueType1      *copyFromVec,
+                                         ValueType2            *copyToVec)
     {
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
@@ -1259,9 +1259,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const ValueType1               a,
-      const ValueType1 *             s,
-      const ValueType2 *             copyFromVec,
-      ValueType2 *                   copyToVecBlock,
+      const ValueType1              *s,
+      const ValueType2              *copyFromVec,
+      ValueType2                    *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
     {
       for (int iBatch = 0; iBatch < numContiguousBlocks; iBatch++)
@@ -1282,8 +1282,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleColumnWise(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType *      beta,
-      ValueType *            x)
+      const ValueType       *beta,
+      ValueType             *x)
     {
       for (unsigned int i = 0; i < numContiguousBlocks; i++)
         {
@@ -1300,9 +1300,9 @@ namespace dftfe
       stridedBlockScaleAndAddColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const ValueType *      x,
-        const ValueType *      beta,
-        ValueType *            y)
+        const ValueType       *x,
+        const ValueType       *beta,
+        ValueType             *y)
     {
       for (unsigned int i = 0; i < numContiguousBlocks; i++)
         {
@@ -1319,10 +1319,10 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType1 *     addFromVec,
-      const ValueType2 *     scalingVector,
+      const ValueType1      *addFromVec,
+      const ValueType2      *scalingVector,
       const ValueType2       a,
-      ValueType1 *           addToVec) const
+      ValueType1            *addToVec) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
         {
@@ -1340,11 +1340,11 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpBy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const ValueType1 *     addFromVec,
-      const ValueType2 *     scalingVector,
+      const ValueType1      *addFromVec,
+      const ValueType2      *scalingVector,
       const ValueType2       a,
       const ValueType2       b,
-      ValueType1 *           addToVec) const
+      ValueType1            *addToVec) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
         {
@@ -1365,9 +1365,9 @@ namespace dftfe
       const dftfe::size_type     contiguousBlockSize,
       const dftfe::size_type     numContiguousBlocks,
       const std::complex<float> *addFromVec,
-      const double *             scalingVector,
+      const double              *scalingVector,
       const double               a,
-      std::complex<float> *      addToVec) const
+      std::complex<float>       *addToVec) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
         {
@@ -1389,10 +1389,10 @@ namespace dftfe
       const dftfe::size_type     contiguousBlockSize,
       const dftfe::size_type     numContiguousBlocks,
       const std::complex<float> *addFromVec,
-      const double *             scalingVector,
+      const double              *scalingVector,
       const double               a,
       const double               b,
-      std::complex<float> *      addToVec) const
+      std::complex<float>       *addToVec) const
     {
       for (unsigned int iBlock = 0; iBlock < numContiguousBlocks; ++iBlock)
         {
@@ -1414,11 +1414,11 @@ namespace dftfe
       stridedBlockScaleAndAddTwoVecColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const ValueType *      x,
-        const ValueType *      alpha,
-        const ValueType *      y,
-        const ValueType *      beta,
-        ValueType *            z)
+        const ValueType       *x,
+        const ValueType       *alpha,
+        const ValueType       *y,
+        const ValueType       *beta,
+        ValueType             *z)
     {
       for (unsigned int i = 0; i < numContiguousBlocks; i++)
         {
@@ -1436,8 +1436,8 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::rightDiagonalScale(
       const dftfe::size_type numberofVectors,
       const dftfe::size_type sizeOfVector,
-      ValueType1 *           X,
-      ValueType2 *           D)
+      ValueType1            *X,
+      ValueType2            *D)
     {
       for (unsigned int iDof = 0; iDof < sizeOfVector; ++iDof)
         for (unsigned int iWave = 0; iWave < numberofVectors; iWave++)
@@ -1450,80 +1450,80 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::rightDiagonalScale(
       const dftfe::size_type numberofVectors,
       const dftfe::size_type sizeOfVector,
-      double *               X,
-      double *               D);
+      double                *X,
+      double                *D);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::rightDiagonalScale(
       const dftfe::size_type numberofVectors,
       const dftfe::size_type sizeOfVector,
-      std::complex<double> * X,
-      double *               D);
+      std::complex<double>  *X,
+      double                *D);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleCopy(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const double *                 copyFromVec,
-      double *                       copyToVecBlock,
+      const double                  *s,
+      const double                  *copyFromVec,
+      double                        *copyToVecBlock,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleCopy(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const float *                  copyFromVec,
-      float *                        copyToVecBlock,
+      const double                  *s,
+      const float                   *copyFromVec,
+      float                         *copyToVecBlock,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleCopy(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const std::complex<double> *   copyFromVec,
-      std::complex<double> *         copyToVecBlock,
+      const double                  *s,
+      const std::complex<double>    *copyFromVec,
+      std::complex<double>          *copyToVecBlock,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleCopy(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const std::complex<float> *    copyFromVec,
-      std::complex<float> *          copyToVecBlock,
+      const double                  *s,
+      const std::complex<float>     *copyFromVec,
+      std::complex<float>           *copyToVecBlock,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds);
-
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleColumnWise(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const double *         beta,
-      double *               x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleColumnWise(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const float *          beta,
-      float *                x);
+      const double          *beta,
+      double                *x);
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleColumnWise(
+      const dftfe::size_type contiguousBlockSize,
+      const dftfe::size_type numContiguousBlocks,
+      const float           *beta,
+      float                 *x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleColumnWise(
       const dftfe::size_type      contiguousBlockSize,
       const dftfe::size_type      numContiguousBlocks,
       const std::complex<double> *beta,
-      std::complex<double> *      x);
+      std::complex<double>       *x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScaleColumnWise(
       const dftfe::size_type     contiguousBlockSize,
       const dftfe::size_type     numContiguousBlocks,
       const std::complex<float> *beta,
-      std::complex<float> *      x);
+      std::complex<float>       *x);
 
     template <typename ValueType1, typename ValueType2>
     void
@@ -1531,8 +1531,8 @@ namespace dftfe
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
       const ValueType1       a,
-      const ValueType1 *     s,
-      ValueType2 *           x)
+      const ValueType1      *s,
+      ValueType2            *x)
     {
       for (int iBatch = 0; iBatch < numContiguousBlocks; iBatch++)
         {
@@ -1545,24 +1545,24 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::MultiVectorXDot(
       const unsigned int contiguousBlockSize,
       const unsigned int numContiguousBlocks,
-      const double *     X,
-      const double *     Y,
-      const double *     onesVec,
-      double *           tempVector,
-      double *           tempResults,
-      double *           result) const;
+      const double      *X,
+      const double      *Y,
+      const double      *onesVec,
+      double            *tempVector,
+      double            *tempResults,
+      double            *result) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::MultiVectorXDot(
       const unsigned int contiguousBlockSize,
       const unsigned int numContiguousBlocks,
-      const double *     X,
-      const double *     Y,
-      const double *     onesVec,
-      double *           tempVector,
-      double *           tempResults,
-      const MPI_Comm &   mpi_communicator,
-      double *           result) const;
+      const double      *X,
+      const double      *Y,
+      const double      *onesVec,
+      double            *tempVector,
+      double            *tempResults,
+      const MPI_Comm    &mpi_communicator,
+      double            *result) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::MultiVectorXDot(
@@ -1571,9 +1571,9 @@ namespace dftfe
       const std::complex<double> *X,
       const std::complex<double> *Y,
       const std::complex<double> *onesVec,
-      std::complex<double> *      tempVector,
-      std::complex<double> *      tempResults,
-      std::complex<double> *      result) const;
+      std::complex<double>       *tempVector,
+      std::complex<double>       *tempResults,
+      std::complex<double>       *result) const;
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::MultiVectorXDot(
       const unsigned int          contiguousBlockSize,
@@ -1581,10 +1581,10 @@ namespace dftfe
       const std::complex<double> *X,
       const std::complex<double> *Y,
       const std::complex<double> *onesVec,
-      std::complex<double> *      tempVector,
-      std::complex<double> *      tempResults,
-      const MPI_Comm &            mpi_communicator,
-      std::complex<double> *      result) const;
+      std::complex<double>       *tempVector,
+      std::complex<double>       *tempResults,
+      const MPI_Comm             &mpi_communicator,
+      std::complex<double>       *result) const;
 
     // stridedBlockScale
     template void
@@ -1592,16 +1592,16 @@ namespace dftfe
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
       const double           a,
-      const double *         s,
-      double *               x);
+      const double          *s,
+      double                *x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
       const float            a,
-      const float *          s,
-      float *                x);
+      const float           *s,
+      float                 *x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
@@ -1609,22 +1609,22 @@ namespace dftfe
       const dftfe::size_type      numContiguousBlocks,
       const std::complex<double>  a,
       const std::complex<double> *s,
-      std::complex<double> *      x);
+      std::complex<double>       *x);
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
       const double           a,
-      const double *         s,
-      std::complex<double> * x);
+      const double          *s,
+      std::complex<double>  *x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
       const double           a,
-      const double *         s,
-      std::complex<float> *  x);
+      const double          *s,
+      std::complex<float>   *x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
@@ -1632,23 +1632,23 @@ namespace dftfe
       const dftfe::size_type     numContiguousBlocks,
       const std::complex<float>  a,
       const std::complex<float> *s,
-      std::complex<float> *      x);
+      std::complex<float>       *x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
       const double           a,
-      const double *         s,
-      float *                x);
+      const double          *s,
+      float                 *x);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockScale(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
       const float            a,
-      const float *          s,
-      double *               x);
+      const float           *s,
+      double                *x);
 
     // for stridedBlockScaleAndAddColumnWise
     template void
@@ -1656,18 +1656,18 @@ namespace dftfe
       stridedBlockScaleAndAddColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const double *         x,
-        const double *         beta,
-        double *               y);
+        const double          *x,
+        const double          *beta,
+        double                *y);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       stridedBlockScaleAndAddColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const float *          x,
-        const float *          beta,
-        float *                y);
+        const float           *x,
+        const float           *beta,
+        float                 *y);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
@@ -1676,7 +1676,7 @@ namespace dftfe
         const dftfe::size_type      numContiguousBlocks,
         const std::complex<double> *x,
         const std::complex<double> *beta,
-        std::complex<double> *      y);
+        std::complex<double>       *y);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
@@ -1685,7 +1685,7 @@ namespace dftfe
         const dftfe::size_type     numContiguousBlocks,
         const std::complex<float> *x,
         const std::complex<float> *beta,
-        std::complex<float> *      y);
+        std::complex<float>       *y);
 
     // for stridedBlockScaleAndAddTwoVecColumnWise
     template void
@@ -1693,22 +1693,22 @@ namespace dftfe
       stridedBlockScaleAndAddTwoVecColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const double *         x,
-        const double *         alpha,
-        const double *         y,
-        const double *         beta,
-        double *               z);
+        const double          *x,
+        const double          *alpha,
+        const double          *y,
+        const double          *beta,
+        double                *z);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       stridedBlockScaleAndAddTwoVecColumnWise(
         const dftfe::size_type contiguousBlockSize,
         const dftfe::size_type numContiguousBlocks,
-        const float *          x,
-        const float *          alpha,
-        const float *          y,
-        const float *          beta,
-        float *                z);
+        const float           *x,
+        const float           *alpha,
+        const float           *y,
+        const float           *beta,
+        float                 *z);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
@@ -1719,7 +1719,7 @@ namespace dftfe
         const std::complex<double> *alpha,
         const std::complex<double> *y,
         const std::complex<double> *beta,
-        std::complex<double> *      z);
+        std::complex<double>       *z);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
@@ -1730,23 +1730,23 @@ namespace dftfe
         const std::complex<float> *alpha,
         const std::complex<float> *y,
         const std::complex<float> *beta,
-        std::complex<float> *      z);
+        std::complex<float>       *z);
 
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const double *                 copyFromVec,
-      double *                       copyToVecBlock,
+      const double                  *copyFromVec,
+      double                        *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const float *                  copyFromVec,
-      float *                        copyToVecBlock,
+      const float                   *copyFromVec,
+      float                         *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
 
@@ -1754,16 +1754,16 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const std::complex<double> *   copyFromVec,
-      std::complex<double> *         copyToVecBlock,
+      const std::complex<double>    *copyFromVec,
+      std::complex<double>          *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedCopyToBlock(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const std::complex<float> *    copyFromVec,
-      std::complex<float> *          copyToVecBlock,
+      const std::complex<float>     *copyFromVec,
+      std::complex<float>           *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
 
@@ -1772,8 +1772,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const dftfe::size_type         startingVecId,
-      const double *                 copyFromVec,
-      double *                       copyToVecBlock,
+      const double                  *copyFromVec,
+      double                        *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
     template void
@@ -1781,8 +1781,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const dftfe::size_type         startingVecId,
-      const float *                  copyFromVec,
-      float *                        copyToVecBlock,
+      const float                   *copyFromVec,
+      float                         *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
     template void
@@ -1790,8 +1790,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const dftfe::size_type         startingVecId,
-      const std::complex<double> *   copyFromVec,
-      std::complex<double> *         copyToVecBlock,
+      const std::complex<double>    *copyFromVec,
+      std::complex<double>          *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
     template void
@@ -1799,8 +1799,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const dftfe::size_type         startingVecId,
-      const std::complex<float> *    copyFromVec,
-      std::complex<float> *          copyToVecBlock,
+      const std::complex<float>     *copyFromVec,
+      std::complex<float>           *copyToVecBlock,
       const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds);
 
     // template void
@@ -1814,64 +1814,54 @@ namespace dftfe
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const double *         valueType1Arr,
-                                       std::complex<double> * valueType2Arr);
+                                       const double          *valueType1Arr,
+                                       std::complex<double>  *valueType2Arr);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       copyValueType1ArrToValueType2Arr(
         const dftfe::size_type      size,
         const std::complex<double> *valueType1Arr,
-        std::complex<double> *      valueType2Arr);
+        std::complex<double>       *valueType2Arr);
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const double *         valueType1Arr,
-                                       double *               valueType2Arr);
+                                       const double          *valueType1Arr,
+                                       double                *valueType2Arr);
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const double *         valueType1Arr,
-                                       float *                valueType2Arr);
+                                       const double          *valueType1Arr,
+                                       float                 *valueType2Arr);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       copyValueType1ArrToValueType2Arr(const dftfe::size_type size,
-                                       const float *          valueType1Arr,
-                                       double *               valueType2Arr);
+                                       const float           *valueType1Arr,
+                                       double                *valueType2Arr);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::
       copyValueType1ArrToValueType2Arr(
         const dftfe::size_type      size,
         const std::complex<double> *valueType1Arr,
-        std::complex<float> *       valueType2Arr);
+        std::complex<float>        *valueType2Arr);
 
     // axpyStridedBlockAtomicAdd
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::axpyStridedBlockAtomicAdd(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const double *                 addFromVec,
-      double *                       addToVec,
+      const double                  *addFromVec,
+      double                        *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::axpyStridedBlockAtomicAdd(
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
-      const std::complex<double> *   addFromVec,
-      std::complex<double> *         addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
-
-    template void
-    BLASWrapper<dftfe::utils::MemorySpace::HOST>::axpyStridedBlockAtomicAdd(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                   a,
-      const double *                 s,
-      const double *                 addFromVec,
-      double *                       addToVec,
+      const std::complex<double>    *addFromVec,
+      std::complex<double>          *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1879,9 +1869,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const std::complex<double> *   addFromVec,
-      std::complex<double> *         addToVec,
+      const double                  *s,
+      const double                  *addFromVec,
+      double                        *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1889,9 +1879,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const float *                  addFromVec,
-      float *                        addToVec,
+      const double                  *s,
+      const std::complex<double>    *addFromVec,
+      std::complex<double>          *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1899,9 +1889,19 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 s,
-      const std::complex<float> *    addFromVec,
-      std::complex<float> *          addToVec,
+      const double                  *s,
+      const float                   *addFromVec,
+      float                         *addToVec,
+      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
+
+    template void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::axpyStridedBlockAtomicAdd(
+      const dftfe::size_type         contiguousBlockSize,
+      const dftfe::size_type         numContiguousBlocks,
+      const double                   a,
+      const double                  *s,
+      const std::complex<float>     *addFromVec,
+      std::complex<float>           *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1909,9 +1909,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const float                    a,
-      const float *                  s,
-      const float *                  addFromVec,
-      float *                        addToVec,
+      const float                   *s,
+      const float                   *addFromVec,
+      float                         *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1919,9 +1919,9 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const float                    a,
-      const float *                  s,
-      const std::complex<float> *    addFromVec,
-      std::complex<float> *          addToVec,
+      const float                   *s,
+      const std::complex<float>     *addFromVec,
+      std::complex<float>           *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1929,8 +1929,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const double *                 addFromVec,
-      double *                       addToVec,
+      const double                  *addFromVec,
+      double                        *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1938,8 +1938,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const std::complex<double> *   addFromVec,
-      std::complex<double> *         addToVec,
+      const std::complex<double>    *addFromVec,
+      std::complex<double>          *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1947,8 +1947,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const float *                  addFromVec,
-      float *                        addToVec,
+      const float                   *addFromVec,
+      float                         *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1956,8 +1956,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const double                   a,
-      const std::complex<float> *    addFromVec,
-      std::complex<float> *          addToVec,
+      const std::complex<float>     *addFromVec,
+      std::complex<float>           *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1965,8 +1965,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const float                    a,
-      const float *                  addFromVec,
-      float *                        addToVec,
+      const float                   *addFromVec,
+      float                         *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1974,8 +1974,8 @@ namespace dftfe
       const dftfe::size_type         contiguousBlockSize,
       const dftfe::size_type         numContiguousBlocks,
       const float                    a,
-      const std::complex<float> *    addFromVec,
-      std::complex<float> *          addToVec,
+      const std::complex<float>     *addFromVec,
+      std::complex<float>           *addToVec,
       const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const;
 
     template void
@@ -1983,7 +1983,7 @@ namespace dftfe
                                                         const double  alpha,
                                                         const double *x,
                                                         const double  beta,
-                                                        double *      y) const;
+                                                        double       *y) const;
 
 
     template void
@@ -1992,14 +1992,14 @@ namespace dftfe
       const double                alpha,
       const std::complex<double> *x,
       const double                beta,
-      std::complex<double> *      y) const;
+      std::complex<double>       *y) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::axpby(const unsigned int n,
                                                         const double alpha,
                                                         const float *x,
                                                         const double beta,
-                                                        float *      y) const;
+                                                        float       *y) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::ApaBD(const unsigned int m,
@@ -2008,7 +2008,7 @@ namespace dftfe
                                                         const double *A,
                                                         const double *B,
                                                         const double *D,
-                                                        double *      C) const;
+                                                        double       *C) const;
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::ApaBD(
       const unsigned int          m,
@@ -2016,51 +2016,51 @@ namespace dftfe
       const double                alpha,
       const std::complex<double> *A,
       const std::complex<double> *B,
-      const double *              D,
-      std::complex<double> *      C) const;
+      const double               *D,
+      std::complex<double>       *C) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::ApaBD(const unsigned int m,
                                                         const unsigned int n,
                                                         const double  alpha,
-                                                        const float * A,
+                                                        const float  *A,
                                                         const double *B,
                                                         const double *D,
-                                                        float *       C) const;
+                                                        float        *C) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::ApaBD(const unsigned int m,
                                                         const unsigned int n,
                                                         const double  alpha,
-                                                        const float * A,
+                                                        const float  *A,
                                                         const double *B,
                                                         const double *D,
-                                                        double *      C) const;
+                                                        double       *C) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::copyRealArrsToComplexArr(
       const dftfe::size_type size,
-      const double *         realArr,
-      const double *         imagArr,
-      std::complex<double> * complexArr);
+      const double          *realArr,
+      const double          *imagArr,
+      std::complex<double>  *complexArr);
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const double *         addFromVec,
-      const double *         scalingVector,
+      const double          *addFromVec,
+      const double          *scalingVector,
       const double           a,
-      double *               addToVec) const;
+      double                *addToVec) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const float *          addFromVec,
-      const double *         scalingVector,
+      const float           *addFromVec,
+      const double          *scalingVector,
       const double           a,
-      float *                addToVec) const;
+      float                 *addToVec) const;
 
 
     template void
@@ -2070,35 +2070,35 @@ namespace dftfe
       const std::complex<double> *addFromVec,
       const std::complex<double> *scalingVector,
       const std::complex<double>  a,
-      std::complex<double> *      addToVec) const;
+      std::complex<double>       *addToVec) const;
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpy(
       const dftfe::size_type      contiguousBlockSize,
       const dftfe::size_type      numContiguousBlocks,
       const std::complex<double> *addFromVec,
-      const double *              scalingVector,
+      const double               *scalingVector,
       const double                a,
-      std::complex<double> *      addToVec) const;
+      std::complex<double>       *addToVec) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpBy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const double *         addFromVec,
-      const double *         scalingVector,
+      const double          *addFromVec,
+      const double          *scalingVector,
       const double           a,
       const double           b,
-      double *               addToVec) const;
+      double                *addToVec) const;
 
     template void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::stridedBlockAxpBy(
       const dftfe::size_type contiguousBlockSize,
       const dftfe::size_type numContiguousBlocks,
-      const float *          addFromVec,
-      const double *         scalingVector,
+      const float           *addFromVec,
+      const double          *scalingVector,
       const double           a,
       const double           b,
-      float *                addToVec) const;
+      float                 *addToVec) const;
 
 
     template void
@@ -2109,7 +2109,7 @@ namespace dftfe
       const std::complex<double> *scalingVector,
       const std::complex<double>  a,
       const std::complex<double>  b,
-      std::complex<double> *      addToVec) const;
+      std::complex<double>       *addToVec) const;
 
 
 
@@ -2118,10 +2118,10 @@ namespace dftfe
       const dftfe::size_type      contiguousBlockSize,
       const dftfe::size_type      numContiguousBlocks,
       const std::complex<double> *addFromVec,
-      const double *              scalingVector,
+      const double               *scalingVector,
       const double                a,
       const double                b,
-      std::complex<double> *      addToVec) const;
+      std::complex<double>       *addToVec) const;
 
 
 

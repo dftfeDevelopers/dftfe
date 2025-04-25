@@ -48,10 +48,10 @@ namespace dftfe
       //
     public:
       typedef ValueType        value_type;
-      typedef ValueType *      pointer;
-      typedef ValueType &      reference;
+      typedef ValueType       *pointer;
+      typedef ValueType       &reference;
       typedef const ValueType &const_reference;
-      typedef ValueType *      iterator;
+      typedef ValueType       *iterator;
       typedef const ValueType *const_iterator;
 
     public:
@@ -155,7 +155,8 @@ namespace dftfe
        * @returns reference to the element of the Vector
        * @throws exception if i >= size of the Vector
        */
-      reference operator[](std::size_t i);
+      reference
+      operator[](std::size_t i);
 
       /**
        * @brief Operator to get a const reference to a element of the Vector
@@ -163,7 +164,8 @@ namespace dftfe
        * @returns const reference to the element of the Vector
        * @throws exception if i >= size of the Vector
        */
-      const_reference operator[](std::size_t i) const;
+      const_reference
+      operator[](std::size_t i) const;
 
       void
       swap(MemoryStorage &rhs);
@@ -344,7 +346,7 @@ namespace dftfe
        */
       template <dftfe::utils::MemorySpace memorySpaceDst>
       void
-      copyTo(ValueType *       dst,
+      copyTo(ValueType        *dst,
              const std::size_t N,
              const std::size_t srcOffset,
              const std::size_t dstOffset) const;
@@ -391,7 +393,7 @@ namespace dftfe
        */
       template <dftfe::utils::MemorySpace memorySpaceSrc>
       void
-      copyFrom(const ValueType * src,
+      copyFrom(const ValueType  *src,
                const std::size_t N,
                const std::size_t srcOffset,
                const std::size_t dstOffset);
@@ -495,7 +497,7 @@ namespace dftfe
 
 
     private:
-      ValueType * d_data = nullptr;
+      ValueType  *d_data = nullptr;
       std::size_t d_size = 0;
     };
 

@@ -33,8 +33,8 @@ namespace dftfe
       reshapeFromNonAffineLayoutHost(const dftfe::size_type numVecs,
                                      const dftfe::size_type numQuads,
                                      const dftfe::size_type numCells,
-                                     const ValueType *      copyFromVec,
-                                     ValueType *            copyToVec)
+                                     const ValueType       *copyFromVec,
+                                     ValueType             *copyToVec)
       {
         for (unsigned int iCell = 0; iCell < numCells; ++iCell)
           for (unsigned int iQuad = 0; iQuad < numQuads; ++iQuad)
@@ -50,8 +50,8 @@ namespace dftfe
       reshapeToNonAffineLayoutHost(const dftfe::size_type numVecs,
                                    const dftfe::size_type numQuads,
                                    const dftfe::size_type numCells,
-                                   const ValueType *      copyFromVec,
-                                   ValueType *            copyToVec)
+                                   const ValueType       *copyFromVec,
+                                   ValueType             *copyToVec)
       {
         for (unsigned int iCell = 0; iCell < numCells; ++iCell)
           for (unsigned int iQuad = 0; iQuad < numQuads; ++iQuad)
@@ -66,27 +66,27 @@ namespace dftfe
       reshapeFromNonAffineLayoutHost(const dftfe::size_type numVecs,
                                      const dftfe::size_type numQuads,
                                      const dftfe::size_type numCells,
-                                     const double *         copyFromVec,
-                                     double *               copyToVec);
+                                     const double          *copyFromVec,
+                                     double                *copyToVec);
       template void
       reshapeFromNonAffineLayoutHost(const dftfe::size_type      numVecs,
                                      const dftfe::size_type      numQuads,
                                      const dftfe::size_type      numCells,
                                      const std::complex<double> *copyFromVec,
-                                     std::complex<double> *      copyToVec);
+                                     std::complex<double>       *copyToVec);
 
       template void
       reshapeToNonAffineLayoutHost(const dftfe::size_type numVecs,
                                    const dftfe::size_type numQuads,
                                    const dftfe::size_type numCells,
-                                   const double *         copyFromVec,
-                                   double *               copyToVec);
+                                   const double          *copyFromVec,
+                                   double                *copyToVec);
       template void
       reshapeToNonAffineLayoutHost(const dftfe::size_type      numVecs,
                                    const dftfe::size_type      numQuads,
                                    const dftfe::size_type      numCells,
                                    const std::complex<double> *copyFromVec,
-                                   std::complex<double> *      copyToVec);
+                                   std::complex<double>       *copyToVec);
 
     } // namespace FEBasisOperationsKernelsInternal
   }   // namespace basis

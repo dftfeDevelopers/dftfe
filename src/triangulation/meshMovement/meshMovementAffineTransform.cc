@@ -23,8 +23,8 @@
 namespace dftfe
 {
   meshMovementAffineTransform::meshMovementAffineTransform(
-    const MPI_Comm &     mpi_comm_parent,
-    const MPI_Comm &     mpi_comm_domain,
+    const MPI_Comm      &mpi_comm_parent,
+    const MPI_Comm      &mpi_comm_domain,
     const dftParameters &dftParams)
     : meshMovementClass(mpi_comm_parent, mpi_comm_domain, dftParams)
   {}
@@ -54,7 +54,7 @@ namespace dftfe
 
   std::pair<bool, double>
   meshMovementAffineTransform::moveMesh(
-    const std::vector<dealii::Point<3>> &            controlPointLocations,
+    const std::vector<dealii::Point<3>>             &controlPointLocations,
     const std::vector<dealii::Tensor<1, 3, double>> &controlPointDisplacements,
     const double                                     controllingParameter,
     const bool                                       moveSubdivided)
