@@ -154,8 +154,9 @@ namespace dftfe
       initialize();
 #endif
       dftfe::utils::deviceBlasStatus_t status;
-      status = create();
-      status = setStream(NULL);
+      status   = create();
+      status   = setStream(NULL);
+      d_opType = tensorOpDataType::fp32;
     }
 
     dftfe::utils::deviceBlasHandle_t &
