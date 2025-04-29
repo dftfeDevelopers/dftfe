@@ -39,4 +39,6 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scf.prm > outputBc
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_scfConstraintMag.prm > outputBccFe_scfConstraintMag
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_pdos.prm > outputBccFe_pdos
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileBccFe_relax.prm > outputBccFe_relax
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileGaAs.prm > outputGaAs
+mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix

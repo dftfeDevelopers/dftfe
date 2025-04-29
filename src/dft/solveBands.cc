@@ -361,7 +361,7 @@ namespace dftfe
 
     double maxRes = 1.0;
 
-    for (dftfe::uInt s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
+    for (unsigned int s = 0; s < d_dftParamsPtr->spinPolarized + 1; ++s)
       {
         if ((d_dftParamsPtr->memOptMode && d_dftParamsPtr->spinPolarized == 1))
           {
@@ -382,7 +382,7 @@ namespace dftfe
                         << " for spin " << s + 1 << std::endl;
 
                 kohnShamDFTEigenOperator.reinitkPointSpinIndex(kPoint, s);
-                if (d_dftParamsPtr->memOptMode)
+                if (d_dftParamsPtr->memOptMode || count == 0)
                   {
                     computing_timer.enter_subsection(
                       "Hamiltonian Matrix Computation");
