@@ -22,12 +22,16 @@ export LD_LIBRARY_PATH=$CRAY_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 export BASE=$WD/src/dftfeDebug/build/release/complex
 
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_1.prm > outputMg2x_1
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_2.prm > outputMg2x_2
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_3.prm > outputMg2x_3
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_4.prm > outputMg2x_4
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_5.prm > outputMg2x_5
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_6.prm > outputMg2x_6
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_7.prm > outputMg2x_7
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_8.prm > outputMg2x_8
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_9.prm > outputMg2x_9
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileMg2x_10.prm > outputMg2x_10
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBe.prm > outputBe
-srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBeMixedPrec.prm > outputBeMixedPrec
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileTiAl_mixedPrec.prm > outputTiAl_hubbard_mixedPrec_mpi6
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileTiAl.prm > outputTiAl_hubbard
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileFeCuPt2_scf.prm > outputFeCuPt2_scf
@@ -39,3 +43,4 @@ srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_relax.prm > out
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileGaAs.prm > outputGaAs
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
