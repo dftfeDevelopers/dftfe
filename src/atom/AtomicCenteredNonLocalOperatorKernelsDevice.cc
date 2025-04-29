@@ -446,19 +446,7 @@ namespace dftfe
       ValueType        *sphericalFnTimesWfcPadded)
 
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      sqrtAlphaScalingWaveFunctionEntriesKernel<<<
-        (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * totalAtomsInCurrentProcessor *
-          maxSingleAtomContribution,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numWfcs,
-        totalAtomsInCurrentProcessor,
-        maxSingleAtomContribution,
-        dftfe::utils::makeDataTypeDeviceCompatible(scalingVector),
-        dftfe::utils::makeDataTypeDeviceCompatible(sphericalFnTimesWfcPadded));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      DFTFE_LAUNCH_KERNEL(
         sqrtAlphaScalingWaveFunctionEntriesKernel,
         (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * totalAtomsInCurrentProcessor *
@@ -471,7 +459,6 @@ namespace dftfe
         maxSingleAtomContribution,
         dftfe::utils::makeDataTypeDeviceCompatible(scalingVector),
         dftfe::utils::makeDataTypeDeviceCompatible(sphericalFnTimesWfcPadded));
-#endif
     }
 
 
@@ -486,37 +473,21 @@ namespace dftfe
       ValueType        *sphericalFnTimesWfcAllCellsVec,
       const dftfe::Int *indexMapPaddedToParallelVec)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      copyFromParallelNonLocalVecToAllCellsVecKernel<<<
-        (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * numNonLocalCells *
-          maxSingleAtomContribution,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numWfcs,
-        numNonLocalCells,
-        maxSingleAtomContribution,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWfcParallelVec),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWfcAllCellsVec),
-        indexMapPaddedToParallelVec);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(copyFromParallelNonLocalVecToAllCellsVecKernel,
-                         (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE * numNonLocalCells *
-                           maxSingleAtomContribution,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         numWfcs,
-                         numNonLocalCells,
-                         maxSingleAtomContribution,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           sphericalFnTimesWfcParallelVec),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           sphericalFnTimesWfcAllCellsVec),
-                         indexMapPaddedToParallelVec);
-#endif
+      DFTFE_LAUNCH_KERNEL(copyFromParallelNonLocalVecToAllCellsVecKernel,
+                          (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE * numNonLocalCells *
+                            maxSingleAtomContribution,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          numWfcs,
+                          numNonLocalCells,
+                          maxSingleAtomContribution,
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            sphericalFnTimesWfcParallelVec),
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            sphericalFnTimesWfcAllCellsVec),
+                          indexMapPaddedToParallelVec);
     }
     template <typename ValueType>
     void
@@ -527,33 +498,19 @@ namespace dftfe
       ValueType         *sphericalFnTimesWfcDealiiParallelVec,
       const dftfe::uInt *indexMapDealiiParallelNumbering)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      copyToDealiiParallelNonLocalVecKernel<<<
-        (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * totalEntries,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numWfcs,
-        totalEntries,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWfcParallelVec),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWfcDealiiParallelVec),
-        indexMapDealiiParallelNumbering);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(copyToDealiiParallelNonLocalVecKernel,
-                         (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE * totalEntries,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         numWfcs,
-                         totalEntries,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           sphericalFnTimesWfcParallelVec),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           sphericalFnTimesWfcDealiiParallelVec),
-                         indexMapDealiiParallelNumbering);
-#endif
+      DFTFE_LAUNCH_KERNEL(copyToDealiiParallelNonLocalVecKernel,
+                          (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE * totalEntries,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          numWfcs,
+                          totalEntries,
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            sphericalFnTimesWfcParallelVec),
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            sphericalFnTimesWfcDealiiParallelVec),
+                          indexMapDealiiParallelNumbering);
     }
 
     template <typename ValueType>
@@ -565,33 +522,20 @@ namespace dftfe
       ValueType        *sphericalFnTimesWfcDealiiParallelVec,
       const dftfe::Int *indexMapDealiiParallelNumbering)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      copyToDealiiParallelNonLocalVecFromPaddedVecKernel<<<
-        (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * totalEntriesPadded,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numWfcs,
-        totalEntriesPadded,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWfcPaddedVec),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWfcDealiiParallelVec),
-        indexMapDealiiParallelNumbering);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(copyToDealiiParallelNonLocalVecFromPaddedVecKernel,
-                         (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE * totalEntriesPadded,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         numWfcs,
-                         totalEntriesPadded,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           sphericalFnTimesWfcPaddedVec),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           sphericalFnTimesWfcDealiiParallelVec),
-                         indexMapDealiiParallelNumbering);
-#endif
+      DFTFE_LAUNCH_KERNEL(copyToDealiiParallelNonLocalVecFromPaddedVecKernel,
+                          (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            totalEntriesPadded,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          numWfcs,
+                          totalEntriesPadded,
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            sphericalFnTimesWfcPaddedVec),
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            sphericalFnTimesWfcDealiiParallelVec),
+                          indexMapDealiiParallelNumbering);
     }
     template <typename ValueType>
     void
@@ -602,33 +546,20 @@ namespace dftfe
       ValueType        *sphericalFnTimesWfcPaddedVec,
       const dftfe::Int *indexMapDealiiParallelNumbering)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      copyFromDealiiParallelNonLocalVecToPaddedVecKernel<<<
-        (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * totalEntriesPadded,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numWfcs,
-        totalEntriesPadded,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWfcDealiiParallelVec),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWfcPaddedVec),
-        indexMapDealiiParallelNumbering);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(copyFromDealiiParallelNonLocalVecToPaddedVecKernel,
-                         (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE * totalEntriesPadded,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         numWfcs,
-                         totalEntriesPadded,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           sphericalFnTimesWfcDealiiParallelVec),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           sphericalFnTimesWfcPaddedVec),
-                         indexMapDealiiParallelNumbering);
-#endif
+      DFTFE_LAUNCH_KERNEL(copyFromDealiiParallelNonLocalVecToPaddedVecKernel,
+                          (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            totalEntriesPadded,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          numWfcs,
+                          totalEntriesPadded,
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            sphericalFnTimesWfcDealiiParallelVec),
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            sphericalFnTimesWfcPaddedVec),
+                          indexMapDealiiParallelNumbering);
     }
 
     template <typename ValueType>
@@ -647,34 +578,20 @@ namespace dftfe
     {
       const dftfe::uInt totalEntries =
         totalNonLocalElements * numberWfc * numberNodesPerElement;
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      addNonLocalContributionDeviceKernel<<<(dftfe::utils::DEVICE_BLOCK_SIZE +
-                                             totalEntries) /
-                                              dftfe::utils::DEVICE_BLOCK_SIZE,
-                                            dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        totalNonLocalElements,
-        numberWfc,
-        numberNodesPerElement,
-        iElemNonLocalToElemIndexMap.begin(),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          nonLocalContribution.begin()),
-        dftfe::utils::makeDataTypeDeviceCompatible(TotalContribution));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(addNonLocalContributionDeviceKernel,
-                         (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         totalNonLocalElements,
-                         numberWfc,
-                         numberNodesPerElement,
-                         iElemNonLocalToElemIndexMap.begin(),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           nonLocalContribution.begin()),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           TotalContribution));
-#endif
+      DFTFE_LAUNCH_KERNEL(addNonLocalContributionDeviceKernel,
+                          (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          totalNonLocalElements,
+                          numberWfc,
+                          numberNodesPerElement,
+                          iElemNonLocalToElemIndexMap.begin(),
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            nonLocalContribution.begin()),
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            TotalContribution));
     }
 
 
@@ -694,22 +611,7 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      addNonLocalContributionDeviceKernel<<<
-        (numberWfc + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * numberCellsForAtom *
-          numberNodesPerElement,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numberWfc,
-        numberCellsForAtom * numberNodesPerElement,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          nonLocalContribution.begin() +
-          numberCellsTraversed * numberNodesPerElement * numberWfc),
-        dftfe::utils::makeDataTypeDeviceCompatible(TotalContribution),
-        cellNodeIdMapNonLocalToLocal.begin() +
-          numberCellsTraversed * numberNodesPerElement);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      DFTFE_LAUNCH_KERNEL(
         addNonLocalContributionDeviceKernel,
         (numberWfc + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * numberCellsForAtom *
@@ -725,7 +627,6 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(TotalContribution),
         cellNodeIdMapNonLocalToLocal.begin() +
           numberCellsTraversed * numberNodesPerElement);
-#endif
     }
 
     template <typename ValueType>

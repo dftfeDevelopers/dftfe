@@ -125,25 +125,18 @@ namespace dftfe
               const double     *scalingVector,
               double           *dstArray)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      diagScaleKernel<<<(blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                          dftfe::utils::DEVICE_BLOCK_SIZE * numContiguousBlocks,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        blockSize, numContiguousBlocks, srcArray, scalingVector, dstArray);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(diagScaleKernel,
-                         (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE *
-                           numContiguousBlocks,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         blockSize,
-                         numContiguousBlocks,
-                         srcArray,
-                         scalingVector,
-                         dstArray);
-#endif
+      DFTFE_LAUNCH_KERNEL(diagScaleKernel,
+                          (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            numContiguousBlocks,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          blockSize,
+                          numContiguousBlocks,
+                          srcArray,
+                          scalingVector,
+                          dstArray);
     }
     void
     dotProductContributionBlocked(const dftfe::uInt numEntries,
@@ -151,23 +144,16 @@ namespace dftfe
                                   const double     *vec2,
                                   double           *vecTemp)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      dotProductContributionBlockedKernel<<<
-        (numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(numEntries, vec1, vec2, vecTemp);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(dotProductContributionBlockedKernel,
-                         (numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         numEntries,
-                         vec1,
-                         vec2,
-                         vecTemp);
-#endif
+      DFTFE_LAUNCH_KERNEL(dotProductContributionBlockedKernel,
+                          (numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          numEntries,
+                          vec1,
+                          vec2,
+                          vecTemp);
     }
 
     void
@@ -176,25 +162,17 @@ namespace dftfe
                  double           *xArray,
                  const double     *scalingVector)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      scaleBlockedKernel<<<(blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                             dftfe::utils::DEVICE_BLOCK_SIZE *
-                             numContiguousBlocks,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        blockSize, numContiguousBlocks, xArray, scalingVector);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(scaleBlockedKernel,
-                         (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE *
-                           numContiguousBlocks,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         blockSize,
-                         numContiguousBlocks,
-                         xArray,
-                         scalingVector);
-#endif
+      DFTFE_LAUNCH_KERNEL(scaleBlockedKernel,
+                          (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            numContiguousBlocks,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          blockSize,
+                          numContiguousBlocks,
+                          xArray,
+                          scalingVector);
     }
 
     void
@@ -202,23 +180,15 @@ namespace dftfe
           double           *xArray,
           const double     *scalingVector)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      scaleKernel<<<(numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                      dftfe::utils::DEVICE_BLOCK_SIZE,
-                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(numEntries,
-                                                       xArray,
-                                                       scalingVector);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(scaleKernel,
-                         (numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         numEntries,
-                         xArray,
-                         scalingVector);
-#endif
+      DFTFE_LAUNCH_KERNEL(scaleKernel,
+                          (numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          numEntries,
+                          xArray,
+                          scalingVector);
     }
 
     // y=alpha*x+y
@@ -229,26 +199,18 @@ namespace dftfe
                  const double     *alpha,
                  double           *y)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      daxpyBlockedKernel<<<(blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                             dftfe::utils::DEVICE_BLOCK_SIZE *
-                             numContiguousBlocks,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        blockSize, numContiguousBlocks, x, alpha, y);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(daxpyBlockedKernel,
-                         (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE *
-                           numContiguousBlocks,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         blockSize,
-                         numContiguousBlocks,
-                         x,
-                         alpha,
-                         y);
-#endif
+      DFTFE_LAUNCH_KERNEL(daxpyBlockedKernel,
+                          (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            numContiguousBlocks,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          blockSize,
+                          numContiguousBlocks,
+                          x,
+                          alpha,
+                          y);
     }
 
 
@@ -260,26 +222,18 @@ namespace dftfe
                   const double     *alpha,
                   double           *y)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      dmaxpyBlockedKernel<<<
-        (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * numContiguousBlocks,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        blockSize, numContiguousBlocks, x, alpha, y);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(dmaxpyBlockedKernel,
-                         (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE *
-                           numContiguousBlocks,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         blockSize,
-                         numContiguousBlocks,
-                         x,
-                         alpha,
-                         y);
-#endif
+      DFTFE_LAUNCH_KERNEL(dmaxpyBlockedKernel,
+                          (blockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            numContiguousBlocks,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          blockSize,
+                          numContiguousBlocks,
+                          x,
+                          alpha,
+                          y);
     }
   } // namespace poissonDevice
 } // namespace dftfe

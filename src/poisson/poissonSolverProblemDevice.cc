@@ -519,10 +519,12 @@ namespace dftfe
 
 
 
-    d_BLASWrapperPtr->add(vec.begin(),
-                          d_meanValueConstraintDeviceVec.begin(),
-                          constrainedNodeValue,
-                          d_xLocalDof);
+    d_BLASWrapperPtr->xaxpy(d_xLocalDof,
+                            &constrainedNodeValue,
+                            d_meanValueConstraintDeviceVec.begin(),
+                            1,
+                            vec.begin(),
+                            1);
 
     // meanValueConstraintSetZero
     if (d_isMeanValueConstraintComputed)
@@ -910,16 +912,25 @@ namespace dftfe
       map(nDofsPerCell * d_nLocalCells);
 
     for (auto cellIdx = 0; cellIdx < d_nLocalCells; ++cellIdx)
-      std::memcpy(map.data() + cellIdx * nDofsPerCell,
-                  ((dofInfo.row_starts[cellIdx].second ==
-                    dofInfo.row_starts[cellIdx + 1].second) &&
-                   (dofInfo.row_starts_plain_indices[cellIdx] ==
-                    dealii::numbers::invalid_unsigned_int)) ?
-                    dofInfo.dof_indices.data() +
-                      dofInfo.row_starts[cellIdx].first :
-                    dofInfo.plain_dof_indices.data() +
-                      dofInfo.row_starts_plain_indices[cellIdx],
-                  nDofsPerCell * sizeof(dftfe::uInt));
+      std::transform((dofInfo.row_starts[cellIdx].second ==
+                        dofInfo.row_starts[cellIdx + 1].second &&
+                      dofInfo.row_starts_plain_indices[cellIdx] ==
+                        dealii::numbers::invalid_unsigned_int) ?
+                       dofInfo.dof_indices.data() +
+                         dofInfo.row_starts[cellIdx].first :
+                       dofInfo.plain_dof_indices.data() +
+                         dofInfo.row_starts_plain_indices[cellIdx],
+                     (dofInfo.row_starts[cellIdx].second ==
+                        dofInfo.row_starts[cellIdx + 1].second &&
+                      dofInfo.row_starts_plain_indices[cellIdx] ==
+                        dealii::numbers::invalid_unsigned_int) ?
+                       dofInfo.dof_indices.data() +
+                         dofInfo.row_starts[cellIdx].first + nDofsPerCell :
+                       dofInfo.plain_dof_indices.data() +
+                         dofInfo.row_starts_plain_indices[cellIdx] +
+                         nDofsPerCell,
+                     map.data() + cellIdx * nDofsPerCell,
+                     [](unsigned int &v) { return v; });
 
     // Construct the device vectors
     d_shapeFunction.resize(shapeFunction.size());

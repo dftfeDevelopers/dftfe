@@ -68,7 +68,7 @@ namespace dftfe
       const dftfe::uInt                        matrixFreeVectorComponent,
       const dftfe::uInt matrixFreeQuadratureComponentRhsDensity,
       const dftfe::uInt matrixFreeQuadratureComponentAX,
-      const std::map<dftfe::uInt, double>                 &atoms,
+      const std::map<dealii::types::global_dof_index, double> &atoms,
       const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
       const dftfe::uInt smearedChargeQuadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -232,7 +232,7 @@ namespace dftfe
 
     /// pointer to map between global dof index in current processor and the
     /// atomic charge on that dof
-    const std::map<dftfe::uInt, double> *d_atomsPtr;
+    const std::map<dealii::types::global_dof_index, double> *d_atomsPtr;
 
     /// shape function gradient integral storage
     std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;

@@ -214,8 +214,8 @@ namespace dftfe
       1,
       expectedOutput);
 
-    std::map<dftfe::uInt, double>                 atoms;
-    std::map<dealii::CellId, std::vector<double>> smearedChargeValues;
+    std::map<dealii::types::global_dof_index, double> atoms;
+    std::map<dealii::CellId, std::vector<double>>     smearedChargeValues;
 
     phiTotalSolverProblem.reinit(d_basisOperationsPtr,
                                  expectedOutput,

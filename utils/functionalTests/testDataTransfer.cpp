@@ -422,8 +422,7 @@ namespace functionalTest
     std::cout << std::flush;
     MPI_Barrier(mpi_comm_domain);
 
-    std::vector<dealii::types::global_dof_index>
-      fullFlattenedArrayCellLocalProcIndexIdMapParent;
+    std::vector<dftfe::uInt> fullFlattenedArrayCellLocalProcIndexIdMapParent;
     dftfe::vectorTools::computeCellLocalIndexSetMap(
       parentVec.getMPIPatternP2P(),
       matrixFreeData,
@@ -604,8 +603,7 @@ namespace functionalTest
     std::cout << std::flush;
     MPI_Barrier(mpi_comm_domain);
 
-    std::vector<dealii::types::global_dof_index>
-      fullFlattenedArrayCellLocalProcIndexIdMapChild;
+    std::vector<dftfe::uInt> fullFlattenedArrayCellLocalProcIndexIdMapChild;
     dftfe::vectorTools::computeCellLocalIndexSetMap(
       childVec.getMPIPatternP2P(),
       matrixFreeDataVxc,

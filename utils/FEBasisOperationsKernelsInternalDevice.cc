@@ -88,18 +88,7 @@ namespace dftfe
                                        const ValueType  *copyFromVec,
                                        ValueType        *copyToVec)
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-        reshapeFromNonAffineDeviceKernel<<<(numVecs * numCells * numQuads * 3) /
-                                               dftfe::utils::DEVICE_BLOCK_SIZE +
-                                             1,
-                                           dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numVecs,
-          numQuads,
-          numCells,
-          dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
-          dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-        hipLaunchKernelGGL(
+        DFTFE_LAUNCH_KERNEL(
           reshapeFromNonAffineDeviceKernel,
           (numVecs * numCells * numQuads * 3) /
               dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -112,7 +101,6 @@ namespace dftfe
           numCells,
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
           dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
-#endif
       }
       template <typename ValueType>
       void
@@ -122,18 +110,7 @@ namespace dftfe
                                      const ValueType  *copyFromVec,
                                      ValueType        *copyToVec)
       {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-        reshapeToNonAffineDeviceKernel<<<(numVecs * numCells * numQuads * 3) /
-                                             dftfe::utils::DEVICE_BLOCK_SIZE +
-                                           1,
-                                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-          numVecs,
-          numQuads,
-          numCells,
-          dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
-          dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-        hipLaunchKernelGGL(
+        DFTFE_LAUNCH_KERNEL(
           reshapeToNonAffineDeviceKernel,
           (numVecs * numCells * numQuads * 3) /
               dftfe::utils::DEVICE_BLOCK_SIZE +
@@ -146,7 +123,6 @@ namespace dftfe
           numCells,
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
           dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
-#endif
       }
       template void
       reshapeFromNonAffineLayoutDevice(const dftfe::uInt numVecs,

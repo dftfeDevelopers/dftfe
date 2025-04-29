@@ -370,8 +370,7 @@ namespace dftfe
                                                  d_phiInQuadValues,
                                                  s);
 
-            computing_timer.leave_subsection("VEff Computation");
-          }
+        computing_timer.leave_subsection("VEff Computation");
         for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
           {
             dftfe::uInt count = 0;

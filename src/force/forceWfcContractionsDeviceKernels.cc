@@ -429,23 +429,7 @@ namespace dftfe
       const dftfe::uInt *projecterKetTimesFlattenedVectorLocalIds,
       ValueType         *nlpContractionContribution)
     {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      nlpContractionContributionPsiIndexDeviceKernel<<<
-        (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * blockSizeNlp,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        wfcBlockSize,
-        numQuadsNLP,
-        blockSizeNlp,
-        startingIdNlp,
-        dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVectorPar),
-        dftfe::utils::makeDataTypeDeviceCompatible(gradPsiOrPsiQuadValuesNLP),
-        partialOccupancies,
-        nonTrivialIdToElemIdMap,
-        projecterKetTimesFlattenedVectorLocalIds,
-        dftfe::utils::makeDataTypeDeviceCompatible(nlpContractionContribution));
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      DFTFE_LAUNCH_KERNEL(
         nlpContractionContributionPsiIndexDeviceKernel,
         (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * blockSizeNlp,
@@ -462,7 +446,6 @@ namespace dftfe
         nonTrivialIdToElemIdMap,
         projecterKetTimesFlattenedVectorLocalIds,
         dftfe::utils::makeDataTypeDeviceCompatible(nlpContractionContribution));
-#  endif
     }
 
 
@@ -487,31 +470,7 @@ namespace dftfe
 #  endif
     )
     {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      computeELocWfcEshelbyTensorContributions<<<
-        (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * cellsBlockSize * numQuads * 9,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        wfcBlockSize,
-        cellsBlockSize * numQuads * 9,
-        numQuads,
-        dftfe::utils::makeDataTypeDeviceCompatible(psiQuadValues),
-        dftfe::utils::makeDataTypeDeviceCompatible(gradPsiQuadValues),
-        eigenValues,
-        partialOccupancies,
-#    ifdef USE_COMPLEX
-        kcoordx,
-        kcoordy,
-        kcoordz,
-#    endif
-        eshelbyTensorContributions
-#    ifdef USE_COMPLEX
-        ,
-        addEk
-#    endif
-      );
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      DFTFE_LAUNCH_KERNEL(
         computeELocWfcEshelbyTensorContributions,
         (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * cellsBlockSize * numQuads * 9,
@@ -525,18 +484,17 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(gradPsiQuadValues),
         eigenValues,
         partialOccupancies,
-#    ifdef USE_COMPLEX
+#  ifdef USE_COMPLEX
         kcoordx,
         kcoordy,
         kcoordz,
-#    endif
+#  endif
         eshelbyTensorContributions
-#    ifdef USE_COMPLEX
+#  ifdef USE_COMPLEX
         ,
         addEk
-#    endif
-      );
 #  endif
+      );
     }
 
     template void

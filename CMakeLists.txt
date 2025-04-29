@@ -2,7 +2,8 @@
 #  CMakeList file for DFT-FE
 ##
 CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17
+    CACHE STRING "Minimum required C++ standard (default is 17)")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Set the name of the project and target:
@@ -246,7 +247,7 @@ SET(DEVICE_SRC
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.cu.cc
-  ./utils/BLASWrapperDevice.cu.cc
+  ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./utils/matrixFreeDeviceKernels.cc
@@ -266,7 +267,7 @@ SET(DEVICE_SRC
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.hip.cc
-  ./utils/BLASWrapperDevice.hip.cc
+  ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./utils/matrixFreeDeviceKernels.cc
@@ -352,6 +353,10 @@ ENDIF()
 
 IF (HIGHERQUAD_PSP)
   ADD_DEFINITIONS(-DDFTFE_WITH_HIGHERQUAD_PSP)
+ENDIF()
+
+IF (USE_64BIT_INT)
+  ADD_DEFINITIONS(-DDFTFE_WITH_64BIT_INT)
 ENDIF()
 
 #

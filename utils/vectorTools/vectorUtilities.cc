@@ -339,8 +339,7 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const dftfe::uInt                    mfDofHandlerIndex,
       const dftfe::uInt                    blockSize,
-      std::vector<dealii::types::global_dof_index>
-        &flattenedArrayCellLocalProcIndexIdMap)
+      std::vector<dftfe::uInt> &flattenedArrayCellLocalProcIndexIdMap)
 
     {
       //
@@ -405,12 +404,10 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const dftfe::uInt                    mfDofHandlerIndex,
       const dftfe::uInt                    blockSize,
-      std::vector<dealii::types::global_dof_index>
-                               &flattenedArrayMacroCellLocalProcIndexIdMap,
+      std::vector<dftfe::uInt> &flattenedArrayMacroCellLocalProcIndexIdMap,
       std::vector<dftfe::uInt> &normalCellIdToMacroCellIdMap,
       std::vector<dftfe::uInt> &macroCellIdToNormalCellIdMap,
-      std::vector<dealii::types::global_dof_index>
-        &flattenedArrayCellLocalProcIndexIdMap)
+      std::vector<dftfe::uInt> &flattenedArrayCellLocalProcIndexIdMap)
 
     {
       //
@@ -564,9 +561,9 @@ namespace dftfe
       const dealii::MatrixFree<3, double> &matrix_free_data,
       const dftfe::uInt                    mfDofHandlerIndex,
       const dftfe::uInt                    blockSize,
-      std::vector<std::vector<dealii::types::global_dof_index>>
+      std::vector<std::vector<dftfe::uInt>>
         &flattenedArrayMacroCellLocalProcIndexIdMap,
-      std::vector<std::vector<dealii::types::global_dof_index>>
+      std::vector<std::vector<dftfe::uInt>>
         &flattenedArrayCellLocalProcIndexIdMap)
 
     {

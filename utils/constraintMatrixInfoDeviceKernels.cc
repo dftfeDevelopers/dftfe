@@ -528,40 +528,23 @@ namespace dftfe
       const double      *constraintColumnValuesAllRowsUnflattened,
       const double      *inhomogenities)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      distributeKernel<<<std::min((contiguousBlockSize * numConstraints +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                                  dftfe::uInt(30000)),
-                         dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        contiguousBlockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(xVec),
-        constraintLocalRowIdsUnflattened,
-        numConstraints,
-        constraintRowSizes,
-        constraintRowSizesAccumulated,
-        constraintLocalColumnIdsAllRowsUnflattened,
-        constraintColumnValuesAllRowsUnflattened,
-        inhomogenities);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(distributeKernel,
-                         std::min((contiguousBlockSize * numConstraints +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                                  dftfe::uInt(30000)),
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         contiguousBlockSize,
-                         dftfe::utils::makeDataTypeDeviceCompatible(xVec),
-                         constraintLocalRowIdsUnflattened,
-                         numConstraints,
-                         constraintRowSizes,
-                         constraintRowSizesAccumulated,
-                         constraintLocalColumnIdsAllRowsUnflattened,
-                         constraintColumnValuesAllRowsUnflattened,
-                         inhomogenities);
-#endif
+      DFTFE_LAUNCH_KERNEL(distributeKernel,
+                          std::min((contiguousBlockSize * numConstraints +
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   dftfe::uInt(30000)),
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          contiguousBlockSize,
+                          dftfe::utils::makeDataTypeDeviceCompatible(xVec),
+                          constraintLocalRowIdsUnflattened,
+                          numConstraints,
+                          constraintRowSizes,
+                          constraintRowSizesAccumulated,
+                          constraintLocalColumnIdsAllRowsUnflattened,
+                          constraintColumnValuesAllRowsUnflattened,
+                          inhomogenities);
     }
 
     template <typename ValueType>
@@ -576,39 +559,22 @@ namespace dftfe
       const dftfe::uInt *constraintLocalColumnIdsAllRowsUnflattened,
       const double      *constraintColumnValuesAllRowsUnflattened)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      distributeSlaveToMasterKernelAtomicAdd<<<
-        std::min((contiguousBlockSize * numConstraints +
-                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                   dftfe::utils::DEVICE_BLOCK_SIZE,
-                 dftfe::uInt(30000)),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        contiguousBlockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(xVec),
-        constraintLocalRowIdsUnflattened,
-        numConstraints,
-        constraintRowSizes,
-        constraintRowSizesAccumulated,
-        constraintLocalColumnIdsAllRowsUnflattened,
-        constraintColumnValuesAllRowsUnflattened);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(distributeSlaveToMasterKernelAtomicAdd,
-                         std::min((contiguousBlockSize * numConstraints +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                                  dftfe::uInt(30000)),
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         contiguousBlockSize,
-                         dftfe::utils::makeDataTypeDeviceCompatible(xVec),
-                         constraintLocalRowIdsUnflattened,
-                         numConstraints,
-                         constraintRowSizes,
-                         constraintRowSizesAccumulated,
-                         constraintLocalColumnIdsAllRowsUnflattened,
-                         constraintColumnValuesAllRowsUnflattened);
-#endif
+      DFTFE_LAUNCH_KERNEL(distributeSlaveToMasterKernelAtomicAdd,
+                          std::min((contiguousBlockSize * numConstraints +
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   dftfe::uInt(30000)),
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          contiguousBlockSize,
+                          dftfe::utils::makeDataTypeDeviceCompatible(xVec),
+                          constraintLocalRowIdsUnflattened,
+                          numConstraints,
+                          constraintRowSizes,
+                          constraintRowSizesAccumulated,
+                          constraintLocalColumnIdsAllRowsUnflattened,
+                          constraintColumnValuesAllRowsUnflattened);
     }
     template <typename ValueType>
     void
@@ -617,30 +583,18 @@ namespace dftfe
                   const dftfe::uInt *constraintLocalRowIdsUnflattened,
                   const dftfe::uInt  numConstraints)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      setzeroKernel<<<std::min((contiguousBlockSize * numConstraints +
-                                (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                 dftfe::utils::DEVICE_BLOCK_SIZE,
-                               dftfe::uInt(30000)),
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        contiguousBlockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(xVec),
-        constraintLocalRowIdsUnflattened,
-        numConstraints);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(setzeroKernel,
-                         std::min((contiguousBlockSize * numConstraints +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                                  dftfe::uInt(30000)),
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         contiguousBlockSize,
-                         dftfe::utils::makeDataTypeDeviceCompatible(xVec),
-                         constraintLocalRowIdsUnflattened,
-                         numConstraints);
-#endif
+      DFTFE_LAUNCH_KERNEL(setzeroKernel,
+                          std::min((contiguousBlockSize * numConstraints +
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   dftfe::uInt(30000)),
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          contiguousBlockSize,
+                          dftfe::utils::makeDataTypeDeviceCompatible(xVec),
+                          constraintLocalRowIdsUnflattened,
+                          numConstraints);
     }
 
     void
@@ -653,36 +607,21 @@ namespace dftfe
       const dftfe::uInt *constraintLocalColumnIdsAllRowsUnflattened,
       double            *constraintColumnValuesAllRowsUnflattened)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      scaleConstraintsKernel<<<
-        std::min((numConstraints + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                   dftfe::utils::DEVICE_BLOCK_SIZE,
-                 dftfe::uInt(30000)),
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        dftfe::utils::makeDataTypeDeviceCompatible(xVec),
-        constraintLocalRowIdsUnflattened,
-        numConstraints,
-        constraintRowSizes,
-        constraintRowSizesAccumulated,
-        constraintLocalColumnIdsAllRowsUnflattened,
-        constraintColumnValuesAllRowsUnflattened);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(scaleConstraintsKernel,
-                         std::min((numConstraints +
-                                   (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                    dftfe::utils::DEVICE_BLOCK_SIZE,
-                                  dftfe::uInt(30000)),
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         dftfe::utils::makeDataTypeDeviceCompatible(xVec),
-                         constraintLocalRowIdsUnflattened,
-                         numConstraints,
-                         constraintRowSizes,
-                         constraintRowSizesAccumulated,
-                         constraintLocalColumnIdsAllRowsUnflattened,
-                         constraintColumnValuesAllRowsUnflattened);
-#endif
+      DFTFE_LAUNCH_KERNEL(scaleConstraintsKernel,
+                          std::min((numConstraints +
+                                    (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                                     dftfe::utils::DEVICE_BLOCK_SIZE,
+                                   dftfe::uInt(30000)),
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          dftfe::utils::makeDataTypeDeviceCompatible(xVec),
+                          constraintLocalRowIdsUnflattened,
+                          numConstraints,
+                          constraintRowSizes,
+                          constraintRowSizesAccumulated,
+                          constraintLocalColumnIdsAllRowsUnflattened,
+                          constraintColumnValuesAllRowsUnflattened);
     }
     template void
     distributeDevice(

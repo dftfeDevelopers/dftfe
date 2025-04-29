@@ -251,21 +251,7 @@ namespace dftfe
     const double      scalarCoeffBetaRho  = 1.0;
     const double      scalarCoeffAlphaGradRho = 1.0;
     const double      scalarCoeffBetaGradRho  = 1.0;
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    computeRhoGradRhoFromInterpolatedValues<<<
-      (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-        dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
-      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      vectorsBlockSize,
-      cellsBlockSize,
-      nQuadsPerCell,
-      dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(rhoCellsWfcContributions),
-      dftfe::utils::makeDataTypeDeviceCompatible(gradRhoCellsWfcContributions),
-      isEvaluateGradRho);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
+    DFTFE_LAUNCH_KERNEL(
       computeRhoGradRhoFromInterpolatedValues,
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
@@ -280,7 +266,6 @@ namespace dftfe
       dftfe::utils::makeDataTypeDeviceCompatible(rhoCellsWfcContributions),
       dftfe::utils::makeDataTypeDeviceCompatible(gradRhoCellsWfcContributions),
       isEvaluateGradRho);
-#endif
     BLASWrapperPtr->xgemv('T',
                           vectorsBlockSize,
                           cellsBlockSize * nQuadsPerCell,
@@ -331,21 +316,7 @@ namespace dftfe
     const double      scalarCoeffAlpha = 1.0;
     const double      scalarCoeffBeta  = 1.0;
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    computeTauFromInterpolatedValues<<<
-      (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-        dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
-      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      vectorsBlockSize,
-      cellsBlockSize,
-      nQuadsPerCell,
-      dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(kCoord),
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        kineticEnergyDensityCellsWfcContributions));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
+    DFTFE_LAUNCH_KERNEL(
       computeTauFromInterpolatedValues,
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
@@ -360,7 +331,6 @@ namespace dftfe
       dftfe::utils::makeDataTypeDeviceCompatible(kCoord),
       dftfe::utils::makeDataTypeDeviceCompatible(
         kineticEnergyDensityCellsWfcContributions));
-#endif
 
     BLASWrapperPtr->xgemv('T',
                           vectorsBlockSize,

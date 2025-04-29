@@ -131,8 +131,6 @@ namespace dftfe
     const dftfe::uInt n_q_points = d_basisOperationsPtrHost->nQuadsPerCell();
     const dftfe::uInt nCells     = d_basisOperationsPtrHost->nCells();
     d_densityInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    // below resize is unnecessary as the same is
-    // done in "interpolateDensityNodalDataToQuadratureDataGeneral" function
     for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size(); ++iComp)
       d_densityInQuadValues[iComp].resize(n_q_points * nCells);
 

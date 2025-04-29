@@ -668,19 +668,6 @@ namespace dftfe
         ValueType2        *copyToVecBlock,
         const dftfe::uInt *copyFromVecStartingContiguousBlockIds);
 
-      void
-      add(double           *y,
-          const double     *x,
-          const double      alpha,
-          const dftfe::uInt size);
-
-      template <typename ValueType>
-      void
-      sadd(ValueType        *y,
-           ValueType        *x,
-           const ValueType   beta,
-           const dftfe::uInt size);
-
       template <typename ValueType>
       void
       stridedBlockScaleColumnWise(const dftfe::uInt contiguousBlockSize,
@@ -1339,19 +1326,6 @@ namespace dftfe
         ValueType2        *copyToVecBlock,
         const dftfe::uInt *copyFromVecStartingContiguousBlockIds);
 
-      void
-      add(double           *y,
-          const double     *x,
-          const double      alpha,
-          const dftfe::uInt size);
-
-      template <typename ValueType>
-      void
-      sadd(ValueType        *y,
-           ValueType        *x,
-           const ValueType   beta,
-           const dftfe::uInt size);
-
       template <typename ValueType>
       void
       stridedBlockScaleColumnWise(const dftfe::uInt contiguousBlockSize,
@@ -1399,10 +1373,6 @@ namespace dftfe
         ValueType1       *valueType1DstArray,
         ValueType2       *valueType2DstArray);
 
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      dftfe::utils::deviceBlasStatus_t
-      setMathMode(dftfe::utils::deviceBlasMath_t mathMode);
-#  endif
       void
       setTensorOpDataType(tensorOpDataType opType)
       {

@@ -317,36 +317,20 @@ namespace dftfe
                                const dftfe::uInt             N,
                                dftfe::utils::deviceStream_t &streamCompute)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      addSubspaceRotatedBlockToXKernel<<<
+      DFTFE_LAUNCH_KERNEL(
+        addSubspaceRotatedBlockToXKernel,
         (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        streamCompute>>>(BDof,
-                         BVec,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           rotatedXBlockSP),
-                         dftfe::utils::makeDataTypeDeviceCompatible(X),
-                         startingDofId,
-                         startingVecId,
-                         N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(addSubspaceRotatedBlockToXKernel,
-                         (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         streamCompute,
-                         BDof,
-                         BVec,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           rotatedXBlockSP),
-                         dftfe::utils::makeDataTypeDeviceCompatible(X),
-                         startingDofId,
-                         startingVecId,
-                         N);
-#endif
+        streamCompute,
+        BDof,
+        BVec,
+        dftfe::utils::makeDataTypeDeviceCompatible(rotatedXBlockSP),
+        dftfe::utils::makeDataTypeDeviceCompatible(X),
+        startingDofId,
+        startingVecId,
+        N);
     }
     template <typename ValueType1, typename ValueType2>
     void
@@ -358,20 +342,7 @@ namespace dftfe
       ValueType2                   *overlapMatrixBlockSP,
       dftfe::utils::deviceStream_t &streamDataMove)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      copyFromOverlapMatBlockToDPSPBlocksKernel<<<
-        (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        streamDataMove>>>(
-        B,
-        D,
-        dftfe::utils::makeDataTypeDeviceCompatible(overlapMatrixBlock),
-        dftfe::utils::makeDataTypeDeviceCompatible(overlapMatrixBlockDP),
-        dftfe::utils::makeDataTypeDeviceCompatible(overlapMatrixBlockSP));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      DFTFE_LAUNCH_KERNEL(
         copyFromOverlapMatBlockToDPSPBlocksKernel,
         (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -383,7 +354,6 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(overlapMatrixBlock),
         dftfe::utils::makeDataTypeDeviceCompatible(overlapMatrixBlockDP),
         dftfe::utils::makeDataTypeDeviceCompatible(overlapMatrixBlockSP));
-#endif
     }
     template <typename ValueType1, typename ValueType2>
     void
@@ -392,27 +362,17 @@ namespace dftfe
                        const dftfe::uInt N,
                        const dftfe::uInt M)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      computeDiagQTimesXKernel<<<(M * N +
-                                  (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                   dftfe::utils::DEVICE_BLOCK_SIZE,
-                                 dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        dftfe::utils::makeDataTypeDeviceCompatible(diagValues),
-        dftfe::utils::makeDataTypeDeviceCompatible(X),
-        N,
-        M);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(computeDiagQTimesXKernel,
-                         (M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         dftfe::utils::makeDataTypeDeviceCompatible(diagValues),
-                         dftfe::utils::makeDataTypeDeviceCompatible(X),
-                         N,
-                         M);
-#endif
+      DFTFE_LAUNCH_KERNEL(computeDiagQTimesXKernel,
+                          (M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            diagValues),
+                          dftfe::utils::makeDataTypeDeviceCompatible(X),
+                          N,
+                          M);
     }
 
     template <typename ValueType>
@@ -426,35 +386,20 @@ namespace dftfe
                           const ValueType  *Y,
                           double           *r)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      computeResidualDeviceKernel<<<(numVectors +
-                                     (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                                      dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
-                                    dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numVectors,
-        numDofs,
-        N,
-        startingVecId,
-        eigenValues,
-        dftfe::utils::makeDataTypeDeviceCompatible(X),
-        dftfe::utils::makeDataTypeDeviceCompatible(Y),
-        r);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(computeResidualDeviceKernel,
-                         (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         numVectors,
-                         numDofs,
-                         N,
-                         startingVecId,
-                         eigenValues,
-                         dftfe::utils::makeDataTypeDeviceCompatible(X),
-                         dftfe::utils::makeDataTypeDeviceCompatible(Y),
-                         r);
-#endif
+      DFTFE_LAUNCH_KERNEL(computeResidualDeviceKernel,
+                          (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          numVectors,
+                          numDofs,
+                          N,
+                          startingVecId,
+                          eigenValues,
+                          dftfe::utils::makeDataTypeDeviceCompatible(X),
+                          dftfe::utils::makeDataTypeDeviceCompatible(Y),
+                          r);
     }
 
     template <typename ValueType>
@@ -466,31 +411,18 @@ namespace dftfe
                                      const ValueType  *X,
                                      double           *residualSqDevice)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      computeResidualDeviceKernelGeneralised<<<
-        (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numVectors,
-        numDofs,
-        N,
-        startingVecId,
-        dftfe::utils::makeDataTypeDeviceCompatible(X),
-        residualSqDevice);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(computeResidualDeviceKernelGeneralised,
-                         (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         numVectors,
-                         numDofs,
-                         N,
-                         startingVecId,
-                         dftfe::utils::makeDataTypeDeviceCompatible(X),
-                         residualSqDevice);
-#endif
+      DFTFE_LAUNCH_KERNEL(computeResidualDeviceKernelGeneralised,
+                          (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          numVectors,
+                          numDofs,
+                          N,
+                          startingVecId,
+                          dftfe::utils::makeDataTypeDeviceCompatible(X),
+                          residualSqDevice);
     }
 
 
@@ -503,28 +435,17 @@ namespace dftfe
             ValueType        *yVec,
             const dftfe::uInt startingXVecId)
     {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      setZeroKernel<<<(BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                        dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        BVec,
-        M,
-        N,
-        dftfe::utils::makeDataTypeDeviceCompatible(yVec),
-        startingXVecId);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(setZeroKernel,
-                         (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                           dftfe::utils::DEVICE_BLOCK_SIZE * M,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         0,
-                         BVec,
-                         M,
-                         N,
-                         dftfe::utils::makeDataTypeDeviceCompatible(yVec),
-                         startingXVecId);
-#endif
+      DFTFE_LAUNCH_KERNEL(setZeroKernel,
+                          (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE * M,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          BVec,
+                          M,
+                          N,
+                          dftfe::utils::makeDataTypeDeviceCompatible(yVec),
+                          startingXVecId);
     }
 
 

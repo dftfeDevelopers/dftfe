@@ -1,6 +1,6 @@
 set SOLVER MODE = NSCF
 set USE GPU   = true
-set VERBOSITY = 4
+set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
 set RESTART FOLDER = ./bcc_fe
 subsection Geometry

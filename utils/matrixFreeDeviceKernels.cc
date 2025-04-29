@@ -828,23 +828,17 @@ namespace dftfe
     const Type       *J,
     const dftfe::Int *map)
   {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    computeAXKernelPoisson<double, M, N, K, dim>
-      <<<blocks, threads, smem>>>(V, U, P, J, map);
-
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(
-                         computeAXKernelPoisson<double, M, N, K, dim>),
-                       blocks,
-                       threads,
-                       smem,
-                       0,
-                       V,
-                       U,
-                       P,
-                       J,
-                       map);
-#endif
+    DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
+                          computeAXKernelPoisson<double, M, N, K, dim>),
+                        blocks,
+                        threads,
+                        smem,
+                        0,
+                        V,
+                        U,
+                        P,
+                        J,
+                        map);
   }
 
   template <typename Type,
@@ -864,24 +858,18 @@ namespace dftfe
     const dftfe::Int *map,
     const Type        coeffHelmholtz)
   {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    computeAXKernelHelmholtz<double, M, N, K, dim>
-      <<<blocks, threads, smem>>>(V, U, P, J, map, coeffHelmholtz);
-
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(
-                         computeAXKernelHelmholtz<double, M, N, K, dim>),
-                       blocks,
-                       threads,
-                       smem,
-                       0,
-                       V,
-                       U,
-                       P,
-                       J,
-                       map,
-                       coeffHelmholtz);
-#endif
+    DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
+                          computeAXKernelHelmholtz<double, M, N, K, dim>),
+                        blocks,
+                        threads,
+                        smem,
+                        0,
+                        V,
+                        U,
+                        P,
+                        J,
+                        map,
+                        coeffHelmholtz);
   }
   template <typename Type,
             dftfe::Int M,

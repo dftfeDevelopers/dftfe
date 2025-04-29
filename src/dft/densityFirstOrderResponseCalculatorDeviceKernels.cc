@@ -96,22 +96,7 @@ namespace dftfe
     const dftfe::uInt vectorsBlockSize    = vecRange.second - vecRange.first;
     const double      scalarCoeffAlphaRho = 1.0;
     const double      scalarCoeffBetaRho  = 1.0;
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    computeRhoResponseFromInterpolatedValues<<<
-      (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-        dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
-      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      vectorsBlockSize,
-      cellsBlockSize,
-      nQuadsPerCell,
-      dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(wfcPrimeQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        rhoResponseHamCellsWfcContributions),
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        rhoResponseFermiEnergyCellsWfcContributions));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
+    DFTFE_LAUNCH_KERNEL(
       computeRhoResponseFromInterpolatedValues,
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
@@ -127,7 +112,6 @@ namespace dftfe
         rhoResponseHamCellsWfcContributions),
       dftfe::utils::makeDataTypeDeviceCompatible(
         rhoResponseFermiEnergyCellsWfcContributions));
-#endif
     BLASWrapperPtr->xgemv('T',
                           vectorsBlockSize,
                           cellsBlockSize * nQuadsPerCell,
