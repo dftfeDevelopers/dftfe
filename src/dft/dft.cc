@@ -4513,7 +4513,7 @@ namespace dftfe
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::writeBands()
   {
-    dftfe::Int          numkPoints = d_kPointWeights.size();
+    int                 numkPoints = d_kPointWeights.size();
     std::vector<double> eigenValuesFlattened;
     //
     for (dftfe::uInt kPoint = 0; kPoint < numkPoints; ++kPoint)
