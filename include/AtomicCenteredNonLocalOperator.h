@@ -162,7 +162,8 @@ namespace dftfe
     void
     initialiseCellWaveFunctionPointers(
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-        &cellWaveFunctionMatrix);
+                       &cellWaveFunctionMatrix,
+      const dftfe::uInt cellsBlockSize);
 
     void
     freeDeviceVectors();

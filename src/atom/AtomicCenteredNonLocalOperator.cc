@@ -2642,7 +2642,8 @@ namespace dftfe
                                         d_numberNodesPerElement *
                                         d_numberWaveFunctions,
                                       0.0);
-        initialiseCellWaveFunctionPointers(cellWaveFunctionMatrix);
+        initialiseCellWaveFunctionPointers(cellWaveFunctionMatrix,
+                                           d_locallyOwnedCells);
         if (d_totalNonlocalElems > 0)
           {
             Assert(
@@ -2904,7 +2905,8 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
     initialiseCellWaveFunctionPointers(
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-        &cellWaveFunctionMatrix)
+                       &cellWaveFunctionMatrix,
+      const dftfe::uInt cellsBlockSize)
   {
     if (!d_useGlobalCMatrix)
       {

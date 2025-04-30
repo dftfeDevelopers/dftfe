@@ -952,7 +952,8 @@ namespace dftfe
               numWaveFunctions,
               d_pseudopotentialNonLocalProjectorTimesVectorBlock);
             d_pseudopotentialNonLocalOperator
-              ->initialiseCellWaveFunctionPointers(d_cellWaveFunctionMatrixSrc);
+              ->initialiseCellWaveFunctionPointers(d_cellWaveFunctionMatrixSrc,
+                                                   d_cellsBlockSizeHX);
           }
         else
           {
@@ -971,7 +972,7 @@ namespace dftfe
                 d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
             d_pseudopotentialNonLocalOperatorSinglePrec
               ->initialiseCellWaveFunctionPointers(
-                d_cellWaveFunctionMatrixSrcSinglePrec);
+                d_cellWaveFunctionMatrixSrcSinglePrec, d_cellsBlockSizeHX);
           }
         else
           d_pseudopotentialNonLocalOperatorSinglePrec

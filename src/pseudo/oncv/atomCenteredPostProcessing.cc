@@ -376,6 +376,11 @@ namespace dftfe
     std::vector<std::vector<std::map<dftfe::uInt, std::vector<double>>>>
       pdosKernelWithoutSmearFunction;
     pdosKernelWithoutSmearFunction.resize(numSpinComponents);
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      {
+        d_nonLocalOperator->initialiseCellWaveFunctionPointers(
+          tempCellNodalData, cellsBlockSize);
+      }
     for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
       {
         pdosKernelWithoutSmearFunction[spinIndex].resize(kPointWeights.size());
@@ -461,13 +466,7 @@ namespace dftfe
                                 tempCellNodalData.resize(currentCellsBlockSize *
                                                          currentBlockSize *
                                                          numNodesPerElement);
-                                if constexpr (memorySpace ==
-                                              dftfe::utils::MemorySpace::DEVICE)
-                                  {
-                                    d_nonLocalOperator
-                                      ->initialiseCellWaveFunctionPointers(
-                                        tempCellNodalData);
-                                  }
+
                                 previousSize =
                                   currentCellsBlockSize * currentBlockSize;
                               }
