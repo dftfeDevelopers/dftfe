@@ -64,10 +64,47 @@ namespace dftfe
                                stream,                                      \
                                __VA_ARGS__);                                \
         } while (0)
+#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
+        do                                                                  \
+          {                                                                 \
+            stream.parallel_for(sycl::nd_range<1>(grid, block),             \
+                                [=](sycl::nd_item<1> ind) {                 \
+                                  kernel(ind, __VA_ARGS__)                  \
+                                });                                         \
+        } while (0)
 #    else
 #      error \
-        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD)"
+        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
 #    endif
+
+
 #    define DFTFE_KERNEL_NAME(...) __VA_ARGS__
+
+
+#    if defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_AMD)
+#      define DFTFE_CREATE_KERNEL(RET, NAME, BODY, ...)    \
+        __global__ RET NAME(__VA_ARGS__)                   \
+        {                                                  \
+          const dftfe::uInt globalThreadId =               \
+            blockIdx.x * blockDim.x + threadIdx.x;         \
+          const dftfe::uInt nThreadsPerBlock = blockDim.x; \
+          const dftfe::uInt nThreadBlock     = gridDim.x;  \
+          BODY                                             \
+        }
+#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#      define DFTFE_CREATE_KERNEL(RET, NAME, BODY, ...)                \
+        RET NAME(sycl::nd_item<1> ind, __VA_ARGS__)                    \
+        {                                                              \
+          const dftfe::uInt globalThreadId   = ind.get_global_id(0);   \
+          const dftfe::uInt nThreadsPerBlock = ind.get_local_range(0); \
+          const dftfe::uInt nThreadBlock     = ind.get_group_range(0); \
+          BODY                                                         \
+        }
+#    else
+#      error \
+        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+#    endif
+
 #  endif // dftfeDeviceKernelLauncherConstants_h
 #endif   // DFTFE_WITH_DEVICE

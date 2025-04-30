@@ -23,57 +23,63 @@ namespace dftfe
   namespace
   {
     template <typename ValueType>
-    __global__ void
-    reshapeFromNonAffineDeviceKernel(const dftfe::uInt numVecs,
-                                     const dftfe::uInt numQuads,
-                                     const dftfe::uInt numCells,
-                                     const ValueType  *copyFromVec,
-                                     ValueType        *copyToVec)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numberEntries  = numQuads * numCells * numVecs * 3;
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          dftfe::uInt blockIndex  = index / numVecs;
-          dftfe::uInt iVec        = index - blockIndex * numVecs;
-          dftfe::uInt blockIndex2 = blockIndex / numQuads;
-          dftfe::uInt iQuad       = blockIndex - blockIndex2 * numQuads;
-          dftfe::uInt iCell       = blockIndex2 / 3;
-          dftfe::uInt iDim        = blockIndex2 - iCell * 3;
-          dftfe::utils::copyValue(
-            copyToVec + index,
-            copyFromVec[iVec + iDim * numVecs + iQuad * 3 * numVecs +
-                        iCell * 3 * numQuads * numVecs]);
-        }
-    }
+    DFTFE_CREATE_KERNEL(
+      void,
+      reshapeFromNonAffineDeviceKernel,
+      {
+        const dftfe::uInt numberEntries = numQuads * numCells * numVecs * 3;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            dftfe::uInt blockIndex  = index / numVecs;
+            dftfe::uInt iVec        = index - blockIndex * numVecs;
+            dftfe::uInt blockIndex2 = blockIndex / numQuads;
+            dftfe::uInt iQuad       = blockIndex - blockIndex2 * numQuads;
+            dftfe::uInt iCell       = blockIndex2 / 3;
+            dftfe::uInt iDim        = blockIndex2 - iCell * 3;
+            dftfe::utils::copyValue(
+              copyToVec + index,
+              copyFromVec[iVec + iDim * numVecs + iQuad * 3 * numVecs +
+                          iCell * 3 * numQuads * numVecs]);
+          }
+      },
+      const dftfe::uInt numVecs,
+      const dftfe::uInt numQuads,
+      const dftfe::uInt numCells,
+      const ValueType  *copyFromVec,
+      ValueType        *copyToVec);
+
     template <typename ValueType>
-    __global__ void
-    reshapeToNonAffineDeviceKernel(const dftfe::uInt numVecs,
-                                   const dftfe::uInt numQuads,
-                                   const dftfe::uInt numCells,
-                                   const ValueType  *copyFromVec,
-                                   ValueType        *copyToVec)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numberEntries  = numQuads * numCells * numVecs * 3;
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          dftfe::uInt blockIndex  = index / numVecs;
-          dftfe::uInt iVec        = index - blockIndex * numVecs;
-          dftfe::uInt blockIndex2 = blockIndex / numQuads;
-          dftfe::uInt iQuad       = blockIndex - blockIndex2 * numQuads;
-          dftfe::uInt iCell       = blockIndex2 / 3;
-          dftfe::uInt iDim        = blockIndex2 - iCell * 3;
-          dftfe::utils::copyValue(copyToVec + iVec + iDim * numVecs +
-                                    iQuad * 3 * numVecs +
-                                    iCell * 3 * numQuads * numVecs,
-                                  copyFromVec[index]);
-        }
-    }
+    DFTFE_CREATE_KERNEL(
+      void,
+      reshapeToNonAffineDeviceKernel,
+      {
+        const dftfe::uInt numberEntries = numQuads * numCells * numVecs * 3;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            dftfe::uInt blockIndex  = index / numVecs;
+            dftfe::uInt iVec        = index - blockIndex * numVecs;
+            dftfe::uInt blockIndex2 = blockIndex / numQuads;
+            dftfe::uInt iQuad       = blockIndex - blockIndex2 * numQuads;
+            dftfe::uInt iCell       = blockIndex2 / 3;
+            dftfe::uInt iDim        = blockIndex2 - iCell * 3;
+            dftfe::utils::copyValue(copyToVec + iVec + iDim * numVecs +
+                                      iQuad * 3 * numVecs +
+                                      iCell * 3 * numQuads * numVecs,
+                                    copyFromVec[index]);
+          }
+      },
+      const dftfe::uInt numVecs,
+      const dftfe::uInt numQuads,
+      const dftfe::uInt numCells,
+      const ValueType  *copyFromVec,
+      ValueType        *copyToVec);
+
   } // namespace
   namespace basis
   {
@@ -95,7 +101,7 @@ namespace dftfe
             1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
           0,
-          0,
+          dftfe::utils::defaultStream,
           numVecs,
           numQuads,
           numCells,
@@ -117,7 +123,7 @@ namespace dftfe
             1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
           0,
-          0,
+          dftfe::utils::defaultStream,
           numVecs,
           numQuads,
           numCells,

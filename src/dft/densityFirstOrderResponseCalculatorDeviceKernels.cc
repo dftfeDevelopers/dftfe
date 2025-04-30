@@ -24,55 +24,59 @@ namespace dftfe
 {
   namespace
   {
-    __global__ void
-    computeRhoResponseFromInterpolatedValues(
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeRhoResponseFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const double psi      = wfc[index];
+            const double psiPrime = wfcPrime[index];
+            rhoResponseFermiEnergyCellsWfcContributions[index] = psi * psi;
+            rhoResponseHamCellsWfcContributions[index]         = psi * psiPrime;
+          }
+      },
       const dftfe::uInt numVectors,
       const dftfe::uInt numCells,
       const dftfe::uInt nQuadsPerCell,
       const double     *wfc,
       const double     *wfcPrime,
       double           *rhoResponseHamCellsWfcContributions,
-      double           *rhoResponseFermiEnergyCellsWfcContributions)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
-      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+      double           *rhoResponseFermiEnergyCellsWfcContributions);
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const double psi                                   = wfc[index];
-          const double psiPrime                              = wfcPrime[index];
-          rhoResponseFermiEnergyCellsWfcContributions[index] = psi * psi;
-          rhoResponseHamCellsWfcContributions[index]         = psi * psiPrime;
-        }
-    }
 
-    __global__ void
-    computeRhoResponseFromInterpolatedValues(
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeRhoResponseFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const dftfe::utils::deviceDoubleComplex psi      = wfc[index];
+            const dftfe::utils::deviceDoubleComplex psiPrime = wfcPrime[index];
+            rhoResponseFermiEnergyCellsWfcContributions[index] =
+              psi.x * psi.x + psi.y * psi.y;
+            rhoResponseHamCellsWfcContributions[index] =
+              psi.x * psiPrime.x + psi.y * psiPrime.y;
+          }
+      },
       const dftfe::uInt                        numVectors,
       const dftfe::uInt                        numCells,
       const dftfe::uInt                        nQuadsPerCell,
       const dftfe::utils::deviceDoubleComplex *wfc,
       const dftfe::utils::deviceDoubleComplex *wfcPrime,
       double *rhoResponseHamCellsWfcContributions,
-      double *rhoResponseFermiEnergyCellsWfcContributions)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
-      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+      double *rhoResponseFermiEnergyCellsWfcContributions);
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const dftfe::utils::deviceDoubleComplex psi      = wfc[index];
-          const dftfe::utils::deviceDoubleComplex psiPrime = wfcPrime[index];
-          rhoResponseFermiEnergyCellsWfcContributions[index] =
-            psi.x * psi.x + psi.y * psi.y;
-          rhoResponseHamCellsWfcContributions[index] =
-            psi.x * psiPrime.x + psi.y * psiPrime.y;
-        }
-    }
   } // namespace
   template <typename NumberType>
   void
@@ -102,7 +106,7 @@ namespace dftfe
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
       dftfe::utils::DEVICE_BLOCK_SIZE,
       0,
-      0,
+      dftfe::utils::defaultStream,
       vectorsBlockSize,
       cellsBlockSize,
       nQuadsPerCell,

@@ -28,62 +28,98 @@ namespace dftfe
   namespace
   {
     template <typename ValueType>
-    __global__ void
-    saddKernel(ValueType        *y,
-               ValueType        *x,
-               const ValueType   beta,
-               const dftfe::uInt size)
-    {
-      const dftfe::uInt globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dftfe::uInt idx = globalId; idx < size;
-           idx += blockDim.x * gridDim.x)
-        {
-          y[idx] = beta * y[idx] - x[idx];
-          x[idx] = 0;
-        }
-    }
+    DFTFE_CREATE_KERNEL(
+      void,
+      saddKernel,
+      {
+        for (dftfe::uInt idx = globalThreadId; idx < size;
+             idx += nThreadsPerBlock * nThreadBlock)
+          {
+            y[idx] = beta * y[idx] - x[idx];
+            x[idx] = 0;
+          }
+      },
+      ValueType        *y,
+      ValueType        *x,
+      const ValueType   beta,
+      const dftfe::uInt size);
+
+
+
+    template <typename ValueTypeComplex, typename ValueTypeReal>
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      copyComplexArrToRealArrsDeviceKernel,
+      {
+        for (dftfe::uInt idx = globalThreadId; idx < size;
+             idx += nThreadsPerBlock * nThreadBlock)
+          {
+            realArr[idx] = complexArr[idx].x;
+            imagArr[idx] = complexArr[idx].y;
+          }
+      },
+      const dftfe::uInt       size,
+      const ValueTypeComplex *complexArr,
+      ValueTypeReal          *realArr,
+      ValueTypeReal          *imagArr);
 
 
     template <typename ValueTypeComplex, typename ValueTypeReal>
-    __global__ void
-    copyComplexArrToRealArrsDeviceKernel(const dftfe::uInt       size,
-                                         const ValueTypeComplex *complexArr,
-                                         ValueTypeReal          *realArr,
-                                         ValueTypeReal          *imagArr)
-    {
-      const dftfe::uInt globalId = threadIdx.x + blockIdx.x * blockDim.x;
 
-      for (dftfe::uInt idx = globalId; idx < size;
-           idx += blockDim.x * gridDim.x)
-        {
-          realArr[idx] = complexArr[idx].x;
-          imagArr[idx] = complexArr[idx].y;
-        }
-    }
-
-    template <typename ValueTypeComplex, typename ValueTypeReal>
-    __global__ void
-    copyRealArrsToComplexArrDeviceKernel(const dftfe::uInt    size,
-                                         const ValueTypeReal *realArr,
-                                         const ValueTypeReal *imagArr,
-                                         ValueTypeComplex    *complexArr)
-    {
-      const dftfe::uInt globalId = threadIdx.x + blockIdx.x * blockDim.x;
-
-      for (dftfe::uInt idx = globalId; idx < size;
-           idx += blockDim.x * gridDim.x)
-        {
-          complexArr[idx].x = realArr[idx];
-          complexArr[idx].y = imagArr[idx];
-        }
-    }
+    DFTFE_CREATE_KERNEL(
+      void,
+      copyRealArrsToComplexArrDeviceKernel,
+      {
+        for (dftfe::uInt idx = globalThreadId; idx < size;
+             idx += nThreadsPerBlock * nThreadBlock)
+          {
+            complexArr[idx].x = realArr[idx];
+            complexArr[idx].y = imagArr[idx];
+          }
+      },
+      const dftfe::uInt    size,
+      const ValueTypeReal *realArr,
+      const ValueTypeReal *imagArr,
+      ValueTypeComplex    *complexArr);
 
 
 
     template <typename ValueType1, typename ValueType2>
-    __global__ void
-    interpolateNodalDataToQuadDeviceKernel(
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      interpolateNodalDataToQuadDeviceKernel,
+      {
+        const dftfe::uInt numberEntries = numQuadPoints * numVecs;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            dftfe::uInt pointIndex      = index / numVecs;
+            dftfe::uInt iCellIndex      = mapPointToCellIndex[pointIndex];
+            dftfe::uInt iShapeFuncIndex = mapPointToShapeFuncIndex[pointIndex];
+            dftfe::uInt iProcLocalIndex = mapPointToProcLocal[pointIndex];
+
+            dftfe::uInt iVec = index - pointIndex * numVecs;
+
+
+
+            for (dftfe::uInt iParentNode = 0; iParentNode < numDofsPerElem;
+                 iParentNode++)
+              {
+                dftfe::utils::copyValue(
+                  quadValues + iProcLocalIndex * numVecs + iVec,
+                  dftfe::utils::add(
+                    quadValues[iProcLocalIndex * numVecs + iVec],
+                    dftfe::utils::mult(
+                      parentShapeFunc[iShapeFuncIndex + iParentNode],
+                      parentNodalValues[iCellIndex * numVecs * numDofsPerElem +
+                                        iParentNode + iVec * numDofsPerElem])));
+              }
+          }
+      },
       const dftfe::uInt numDofsPerElem,
       const dftfe::uInt numQuadPoints,
       const dftfe::uInt numVecs,
@@ -92,37 +128,8 @@ namespace dftfe
       const ValueType1 *mapPointToProcLocal,
       const ValueType1 *mapPointToShapeFuncIndex,
       const ValueType2 *parentNodalValues,
-      ValueType2       *quadValues)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numberEntries  = numQuadPoints * numVecs;
+      ValueType2       *quadValues);
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          dftfe::uInt pointIndex      = index / numVecs;
-          dftfe::uInt iCellIndex      = mapPointToCellIndex[pointIndex];
-          dftfe::uInt iShapeFuncIndex = mapPointToShapeFuncIndex[pointIndex];
-          dftfe::uInt iProcLocalIndex = mapPointToProcLocal[pointIndex];
-
-          dftfe::uInt iVec = index - pointIndex * numVecs;
-
-
-
-          for (dftfe::uInt iParentNode = 0; iParentNode < numDofsPerElem;
-               iParentNode++)
-            {
-              dftfe::utils::copyValue(
-                quadValues + iProcLocalIndex * numVecs + iVec,
-                dftfe::utils::add(
-                  quadValues[iProcLocalIndex * numVecs + iVec],
-                  dftfe::utils::mult(
-                    parentShapeFunc[iShapeFuncIndex + iParentNode],
-                    parentNodalValues[iCellIndex * numVecs * numDofsPerElem +
-                                      iParentNode + iVec * numDofsPerElem])));
-            }
-        }
-    }
 
   } // namespace
 
@@ -159,7 +166,7 @@ namespace dftfe
                             size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                             0,
-                            0,
+                            dftfe::utils::defaultStream,
                             size,
                             dftfe::utils::makeDataTypeDeviceCompatible(
                               complexArr),
@@ -180,7 +187,7 @@ namespace dftfe
                             size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                             0,
-                            0,
+                            dftfe::utils::defaultStream,
                             size,
                             realArr,
                             imagArr,
@@ -204,7 +211,7 @@ namespace dftfe
                             gridSize,
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                             0,
-                            0,
+                            dftfe::utils::defaultStream,
                             y,
                             x,
                             beta,
@@ -231,7 +238,7 @@ namespace dftfe
           (numQuadPoints * numVecs) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
           0,
-          0,
+          dftfe::utils::defaultStream,
           numDofsPerElem,
           numQuadPoints,
           numVecs,

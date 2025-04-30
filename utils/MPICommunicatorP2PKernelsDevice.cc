@@ -43,210 +43,238 @@ namespace dftfe
     namespace
     {
       template <typename ValueType1, typename ValueType2>
-      __global__ void
-      gatherSendBufferDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        gatherSendBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+
+              sendBuffer[i] =
+                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                          intraBlockId];
+            }
+        },
         const dftfe::uInt  totalFlattenedSize,
         const dftfe::uInt  blockSize,
         const ValueType1  *dataArray,
         const dftfe::uInt *ownedLocalIndicesForTargetProcs,
-        ValueType2        *sendBuffer)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockId      = i / blockSize;
-            const dftfe::uInt intraBlockId = i - blockId * blockSize;
+        ValueType2        *sendBuffer);
 
-            sendBuffer[i] =
-              dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                        intraBlockId];
-          }
-      }
 
       template <>
-      __global__ void
-      gatherSendBufferDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        gatherSendBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              sendBuffer[i].x =
+                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                          intraBlockId]
+                  .x;
+              sendBuffer[i].y =
+                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                          intraBlockId]
+                  .y;
+            }
+        },
         const dftfe::uInt                        totalFlattenedSize,
         const dftfe::uInt                        blockSize,
         const dftfe::utils::deviceDoubleComplex *dataArray,
         const dftfe::uInt                *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::deviceFloatComplex *sendBuffer)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockId      = i / blockSize;
-            const dftfe::uInt intraBlockId = i - blockId * blockSize;
-            sendBuffer[i].x =
-              dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                        intraBlockId]
-                .x;
-            sendBuffer[i].y =
-              dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                        intraBlockId]
-                .y;
-          }
-      }
+        dftfe::utils::deviceFloatComplex *sendBuffer);
+
 
       template <typename ValueType1, typename ValueType2>
-      __global__ void
-      accumAddFromRecvBufferDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumAddFromRecvBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              const ValueType2  recvVal      = recvBuffer[i];
+              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize +
+                                   intraBlockId],
+                        recvVal);
+            }
+        },
         const dftfe::uInt  totalFlattenedSize,
         const dftfe::uInt  blockSize,
         const ValueType1  *recvBuffer,
         const dftfe::uInt *ownedLocalIndicesForTargetProcs,
-        ValueType2        *dataArray)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockId      = i / blockSize;
-            const dftfe::uInt intraBlockId = i - blockId * blockSize;
-            const ValueType2  recvVal      = recvBuffer[i];
-            atomicAdd(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId],
-              recvVal);
-          }
-      }
+        ValueType2        *dataArray);
+
 
       template <>
-      __global__ void
-      accumAddFromRecvBufferDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumAddFromRecvBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+
+              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize +
+                                   intraBlockId]
+                           .x,
+                        dftfe::utils::realPartDevice(recvBuffer[i]));
+              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize +
+                                   intraBlockId]
+                           .y,
+                        dftfe::utils::imagPartDevice(recvBuffer[i]));
+            }
+        },
         const dftfe::uInt                       totalFlattenedSize,
         const dftfe::uInt                       blockSize,
         const dftfe::utils::deviceFloatComplex *recvBuffer,
         const dftfe::uInt                      *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::deviceFloatComplex       *dataArray)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockId      = i / blockSize;
-            const dftfe::uInt intraBlockId = i - blockId * blockSize;
+        dftfe::utils::deviceFloatComplex       *dataArray);
 
-            atomicAdd(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId]
-                 .x,
-              dftfe::utils::realPartDevice(recvBuffer[i]));
-            atomicAdd(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId]
-                 .y,
-              dftfe::utils::imagPartDevice(recvBuffer[i]));
-          }
-      }
 
       template <>
-      __global__ void
-      accumAddFromRecvBufferDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumAddFromRecvBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+
+              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize +
+                                   intraBlockId]
+                           .x,
+                        dftfe::utils::realPartDevice(recvBuffer[i]));
+              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize +
+                                   intraBlockId]
+                           .y,
+                        dftfe::utils::imagPartDevice(recvBuffer[i]));
+            }
+        },
         const dftfe::uInt                        totalFlattenedSize,
         const dftfe::uInt                        blockSize,
         const dftfe::utils::deviceDoubleComplex *recvBuffer,
         const dftfe::uInt                 *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::deviceDoubleComplex *dataArray)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockId      = i / blockSize;
-            const dftfe::uInt intraBlockId = i - blockId * blockSize;
+        dftfe::utils::deviceDoubleComplex *dataArray);
 
-            atomicAdd(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId]
-                 .x,
-              dftfe::utils::realPartDevice(recvBuffer[i]));
-            atomicAdd(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId]
-                 .y,
-              dftfe::utils::imagPartDevice(recvBuffer[i]));
-          }
-      }
 
       template <>
-      __global__ void
-      accumAddFromRecvBufferDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumAddFromRecvBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              const double      recvValReal =
+                dftfe::utils::realPartDevice(recvBuffer[i]);
+              const double recvValImag =
+                dftfe::utils::imagPartDevice(recvBuffer[i]);
+
+              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize +
+                                   intraBlockId]
+                           .x,
+                        recvValReal);
+              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize +
+                                   intraBlockId]
+                           .y,
+                        recvValImag);
+            }
+        },
         const dftfe::uInt                       totalFlattenedSize,
         const dftfe::uInt                       blockSize,
         const dftfe::utils::deviceFloatComplex *recvBuffer,
         const dftfe::uInt                      *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::deviceDoubleComplex      *dataArray)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockId      = i / blockSize;
-            const dftfe::uInt intraBlockId = i - blockId * blockSize;
-            const double      recvValReal =
-              dftfe::utils::realPartDevice(recvBuffer[i]);
-            const double recvValImag =
-              dftfe::utils::imagPartDevice(recvBuffer[i]);
+        dftfe::utils::deviceDoubleComplex      *dataArray);
 
-            atomicAdd(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId]
-                 .x,
-              recvValReal);
-            atomicAdd(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId]
-                 .y,
-              recvValImag);
-          }
-      }
 
       template <typename ValueType1, typename ValueType2>
-      __global__ void
-      accumInsertFromRecvBufferDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumInsertFromRecvBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              const ValueType2  recvVal      = recvBuffer[i];
+
+              dftfe::utils::copyValue(
+                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                             blockSize +
+                           intraBlockId],
+                recvVal);
+            }
+        },
         const dftfe::uInt  totalFlattenedSize,
         const dftfe::uInt  blockSize,
         const ValueType1  *recvBuffer,
         const dftfe::uInt *ownedLocalIndicesForTargetProcs,
-        ValueType2        *dataArray)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockId      = i / blockSize;
-            const dftfe::uInt intraBlockId = i - blockId * blockSize;
-            const ValueType2  recvVal      = recvBuffer[i];
+        ValueType2        *dataArray);
 
-            dftfe::utils::copyValue(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId],
-              recvVal);
-          }
-      }
       /*
                 template <>
-                __global__ void
-                accumInsertFromRecvBufferDeviceKernel(
+
+    DFTFE_CREATE_KERNEL(void, accumInsertFromRecvBufferDeviceKernel, {
+                  for (dftfe::uInt i = globalThreadId; i <
+         totalFlattenedSize; i += nThreadsPerBlock * nThreadBlock)
+                    {
+                      const dftfe::uInt blockId      = i / blockSize;
+                      const dftfe::uInt intraBlockId = i - blockId * blockSize;
+
+                      dftfe::utils::copyValue(
+                        &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+             blockSize + intraBlockId] .x,
+                        dftfe::utils::realPartDevice(recvBuffer[i]));
+
+                      dftfe::utils::copyValue(
+                        &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+             blockSize + intraBlockId] .y,
+                        dftfe::utils::imagPartDevice(recvBuffer[i]));
+                    }
+                },
                   const dftfe::uInt                         totalFlattenedSize,
                   const dftfe::uInt                         blockSize,
                   const dftfe::utils::deviceFloatComplex *recvBuffer,
                   const dftfe::uInt * ownedLocalIndicesForTargetProcs,
-                  dftfe::utils::deviceFloatComplex *      dataArray)
-                {
-                  const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x +
-             threadIdx.x; for (dftfe::uInt i = globalThreadId; i <
-         totalFlattenedSize; i += blockDim.x * gridDim.x)
+                  dftfe::utils::deviceFloatComplex *      dataArray);
+
+
+                template <>
+
+    DFTFE_CREATE_KERNEL(void, accumInsertFromRecvBufferDeviceKernel, {
+                  for (dftfe::uInt i = globalThreadId; i <
+         totalFlattenedSize; i += nThreadsPerBlock * nThreadBlock)
                     {
                       const dftfe::uInt blockId      = i / blockSize;
                       const dftfe::uInt intraBlockId = i - blockId * blockSize;
@@ -261,70 +289,51 @@ namespace dftfe
              blockSize + intraBlockId] .y,
                         dftfe::utils::imagPartDevice(recvBuffer[i]));
                     }
-                }
-
-                template <>
-                __global__ void
-                accumInsertFromRecvBufferDeviceKernel(
+                },
                   const dftfe::uInt                          totalFlattenedSize,
                   const dftfe::uInt                          blockSize,
                   const dftfe::utils::deviceDoubleComplex *recvBuffer,
                   const dftfe::uInt * ownedLocalIndicesForTargetProcs,
-                  dftfe::utils::deviceDoubleComplex *dataArray)
-                {
-                  const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x +
-             threadIdx.x; for (dftfe::uInt i = globalThreadId; i <
-         totalFlattenedSize; i += blockDim.x * gridDim.x)
-                    {
-                      const dftfe::uInt blockId      = i / blockSize;
-                      const dftfe::uInt intraBlockId = i - blockId * blockSize;
+                  dftfe::utils::deviceDoubleComplex *dataArray);
 
-                      dftfe::utils::copyValue(
-                        &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-             blockSize + intraBlockId] .x,
-                        dftfe::utils::realPartDevice(recvBuffer[i]));
-
-                      dftfe::utils::copyValue(
-                        &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-             blockSize + intraBlockId] .y,
-                        dftfe::utils::imagPartDevice(recvBuffer[i]));
-                    }
-                }
     */
       template <>
-      __global__ void
-      accumInsertFromRecvBufferDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumInsertFromRecvBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              const double      recvValReal =
+                dftfe::utils::realPartDevice(recvBuffer[i]);
+              const double recvValImag =
+                dftfe::utils::imagPartDevice(recvBuffer[i]);
+
+              dftfe::utils::copyValue(
+                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                             blockSize +
+                           intraBlockId]
+                   .x,
+                recvValReal);
+
+              dftfe::utils::copyValue(
+                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                             blockSize +
+                           intraBlockId]
+                   .y,
+                recvValImag);
+            }
+        },
         const dftfe::uInt                       totalFlattenedSize,
         const dftfe::uInt                       blockSize,
         const dftfe::utils::deviceFloatComplex *recvBuffer,
         const dftfe::uInt                      *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::deviceDoubleComplex      *dataArray)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockId      = i / blockSize;
-            const dftfe::uInt intraBlockId = i - blockId * blockSize;
-            const double      recvValReal =
-              dftfe::utils::realPartDevice(recvBuffer[i]);
-            const double recvValImag =
-              dftfe::utils::imagPartDevice(recvBuffer[i]);
+        dftfe::utils::deviceDoubleComplex      *dataArray);
 
-            dftfe::utils::copyValue(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId]
-                 .x,
-              recvValReal);
-
-            dftfe::utils::copyValue(
-              &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                         intraBlockId]
-                 .y,
-              recvValImag);
-          }
-      }
 
 
     } // namespace
