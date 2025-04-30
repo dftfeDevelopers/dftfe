@@ -104,6 +104,22 @@ namespace dftfe
       const double     *scalingVector,
       ValueType        *sphericalFnTimesWfcPadded);
 
+    template <typename ValueType>
+    void
+    assembleAtomLevelContributionsFromCellLevel(
+      const dftfe::uInt numberWaveFunctions,
+      const dftfe::uInt totalNonlocalElems,
+      const dftfe::uInt maxSingleAtomContribution,
+      const dftfe::uInt totalNonlocalEntries,
+      const dftfe::utils::MemoryStorage<ValueType,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesVectorAllCellsDevice,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &mapSphericalFnTimesVectorAllCellsReductionDevice,
+      dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesWavefunctionMatrix);
+
 
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice
 

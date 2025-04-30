@@ -1054,7 +1054,7 @@ namespace dftfe
 
           prm.declare_entry(
             "SUBSPACE PROJ SHEP GPU",
-            "true",
+            "false",
             dealii::Patterns::Bool(),
             "[Advanced] Solve a standard hermitian eigenvalue problem in the Rayleigh Ritz step instead of a generalized hermitian eigenvalue problem on GPUs. Default setting is true.");
 

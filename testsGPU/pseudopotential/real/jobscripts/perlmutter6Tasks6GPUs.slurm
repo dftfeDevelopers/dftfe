@@ -36,4 +36,3 @@ srun ./dftfe parameterFileMg2x_14.prm > outputMg2x_14
 srun ./dftfe parameterFileMg2x_15.prm > outputMg2x_15
 srun ./dftfe Pt3Ni_hubbard_spin.prm            > outputPt3Ni_hubbard_spin
 srun ./dftfe Pt3Ni_hubbard_spin_mixedPrec.prm > outputPt3Ni_hubbard_spin_mixedPrec
-srun ./dftfe parameterFile_LLZO_scan.prm > output_LLZO_scan
