@@ -895,17 +895,20 @@ namespace dftfe
       ValueType3        *addToVec,
       const dftfe::uInt *addToVecStartingContiguousBlockIds) const
     {
-      axpyStridedBlockAtomicAddDeviceKernel<<<
-        (contiguousBlockSize * numContiguousBlocks) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        contiguousBlockSize,
-        numContiguousBlocks,
-        dftfe::utils::makeDataTypeDeviceCompatible(a),
-        dftfe::utils::makeDataTypeDeviceCompatible(addFromVec),
-        dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
-        addToVecStartingContiguousBlockIds);
+      DFTFE_LAUNCH_KERNEL(axpyStridedBlockAtomicAddDeviceKernel,
+                          (contiguousBlockSize * numContiguousBlocks) /
+                              dftfe::utils::DEVICE_BLOCK_SIZE +
+                            1,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          0,
+                          contiguousBlockSize,
+                          numContiguousBlocks,
+                          dftfe::utils::makeDataTypeDeviceCompatible(a),
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            addFromVec),
+                          dftfe::utils::makeDataTypeDeviceCompatible(addToVec),
+                          addToVecStartingContiguousBlockIds);
     }
 
     void
@@ -1671,11 +1674,12 @@ namespace dftfe
         ValueType2       *valueType2DstArray)
     {
       const dftfe::uInt size = D * B;
-      copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel<<<
+      DFTFE_LAUNCH_KERNEL(
+        copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        d_streamId>>>(
+        d_streamId,
         B,
         DRem,
         D,
