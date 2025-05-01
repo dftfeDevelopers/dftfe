@@ -581,7 +581,8 @@ namespace dftfe
     dftfe::uInt d_numberWaveFunctions;
     dftfe::uInt d_kPointIndex;
     bool        d_memoryOptMode;
-    bool        d_isMallocCalled = false;
+    bool        d_isMallocCalled     = false;
+    bool        d_reinitialiseKPoint = true;
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
       d_CMatrixEntriesTranspose;
@@ -726,14 +727,23 @@ namespace dftfe
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>
       d_tempConjtansX;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                d_sphericalFnTimesWavefunctionMatrix;
-    ValueType **hostPointerCDagger, **hostPointerCDaggeOutTemp,
-      **hostWfcPointers;
-    ValueType  *d_wfcStartPointer;
-    ValueType **devicePointerCDagger, **devicePointerCDaggerOutTemp,
-      **deviceWfcPointers;
-    std::vector<dftfe::uInt> d_nonlocalElemIdToLocalElemIdMap;
+      d_sphericalFnTimesWavefunctionMatrix;
+    // ValueType **hostPointerCDagger, **hostPointerCDaggeOutTemp,
+    //   **hostWfcPointers;
+    ValueType *d_wfcStartPointer;
+    // ValueType **devicePointerCDagger, **devicePointerCDaggerOutTemp,
+    //   **deviceWfcPointers;
+    std::vector<ValueType **> deviceWfcPointersInCellRange,
+      devicePointerCDaggerInCellRange, devicePointerCDaggerOutTempInCellRange;
+    std::vector<ValueType **> hostWfcPointersInCellRange,
+      hostPointerCDaggerInCellRange, hostPointerCDaggerOutTempInCellRange;
+    std::vector<ValueType *> d_wfcStartPointerInCellRange;
+    dftfe::uInt              d_cellsBlockSize, d_numCellBatches;
+    std::vector<dftfe::uInt> d_nonLocalElementsInCellRange;
 
+    std::vector<dftfe::uInt> d_nonlocalElemIdToLocalElemIdMap;
+    std::vector<std::vector<std::pair<dftfe::uInt, dftfe::uInt>>>
+      d_elementIdToNonLocalElementIdMap;
     // The below memory storage objects receives the copy of the distributed
     // ketTimesWfc data in a padded form. THe padding is done by
     // copyDistributedVectorToPaddedMemoryStorageVector
