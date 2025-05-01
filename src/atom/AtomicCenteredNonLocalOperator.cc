@@ -968,6 +968,8 @@ namespace dftfe
                 const dftfe::uInt elementId =
                   elementIndexesInAtomCompactSupport[iElemComp];
                 d_nonlocalElemIdToLocalElemIdMap[countElem] = elementId;
+                d_elementIdToNonLocalElementIdMap[elementId].push_back(
+                  std::make_pair(atomId, countElem));
                 if (!d_useGlobalCMatrix)
                   {
                     for (dftfe::uInt ikpoint = 0;
@@ -3416,8 +3418,7 @@ namespace dftfe
                 const dftfe::uInt elementId =
                   elementIndexesInAtomCompactSupport[iElemComp];
                 d_nonlocalElemIdToLocalElemIdMap[countElem] = elementId;
-                d_elementIdToNonLocalElementIdMap[elementId].push_back(
-                  std::make_pair(atomId, countElem));
+
                 if (!d_useGlobalCMatrix)
                   {
                     for (dftfe::uInt ikpoint = 0;
@@ -4092,7 +4093,8 @@ namespace dftfe
                 const dftfe::uInt elementId =
                   elementIndexesInAtomCompactSupport[iElemComp];
                 d_nonlocalElemIdToLocalElemIdMap[countElem] = elementId;
-
+                d_elementIdToNonLocalElementIdMap[elementId].push_back(
+                  std::make_pair(atomId, countElem));
                 for (dftfe::uInt ikpoint = 0; ikpoint < d_kPointWeights.size();
                      ikpoint++)
                   for (dftfe::uInt iNode = 0; iNode < d_numberNodesPerElement;
@@ -4198,6 +4200,9 @@ namespace dftfe
         d_cellNodeIdMapNonLocalToLocalDevice.copyFrom(
           d_cellNodeIdMapNonLocalToLocal);
         d_nonlocalElemIdToCellIdVector.clear();
+
+
+
         d_flattenedNonLocalCellDofIndexToProcessDofIndexVector.clear();
         for (dftfe::uInt i = 0; i < d_totalNonlocalElems; i++)
           {
