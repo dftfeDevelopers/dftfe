@@ -60,6 +60,7 @@ namespace dftfe
     d_useGlobalCMatrix         = useGlobalCMatrix;
     d_cellsBlockSize           = 0;
     d_numCellBatches           = 0;
+    d_wfcStartPointer          = NULL;
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -2979,7 +2980,76 @@ namespace dftfe
                       hostWfcPointersInCellRange[iCellBatch],
                       nonLocalElements * sizeof(ValueType *));
                   } // iCellBatch
-                d_isMallocCalled = true;
+                d_isMallocCalled  = true;
+                d_wfcStartPointer = cellWaveFunctionMatrix.begin();
+              }
+            if (cellWaveFunctionMatrix.begin() != d_wfcStartPointer)
+              {
+                for (dftfe::uInt iCellBatch = 0; iCellBatch < d_numCellBatches;
+                     ++iCellBatch)
+                  {
+                    dftfe::uInt startCell = iCellBatch * cellsBlockSize;
+                    d_wfcStartPointerInCellRange[iCellBatch] =
+                      cellWaveFunctionMatrix.begin() +
+                      startCell * d_numberNodesPerElement *
+                        d_numberWaveFunctions;
+                  }
+
+                for (dftfe::uInt iCellBatch = 0; iCellBatch < d_numCellBatches;
+                     ++iCellBatch)
+                  {
+                    const dftfe::uInt nonLocalElements =
+                      d_nonLocalElementsInCellRange[iCellBatch];
+                    dftfe::uInt startCell = iCellBatch * cellsBlockSize;
+                    dftfe::uInt endCell =
+                      std::min(startCell + cellsBlockSize, d_locallyOwnedCells);
+                    dftfe::uInt i = 0;
+                    for (dftfe::uInt iCell = startCell; iCell < endCell;
+                         ++iCell)
+                      {
+                        const std::vector<dftfe::Int> &atomIdsInElement =
+                          d_atomCenteredSphericalFunctionContainer
+                            ->getAtomIdsInElement(iCell);
+                        dftfe::Int numOfAtomsInElement =
+                          atomIdsInElement.size();
+                        for (dftfe::Int iAtom = 0; iAtom < numOfAtomsInElement;
+                             iAtom++)
+                          {
+                            const dftfe::uInt atomId = atomIdsInElement[iAtom];
+
+                            dftfe::uInt countElem;
+                            auto        it = std::find_if(
+                              d_elementIdToNonLocalElementIdMap[iCell].begin(),
+                              d_elementIdToNonLocalElementIdMap[iCell].end(),
+                              [&atomId](
+                                const std::pair<dftfe::uInt, dftfe::uInt> &p) {
+                                return p.first == atomId;
+                              });
+                            if (it !=
+                                d_elementIdToNonLocalElementIdMap[iCell].end())
+                              countElem = it->second;
+                            else
+                              {
+                                AssertThrow(
+                                  false,
+                                  dealii::ExcMessage(
+                                    "DFT-FE Error: Inconsistent element id to nonlocal element id map."));
+                              }
+                            hostWfcPointersInCellRange[iCellBatch][i] =
+                              cellWaveFunctionMatrix.begin() +
+                              iCell * d_numberNodesPerElement *
+                                d_numberWaveFunctions;
+
+                            i++;
+                          } // iAtom
+                      }     // iCell
+                    dftfe::utils::deviceMemcpyH2D(
+                      deviceWfcPointersInCellRange[iCellBatch],
+                      hostWfcPointersInCellRange[iCellBatch],
+                      nonLocalElements * sizeof(ValueType *));
+                  } // iCellBatch
+                d_isMallocCalled  = true;
+                d_wfcStartPointer = cellWaveFunctionMatrix.begin();
               }
           }
       }
