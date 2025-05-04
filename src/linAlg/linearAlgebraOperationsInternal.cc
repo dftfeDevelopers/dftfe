@@ -254,24 +254,24 @@ namespace dftfe
                      std::min((dftfe::uInt)std::floor(std::sqrt(numberProcs)),
                               (dftfe::uInt)std::floor(rowProcs * 3.0)) :
                      rowProcs;
-                     if(!dftParams.useDevice)
-                     {
-                     if (!dftParams.reproducible_output)
-                        rowProcs =
-                          std::min(rowProcs,
-                                   (dftfe::uInt)std::ceil((double)size / (double)(100)));
-              
-                      else
-                        rowProcs =
-                          std::min(rowProcs,
-                                   (dftfe::uInt)std::ceil((double)size / (double)(10)));
-                     }
-                     else
-                     {
-                        rowProcs =
-                          std::min(rowProcs,
-                                   (dftfe::uInt)std::ceil((double)size / (double)(100)));        
-                     }
+        if (!dftParams.useDevice)
+          {
+            if (!dftParams.reproducible_output)
+              rowProcs =
+                std::min(rowProcs,
+                         (dftfe::uInt)std::ceil((double)size / (double)(100)));
+
+            else
+              rowProcs =
+                std::min(rowProcs,
+                         (dftfe::uInt)std::ceil((double)size / (double)(10)));
+          }
+        else
+          {
+            rowProcs =
+              std::min(rowProcs,
+                       (dftfe::uInt)std::ceil((double)size / (double)(100)));
+          }
 
 
         if (dftParams.verbosity >= 4)
