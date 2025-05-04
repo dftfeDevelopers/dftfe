@@ -29,9 +29,9 @@ namespace dftfe
   //
   // Constructor.
   //
-  nonLinearSolver::nonLinearSolver(const unsigned int debugLevel,
-                                   const unsigned int maxNumberIterations,
-                                   const double       tolerance)
+  nonLinearSolver::nonLinearSolver(const dftfe::uInt debugLevel,
+                                   const dftfe::uInt maxNumberIterations,
+                                   const double      tolerance)
     : d_debugLevel(debugLevel)
     , d_maxNumberIterations(maxNumberIterations)
     , d_tolerance(tolerance)
@@ -63,7 +63,7 @@ namespace dftfe
   //
   // Get maximum number of iterations.
   //
-  unsigned int
+  dftfe::uInt
   nonLinearSolver::getMaximumNumberIterations() const
   {
     //
@@ -76,7 +76,7 @@ namespace dftfe
   //
   // Get debug level.
   //
-  unsigned int
+  dftfe::uInt
   nonLinearSolver::getDebugLevel() const
   {
     //

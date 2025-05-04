@@ -48,9 +48,9 @@ namespace dftfe
                                                pseudopotentialClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       dftParameters                           *dftParamsPtr,
-      const unsigned int                       densityQuadratureID,
-      const unsigned int                       lpspQuadratureID,
-      const unsigned int                       feOrderPlusOneQuadratureID,
+      const dftfe::uInt                        densityQuadratureID,
+      const dftfe::uInt                        lpspQuadratureID,
+      const dftfe::uInt                        feOrderPlusOneQuadratureID,
       const MPI_Comm                          &mpi_comm_parent,
       const MPI_Comm                          &mpi_comm_domain)
     : KohnShamDFTBaseOperator<memorySpace>(BLASWrapperPtr,
@@ -78,10 +78,10 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
     const bool useApproximateMatrixEntries)
   {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
-    const double       one(1.0);
+    const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
+    const double      one(1.0);
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
 
@@ -99,7 +99,7 @@ namespace dftfe
                             dst.data());
     if (useApproximateMatrixEntries)
       {
-        const unsigned int blockSize = src.numVectors();
+        const dftfe::uInt blockSize = src.numVectors();
         d_BLASWrapperPtr->stridedBlockAxpy(
           blockSize,
           src.locallyOwnedSize(),
@@ -115,10 +115,10 @@ namespace dftfe
         const dataTypes::number scalarCoeffAlpha = scalarOX,
                                 scalarCoeffBeta  = dataTypes::number(0.0);
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
             d_BLASWrapperPtr->stridedCopyToBlock(
               numberWavefunctions,
@@ -130,10 +130,10 @@ namespace dftfe
                   .data() +
                 cellRange.first * numDoFsPerCell);
           }
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
 
             d_BLASWrapperPtr->xgemmStridedBatched(
@@ -190,7 +190,7 @@ namespace dftfe
     const double scalarX,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst)
   {
-    const unsigned int blockSize = src.numVectors();
+    const dftfe::uInt blockSize = src.numVectors();
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * blockSize,
                             scalarX,
                             src.data(),
@@ -213,7 +213,7 @@ namespace dftfe
     const double scalarX,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst)
   {
-    const unsigned int blockSize = src.numVectors();
+    const dftfe::uInt blockSize = src.numVectors();
     d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * blockSize,
                             scalarX,
                             src.data(),
@@ -243,9 +243,9 @@ namespace dftfe
     const bool skip2,
     const bool skip3)
   {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
+    const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
 
@@ -278,10 +278,10 @@ namespace dftfe
               ->reinitKPointDependentVariables(d_kPointIndex);
           }
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
             d_BLASWrapperPtr->stridedBlockScaleCopy(
               numberWavefunctions,
@@ -344,10 +344,10 @@ namespace dftfe
     if (!skip3)
       {
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
 
             d_BLASWrapperPtr->xgemmStridedBatched(
@@ -399,7 +399,7 @@ namespace dftfe
             (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
              ExcFamilyType::MGGA))
           {
-            unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+            dftfe::uInt relaventDofs = d_basisOperationsPtr->nRelaventDofs();
             d_BLASWrapperPtr->stridedBlockAxpBy(
               numberWavefunctions,
               src.locallyOwnedSize(),
@@ -453,9 +453,9 @@ namespace dftfe
     const bool skip2,
     const bool skip3)
   {
-    const unsigned int numCells       = d_basisOperationsPtr->nCells();
-    const unsigned int numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const unsigned int numberWavefunctions = src.numVectors();
+    const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
 #if defined(DFTFE_WITH_DEVICE)
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {
@@ -491,10 +491,10 @@ namespace dftfe
             d_pseudopotentialNonLocalOperatorSinglePrec
               ->initialiseOperatorActionOnX(d_kPointIndex);
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
             d_BLASWrapperPtr->stridedBlockScaleCopy(
               numberWavefunctions,
@@ -560,10 +560,10 @@ namespace dftfe
     if (!skip3)
       {
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0; iCell < numCells;
+        for (dftfe::uInt iCell = 0; iCell < numCells;
              iCell += d_cellsBlockSizeHX)
           {
-            std::pair<unsigned int, unsigned int> cellRange(
+            std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
 
             d_BLASWrapperPtr->xgemmStridedBatched(
@@ -616,7 +616,7 @@ namespace dftfe
             (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
              ExcFamilyType::MGGA))
           {
-            unsigned int relaventDofs = d_basisOperationsPtr->nRelaventDofs();
+            dftfe::uInt relaventDofs = d_basisOperationsPtr->nRelaventDofs();
             d_BLASWrapperPtr->stridedBlockAxpBy(
               numberWavefunctions,
               src.locallyOwnedSize(),

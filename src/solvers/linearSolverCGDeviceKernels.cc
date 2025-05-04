@@ -2,18 +2,18 @@
 
 namespace dftfe
 {
-  template <typename Type, int blockSize>
+  template <typename Type, dftfe::Int blockSize>
   __global__ void
-  applyPreconditionAndComputeDotProductKernel(Type       *d_dvec,
-                                              Type       *d_devSum,
-                                              const Type *d_rvec,
-                                              const Type *d_jacobi,
-                                              const int   N)
+  applyPreconditionAndComputeDotProductKernel(Type            *d_dvec,
+                                              Type            *d_devSum,
+                                              const Type      *d_rvec,
+                                              const Type      *d_jacobi,
+                                              const dftfe::Int N)
   {
     __shared__ Type smem[blockSize];
 
-    int tid = threadIdx.x;
-    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+    dftfe::Int tid = threadIdx.x;
+    dftfe::Int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
 
     Type localSum;
 
@@ -40,7 +40,7 @@ namespace dftfe
     __syncthreads();
 
 #pragma unroll
-    for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+    for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
       {
@@ -56,7 +56,7 @@ namespace dftfe
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
 #pragma unroll
-        for (int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
+        for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -74,18 +74,18 @@ namespace dftfe
   }
 
 
-  template <typename Type, int blockSize>
+  template <typename Type, dftfe::Int blockSize>
   __global__ void
-  applyPreconditionComputeDotProductAndSaddKernel(Type       *d_qvec,
-                                                  Type       *d_devSum,
-                                                  const Type *d_rvec,
-                                                  const Type *d_jacobi,
-                                                  const int   N)
+  applyPreconditionComputeDotProductAndSaddKernel(Type            *d_qvec,
+                                                  Type            *d_devSum,
+                                                  const Type      *d_rvec,
+                                                  const Type      *d_jacobi,
+                                                  const dftfe::Int N)
   {
     __shared__ Type smem[blockSize];
 
-    int tid = threadIdx.x;
-    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+    dftfe::Int tid = threadIdx.x;
+    dftfe::Int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
 
     Type localSum;
 
@@ -112,7 +112,7 @@ namespace dftfe
     __syncthreads();
 
 #pragma unroll
-    for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+    for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
       {
@@ -127,7 +127,7 @@ namespace dftfe
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
 #pragma unroll
-        for (int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
+        for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -145,20 +145,20 @@ namespace dftfe
   }
 
 
-  template <typename Type, int blockSize>
+  template <typename Type, dftfe::Int blockSize>
   __global__ void
-  scaleXRandComputeNormKernel(Type       *x,
-                              Type       *d_rvec,
-                              Type       *d_devSum,
-                              const Type *d_qvec,
-                              const Type *d_dvec,
-                              const Type  alpha,
-                              const int   N)
+  scaleXRandComputeNormKernel(Type            *x,
+                              Type            *d_rvec,
+                              Type            *d_devSum,
+                              const Type      *d_qvec,
+                              const Type      *d_dvec,
+                              const Type       alpha,
+                              const dftfe::Int N)
   {
     __shared__ Type smem[blockSize];
 
-    int tid = threadIdx.x;
-    int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+    dftfe::Int tid = threadIdx.x;
+    dftfe::Int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
 
     Type localSum;
 
@@ -188,7 +188,7 @@ namespace dftfe
     __syncthreads();
 
 #pragma unroll
-    for (int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
+    for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
       {
@@ -204,7 +204,7 @@ namespace dftfe
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
 #pragma unroll
-        for (int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
+        for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
@@ -221,92 +221,72 @@ namespace dftfe
       atomicAdd(&d_devSum[0], localSum);
   }
   void
-  applyPreconditionAndComputeDotProductDevice(double       *d_dvec,
-                                              double       *d_devSum,
-                                              const double *d_rvec,
-                                              const double *d_jacobi,
-                                              const int     N)
+  applyPreconditionAndComputeDotProductDevice(double          *d_dvec,
+                                              double          *d_devSum,
+                                              const double    *d_rvec,
+                                              const double    *d_jacobi,
+                                              const dftfe::Int N)
   {
-    const int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
-                       (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    applyPreconditionAndComputeDotProductKernel<double,
-                                                dftfe::utils::DEVICE_BLOCK_SIZE>
-      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        d_dvec, d_devSum, d_rvec, d_jacobi, N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(
-                         applyPreconditionAndComputeDotProductKernel<
-                           double,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>),
-                       blocks,
-                       dftfe::utils::DEVICE_BLOCK_SIZE,
-                       0,
-                       0,
-                       d_dvec,
-                       d_devSum,
-                       d_rvec,
-                       d_jacobi,
-                       N);
-#endif
+    const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+                              (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
+    DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
+                          applyPreconditionAndComputeDotProductKernel<
+                            double,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>),
+                        blocks,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        0,
+                        0,
+                        d_dvec,
+                        d_devSum,
+                        d_rvec,
+                        d_jacobi,
+                        N);
   }
 
 
   void
-  applyPreconditionComputeDotProductAndSaddDevice(double       *d_qvec,
-                                                  double       *d_devSum,
-                                                  const double *d_rvec,
-                                                  const double *d_jacobi,
-                                                  const int     N)
+  applyPreconditionComputeDotProductAndSaddDevice(double          *d_qvec,
+                                                  double          *d_devSum,
+                                                  const double    *d_rvec,
+                                                  const double    *d_jacobi,
+                                                  const dftfe::Int N)
   {
-    const int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
-                       (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
+    const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+                              (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    applyPreconditionComputeDotProductAndSaddKernel<
-      double,
-      dftfe::utils::DEVICE_BLOCK_SIZE>
-      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        d_qvec, d_devSum, d_rvec, d_jacobi, N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(
-                         applyPreconditionComputeDotProductAndSaddKernel<
-                           double,
-                           dftfe::utils::DEVICE_BLOCK_SIZE>),
-                       blocks,
-                       dftfe::utils::DEVICE_BLOCK_SIZE,
-                       0,
-                       0,
-                       d_qvec,
-                       d_devSum,
-                       d_rvec,
-                       d_jacobi,
-                       N);
-#endif
+    DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
+                          applyPreconditionComputeDotProductAndSaddKernel<
+                            double,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>),
+                        blocks,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        0,
+                        0,
+                        d_qvec,
+                        d_devSum,
+                        d_rvec,
+                        d_jacobi,
+                        N);
   }
 
 
   void
-  scaleXRandComputeNormDevice(double       *x,
-                              double       *d_rvec,
-                              double       *d_devSum,
-                              const double *d_qvec,
-                              const double *d_dvec,
-                              const double  alpha,
-                              const int     N)
+  scaleXRandComputeNormDevice(double          *x,
+                              double          *d_rvec,
+                              double          *d_devSum,
+                              const double    *d_qvec,
+                              const double    *d_dvec,
+                              const double     alpha,
+                              const dftfe::Int N)
   {
-    const int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
-                       (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
+    const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
+                              (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>
-      <<<blocks, dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        x, d_rvec, d_devSum, d_qvec, d_dvec, alpha, N);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
-      HIP_KERNEL_NAME(
+    DFTFE_LAUNCH_KERNEL(
+      DFTFE_KERNEL_NAME(
         scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>),
       blocks,
       dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -319,7 +299,6 @@ namespace dftfe
       d_dvec,
       alpha,
       N);
-#endif
   }
 
 } // namespace dftfe

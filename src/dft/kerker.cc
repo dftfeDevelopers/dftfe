@@ -23,8 +23,8 @@
 namespace dftfe
 {
   // implement nodal anderson mixing scheme with Kerker
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -53,6 +53,7 @@ namespace dftfe
       d_densityQuadratureIdElectro,
       residualRho,
       d_densityResidualQuadValues[0],
+      dummy,
       dummy,
       dummy,
       false);

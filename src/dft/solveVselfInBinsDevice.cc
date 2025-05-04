@@ -38,18 +38,18 @@ namespace dftfe
                                      &constraintsMatrixDataInfoDevice,
         distributedDeviceVec<double> &src,
         distributedDeviceVec<double> &temp,
-        const unsigned int            totalLocallyOwnedCells,
-        const unsigned int            numberNodesPerElement,
-        const unsigned int            numberVectors,
-        const unsigned int            localSize,
-        const unsigned int            ghostSize,
+        const dftfe::uInt             totalLocallyOwnedCells,
+        const dftfe::uInt             numberNodesPerElement,
+        const dftfe::uInt             numberVectors,
+        const dftfe::uInt             localSize,
+        const dftfe::uInt             ghostSize,
         const dftfe::utils::MemoryStorage<double,
                                           dftfe::utils::MemorySpace::DEVICE>
           &poissonCellStiffnessMatricesD,
         const dftfe::utils::MemoryStorage<double,
                                           dftfe::utils::MemorySpace::DEVICE>
           &inhomoIdsColoredVecFlattenedD,
-        const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+        const dftfe::utils::MemoryStorage<dftfe::uInt,
                                           dftfe::utils::MemorySpace::DEVICE>
                                      &cellLocalProcIndexIdMapD,
         distributedDeviceVec<double> &dst,
@@ -58,7 +58,7 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
           &cellStiffnessMatrixTimesVectorD)
       {
-        // const unsigned int numberVectors = 1;
+        // const dftfe::uInt numberVectors = 1;
         dst.setValue(0);
 
         // distributedDeviceVec<double> temp;
@@ -90,14 +90,14 @@ namespace dftfe
                                                numberNodesPerElement,
                                              temp.begin(), // src.begin(),
                                              cellNodalVectorD.begin(),
-                                             cellLocalProcIndexIdMapD.begin());
+                                             cellLocalProcIndexIdMapD.data());
 
 
 
-        const unsigned int strideA = numberNodesPerElement * numberVectors;
-        const unsigned int strideB =
+        const dftfe::uInt strideA = numberNodesPerElement * numberVectors;
+        const dftfe::uInt strideB =
           numberNodesPerElement * numberNodesPerElement;
-        const unsigned int strideC = numberNodesPerElement * numberVectors;
+        const dftfe::uInt strideC = numberNodesPerElement * numberVectors;
 
         //
         // do matrix-matrix multiplication
@@ -152,11 +152,11 @@ namespace dftfe
       }
 
       void
-      precondition_Jacobi(const double      *src,
-                          const double      *diagonalA,
-                          const unsigned int numberVectors,
-                          const unsigned int localSize,
-                          double            *dst)
+      precondition_Jacobi(const double     *src,
+                          const double     *diagonalA,
+                          const dftfe::uInt numberVectors,
+                          const dftfe::uInt localSize,
+                          double           *dst)
       {
         if (localSize > 0)
           diagScale(numberVectors, localSize, src, diagonalA, dst);
@@ -169,8 +169,8 @@ namespace dftfe
                         const double                          *vec2,
                         double                                *vecTemp,
                         const double                          *onesVec,
-                        const unsigned int                     numberVectors,
-                        const unsigned int                     localSize,
+                        const dftfe::uInt                      numberVectors,
+                        const dftfe::uInt                      localSize,
                         double                                *residualNormSq)
       {
         if (localSize > 0)
@@ -205,29 +205,29 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                               &BLASWrapperPtr,
       const dealii::MatrixFree<3, double>     &matrixFreeData,
-      const unsigned int                       mfDofHandlerIndex,
+      const dftfe::uInt                        mfDofHandlerIndex,
       const dealii::AffineConstraints<double> &hangingPeriodicConstraintMatrix,
       const double                            *bH,
       const double                            *diagonalAH,
       const double                            *inhomoIdsColoredVecFlattenedH,
-      const unsigned int                       localSize,
-      const unsigned int                       ghostSize,
-      const unsigned int                       numberBins,
+      const dftfe::uInt                        localSize,
+      const dftfe::uInt                        ghostSize,
+      const dftfe::uInt                        numberBins,
       const MPI_Comm                          &mpiCommParent,
       const MPI_Comm                          &mpiCommDomain,
       double                                  *xH,
-      const int                                verbosity,
-      const unsigned int                       maxLinearSolverIterations,
+      const dftfe::Int                         verbosity,
+      const dftfe::uInt                        maxLinearSolverIterations,
       const double                             absLinearSolverTolerance,
       const bool isElectroFEOrderDifferentFromFEOrder)
     {
       int this_process;
       MPI_Comm_rank(mpiCommParent, &this_process);
 
-      const unsigned int blockSize = numberBins;
-      const unsigned int totalLocallyOwnedCells =
+      const dftfe::uInt blockSize = numberBins;
+      const dftfe::uInt totalLocallyOwnedCells =
         matrixFreeData.n_physical_cells();
-      const unsigned int numberNodesPerElement =
+      const dftfe::uInt numberNodesPerElement =
         matrixFreeData.get_dofs_per_cell(mfDofHandlerIndex);
 
       distributedDeviceVec<double> xD;
@@ -256,7 +256,7 @@ namespace dftfe
         matrixFreeData.get_vector_partitioner(mfDofHandlerIndex),
         blockSize,
         flattenedArray);
-      std::vector<dealii::types::global_dof_index> cellLocalProcIndexIdMapH;
+      std::vector<dftfe::uInt> cellLocalProcIndexIdMapH;
 
       vectorTools::computeCellLocalIndexSetMap(
         flattenedArray.getMPIPatternP2P(),
@@ -284,7 +284,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         inhomoIdsColoredVecFlattenedD((localSize + ghostSize) * numberBins,
                                       0.0);
-      dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+      dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::DEVICE>
         cellLocalProcIndexIdMapD(totalLocallyOwnedCells *
                                  numberNodesPerElement);
@@ -307,7 +307,7 @@ namespace dftfe
                                     &cellLocalProcIndexIdMapH[0],
                                     totalLocallyOwnedCells *
                                       numberNodesPerElement *
-                                      sizeof(dealii::types::global_dof_index));
+                                      sizeof(dftfe::uInt));
 
       dftfe::utils::deviceSynchronize();
       MPI_Barrier(mpiCommParent);
@@ -356,16 +356,16 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &inhomoIdsColoredVecFlattenedD,
-      const dftfe::utils::MemoryStorage<dealii::types::global_dof_index,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::DEVICE>
                                    &cellLocalProcIndexIdMapD,
-      const unsigned int            localSize,
-      const unsigned int            ghostSize,
-      const unsigned int            numberBins,
-      const unsigned int            totalLocallyOwnedCells,
-      const unsigned int            numberNodesPerElement,
-      const int                     debugLevel,
-      const unsigned int            maxIter,
+      const dftfe::uInt             localSize,
+      const dftfe::uInt             ghostSize,
+      const dftfe::uInt             numberBins,
+      const dftfe::uInt             totalLocallyOwnedCells,
+      const dftfe::uInt             numberNodesPerElement,
+      const dftfe::Int              debugLevel,
+      const dftfe::uInt             maxIter,
       const double                  absTol,
       const MPI_Comm               &mpiCommParent,
       const MPI_Comm               &mpiCommDomain,
@@ -381,7 +381,7 @@ namespace dftfe
       // initialize certain variables
       const double negOne = -1.0;
       // const double posOne = 1.0;
-      const unsigned int inc = 1;
+      const dftfe::uInt inc = 1;
 
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         delta_newD(numberBins, 0.0);
@@ -432,7 +432,7 @@ namespace dftfe
       // "<<end_timeRhs<<std::endl;
 
       // get size of vectors
-      // unsigned int localSize = b.size();
+      // dftfe::uInt localSize = b.size();
 
 
       // get access to initial guess for solving Ax=b
@@ -541,7 +541,7 @@ namespace dftfe
       // dftfe::utils::MemoryStorage<double,dftfe::utils::MemorySpace::DEVICE>
       // q,s; q.resize(localSize,0.0); s.resize(localSize,0.0);
 
-      unsigned int iterationNumber = 0;
+      dftfe::uInt iterationNumber = 0;
 
       computeResidualSq(BLASWrapperPtr,
                         r.begin(),
@@ -566,14 +566,14 @@ namespace dftfe
 
       if (debugLevel >= 2 && this_process == 0)
         {
-          for (unsigned int i = 0; i < numberBins; i++)
+          for (dftfe::uInt i = 0; i < numberBins; i++)
             std::cout
               << "Device based Linear Conjugate Gradient solver for bin: " << i
               << " started with residual norm squared: " << residualNormSqH[i]
               << std::endl;
         }
 
-      for (unsigned int iter = 0; iter < maxIter; ++iter)
+      for (dftfe::uInt iter = 0; iter < maxIter; ++iter)
         {
           // q = Ad
           // computeAX(d,q);
@@ -617,13 +617,13 @@ namespace dftfe
                         MPI_SUM,
                         mpiCommDomain);
 
-          // for (unsigned int i=0;i <numberBins; i++)
+          // for (dftfe::uInt i=0;i <numberBins; i++)
           //   std::cout<< "scalar "<<scalarH[i]<<std::endl;
 
-          for (unsigned int i = 0; i < numberBins; i++)
+          for (dftfe::uInt i = 0; i < numberBins; i++)
             alphaH[i] = delta_newH[i] / scalarH[i];
 
-          // for (unsigned int i=0;i <numberBins; i++)
+          // for (dftfe::uInt i=0;i <numberBins; i++)
           //   std::cout<< "alpha "<<alphaH[i]<<std::endl;
 
           dftfe::utils::deviceMemcpyH2D(alphaD.begin(),
@@ -711,10 +711,10 @@ namespace dftfe
                         mpiCommDomain);
 
 
-          // for (unsigned int i=0;i <numberBins; i++)
+          // for (dftfe::uInt i=0;i <numberBins; i++)
           //   std::cout<< "delta_new "<<delta_newH[i]<<std::endl;
 
-          for (unsigned int i = 0; i < numberBins; i++)
+          for (dftfe::uInt i = 0; i < numberBins; i++)
             betaH[i] = delta_newH[i] / delta_oldH[i];
 
           dftfe::utils::deviceMemcpyH2D(betaD.begin(),
@@ -733,11 +733,11 @@ namespace dftfe
           if (localSize > 0)
             daxpyBlocked(
               numberBins, localSize, s.begin(), posOneD.begin(), d.begin());
-          unsigned int isBreak = 1;
+          dftfe::uInt isBreak = 1;
           // if(delta_new < relTolerance*relTolerance*delta_0)
           //  isBreak = 1;
 
-          for (unsigned int i = 0; i < numberBins; i++)
+          for (dftfe::uInt i = 0; i < numberBins; i++)
             if (delta_newH[i] > absTol * absTol)
               isBreak = 0;
 
@@ -775,7 +775,7 @@ namespace dftfe
       //
       // set error condition
       //
-      unsigned int solveStatus = 1;
+      dftfe::uInt solveStatus = 1;
 
       if (iterationNumber == maxIter)
         solveStatus = 0;
@@ -785,7 +785,7 @@ namespace dftfe
         {
           if (solveStatus == 1)
             {
-              for (unsigned int i = 0; i < numberBins; i++)
+              for (dftfe::uInt i = 0; i < numberBins; i++)
                 std::cout << "Linear Conjugate Gradient solver for bin: " << i
                           << " converged after " << iterationNumber + 1
                           << " iterations. with residual norm squared "
@@ -793,7 +793,7 @@ namespace dftfe
             }
           else
             {
-              for (unsigned int i = 0; i < numberBins; i++)
+              for (dftfe::uInt i = 0; i < numberBins; i++)
                 std::cout << "Linear Conjugate Gradient solver for bin: " << i
                           << " failed to converge after " << iterationNumber
                           << " iterations. with residual norm squared "

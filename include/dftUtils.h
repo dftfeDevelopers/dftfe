@@ -251,15 +251,15 @@ namespace dftfe
      */
     void
     createBandParallelizationIndices(
-      const MPI_Comm            &interBandGroupComm,
-      const unsigned int         numBands,
-      std::vector<unsigned int> &bandGroupLowHighPlusOneIndices);
+      const MPI_Comm           &interBandGroupComm,
+      const dftfe::uInt         numBands,
+      std::vector<dftfe::uInt> &bandGroupLowHighPlusOneIndices);
 
     void
     createKpointParallelizationIndices(
-      const MPI_Comm   &interKptPoolComm,
-      const int         numberIndices,
-      std::vector<int> &kptGroupLowHighPlusOneIndices);
+      const MPI_Comm          &interKptPoolComm,
+      const dftfe::Int         numberIndices,
+      std::vector<dftfe::Int> &kptGroupLowHighPlusOneIndices);
 
 
     /** @brief Wrapper to print current memory usage (prints only the maximum across mpiComm)
@@ -278,9 +278,9 @@ namespace dftfe
     class Pool
     {
     public:
-      Pool(const MPI_Comm    &mpi_communicator,
-           const unsigned int n_pools,
-           const int          verbosity);
+      Pool(const MPI_Comm   &mpi_communicator,
+           const dftfe::uInt n_pools,
+           const dftfe::Int  verbosity);
 
       /**
        * @brief get the communicator across the processor groups

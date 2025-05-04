@@ -45,9 +45,9 @@ namespace dftfe
         const MPI_Comm &mpi_communicator,
         MPI_Comm       &processGridCommunicatorActive,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const unsigned int                               na,
-        const unsigned int                               nev,
-        const unsigned int                               blockSize,
+        const dftfe::uInt                                na,
+        const dftfe::uInt                                nev,
+        const dftfe::uInt                                blockSize,
         elpa_t                                          &elpaHandle,
         const dftParameters                             &dftParams);
 
@@ -58,7 +58,7 @@ namespace dftfe
       void
       createProcessGridSquareMatrix(
         const MPI_Comm                            &mpi_communicator,
-        const unsigned                             size,
+        const dftfe::uInt                          size,
         std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const dftParameters                       &dftParams,
         const bool                                 useOnlyThumbRule = false);
@@ -70,8 +70,8 @@ namespace dftfe
       void
       createProcessGridRectangularMatrix(
         const MPI_Comm                            &mpi_communicator,
-        const unsigned                             sizeRows,
-        const unsigned                             sizeColumns,
+        const dftfe::uInt                          sizeRows,
+        const dftfe::uInt                          sizeColumns,
         std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const dftParameters                       &dftParams);
 
@@ -84,9 +84,8 @@ namespace dftfe
       createGlobalToLocalIdMapsScaLAPACKMat(
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const dftfe::ScaLAPACKMatrix<T>                 &mat,
-        std::unordered_map<unsigned int, unsigned int>  &globalToLocalRowIdMap,
-        std::unordered_map<unsigned int, unsigned int>
-          &globalToLocalColumnIdMap);
+        std::unordered_map<dftfe::uInt, dftfe::uInt>    &globalToLocalRowIdMap,
+        std::unordered_map<dftfe::uInt, dftfe::uInt> &globalToLocalColumnIdMap);
 
 
       /** @brief Mpi all reduce of ScaLAPACKMat across a given inter communicator.
@@ -127,7 +126,7 @@ namespace dftfe
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         dftfe::ScaLAPACKMatrix<T>                       &mat,
         const MPI_Comm                                  &interComm,
-        const unsigned int                               broadcastRoot);
+        const dftfe::uInt                                broadcastRoot);
 
       /** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
        * X^{T} is the subspaceVectorsArray stored in the column major format (N
@@ -145,8 +144,8 @@ namespace dftfe
         const std::shared_ptr<
           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                         &BLASWrapperPtr,
-        const unsigned int                               XLocalSize,
-        const unsigned int                               numberVectors,
+        const dftfe::uInt                                XLocalSize,
+        const dftfe::uInt                                numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm                                  &interBandGroupComm,
         const MPI_Comm                                  &mpiComm,
@@ -170,8 +169,8 @@ namespace dftfe
         const std::shared_ptr<
           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                         &BLASWrapperPtr,
-        const unsigned int                               XLocalSize,
-        const unsigned int                               numberVectors,
+        const dftfe::uInt                                XLocalSize,
+        const dftfe::uInt                                numberVectors,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm                                  &interBandGroupComm,
         const MPI_Comm                                  &mpiComm,
@@ -194,9 +193,9 @@ namespace dftfe
         T *subspaceVectorsArray,
         const std::shared_ptr<
           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                          &BLASWrapperPtr,
-        const unsigned int subspaceVectorsArrayLocalSize,
-        const unsigned int N,
+                         &BLASWrapperPtr,
+        const dftfe::uInt subspaceVectorsArrayLocalSize,
+        const dftfe::uInt N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm                                  &interBandGroupComm,
         const MPI_Comm                                  &mpiComm,
@@ -221,9 +220,9 @@ namespace dftfe
         T *subspaceVectorsArray,
         const std::shared_ptr<
           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                          &BLASWrapperPtr,
-        const unsigned int subspaceVectorsArrayLocalSize,
-        const unsigned int N,
+                         &BLASWrapperPtr,
+        const dftfe::uInt subspaceVectorsArrayLocalSize,
+        const dftfe::uInt N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm                                  &interBandGroupComm,
         const MPI_Comm                                  &mpiComm,
@@ -253,12 +252,12 @@ namespace dftfe
         const T *X,
         const std::shared_ptr<
           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                          &BLASWrapperPtr,
-        T                 *Y,
-        const unsigned int subspaceVectorsArrayLocalSize,
-        const unsigned int N,
+                         &BLASWrapperPtr,
+        T                *Y,
+        const dftfe::uInt subspaceVectorsArrayLocalSize,
+        const dftfe::uInt N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const unsigned int                               numberTopVectors,
+        const dftfe::uInt                                numberTopVectors,
         const MPI_Comm                                  &interBandGroupComm,
         const MPI_Comm                                  &mpiComm,
         const dftfe::ScaLAPACKMatrix<T>                 &QMat,
@@ -285,12 +284,12 @@ namespace dftfe
         const T *X,
         const std::shared_ptr<
           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                          &BLASWrapperPtr,
-        T                 *Y,
-        const unsigned int subspaceVectorsArrayLocalSize,
-        const unsigned int N,
+                         &BLASWrapperPtr,
+        T                *Y,
+        const dftfe::uInt subspaceVectorsArrayLocalSize,
+        const dftfe::uInt N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
-        const unsigned int                               numberTopVectors,
+        const dftfe::uInt                                numberTopVectors,
         const MPI_Comm                                  &interBandGroupComm,
         const MPI_Comm                                  &mpiComm,
         const dftfe::ScaLAPACKMatrix<T>                 &QMat,
@@ -313,9 +312,9 @@ namespace dftfe
         T *subspaceVectorsArray,
         const std::shared_ptr<
           dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                          &BLASWrapperPtr,
-        const unsigned int subspaceVectorsArrayLocalSize,
-        const unsigned int N,
+                         &BLASWrapperPtr,
+        const dftfe::uInt subspaceVectorsArrayLocalSize,
+        const dftfe::uInt N,
         const std::shared_ptr<const dftfe::ProcessGrid> &processGrid,
         const MPI_Comm                                  &interBandGroupComm,
         const MPI_Comm                                  &mpiComm,

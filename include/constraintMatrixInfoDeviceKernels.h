@@ -13,43 +13,43 @@ namespace dftfe
     template <typename ValueType>
     void
     distributeDevice(
-      const unsigned int  contiguousBlockSize,
-      ValueType          *xVec,
-      const unsigned int *constraintLocalRowIdsUnflattened,
-      const unsigned int  numConstraints,
-      const unsigned int *constraintRowSizes,
-      const unsigned int *constraintRowSizesAccumulated,
-      const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-      const double       *constraintColumnValuesAllRowsUnflattened,
-      const double       *inhomogenities);
+      const dftfe::uInt  contiguousBlockSize,
+      ValueType         *xVec,
+      const dftfe::uInt *constraintLocalRowIdsUnflattened,
+      const dftfe::uInt  numConstraints,
+      const dftfe::uInt *constraintRowSizes,
+      const dftfe::uInt *constraintRowSizesAccumulated,
+      const dftfe::uInt *constraintLocalColumnIdsAllRowsUnflattened,
+      const double      *constraintColumnValuesAllRowsUnflattened,
+      const double      *inhomogenities);
 
     template <typename ValueType>
     void
     distributeSlaveToMasterAtomicAddDevice(
-      const unsigned int  contiguousBlockSize,
-      ValueType          *xVec,
-      const unsigned int *constraintLocalRowIdsUnflattened,
-      const unsigned int  numConstraints,
-      const unsigned int *constraintRowSizes,
-      const unsigned int *constraintRowSizesAccumulated,
-      const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-      const double       *constraintColumnValuesAllRowsUnflattened);
+      const dftfe::uInt  contiguousBlockSize,
+      ValueType         *xVec,
+      const dftfe::uInt *constraintLocalRowIdsUnflattened,
+      const dftfe::uInt  numConstraints,
+      const dftfe::uInt *constraintRowSizes,
+      const dftfe::uInt *constraintRowSizesAccumulated,
+      const dftfe::uInt *constraintLocalColumnIdsAllRowsUnflattened,
+      const double      *constraintColumnValuesAllRowsUnflattened);
 
     template <typename ValueType>
     void
-    setzeroDevice(const unsigned int  contiguousBlockSize,
-                  ValueType          *xVec,
-                  const unsigned int *constraintLocalRowIdsUnflattened,
-                  const unsigned int  numConstraints);
+    setzeroDevice(const dftfe::uInt  contiguousBlockSize,
+                  ValueType         *xVec,
+                  const dftfe::uInt *constraintLocalRowIdsUnflattened,
+                  const dftfe::uInt  numConstraints);
     void
     scaleConstraintsDevice(
-      const double       *xVec,
-      const unsigned int *constraintLocalRowIdsUnflattened,
-      const unsigned int  numConstraints,
-      const unsigned int *constraintRowSizes,
-      const unsigned int *constraintRowSizesAccumulated,
-      const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-      double             *constraintColumnValuesAllRowsUnflattened);
+      const double      *xVec,
+      const dftfe::uInt *constraintLocalRowIdsUnflattened,
+      const dftfe::uInt  numConstraints,
+      const dftfe::uInt *constraintRowSizes,
+      const dftfe::uInt *constraintRowSizesAccumulated,
+      const dftfe::uInt *constraintLocalColumnIdsAllRowsUnflattened,
+      double            *constraintColumnValuesAllRowsUnflattened);
   } // namespace dftUtils
 } // namespace dftfe
 #endif

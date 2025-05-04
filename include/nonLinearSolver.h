@@ -82,9 +82,9 @@ namespace dftfe
      * @brief Constructor.
      *
      */
-    nonLinearSolver(const unsigned int debugLevel,
-                    const unsigned int maxNumberIterations,
-                    const double       tolerance = 0);
+    nonLinearSolver(const dftfe::uInt debugLevel,
+                    const dftfe::uInt maxNumberIterations,
+                    const double      tolerance = 0);
 
 
   protected:
@@ -101,7 +101,7 @@ namespace dftfe
      *
      * @return Maximum number of iterations.
      */
-    unsigned int
+    dftfe::uInt
     getMaximumNumberIterations() const;
 
     /**
@@ -109,15 +109,15 @@ namespace dftfe
      *
      * @return Debug level.
      */
-    unsigned int
+    dftfe::uInt
     getDebugLevel() const;
 
 
     /// controls the verbosity of the printing
-    const unsigned int d_debugLevel;
+    const dftfe::uInt d_debugLevel;
 
     /// maximum number of nonlinear solve iterations
-    const unsigned int d_maxNumberIterations;
+    const dftfe::uInt d_maxNumberIterations;
 
     /// nonlinear solve stopping tolerance
     const double d_tolerance;

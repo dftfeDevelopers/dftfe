@@ -67,7 +67,7 @@ namespace dftfe
     void
     excSpinUnpolarized(
       const double                        *rho,
-      const unsigned int                   numPoints,
+      const dftfe::uInt                    numPoints,
       double                              *exc,
       torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
@@ -76,7 +76,7 @@ namespace dftfe
       std::vector<double> rhoModified(numPoints, 0.0);
       if (densityPositivityCheckType ==
           excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
-        for (unsigned int i = 0; i < numPoints; ++i)
+        for (dftfe::uInt i = 0; i < numPoints; ++i)
           {
             std::string errMsg =
               "Negative electron-density encountered during xc evaluations";
@@ -84,13 +84,13 @@ namespace dftfe
           }
       else if (densityPositivityCheckType ==
                excDensityPositivityCheckTypes::MAKE_POSITIVE)
-        for (unsigned int i = 0; i < numPoints; ++i)
+        for (dftfe::uInt i = 0; i < numPoints; ++i)
           {
             rhoModified[i] =
               std::max(rho[i], 0.0); // d_rhoTol will be added subsequently
           }
       else
-        for (unsigned int i = 0; i < numPoints; ++i)
+        for (dftfe::uInt i = 0; i < numPoints; ++i)
           {
             rhoModified[i] = rho[i];
           }
@@ -109,7 +109,7 @@ namespace dftfe
       std::vector<torch::jit::IValue> input(0);
       input.push_back(rhoTensor);
       auto excTensor = model->forward(input).toTensor();
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
                  (rhoModified[i] + rhoTol);
     }
@@ -117,7 +117,7 @@ namespace dftfe
     void
     excSpinPolarized(
       const double                        *rho,
-      const unsigned int                   numPoints,
+      const dftfe::uInt                    numPoints,
       double                              *exc,
       torch::jit::script::Module          *model,
       const excDensityPositivityCheckTypes densityPositivityCheckType,
@@ -126,7 +126,7 @@ namespace dftfe
       std::vector<double> rhoModified(2 * numPoints, 0.0);
       if (densityPositivityCheckType ==
           excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             std::string errMsg =
               "Negative electron-density encountered during xc evaluations";
@@ -134,13 +134,13 @@ namespace dftfe
           }
       else if (densityPositivityCheckType ==
                excDensityPositivityCheckTypes::MAKE_POSITIVE)
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             rhoModified[i] =
               std::max(rho[i], 0.0); // d_rhoTol will be added subsequently
           }
       else
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             rhoModified[i] = rho[i];
           }
@@ -159,7 +159,7 @@ namespace dftfe
       std::vector<torch::jit::IValue> input(0);
       input.push_back(rhoTensor);
       auto excTensor = model->forward(input).toTensor();
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
                  (rhoModified[2 * i] + rhoModified[2 * i + 1] + 2 * rhoTol);
     }
@@ -167,7 +167,7 @@ namespace dftfe
     void
     vxcSpinUnpolarized(
       const double                        *rho,
-      const unsigned int                   numPoints,
+      const dftfe::uInt                    numPoints,
       double                              *exc,
       double                              *vxc,
       torch::jit::script::Module          *model,
@@ -177,7 +177,7 @@ namespace dftfe
       std::vector<double> rhoModified(numPoints, 0.0);
       if (densityPositivityCheckType ==
           excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
-        for (unsigned int i = 0; i < numPoints; ++i)
+        for (dftfe::uInt i = 0; i < numPoints; ++i)
           {
             std::string errMsg =
               "Negative electron-density encountered during xc evaluations";
@@ -185,13 +185,13 @@ namespace dftfe
           }
       else if (densityPositivityCheckType ==
                excDensityPositivityCheckTypes::MAKE_POSITIVE)
-        for (unsigned int i = 0; i < numPoints; ++i)
+        for (dftfe::uInt i = 0; i < numPoints; ++i)
           {
             rhoModified[i] =
               std::max(rho[i], 0.0); // d_rhoTol will be added subsequently
           }
       else
-        for (unsigned int i = 0; i < numPoints; ++i)
+        for (dftfe::uInt i = 0; i < numPoints; ++i)
           {
             rhoModified[i] = rho[i];
           }
@@ -215,7 +215,7 @@ namespace dftfe
                                                {rhoTensor},
                                              /*grad_outputs=*/{grad_output},
                                              /*create_graph=*/true)[0];
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         {
           exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
                    (rhoModified[i] + rhoTol);
@@ -226,7 +226,7 @@ namespace dftfe
     void
     vxcSpinPolarized(
       const double                        *rho,
-      const unsigned int                   numPoints,
+      const dftfe::uInt                    numPoints,
       double                              *exc,
       double                              *vxc,
       torch::jit::script::Module          *model,
@@ -236,7 +236,7 @@ namespace dftfe
       std::vector<double> rhoModified(2 * numPoints, 0.0);
       if (densityPositivityCheckType ==
           excDensityPositivityCheckTypes::EXCEPTION_POSITIVE)
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             std::string errMsg =
               "Negative electron-density encountered during xc evaluations";
@@ -244,13 +244,13 @@ namespace dftfe
           }
       else if (densityPositivityCheckType ==
                excDensityPositivityCheckTypes::MAKE_POSITIVE)
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             rhoModified[i] =
               std::max(rho[i], 0.0); // d_rhoTol will be added subsequently
           }
       else
-        for (unsigned int i = 0; i < 2 * numPoints; ++i)
+        for (dftfe::uInt i = 0; i < 2 * numPoints; ++i)
           {
             rhoModified[i] = rho[i];
           }
@@ -274,11 +274,11 @@ namespace dftfe
                                                {rhoTensor},
                                              /*grad_outputs=*/{grad_output},
                                              /*create_graph=*/true)[0];
-      for (unsigned int i = 0; i < numPoints; ++i)
+      for (dftfe::uInt i = 0; i < numPoints; ++i)
         {
           exc[i] = static_cast<double>(excTensor[i][0].item<float>()) /
                    (rhoModified[2 * i] + rhoModified[2 * i + 1] + 2 * rhoTol);
-          for (unsigned int j = 0; j < 2; ++j)
+          for (dftfe::uInt j = 0; j < 2; ++j)
             vxc[2 * i + j] = static_cast<double>(vxcTensor[i][j].item<float>());
         }
     }
@@ -297,7 +297,7 @@ namespace dftfe
     std::vector<std::string> keysToFind = {"PTC_FILE", "RHO_TOL"};
 
     // check if all required keys are found
-    for (unsigned int i = 0; i < keysToFind.size(); ++i)
+    for (dftfe::uInt i = 0; i < keysToFind.size(); ++i)
       {
         bool found = false;
         for (auto it = modelKeyValues.begin(); it != modelKeyValues.end(); ++it)
@@ -326,9 +326,9 @@ namespace dftfe
   }
 
   void
-  NNLDA::evaluateexc(const double      *rho,
-                     const unsigned int numPoints,
-                     double            *exc)
+  NNLDA::evaluateexc(const double     *rho,
+                     const dftfe::uInt numPoints,
+                     double           *exc)
   {
     if (!d_isSpinPolarized)
       excSpinUnpolarized(
@@ -350,15 +350,15 @@ namespace dftfe
     //  std::vector<torch::jit::IValue> input(0);
     //  input.push_back(rhoTensor);
     //  auto excTensor = d_model->forward(input).toTensor();
-    //  for(unsigned int i = 0; i < numPoints; ++i)
+    //  for(dftfe::uInt i = 0; i < numPoints; ++i)
     //	exc[i] = static_cast<double>(excTensor[i][0].item<float>());
   }
 
   void
-  NNLDA::evaluatevxc(const double      *rho,
-                     const unsigned int numPoints,
-                     double            *exc,
-                     double            *vxc)
+  NNLDA::evaluatevxc(const double     *rho,
+                     const dftfe::uInt numPoints,
+                     double           *exc,
+                     double           *vxc)
   {
     if (!d_isSpinPolarized)
       vxcSpinUnpolarized(rho,
@@ -391,7 +391,7 @@ namespace dftfe
     // torch::ones_like(excTensor); auto vxcTensor =
     // torch::autograd::grad({excTensor}, {rhoTensor},
     // /*grad_outputs=*/{grad_output}, /*create_graph=*/true)[0]; for(unsigned
-    // int i = 0; i < numPoints; ++i)
+    // dftfe::Int i = 0; i < numPoints; ++i)
     //{
     //  exc[i] = static_cast<double>(excTensor[i][0].item<float>());
     //  vxc[i] = static_cast<double>(vxcTensor[i][0].item<float>());

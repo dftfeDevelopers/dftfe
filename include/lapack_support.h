@@ -32,7 +32,7 @@ namespace dftfe
     /**
      * Integer type in BLAS.
      */
-    using blas_int = int;
+    using blas_int = dftfe::Int;
 #endif
   } // namespace types
 

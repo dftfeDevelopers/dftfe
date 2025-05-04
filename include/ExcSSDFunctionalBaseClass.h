@@ -26,12 +26,19 @@ namespace dftfe
 {
   enum class ExcFamilyType
   {
+    /*
+    LLMGGA: Includes only Laplacian of the electron-density
+    TauMGGA: Includes only kinetic energy density
+    MGGA: Includes both the Laplacian of the electron-density and kinetic energy
+    density
+    */
     LDA,
     GGA,
     LLMGGA,
     HYBRID,
     DFTPlusU,
-    MGGA
+    MGGA,
+    TauMGGA
   };
 
   enum class densityFamilyType
@@ -83,6 +90,12 @@ namespace dftfe
                               const densityFamilyType densityFamType,
                               const std::vector<DensityDescriptorDataAttributes>
                                 &densityDescriptorAttributesList);
+    ExcSSDFunctionalBaseClass(const ExcFamilyType     excFamType,
+                              const densityFamilyType densityFamType,
+                              const std::vector<DensityDescriptorDataAttributes>
+                                &densityDescriptorAttributesList,
+                              const std::vector<WfcDescriptorDataAttributes>
+                                &wfcDescriptorAttributesList);
 
     virtual ~ExcSSDFunctionalBaseClass();
 
@@ -108,9 +121,9 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
                                                                         &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const unsigned int inputVecSize,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex) = 0;
+      const dftfe::uInt inputVecSize,
+      const dftfe::uInt kPointIndex,
+      const dftfe::uInt spinIndex) = 0;
 
     /*
      * @brief The apply function that will be called in HXCheby() with single precision.
@@ -127,10 +140,10 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32,
                                               memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
-                        &dst,
-      const unsigned int inputVecSize,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex) = 0;
+                       &dst,
+      const dftfe::uInt inputVecSize,
+      const dftfe::uInt kPointIndex,
+      const dftfe::uInt spinIndex) = 0;
 
     /*
      * @brief The function that updates the Wave function dependent part
@@ -176,8 +189,8 @@ namespace dftfe
      */
     virtual void
     computeRhoTauDependentXCData(
-      AuxDensityMatrix<memorySpace>               &auxDensityMatrix,
-      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
         &xDataOut,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -193,11 +206,14 @@ namespace dftfe
       const = 0;
 
     virtual void
-    reinitKPointDependentVariables(unsigned int kPointIndex) = 0;
+    reinitKPointDependentVariables(dftfe::uInt kPointIndex) = 0;
 
   protected:
     const std::vector<DensityDescriptorDataAttributes>
       d_densityDescriptorAttributesList;
+
+    const std::vector<WfcDescriptorDataAttributes>
+      d_wfcDescriptorAttributesList;
 
     ExcFamilyType     d_ExcFamilyType;
     densityFamilyType d_densityFamilyType;

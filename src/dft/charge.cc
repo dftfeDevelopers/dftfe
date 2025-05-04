@@ -26,8 +26,8 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
@@ -40,8 +40,8 @@ namespace dftfe
     dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
                                   quadrature_formula,
                                   dealii::update_JxW_values);
-    const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-    const unsigned int n_q_points    = quadrature_formula.size();
+    const dftfe::uInt dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+    const dftfe::uInt n_q_points    = quadrature_formula.size();
 
     dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
                                                          .begin_active(),
@@ -53,7 +53,7 @@ namespace dftfe
             fe_values.reinit(cell);
             const std::vector<double> &rhoValues =
               (*rhoQuadValues).find(cell->id())->second;
-            for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+            for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
               {
                 normValue += rhoValues[q_point] * fe_values.JxW(q_point);
               }
@@ -62,8 +62,8 @@ namespace dftfe
     return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
@@ -77,20 +77,20 @@ namespace dftfe
     dealii::FEValues<3> fe_values(dofHandlerOfField.get_fe(),
                                   quadrature_formula,
                                   dealii::update_JxW_values);
-    const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-    const unsigned int n_q_points    = quadrature_formula.size();
+    const dftfe::uInt dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+    const dftfe::uInt n_q_points    = quadrature_formula.size();
 
     dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
                                                          .begin_active(),
                                                 endc = dofHandlerOfField.end();
-    unsigned int iCell                               = 0;
+    dftfe::uInt iCell                                = 0;
     for (; cell != endc; ++cell)
       {
         if (cell->is_locally_owned())
           {
             fe_values.reinit(cell);
             const double *rhoValues = rhoQuadValues.data() + iCell * n_q_points;
-            for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+            for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
               {
                 normValue += rhoValues[q_point] * fe_values.JxW(q_point);
               }
@@ -104,8 +104,8 @@ namespace dftfe
   //
   // compute total charge using nodal point values
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
@@ -119,8 +119,8 @@ namespace dftfe
                                   quadrature_formula,
                                   dealii::update_values |
                                     dealii::update_JxW_values);
-    const unsigned int dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
-    const unsigned int n_q_points    = quadrature_formula.size();
+    const dftfe::uInt dofs_per_cell = dofHandlerOfField.get_fe().dofs_per_cell;
+    const dftfe::uInt n_q_points    = quadrature_formula.size();
     rhoNodalField.update_ghost_values();
     dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerOfField
                                                          .begin_active(),
@@ -132,7 +132,7 @@ namespace dftfe
             fe_values.reinit(cell);
             std::vector<double> tempRho(n_q_points);
             fe_values.get_function_values(rhoNodalField, tempRho);
-            for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+            for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
               {
                 normValue += tempRho[q_point] * fe_values.JxW(q_point);
               }
@@ -144,8 +144,8 @@ namespace dftfe
   //
   // compute total charge using nodal point values by using FEEvaluation object
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
@@ -163,7 +163,7 @@ namespace dftfe
                    d_densityQuadratureIdElectro);
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
-    const unsigned int numQuadPoints = fe_evalField.n_q_points;
+    const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
     nodalField.update_ghost_values();
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(d_densityDofHandlerIndexElectro)),
     //        dealii::ExcMessage("DFT-FE Error: mismatch in
@@ -176,13 +176,13 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     double normValue = 0.0;
-    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_cell_batches();
+    for (dftfe::uInt cell = 0; cell < matrixFreeDataObject.n_cell_batches();
          ++cell)
       {
         fe_evalField.reinit(cell);
         fe_evalField.read_dof_values(nodalField);
         fe_evalField.evaluate(dealii::EvaluationFlags::values);
-        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        for (dftfe::uInt q_point = 0; q_point < numQuadPoints; ++q_point)
           {
             dealii::VectorizedArray<double> temp =
               fe_evalField.get_value(q_point);
@@ -191,7 +191,7 @@ namespace dftfe
 
         normValueVectorized = fe_evalField.integrate_value();
 
-        for (unsigned int iSubCell = 0;
+        for (dftfe::uInt iSubCell = 0;
              iSubCell <
              matrixFreeDataObject.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
@@ -206,8 +206,8 @@ namespace dftfe
   //
   // compute total charge
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::totalMagnetization(
@@ -221,19 +221,19 @@ namespace dftfe
     dealii::FEValues<3> fe_values(FE,
                                   quadrature_formula,
                                   dealii::update_JxW_values);
-    const unsigned int  dofs_per_cell = FE.dofs_per_cell;
-    const unsigned int  n_q_points    = quadrature_formula.size();
+    const dftfe::uInt   dofs_per_cell = FE.dofs_per_cell;
+    const dftfe::uInt   n_q_points    = quadrature_formula.size();
 
     dealii::DoFHandler<3>::active_cell_iterator cell =
                                                   dofHandler.begin_active(),
                                                 endc = dofHandler.end();
-    unsigned int iCell                               = 0;
+    dftfe::uInt iCell                                = 0;
     for (; cell != endc; ++cell)
       {
         if (cell->is_locally_owned())
           {
             fe_values.reinit(cell);
-            for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+            for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
               {
                 normValue += (magQuadValues[iCell * n_q_points + q_point]) *
                              fe_values.JxW(q_point);
@@ -258,15 +258,15 @@ namespace dftfe
   //
   // compute field l2 norm
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::rhofieldl2Norm(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
     const distributedCPUVec<double>     &nodalField,
-    const unsigned int                   dofHandlerId,
-    const unsigned int                   quadratureId)
+    const dftfe::uInt                    dofHandlerId,
+    const dftfe::uInt                    quadratureId)
 
   {
     dealii::FEEvaluation<
@@ -278,7 +278,7 @@ namespace dftfe
       fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
-    const unsigned int numQuadPoints = fe_evalField.n_q_points;
+    const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
     nodalField.update_ghost_values();
     AssertThrow(
       matrixFreeDataObject.get_quadrature(quadratureId).size() == numQuadPoints,
@@ -286,13 +286,13 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     double normValue = 0.0;
-    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_cell_batches();
+    for (dftfe::uInt cell = 0; cell < matrixFreeDataObject.n_cell_batches();
          ++cell)
       {
         fe_evalField.reinit(cell);
         fe_evalField.read_dof_values(nodalField);
         fe_evalField.evaluate(dealii::EvaluationFlags::values);
-        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        for (dftfe::uInt q_point = 0; q_point < numQuadPoints; ++q_point)
           {
             dealii::VectorizedArray<double> temp =
               fe_evalField.get_value(q_point) * fe_evalField.get_value(q_point);
@@ -301,7 +301,7 @@ namespace dftfe
 
         normValueVectorized = fe_evalField.integrate_value();
 
-        for (unsigned int iSubCell = 0;
+        for (dftfe::uInt iSubCell = 0;
              iSubCell <
              matrixFreeDataObject.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
@@ -314,16 +314,16 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::rhofieldInnerProduct(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
     const distributedCPUVec<double>     &nodalField1,
     const distributedCPUVec<double>     &nodalField2,
-    const unsigned int                   dofHandlerId,
-    const unsigned int                   quadratureId)
+    const dftfe::uInt                    dofHandlerId,
+    const dftfe::uInt                    quadratureId)
 
   {
     dealii::FEEvaluation<
@@ -335,7 +335,7 @@ namespace dftfe
       fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
     dealii::VectorizedArray<double> valueVectorized =
       dealii::make_vectorized_array(0.0);
-    const unsigned int numQuadPoints = fe_evalField.n_q_points;
+    const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
     nodalField1.update_ghost_values();
     nodalField2.update_ghost_values();
     AssertThrow(
@@ -344,7 +344,7 @@ namespace dftfe
         "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
     double value = 0.0;
-    for (unsigned int cell = 0; cell < matrixFreeDataObject.n_cell_batches();
+    for (dftfe::uInt cell = 0; cell < matrixFreeDataObject.n_cell_batches();
          ++cell)
       {
         fe_evalField.reinit(cell);
@@ -352,7 +352,7 @@ namespace dftfe
         fe_evalField.evaluate(dealii::EvaluationFlags::values);
         dealii::AlignedVector<dealii::VectorizedArray<double>> temp1(
           numQuadPoints, dealii::make_vectorized_array(0.0));
-        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        for (dftfe::uInt q_point = 0; q_point < numQuadPoints; ++q_point)
           {
             temp1[q_point] = fe_evalField.get_value(q_point);
           }
@@ -361,12 +361,12 @@ namespace dftfe
         fe_evalField.evaluate(dealii::EvaluationFlags::values);
         dealii::AlignedVector<dealii::VectorizedArray<double>> temp2(
           numQuadPoints, dealii::make_vectorized_array(0.0));
-        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        for (dftfe::uInt q_point = 0; q_point < numQuadPoints; ++q_point)
           {
             temp2[q_point] = fe_evalField.get_value(q_point);
           }
 
-        for (unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+        for (dftfe::uInt q_point = 0; q_point < numQuadPoints; ++q_point)
           {
             fe_evalField.submit_value(temp1[q_point] * temp2[q_point], q_point);
           }
@@ -374,7 +374,7 @@ namespace dftfe
 
         valueVectorized = fe_evalField.integrate_value();
 
-        for (unsigned int iSubCell = 0;
+        for (dftfe::uInt iSubCell = 0;
              iSubCell <
              matrixFreeDataObject.n_active_entries_per_cell_batch(cell);
              ++iSubCell)
@@ -387,22 +387,22 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::computeMultipoleMoments(
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-                      &basisOperationsPtr,
-    const unsigned int densityQuadratureId,
+                     &basisOperationsPtr,
+    const dftfe::uInt densityQuadratureId,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                                                         &rhoQuadValues,
     const std::map<dealii::CellId, std::vector<double>> *bQuadValues)
   {
     basisOperationsPtr->reinit(0, 0, densityQuadratureId, false);
-    const unsigned int nQuadsPerCellDensity =
+    const dftfe::uInt nQuadsPerCellDensity =
       basisOperationsPtr->nQuadsPerCell();
     auto matrixFreeDataObject = basisOperationsPtr->matrixFreeData();
 
@@ -501,14 +501,14 @@ namespace dftfe
                       d_smearedChargeQuadratureIdElectro);
             d_smearedChargeMoments.clear();
             d_smearedChargeMoments.resize(13, 0.0);
-            for (unsigned int iMacroCell = 0;
+            for (dftfe::uInt iMacroCell = 0;
                  iMacroCell < matrixFreeDataObject.n_cell_batches();
                  ++iMacroCell)
               {
                 FEEvalb.reinit(iMacroCell);
                 dealii::AlignedVector<dealii::VectorizedArray<double>> bVec(
                   FEEvalb.n_q_points, 0.0);
-                for (unsigned int iSubCell = 0;
+                for (dftfe::uInt iSubCell = 0;
                      iSubCell <
                      matrixFreeDataObject.n_active_entries_per_cell_batch(
                        iMacroCell);
@@ -523,16 +523,16 @@ namespace dftfe
                     const std::vector<double> &tempbVec =
                       bQuadValues->find(subCellId)->second;
                     if (tempbVec.size() != 0)
-                      for (unsigned int iQuad = 0; iQuad < FEEvalb.n_q_points;
+                      for (dftfe::uInt iQuad = 0; iQuad < FEEvalb.n_q_points;
                            ++iQuad)
                         {
                           bVec[iQuad][iSubCell] = tempbVec[iQuad];
                         }
                   }
-                for (unsigned int iMomentComponent = 0; iMomentComponent < 13;
+                for (dftfe::uInt iMomentComponent = 0; iMomentComponent < 13;
                      ++iMomentComponent)
                   {
-                    for (unsigned int iQuad = 0; iQuad < FEEvalb.n_q_points;
+                    for (dftfe::uInt iQuad = 0; iQuad < FEEvalb.n_q_points;
                          ++iQuad)
                       {
                         FEEvalb.submit_value(
@@ -541,7 +541,7 @@ namespace dftfe
                           iQuad);
                       }
                     auto bMacroCellIntegral = FEEvalb.integrate_value();
-                    for (unsigned int iSubCell = 0;
+                    for (dftfe::uInt iSubCell = 0;
                          iSubCell <
                          matrixFreeDataObject.n_active_entries_per_cell_batch(
                            iMacroCell);
@@ -568,14 +568,14 @@ namespace dftfe
       FEEvalRho(matrixFreeDataObject,
                 d_densityDofHandlerIndexElectro,
                 d_densityQuadratureIdElectro);
-    for (unsigned int iMacroCell = 0;
+    for (dftfe::uInt iMacroCell = 0;
          iMacroCell < matrixFreeDataObject.n_cell_batches();
          ++iMacroCell)
       {
         FEEvalRho.reinit(iMacroCell);
         dealii::AlignedVector<dealii::VectorizedArray<double>> rhoVec(
           FEEvalRho.n_q_points, 0.0);
-        for (unsigned int iSubCell = 0;
+        for (dftfe::uInt iSubCell = 0;
              iSubCell <
              matrixFreeDataObject.n_active_entries_per_cell_batch(iMacroCell);
              ++iSubCell)
@@ -586,19 +586,19 @@ namespace dftfe
                                    iSubCell,
                                    d_densityDofHandlerIndexElectro)
                 ->id();
-            const unsigned int cellIndex =
+            const dftfe::uInt cellIndex =
               basisOperationsPtr->cellIndex(subCellId);
             const double *tempVec =
               rhoQuadValues.data() + cellIndex * FEEvalRho.n_q_points;
-            for (unsigned int iQuad = 0; iQuad < FEEvalRho.n_q_points; ++iQuad)
+            for (dftfe::uInt iQuad = 0; iQuad < FEEvalRho.n_q_points; ++iQuad)
               {
                 rhoVec[iQuad][iSubCell] = tempVec[iQuad];
               }
           }
-        for (unsigned int iMomentComponent = 0; iMomentComponent < 13;
+        for (dftfe::uInt iMomentComponent = 0; iMomentComponent < 13;
              ++iMomentComponent)
           {
-            for (unsigned int iQuad = 0; iQuad < FEEvalRho.n_q_points; ++iQuad)
+            for (dftfe::uInt iQuad = 0; iQuad < FEEvalRho.n_q_points; ++iQuad)
               {
                 FEEvalRho.submit_value((momentsAtQuadPoints[iMomentComponent])(
                                          rhoVec[iQuad],
@@ -606,7 +606,7 @@ namespace dftfe
                                        iQuad);
               }
             auto rhoMacroCellIntegral = FEEvalRho.integrate_value();
-            for (unsigned int iSubCell = 0;
+            for (dftfe::uInt iSubCell = 0;
                  iSubCell <
                  matrixFreeDataObject.n_active_entries_per_cell_batch(
                    iMacroCell);
@@ -617,7 +617,7 @@ namespace dftfe
           }
       }
     dealii::Utilities::MPI::sum(moments, mpi_communicator, moments);
-    for (unsigned int iMomentComponent = 0; iMomentComponent < 13;
+    for (dftfe::uInt iMomentComponent = 0; iMomentComponent < 13;
          ++iMomentComponent)
       {
         moments[iMomentComponent] += d_smearedChargeMoments[iMomentComponent];

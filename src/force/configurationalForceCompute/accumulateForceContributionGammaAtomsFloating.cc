@@ -21,17 +21,17 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     accumulateForceContributionGammaAtomsFloating(
-      const std::map<unsigned int, std::vector<double>>
+      const std::map<dftfe::uInt, std::vector<double>>
                           &forceContributionLocalGammaAtoms,
       std::vector<double> &accumForcesVector)
   {
-    for (unsigned int iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
       {
         std::vector<double> forceContributionLocalGammaiAtomGlobal(3);
         std::vector<double> forceContributionLocalGammaiAtomLocal(3, 0.0);
@@ -57,7 +57,7 @@ namespace dftfe
                       MPI_SUM,
                       mpi_communicator);
 
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           accumForcesVector[iAtom * 3 + idim] +=
             forceContributionLocalGammaiAtomGlobal[idim];
       }

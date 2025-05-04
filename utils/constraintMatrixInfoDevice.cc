@@ -56,8 +56,8 @@ namespace dftfe
         partitioner->locally_owned_range();
       const dealii::IndexSet &ghost_dofs = partitioner->ghost_indices();
 
-      dealii::types::global_dof_index     count = 0;
-      std::vector<std::set<unsigned int>> slaveToMasterSet;
+      dealii::types::global_dof_index    count = 0;
+      std::vector<std::set<dftfe::uInt>> slaveToMasterSet;
       for (dealii::IndexSet::ElementIterator it = locally_owned_dofs.begin();
            it != locally_owned_dofs.end();
            ++it)
@@ -77,12 +77,12 @@ namespace dftfe
               d_rowSizes.push_back(rowData->size());
               d_rowSizesAccumulated.push_back(count);
               count += rowData->size();
-              std::set<unsigned int> columnIds;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              std::set<dftfe::uInt> columnIds;
+              for (dftfe::uInt j = 0; j < rowData->size(); ++j)
                 {
                   Assert((*rowData)[j].first < partitioner->size(),
                          dealii::ExcMessage("Index out of bounds"));
-                  const unsigned int columnId =
+                  const dftfe::uInt columnId =
                     partitioner->global_to_local((*rowData)[j].first);
                   d_columnIdsLocal.push_back(columnId);
                   d_columnValues.push_back((*rowData)[j].second);
@@ -112,12 +112,12 @@ namespace dftfe
               d_rowSizes.push_back(rowData->size());
               d_rowSizesAccumulated.push_back(count);
               count += rowData->size();
-              std::set<unsigned int> columnIds;
-              for (unsigned int j = 0; j < rowData->size(); ++j)
+              std::set<dftfe::uInt> columnIds;
+              for (dftfe::uInt j = 0; j < rowData->size(); ++j)
                 {
                   Assert((*rowData)[j].first < partitioner->size(),
                          dealii::ExcMessage("Index out of bounds"));
-                  const unsigned int columnId =
+                  const dftfe::uInt columnId =
                     partitioner->global_to_local((*rowData)[j].first);
                   d_columnIdsLocal.push_back(columnId);
                   d_columnValues.push_back((*rowData)[j].second);
@@ -156,7 +156,7 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
 
-      const unsigned int blockSize = fieldVector.numVectors();
+      const dftfe::uInt blockSize = fieldVector.numVectors();
       distributeDevice(blockSize,
                        fieldVector.begin(),
                        d_rowIdsLocalDevice.begin(),
@@ -199,7 +199,7 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
 
-      const unsigned int blockSize = fieldVector.numVectors();
+      const dftfe::uInt blockSize = fieldVector.numVectors();
       distributeSlaveToMasterAtomicAddDevice(
         blockSize,
         fieldVector.begin(),
@@ -219,8 +219,8 @@ namespace dftfe
       if (d_numConstrainedDofs == 0)
         return;
 
-      const unsigned int blockSize          = fieldVector.numVectors();
-      const unsigned int numConstrainedDofs = d_rowIdsLocal.size();
+      const dftfe::uInt blockSize          = fieldVector.numVectors();
+      const dftfe::uInt numConstrainedDofs = d_rowIdsLocal.size();
       setzeroDevice(blockSize,
                     fieldVector.begin(),
                     d_rowIdsLocalDevice.begin(),
@@ -269,7 +269,7 @@ namespace dftfe
     void
     constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::distribute(
       distributedCPUVec<T> &fieldVector,
-      const unsigned int    blockSize) const
+      const dftfe::uInt     blockSize) const
     {
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
@@ -278,7 +278,7 @@ namespace dftfe
     void
     constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::
       distribute_slave_to_master(distributedCPUVec<T> &fieldVector,
-                                 const unsigned int    blockSize) const
+                                 const dftfe::uInt     blockSize) const
     {
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
@@ -295,7 +295,7 @@ namespace dftfe
     void
     constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::set_zero(
       distributedCPUVec<T> &fieldVector,
-      const unsigned int    blockSize) const
+      const dftfe::uInt     blockSize) const
     {
       AssertThrow(false, dftUtils::ExcNotImplementedYet());
     }
@@ -303,25 +303,25 @@ namespace dftfe
     template void
     constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::distribute(
       distributedCPUVec<dataTypes::number> &fieldVector,
-      const unsigned int                    blockSize) const;
+      const dftfe::uInt                     blockSize) const;
 
     template void
     constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::
       distribute_slave_to_master(
         distributedCPUVec<dataTypes::number> &fieldVector,
-        const unsigned int                    blockSize) const;
+        const dftfe::uInt                     blockSize) const;
 
 #if defined(USE_COMPLEX)
     template void
     constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::
       distribute_slave_to_master(distributedCPUVec<double> &fieldVector,
-                                 const unsigned int         blockSize) const;
+                                 const dftfe::uInt          blockSize) const;
 #endif
 
     template void
     constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>::set_zero(
       distributedCPUVec<dataTypes::number> &fieldVector,
-      const unsigned int                    blockSize) const;
+      const dftfe::uInt                     blockSize) const;
 
 
 

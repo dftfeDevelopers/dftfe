@@ -19,9 +19,9 @@
 #include "vector"
 namespace dftfe
 {
-  AtomPseudoWavefunctions::AtomPseudoWavefunctions(std::string  filename,
-                                                   unsigned int n,
-                                                   unsigned int l)
+  AtomPseudoWavefunctions::AtomPseudoWavefunctions(std::string filename,
+                                                   dftfe::uInt n,
+                                                   dftfe::uInt l)
   {
     d_nQuantumNumber = n;
     d_lQuantumNumber = l;
@@ -34,7 +34,7 @@ namespace dftfe
     std::vector<double> orbVec;
     orbVec.reserve(5000);
 
-    unsigned int numMeshSize = 0;
+    dftfe::uInt numMeshSize = 0;
     if (pspFile.is_open())
       {
         while (pspFile.good())
@@ -95,7 +95,7 @@ namespace dftfe
     return v;
   }
 
-  unsigned int
+  dftfe::uInt
   AtomPseudoWavefunctions::getQuantumNumbern() const
   {
     return d_nQuantumNumber;

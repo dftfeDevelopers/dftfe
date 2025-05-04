@@ -46,7 +46,7 @@ namespace dftfe
       if (file.is_open())
         {
           std::string line;
-          int         lineNumber = 0;
+          dftfe::Int  lineNumber = 0;
           while (std::getline(file, line))
             {
               lineNumber++;
@@ -83,8 +83,8 @@ namespace dftfe
   } // namespace
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initUnmovedTriangulation(
@@ -158,7 +158,7 @@ namespace dftfe
     localProc_dof_indicesReal.clear();
     local_dof_indicesImag.clear();
     localProc_dof_indicesImag.clear();
-    for (unsigned int i = 0; i < locally_owned_dofsEigen.n_elements(); i++)
+    for (dftfe::uInt i = 0; i < locally_owned_dofsEigen.n_elements(); i++)
       {
         if (selectedDofsReal.is_element(
               locally_owned_dofsEigen.nth_index_in_set(i)))
@@ -200,7 +200,7 @@ namespace dftfe
     std::vector<std::vector<double>> unitVectorsXYZ;
     unitVectorsXYZ.resize(3);
 
-    for (int i = 0; i < 3; ++i)
+    for (dftfe::Int i = 0; i < 3; ++i)
       {
         unitVectorsXYZ[i].resize(3, 0.0);
         unitVectorsXYZ[i][i] = 0.0;
@@ -210,9 +210,9 @@ namespace dftfe
     // resize offset vectors
     offsetVectors.resize(3);
 
-    for (int i = 0; i < 3; ++i)
+    for (dftfe::Int i = 0; i < 3; ++i)
       {
-        for (int j = 0; j < 3; ++j)
+        for (dftfe::Int j = 0; j < 3; ++j)
           {
             offsetVectors[i][j] =
               unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
@@ -223,11 +223,11 @@ namespace dftfe
       typename dealii::DoFHandler<3>::cell_iterator>>
       periodicity_vector2, periodicity_vector2Eigen;
 
-    std::vector<int>         periodicDirectionVector;
-    const std::array<int, 3> periodic = {d_dftParamsPtr->periodicX,
-                                         d_dftParamsPtr->periodicY,
-                                         d_dftParamsPtr->periodicZ};
-    for (unsigned int d = 0; d < 3; ++d)
+    std::vector<dftfe::Int>         periodicDirectionVector;
+    const std::array<dftfe::Int, 3> periodic = {d_dftParamsPtr->periodicX,
+                                                d_dftParamsPtr->periodicY,
+                                                d_dftParamsPtr->periodicZ};
+    for (dftfe::uInt d = 0; d < 3; ++d)
       {
         if (periodic[d] == 1)
           {
@@ -236,7 +236,8 @@ namespace dftfe
       }
 
 
-    for (int i = 0; i < std::accumulate(periodic.begin(), periodic.end(), 0);
+    for (dftfe::Int i = 0;
+         i < std::accumulate(periodic.begin(), periodic.end(), 0);
          ++i)
       {
         dealii::GridTools::collect_periodic_faces(

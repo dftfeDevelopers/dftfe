@@ -133,7 +133,7 @@ namespace dftfe
     // parallel objects
     MPI_Comm                   d_mpiCommParent;
     MPI_Comm                   mpi_communicator;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
   };
 } // namespace dftfe

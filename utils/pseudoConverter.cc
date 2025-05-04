@@ -53,11 +53,11 @@ namespace dftfe
     }
 
 
-    std::vector<int>
+    std::vector<dftfe::Int>
     convert(const std::string &fileName,
             const std::string &dftfeScratchFolderName,
-            const int          verbosity,
-            const unsigned int natomTypes,
+            const dftfe::Int   verbosity,
+            const dftfe::uInt  natomTypes,
             const bool         pseudoTestsFlag)
     {
       dealii::ConditionalOStream pcout(std::cout);
@@ -73,7 +73,7 @@ namespace dftfe
       std::string              z;
       std::string              toParse;
       std::vector<std::string> atomTypes;
-      unsigned int             nlccSum = 0;
+      dftfe::uInt              nlccSum = 0;
 
       while (input_file >> z >> toParse)
         {
@@ -91,7 +91,7 @@ namespace dftfe
               // std::string xmlFileName = newFolder + "/" + toParse.substr(0,
               // toParse.find(".upf"));
               std::string xmlFileName = newFolder + "/" + "z" + z + ".xml";
-              int         errorFlag;
+              dftfe::Int  errorFlag;
               if (pseudoTestsFlag)
                 {
                   std::string dftPath = DFTFE_PATH;
@@ -103,18 +103,18 @@ namespace dftfe
                     dftPath + "/tests/dft/pseudopotential/real/" + toParse;
 #endif
 
-                  unsigned int nlccFlag = 0;
-                  unsigned int socFlag  = 0;
-                  unsigned int pawFlag  = 0;
+                  dftfe::uInt nlccFlag = 0;
+                  dftfe::uInt socFlag  = 0;
+                  dftfe::uInt pawFlag  = 0;
                   errorFlag = dftfe::pseudoUtils::pseudoPotentialToDftfeParser(
                     newPath, newFolder, verbosity, nlccFlag, socFlag, pawFlag);
                   nlccSum += nlccFlag;
                 }
               else
                 {
-                  unsigned int nlccFlag = 0;
-                  unsigned int socFlag  = 0;
-                  unsigned int pawFlag  = 0;
+                  dftfe::uInt nlccFlag = 0;
+                  dftfe::uInt socFlag  = 0;
+                  dftfe::uInt pawFlag  = 0;
                   errorFlag = dftfe::pseudoUtils::pseudoPotentialToDftfeParser(
                     toParse, newFolder, verbosity, nlccFlag, socFlag, pawFlag);
                   nlccSum += nlccFlag;
@@ -153,7 +153,7 @@ namespace dftfe
         dealii::ExcMessage(
           "Number of atom types in your pseudopotential file does not match with that given in the parameter file"));
 
-      std::vector<int> pspFlags(2, 0);
+      std::vector<dftfe::Int> pspFlags(2, 0);
       pspFlags[0] = nlccSum;
       pspFlags[1] = 0;
 

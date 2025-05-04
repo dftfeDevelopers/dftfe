@@ -50,10 +50,10 @@ namespace dftfe
              dftfe::basis::FEBasisOperations<double, double, memorySpace>>
                                                     basisOperationsPtr,
            const dealii::AffineConstraints<double> &constraintMatrix,
-           const unsigned int                       matrixFreeVectorComponent,
-           const unsigned int matrixFreeQuadratureComponentRhs,
-           const unsigned int matrixFreeQuadratureComponentAX,
-           bool               isComputeMeanValueConstraint);
+           const dftfe::uInt                        matrixFreeVectorComponent,
+           const dftfe::uInt matrixFreeQuadratureComponentRhs,
+           const dftfe::uInt matrixFreeQuadratureComponentAX,
+           bool              isComputeMeanValueConstraint);
     /**
      * @brief Compute right hand side vector for the problem Ax = rhs.
      *
@@ -63,7 +63,7 @@ namespace dftfe
     computeRhs(
       dftfe::linearAlgebra::MultiVector<double, memorySpace> &NDBCVec,
       dftfe::linearAlgebra::MultiVector<double, memorySpace> &outputVec,
-      unsigned int blockSizeInput) override;
+      dftfe::uInt blockSizeInput) override;
 
     /**
      * @brief Compute A matrix multipled by x.
@@ -72,7 +72,7 @@ namespace dftfe
     void
     vmult(dftfe::linearAlgebra::MultiVector<double, memorySpace> &Ax,
           dftfe::linearAlgebra::MultiVector<double, memorySpace> &x,
-          unsigned int blockSize) override;
+          dftfe::uInt blockSize) override;
 
     /**
      * @brief Apply the constraints to the solution vector.
@@ -140,9 +140,9 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<double, memorySpace> *d_blockedXPtr,
       *d_blockedNDBCPtr, d_rhsVec;
 
-    unsigned int d_matrixFreeQuadratureComponentRhs;
-    unsigned int d_matrixFreeVectorComponent;
-    unsigned int d_blockSize;
+    dftfe::uInt d_matrixFreeQuadratureComponentRhs;
+    dftfe::uInt d_matrixFreeVectorComponent;
+    dftfe::uInt d_blockSize;
 
     dftfe::utils::MemoryStorage<double, memorySpace> d_diagonalA,
       d_diagonalSqrtA;
@@ -164,25 +164,25 @@ namespace dftfe
 
     /// data members for the mpi implementation
     const MPI_Comm             mpi_communicator, d_mpi_parent;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
-    size_type                  d_locallyOwnedSize;
+    dftfe::uInt                d_locallyOwnedSize;
 
-    size_type d_numberDofsPerElement;
-    size_type d_numCells;
+    dftfe::uInt d_numberDofsPerElement;
+    dftfe::uInt d_numCells;
 
-    size_type d_inc;
-    double    d_negScalarCoeffAlpha;
-    double    d_scalarCoeffAlpha;
-    double    d_beta;
-    double    d_alpha;
-    char      d_transA;
-    char      d_transB;
+    dftfe::uInt d_inc;
+    double      d_negScalarCoeffAlpha;
+    double      d_scalarCoeffAlpha;
+    double      d_beta;
+    double      d_alpha;
+    char        d_transA;
+    char        d_transB;
 
 
-    dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
-      d_mapNodeIdToProcId, d_mapQuadIdToProcId;
+    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> d_mapNodeIdToProcId,
+      d_mapQuadIdToProcId;
 
     dftfe::utils::MemoryStorage<double, memorySpace> d_xCellLLevelNodalData,
       d_AxCellLLevelNodalData;
@@ -190,14 +190,14 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, memorySpace> *d_rhsQuadDataPtr;
 
-    unsigned int d_matrixFreeQuadratureComponentAX, d_nQuadsPerCell;
+    dftfe::uInt d_matrixFreeQuadratureComponentAX, d_nQuadsPerCell;
 
     /// pointer to the dealii::DofHandler object. This is already part of the
     /// matrixFreeData object.
     const dealii::DoFHandler<3> *d_dofHandler;
 
     /**
-     * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\int(\nabla N_i \cdot \nabla N_j))
+     * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\dftfe::Int(\nabla N_i \cdot \nabla N_j))
      * with first dimension traversing the macro cell id
      * and second dimension storing the matrix of size numberNodesPerElement x
      * numberNodesPerElement in a flattened 1D dealii Vectorized array
@@ -205,7 +205,7 @@ namespace dftfe
     std::vector<double> d_cellShapeFunctionGradientIntegral;
 
     /**
-     * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\int(\nabla N_i ))
+     * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\dftfe::Int(\nabla N_i ))
      * with first dimension traversing the macro cell id
      * and second dimension storing the matrix of size numberNodesPerElement in
      * a flattened 1D dealii Vectorized array
@@ -215,7 +215,7 @@ namespace dftfe
     /// storage for shapefunctions
     std::vector<double> d_shapeFunctionValue;
 
-    unsigned int d_cellBlockSize;
+    dftfe::uInt d_cellBlockSize;
   };
 
 } // namespace dftfe

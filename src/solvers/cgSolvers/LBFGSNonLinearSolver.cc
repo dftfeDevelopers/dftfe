@@ -26,13 +26,13 @@ namespace dftfe
   // Constructor.
   //
   LBFGSNonLinearSolver::LBFGSNonLinearSolver(
-    const bool         usePreconditioner,
-    const double       maxUpdate,
-    const unsigned int maxNumberIterations,
-    const int          maxNumPastSteps,
-    const unsigned int debugLevel,
-    const MPI_Comm    &mpi_comm_parent,
-    const bool         isCurvatureOnlyLineSearchStoppingCondition)
+    const bool        usePreconditioner,
+    const double      maxUpdate,
+    const dftfe::uInt maxNumberIterations,
+    const dftfe::Int  maxNumPastSteps,
+    const dftfe::uInt debugLevel,
+    const MPI_Comm   &mpi_comm_parent,
+    const bool        isCurvatureOnlyLineSearchStoppingCondition)
     : nonLinearSolver(debugLevel, maxNumberIterations)
     , d_maxStepLength(maxUpdate)
     , mpi_communicator(mpi_comm_parent)
@@ -138,7 +138,7 @@ namespace dftfe
     computeLInfNorm(std::vector<double> &vec)
     {
       double norm = 0.0;
-      for (unsigned int i = 0; i < vec.size(); ++i)
+      for (dftfe::uInt i = 0; i < vec.size(); ++i)
         {
           norm = norm > std::abs(vec[i]) ? norm : std::abs(vec[i]);
         }
@@ -366,7 +366,7 @@ namespace dftfe
           }
       }
     std::vector<double> alpha(d_maxNumPastSteps, 0.0);
-    for (int j = d_maxNumPastSteps - 1; j >= 0; --j)
+    for (dftfe::Int j = d_maxNumPastSteps - 1; j >= 0; --j)
       {
         alpha[j] = internalLBFGS::dot(d_deltaXq[j], Hx) * d_rhoq[j];
         internalLBFGS::axpy(-alpha[j], d_deltaGq[j], Hx);
@@ -376,7 +376,7 @@ namespace dftfe
         internalLBFGS::linearSolve(d_preconditioner, Hx);
         if (d_numPastSteps > 0)
           {
-            for (int i = 0; i < d_numberUnknowns; ++i)
+            for (dftfe::Int i = 0; i < d_numberUnknowns; ++i)
               {
                 Hx[i] *= d_scalingFactor;
               }
@@ -384,12 +384,12 @@ namespace dftfe
       }
     else if (d_numPastSteps > 0)
       {
-        for (int i = 0; i < d_numberUnknowns; ++i)
+        for (dftfe::Int i = 0; i < d_numberUnknowns; ++i)
           {
             Hx[i] *= d_scalingFactor;
           }
       }
-    for (int j = 0; j < d_maxNumPastSteps; ++j)
+    for (dftfe::Int j = 0; j < d_maxNumPastSteps; ++j)
       {
         double beta = internalLBFGS::dot(d_deltaGq[j], Hx) * d_rhoq[j];
         internalLBFGS::axpy(alpha[j] - beta, d_deltaXq[j], Hx);
@@ -404,7 +404,7 @@ namespace dftfe
   {
     std::vector<double> gradient = d_gradient;
     computeHx(gradient);
-    for (int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::Int i = 0; i < d_numberUnknowns; ++i)
       {
         d_deltaXNew[i] = -gradient[i];
       }
@@ -459,7 +459,7 @@ namespace dftfe
     double sy  = internalLBFGS::dot(delta_g, d_deltaXNew);
     std::vector<double> Hy = d_gradientNew;
     computeHx(Hy);
-    for (int i = 0; i < Hy.size(); ++i)
+    for (dftfe::Int i = 0; i < Hy.size(); ++i)
       {
         Hy[i] += d_deltaXNew[i] / d_alpha;
       }
@@ -598,11 +598,11 @@ namespace dftfe
     //
     // get the size of solution
     //
-    const std::vector<double>::size_type solutionSize = d_numberUnknowns;
+    const dftfe::uInt solutionSize = d_numberUnknowns;
     incrementVector.resize(d_numberUnknowns);
 
 
-    for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
+    for (dftfe::uInt i = 0; i < solutionSize; ++i)
       incrementVector[i] = step[i];
 
     //
@@ -625,25 +625,25 @@ namespace dftfe
         pcout << "Saving LBFGS data to " << checkpointFileName << std::endl;
       }
     std::vector<std::vector<double>> data;
-    for (unsigned int i = 0; i < d_deltaX.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_deltaX.size(); ++i)
       data.push_back(std::vector<double>(1, d_deltaX[i]));
-    for (unsigned int i = 0; i < d_gradient.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_gradient.size(); ++i)
       data.push_back(std::vector<double>(1, d_gradient[i]));
-    for (unsigned int i = 0; i < d_deltaXq.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_deltaXq.size(); ++i)
       {
-        for (unsigned int j = 0; j < d_deltaXq[i].size(); ++j)
+        for (dftfe::uInt j = 0; j < d_deltaXq[i].size(); ++j)
           {
             data.push_back(std::vector<double>(1, d_deltaXq[i][j]));
           }
       }
-    for (unsigned int i = 0; i < d_deltaGq.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_deltaGq.size(); ++i)
       {
-        for (unsigned int j = 0; j < d_deltaGq[i].size(); ++j)
+        for (dftfe::uInt j = 0; j < d_deltaGq[i].size(); ++j)
           {
             data.push_back(std::vector<double>(1, d_deltaGq[i][j]));
           }
       }
-    for (unsigned int i = 0; i < d_deltaGq.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_deltaGq.size(); ++i)
       {
         data.push_back(std::vector<double>(1, d_rhoq[i]));
       }
@@ -686,36 +686,36 @@ namespace dftfe
     d_rhoq.resize(d_maxNumPastSteps, 0.0);
     d_value.resize(1);
     d_valueNew.resize(1);
-    for (int i = 0; i < d_maxNumPastSteps; ++i)
+    for (dftfe::Int i = 0; i < d_maxNumPastSteps; ++i)
       {
         d_deltaGq[i].resize(d_numberUnknowns);
         d_deltaXq[i].resize(d_numberUnknowns);
       }
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       d_deltaX[i] = data[i][0];
 
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       d_gradient[i] = data[i + d_numberUnknowns][0];
 
-    for (unsigned int i = 0; i < d_deltaXq.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_deltaXq.size(); ++i)
       {
-        for (unsigned int j = 0; j < d_deltaXq[i].size(); ++j)
+        for (dftfe::uInt j = 0; j < d_deltaXq[i].size(); ++j)
           {
             d_deltaXq[i][j] =
               data[j + i * d_deltaXq[i].size() + 2 * d_numberUnknowns][0];
           }
       }
 
-    for (unsigned int i = 0; i < d_deltaGq.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_deltaGq.size(); ++i)
       {
-        for (unsigned int j = 0; j < d_deltaGq[i].size(); ++j)
+        for (dftfe::uInt j = 0; j < d_deltaGq[i].size(); ++j)
           {
             d_deltaGq[i][j] = data[j + i * d_deltaGq[i].size() +
                                    d_numberUnknowns * d_maxNumPastSteps +
                                    2 * d_numberUnknowns][0];
           }
       }
-    for (unsigned int i = 0; i < d_rhoq.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_rhoq.size(); ++i)
       {
         d_rhoq[i] = data[i + 2 * d_numberUnknowns * d_maxNumPastSteps +
                          2 * d_numberUnknowns][0];
@@ -734,7 +734,7 @@ namespace dftfe
            d_maxNumPastSteps][0];
 
     d_iter =
-      (int)
+      (dftfe::Int)
         data[3 + 2 * d_numberUnknowns +
              2 * d_numberUnknowns * d_maxNumPastSteps + d_maxNumPastSteps][0] +
       1;
@@ -774,7 +774,7 @@ namespace dftfe
     d_deltaGq.resize(d_maxNumPastSteps);
     d_deltaXq.resize(d_maxNumPastSteps);
     d_rhoq.resize(d_maxNumPastSteps, 0.0);
-    for (int i = 0; i < d_maxNumPastSteps; ++i)
+    for (dftfe::Int i = 0; i < d_maxNumPastSteps; ++i)
       {
         d_deltaGq[i].resize(d_numberUnknowns);
         d_deltaXq[i].resize(d_numberUnknowns);
@@ -813,12 +813,16 @@ namespace dftfe
     //
     // check for convergence
     //
-    unsigned int isSuccess = 0;
+    dftfe::uInt isSuccess = 0;
 
     if (problem.isConverged())
       isSuccess = 1;
 
-    MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
+    MPI_Bcast(&(isSuccess),
+              1,
+              dftfe::dataTypes::mpi_type_id(&isSuccess),
+              0,
+              mpi_communicator);
     if (isSuccess == 1)
       return SUCCESS;
 
@@ -904,11 +908,15 @@ namespace dftfe
         //
         // check for convergence
         //
-        unsigned int isBreak = 0;
+        dftfe::uInt isBreak = 0;
 
         if (problem.isConverged())
           isBreak = 1;
-        MPI_Bcast(&(isBreak), 1, MPI_INT, 0, mpi_communicator);
+        MPI_Bcast(&(isBreak),
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&isBreak),
+                  0,
+                  mpi_communicator);
         if (isBreak == 1)
           break;
       }

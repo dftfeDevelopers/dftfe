@@ -26,11 +26,17 @@ namespace dftfe
 
     void
     applyLocalOperations(
-      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
       std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
         &densityData) override;
 
 
+
+    void
+    applyLocalOperations(
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
+      std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+        &wfcData) override;
 
     void
     evalOverlapMatrixStart(const std::vector<double> &quadpts,
@@ -44,8 +50,8 @@ namespace dftfe
       const std::unordered_map<std::string, std::vector<dataTypes::number>>
         &projectionInputsDataType,
       const std::unordered_map<std::string, std::vector<double>>
-               &projectionInputsReal,
-      const int iSpin) override;
+                      &projectionInputsReal,
+      const dftfe::Int iSpin) override;
 
     void
     projectDensityMatrixEnd(const MPI_Comm &mpiComm) override;
@@ -96,6 +102,10 @@ namespace dftfe
     std::vector<double> d_densityValsSpinDownAllQuads;
     std::vector<double> d_gradDensityValsSpinUpAllQuads;
     std::vector<double> d_gradDensityValsSpinDownAllQuads;
+    std::vector<double> d_tauValsTotalAllQuads;
+    std::vector<double> d_tauValsSpinUpAllQuads;
+    std::vector<double> d_tauValsSpinDownAllQuads;
+
     std::vector<double> d_quadPointsAll;
     std::vector<double> d_quadWeightsAll;
   };

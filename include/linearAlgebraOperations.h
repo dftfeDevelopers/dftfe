@@ -503,12 +503,12 @@ namespace dftfe
     /** @brief Compute inverse of serial matrix using LAPACK LU factorization
      */
     void
-    inverse(double *A, int N);
+    inverse(double *A, dftfe::Int N);
 
     /** @brief Compute inverse of serial matrix using LAPACK LU factorization
      */
     void
-    inverse(std::complex<double> *A, int N);
+    inverse(std::complex<double> *A, dftfe::Int N);
 
 
     /** @brief Calculates an estimate of lower and upper bounds of a matrix using
@@ -548,7 +548,7 @@ namespace dftfe
     chebyshevFilter(operatorDFTClass<memorySpace> &operatorMatrix,
                     dftfe::linearAlgebra::MultiVector<T, memorySpace> &X,
                     dftfe::linearAlgebra::MultiVector<T, memorySpace> &Y,
-                    const unsigned int                                 m,
+                    const dftfe::uInt                                  m,
                     const double                                       a,
                     const double                                       b,
                     const double                                       a0);
@@ -579,7 +579,7 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<T2, memorySpace> &Residual,
       dftfe::linearAlgebra::MultiVector<T2, memorySpace> &ResidualNew,
       std::vector<double>                                 eigenvalues,
-      const unsigned int                                  m,
+      const dftfe::uInt                                   m,
       const double                                        a,
       const double                                        b,
       const double                                        a0,

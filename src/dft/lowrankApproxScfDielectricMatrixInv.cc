@@ -29,11 +29,11 @@ namespace dftfe
       const distributedCPUVec<double>             &residualVec,
       const double                                 k0)
     {
-      const unsigned int rank = fvcontainer.size();
+      const dftfe::uInt rank = fvcontainer.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
-      for (int j = 0; j < rank; j++)
-        for (int i = 0; i < rank; i++)
+      for (dftfe::Int j = 0; j < rank; j++)
+        for (dftfe::Int i = 0; i < rank; i++)
           mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
@@ -41,7 +41,7 @@ namespace dftfe
       distributedCPUVec<double> k0ResidualVec, approximationErrorVec;
       k0ResidualVec.reinit(residualVec);
       approximationErrorVec.reinit(residualVec);
-      for (unsigned int idof = 0; idof < residualVec.locally_owned_size();
+      for (dftfe::uInt idof = 0; idof < residualVec.locally_owned_size();
            idof++)
         {
           k0ResidualVec.local_element(idof) =
@@ -51,17 +51,17 @@ namespace dftfe
         }
 
       std::vector<double> innerProducts(rank, 0.0);
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         innerProducts[i] = fvcontainer[i] * k0ResidualVec;
 
 
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         {
           double temp = 0.0;
-          for (unsigned int j = 0; j < rank; j++)
+          for (dftfe::uInt j = 0; j < rank; j++)
             temp += mMat[j * rank + i] * innerProducts[j];
 
-          for (unsigned int idof = 0; idof < residualVec.locally_owned_size();
+          for (dftfe::uInt idof = 0; idof < residualVec.locally_owned_size();
                idof++)
             approximationErrorVec.local_element(idof) -=
               fvcontainer[i].local_element(idof) * temp;
@@ -78,18 +78,18 @@ namespace dftfe
       const double                                 k0,
       const double                                 alpha)
     {
-      const unsigned int rank = fvcontainer.size();
+      const dftfe::uInt rank = fvcontainer.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
-      for (int j = 0; j < rank; j++)
-        for (int i = 0; i < rank; i++)
+      for (dftfe::Int j = 0; j < rank; j++)
+        for (dftfe::Int i = 0; i < rank; i++)
           mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
       distributedCPUVec<double> k0ResidualVec;
       k0ResidualVec.reinit(residualVec);
-      for (unsigned int idof = 0; idof < residualVec.locally_owned_size();
+      for (dftfe::uInt idof = 0; idof < residualVec.locally_owned_size();
            idof++)
         {
           k0ResidualVec.local_element(idof) =
@@ -99,17 +99,17 @@ namespace dftfe
         }
 
       std::vector<double> innerProducts(rank, 0.0);
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         innerProducts[i] = fvcontainer[i] * k0ResidualVec;
 
 
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         {
           double temp = 0.0;
-          for (unsigned int j = 0; j < rank; j++)
+          for (dftfe::uInt j = 0; j < rank; j++)
             temp += mMat[j * rank + i] * innerProducts[j];
 
-          for (unsigned int idof = 0; idof < residualVec.locally_owned_size();
+          for (dftfe::uInt idof = 0; idof < residualVec.locally_owned_size();
                idof++)
             predictedResidualVec.local_element(idof) -=
               alpha * fvcontainer[i].local_element(idof) * temp;
@@ -124,32 +124,32 @@ namespace dftfe
                        const double                                 k0,
                        distributedCPUVec<double>                   &y)
     {
-      const unsigned int rank = fvcontainer.size();
+      const dftfe::uInt rank = fvcontainer.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
-      for (int j = 0; j < rank; j++)
-        for (int i = 0; i < rank; i++)
+      for (dftfe::Int j = 0; j < rank; j++)
+        for (dftfe::Int i = 0; i < rank; i++)
           mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
-      for (unsigned int idof = 0; idof < x.locally_owned_size(); idof++)
+      for (dftfe::uInt idof = 0; idof < x.locally_owned_size(); idof++)
         y.local_element(idof) = x.local_element(idof) * k0;
 
       std::vector<double> innerProducts(rank, 0.0);
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         innerProducts[i] = fvcontainer[i] * y;
 
       y = 0;
 
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         {
           double temp = 0.0;
           // FIXME: exploit symmetry of mMat
-          for (unsigned int j = 0; j < rank; j++)
+          for (dftfe::uInt j = 0; j < rank; j++)
             temp += mMat[j * rank + i] * innerProducts[j];
 
-          for (unsigned int idof = 0; idof < y.locally_owned_size(); idof++)
+          for (dftfe::uInt idof = 0; idof < y.locally_owned_size(); idof++)
             y.local_element(idof) += vcontainer[i].local_element(idof) * temp;
         }
     }
@@ -161,28 +161,28 @@ namespace dftfe
                        const distributedCPUVec<double>             &x,
                        distributedCPUVec<double>                   &y)
     {
-      const unsigned int rank = fvcontainer.size();
+      const dftfe::uInt rank = fvcontainer.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
-      for (int j = 0; j < rank; j++)
-        for (int i = 0; i < rank; i++)
+      for (dftfe::Int j = 0; j < rank; j++)
+        for (dftfe::Int i = 0; i < rank; i++)
           mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
       std::vector<double> innerProducts(rank, 0.0);
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         innerProducts[i] = fvcontainer[i] * x;
 
       y = 0;
 
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         {
           double temp = 0.0;
-          for (unsigned int j = 0; j < rank; j++)
+          for (dftfe::uInt j = 0; j < rank; j++)
             temp += mMat[j * rank + i] * innerProducts[j];
 
-          for (unsigned int idof = 0; idof < y.locally_owned_size(); idof++)
+          for (dftfe::uInt idof = 0; idof < y.locally_owned_size(); idof++)
             y.local_element(idof) += vcontainer[i].local_element(idof) * temp;
         }
     }
@@ -194,16 +194,16 @@ namespace dftfe
                     const distributedCPUVec<double>             &x,
                     distributedCPUVec<double>                   &y)
     {
-      const unsigned int rank = fvcontainer.size();
+      const dftfe::uInt rank = fvcontainer.size();
 
 
       std::vector<double> innerProducts(rank, 0.0);
-      for (unsigned int i = 0; i < rank; i++)
+      for (dftfe::uInt i = 0; i < rank; i++)
         innerProducts[i] = vcontainer[i] * x;
 
       y = 0;
-      for (unsigned int i = 0; i < rank; i++)
-        for (unsigned int idof = 0; idof < y.locally_owned_size(); idof++)
+      for (dftfe::uInt i = 0; i < rank; i++)
+        for (dftfe::uInt idof = 0; idof < y.locally_owned_size(); idof++)
           y.local_element(idof) +=
             fvcontainer[i].local_element(idof) * innerProducts[i];
     }
@@ -231,12 +231,12 @@ namespace dftfe
 
       vVector = 0.0, fVector = 0.0;
       // std::srand(this_mpi_process);
-      const unsigned int local_size = vVector.locally_owned_size();
+      const dftfe::uInt local_size = vVector.locally_owned_size();
 
-      // for (unsigned int i = 0; i < local_size; i++)
+      // for (dftfe::uInt i = 0; i < local_size; i++)
       //  vVector.local_element(i) = x.local_element(i);
 
-      for (unsigned int i = 0; i < local_size; i++)
+      for (dftfe::uInt i = 0; i < local_size; i++)
         vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
 
       constraintsRhoNodal.set_zero(vVector);
@@ -245,7 +245,7 @@ namespace dftfe
       // evaluate l2 norm
       //
       vVector /= vVector.l2_norm();
-      int iter = 0;
+      dftfe::Int iter = 0;
       while (diffLambdaAbs > tol)
         {
           fVector = 0;
@@ -289,12 +289,12 @@ namespace dftfe
 
       vVector = 0.0, fVector = 0.0;
       // std::srand(this_mpi_process);
-      const unsigned int local_size = vVector.locally_owned_size();
+      const dftfe::uInt local_size = vVector.locally_owned_size();
 
-      // for (unsigned int i = 0; i < local_size; i++)
+      // for (dftfe::uInt i = 0; i < local_size; i++)
       //   vVector.local_element(i) = x.local_element(i);
 
-      for (unsigned int i = 0; i < local_size; i++)
+      for (dftfe::uInt i = 0; i < local_size; i++)
         vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
 
       constraintsRhoNodal.set_zero(vVector);
@@ -304,7 +304,7 @@ namespace dftfe
       //
       vVector /= vVector.l2_norm();
 
-      int iter = 0;
+      dftfe::Int iter = 0;
       while (diffLambdaAbs > tol)
         {
           fVector = 0;
@@ -328,12 +328,12 @@ namespace dftfe
     }
   } // namespace internalLowrankJacInv
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    lowrankApproxScfDielectricMatrixInv(const unsigned int scfIter)
+    lowrankApproxScfDielectricMatrixInv(const dftfe::uInt scfIter)
   {
     int this_process;
     MPI_Comm_rank(d_mpiCommParent, &this_process);
@@ -383,8 +383,8 @@ namespace dftfe
     d_residualPredicted.reinit(residualRho);
     d_residualPredicted = 0;
 
-    double             charge;
-    const unsigned int local_size = residualRho.locally_owned_size();
+    double            charge;
+    const dftfe::uInt local_size = residualRho.locally_owned_size();
 
 
     double relativeApproxError = 1.0e+6;
@@ -400,8 +400,8 @@ namespace dftfe
       }
 
     const double linearityRegimeFac      = d_dftParamsPtr->betaTol;
-    int          rankAddedInThisScf      = 0;
-    int          rankAddedBeforeClearing = 0;
+    dftfe::Int   rankAddedInThisScf      = 0;
+    dftfe::Int   rankAddedBeforeClearing = 0;
     if (!(relativeApproxError < d_dftParamsPtr->adaptiveRankRelTolLRD &&
           predictedToActualResidualRatio > (1 - linearityRegimeFac) &&
           predictedToActualResidualRatio < (1 + linearityRegimeFac)))
@@ -444,7 +444,7 @@ namespace dftfe
             d_rankCurrentLRD = 0;
           }
 
-        int maxRankThisScf =
+        dftfe::Int maxRankThisScf =
           (scfIter < 2) ? 5 : (d_rankCurrentLRD >= 1 ? 5 : 20);
         d_tolReached = false;
         while (((rankAddedInThisScf < maxRankThisScf)) ||
@@ -466,7 +466,7 @@ namespace dftfe
 
 
             std::deque<double> components;
-            for (int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
+            for (dftfe::Int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
               {
                 components.push_back(d_vcontainerVals[d_rankCurrentLRD] *
                                      d_vcontainerVals[jrank]);
@@ -477,7 +477,7 @@ namespace dftfe
                 (d_rankCurrentLRD - rankAddedInThisScf) > 0)
               {
                 compvec = 0;
-                for (int jrank = 0;
+                for (dftfe::Int jrank = 0;
                      jrank < (d_rankCurrentLRD - rankAddedInThisScf);
                      jrank++)
                   {
@@ -518,7 +518,7 @@ namespace dftfe
 
 
             compvec = 0;
-            for (int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
+            for (dftfe::Int jrank = 0; jrank < d_rankCurrentLRD; jrank++)
               {
                 compvec.add(components[jrank], d_vcontainerVals[jrank]);
               }
@@ -684,6 +684,10 @@ namespace dftfe
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
 
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
     // interpolate nodal data to quadrature data
     interpolateDensityNodalDataToQuadratureDataGeneral(
       d_basisOperationsPtrElectroHost,
@@ -692,8 +696,10 @@ namespace dftfe
       d_densityInNodalValues[0],
       d_densityInQuadValues[0],
       d_gradDensityInQuadValues[0],
+      d_tauInQuadValues[0],
       d_gradDensityInQuadValues[0],
-      isGradDensityDataDependent);
+      isGradDensityDataDependent,
+      isTauMGGA);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

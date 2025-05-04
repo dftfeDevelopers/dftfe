@@ -25,13 +25,13 @@ namespace dftfe
 {
   //(locally used function) compute FNonlinearCoreCorrection contibution due to
   // Gamma(Rj) for given set of cells
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     FNonlinearCoreCorrectionGammaAtomsElementalContribution(
-      std::map<unsigned int, std::vector<double>>
+      std::map<dftfe::uInt, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
       dealii::FEEvaluation<
         3,
@@ -39,35 +39,33 @@ namespace dftfe
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
         3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
+      const dftfe::uInt                    cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &gradRhoCoreAtoms)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
-    const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
-    const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
-    const unsigned int totalNumberAtoms =
-      numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells =
+    const dftfe::uInt numberGlobalAtoms  = dftPtr->atomLocations.size();
+    const dftfe::uInt numberImageCharges = dftPtr->d_imageIdsTrunc.size();
+    const dftfe::uInt totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+    const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
-    const unsigned int numQuadPoints = forceEval.n_q_points;
+    const dftfe::uInt numQuadPoints = forceEval.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
         dealii::AlignedVector<
           dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
           gradRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
 
-        unsigned int atomId = iAtom;
+        dftfe::uInt atomId = iAtom;
         if (iAtom >= numberGlobalAtoms)
           {
-            const int imageId = iAtom - numberGlobalAtoms;
-            atomId            = dftPtr->d_imageIdsTrunc[imageId];
+            const dftfe::Int imageId = iAtom - numberGlobalAtoms;
+            atomId                   = dftPtr->d_imageIdsTrunc[imageId];
           }
 
         bool isLocalDomainOutsideCoreRhoTail = false;
@@ -78,7 +76,7 @@ namespace dftfe
           continue;
 
         bool isCellOutsideCoreRhoTail = true;
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
             dealii::CellId subCellId = subCellPtr->id();
@@ -92,7 +90,7 @@ namespace dftfe
                   {
                     isCellOutsideCoreRhoTail        = false;
                     const std::vector<double> &temp = it->second;
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                       {
                         gradRhoCoreAtomsQuads[q][0][iSubCell] = temp[q * 3];
                         gradRhoCoreAtomsQuads[q][1][iSubCell] = temp[q * 3 + 1];
@@ -105,7 +103,7 @@ namespace dftfe
         if (isCellOutsideCoreRhoTail)
           continue;
 
-        for (unsigned int q = 0; q < numQuadPoints; ++q)
+        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
           {
             forceEval.submit_value(-eshelbyTensor::getFNonlinearCoreCorrection(
                                      vxcQuads[q], gradRhoCoreAtomsQuads[q]),
@@ -119,8 +117,8 @@ namespace dftfe
             forceContributionFNonlinearCoreCorrectionGammaAtoms.end())
           forceContributionFNonlinearCoreCorrectionGammaAtoms[atomId] =
             std::vector<double>(3, 0.0);
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-          for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
             {
               forceContributionFNonlinearCoreCorrectionGammaAtoms[atomId]
                                                                  [idim] +=
@@ -133,13 +131,13 @@ namespace dftfe
 
   //(locally used function) compute FNonlinearCoreCorrection contibution due to
   // Gamma(Rj) for given set of cells
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     FNonlinearCoreCorrectionGammaAtomsElementalContribution(
-      std::map<unsigned int, std::vector<double>>
+      std::map<dftfe::uInt, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
       dealii::FEEvaluation<
         3,
@@ -147,42 +145,40 @@ namespace dftfe
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
         3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
+      const dftfe::uInt                    cell,
       const dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &derExcGradRho,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &hessianRhoCoreAtoms)
   {
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor1;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       {
-        for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
           {
             zeroTensor1[idim][jdim] = dealii::make_vectorized_array(0.0);
           }
       }
 
-    const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
-    const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
-    const unsigned int totalNumberAtoms =
-      numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells =
+    const dftfe::uInt numberGlobalAtoms  = dftPtr->atomLocations.size();
+    const dftfe::uInt numberImageCharges = dftPtr->d_imageIdsTrunc.size();
+    const dftfe::uInt totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+    const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
-    const unsigned int numQuadPoints = forceEval.n_q_points;
+    const dftfe::uInt numQuadPoints = forceEval.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
         dealii::AlignedVector<
           dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
           hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor1);
 
-        unsigned int atomId = iAtom;
+        dftfe::uInt atomId = iAtom;
         if (iAtom >= numberGlobalAtoms)
           {
-            const int imageId = iAtom - numberGlobalAtoms;
-            atomId            = dftPtr->d_imageIdsTrunc[imageId];
+            const dftfe::Int imageId = iAtom - numberGlobalAtoms;
+            atomId                   = dftPtr->d_imageIdsTrunc[imageId];
           }
 
         bool isLocalDomainOutsideCoreRhoTail = false;
@@ -194,7 +190,7 @@ namespace dftfe
 
         bool isCellOutsideCoreRhoTail = true;
 
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
             dealii::CellId subCellId = subCellPtr->id();
@@ -209,10 +205,10 @@ namespace dftfe
                   {
                     isCellOutsideCoreRhoTail        = false;
                     const std::vector<double> &temp = it->second;
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                       {
-                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                          for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                          for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                             hessianRhoCoreAtomsQuads[q][iDim][jDim][iSubCell] =
                               temp[q * 3 * 3 + 3 * iDim + jDim];
                       }
@@ -223,7 +219,7 @@ namespace dftfe
         if (isCellOutsideCoreRhoTail)
           continue;
 
-        for (unsigned int q = 0; q < numQuadPoints; ++q)
+        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
           {
             forceEval.submit_value(-eshelbyTensor::getFNonlinearCoreCorrection(
                                      derExcGradRho[q],
@@ -239,8 +235,8 @@ namespace dftfe
           forceContributionFNonlinearCoreCorrectionGammaAtoms[atomId] =
             std::vector<double>(3, 0.0);
 
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-          for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
             {
               forceContributionFNonlinearCoreCorrectionGammaAtoms[atomId]
                                                                  [idim] +=
@@ -252,13 +248,13 @@ namespace dftfe
 
   //(locally used function) compute FNonlinearCoreCorrection contibution due to
   // Gamma(Rj) for given set of cells
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     FNonlinearCoreCorrectionGammaAtomsElementalContributionSpinPolarized(
-      std::map<unsigned int, std::vector<double>>
+      std::map<dftfe::uInt, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
       dealii::FEEvaluation<
         3,
@@ -266,7 +262,7 @@ namespace dftfe
         C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
         3>                                &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   cell,
+      const dftfe::uInt                    cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
         &vxcQuadsSpin0,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>
@@ -277,33 +273,30 @@ namespace dftfe
       const dealii::AlignedVector<
         dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
         &derExcGradRhoSpin1,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &gradRhoCoreAtoms,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                 &hessianRhoCoreAtoms,
       const bool isXCGGA)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       zeroTensor1[idim] = dealii::make_vectorized_array(0.0);
 
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
-    for (unsigned int idim = 0; idim < 3; idim++)
-      for (unsigned int jdim = 0; jdim < 3; jdim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
+      for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
         zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
 
-    const unsigned int numberGlobalAtoms  = dftPtr->atomLocations.size();
-    const unsigned int numberImageCharges = dftPtr->d_imageIdsTrunc.size();
-    const unsigned int totalNumberAtoms =
-      numberGlobalAtoms + numberImageCharges;
-    const unsigned int numSubCells =
+    const dftfe::uInt numberGlobalAtoms  = dftPtr->atomLocations.size();
+    const dftfe::uInt numberImageCharges = dftPtr->d_imageIdsTrunc.size();
+    const dftfe::uInt totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+    const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
-    const unsigned int numQuadPoints = forceEval.n_q_points;
+    const dftfe::uInt numQuadPoints = forceEval.n_q_points;
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; iAtom++)
       {
         dealii::AlignedVector<
           dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
@@ -312,11 +305,11 @@ namespace dftfe
           dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
           hessianRhoCoreAtomsQuads(numQuadPoints, zeroTensor2);
 
-        unsigned int atomId = iAtom;
+        dftfe::uInt atomId = iAtom;
         if (iAtom >= numberGlobalAtoms)
           {
-            const int imageId = iAtom - numberGlobalAtoms;
-            atomId            = dftPtr->d_imageIdsTrunc[imageId];
+            const dftfe::Int imageId = iAtom - numberGlobalAtoms;
+            atomId                   = dftPtr->d_imageIdsTrunc[imageId];
           }
 
         bool isLocalDomainOutsideCoreRhoTail = false;
@@ -327,7 +320,7 @@ namespace dftfe
           continue;
 
         bool isCellOutsideCoreRhoTail = true;
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
             dealii::CellId subCellId = subCellPtr->id();
@@ -341,7 +334,7 @@ namespace dftfe
                   {
                     isCellOutsideCoreRhoTail        = false;
                     const std::vector<double> &temp = it->second;
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                       {
                         gradRhoCoreAtomsQuads[q][0][iSubCell] =
                           temp[q * 3] / 2.0;
@@ -361,10 +354,10 @@ namespace dftfe
                     if (it2 != hessianRhoCoreAtoms.find(iAtom)->second.end())
                       {
                         const std::vector<double> &temp2 = it2->second;
-                        for (unsigned int q = 0; q < numQuadPoints; ++q)
+                        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                           {
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
-                              for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                              for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                                 hessianRhoCoreAtomsQuads
                                   [q][iDim][jDim][iSubCell] =
                                     temp2[q * 3 * 3 + 3 * iDim + jDim] / 2.0;
@@ -377,7 +370,7 @@ namespace dftfe
         if (isCellOutsideCoreRhoTail)
           continue;
 
-        for (unsigned int q = 0; q < numQuadPoints; ++q)
+        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
           forceEval.submit_value(-eshelbyTensorSP::getFNonlinearCoreCorrection(
                                    vxcQuadsSpin0[q],
                                    vxcQuadsSpin1[q],
@@ -396,8 +389,8 @@ namespace dftfe
             forceContributionFNonlinearCoreCorrectionGammaAtoms.end())
           forceContributionFNonlinearCoreCorrectionGammaAtoms[atomId] =
             std::vector<double>(3, 0.0);
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-          for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+          for (dftfe::uInt idim = 0; idim < 3; idim++)
             {
               forceContributionFNonlinearCoreCorrectionGammaAtoms[atomId]
                                                                  [idim] +=

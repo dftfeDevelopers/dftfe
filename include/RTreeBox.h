@@ -49,13 +49,13 @@ namespace dftfe
      * @tparam dim Dimension of the box
      * @param M maximum allowable nodes in a branch of RTreeBox (i.e., maximum number of child nodes a parent node can have)
      */
-    template <size_type dim, size_type M>
+    template <dftfe::uInt dim, dftfe::uInt M>
     class RTreeBox
     {
     public:
       using BPoint     = BG::model::point<double, dim, BG::cs::cartesian>;
       using BBox       = BG::model::box<BPoint>;
-      using BBoxI      = std::pair<BBox, size_type>;
+      using BBoxI      = std::pair<BBox, dftfe::uInt>;
       using BRTreeBoxI = BGI::rtree<BBoxI, BGI::quadratic<M>>;
 
       /**
@@ -65,7 +65,7 @@ namespace dftfe
        */
       RTreeBox(std::vector<std::shared_ptr<const Cell<dim>>> sourceCells);
 
-      std::vector<std::vector<size_type>>
+      std::vector<std::vector<dftfe::uInt>>
       getOverlappingCellIds(
         std::vector<std::shared_ptr<const Cell<dim>>> queryCells);
 

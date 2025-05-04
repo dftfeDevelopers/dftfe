@@ -27,18 +27,18 @@ namespace dftfe
 {
   // compute configurational stress contribution from all terms except the
   // nuclear self energy
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     computeStressEEshelbyEPSPEnlEk(
       const dealii::MatrixFree<3, double> &matrixFreeData,
-      const unsigned int                   eigenDofHandlerIndex,
-      const unsigned int                   smearedChargeQuadratureId,
-      const unsigned int                   lpspQuadratureIdElectro,
+      const dftfe::uInt                    eigenDofHandlerIndex,
+      const dftfe::uInt                    smearedChargeQuadratureId,
+      const dftfe::uInt                    lpspQuadratureIdElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const unsigned int                   phiTotDofHandlerIndexElectro,
+      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
       const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -51,17 +51,14 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &pseudoVLocAtomsElectro,
       const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
       const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
         &gradRhoCoreAtoms,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                                       &hessianRhoCoreAtoms,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
@@ -73,7 +70,7 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     double init_time = MPI_Wtime();
 
-    const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
+    const dftfe::uInt numberGlobalAtoms = dftPtr->atomLocations.size();
 
     const bool isPseudopotential = d_dftParams.isPseudopotential;
 
@@ -102,10 +99,10 @@ namespace dftfe
       (d_dftParams.spinPolarized == 1) ? dealii::make_vectorized_array(0.5) :
                                          dealii::make_vectorized_array(1.0);
 
-    const unsigned int numQuadPoints    = forceEval.n_q_points;
-    const unsigned int numQuadPointsNLP = forceEvalNLP.n_q_points;
-    const unsigned int numEigenVectors  = dftPtr->d_numEigenValues;
-    const unsigned int numKPoints       = dftPtr->d_kPointWeights.size();
+    const dftfe::uInt numQuadPoints    = forceEval.n_q_points;
+    const dftfe::uInt numQuadPointsNLP = forceEvalNLP.n_q_points;
+    const dftfe::uInt numEigenVectors  = dftPtr->d_numEigenValues;
+    const dftfe::uInt numKPoints       = dftPtr->d_kPointWeights.size();
 
     dealii::DoFHandler<3>::active_cell_iterator           subCellPtr;
     dealii::Tensor<1, 2, dealii::VectorizedArray<double>> zeroTensor1;
@@ -117,15 +114,15 @@ namespace dftfe
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor4;
     dealii::Tensor<1, 2, dealii::Tensor<2, 3, dealii::VectorizedArray<double>>>
       zeroTensor5;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       {
         zeroTensor2[0][idim] = dealii::make_vectorized_array(0.0);
         zeroTensor2[1][idim] = dealii::make_vectorized_array(0.0);
         zeroTensor3[idim]    = dealii::make_vectorized_array(0.0);
       }
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       {
-        for (unsigned int jdim = 0; jdim < 3; jdim++)
+        for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
           {
             zeroTensor4[idim][jdim] = dealii::make_vectorized_array(0.0);
           }
@@ -134,14 +131,14 @@ namespace dftfe
     zeroTensor5[1] = zeroTensor4;
 
 
-    const unsigned int numPhysicalCells = matrixFreeData.n_physical_cells();
+    const dftfe::uInt numPhysicalCells = matrixFreeData.n_physical_cells();
 
-    std::map<dealii::CellId, unsigned int> cellIdToCellNumberMap;
+    std::map<dealii::CellId, dftfe::uInt> cellIdToCellNumberMap;
 
     dealii::DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler
                                                          .begin_active(),
                                                 endc = dftPtr->dofHandler.end();
-    unsigned int iElem                               = 0;
+    dftfe::uInt iElem                                = 0;
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
@@ -150,38 +147,37 @@ namespace dftfe
         }
 
     // band group parallelization data structures
-    const unsigned int numberBandGroups =
+    const dftfe::uInt numberBandGroups =
       dealii::Utilities::MPI::n_mpi_processes(dftPtr->interBandGroupComm);
-    const unsigned int bandGroupTaskId =
+    const dftfe::uInt bandGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm);
-    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
     dftUtils::createBandParallelizationIndices(dftPtr->interBandGroupComm,
                                                numEigenVectors,
                                                bandGroupLowHighPlusOneIndices);
 
-    const unsigned int blockSize = std::min(d_dftParams.chebyWfcBlockSize,
-                                            bandGroupLowHighPlusOneIndices[1]);
+    const dftfe::uInt blockSize = std::min(d_dftParams.chebyWfcBlockSize,
+                                           bandGroupLowHighPlusOneIndices[1]);
 
-    const unsigned int localVectorSize =
+    const dftfe::uInt localVectorSize =
       matrixFreeData.get_vector_partitioner()->locally_owned_size();
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
       dftPtr->d_kPointWeights.size());
     std::vector<distributedCPUVec<dataTypes::number>>
       eigenVectorsFlattenedBlock(dftPtr->d_kPointWeights.size());
 
-    const unsigned int numMacroCells = matrixFreeData.n_cell_batches();
+    const dftfe::uInt numMacroCells = matrixFreeData.n_cell_batches();
 
 
     std::vector<std::vector<double>> partialOccupancies(
       dftPtr->d_kPointWeights.size(),
       std::vector<double>((1 + d_dftParams.spinPolarized) * numEigenVectors,
                           0.0));
-    for (unsigned int spinIndex = 0;
-         spinIndex < (1 + d_dftParams.spinPolarized);
+    for (dftfe::uInt spinIndex = 0; spinIndex < (1 + d_dftParams.spinPolarized);
          ++spinIndex)
-      for (unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size();
+      for (dftfe::uInt kPoint = 0; kPoint < dftPtr->d_kPointWeights.size();
            ++kPoint)
-        for (unsigned int iWave = 0; iWave < numEigenVectors; ++iWave)
+        for (dftfe::uInt iWave = 0; iWave < numEigenVectors; ++iWave)
           partialOccupancies[kPoint][numEigenVectors * spinIndex + iWave] =
             dftPtr->d_partialOccupancies[kPoint]
                                         [numEigenVectors * spinIndex + iWave];
@@ -189,8 +185,7 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     init_time = MPI_Wtime() - init_time;
 
-    for (unsigned int spinIndex = 0;
-         spinIndex < (1 + d_dftParams.spinPolarized);
+    for (dftfe::uInt spinIndex = 0; spinIndex < (1 + d_dftParams.spinPolarized);
          ++spinIndex)
       {
         std::vector<double> elocWfcEshelbyTensorQuadValuesH(
@@ -353,45 +348,45 @@ namespace dftfe
         //                  dataTypes::number(0.0));
         // std::cout << "check1: " << check1 << std::endl;
 
-        for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
+        for (dftfe::uInt cell = 0; cell < matrixFreeData.n_cell_batches();
              ++cell)
           {
             forceEval.reinit(cell);
 
 
-            const unsigned int numSubCells =
+            const dftfe::uInt numSubCells =
               matrixFreeData.n_active_entries_per_cell_batch(cell);
 
             std::vector<double> jxwQuadsSubCells(numSubCells * numQuadPoints,
                                                  0.0);
             dealii::VectorizedArray<double> jxwQuadsVect =
               dealii::make_vectorized_array(0.0);
-            for (unsigned int q = 0; q < numQuadPoints; ++q)
+            for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
               {
                 jxwQuadsVect = forceEval.JxW(q);
-                for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells;
                      ++iSubCell)
                   jxwQuadsSubCells[iSubCell * numQuadPoints + q] =
                     jxwQuadsVect[iSubCell];
               }
 
-            for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+            for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
               {
                 subCellPtr = matrixFreeData.get_cell_iterator(cell, iSubCell);
-                const unsigned int physicalCellId =
+                const dftfe::uInt physicalCellId =
                   cellIdToCellNumberMap[subCellPtr->id()];
-                for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
+                for (dftfe::uInt kPoint = 0; kPoint < numKPoints; ++kPoint)
                   {
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                       {
-                        const unsigned int id =
+                        const dftfe::uInt id =
                           kPoint * numPhysicalCells * numQuadPoints * 9 +
                           physicalCellId * numQuadPoints * 9 + q * 9;
                         const double temp =
                           jxwQuadsSubCells[iSubCell * numQuadPoints + q] *
                           spinPolarizedFactor * dftPtr->d_kPointWeights[kPoint];
-                        for (unsigned int idim = 0; idim < 3; ++idim)
-                          for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                        for (dftfe::uInt idim = 0; idim < 3; ++idim)
+                          for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
                             d_stressKPoints[idim][jdim] +=
                               temp *
                               elocWfcEshelbyTensorQuadValuesH[id + idim * 3 +
@@ -404,12 +399,12 @@ namespace dftfe
 
         if (isPseudopotential || useHubbard)
           {
-            for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
+            for (dftfe::uInt cell = 0; cell < matrixFreeData.n_cell_batches();
                  ++cell)
               {
                 forceEvalNLP.reinit(cell);
 
-                const unsigned int numSubCells =
+                const dftfe::uInt numSubCells =
                   matrixFreeData.n_active_entries_per_cell_batch(cell);
 
                 std::vector<double>             jxwQuadsSubCells(numSubCells *
@@ -417,10 +412,10 @@ namespace dftfe
                                                      0.0);
                 dealii::VectorizedArray<double> jxwQuadsVect =
                   dealii::make_vectorized_array(0.0);
-                for (unsigned int q = 0; q < numQuadPointsNLP; ++q)
+                for (dftfe::uInt q = 0; q < numQuadPointsNLP; ++q)
                   {
                     jxwQuadsVect = forceEvalNLP.JxW(q);
-                    for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                    for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells;
                          ++iSubCell)
                       jxwQuadsSubCells[iSubCell * numQuadPointsNLP + q] =
                         jxwQuadsVect[iSubCell];
@@ -428,19 +423,19 @@ namespace dftfe
 
                 if (isPseudopotential)
                   {
-                    const unsigned int numNonLocalAtomsCurrentProcessPsP =
+                    const dftfe::uInt numNonLocalAtomsCurrentProcessPsP =
                       (dftPtr->d_oncvClassPtr
                          ->getTotalNumberOfAtomsInCurrentProcessor());
 
-                    std::vector<int> nonLocalAtomIdPsP;
+                    std::vector<dftfe::Int> nonLocalAtomIdPsP;
                     nonLocalAtomIdPsP.resize(numNonLocalAtomsCurrentProcessPsP);
 
-                    std::vector<unsigned int>
+                    std::vector<dftfe::uInt>
                       numberPseudoWaveFunctionsPerAtomPsP;
                     numberPseudoWaveFunctionsPerAtomPsP.resize(
                       numNonLocalAtomsCurrentProcessPsP);
 
-                    for (unsigned int iAtom = 0;
+                    for (dftfe::uInt iAtom = 0;
                          iAtom < numNonLocalAtomsCurrentProcessPsP;
                          iAtom++)
                       {
@@ -481,16 +476,16 @@ namespace dftfe
 
                 if (useHubbard)
                   {
-                    const unsigned int numNonLocalAtomsCurrentProcessHubbard =
+                    const dftfe::uInt numNonLocalAtomsCurrentProcessHubbard =
                       (dftPtr->getHubbardClassPtr()
                          ->getNonLocalOperator()
                          ->getTotalAtomInCurrentProcessor());
 
-                    std::vector<unsigned int>
+                    std::vector<dftfe::uInt>
                       numberPseudoWaveFunctionsPerAtomHubbard;
                     numberPseudoWaveFunctionsPerAtomHubbard.resize(
                       numNonLocalAtomsCurrentProcessHubbard);
-                    for (unsigned int iAtom = 0;
+                    for (dftfe::uInt iAtom = 0;
                          iAtom < numNonLocalAtomsCurrentProcessHubbard;
                          iAtom++)
                       {
@@ -543,12 +538,12 @@ namespace dftfe
     if (bandGroupTaskId == 0)
       {
         // kpoint group parallelization data structures
-        const unsigned int numberKptGroups =
+        const dftfe::uInt numberKptGroups =
           dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
 
-        const unsigned int kptGroupTaskId =
+        const dftfe::uInt kptGroupTaskId =
           dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
-        std::vector<int> kptGroupLowHighPlusOneIndices;
+        std::vector<dftfe::Int> kptGroupLowHighPlusOneIndices;
 
         if (numMacroCells > 0)
           dftUtils::createKpointParallelizationIndices(
@@ -634,7 +629,7 @@ namespace dftfe
 
         auto quadWeightsAll = dftPtr->d_basisOperationsPtrHost->JxW();
 
-        for (unsigned int cell = 0; cell < matrixFreeData.n_cell_batches();
+        for (dftfe::uInt cell = 0; cell < matrixFreeData.n_cell_batches();
              ++cell)
           {
             if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
@@ -670,12 +665,12 @@ namespace dftfe
                           hessianRhoCoreQuads.end(),
                           zeroTensor4);
 
-                const unsigned int numSubCells =
+                const dftfe::uInt numSubCells =
                   matrixFreeData.n_active_entries_per_cell_batch(cell);
 
 
                 //
-                for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells;
                      ++iSubCell)
                   {
                     subCellPtr =
@@ -683,7 +678,7 @@ namespace dftfe
                     dealii::CellId subCellId = subCellPtr->id();
 
 
-                    const unsigned int subCellIndex =
+                    const dftfe::uInt subCellIndex =
                       dftPtr->d_basisOperationsPtrHost->cellIndex(subCellId);
 
 
@@ -691,7 +686,7 @@ namespace dftfe
                     dftPtr->d_excManagerPtr->getExcSSDFunctionalObj()
                       ->computeRhoTauDependentXCData(
                         *(dftPtr->d_auxDensityMatrixXCOutPtr),
-                        std::make_pair<unsigned int, unsigned int>(
+                        std::make_pair<dftfe::uInt, dftfe::uInt>(
                           subCellIndex * numQuadPoints,
                           (subCellIndex + 1) * numQuadPoints),
                         xDensityOutDataOut,
@@ -725,7 +720,7 @@ namespace dftfe
                       }
 
                     dftPtr->d_auxDensityMatrixXCOutPtr->applyLocalOperations(
-                      std::make_pair<unsigned int, unsigned int>(
+                      std::make_pair<dftfe::uInt, dftfe::uInt>(
                         subCellIndex * numQuadPoints,
                         (subCellIndex + 1) * numQuadPoints),
                       densityXCOutData);
@@ -751,8 +746,8 @@ namespace dftfe
                         const auto &gradRhoMagOutValues =
                           gradDensityOutValuesSpinPolarized[1];
 
-                        for (unsigned int q = 0; q < numQuadPoints; ++q)
-                          for (unsigned int idim = 0; idim < 3; idim++)
+                        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
+                          for (dftfe::uInt idim = 0; idim < 3; idim++)
                             {
                               gradRhoSpin0QuadsVect[q][idim][iSubCell] =
                                 (gradRhoTotalOutValues[subCellIndex *
@@ -774,7 +769,7 @@ namespace dftfe
                       }
 
 
-                    for (unsigned int q = 0; q < numQuadPoints; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                       {
                         excQuads[q][iSubCell] =
                           xEnergyDensityOut[q] + cEnergyDensityOut[q];
@@ -786,9 +781,9 @@ namespace dftfe
 
                     if (isGradDensityDataRequired)
                       {
-                        for (unsigned int q = 0; q < numQuadPoints; ++q)
+                        for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                           {
-                            for (unsigned int idim = 0; idim < 3; idim++)
+                            for (dftfe::uInt idim = 0; idim < 3; idim++)
                               {
                                 derExchCorrEnergyWithGradRhoOutSpin0Quads
                                   [q][idim][iSubCell] =
@@ -817,12 +812,12 @@ namespace dftfe
                           }
                       }
                     if (d_dftParams.nonLinearCoreCorrection == true)
-                      for (unsigned int q = 0; q < numQuadPoints; ++q)
+                      for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                         {
                           const std::vector<double> &temp1 =
                             gradRhoCoreValues.find(subCellId)->second;
-                          for (unsigned int q = 0; q < numQuadPoints; ++q)
-                            for (unsigned int idim = 0; idim < 3; idim++)
+                          for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
+                            for (dftfe::uInt idim = 0; idim < 3; idim++)
                               gradRhoCoreQuads[q][idim][iSubCell] =
                                 temp1[3 * q + idim] / 2.0;
 
@@ -830,9 +825,9 @@ namespace dftfe
                             {
                               const std::vector<double> &temp2 =
                                 hessianRhoCoreValues.find(subCellId)->second;
-                              for (unsigned int q = 0; q < numQuadPoints; ++q)
-                                for (unsigned int idim = 0; idim < 3; ++idim)
-                                  for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                              for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
+                                for (dftfe::uInt idim = 0; idim < 3; ++idim)
+                                  for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
                                     hessianRhoCoreQuads
                                       [q][idim][jdim][iSubCell] =
                                         temp2[9 * q + 3 * idim + jdim] / 2.0;
@@ -843,7 +838,7 @@ namespace dftfe
 
                 dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EQuadSum =
                   zeroTensor4;
-                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                   {
                     dealii::Tensor<2, 3, dealii::VectorizedArray<double>> E =
                       eshelbyTensorSP::getELocXcEshelbyTensor(
@@ -872,10 +867,10 @@ namespace dftfe
                         isGradDensityDataRequired);
                   }
 
-                for (unsigned int iSubCell = 0; iSubCell < numSubCells;
+                for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells;
                      ++iSubCell)
-                  for (unsigned int idim = 0; idim < 3; ++idim)
-                    for (unsigned int jdim = 0; jdim < 3; ++jdim)
+                  for (dftfe::uInt idim = 0; idim < 3; ++idim)
+                    for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
                       {
                         d_stress[idim][jdim] += EQuadSum[idim][jdim][iSubCell];
                       }
@@ -918,16 +913,16 @@ namespace dftfe
   }
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::
     computeStressEEshelbyEElectroPhiTot(
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const unsigned int                   phiTotDofHandlerIndexElectro,
-      const unsigned int                   smearedChargeQuadratureId,
-      const unsigned int                   lpspQuadratureIdElectro,
+      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
+      const dftfe::uInt                    smearedChargeQuadratureId,
+      const dftfe::uInt                    lpspQuadratureIdElectro,
       const distributedCPUVec<double>     &phiTotRhoOutElectro,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &rhoTotalOutValues,
@@ -938,8 +933,7 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &gradRhoTotalOutValuesLpsp,
       const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-      const std::map<unsigned int,
-                     std::map<dealii::CellId, std::vector<double>>>
+      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                                       &pseudoVLocAtomsElectro,
       const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
   {
@@ -995,10 +989,9 @@ namespace dftfe
       dealii::update_values | dealii::update_JxW_values |
         dealii::update_normal_vectors | dealii::update_quadrature_points);
 
-    const unsigned int numQuadPoints = forceEvalElectro.n_q_points;
-    const unsigned int numQuadPointsSmearedb =
-      forceEvalSmearedCharge.n_q_points;
-    const unsigned int numQuadPointsLpsp = forceEvalElectroLpsp.n_q_points;
+    const dftfe::uInt numQuadPoints         = forceEvalElectro.n_q_points;
+    const dftfe::uInt numQuadPointsSmearedb = forceEvalSmearedCharge.n_q_points;
+    const dftfe::uInt numQuadPointsLpsp     = forceEvalElectroLpsp.n_q_points;
 
     // if (gradRhoTotalOutValuesLpsp.size() != 0)
     //  AssertThrow(
@@ -1012,14 +1005,14 @@ namespace dftfe
 
 
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor;
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       {
         zeroTensor[idim] = dealii::make_vectorized_array(0.0);
       }
 
     dealii::Tensor<2, 3, dealii::VectorizedArray<double>> zeroTensor2;
-    for (unsigned int idim = 0; idim < 3; idim++)
-      for (unsigned int jdim = 0; jdim < 3; jdim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
+      for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
         zeroTensor2[idim][jdim] = dealii::make_vectorized_array(0.0);
 
     std::vector<double> tempRhoVal(numQuadPoints, 0);
@@ -1044,12 +1037,12 @@ namespace dftfe
 
 
     // kpoint group parallelization data structures
-    const unsigned int numberKptGroups =
+    const dftfe::uInt numberKptGroups =
       dealii::Utilities::MPI::n_mpi_processes(dftPtr->interpoolcomm);
 
-    const unsigned int kptGroupTaskId =
+    const dftfe::uInt kptGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(dftPtr->interpoolcomm);
-    std::vector<int> kptGroupLowHighPlusOneIndices;
+    std::vector<dftfe::Int> kptGroupLowHighPlusOneIndices;
 
     if (matrixFreeDataElectro.n_cell_batches() > 0)
       dftUtils::createKpointParallelizationIndices(
@@ -1057,28 +1050,27 @@ namespace dftfe
         matrixFreeDataElectro.n_cell_batches(),
         kptGroupLowHighPlusOneIndices);
 
-    for (unsigned int cell = 0; cell < matrixFreeDataElectro.n_cell_batches();
+    for (dftfe::uInt cell = 0; cell < matrixFreeDataElectro.n_cell_batches();
          ++cell)
       {
         if (cell < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
             cell >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
           {
-            std::set<unsigned int> nonTrivialSmearedChargeAtomImageIdsMacroCell;
+            std::set<dftfe::uInt> nonTrivialSmearedChargeAtomImageIdsMacroCell;
 
-            const unsigned int numSubCells =
+            const dftfe::uInt numSubCells =
               matrixFreeDataElectro.n_active_entries_per_cell_batch(cell);
 
             if (d_dftParams.smearedNuclearCharges)
-              for (unsigned int iSubCell = 0; iSubCell < numSubCells;
-                   ++iSubCell)
+              for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
                 {
                   subCellPtr =
                     matrixFreeDataElectro.get_cell_iterator(cell, iSubCell);
-                  dealii::CellId                   subCellId = subCellPtr->id();
-                  const std::vector<unsigned int> &temp =
+                  dealii::CellId                  subCellId = subCellPtr->id();
+                  const std::vector<dftfe::uInt> &temp =
                     dftPtr->d_bCellNonTrivialAtomImageIds.find(subCellId)
                       ->second;
-                  for (int i = 0; i < temp.size(); i++)
+                  for (dftfe::Int i = 0; i < temp.size(); i++)
                     nonTrivialSmearedChargeAtomImageIdsMacroCell.insert(
                       temp[i]);
                 }
@@ -1124,23 +1116,23 @@ namespace dftfe
                       gradPhiTotSmearedChargeQuads.end(),
                       zeroTensor);
 
-            for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+            for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
               {
                 subCellPtr =
                   matrixFreeDataElectro.get_cell_iterator(cell, iSubCell);
                 dealii::CellId subCellId = subCellPtr->id();
 
-                const unsigned int subCellIndex =
+                const dftfe::uInt subCellIndex =
                   dftPtr->d_basisOperationsPtrElectroHost->cellIndex(subCellId);
 
-                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                   tempRhoVal[q] =
                     rhoTotalOutValues[subCellIndex * numQuadPoints + q];
 
-                for (unsigned int q = 0; q < numQuadPoints; ++q)
+                for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                   rhoQuadsElectro[q][iSubCell] = tempRhoVal[q];
 
-                // for (unsigned int q = 0; q < numQuadPoints; ++q)
+                // for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
                 //  rhoQuadsElectro[q][iSubCell] =
                 //    rhoOutValues.find(subCellId)->second[q];
 
@@ -1156,7 +1148,7 @@ namespace dftfe
                     //  gradRhoOutValuesLpsp.find(subCellId)->second;
 
 
-                    for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPointsLpsp; ++q)
                       {
                         tempLpspRhoVal[q] =
                           rhoTotalOutValuesLpsp[subCellIndex *
@@ -1176,7 +1168,7 @@ namespace dftfe
                                                     3 * q + 2];
                       }
 
-                    for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPointsLpsp; ++q)
                       {
                         pseudoVLocQuadsElectro[q][iSubCell] = tempPseudoVal[q];
                         rhoQuadsElectroLpsp[q][iSubCell]    = tempLpspRhoVal[q];
@@ -1194,7 +1186,7 @@ namespace dftfe
                   {
                     const std::vector<double> &bQuadValuesCell =
                       dftPtr->d_bQuadValuesAllAtoms.find(subCellId)->second;
-                    for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
+                    for (dftfe::uInt q = 0; q < numQuadPointsSmearedb; ++q)
                       {
                         smearedbQuads[q][iSubCell] = bQuadValuesCell[q];
                       }
@@ -1220,7 +1212,7 @@ namespace dftfe
 
             dealii::Tensor<2, 3, dealii::VectorizedArray<double>> EQuadSum =
               zeroTensor2;
-            for (unsigned int q = 0; q < numQuadPoints; ++q)
+            for (dftfe::uInt q = 0; q < numQuadPoints; ++q)
               {
                 dealii::VectorizedArray<double> phiTotElectro_q =
                   phiTotEvalElectro.get_value(q);
@@ -1239,7 +1231,7 @@ namespace dftfe
 
             if (d_dftParams.isPseudopotential ||
                 d_dftParams.smearedNuclearCharges)
-              for (unsigned int q = 0; q < numQuadPointsLpsp; ++q)
+              for (dftfe::uInt q = 0; q < numQuadPointsLpsp; ++q)
                 {
                   dealii::VectorizedArray<double> phiExtElectro_q =
                     dealii::make_vectorized_array(0.0);
@@ -1249,15 +1241,15 @@ namespace dftfe
                   EQuadSum += E * forceEvalElectroLpsp.JxW(q);
                 }
 
-            for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
-              for (unsigned int idim = 0; idim < 3; ++idim)
-                for (unsigned int jdim = 0; jdim < 3; ++jdim)
+            for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+              for (dftfe::uInt idim = 0; idim < 3; ++idim)
+                for (dftfe::uInt jdim = 0; jdim < 3; ++jdim)
                   d_stress[idim][jdim] += EQuadSum[idim][jdim][iSubCell];
 
             if (d_dftParams.smearedNuclearCharges &&
                 nonTrivialSmearedChargeAtomImageIdsMacroCell.size() > 0)
               {
-                for (unsigned int q = 0; q < numQuadPointsSmearedb; ++q)
+                for (dftfe::uInt q = 0; q < numQuadPointsSmearedb; ++q)
                   {
                     gradPhiTotSmearedChargeQuads[q] =
                       phiTotEvalSmearedCharge.get_gradient(q);
@@ -1268,7 +1260,7 @@ namespace dftfe
                   matrixFreeDataElectro,
                   cell,
                   gradPhiTotSmearedChargeQuads,
-                  std::vector<unsigned int>(
+                  std::vector<dftfe::uInt>(
                     nonTrivialSmearedChargeAtomImageIdsMacroCell.begin(),
                     nonTrivialSmearedChargeAtomImageIdsMacroCell.end()),
                   dftPtr->d_bQuadAtomIdsAllAtomsImages,

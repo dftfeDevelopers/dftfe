@@ -25,7 +25,8 @@
 #include <iostream>
 #include <fstream>
 #include <numeric>
-
+#include <TypeConfig.h>
+#include <dftfeDataTypes.h>
 namespace dftfe
 {
   namespace dftUtils
@@ -47,7 +48,7 @@ namespace dftfe
           file.close();
         }
 
-      int color =
+      dftfe::Int color =
         data.size() > 0 ?
           1 :
           MPI_UNDEFINED; // Determine color based on non-zero/zero data size
@@ -65,8 +66,8 @@ namespace dftfe
 
 
           // create char array
-          const auto localSize = data.size();
-          const int  charsPerDataElement =
+          const dftfe::uInt localSize = data.size();
+          const dftfe::Int  charsPerDataElement =
             data[0]->getNumberCharsPerCompositeData();
 
           // FIXME Playing a dangerous game ... the +1 is for the trailing NULL
@@ -81,20 +82,20 @@ namespace dftfe
           data[0]->getMPIDataType(&newType);
 
           // create local array for set view
-          std::vector<unsigned long> sizes(static_cast<unsigned long>(size)),
-            offset(static_cast<unsigned long>(size), 0);
+          std::vector<dftfe::uInt> sizes(static_cast<dftfe::uInt>(size)),
+            offset(static_cast<dftfe::uInt>(size), 0);
           MPI_Allgather(&localSize,
                         1,
-                        MPI_UNSIGNED_LONG,
-                        &sizes[0],
+                        dftfe::dataTypes::mpi_type_id(&localSize),
+                        sizes.data(),
                         1,
-                        MPI_UNSIGNED_LONG,
+                        dftfe::dataTypes::mpi_type_id(sizes.data()),
                         nontrivialcomm);
 
           const auto globalSize = (std::accumulate(
-            sizes.begin(), sizes.end(), static_cast<unsigned long>(0)));
+            sizes.begin(), sizes.end(), static_cast<dftfe::uInt>(0)));
 
-          for (int i = 1; i < size; ++i)
+          for (dftfe::Int i = 1; i < size; ++i)
             {
               offset[i] = offset[i - 1] + sizes[i - 1];
             }

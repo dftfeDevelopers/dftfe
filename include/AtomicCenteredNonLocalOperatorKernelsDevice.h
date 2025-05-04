@@ -32,62 +32,62 @@ namespace dftfe
     template <typename ValueType>
     void
     copyFromParallelNonLocalVecToAllCellsVec(
-      const unsigned int numWfcs,
-      const unsigned int numNonLocalCells,
-      const unsigned int maxSingleAtomPseudoWfc,
-      const ValueType   *sphericalFnTimesWfcParallelVec,
-      ValueType         *sphericalFnTimesWfcAllCellsVec,
-      const int         *indexMapPaddedToParallelVec);
+      const dftfe::uInt numWfcs,
+      const dftfe::uInt numNonLocalCells,
+      const dftfe::uInt maxSingleAtomPseudoWfc,
+      const ValueType  *sphericalFnTimesWfcParallelVec,
+      ValueType        *sphericalFnTimesWfcAllCellsVec,
+      const dftfe::Int *indexMapPaddedToParallelVec);
 
 
     template <typename ValueType>
     void
     copyToDealiiParallelNonLocalVec(
-      const unsigned int  numWfcs,
-      const unsigned int  totalEntries,
-      const ValueType    *sphericalFnTimesWfcParallelVec,
-      ValueType          *sphericalFnTimesWfcDealiiParallelVec,
-      const unsigned int *indexMapDealiiParallelNumbering);
+      const dftfe::uInt  numWfcs,
+      const dftfe::uInt  totalEntries,
+      const ValueType   *sphericalFnTimesWfcParallelVec,
+      ValueType         *sphericalFnTimesWfcDealiiParallelVec,
+      const dftfe::uInt *indexMapDealiiParallelNumbering);
 
     template <typename ValueType>
     void
     copyFromDealiiParallelNonLocalVecToPaddedVector(
-      const unsigned int numWfcs,
-      const unsigned int totalEntriesPadded,
-      const ValueType   *sphericalFnTimesWfcDealiiParallelVec,
-      ValueType         *sphericalFnTimesWfcPaddedVec,
-      const int         *indexMapDealiiParallelNumbering);
+      const dftfe::uInt numWfcs,
+      const dftfe::uInt totalEntriesPadded,
+      const ValueType  *sphericalFnTimesWfcDealiiParallelVec,
+      ValueType        *sphericalFnTimesWfcPaddedVec,
+      const dftfe::Int *indexMapDealiiParallelNumbering);
 
     template <typename ValueType>
     void
     copyToDealiiParallelNonLocalVecFromPaddedVector(
-      const unsigned int numWfcs,
-      const unsigned int totalEntriesPadded,
-      const ValueType   *sphericalFnTimesWfcPaddedVec,
-      ValueType         *sphericalFnTimesWfcDealiiParallelVec,
-      const int         *indexMapDealiiParallelNumbering);
+      const dftfe::uInt numWfcs,
+      const dftfe::uInt totalEntriesPadded,
+      const ValueType  *sphericalFnTimesWfcPaddedVec,
+      ValueType        *sphericalFnTimesWfcDealiiParallelVec,
+      const dftfe::Int *indexMapDealiiParallelNumbering);
 
     template <typename ValueType>
     void
     addNonLocalContribution(
-      const unsigned int numberCellsForAtom,
-      const unsigned int numberNodesPerElement,
-      const unsigned int numberWfc,
-      const unsigned int numberCellsTraversed,
+      const dftfe::uInt numberCellsForAtom,
+      const dftfe::uInt numberNodesPerElement,
+      const dftfe::uInt numberWfc,
+      const dftfe::uInt numberCellsTraversed,
       const dftfe::utils::MemoryStorage<ValueType,
                                         dftfe::utils::MemorySpace::DEVICE>
                 &nonLocalContribution,
       ValueType *TotalContribution,
-      const dftfe::utils::MemoryStorage<unsigned int,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal);
     template <typename ValueType>
     void
     addNonLocalContribution(
-      const unsigned int totalNonLocalElements,
-      const unsigned int numberWfc,
-      const unsigned int numberNodesPerElement,
-      const dftfe::utils::MemoryStorage<unsigned int,
+      const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt numberWfc,
+      const dftfe::uInt numberNodesPerElement,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::DEVICE>
         &iElemNonLocalToElemIndexMap,
       const dftfe::utils::MemoryStorage<ValueType,
@@ -98,11 +98,27 @@ namespace dftfe
     template <typename ValueType>
     void
     sqrtAlphaScalingWaveFunctionEntries(
-      const unsigned int maxSingleAtomContribution,
-      const unsigned int numWfcs,
-      const unsigned int totalAtomsInCurrentProcessor,
-      const double      *scalingVector,
-      ValueType         *sphericalFnTimesWfcPadded);
+      const dftfe::uInt maxSingleAtomContribution,
+      const dftfe::uInt numWfcs,
+      const dftfe::uInt totalAtomsInCurrentProcessor,
+      const double     *scalingVector,
+      ValueType        *sphericalFnTimesWfcPadded);
+
+    template <typename ValueType>
+    void
+    assembleAtomLevelContributionsFromCellLevel(
+      const dftfe::uInt numberWaveFunctions,
+      const dftfe::uInt totalNonlocalElems,
+      const dftfe::uInt maxSingleAtomContribution,
+      const dftfe::uInt totalNonlocalEntries,
+      const dftfe::utils::MemoryStorage<ValueType,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesVectorAllCellsDevice,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &mapSphericalFnTimesVectorAllCellsReductionDevice,
+      dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+        &sphericalFnTimesWavefunctionMatrix);
 
 
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice

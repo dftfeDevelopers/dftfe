@@ -39,7 +39,7 @@ namespace dftfe
   {
     auto quadPoints = feBasisOp->quadPoints();
 
-    unsigned int numQuadPoints = quadPoints.size() / 3;
+    dftfe::uInt numQuadPoints = quadPoints.size() / 3;
 
     double periodicFactorX = dftParams.periodicX == true ? 0.0 : 1.0;
     double periodicFactorY = dftParams.periodicY == true ? 0.0 : 1.0;
@@ -53,7 +53,7 @@ namespace dftfe
         "DFT-FE Error: Confining potential can not be applied in an all-periodic setting"));
 
 
-    for (unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
+    for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); iAtom++)
       {
         double atomDist = 0.0;
         atomDist =
@@ -75,7 +75,7 @@ namespace dftfe
 
     d_confiningPotential.resize(numQuadPoints);
     d_confiningPotential.setValue(0.0);
-    for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+    for (dftfe::uInt iQuad = 0; iQuad < numQuadPoints; iQuad++)
       {
         double quadDist = 0.0;
         quadDist = quadPoints[3 * iQuad + 0] * quadPoints[3 * iQuad + 0] *
@@ -116,7 +116,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &externalPotential) const
   {
-    for (unsigned int iQuad = 0; iQuad < externalPotential.size(); iQuad++)
+    for (dftfe::uInt iQuad = 0; iQuad < externalPotential.size(); iQuad++)
       {
         externalPotential.data()[iQuad] += d_confiningPotential.data()[iQuad];
       }

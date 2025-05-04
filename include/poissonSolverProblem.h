@@ -33,7 +33,7 @@ namespace dftfe
    *
    * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
    */
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   class poissonSolverProblem : public dealiiLinearSolverProblem
   {
   public:
@@ -65,23 +65,23 @@ namespace dftfe
                                               &basisOperationsPtr,
       distributedCPUVec<double>               &x,
       const dealii::AffineConstraints<double> &constraintMatrix,
-      const unsigned int                       matrixFreeVectorComponent,
-      const unsigned int matrixFreeQuadratureComponentRhsDensity,
-      const unsigned int matrixFreeQuadratureComponentAX,
+      const dftfe::uInt                        matrixFreeVectorComponent,
+      const dftfe::uInt matrixFreeQuadratureComponentRhsDensity,
+      const dftfe::uInt matrixFreeQuadratureComponentAX,
       const std::map<dealii::types::global_dof_index, double> &atoms,
       const std::map<dealii::CellId, std::vector<double>> &smearedChargeValues,
-      const unsigned int smearedChargeQuadratureId,
+      const dftfe::uInt smearedChargeQuadratureId,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                        &rhoValues,
-      const bool         isComputeDiagonalA               = true,
-      const bool         isComputeMeanValueConstraints    = false,
-      const bool         smearedNuclearCharges            = false,
-      const bool         isRhoValues                      = true,
-      const bool         isGradSmearedChargeRhs           = false,
-      const unsigned int smearedChargeGradientComponentId = 0,
-      const bool         storeSmearedChargeRhs            = false,
-      const bool         reuseSmearedChargeRhs            = false,
-      const bool         reinitializeFastConstraints      = false);
+                       &rhoValues,
+      const bool        isComputeDiagonalA               = true,
+      const bool        isComputeMeanValueConstraints    = false,
+      const bool        smearedNuclearCharges            = false,
+      const bool        isRhoValues                      = true,
+      const bool        isGradSmearedChargeRhs           = false,
+      const dftfe::uInt smearedChargeGradientComponentId = 0,
+      const bool        storeSmearedChargeRhs            = false,
+      const bool        reuseSmearedChargeRhs            = false,
+      const bool        reinitializeFastConstraints      = false);
 
 
     /**
@@ -148,10 +148,10 @@ namespace dftfe
      *
      */
     void
-    AX(const dealii::MatrixFree<3, double>         &matrixFreeData,
-       distributedCPUVec<double>                   &dst,
-       const distributedCPUVec<double>             &src,
-       const std::pair<unsigned int, unsigned int> &cell_range) const;
+    AX(const dealii::MatrixFree<3, double>       &matrixFreeData,
+       distributedCPUVec<double>                 &dst,
+       const distributedCPUVec<double>           &src,
+       const std::pair<dftfe::uInt, dftfe::uInt> &cell_range) const;
 
 
     /**
@@ -212,13 +212,13 @@ namespace dftfe
 
     /// matrix free index required to access the DofHandler and
     /// dealii::AffineConstraints<double> objects corresponding to the problem
-    unsigned int d_matrixFreeVectorComponent;
+    dftfe::uInt d_matrixFreeVectorComponent;
 
     /// matrix free quadrature index
-    unsigned int d_matrixFreeQuadratureComponentRhsDensity;
+    dftfe::uInt d_matrixFreeQuadratureComponentRhsDensity;
 
     /// matrix free quadrature index
-    unsigned int d_matrixFreeQuadratureComponentAX;
+    dftfe::uInt d_matrixFreeQuadratureComponentAX;
 
     /// pointer to electron density cell quadrature data
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -228,7 +228,7 @@ namespace dftfe
       *d_smearedChargeValuesPtr;
 
     ///
-    unsigned int d_smearedChargeQuadratureId;
+    dftfe::uInt d_smearedChargeQuadratureId;
 
     /// pointer to map between global dof index in current processor and the
     /// atomic charge on that dof
@@ -254,14 +254,14 @@ namespace dftfe
     bool d_isReuseSmearedChargeRhs;
 
     ///
-    unsigned int d_smearedChargeGradientComponentId;
+    dftfe::uInt d_smearedChargeGradientComponentId;
 
     /// mean value constraints: mean value constrained node
-    dealii::types::global_dof_index d_meanValueConstraintNodeId;
+    dftfe::uInt d_meanValueConstraintNodeId;
 
     /// mean value constraints: constrained proc id containing the mean value
     /// constrained node
-    unsigned int d_meanValueConstraintProcId;
+    dftfe::uInt d_meanValueConstraintProcId;
 
     /// duplicate constraints object with flattened maps for faster access
     dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::HOST>
@@ -274,8 +274,8 @@ namespace dftfe
     bool d_isFastConstraintsInitialized;
 
     const MPI_Comm             mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
   };
 

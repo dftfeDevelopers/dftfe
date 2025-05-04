@@ -44,7 +44,7 @@ namespace dftfe
      *
      * @return Number of unknowns.
      */
-    virtual unsigned int
+    virtual dftfe::uInt
     getNumberUnknowns() const = 0;
 
     /**
@@ -101,10 +101,10 @@ namespace dftfe
      * be accumulated once when dot products of vertex fields are
      * computed (e.g. residual).
      *
-     * @return A vector of int values for each unknown. Value of 1
+     * @return A vector of dftfe::Int values for each unknown. Value of 1
      * indicates that the unknown should be counted and 0 otherwise.
      */
-    virtual std::vector<unsigned int>
+    virtual std::vector<dftfe::uInt>
     getUnknownCountFlag() const = 0;
 
     /**

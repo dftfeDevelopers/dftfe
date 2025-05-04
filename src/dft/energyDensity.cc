@@ -34,8 +34,8 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::computeAndPrintKE(
@@ -44,7 +44,7 @@ namespace dftfe
   {
     const dealii::Quadrature<3> &quadratureFormula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
-    const unsigned int n_q_points = quadratureFormula.size();
+    const dftfe::uInt n_q_points = quadratureFormula.size();
 
     //
     // compute kinetic energy density values
@@ -101,13 +101,13 @@ namespace dftfe
       cell = dofHandler.begin_active(),
       endc = dofHandler.end();
 
-    unsigned int iElem = 0;
+    dftfe::uInt iElem = 0;
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
           feValues.reinit(cell);
 
-          for (unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+          for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
             {
               const dealii::Point<3> &quadPoint =
                 feValues.quadrature_point(q_point);

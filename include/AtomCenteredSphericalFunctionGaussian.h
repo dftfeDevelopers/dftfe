@@ -33,14 +33,14 @@ namespace dftfe
     : public AtomCenteredSphericalFunctionBase
   {
   public:
-    AtomCenteredSphericalFunctionGaussian(double       RcParameter,
-                                          double       RmaxParameter,
-                                          unsigned int lParameter);
+    AtomCenteredSphericalFunctionGaussian(double      RcParameter,
+                                          double      RmaxParameter,
+                                          dftfe::uInt lParameter);
 
     double
     getRadialValue(double r) const override;
 
-    unsigned int
+    dftfe::uInt
     getQuantumNumbern() const;
 
     double

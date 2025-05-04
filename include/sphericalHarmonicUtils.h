@@ -33,11 +33,11 @@ namespace dftfe
     }
 
     inline void
-    getSphericalHarmonicVal(const double theta,
-                            const double phi,
-                            const int    l,
-                            const int    m,
-                            double      &sphericalHarmonicVal)
+    getSphericalHarmonicVal(const double     theta,
+                            const double     phi,
+                            const dftfe::Int l,
+                            const dftfe::Int m,
+                            double          &sphericalHarmonicVal)
     {
       if (m < 0)
         sphericalHarmonicVal =

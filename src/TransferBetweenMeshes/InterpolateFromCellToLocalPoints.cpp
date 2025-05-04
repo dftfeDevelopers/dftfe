@@ -26,7 +26,7 @@ namespace dftfe
   InterpolateFromCellToLocalPoints<memorySpace>::
     InterpolateFromCellToLocalPoints(
       const std::shared_ptr<const dftfe::utils::FECell<3>> &srcCell,
-      unsigned int                                          numNodes,
+      dftfe::uInt                                           numNodes,
       bool                                                  memOpt)
   {
     d_srcCell  = srcCell;
@@ -37,7 +37,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   InterpolateFromCellToLocalPoints<memorySpace>::
-    setRealCoordinatesOfLocalPoints(unsigned int         numPoints,
+    setRealCoordinatesOfLocalPoints(dftfe::uInt          numPoints,
                                     std::vector<double> &coordinates)
   {
     d_numPoints = numPoints;
@@ -61,14 +61,14 @@ namespace dftfe
   InterpolateFromCellToLocalPoints<memorySpace>::interpolate(
     const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                             &BLASWrapperPtr,
-    unsigned int             numberOfVectors,
+    dftfe::uInt              numberOfVectors,
     const dataTypes::number *parentNodalMemSpacePtr,
     dataTypes::number       *outputMemSpacePtr)
   {
     const dataTypes::number scalarCoeffAlpha = 1.0;
     const dataTypes::number scalarCoeffBeta  = 0.0;
     const char              transA = 'N', transB = 'N';
-    const unsigned int      inc = 1;
+    const dftfe::uInt       inc = 1;
 
     if (d_memOpt)
       {
@@ -107,14 +107,14 @@ namespace dftfe
     const std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                          &BLASWrapperPtr,
-    unsigned int                          numberOfVectors,
+    dftfe::uInt                           numberOfVectors,
     const std::vector<dataTypes::number> &parentNodalHost,
     std::vector<dataTypes::number>       &outputHost)
   {
     const dataTypes::number scalarCoeffAlpha = 1.0;
     const dataTypes::number scalarCoeffBeta  = 0.0;
     const char              transA = 'N', transB = 'N';
-    const unsigned int      inc = 1;
+    const dftfe::uInt       inc = 1;
 
 
     if (d_memOpt)

@@ -44,32 +44,32 @@ namespace dftfe
         std::shared_ptr<dftfe::basis::FEBasisOperations<dataTypes::number,
                                                         double,
                                                         memorySpace>>
-                          &basisOperationsPtr,
-        const unsigned int nlpspQuadratureId,
+                         &basisOperationsPtr,
+        const dftfe::uInt nlpspQuadratureId,
         const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
           &BLASWrapperPtr,
         dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &Xb,
-        const unsigned int                                                 BVec,
-        const unsigned int numCells,
-        const unsigned int cellsBlockSize,
+        const dftfe::uInt                                                  BVec,
+        const dftfe::uInt numCells,
+        const dftfe::uInt cellsBlockSize,
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
           &psiQuadsNLP,
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
           &gradPsiQuadsNLP)
       {
-        const int blockSize    = cellsBlockSize;
-        const int numberBlocks = numCells / blockSize;
-        const int remBlockSize = numCells - numberBlocks * blockSize;
+        const dftfe::Int blockSize    = cellsBlockSize;
+        const dftfe::Int numberBlocks = numCells / blockSize;
+        const dftfe::Int remBlockSize = numCells - numberBlocks * blockSize;
 
 
         basisOperationsPtr->reinit(BVec, cellsBlockSize, nlpspQuadratureId);
 
 
-        for (int iblock = 0; iblock < (numberBlocks + 1); iblock++)
+        for (dftfe::Int iblock = 0; iblock < (numberBlocks + 1); iblock++)
           {
-            const int currentBlockSize =
+            const dftfe::Int currentBlockSize =
               (iblock == numberBlocks) ? remBlockSize : blockSize;
-            const int startingId = iblock * blockSize;
+            const dftfe::Int startingId = iblock * blockSize;
 
             if (currentBlockSize > 0)
               {
@@ -79,9 +79,9 @@ namespace dftfe
                     startingId * basisOperationsPtr->nQuadsPerCell() * BVec,
                   gradPsiQuadsNLP.data() +
                     startingId * 3 * basisOperationsPtr->nQuadsPerCell() * BVec,
-                  std::pair<unsigned int, unsigned int>(startingId,
-                                                        startingId +
-                                                          currentBlockSize));
+                  std::pair<dftfe::uInt, dftfe::uInt>(startingId,
+                                                      startingId +
+                                                        currentBlockSize));
               }
           }
       }
@@ -92,14 +92,14 @@ namespace dftfe
         std::shared_ptr<dftfe::basis::FEBasisOperations<dataTypes::number,
                                                         double,
                                                         memorySpace>>
-                          &basisOperationsPtr,
-        const unsigned int densityQuadratureId,
+                         &basisOperationsPtr,
+        const dftfe::uInt densityQuadratureId,
         const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
           &BLASWrapperPtr,
         dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &Xb,
-        const unsigned int                                                 BVec,
-        const unsigned int                                      numCells,
-        const unsigned int                                      numQuads,
+        const dftfe::uInt                                                  BVec,
+        const dftfe::uInt                                       numCells,
+        const dftfe::uInt                                       numQuads,
         const dftfe::utils::MemoryStorage<double, memorySpace> &eigenValues,
         const dftfe::utils::MemoryStorage<double, memorySpace>
                     &partialOccupancies,
@@ -107,7 +107,7 @@ namespace dftfe
         const double kcoordy,
         const double kcoordz,
         const dftfe::utils::MemoryStorage<double, memorySpace> &onesVec,
-        const unsigned int                                      cellsBlockSize,
+        const dftfe::uInt                                       cellsBlockSize,
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
           &psiQuadsFlat,
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
@@ -119,19 +119,19 @@ namespace dftfe
         const bool isFloatingChargeForces,
         const bool addEk)
       {
-        const int blockSize    = cellsBlockSize;
-        const int numberBlocks = numCells / blockSize;
-        const int remBlockSize = numCells - numberBlocks * blockSize;
+        const dftfe::Int blockSize    = cellsBlockSize;
+        const dftfe::Int numberBlocks = numCells / blockSize;
+        const dftfe::Int remBlockSize = numCells - numberBlocks * blockSize;
 
 
         basisOperationsPtr->reinit(BVec, cellsBlockSize, densityQuadratureId);
 
 
-        for (int iblock = 0; iblock < (numberBlocks + 1); iblock++)
+        for (dftfe::Int iblock = 0; iblock < (numberBlocks + 1); iblock++)
           {
-            const int currentBlockSize =
+            const dftfe::Int currentBlockSize =
               (iblock == numberBlocks) ? remBlockSize : blockSize;
-            const int startingId = iblock * blockSize;
+            const dftfe::Int startingId = iblock * blockSize;
 
             if (currentBlockSize > 0)
               {
@@ -141,8 +141,9 @@ namespace dftfe
                       Xb,
                       psiQuadsFlat.data(),
                       gradPsiQuadsFlat.data(),
-                      std::pair<unsigned int, unsigned int>(
-                        startingId, startingId + currentBlockSize));
+                      std::pair<dftfe::uInt, dftfe::uInt>(startingId,
+                                                          startingId +
+                                                            currentBlockSize));
 
                     if (memorySpace == dftfe::utils::MemorySpace::HOST)
                       {
@@ -153,10 +154,9 @@ namespace dftfe
                         const double absksq = kcoord[0] * kcoord[0] +
                                               kcoord[1] * kcoord[1] +
                                               kcoord[2] * kcoord[2];
-                        for (unsigned int j = 0; j < currentBlockSize; j++)
-                          for (unsigned int iquad = 0; iquad < numQuads;
-                               iquad++)
-                            for (unsigned int iwfc = 0; iwfc < BVec; iwfc++)
+                        for (dftfe::uInt j = 0; j < currentBlockSize; j++)
+                          for (dftfe::uInt iquad = 0; iquad < numQuads; iquad++)
+                            for (dftfe::uInt iwfc = 0; iwfc < BVec; iwfc++)
                               {
                                 const dataTypes::number psiQuad =
                                   psiQuadsFlat.data()[j * numQuads * BVec +
@@ -203,8 +203,8 @@ namespace dftfe
                                       (kcoord[0] * gradPsiQuad[0] +
                                        kcoord[1] * gradPsiQuad[1] +
                                        kcoord[2] * gradPsiQuad[2]));
-                                for (unsigned int idim = 0; idim < 3; idim++)
-                                  for (unsigned int jdim = 0; jdim < 3; jdim++)
+                                for (dftfe::uInt idim = 0; idim < 3; idim++)
+                                  for (dftfe::uInt jdim = 0; jdim < 3; jdim++)
                                     {
                                       eshelbyTensorContributions
                                         [j * numQuads * 9 * BVec +
@@ -235,9 +235,8 @@ namespace dftfe
 #ifdef USE_COMPLEX
                                 if (addEk)
                                   {
-                                    for (unsigned int idim = 0; idim < 3;
-                                         idim++)
-                                      for (unsigned int jdim = 0; jdim < 3;
+                                    for (dftfe::uInt idim = 0; idim < 3; idim++)
+                                      for (dftfe::uInt jdim = 0; jdim < 3;
                                            jdim++)
                                         {
                                           eshelbyTensorContributions
@@ -322,15 +321,15 @@ namespace dftfe
         const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
                                 &onesVecNLP,
         const dataTypes::number *projectorKetTimesVectorParFlattened,
-        const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+        const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
           &nonTrivialIdToElemIdMap,
-        const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
-                          &projecterKetTimesFlattenedVectorLocalIds,
-        const unsigned int numCells,
-        const unsigned int numQuadsNLP,
-        const unsigned int numPsi,
-        const unsigned int totalNonTrivialPseudoWfcs,
-        const unsigned int innerBlockSizeEnlp,
+        const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
+                         &projecterKetTimesFlattenedVectorLocalIds,
+        const dftfe::uInt numCells,
+        const dftfe::uInt numQuadsNLP,
+        const dftfe::uInt numPsi,
+        const dftfe::uInt totalNonTrivialPseudoWfcs,
+        const dftfe::uInt innerBlockSizeEnlp,
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
           &nlpContractionContribution,
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> &
@@ -346,30 +345,32 @@ namespace dftfe
         dataTypes::number *
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp)
       {
-        const int blockSizeNlp    = innerBlockSizeEnlp;
-        const int numberBlocksNlp = totalNonTrivialPseudoWfcs / blockSizeNlp;
-        const int remBlockSizeNlp =
+        const dftfe::Int blockSizeNlp = innerBlockSizeEnlp;
+        const dftfe::Int numberBlocksNlp =
+          totalNonTrivialPseudoWfcs / blockSizeNlp;
+        const dftfe::Int remBlockSizeNlp =
           totalNonTrivialPseudoWfcs - numberBlocksNlp * blockSizeNlp;
 
 
         dataTypes::number scalarCoeffAlphaNlp = dataTypes::number(1.0);
         dataTypes::number scalarCoeffBetaNlp  = dataTypes::number(0.0);
 
-        for (int iblocknlp = 0; iblocknlp < (numberBlocksNlp + 1); iblocknlp++)
+        for (dftfe::Int iblocknlp = 0; iblocknlp < (numberBlocksNlp + 1);
+             iblocknlp++)
           {
-            const int currentBlockSizeNlp =
+            const dftfe::Int currentBlockSizeNlp =
               (iblocknlp == numberBlocksNlp) ? remBlockSizeNlp : blockSizeNlp;
-            const int startingIdNlp = iblocknlp * blockSizeNlp;
+            const dftfe::Int startingIdNlp = iblocknlp * blockSizeNlp;
             if (currentBlockSizeNlp > 0)
               {
                 if (memorySpace == dftfe::utils::MemorySpace::HOST)
                   {
-                    for (unsigned int ipseudowfc = 0;
+                    for (dftfe::uInt ipseudowfc = 0;
                          ipseudowfc < currentBlockSizeNlp;
                          ipseudowfc++)
-                      for (unsigned int iquad = 0; iquad < (numQuadsNLP * 3);
+                      for (dftfe::uInt iquad = 0; iquad < (numQuadsNLP * 3);
                            iquad++)
-                        for (unsigned int iwfc = 0; iwfc < numPsi; iwfc++)
+                        for (dftfe::uInt iwfc = 0; iwfc < numPsi; iwfc++)
                           {
                             nlpContractionContribution[ipseudowfc *
                                                          numQuadsNLP * 3 *
@@ -431,7 +432,7 @@ namespace dftfe
                       .data());
 
 
-                for (unsigned int i = 0;
+                for (dftfe::uInt i = 0;
                      i < currentBlockSizeNlp * 3 * numQuadsNLP;
                      i++)
                   projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH
@@ -441,11 +442,11 @@ namespace dftfe
 #ifdef USE_COMPLEX
                 if (memorySpace == dftfe::utils::MemorySpace::HOST)
                   {
-                    for (unsigned int ipseudowfc = 0;
+                    for (dftfe::uInt ipseudowfc = 0;
                          ipseudowfc < currentBlockSizeNlp;
                          ipseudowfc++)
-                      for (unsigned int iquad = 0; iquad < numQuadsNLP; iquad++)
-                        for (unsigned int iwfc = 0; iwfc < numPsi; iwfc++)
+                      for (dftfe::uInt iquad = 0; iquad < numQuadsNLP; iquad++)
+                        for (dftfe::uInt iwfc = 0; iwfc < numPsi; iwfc++)
                           nlpContractionContribution[ipseudowfc * numQuadsNLP *
                                                        numPsi +
                                                      iquad * numPsi + iwfc] =
@@ -504,7 +505,7 @@ namespace dftfe
                       .data());
 
 
-                for (unsigned int i = 0; i < currentBlockSizeNlp * numQuadsNLP;
+                for (dftfe::uInt i = 0; i < currentBlockSizeNlp * numQuadsNLP;
                      i++)
                   projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedH
                     [startingIdNlp * numQuadsNLP + i] +=
@@ -522,17 +523,17 @@ namespace dftfe
         std::shared_ptr<dftfe::basis::FEBasisOperations<dataTypes::number,
                                                         double,
                                                         memorySpace>>
-                          &basisOperationsPtr,
-        const unsigned int densityQuadratureId,
-        const unsigned int nlpspQuadratureId,
+                         &basisOperationsPtr,
+        const dftfe::uInt densityQuadratureId,
+        const dftfe::uInt nlpspQuadratureId,
         const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
           &BLASWrapperPtr,
         std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
           oncvClassPtr,
         std::shared_ptr<hubbard<dataTypes::number, memorySpace>>
-                           hubbardClassPtr,
-        const unsigned int kPointIndex,
-        const unsigned int spinIndex,
+                          hubbardClassPtr,
+        const dftfe::uInt kPointIndex,
+        const dftfe::uInt spinIndex,
         dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
           &flattenedArrayBlock,
         dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
@@ -549,22 +550,22 @@ namespace dftfe
         const dftfe::utils::MemoryStorage<double, memorySpace> &onesVec,
         const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
           &onesVecNLP,
-        const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+        const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
           &nonTrivialIdToElemIdMap,
-        const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+        const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
           &projecterKetTimesFlattenedVectorLocalIds,
-        const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+        const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
           &nonTrivialIdToElemIdMapHubbard,
-        const dftfe::utils::MemoryStorage<unsigned int, memorySpace>
-                          &projecterKetTimesFlattenedVectorLocalIdsHubbard,
-        const unsigned int startingVecId,
-        const unsigned int N,
-        const unsigned int numPsi,
-        const unsigned int numCells,
-        const unsigned int numQuads,
-        const unsigned int numQuadsNLP,
-        const unsigned int totalNonTrivialPseudoWfcs,
-        const unsigned int totalNonTrivialHubbardProjectors,
+        const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
+                         &projecterKetTimesFlattenedVectorLocalIdsHubbard,
+        const dftfe::uInt startingVecId,
+        const dftfe::uInt N,
+        const dftfe::uInt numPsi,
+        const dftfe::uInt numCells,
+        const dftfe::uInt numQuads,
+        const dftfe::uInt numQuadsNLP,
+        const dftfe::uInt totalNonTrivialPseudoWfcs,
+        const dftfe::uInt totalNonTrivialHubbardProjectors,
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
           &psiQuadsFlat,
         dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
@@ -603,21 +604,21 @@ namespace dftfe
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTemp,
         dataTypes::number *
           projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedHPinnedTempHubbard,
-        const unsigned int cellsBlockSize,
-        const unsigned int innerBlockSizeEnlp,
-        const bool         isPsp,
-        const unsigned int innerBlockSizeHubbard,
-        const bool         useHubbard,
-        const bool         isFloatingChargeForces,
-        const bool         addEk)
+        const dftfe::uInt cellsBlockSize,
+        const dftfe::uInt innerBlockSizeEnlp,
+        const bool        isPsp,
+        const dftfe::uInt innerBlockSizeHubbard,
+        const bool        useHubbard,
+        const bool        isFloatingChargeForces,
+        const bool        addEk)
       {
-        // int this_process;
+        // dftfe::Int this_process;
         // MPI_Comm_rank(d_mpiCommParent, &this_process);
 
 
 
         if (memorySpace == dftfe::utils::MemorySpace::HOST)
-          for (unsigned int iNode = 0; iNode < basisOperationsPtr->nOwnedDofs();
+          for (dftfe::uInt iNode = 0; iNode < basisOperationsPtr->nOwnedDofs();
                ++iNode)
             std::memcpy(flattenedArrayBlock.data() + iNode * numPsi,
                         X + iNode * N + startingVecId,
@@ -799,9 +800,9 @@ namespace dftfe
     wfcContractionsForceKernelsAllH(
       std::shared_ptr<
         dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
-                        &basisOperationsPtr,
-      const unsigned int densityQuadratureId,
-      const unsigned int nlpspQuadratureId,
+                       &basisOperationsPtr,
+      const dftfe::uInt densityQuadratureId,
+      const dftfe::uInt nlpspQuadratureId,
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         &BLASWrapperPtr,
       std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
@@ -809,16 +810,16 @@ namespace dftfe
       std::shared_ptr<hubbard<dataTypes::number, memorySpace>> hubbardClassPtr,
       const bool                                               useHubbard,
       const dataTypes::number                                 *X,
-      const unsigned int                      spinPolarizedFlag,
-      const unsigned int                      spinIndex,
+      const dftfe::uInt                       spinPolarizedFlag,
+      const dftfe::uInt                       spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
       const std::vector<std::vector<double>> &partialOccupanciesH,
       const std::vector<double>              &kPointCoordinates,
-      const unsigned int                      MLoc,
-      const unsigned int                      N,
-      const unsigned int                      numCells,
-      const unsigned int                      numQuads,
-      const unsigned int                      numQuadsNLP,
+      const dftfe::uInt                       MLoc,
+      const dftfe::uInt                       N,
+      const dftfe::uInt                       numCells,
+      const dftfe::uInt                       numQuads,
+      const dftfe::uInt                       numQuadsNLP,
       double                                 *eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
@@ -838,19 +839,18 @@ namespace dftfe
       const dftParameters &dftParams)
     {
       // band group parallelization data structures
-      const unsigned int numberBandGroups =
+      const dftfe::uInt numberBandGroups =
         dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
-      const unsigned int bandGroupTaskId =
+      const dftfe::uInt bandGroupTaskId =
         dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
       dftUtils::createBandParallelizationIndices(
         interBandGroupComm, N, bandGroupLowHighPlusOneIndices);
 
-      const unsigned int blockSize =
-        std::min(dftParams.chebyWfcBlockSize,
-                 bandGroupLowHighPlusOneIndices[1]);
+      const dftfe::uInt blockSize = std::min(dftParams.chebyWfcBlockSize,
+                                             bandGroupLowHighPlusOneIndices[1]);
 
-      // int this_process;
+      // dftfe::Int this_process;
       // MPI_Comm_rank(mpiCommParent, &this_process);
       // dftfe::utils::deviceSynchronize();
       // MPI_Barrier(mpiCommParent);
@@ -889,7 +889,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> onesVecNLP(
         blockSize, dataTypes::number(1.0));
 
-      const unsigned int cellsBlockSize = std::min((unsigned int)10, numCells);
+      const dftfe::uInt cellsBlockSize = std::min((dftfe::uInt)10, numCells);
 
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> psiQuadsFlat(
         cellsBlockSize * numQuads * blockSize, dataTypes::number(0.0));
@@ -907,13 +907,13 @@ namespace dftfe
         eshelbyTensorContributions(cellsBlockSize * numQuads * blockSize * 9,
                                    0.0);
 
-      const unsigned int totalNonTrivialPseudoWfcs =
+      const dftfe::uInt totalNonTrivialPseudoWfcs =
         isPsp ? oncvClassPtr->getNonLocalOperator()
                   ->getTotalNonTrivialSphericalFnsOverAllCells() :
                 0;
 
-      const unsigned int innerBlockSizeEnlp =
-        std::min((unsigned int)10, totalNonTrivialPseudoWfcs);
+      const dftfe::uInt innerBlockSizeEnlp =
+        std::min((dftfe::uInt)10, totalNonTrivialPseudoWfcs);
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
         nlpContractionContribution(innerBlockSizeEnlp * numQuadsNLP * 3 *
                                      blockSize,
@@ -922,9 +922,9 @@ namespace dftfe
         projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedBlock;
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedBlock;
-      dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+      dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         projecterKetTimesFlattenedVectorLocalIds;
-      dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+      dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         nonTrivialIdToElemIdMap;
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
@@ -958,7 +958,7 @@ namespace dftfe
           dftfe::utils::deviceMemcpyH2D(nonTrivialIdToElemIdMapD.data(),
                                         nonTrivialIdToElemIdMapH,
                                         totalNonTrivialPseudoWfcs *
-                                          sizeof(unsigned int));
+                                          sizeof(dftfe::uInt));
           */
 
           dftfe::utils::
@@ -972,19 +972,19 @@ namespace dftfe
           dftfe::utils::deviceMemcpyH2D(
             projecterKetTimesFlattenedVectorLocalIdsD.data(),
             projecterKetTimesFlattenedVectorLocalIdsH,
-            totalNonTrivialPseudoWfcs * sizeof(unsigned int));
+            totalNonTrivialPseudoWfcs * sizeof(dftfe::uInt));
           */
         }
 
 
-      const unsigned int totalNonTrivialHubbardProjectors =
+      const dftfe::uInt totalNonTrivialHubbardProjectors =
         useHubbard ? hubbardClassPtr->getNonLocalOperator()
                        ->getTotalNonTrivialSphericalFnsOverAllCells() :
                      0;
 
 
-      const unsigned int innerBlockSizeHubbard =
-        std::min((unsigned int)10, totalNonTrivialHubbardProjectors);
+      const dftfe::uInt innerBlockSizeHubbard =
+        std::min((dftfe::uInt)10, totalNonTrivialHubbardProjectors);
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
         contractionContributionHubbard(innerBlockSizeHubbard * numQuadsNLP * 3 *
                                          blockSize,
@@ -993,9 +993,9 @@ namespace dftfe
         projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattenedBlockHubbard;
       dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedBlockHubbard;
-      dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+      dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         projecterKetTimesFlattenedVectorLocalIdsHubbard;
-      dftfe::utils::MemoryStorage<unsigned int, memorySpace>
+      dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         nonTrivialIdToElemIdMapHubbard;
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
@@ -1037,8 +1037,8 @@ namespace dftfe
                   ->getSphericalFnTimesVectorFlattenedVectorLocalIds()[0]));
         }
 
-      const unsigned numKPoints = kPointCoordinates.size() / 3;
-      for (unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
+      const dftfe::uInt numKPoints = kPointCoordinates.size() / 3;
+      for (dftfe::uInt kPoint = 0; kPoint < numKPoints; ++kPoint)
         {
           elocWfcEshelbyTensorQuadValues.setValue(0);
           // spin index update is not required
@@ -1086,9 +1086,9 @@ namespace dftfe
 #endif
             }
 
-          for (unsigned int ivec = 0; ivec < N; ivec += blockSize)
+          for (dftfe::uInt ivec = 0; ivec < N; ivec += blockSize)
             {
-              const unsigned int currentBlockSize =
+              const dftfe::uInt currentBlockSize =
                 std::min(blockSize, N - ivec);
 
               flattenedArrayBlockPtr =
@@ -1113,8 +1113,7 @@ namespace dftfe
                   std::vector<double> blockedEigenValues(currentBlockSize, 0.0);
                   std::vector<double> blockedPartialOccupancies(
                     currentBlockSize, 0.0);
-                  for (unsigned int iWave = 0; iWave < currentBlockSize;
-                       ++iWave)
+                  for (dftfe::uInt iWave = 0; iWave < currentBlockSize; ++iWave)
                     {
                       blockedEigenValues[iWave] =
                         eigenValuesH[kPoint][spinIndex * N + ivec + iWave];
@@ -1264,9 +1263,9 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::DEVICE>>
-                        &basisOperationsPtr,
-      const unsigned int densityQuadratureId,
-      const unsigned int nlpspQuadratureId,
+                       &basisOperationsPtr,
+      const dftfe::uInt densityQuadratureId,
+      const dftfe::uInt nlpspQuadratureId,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
         &BLASWrapperPtr,
@@ -1278,16 +1277,16 @@ namespace dftfe
                                               hubbardClassPtr,
       const bool                              useHubbard,
       const dataTypes::number                *X,
-      const unsigned int                      spinPolarizedFlag,
-      const unsigned int                      spinIndex,
+      const dftfe::uInt                       spinPolarizedFlag,
+      const dftfe::uInt                       spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
       const std::vector<std::vector<double>> &partialOccupanciesH,
       const std::vector<double>              &kPointCoordinates,
-      const unsigned int                      MLoc,
-      const unsigned int                      N,
-      const unsigned int                      numCells,
-      const unsigned int                      numQuads,
-      const unsigned int                      numQuadsNLP,
+      const dftfe::uInt                       MLoc,
+      const dftfe::uInt                       N,
+      const dftfe::uInt                       numCells,
+      const dftfe::uInt                       numQuads,
+      const dftfe::uInt                       numQuadsNLP,
       double                                 *eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,
@@ -1313,9 +1312,9 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                        &basisOperationsPtr,
-      const unsigned int densityQuadratureId,
-      const unsigned int nlpspQuadratureId,
+                       &basisOperationsPtr,
+      const dftfe::uInt densityQuadratureId,
+      const dftfe::uInt nlpspQuadratureId,
       const std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
         &BLASWrapperPtr,
@@ -1326,16 +1325,16 @@ namespace dftfe
                               dftfe::utils::MemorySpace::HOST>> hubbardClassPtr,
       const bool                                                useHubbard,
       const dataTypes::number                                  *X,
-      const unsigned int                      spinPolarizedFlag,
-      const unsigned int                      spinIndex,
+      const dftfe::uInt                       spinPolarizedFlag,
+      const dftfe::uInt                       spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
       const std::vector<std::vector<double>> &partialOccupanciesH,
       const std::vector<double>              &kPointCoordinates,
-      const unsigned int                      MLoc,
-      const unsigned int                      N,
-      const unsigned int                      numCells,
-      const unsigned int                      numQuads,
-      const unsigned int                      numQuadsNLP,
+      const dftfe::uInt                       MLoc,
+      const dftfe::uInt                       N,
+      const dftfe::uInt                       numCells,
+      const dftfe::uInt                       numQuads,
+      const dftfe::uInt                       numQuadsNLP,
       double                                 *eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,

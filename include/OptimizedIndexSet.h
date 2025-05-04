@@ -36,7 +36,7 @@ namespace dftfe
      * contiguous sub-ranges competes with the size of the index set (i.e., the
      * index set is very random) then it default to the behavior of an std::set.
      *
-     * @tparam ValueType The data type of the indices (e.g., unsigned int, unsigned long int)
+     * @tparam ValueType The data type of the indices (e.g., dftfe::uInt, unsigned long int)
      */
 
     template <typename T>
@@ -46,14 +46,14 @@ namespace dftfe
       /**
        * @brief Constructor
        *
-       * @param[in] inputSet A set of unsigned int or unsigned long int
+       * @param[in] inputSet A set of dftfe::uInt or unsigned long int
        * for which an OptimizedIndexSet is to be created
        */
       OptimizedIndexSet(const std::set<T> &inputSet = std::set<T>());
       ~OptimizedIndexSet() = default;
 
       void
-      getPosition(const T &index, size_type &pos, bool &found) const;
+      getPosition(const T &index, dftfe::uInt &pos, bool &found) const;
 
       bool
       getPosition(const OptimizedIndexSet<T> &rhs) const;
@@ -61,7 +61,7 @@ namespace dftfe
 
     private:
       /// Store the number of contiguous ranges in the input set of indices
-      size_type d_numContiguousRanges;
+      dftfe::uInt d_numContiguousRanges;
 
       /*
        * Vector of size 2*(d_numContiguousRanges in d_set).
@@ -74,7 +74,7 @@ namespace dftfe
 
       /// Vector of size d_numContiguousRanges which stores the accumulated
       /// number of elements in d_set prior to the i-th contiguous range
-      std::vector<size_type> d_numEntriesBefore;
+      std::vector<dftfe::uInt> d_numEntriesBefore;
 
       bool
       operator==(const OptimizedIndexSet<T> &rhs) const;

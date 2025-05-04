@@ -58,13 +58,13 @@ namespace dftfe
       const bool isXCGGA)
     {
       dealii::Tensor<1, 3, dealii::VectorizedArray<double>> temp;
-      for (unsigned int i = 0; i < 3; i++)
+      for (dftfe::uInt i = 0; i < 3; i++)
         temp[i] = dealii::make_vectorized_array(0.0);
 
       if (isXCGGA)
         {
-          for (unsigned int i = 0; i < 3; i++)
-            for (unsigned int j = 0; j < 3; j++)
+          for (dftfe::uInt i = 0; i < 3; i++)
+            for (dftfe::uInt j = 0; j < 3; j++)
               temp[i] += (derExcGradRhoSpin0[j] + derExcGradRhoSpin1[j]) *
                          hessianRhoCore[j][i];
         }

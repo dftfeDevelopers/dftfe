@@ -39,12 +39,12 @@ namespace dftfe
   public:
     TransferDataBetweenMeshesIncompatiblePartitioning(
       const dealii::MatrixFree<3, double> &matrixFreeMesh1,
-      const unsigned int                   matrixFreeMesh1VectorComponent,
-      const unsigned int                   matrixFreeMesh1QuadratureComponent,
+      const dftfe::uInt                    matrixFreeMesh1VectorComponent,
+      const dftfe::uInt                    matrixFreeMesh1QuadratureComponent,
       const dealii::MatrixFree<3, double> &matrixFreeMesh2,
-      const unsigned int                   matrixFreeMesh2VectorComponent,
-      const unsigned int                   matrixFreeMesh2QuadratureComponent,
-      const unsigned int                   verbosity,
+      const dftfe::uInt                    matrixFreeMesh2VectorComponent,
+      const dftfe::uInt                    matrixFreeMesh2QuadratureComponent,
+      const dftfe::uInt                    verbosity,
       const MPI_Comm                      &mpiComm,
       const bool useMemOptForCellWiseInterpolation = false);
 
@@ -54,15 +54,15 @@ namespace dftfe
                                                            &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<dftfe::dataTypes::number,
                                               memorySpace> &inputVec,
-      const unsigned int                                    numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+      const dftfe::uInt                                     numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-                        &outputQuadData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeOutputVec); // override;
+                       &outputQuadData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeOutputVec); // override;
 
     void
     interpolateMesh2DataToMesh1QuadPoints(
@@ -70,15 +70,15 @@ namespace dftfe
                                                            &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<dftfe::dataTypes::number,
                                               memorySpace> &inputVec,
-      const unsigned int                                    numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+      const dftfe::uInt                                     numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         &fullFlattenedArrayCellLocalProcIndexIdMapMesh1,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number, memorySpace>
-                        &outputQuadData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeOutputVec); // override;
+                       &outputQuadData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeOutputVec); // override;
 
 
     void
@@ -87,17 +87,17 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                         &BLASWrapperPtr,
       const distributedCPUVec<dftfe::dataTypes::number> &inputVec,
-      const unsigned int                                 numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type,
+      const dftfe::uInt                                  numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::HOST>
         &fullFlattenedArrayCellLocalProcIndexIdMapParent,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-                        &outputQuadData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeOutputVec); // override;
+                       &outputQuadData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeOutputVec); // override;
 
     void
     interpolateMesh2DataToMesh1QuadPoints(
@@ -105,26 +105,26 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                                         &BLASWrapperPtr,
       const distributedCPUVec<dftfe::dataTypes::number> &inputVec,
-      const unsigned int                                 numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type,
+      const dftfe::uInt                                  numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::HOST>
         &mapVecToCells,
       dftfe::utils::MemoryStorage<dftfe::dataTypes::number,
                                   dftfe::utils::MemorySpace::HOST>
-                        &outputQuadData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeOutputVec); // override;
+                       &outputQuadData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeOutputVec); // override;
 
   private:
     const dealii::MatrixFree<3, double> *d_matrixFreeMesh1Ptr;
     const dealii::MatrixFree<3, double> *d_matrixFreeMesh2Ptr;
 
-    size_type d_matrixFreeMesh1VectorComponent,
+    dftfe::uInt d_matrixFreeMesh1VectorComponent,
       d_matrixFreeMesh1QuadratureComponent;
 
-    size_type d_matrixFreeMesh2VectorComponent,
+    dftfe::uInt d_matrixFreeMesh2VectorComponent,
       d_matrixFreeMesh2QuadratureComponent;
 
     std::shared_ptr<

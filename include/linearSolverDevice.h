@@ -49,8 +49,8 @@ namespace dftfe
     virtual void
     solve(linearSolverProblemDevice &problem,
           const double               absTolerance,
-          const unsigned int         maxNumberIterations,
-          const int                  debugLevel     = 0,
+          const dftfe::uInt          maxNumberIterations,
+          const dftfe::Int           debugLevel     = 0,
           bool                       distributeFlag = true) = 0;
 
   private:

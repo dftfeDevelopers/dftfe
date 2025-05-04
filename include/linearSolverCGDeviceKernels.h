@@ -11,34 +11,34 @@ namespace dftfe
    *
    */
   void
-  applyPreconditionAndComputeDotProductDevice(double       *d_dvec,
-                                              double       *d_devSum,
-                                              const double *d_rvec,
-                                              const double *d_jacobi,
-                                              const int     N);
+  applyPreconditionAndComputeDotProductDevice(double          *d_dvec,
+                                              double          *d_devSum,
+                                              const double    *d_rvec,
+                                              const double    *d_jacobi,
+                                              const dftfe::Int N);
 
   /**
    * @brief Combines precondition, sadd and dot product
    *
    */
   void
-  applyPreconditionComputeDotProductAndSaddDevice(double       *d_qvec,
-                                                  double       *d_devSum,
-                                                  const double *d_rvec,
-                                                  const double *d_jacobi,
-                                                  const int     N);
+  applyPreconditionComputeDotProductAndSaddDevice(double          *d_qvec,
+                                                  double          *d_devSum,
+                                                  const double    *d_rvec,
+                                                  const double    *d_jacobi,
+                                                  const dftfe::Int N);
 
   /**
    * @brief Combines scaling and norm
    *
    */
   void
-  scaleXRandComputeNormDevice(double       *x,
-                              double       *d_rvec,
-                              double       *d_devSum,
-                              const double *d_qvec,
-                              const double *d_dvec,
-                              const double  alpha,
-                              const int     N);
+  scaleXRandComputeNormDevice(double          *x,
+                              double          *d_rvec,
+                              double          *d_devSum,
+                              const double    *d_qvec,
+                              const double    *d_dvec,
+                              const double     alpha,
+                              const dftfe::Int N);
 } // namespace dftfe
 #endif

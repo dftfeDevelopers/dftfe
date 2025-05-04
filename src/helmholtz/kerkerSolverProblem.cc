@@ -25,7 +25,7 @@ namespace dftfe
   //
   // constructor
   //
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   kerkerSolverProblem<FEOrderElectro>::kerkerSolverProblem(
     const MPI_Comm &mpi_comm_parent,
     const MPI_Comm &mpi_comm_domain)
@@ -39,7 +39,7 @@ namespace dftfe
   {}
 
 
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::init(
     std::shared_ptr<
@@ -49,8 +49,8 @@ namespace dftfe
     dealii::AffineConstraints<double> &constraintMatrixPRefined,
     distributedCPUVec<double>         &x,
     double                             kerkerMixingParameter,
-    const unsigned int                 matrixFreeVectorComponent,
-    const unsigned int                 matrixFreeQuadratureComponent)
+    const dftfe::uInt                  matrixFreeVectorComponent,
+    const dftfe::uInt                  matrixFreeQuadratureComponent)
   {
     d_basisOperationsPtr            = basisOperationsPtr;
     d_matrixFreeDataPRefinedPtr     = &(basisOperationsPtr->matrixFreeData());
@@ -65,7 +65,7 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::reinit(
     distributedCPUVec<double> &x,
@@ -76,21 +76,21 @@ namespace dftfe
     d_residualQuadValuesPtr = &quadPointValues;
   }
 
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::distributeX()
   {
     d_constraintMatrixPRefinedPtr->distribute(*d_xPtr);
   }
 
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   distributedCPUVec<double> &
   kerkerSolverProblem<FEOrderElectro>::getX()
   {
     return *d_xPtr;
   }
 
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::computeRhs(
     distributedCPUVec<double> &rhs)
@@ -108,30 +108,30 @@ namespace dftfe
 
     dealii::AlignedVector<dealii::VectorizedArray<double>> residualQuads(
       fe_eval.n_q_points, zeroVec);
-    for (unsigned int macrocell = 0;
+    for (dftfe::uInt macrocell = 0;
          macrocell < d_matrixFreeDataPRefinedPtr->n_cell_batches();
          ++macrocell)
       {
         std::fill(residualQuads.begin(), residualQuads.end(), zeroVec);
-        const unsigned int numSubCells =
+        const dftfe::uInt numSubCells =
           d_matrixFreeDataPRefinedPtr->n_active_entries_per_cell_batch(
             macrocell);
-        for (unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+        for (dftfe::uInt iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
           {
             subCellPtr = d_matrixFreeDataPRefinedPtr->get_cell_iterator(
               macrocell, iSubCell, d_matrixFreeVectorComponent);
-            dealii::CellId     subCellId = subCellPtr->id();
-            const unsigned int cellIndex =
+            dealii::CellId    subCellId = subCellPtr->id();
+            const dftfe::uInt cellIndex =
               d_basisOperationsPtr->cellIndex(subCellId);
             const double *tempVec =
               d_residualQuadValuesPtr->data() + fe_eval.n_q_points * cellIndex;
 
-            for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+            for (dftfe::uInt q = 0; q < fe_eval.n_q_points; ++q)
               residualQuads[q][iSubCell] = -tempVec[q];
           }
 
         fe_eval.reinit(macrocell);
-        for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+        for (dftfe::uInt q = 0; q < fe_eval.n_q_points; ++q)
           fe_eval.submit_value(residualQuads[q], q);
 
         fe_eval.integrate(dealii::EvaluationFlags::values);
@@ -147,7 +147,7 @@ namespace dftfe
   }
 
   // Matrix-Free Jacobi preconditioner application
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::precondition_Jacobi(
     distributedCPUVec<double>       &dst,
@@ -158,7 +158,7 @@ namespace dftfe
     dst.scale(d_diagonalA);
   }
 
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::computeDiagonalA()
   {
@@ -175,8 +175,8 @@ namespace dftfe
                                   dealii::update_values |
                                     dealii::update_gradients |
                                     dealii::update_JxW_values);
-    const unsigned int     dofs_per_cell   = dofHandler.get_fe().dofs_per_cell;
-    const unsigned int     num_quad_points = quadrature.size();
+    const dftfe::uInt      dofs_per_cell   = dofHandler.get_fe().dofs_per_cell;
+    const dftfe::uInt      num_quad_points = quadrature.size();
     dealii::Vector<double> elementalDiagonalA(dofs_per_cell);
     std::vector<dealii::types::global_dof_index> local_dof_indices(
       dofs_per_cell);
@@ -194,8 +194,8 @@ namespace dftfe
           cell->get_dof_indices(local_dof_indices);
 
           elementalDiagonalA = 0.0;
-          for (unsigned int i = 0; i < dofs_per_cell; ++i)
-            for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+          for (dftfe::uInt i = 0; i < dofs_per_cell; ++i)
+            for (dftfe::uInt q_point = 0; q_point < num_quad_points; ++q_point)
               elementalDiagonalA(i) +=
                 (fe_values.shape_grad(i, q_point) *
                    fe_values.shape_grad(i, q_point) +
@@ -219,13 +219,13 @@ namespace dftfe
   }
 
   // Ax
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::AX(
-    const dealii::MatrixFree<3, double>         &matrixFreeData,
-    distributedCPUVec<double>                   &dst,
-    const distributedCPUVec<double>             &src,
-    const std::pair<unsigned int, unsigned int> &cell_range) const
+    const dealii::MatrixFree<3, double>       &matrixFreeData,
+    distributedCPUVec<double>                 &dst,
+    const distributedCPUVec<double>           &src,
+    const std::pair<dftfe::uInt, dftfe::uInt> &cell_range) const
   {
     dealii::FEEvaluation<3, FEOrderElectro, C_num1DQuad<FEOrderElectro>()>
       fe_eval(matrixFreeData,
@@ -236,14 +236,14 @@ namespace dftfe
       dealii::make_vectorized_array(4 * M_PI * d_gamma);
 
 
-    for (unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+    for (dftfe::uInt cell = cell_range.first; cell < cell_range.second; ++cell)
       {
         fe_eval.reinit(cell);
         // fe_eval.gather_evaluate(src,dealii::EvaluationFlags::values|dealii::EvaluationFlags::gradients);
         fe_eval.read_dof_values(src);
         fe_eval.evaluate(dealii::EvaluationFlags::values |
                          dealii::EvaluationFlags::gradients);
-        for (unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+        for (dftfe::uInt q = 0; q < fe_eval.n_q_points; ++q)
           {
             fe_eval.submit_gradient(fe_eval.get_gradient(q), q);
             fe_eval.submit_value(fe_eval.get_value(q) * kerkerConst, q);
@@ -256,7 +256,7 @@ namespace dftfe
   }
 
 
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
   kerkerSolverProblem<FEOrderElectro>::vmult(distributedCPUVec<double> &Ax,
                                              distributedCPUVec<double> &x)

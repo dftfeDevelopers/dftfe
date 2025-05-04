@@ -43,7 +43,7 @@ namespace dftfe
     const std::string restartFilesPath,
     const MPI_Comm   &mpi_comm_parent,
     const bool        restart,
-    const int         verbosity,
+    const dftfe::Int  verbosity,
     const bool        useDevice)
     : d_mpiCommParent(mpi_comm_parent)
     , d_this_mpi_process(
@@ -128,7 +128,7 @@ namespace dftfe
       temp_domainBoundingVectors,
       d_dftPtr->getParametersObject().domainBoundingVectorsFile);
 
-    for (int i = 0; i < 3; i++)
+    for (dftfe::Int i = 0; i < 3; i++)
       {
         double temp =
           temp_domainBoundingVectors[i][0] * temp_domainBoundingVectors[i][0] +
@@ -146,7 +146,7 @@ namespace dftfe
 
 
 
-  int
+  dftfe::Int
   molecularDynamicsClass::runMD()
   {
     std::vector<double> massAtoms(d_numberGlobalCharges);
@@ -159,15 +159,16 @@ namespace dftfe
                        d_dftPtr->getParametersObject().atomicMassesFile);
     std::vector<std::vector<double>> atomLocations;
     atomLocations = d_dftPtr->getAtomLocationsCart();
-    std::set<unsigned int> atomTypes;
+    std::set<dftfe::uInt> atomTypes;
     atomTypes = d_dftPtr->getAtomTypes();
     AssertThrow(atomTypes.size() == atomTypesMasses.size(),
                 dealii::ExcMessage("DFT-FE Error: check ATOM MASSES FILE"));
 
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
       {
         bool isFound = false;
-        for (int jatomtype = 0; jatomtype < atomTypesMasses.size(); ++jatomtype)
+        for (dftfe::Int jatomtype = 0; jatomtype < atomTypesMasses.size();
+             ++jatomtype)
           {
             const double charge = atomLocations[iCharge][0];
             if (std::fabs(charge - atomTypesMasses[jatomtype][0]) < 1e-8)
@@ -206,7 +207,7 @@ namespace dftfe
                            d_dftPtr->getParametersObject().coordinatesFile);
         std::vector<std::vector<double>> fileDisplacementData;
         std::vector<double>              initDisp(0.0, 3);
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             fileDisplacementData.push_back(initDisp);
           }
@@ -225,7 +226,7 @@ namespace dftfe
         // Initialise Velocity
         if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
-            for (int jatomtype = 0; jatomtype < atomTypesMasses.size();
+            for (dftfe::Int jatomtype = 0; jatomtype < atomTypesMasses.size();
                  ++jatomtype)
               {
                 double Mass          = atomTypesMasses[jatomtype][1];
@@ -241,7 +242,7 @@ namespace dftfe
                                          boost::normal_distribution<>>
                   generator(rng, gaussianDist);
 
-                for (int iCharge = 0; iCharge < d_numberGlobalCharges;
+                for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
                      ++iCharge)
                   {
                     if (std::fabs(atomLocations[iCharge][0] -
@@ -255,7 +256,7 @@ namespace dftfe
               }
           }
 
-        for (unsigned int i = 0; i < d_numberGlobalCharges * 3; ++i)
+        for (dftfe::uInt i = 0; i < d_numberGlobalCharges * 3; ++i)
           {
             velocity[i] =
               dealii::Utilities::MPI::sum(velocity[i], d_mpiCommParent);
@@ -265,7 +266,7 @@ namespace dftfe
 
         // compute KEinetic Energy and COM vecloity
         totMass = 0.0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
             totMass += massAtoms[iCharge];
             Px += massAtoms[iCharge] * velocity[3 * iCharge + 0];
@@ -274,7 +275,7 @@ namespace dftfe
           }
         // Correcting for COM velocity to be 0
 
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
             velocity[3 * iCharge + 0] =
               (massAtoms[iCharge] * velocity[3 * iCharge + 0] -
@@ -305,14 +306,14 @@ namespace dftfe
         // Correcting velocity to match init Temperature
         double gamma = sqrt(d_startingTemperature / TemperatureFromVelocities);
 
-        for (int i = 0; i < 3 * d_numberGlobalCharges; ++i)
+        for (dftfe::Int i = 0; i < 3 * d_numberGlobalCharges; ++i)
           {
             velocity[i] = gamma * velocity[i];
           }
 
 
         KineticEnergy = 0.0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
             KineticEnergy +=
               0.5 * massAtoms[iCharge] *
@@ -335,7 +336,7 @@ namespace dftfe
                  d_dftPtr->getParametersObject().spinPolarized != 1)
           DensitySplitExtrapolation(0);
         double dt = d_TimeStep;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             displacements[iCharge][0] =
               (dt * velocity[3 * iCharge + 0] -
@@ -365,7 +366,8 @@ namespace dftfe
         if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 ++iCharge)
               {
                 pcout << "Charge Id: " << iCharge << " "
                       << velocity[3 * iCharge + 0] << " "
@@ -411,7 +413,7 @@ namespace dftfe
       {
         /*if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
           {
-            int           error;
+            dftfe::Int           error;
             std::string   file1 = "TotalDisplacement.chk";
             std::ifstream readFile1(file1.c_str());
             if (!readFile1.fail())
@@ -452,7 +454,8 @@ namespace dftfe
             !d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << "-- Starting Unwrapped Coordinates: --" << std::endl;
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 iCharge++)
               pcout << d_atomFractionalunwrapped[iCharge][0] << " "
                     << d_atomFractionalunwrapped[iCharge][1] << " "
                     << d_atomFractionalunwrapped[iCharge][2] << " "
@@ -463,7 +466,7 @@ namespace dftfe
 
     //--------------------Choosing Ensemble
     //----------------------------------------------//
-    int status;
+    dftfe::Int status;
     if (d_ThermostatType == "NO_CONTROL")
       {
         status = mdNVE(KineticEnergyVector,
@@ -517,7 +520,7 @@ namespace dftfe
   }
 
 
-  int
+  dftfe::Int
   molecularDynamicsClass::mdNVE(
     std::vector<double>                       &KineticEnergyVector,
     std::vector<double>                       &InternalEnergyVector,
@@ -564,7 +567,8 @@ namespace dftfe
         if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 ++iCharge)
               {
                 pcout << "Charge Id: " << iCharge << " "
                       << velocity[3 * iCharge + 0] << " "
@@ -577,7 +581,7 @@ namespace dftfe
         double vx  = 0.0;
         double vy  = 0.0;
         double vz  = 0.0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             vx += atomMass[iCharge] * velocity[3 * iCharge + 0];
             vy += atomMass[iCharge] * velocity[3 * iCharge + 1];
@@ -645,7 +649,7 @@ namespace dftfe
   }
 
 
-  int
+  dftfe::Int
   molecularDynamicsClass::mdNVTrescaleThermostat(
     std::vector<double>                       &KineticEnergyVector,
     std::vector<double>                       &InternalEnergyVector,
@@ -702,7 +706,8 @@ namespace dftfe
         if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 ++iCharge)
               {
                 pcout << "Charge Id: " << iCharge << " "
                       << velocity[3 * iCharge + 0] << " "
@@ -715,7 +720,7 @@ namespace dftfe
         double vx  = 0.0;
         double vy  = 0.0;
         double vz  = 0.0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             vx += atomMass[iCharge] * velocity[3 * iCharge + 0];
             vy += atomMass[iCharge] * velocity[3 * iCharge + 1];
@@ -783,7 +788,7 @@ namespace dftfe
     return (0);
   }
 
-  int
+  dftfe::Int
   molecularDynamicsClass::mdNVTnosehoverchainsThermostat(
     std::vector<double>                       &KineticEnergyVector,
     std::vector<double>                       &InternalEnergyVector,
@@ -854,7 +859,7 @@ namespace dftfe
                         KineticEnergy,
                         d_startingTemperature);
         KineticEnergy = 0.0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             KineticEnergy +=
               0.5 * atomMass[iCharge] *
@@ -892,7 +897,8 @@ namespace dftfe
         if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 ++iCharge)
               {
                 pcout << "Charge Id: " << iCharge << " "
                       << velocity[3 * iCharge + 0] << " "
@@ -905,7 +911,7 @@ namespace dftfe
         double vx  = 0.0;
         double vy  = 0.0;
         double vz  = 0.0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             vx += atomMass[iCharge] * velocity[3 * iCharge + 0];
             vy += atomMass[iCharge] * velocity[3 * iCharge + 1];
@@ -987,7 +993,7 @@ namespace dftfe
   }
 
 
-  int
+  dftfe::Int
   molecularDynamicsClass::mdNVTsvrThermostat(
     std::vector<double>                       &KineticEnergyVector,
     std::vector<double>                       &InternalEnergyVector,
@@ -1045,7 +1051,8 @@ namespace dftfe
         if (d_dftPtr->getParametersObject().verbosity >= 1)
           {
             pcout << "Velocity of atoms " << std::endl;
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 ++iCharge)
               {
                 pcout << "Charge Id: " << iCharge << " "
                       << velocity[3 * iCharge + 0] << " "
@@ -1058,7 +1065,7 @@ namespace dftfe
         double vx  = 0.0;
         double vy  = 0.0;
         double vz  = 0.0;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             vx += atomMass[iCharge] * velocity[3 * iCharge + 0];
             vy += atomMass[iCharge] * velocity[3 * iCharge + 1];
@@ -1134,7 +1141,7 @@ namespace dftfe
     const std::vector<double>                 &atomMass,
     std::vector<double>                       &forceOnAtoms)
   {
-    int                 i;
+    dftfe::Int          i;
     double              totalKE;
     double              KE   = 0.0;
     double              dt   = d_TimeStep;
@@ -1205,9 +1212,9 @@ namespace dftfe
     MPI_Bcast(
       &(rloc[0]), 3 * d_numberGlobalCharges, MPI_DOUBLE, 0, d_mpiCommParent);
 
-    for (unsigned int i = 0; i < d_numberGlobalCharges; ++i)
+    for (dftfe::uInt i = 0; i < d_numberGlobalCharges; ++i)
       {
-        for (unsigned int j = 0; j < 3; ++j)
+        for (dftfe::uInt j = 0; j < 3; ++j)
           {
             r[i][j] = rloc[i * 3 + j];
           }
@@ -1225,7 +1232,7 @@ namespace dftfe
         std::vector<std::vector<double>> atomLocations;
         atomLocations = d_dftPtr->getAtomLocationsCart();
         pcout << "Displacement  " << std::endl;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
             if (atomLocations[iCharge][0] ==
                 d_dftPtr->getParametersObject().MDTrack)
@@ -1241,7 +1248,7 @@ namespace dftfe
               }
           }
       }
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         d_atomFractionalunwrapped[iCharge][2] =
           d_atomFractionalunwrapped[iCharge][2] +
@@ -1257,7 +1264,7 @@ namespace dftfe
         !d_dftPtr->getParametersObject().reproducible_output)
       {
         pcout << "---- Updated Unwrapped Coordinates: -----" << std::endl;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
             if (d_atomFractionalunwrapped[iCharge][0] ==
                 d_dftPtr->getParametersObject().MDTrack)
@@ -1329,7 +1336,7 @@ namespace dftfe
     COMx       = 0.0;
     COMy       = 0.0;
     COMz       = 0.0;
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         vx += atomMass[iCharge] * v[3 * iCharge + 0];
         vy += atomMass[iCharge] * v[3 * iCharge + 1];
@@ -1369,7 +1376,7 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: Temperature reached O K")); // Determine Exit sequence ..
     double KE = 0.0;
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         v[3 * iCharge + 0] =
           v[3 * iCharge + 0] * sqrt(d_startingTemperature / Temperature);
@@ -1407,7 +1414,7 @@ namespace dftfe
     e[1]   = e[1] + v_e[1] * d_TimeStep / 2;
     s      = std::exp(-v_e[0] * d_TimeStep / 2);
 
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         v[3 * iCharge + 0] = s * v[3 * iCharge + 0];
         v[3 * iCharge + 1] = s * v[3 * iCharge + 1];
@@ -1428,9 +1435,9 @@ namespace dftfe
   double
   molecularDynamicsClass::svr(std::vector<double> &v, double KE, double KEref)
   {
-    double       alphasq;
-    unsigned int Nf = 3 * (d_numberGlobalCharges - 1);
-    double       R1, Rsum;
+    double      alphasq;
+    dftfe::uInt Nf = 3 * (d_numberGlobalCharges - 1);
+    double      R1, Rsum;
     R1   = 0.0;
     Rsum = 0.0;
     if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
@@ -1464,7 +1471,7 @@ namespace dftfe
           }
            */
         double temp;
-        for (int dof = 1; dof < Nf; dof++)
+        for (dftfe::Int dof = 1; dof < Nf; dof++)
           {
             temp = generator();
             Rsum = Rsum + temp * temp;
@@ -1492,7 +1499,7 @@ namespace dftfe
     // "<<d_ThermostatTimeConstant<< std::endl;
     KE           = alphasq * KE;
     double alpha = std::sqrt(alphasq);
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
       {
         v[3 * iCharge + 0] = alpha * v[3 * iCharge + 0];
         v[3 * iCharge + 1] = alpha * v[3 * iCharge + 1];
@@ -1511,7 +1518,7 @@ namespace dftfe
     const std::vector<double>                       &KineticEnergyVector,
     const std::vector<double>                       &InternalEnergyVector,
     const std::vector<double>                       &TotalEnergyVector,
-    int                                              time)
+    dftfe::Int                                       time)
 
   {
     // Writes the restart files for velocities and positions
@@ -1563,19 +1570,19 @@ namespace dftfe
     std::string newFolder6 = tempfolder + "/" + "TotalEnergy.chk";
     dftUtils::writeDataIntoFile(TEData, newFolder6, d_mpiCommParent);
 
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
       {
         fileForceData[iCharge][0] = force[3 * iCharge + 0];
         fileForceData[iCharge][1] = force[3 * iCharge + 1];
         fileForceData[iCharge][2] = force[3 * iCharge + 2];
       }
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
       {
         fileDispData[iCharge][0] = disp[iCharge][0];
         fileDispData[iCharge][1] = disp[iCharge][1];
         fileDispData[iCharge][2] = disp[iCharge][2];
       }
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
       {
         fileVelocityData[iCharge][0] = velocity[3 * iCharge + 0];
         fileVelocityData[iCharge][1] = velocity[3 * iCharge + 1];
@@ -1656,7 +1663,7 @@ namespace dftfe
         std::vector<std::vector<double>> atomLocations;
         atomLocations = d_dftPtr->getAtomLocationsCart();
         pcout << "Cartesian Atom Locations from Restart " << std::endl;
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
           {
             pcout << "Charge Id: " << iCharge << " "
                   << atomLocations[iCharge][2] << " "
@@ -1676,7 +1683,7 @@ namespace dftfe
     std::string                      newFolder1 = tempfolder + "/" + fileName1;
     std::vector<std::vector<double>> fileVelData;
     dftUtils::readFile(3, fileVelData, newFolder1);
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
       {
         velocity[3 * iCharge + 0] = fileVelData[iCharge][0];
         velocity[3 * iCharge + 1] = fileVelData[iCharge][1];
@@ -1687,7 +1694,7 @@ namespace dftfe
     std::string                      newFolder2 = tempfolder + "/" + fileName2;
     std::vector<std::vector<double>> fileDispData;
     dftUtils::readFile(3, fileDispData, newFolder2);
-    for (int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
+    for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; ++iCharge)
       {
         disp[iCharge][0] = fileDispData[iCharge][0];
         disp[iCharge][1] = fileDispData[iCharge][1];
@@ -1769,7 +1776,7 @@ namespace dftfe
   molecularDynamicsClass::writeRestartNHCfile(const std::vector<double> &v_e,
                                               const std::vector<double> &e,
                                               const std::vector<double> &Q,
-                                              const int                  time)
+                                              const dftfe::Int           time)
 
   {
     if (d_dftPtr->getParametersObject().reproducible_output == false)
@@ -1801,7 +1808,7 @@ namespace dftfe
   void
   molecularDynamicsClass::writeTotalDisplacementFile(
     const std::vector<dealii::Tensor<1, 3, double>> &r,
-    int                                              time)
+    dftfe::Int                                       time)
   {
     if (d_dftPtr->getParametersObject().reproducible_output == false)
       {
@@ -1813,7 +1820,7 @@ namespace dftfe
         dftUtils::readFile(3,
                            fileDisplacementData,
                            prevPath + "Displacement.chk");
-        for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+        for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
           {
             fileDisplacementData[iCharge][0] =
               fileDisplacementData[iCharge][0] + r[iCharge][0];
@@ -1835,7 +1842,8 @@ namespace dftfe
                          std::ios_base::app);
             std::vector<std::vector<double>> atomLocations;
             atomLocations = d_dftPtr->getAtomLocationsCart();
-            for (int iCharge = 0; iCharge < d_numberGlobalCharges; iCharge++)
+            for (dftfe::Int iCharge = 0; iCharge < d_numberGlobalCharges;
+                 iCharge++)
               {
                 outfile << atomLocations[iCharge][0] << "  "
                         << atomLocations[iCharge][1] << std::setprecision(16)
@@ -1868,12 +1876,12 @@ namespace dftfe
     return (Hnose);
   }
 
-  int
+  dftfe::Int
   molecularDynamicsClass::checkRestart(std::string &coordinatesFile,
                                        std::string &domainVectorsFile,
                                        bool        &scfRestart)
   {
-    int time1 = 0;
+    dftfe::Int time1 = 0;
 
     if (d_restartFlag == 1)
       {
@@ -1940,7 +1948,7 @@ namespace dftfe
     return (time1);
   }
   void
-  molecularDynamicsClass::DensityExtrapolation(int TimeStep)
+  molecularDynamicsClass::DensityExtrapolation(dftfe::Int TimeStep)
   {
     if (TimeStep == 0)
       d_extrapDensity_tmin2 = d_dftPtr->getRhoNodalOut();
@@ -1957,7 +1965,7 @@ namespace dftfe
         // for loop
         pcout << "Using Extrapolated Density for init" << std::endl;
         d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
-        for (int i = 0; i < d_extrapDensity_t0.locally_owned_size(); i++)
+        for (dftfe::Int i = 0; i < d_extrapDensity_t0.locally_owned_size(); i++)
           {
             C = d_extrapDensity_t0.local_element(i);
             B = 0.5 * (3 * d_extrapDensity_t0.local_element(i) +
@@ -1982,7 +1990,7 @@ namespace dftfe
       }
   }
   void
-  molecularDynamicsClass::DensitySplitExtrapolation(int TimeStep)
+  molecularDynamicsClass::DensitySplitExtrapolation(dftfe::Int TimeStep)
   {
     if (TimeStep == 0)
       {
@@ -2008,7 +2016,7 @@ namespace dftfe
         pcout << "Using Split Extrapolated Density for initialization"
               << std::endl;
         d_extrapDensity_tp1.reinit(d_extrapDensity_t0);
-        for (int i = 0; i < d_extrapDensity_t0.locally_owned_size(); i++)
+        for (dftfe::Int i = 0; i < d_extrapDensity_t0.locally_owned_size(); i++)
           {
             C = d_extrapDensity_t0.local_element(i);
             B = 0.5 * (3 * d_extrapDensity_t0.local_element(i) +

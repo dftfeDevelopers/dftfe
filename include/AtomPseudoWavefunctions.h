@@ -45,23 +45,21 @@ namespace dftfe
   class AtomPseudoWavefunctions : public AtomCenteredSphericalFunctionBase
   {
   public:
-    AtomPseudoWavefunctions(std::string  filename,
-                            unsigned int n,
-                            unsigned int l);
+    AtomPseudoWavefunctions(std::string filename, dftfe::uInt n, dftfe::uInt l);
 
     double
     getRadialValue(double r) const override;
 
-    unsigned int
+    dftfe::uInt
     getQuantumNumbern() const;
 
     double
     getrMinVal() const;
 
   private:
-    unsigned int d_nQuantumNumber;
-    unsigned int d_lQuantumNumber;
-    double       d_rMin;
+    dftfe::uInt d_nQuantumNumber;
+    dftfe::uInt d_lQuantumNumber;
+    double      d_rMin;
 
     alglib::spline1dinterpolant d_radialSplineObject;
   };

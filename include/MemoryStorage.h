@@ -37,7 +37,7 @@ namespace dftfe
        * HOST (cpu) , DEVICE (gpu), etc,.
        *
        * @tparam ValueType The underlying value type for the MemoryStorage
-       *  (e.g., int, double, complex<double>, etc.)
+       *  (e.g., dftfe::Int, double, complex<double>, etc.)
        * @tparam memorySpace The memory space in which the MemoryStorage needs
        *  to reside
        *
@@ -512,8 +512,8 @@ namespace dftfe
      * @return A MemoryStorage object containing the data in the input C++
      *  STL vector
      * @tparam ValueType Datatype of the underlying data in MemoryStorage
-     *  as well as C++ STL vector (e.g., int, double, float, complex<double>,
-     *  etc)
+     *  as well as C++ STL vector (e.g., dftfe::Int, double, float,
+     * complex<double>, etc)
      * @tparam memorySpaceDst MemorySpace (e.g. HOST, DEVICE, HOST_PINNED, etc)
      * where the output MemoryStorage object should reside
      */

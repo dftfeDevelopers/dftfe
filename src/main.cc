@@ -52,8 +52,8 @@ main(int argc, char *argv[])
   MPI_Init(&argc, &argv);
 
 #if defined(DFTFE_WITH_MDI)
-  MPI_Comm mpi_world_comm;
-  int      ret;
+  MPI_Comm   mpi_world_comm;
+  dftfe::Int ret;
   // Initialize MDI
   ret = MDI_Init(&argc, &argv);
   if (ret != 0)
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
     }
 
   // Confirm that MDI was initialized successfully
-  int initialized_mdi;
+  dftfe::Int initialized_mdi;
   ret = MDI_Initialized(&initialized_mdi);
   if (ret != 0)
     {
@@ -183,6 +183,11 @@ main(int argc, char *argv[])
 #  else
       std::cout << "without GPU support, ";
 #  endif
+#  ifdef DFTFE_WITH_64BIT_INT
+      std::cout << "with 64 bit integers, ";
+#  else
+      std::cout << "with 32 bit integers, ";
+#  endif
 #  ifdef DFTFE_WITH_HIGHERQUAD_PSP
       std::cout << "and with HIGHERQUAD_PSP" << std::endl;
 #  else
@@ -205,7 +210,7 @@ main(int argc, char *argv[])
                                             runParams.verbosity,
                                             runParams.useDevice);
 
-      int status = mdClass.runMD();
+      dftfe::Int status = mdClass.runMD();
     }
 
   else if (runParams.solvermode == "NEB")
@@ -232,7 +237,7 @@ main(int argc, char *argv[])
         runParams.domainVectorsFileNEB,
         runParams.ionRelaxFlagsFile);
 
-      int status = nebClass.findMEP();
+      dftfe::Int status = nebClass.findMEP();
     }
   else if (runParams.solvermode == "GEOOPT")
     {

@@ -2,6 +2,7 @@
 #define DFTFE_FiniteDifference_H
 
 #include <vector>
+#include <TypeConfig.h>
 
 namespace dftfe
 {
@@ -11,8 +12,8 @@ namespace dftfe
     {
     public:
       static std::vector<double>
-      getStencilGridOneVariableCentral(const unsigned int totalStencilSize,
-                                       const double       h);
+      getStencilGridOneVariableCentral(const dftfe::uInt totalStencilSize,
+                                       const double      h);
 
 
 
@@ -20,38 +21,38 @@ namespace dftfe
       // memory for firstOrderDerivative is assumed to be allocated
       static void
       firstOrderDerivativeOneVariableCentral(
-        const unsigned int totalStencilSize,
-        const double       h,
-        const unsigned int numQuadPoints,
-        const double      *stencilDataAllQuadPoints,
-        double            *firstOrderDerivative);
+        const dftfe::uInt totalStencilSize,
+        const double      h,
+        const dftfe::uInt numQuadPoints,
+        const double     *stencilDataAllQuadPoints,
+        double           *firstOrderDerivative);
 
       static void
       firstOrderDerivativeOneVariableCentral(
-        const unsigned int totalStencilSize,
-        const double      *h,
-        const unsigned int numQuadPoints,
-        const double      *stencilDataAllQuadPoints,
-        double            *firstOrderDerivative);
+        const dftfe::uInt totalStencilSize,
+        const double     *h,
+        const dftfe::uInt numQuadPoints,
+        const double     *stencilDataAllQuadPoints,
+        double           *firstOrderDerivative);
 
 
       // stencil index is the fastest index in stencilDataAllQuadPoints
       // memory for secondOrderDerivative is assumed to be allocated
       static void
       secondOrderDerivativeOneVariableCentral(
-        const unsigned int totalStencilSize,
-        const double       h,
-        const unsigned int numQuadPoints,
-        const double      *stencilDataAllQuadPoints,
-        double            *secondOrderDerivative);
+        const dftfe::uInt totalStencilSize,
+        const double      h,
+        const dftfe::uInt numQuadPoints,
+        const double     *stencilDataAllQuadPoints,
+        double           *secondOrderDerivative);
 
       static void
       secondOrderDerivativeOneVariableCentral(
-        const unsigned int totalStencilSize,
-        const double      *h,
-        const unsigned int numQuadPoints,
-        const double      *stencilDataAllQuadPoints,
-        double            *secondOrderDerivative);
+        const dftfe::uInt totalStencilSize,
+        const double     *h,
+        const dftfe::uInt numQuadPoints,
+        const double     *stencilDataAllQuadPoints,
+        double           *secondOrderDerivative);
     };
   } // namespace utils
 } // namespace dftfe

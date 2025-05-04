@@ -22,8 +22,8 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::createBinObjectsForce(
@@ -35,20 +35,20 @@ namespace dftfe
       &cellsVselfBallsDofHandler,
     std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
       &cellsVselfBallsDofHandlerForce,
-    std::vector<std::map<dealii::CellId, unsigned int>>
-      &cellsVselfBallsClosestAtomIdDofHandler,
-    std::map<unsigned int, unsigned int> &AtomIdBinIdLocalDofHandler,
+    std::vector<std::map<dealii::CellId, dftfe::uInt>>
+                                       &cellsVselfBallsClosestAtomIdDofHandler,
+    std::map<dftfe::uInt, dftfe::uInt> &AtomIdBinIdLocalDofHandler,
     std::vector<std::map<dealii::DoFHandler<3>::active_cell_iterator,
-                         std::vector<unsigned int>>>
+                         std::vector<dftfe::uInt>>>
       &cellFacesVselfBallSurfacesDofHandler,
     std::vector<std::map<dealii::DoFHandler<3>::active_cell_iterator,
-                         std::vector<unsigned int>>>
+                         std::vector<dftfe::uInt>>>
       &cellFacesVselfBallSurfacesDofHandlerForce)
   {
-    const unsigned int faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
-    const unsigned int dofs_per_cell  = dofHandler.get_fe().dofs_per_cell;
-    const unsigned int dofs_per_face  = dofHandler.get_fe().dofs_per_face;
-    const unsigned int numberBins = vselfBinsManager.getAtomIdsBins().size();
+    const dftfe::uInt faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
+    const dftfe::uInt dofs_per_cell  = dofHandler.get_fe().dofs_per_cell;
+    const dftfe::uInt dofs_per_face  = dofHandler.get_fe().dofs_per_face;
+    const dftfe::uInt numberBins     = vselfBinsManager.getAtomIdsBins().size();
     // clear exisitng data
     cellsVselfBallsDofHandler.clear();
     cellsVselfBallsDofHandlerForce.clear();
@@ -63,11 +63,11 @@ namespace dftfe
     cellFacesVselfBallSurfacesDofHandlerForce.resize(numberBins);
     cellsVselfBallsClosestAtomIdDofHandler.resize(numberBins);
 
-    for (unsigned int iBin = 0; iBin < numberBins; ++iBin)
+    for (dftfe::uInt iBin = 0; iBin < numberBins; ++iBin)
       {
-        const std::map<dealii::types::global_dof_index, int> &boundaryNodeMap =
-          vselfBinsManager.getBoundaryFlagsBins()[iBin];
-        const std::map<dealii::types::global_dof_index, int>
+        const std::map<dealii::types::global_dof_index, dftfe::Int>
+          &boundaryNodeMap = vselfBinsManager.getBoundaryFlagsBins()[iBin];
+        const std::map<dealii::types::global_dof_index, dftfe::Int>
           &closestAtomBinMap = vselfBinsManager.getClosestAtomIdsBins()[iBin];
         dealii::DoFHandler<3>::active_cell_iterator cell =
           dofHandler.begin_active();
@@ -78,22 +78,22 @@ namespace dftfe
           {
             if (cell->is_locally_owned())
               {
-                std::vector<unsigned int> dirichletFaceIds;
-                std::vector<unsigned int>
+                std::vector<dftfe::uInt> dirichletFaceIds;
+                std::vector<dftfe::uInt>
                   faceIdsWithAtleastOneSolvedNonHangingNode;
-                std::vector<unsigned int> allFaceIdsOfCell;
-                unsigned int              closestAtomIdSum          = 0;
-                unsigned int              closestAtomId             = 0;
-                unsigned int              nonHangingNodeIdCountCell = 0;
-                for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+                std::vector<dftfe::uInt> allFaceIdsOfCell;
+                dftfe::uInt              closestAtomIdSum          = 0;
+                dftfe::uInt              closestAtomId             = 0;
+                dftfe::uInt              nonHangingNodeIdCountCell = 0;
+                for (dftfe::uInt iFace = 0; iFace < faces_per_cell; ++iFace)
                   {
-                    int  dirichletDofCount         = 0;
-                    bool isSolvedDofPresent        = false;
-                    int  nonHangingNodeIdCountFace = 0;
+                    dftfe::Int dirichletDofCount         = 0;
+                    bool       isSolvedDofPresent        = false;
+                    dftfe::Int nonHangingNodeIdCountFace = 0;
                     std::vector<dealii::types::global_dof_index>
                       iFaceGlobalDofIndices(dofs_per_face);
                     cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
-                    for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                    for (dftfe::uInt iFaceDof = 0; iFaceDof < dofs_per_face;
                          ++iFaceDof)
                       {
                         const dealii::types::global_dof_index nodeId =
@@ -126,7 +126,7 @@ namespace dftfe
                                         double>> *rowData =
                               hangingPlusPBCConstraints.get_constraint_entries(
                                 nodeId);
-                            for (unsigned int j = 0; j < rowData->size(); ++j)
+                            for (dftfe::uInt j = 0; j < rowData->size(); ++j)
                               {
                                 if (d_dftParams
                                       .createConstraintsFromSerialDofhandler)

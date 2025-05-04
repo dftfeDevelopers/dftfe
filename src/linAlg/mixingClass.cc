@@ -23,9 +23,9 @@
 
 namespace dftfe
 {
-  MixingScheme::MixingScheme(const MPI_Comm    &mpi_comm_parent,
-                             const MPI_Comm    &mpi_comm_domain,
-                             const unsigned int verbosity)
+  MixingScheme::MixingScheme(const MPI_Comm   &mpi_comm_parent,
+                             const MPI_Comm   &mpi_comm_domain,
+                             const dftfe::uInt verbosity)
     : d_mpi_comm_domain(mpi_comm_domain)
     , d_mpi_comm_parent(mpi_comm_parent)
     , pcout(std::cout,
@@ -57,11 +57,11 @@ namespace dftfe
     d_adaptiveMixingParameterDecLastIteration = false;
     d_adaptiveMixingParameterDecAllIterations = true;
     d_adaptiveMixingParameterIncAllIterations = true;
-    unsigned int weightDotProductsSize        = weightDotProducts.size();
+    dftfe::uInt weightDotProductsSize         = weightDotProducts.size();
     MPI_Allreduce(MPI_IN_PLACE,
                   &weightDotProductsSize,
                   1,
-                  MPI_UNSIGNED,
+                  dftfe::dataTypes::mpi_type_id(&weightDotProductsSize),
                   MPI_MAX,
                   d_mpi_comm_domain);
     if (weightDotProductsSize > 0)
@@ -97,8 +97,8 @@ namespace dftfe
     cDensity.resize(c.size());
     std::fill(cDensity.begin(), cDensity.end(), 0.0);
 
-    int          N             = inHist.size() - 1;
-    unsigned int numQuadPoints = 0;
+    dftfe::Int  N             = inHist.size() - 1;
+    dftfe::uInt numQuadPoints = 0;
     if (N > 0)
       numQuadPoints = inHist[0].size();
 
@@ -109,13 +109,13 @@ namespace dftfe
                       "DFT-FE Error: The size of the weight dot products vec "
                       "does not match the size of the vectors in history."
                       "Please resize the vectors appropriately."));
-        for (unsigned int iQuad = 0; iQuad < numQuadPoints; iQuad++)
+        for (dftfe::uInt iQuad = 0; iQuad < numQuadPoints; iQuad++)
           {
             double Fn = residualHist[N][iQuad];
-            for (int m = 0; m < N; m++)
+            for (dftfe::Int m = 0; m < N; m++)
               {
                 double Fnm = residualHist[N - 1 - m][iQuad];
-                for (int k = 0; k < N; k++)
+                for (dftfe::Int k = 0; k < N; k++)
                   {
                     double Fnk = residualHist[N - 1 - k][iQuad];
                     Adensity[k * N + m] +=
@@ -127,8 +127,8 @@ namespace dftfe
               }
           }
 
-        unsigned int aSize = Adensity.size();
-        unsigned int cSize = cDensity.size();
+        dftfe::uInt aSize = Adensity.size();
+        dftfe::uInt cSize = cDensity.size();
 
         std::vector<double> ATotal(aSize), cTotal(cSize);
         std::fill(ATotal.begin(), ATotal.end(), 0.0);
@@ -153,19 +153,19 @@ namespace dftfe
             ATotal = Adensity;
             cTotal = cDensity;
           }
-        for (unsigned int i = 0; i < aSize; i++)
+        for (dftfe::uInt i = 0; i < aSize; i++)
           {
             A[i] += ATotal[i];
           }
 
-        for (unsigned int i = 0; i < cSize; i++)
+        for (dftfe::uInt i = 0; i < cSize; i++)
           {
             c[i] += cTotal[i];
           }
       }
   }
 
-  unsigned int
+  dftfe::uInt
   MixingScheme::lengthOfHistory()
   {
     return d_variableHistoryIn[mixingVariable::rho].size();
@@ -185,9 +185,9 @@ namespace dftfe
         std::vector<int> ipiv(N);
         d_A.resize(lda * N);
         d_c.resize(ldb * NRHS);
-        for (int i = 0; i < lda * N; i++)
+        for (dftfe::Int i = 0; i < lda * N; i++)
           d_A[i] = 0.0;
-        for (int i = 0; i < ldb * NRHS; i++)
+        for (dftfe::Int i = 0; i < ldb * NRHS; i++)
           d_c[i] = 0.0;
 
         for (const auto &key : mixingVariablesList)
@@ -204,7 +204,7 @@ namespace dftfe
         dgesv_(&N, &NRHS, &d_A[0], &lda, &ipiv[0], &d_c[0], &ldb, &info);
       }
     d_cFinal = 1.0;
-    for (int i = 0; i < N; i++)
+    for (dftfe::Int i = 0; i < N; i++)
       d_cFinal -= d_c[i];
     computeAdaptiveAndersonMixingParameter();
   }
@@ -284,7 +284,7 @@ namespace dftfe
   void
   MixingScheme::addVariableToInHist(const mixingVariable mixingVariableName,
                                     const double        *inputVariableToInHist,
-                                    const unsigned int   length)
+                                    const dftfe::uInt    length)
   {
     d_variableHistoryIn[mixingVariableName].push_back(
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
@@ -298,7 +298,7 @@ namespace dftfe
   MixingScheme::addVariableToResidualHist(
     const mixingVariable mixingVariableName,
     const double        *inputVariableToResidualHist,
-    const unsigned int   length)
+    const dftfe::uInt    length)
   {
     d_variableHistoryResidual[mixingVariableName].push_back(
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
@@ -310,11 +310,11 @@ namespace dftfe
 
   // Computes the new variable after mixing.
   void
-  MixingScheme::mixVariable(mixingVariable     mixingVariableName,
-                            double            *outputVariable,
-                            const unsigned int lenVar)
+  MixingScheme::mixVariable(mixingVariable    mixingVariableName,
+                            double           *outputVariable,
+                            const dftfe::uInt lenVar)
   {
-    unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;
+    dftfe::uInt N = d_variableHistoryIn[mixingVariableName].size() - 1;
     // Assumes the variable is present otherwise will lead to a seg fault
     AssertThrow(
       lenVar == d_variableHistoryIn[mixingVariableName][0].size(),
@@ -323,14 +323,14 @@ namespace dftfe
 
     std::fill(outputVariable, outputVariable + lenVar, 0.0);
 
-    for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
+    for (dftfe::uInt iQuad = 0; iQuad < lenVar; iQuad++)
       {
         double varResidualBar =
           d_cFinal * d_variableHistoryResidual[mixingVariableName][N][iQuad];
         double varInBar =
           d_cFinal * d_variableHistoryIn[mixingVariableName][N][iQuad];
 
-        for (int i = 0; i < N; i++)
+        for (dftfe::Int i = 0; i < N; i++)
           {
             varResidualBar +=
               d_c[i] *
@@ -345,11 +345,11 @@ namespace dftfe
   }
 
   void
-  MixingScheme::getOptimizedResidual(mixingVariable     mixingVariableName,
-                                     double            *outputVariable,
-                                     const unsigned int lenVar)
+  MixingScheme::getOptimizedResidual(mixingVariable    mixingVariableName,
+                                     double           *outputVariable,
+                                     const dftfe::uInt lenVar)
   {
-    unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;
+    dftfe::uInt N = d_variableHistoryIn[mixingVariableName].size() - 1;
     // Assumes the variable is present otherwise will lead to a seg fault
     AssertThrow(
       lenVar == d_variableHistoryIn[mixingVariableName][0].size(),
@@ -358,11 +358,11 @@ namespace dftfe
 
     std::fill(outputVariable, outputVariable + lenVar, 0.0);
 
-    for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
+    for (dftfe::uInt iQuad = 0; iQuad < lenVar; iQuad++)
       {
         double varResidualBar =
           d_cFinal * d_variableHistoryResidual[mixingVariableName][N][iQuad];
-        for (int i = 0; i < N; i++)
+        for (dftfe::Int i = 0; i < N; i++)
           {
             varResidualBar +=
               d_c[i] *
@@ -373,12 +373,12 @@ namespace dftfe
   }
 
   void
-  MixingScheme::mixPreconditionedResidual(mixingVariable     mixingVariableName,
-                                          double            *inputVariable,
-                                          double            *outputVariable,
-                                          const unsigned int lenVar)
+  MixingScheme::mixPreconditionedResidual(mixingVariable    mixingVariableName,
+                                          double           *inputVariable,
+                                          double           *outputVariable,
+                                          const dftfe::uInt lenVar)
   {
-    unsigned int N = d_variableHistoryIn[mixingVariableName].size() - 1;
+    dftfe::uInt N = d_variableHistoryIn[mixingVariableName].size() - 1;
     // Assumes the variable is present otherwise will lead to a seg fault
     AssertThrow(
       lenVar == d_variableHistoryIn[mixingVariableName][0].size(),
@@ -387,12 +387,12 @@ namespace dftfe
 
     std::fill(outputVariable, outputVariable + lenVar, 0.0);
 
-    for (unsigned int iQuad = 0; iQuad < lenVar; iQuad++)
+    for (dftfe::uInt iQuad = 0; iQuad < lenVar; iQuad++)
       {
         double varInBar =
           d_cFinal * d_variableHistoryIn[mixingVariableName][N][iQuad];
 
-        for (int i = 0; i < N; i++)
+        for (dftfe::Int i = 0; i < N; i++)
           {
             varInBar +=
               d_c[i] *
@@ -423,7 +423,7 @@ namespace dftfe
   // If the length is greater or equal to mixingHistory then the
   // oldest history is deleted
   void
-  MixingScheme::popOldHistory(unsigned int mixingHistory)
+  MixingScheme::popOldHistory(dftfe::uInt mixingHistory)
   {
     if (d_variableHistoryIn[mixingVariable::rho].size() > mixingHistory)
       {

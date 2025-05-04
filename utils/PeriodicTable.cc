@@ -20,23 +20,22 @@
 #include "PeriodicTable.h"
 
 #include <cassert>
-
 namespace dftfe
 {
   namespace pseudoUtils
   {
     ////////////////////////////////////////////////////////////////////////////////
-    int
+    dftfe::Int
     PeriodicTable::z(std::string symbol) const
     {
-      std::map<std::string, int>::const_iterator i = zmap.find(symbol);
+      std::map<std::string, dftfe::Int>::const_iterator i = zmap.find(symbol);
       assert(i != zmap.end());
       return (*i).second;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     std::string
-    PeriodicTable::symbol(int z) const
+    PeriodicTable::symbol(dftfe::Int z) const
     {
       assert(z > 0 && z <= ptable.size());
       return ptable[z - 1].symbol;
@@ -44,7 +43,7 @@ namespace dftfe
 
     ////////////////////////////////////////////////////////////////////////////////
     std::string
-    PeriodicTable::configuration(int z) const
+    PeriodicTable::configuration(dftfe::Int z) const
     {
       assert(z > 0 && z <= ptable.size());
       return ptable[z - 1].config;
@@ -59,7 +58,7 @@ namespace dftfe
 
     ////////////////////////////////////////////////////////////////////////////////
     double
-    PeriodicTable::mass(int z) const
+    PeriodicTable::mass(dftfe::Int z) const
     {
       assert(z > 0 && z <= ptable.size());
       return ptable[z - 1].mass;
@@ -73,7 +72,7 @@ namespace dftfe
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-    int
+    dftfe::Int
     PeriodicTable::size(void) const
     {
       return ptable.size();
@@ -182,7 +181,7 @@ namespace dftfe
       ptable.push_back(Element(93, "Np", "[Rn] 5f4 6d1 7s2", 237.0));
       ptable.push_back(Element(94, "Pu", "[Rn] 5f5 6d1 7s2", 244.0));
 
-      for (int i = 0; i < ptable.size(); i++)
+      for (dftfe::Int i = 0; i < ptable.size(); i++)
         zmap[ptable[i].symbol] = i + 1;
     }
 

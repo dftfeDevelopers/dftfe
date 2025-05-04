@@ -30,7 +30,7 @@ namespace dftfe
   public:
     ExcDFTPlusU(
       std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> excSSDObjPtr,
-      unsigned int                                            numSpins);
+      dftfe::uInt                                             numSpins);
 
     ~ExcDFTPlusU();
 
@@ -39,9 +39,9 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
                                                                         &src,
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-      const unsigned int inputVecSize,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex) override;
+      const dftfe::uInt inputVecSize,
+      const dftfe::uInt kPointIndex,
+      const dftfe::uInt spinIndex) override;
 
     /*
      * @brief The apply function that will be called in HXCheby() with single precision.
@@ -60,10 +60,10 @@ namespace dftfe
         memorySpace> &src,
       dftfe::linearAlgebra::MultiVector<
         typename dataTypes::singlePrecType<ValueType>::type,
-        memorySpace>    &dst,
-      const unsigned int inputVecSize,
-      const unsigned int kPointIndex,
-      const unsigned int spinIndex) override;
+        memorySpace>   &dst,
+      const dftfe::uInt inputVecSize,
+      const dftfe::uInt kPointIndex,
+      const dftfe::uInt spinIndex) override;
 
     void
     updateWaveFunctionDependentFuncDerWrtPsi(
@@ -86,8 +86,8 @@ namespace dftfe
      */
     void
     computeRhoTauDependentXCData(
-      AuxDensityMatrix<memorySpace>               &auxDensityMatrix,
-      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
         &xDataOut,
       std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
@@ -98,7 +98,7 @@ namespace dftfe
       const override;
 
     void
-    reinitKPointDependentVariables(unsigned int kPointIndex) override;
+    reinitKPointDependentVariables(dftfe::uInt kPointIndex) override;
 
     void
     initialiseHubbardClass(
@@ -118,18 +118,18 @@ namespace dftfe
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                               BLASWrapperHostPtr,
-      const unsigned int                      matrixFreeVectorComponent,
-      const unsigned int                      densityQuadratureId,
-      const unsigned int                      sparsityPatternQuadratureId,
-      const unsigned int                      numberWaveFunctions,
-      const unsigned int                      numSpins,
+      const dftfe::uInt                       matrixFreeVectorComponent,
+      const dftfe::uInt                       densityQuadratureId,
+      const dftfe::uInt                       sparsityPatternQuadratureId,
+      const dftfe::uInt                       numberWaveFunctions,
+      const dftfe::uInt                       numSpins,
       const dftParameters                    &dftParam,
       const std::string                      &scratchFolderName,
       const bool                              singlePrecNonLocalOperator,
       const bool                              updateNonlocalSparsity,
       const std::vector<std::vector<double>> &atomLocations,
       const std::vector<std::vector<double>> &atomLocationsFrac,
-      const std::vector<int>                 &imageIds,
+      const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &imagePositions,
       std::vector<double>                    &kPointCoordinates,
       const std::vector<double>              &kPointWeights,

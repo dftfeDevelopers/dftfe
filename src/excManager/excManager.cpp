@@ -21,6 +21,7 @@
 #include <excDensityGGAClass.h>
 #include <excDensityLDAClass.h>
 #include <excDensityLLMGGAClass.h>
+#include <excTauMGGAClass.h>
 #include "ExcDFTPlusU.h"
 
 namespace dftfe
@@ -28,7 +29,7 @@ namespace dftfe
   namespace
   {
     std::string
-    lastN(std::string input, unsigned int n)
+    lastN(std::string input, dftfe::uInt n)
     {
       if (input.size() < n)
         return input;
@@ -43,7 +44,7 @@ namespace dftfe
                      std::shared_ptr<xc_func_type> funcCPtr,
                      std::string                   modelXCInputFile)
     {
-      int exceptParamX = -1, exceptParamC = -1;
+      dftfe::Int exceptParamX = -1, exceptParamC = -1;
 
       std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> excObj;
       if (XCType == "LDA-PZ")
@@ -128,6 +129,24 @@ namespace dftfe
           excObj = std::make_shared<excDensityLLMGGAClass<memorySpace>>(
             funcXPtr, funcCPtr, modelXCInputFile);
         }
+      else if (XCType == "MGGA-SCAN")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_MGGA_X_SCAN, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_MGGA_C_SCAN, XC_POLARIZED);
+          excObj =
+            std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr, funcCPtr);
+        }
+      else if (XCType == "MGGA-R2SCAN")
+        {
+          exceptParamX =
+            xc_func_init(funcXPtr.get(), XC_MGGA_X_R2SCAN, XC_POLARIZED);
+          exceptParamC =
+            xc_func_init(funcCPtr.get(), XC_MGGA_C_R2SCAN, XC_POLARIZED);
+          excObj =
+            std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr, funcCPtr);
+        }
       else
         {
           std::cout << "Error in xc code \n";
@@ -193,7 +212,7 @@ namespace dftfe
 
     if (enableHubbard)
       {
-        unsigned int numSpin = 1;
+        dftfe::uInt numSpin = 1;
         if (isSpinPolarized == true)
           numSpin = 2;
 

@@ -29,16 +29,17 @@ namespace dftfe
   {
     void
     exchangeAtomToGlobalNodeIdMaps(
-      const unsigned int totalNumberAtoms,
-      std::map<int, std::set<dealii::types::global_dof_index>>
-                        &atomToGlobalNodeIdMap,
-      const unsigned int numMeshPartitions,
-      const MPI_Comm    &mpi_communicator)
+      const dftfe::uInt totalNumberAtoms,
+      std::map<dftfe::Int, std::set<dealii::types::global_dof_index>>
+                       &atomToGlobalNodeIdMap,
+      const dftfe::uInt numMeshPartitions,
+      const MPI_Comm   &mpi_communicator)
 
     {
-      std::map<int, std::set<dealii::types::global_dof_index>>::iterator iter;
+      std::map<dftfe::Int, std::set<dealii::types::global_dof_index>>::iterator
+        iter;
 
-      for (unsigned int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal)
+      for (dftfe::uInt iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal)
         {
           //
           // for each charge, exchange its global list across all procs
@@ -62,15 +63,16 @@ namespace dftfe
 
           std::vector<int> atomToGlobalNodeIdListSizes(numMeshPartitions);
 
-          MPI_Allgather(&numberGlobalNodeIdsOnLocalProc,
-                        1,
-                        MPI_INT,
-                        &(atomToGlobalNodeIdListSizes[0]),
-                        1,
-                        MPI_INT,
-                        mpi_communicator);
+          MPI_Allgather(
+            &numberGlobalNodeIdsOnLocalProc,
+            1,
+            dftfe::dataTypes::mpi_type_id(&numberGlobalNodeIdsOnLocalProc),
+            &(atomToGlobalNodeIdListSizes[0]),
+            1,
+            dftfe::dataTypes::mpi_type_id(atomToGlobalNodeIdListSizes.data()),
+            mpi_communicator);
 
-          const int newAtomToGlobalNodeIdListSize =
+          const dftfe::Int newAtomToGlobalNodeIdListSize =
             std::accumulate(&(atomToGlobalNodeIdListSizes[0]),
                             &(atomToGlobalNodeIdListSizes[numMeshPartitions]),
                             0);
@@ -82,7 +84,7 @@ namespace dftfe
 
           mpiOffsets[0] = 0;
 
-          for (unsigned int i = 1; i < numMeshPartitions; ++i)
+          for (dftfe::uInt i = 1; i < numMeshPartitions; ++i)
             mpiOffsets[i] =
               atomToGlobalNodeIdListSizes[i - 1] + mpiOffsets[i - 1];
 
@@ -98,7 +100,7 @@ namespace dftfe
           //
           // over-write local interaction with items of globalInteractionList
           //
-          for (unsigned int i = 0; i < globalAtomToGlobalNodeIdList.size(); ++i)
+          for (dftfe::uInt i = 0; i < globalAtomToGlobalNodeIdList.size(); ++i)
             (atomToGlobalNodeIdMap[iGlobal])
               .insert(globalAtomToGlobalNodeIdList[i]);
         }
@@ -106,26 +108,27 @@ namespace dftfe
 
 
     void
-    exchangeInteractionMaps(const unsigned int            totalNumberAtoms,
-                            std::map<int, std::set<int>> &interactionMap,
-                            const unsigned int            numMeshPartitions,
-                            const MPI_Comm               &mpi_communicator)
+    exchangeInteractionMaps(
+      const dftfe::uInt                           totalNumberAtoms,
+      std::map<dftfe::Int, std::set<dftfe::Int>> &interactionMap,
+      const dftfe::uInt                           numMeshPartitions,
+      const MPI_Comm                             &mpi_communicator)
 
     {
-      std::map<int, std::set<int>>::iterator iter;
+      std::map<dftfe::Int, std::set<dftfe::Int>>::iterator iter;
 
-      for (unsigned int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal)
+      for (dftfe::uInt iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal)
         {
           //
           // for each charge, exchange its global list across all procs
           //
           iter = interactionMap.find(iGlobal);
 
-          std::vector<int> localAtomToInteractingAtomsList;
+          std::vector<dftfe::Int> localAtomToInteractingAtomsList;
 
           if (iter != interactionMap.end())
             {
-              std::set<int> &localInteractingAtomsSet = iter->second;
+              std::set<dftfe::Int> &localInteractingAtomsSet = iter->second;
               std::copy(localInteractingAtomsSet.begin(),
                         localInteractingAtomsSet.end(),
                         std::back_inserter(localAtomToInteractingAtomsList));
@@ -137,75 +140,78 @@ namespace dftfe
 
           MPI_Allgather(&sizeOnLocalProc,
                         1,
-                        MPI_INT,
+                        dftfe::dataTypes::mpi_type_id(&sizeOnLocalProc),
                         &(interactionMapListSizes[0]),
                         1,
-                        MPI_INT,
+                        dftfe::dataTypes::mpi_type_id(
+                          interactionMapListSizes.data()),
                         mpi_communicator);
 
-          const int newListSize =
+          const dftfe::Int newListSize =
             std::accumulate(&(interactionMapListSizes[0]),
                             &(interactionMapListSizes[numMeshPartitions]),
                             0);
 
-          std::vector<int> globalInteractionMapList(newListSize);
+          std::vector<dftfe::Int> globalInteractionMapList(newListSize);
 
           std::vector<int> mpiOffsets(numMeshPartitions);
 
           mpiOffsets[0] = 0;
 
-          for (unsigned int i = 1; i < numMeshPartitions; ++i)
+          for (dftfe::uInt i = 1; i < numMeshPartitions; ++i)
             mpiOffsets[i] = interactionMapListSizes[i - 1] + mpiOffsets[i - 1];
 
           MPI_Allgatherv(&(localAtomToInteractingAtomsList[0]),
                          sizeOnLocalProc,
-                         MPI_INT,
+                         dftfe::dataTypes::mpi_type_id(
+                           localAtomToInteractingAtomsList.data()),
                          &(globalInteractionMapList[0]),
                          &(interactionMapListSizes[0]),
                          &(mpiOffsets[0]),
-                         MPI_INT,
+                         dftfe::dataTypes::mpi_type_id(
+                           globalInteractionMapList.data()),
                          mpi_communicator);
 
           //
           // over-write local interaction with items of globalInteractionList
           //
-          for (unsigned int i = 0; i < globalInteractionMapList.size(); ++i)
+          for (dftfe::uInt i = 0; i < globalInteractionMapList.size(); ++i)
             (interactionMap[iGlobal]).insert(globalInteractionMapList[i]);
         }
     }
 
 
     //
-    unsigned int
+    dftfe::uInt
     createAndCheckInteractionMap(
-      std::map<int, std::set<int>> &interactionMap,
-      const dealii::DoFHandler<3>  &dofHandler,
+      std::map<dftfe::Int, std::set<dftfe::Int>> &interactionMap,
+      const dealii::DoFHandler<3>                &dofHandler,
       const std::map<dealii::types::global_dof_index, dealii::Point<3>>
                                              &supportPoints,
       const std::vector<std::vector<double>> &atomLocations,
       const std::vector<std::vector<double>> &imagePositions,
-      const std::vector<int>                 &imageIds,
+      const std::vector<dftfe::Int>          &imageIds,
       const double                            radiusAtomBall,
       const dealii::BoundingBox<3>           &boundingBoxTria,
-      const unsigned int                      n_mpi_processes,
+      const dftfe::uInt                       n_mpi_processes,
       const MPI_Comm                         &mpi_communicator,
       dealii::TimerOutput                    &computing_timer)
     {
       computing_timer.enter_subsection(
         "create bins: find nodes inside atom balls");
       interactionMap.clear();
-      const unsigned int numberImageCharges = imageIds.size();
-      const unsigned int numberGlobalAtoms  = atomLocations.size();
-      const unsigned int totalNumberAtoms =
+      const dftfe::uInt numberImageCharges = imageIds.size();
+      const dftfe::uInt numberGlobalAtoms  = atomLocations.size();
+      const dftfe::uInt totalNumberAtoms =
         numberGlobalAtoms + numberImageCharges;
 
-      const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
-      const unsigned int vertices_per_cell =
+      const dftfe::uInt dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+      const dftfe::uInt vertices_per_cell =
         dealii::GeometryInfo<3>::vertices_per_cell;
 
-      std::map<int, std::set<dealii::types::global_dof_index>>
+      std::map<dftfe::Int, std::set<dealii::types::global_dof_index>>
         atomToGlobalNodeIdMap;
-      for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
+      for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
         {
           std::set<dealii::types::global_dof_index> tempNodalSet;
           dealii::Point<3>                          atomCoor;
@@ -258,10 +264,10 @@ namespace dftfe
                     dealii::NeighborType::not_neighbors)
                   continue;
 
-                int cutOffFlag = 0;
+                dftfe::Int cutOffFlag = 0;
                 // cell->get_dof_indices(cell_dof_indices);
 
-                for (unsigned int iNode = 0; iNode < vertices_per_cell; ++iNode)
+                for (dftfe::uInt iNode = 0; iNode < vertices_per_cell; ++iNode)
                   {
                     const dealii::Point<3> &feNodeGlobalCoord =
                       supportPoints.find(cell->vertex_dof_index(iNode, 0))
@@ -291,7 +297,7 @@ namespace dftfe
                 if (cutOffFlag == 0)
                   {
                     cell->get_dof_indices(cell_dof_indices);
-                    for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+                    for (dftfe::uInt iNode = 0; iNode < dofs_per_cell; ++iNode)
                       {
                         const dealii::Point<3> &feNodeGlobalCoord =
                           supportPoints.find(cell_dof_indices[iNode])->second;
@@ -307,7 +313,7 @@ namespace dftfe
 
                 if (cutOffFlag == 1)
                   {
-                    for (unsigned int iNode = 0; iNode < vertices_per_cell;
+                    for (dftfe::uInt iNode = 0; iNode < vertices_per_cell;
                          ++iNode)
                       {
                         const dealii::types::global_dof_index nodeID =
@@ -334,9 +340,9 @@ namespace dftfe
       //					   mpi_communicator);
 
       computing_timer.enter_subsection("create bins: local interaction maps");
-      unsigned int ilegalInteraction = 0;
+      dftfe::uInt ilegalInteraction = 0;
 
-      for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
+      for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
         {
           if (atomToGlobalNodeIdMap.find(iAtom) == atomToGlobalNodeIdMap.end())
             continue;
@@ -349,7 +355,7 @@ namespace dftfe
 
           // std::cout<<"IAtom: "<<iAtom<<std::endl;
 
-          for (int jAtom = iAtom - 1; jAtom > -1; jAtom--)
+          for (dftfe::Int jAtom = iAtom - 1; jAtom > -1; jAtom--)
             {
               // std::cout<<"JAtom: "<<jAtom<<std::endl;
               if (atomToGlobalNodeIdMap.find(jAtom) ==
@@ -391,7 +397,7 @@ namespace dftfe
                       // image then create the interaction map between that atom
                       // and iAtom
                       //
-                      const int masterAtomId =
+                      const dftfe::Int masterAtomId =
                         imageIds[jAtom - numberGlobalAtoms];
                       if (masterAtomId == iAtom)
                         {
@@ -412,7 +418,7 @@ namespace dftfe
                       // image and then create interaction map between that atom
                       // and jAtom
                       //
-                      const int masterAtomId =
+                      const dftfe::Int masterAtomId =
                         imageIds[iAtom - numberGlobalAtoms];
                       if (masterAtomId == jAtom)
                         {
@@ -432,9 +438,9 @@ namespace dftfe
                       // iAtom and jAtom are interacting atoms find the actual
                       // atoms for which iAtom and jAtoms are images and create
                       // interacting maps between them
-                      const int masteriAtomId =
+                      const dftfe::Int masteriAtomId =
                         imageIds[iAtom - numberGlobalAtoms];
-                      const int masterjAtomId =
+                      const dftfe::Int masterjAtomId =
                         imageIds[jAtom - numberGlobalAtoms];
                       if (masteriAtomId == masterjAtomId)
                         {
@@ -473,7 +479,7 @@ namespace dftfe
   } // namespace internal
 
   // constructor
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   vselfBinsManager<FEOrder, FEOrderElectro>::vselfBinsManager(
     const MPI_Comm      &mpi_comm_parent,
     const MPI_Comm      &mpi_comm_domain,
@@ -491,7 +497,7 @@ namespace dftfe
     , d_storedAdaptiveBallRadius(0)
   {}
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   void
   vselfBinsManager<FEOrder, FEOrderElectro>::createAtomBins(
     std::vector<const dealii::AffineConstraints<double> *> &constraintsVector,
@@ -500,7 +506,7 @@ namespace dftfe
     const dealii::AffineConstraints<double> &constraintMatrix,
     const std::vector<std::vector<double>>  &atomLocations,
     const std::vector<std::vector<double>>  &imagePositions,
-    const std::vector<int>                  &imageIds,
+    const std::vector<dftfe::Int>           &imageIds,
     const std::vector<double>               &imageCharges,
     const double                             radiusAtomBall)
 
@@ -530,14 +536,13 @@ namespace dftfe
 
     d_atomLocations = atomLocations;
 
-    const unsigned int numberImageCharges = imageIds.size();
-    const unsigned int numberGlobalAtoms  = atomLocations.size();
-    const unsigned int totalNumberAtoms =
-      numberGlobalAtoms + numberImageCharges;
+    const dftfe::uInt numberImageCharges = imageIds.size();
+    const dftfe::uInt numberGlobalAtoms  = atomLocations.size();
+    const dftfe::uInt totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
-    const unsigned int vertices_per_cell =
+    const dftfe::uInt vertices_per_cell =
       dealii::GeometryInfo<3>::vertices_per_cell;
-    const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+    const dftfe::uInt dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 
 
     dealii::BoundingBox<3> boundingBoxTria(
@@ -556,7 +561,7 @@ namespace dftfe
 
     // create interaction maps by finding the intersection of global NodeIds of
     // each atom
-    std::map<int, std::set<int>> interactionMap;
+    std::map<dftfe::Int, std::set<dftfe::Int>> interactionMap;
 
     double radiusAtomBallAdaptive =
       (d_storedAdaptiveBallRadius > 1e-6) ?
@@ -577,7 +582,7 @@ namespace dftfe
           pcout
             << "Determining the ball radius around the atom for nuclear self-potential solve... "
             << std::endl;
-        unsigned int check =
+        dftfe::uInt check =
           internal::createAndCheckInteractionMap(interactionMap,
                                                  dofHandler,
                                                  supportPoints,
@@ -634,7 +639,7 @@ namespace dftfe
             << radiusAtomBall << std::endl;
 
         radiusAtomBallAdaptive = radiusAtomBall;
-        const unsigned int check =
+        const dftfe::uInt check =
           internal::createAndCheckInteractionMap(interactionMap,
                                                  dofHandler,
                                                  supportPoints,
@@ -659,22 +664,22 @@ namespace dftfe
       }
 
     computing_timer.enter_subsection("create bins: put in bins");
-    std::map<int, std::set<int>>::iterator iter;
+    std::map<dftfe::Int, std::set<dftfe::Int>>::iterator iter;
 
     //
     // start by adding atom 0 to bin 0
     //
     (d_bins[0]).insert(0);
-    int binCount = 0;
+    dftfe::Int binCount = 0;
     // iterate from atom 1 onwards
-    for (int i = 1; i < numberGlobalAtoms; ++i)
+    for (dftfe::Int i = 1; i < numberGlobalAtoms; ++i)
       {
-        const std::set<int> &interactingAtoms = interactionMap[i];
+        const std::set<dftfe::Int> &interactingAtoms = interactionMap[i];
         //
         // treat spl case when no atom intersects with another. e.g. simple
         // cubic
         //
-        int isInteraction = 1;
+        dftfe::Int isInteraction = 1;
         if (interactingAtoms.size() == 0)
           isInteraction = 0;
 
@@ -689,19 +694,20 @@ namespace dftfe
         for (iter = d_bins.begin(); iter != d_bins.end(); ++iter)
           {
             // pick out atoms in this bin
-            std::set<int> &atomsInThisBin = iter->second;
-            int            index          = std::distance(d_bins.begin(), iter);
+            std::set<dftfe::Int> &atomsInThisBin = iter->second;
+            dftfe::Int            index = std::distance(d_bins.begin(), iter);
 
-            isBinFound            = true;
-            int isBinIntersecting = 0;
+            isBinFound                   = true;
+            dftfe::Int isBinIntersecting = 0;
 
             // to belong to this bin, this atom must not overlap with any other
             // atom already present in this bin
-            for (std::set<int>::iterator iter2 = interactingAtoms.begin();
+            for (std::set<dftfe::Int>::iterator iter2 =
+                   interactingAtoms.begin();
                  iter2 != interactingAtoms.end();
                  ++iter2)
               {
-                int atom = *iter2;
+                dftfe::Int atom = *iter2;
 
                 if (atomsInThisBin.find(atom) != atomsInThisBin.end())
                   {
@@ -731,17 +737,17 @@ namespace dftfe
           }
       }
 
-    const int numberBins = binCount + 1;
+    const dftfe::Int numberBins = binCount + 1;
     if (d_dftParams.verbosity >= 2)
       pcout << "number bins: " << numberBins << std::endl;
 
     computing_timer.leave_subsection("create bins: put in bins");
 
     computing_timer.enter_subsection("create bins: set boundary conditions");
-    const unsigned int faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
-    const unsigned int dofs_per_face  = dofHandler.get_fe().dofs_per_face;
+    const dftfe::uInt faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
+    const dftfe::uInt dofs_per_face  = dofHandler.get_fe().dofs_per_face;
 
-    std::vector<std::vector<int>> imageIdsInBins(numberBins);
+    std::vector<std::vector<dftfe::Int>> imageIdsInBins(numberBins);
     d_boundaryFlag.resize(numberBins);
     d_boundaryFlagOnlyChargeId.resize(numberBins);
     d_dofClosestChargeLocationMap.resize(numberBins);
@@ -760,7 +766,7 @@ namespace dftfe
                                 mpi_communicator);
 
     std::vector<distributedCPUVec<double>> inhomogBoundaryVecVselfDerR(3);
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       inhomogBoundaryVecVselfDerR[idim].reinit(inhomogBoundaryVec);
 
     d_constraintsOnlyHangingInfo.initialize(
@@ -775,22 +781,23 @@ namespace dftfe
     //
     // set constraint matrices for each bin
     //
-    for (int iBin = 0; iBin < numberBins; ++iBin)
+    for (dftfe::Int iBin = 0; iBin < numberBins; ++iBin)
       {
         /*
         inhomogBoundaryVec=0.0;
-        for (unsigned int idim=0; idim<3; idim++)
+        for (dftfe::uInt idim=0; idim<3; idim++)
             inhomogBoundaryVecVselfDerR[idim]=0.0;
         */
 
-        std::set<int>                &atomsInBinSet = d_bins[iBin];
-        std::vector<int>              atomsInCurrentBin(atomsInBinSet.begin(),
-                                           atomsInBinSet.end());
+        std::set<dftfe::Int>         &atomsInBinSet = d_bins[iBin];
+        std::vector<dftfe::Int>       atomsInCurrentBin(atomsInBinSet.begin(),
+                                                  atomsInBinSet.end());
         std::vector<dealii::Point<3>> atomPositionsInCurrentBin;
 
-        int numberGlobalAtomsInBin = atomsInCurrentBin.size();
+        dftfe::Int numberGlobalAtomsInBin = atomsInCurrentBin.size();
 
-        std::vector<int> &imageIdsOfAtomsInCurrentBin = imageIdsInBins[iBin];
+        std::vector<dftfe::Int> &imageIdsOfAtomsInCurrentBin =
+          imageIdsInBins[iBin];
         std::vector<std::vector<double>> imagePositionsOfAtomsInCurrentBin;
 
         if (d_dftParams.verbosity >= 2)
@@ -798,9 +805,9 @@ namespace dftfe
                 << ": number of global atoms: " << numberGlobalAtomsInBin
                 << std::endl;
 
-        for (int index = 0; index < numberGlobalAtomsInBin; ++index)
+        for (dftfe::Int index = 0; index < numberGlobalAtomsInBin; ++index)
           {
-            int globalChargeIdInCurrentBin = atomsInCurrentBin[index];
+            dftfe::Int globalChargeIdInCurrentBin = atomsInCurrentBin[index];
 
             d_atomIdBinIdMapLocalAllImages[globalChargeIdInCurrentBin] = iBin;
 
@@ -813,7 +820,7 @@ namespace dftfe
               atomLocations[globalChargeIdInCurrentBin][4]);
             atomPositionsInCurrentBin.push_back(atomPosition);
 
-            for (int iImageAtom = 0; iImageAtom < numberImageCharges;
+            for (dftfe::Int iImageAtom = 0; iImageAtom < numberImageCharges;
                  ++iImageAtom)
               {
                 if (imageIds[iImageAtom] == globalChargeIdInCurrentBin)
@@ -829,11 +836,11 @@ namespace dftfe
               }
           }
 
-        int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
+        dftfe::Int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
 
-        std::map<dealii::types::global_dof_index, int> &boundaryNodeMap =
+        std::map<dealii::types::global_dof_index, dftfe::Int> &boundaryNodeMap =
           d_boundaryFlag[iBin];
-        std::map<dealii::types::global_dof_index, int>
+        std::map<dealii::types::global_dof_index, dftfe::Int>
           &boundaryNodeMapOnlyChargeId = d_boundaryFlagOnlyChargeId[iBin];
         std::map<dealii::types::global_dof_index, dealii::Point<3>>
           &dofClosestChargeLocationMap = d_dofClosestChargeLocationMap[iBin];
@@ -844,7 +851,7 @@ namespace dftfe
         // create constraint matrix for current bin
         //
         d_vselfBinConstraintMatrices[4 * iBin].reinit(locally_relevant_dofs);
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           d_vselfBinConstraintMatrices[4 * iBin + idim + 1].reinit(
             locally_relevant_dofs);
 
@@ -856,7 +863,7 @@ namespace dftfe
         while (!areBoundaryConditionsCorrectInCaseOfHangingNodes)
           {
             inhomogBoundaryVec = 0.0;
-            for (unsigned int idim = 0; idim < 3; idim++)
+            for (dftfe::uInt idim = 0; idim < 3; idim++)
               inhomogBoundaryVecVselfDerR[idim] = 0.0;
 
             for (iterMap = supportPoints.begin();
@@ -868,11 +875,11 @@ namespace dftfe
                     if (!onlyHangingNodeConstraints.is_constrained(
                           iterMap->first))
                       {
-                        int                     overlapFlag = 0;
+                        dftfe::Int              overlapFlag = 0;
                         const dealii::Point<3> &nodalCoor   = iterMap->second;
                         std::vector<double>     distanceFromNode;
 
-                        for (unsigned int iAtom = 0;
+                        for (dftfe::uInt iAtom = 0;
                              iAtom <
                              numberGlobalAtomsInBin + numberImageAtomsInBin;
                              ++iAtom)
@@ -916,8 +923,8 @@ namespace dftfe
 
                         double minDistance = *minDistanceIter;
 
-                        int chargeId;
-                        int domainChargeId;
+                        dftfe::Int chargeId;
+                        dftfe::Int domainChargeId;
 
                         if (minDistanceAtomId < numberGlobalAtomsInBin)
                           {
@@ -1010,7 +1017,7 @@ namespace dftfe
 
 
                             inhomogBoundaryVec[iterMap->first] = potentialValue;
-                            for (unsigned int idim = 0; idim < 3; idim++)
+                            for (dftfe::uInt idim = 0; idim < 3; idim++)
                               inhomogBoundaryVecVselfDerR[idim][iterMap
                                                                   ->first] =
                                 potentialValue / minDistance *
@@ -1040,19 +1047,19 @@ namespace dftfe
                       cell_dof_indices(dofs_per_cell);
                     cell->get_dof_indices(cell_dof_indices);
 
-                    int  closestChargeIdSolvedNode = -1;
-                    bool isDirichletNodePresent    = false;
-                    bool isSolvedNodePresent       = false;
-                    int  numSolvedNodes            = 0;
-                    int  closestChargeIdSolvedSum  = 0;
-                    for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+                    dftfe::Int closestChargeIdSolvedNode = -1;
+                    bool       isDirichletNodePresent    = false;
+                    bool       isSolvedNodePresent       = false;
+                    dftfe::Int numSolvedNodes            = 0;
+                    dftfe::Int closestChargeIdSolvedSum  = 0;
+                    for (dftfe::uInt iNode = 0; iNode < dofs_per_cell; ++iNode)
                       {
                         const dealii::types::global_dof_index globalNodeId =
                           cell_dof_indices[iNode];
                         if (!onlyHangingNodeConstraints.is_constrained(
                               globalNodeId))
                           {
-                            const int boundaryId =
+                            const dftfe::Int boundaryId =
                               d_boundaryFlag[iBin][globalNodeId];
                             if (boundaryId == -1)
                               {
@@ -1095,7 +1102,7 @@ namespace dftfe
                           }
                         else
                           {
-                            const int imageId =
+                            const dftfe::Int imageId =
                               closestChargeIdSolvedNode - numberGlobalAtoms;
                             closestAtomChargeSolved = imageCharges[imageId];
                             closestAtomLocationSolved[0] =
@@ -1107,12 +1114,12 @@ namespace dftfe
                           }
 
                         // FIXME: dofs touched optimization to be done
-                        for (unsigned int iNode = 0; iNode < dofs_per_cell;
+                        for (dftfe::uInt iNode = 0; iNode < dofs_per_cell;
                              ++iNode)
                           {
                             const dealii::types::global_dof_index globalNodeId =
                               cell_dof_indices[iNode];
-                            const int boundaryId =
+                            const dftfe::Int boundaryId =
                               d_boundaryFlag[iBin][globalNodeId];
                             if (!onlyHangingNodeConstraints.is_constrained(
                                   globalNodeId) &&
@@ -1133,7 +1140,7 @@ namespace dftfe
                                 inhomogBoundaryVec[globalNodeId] =
                                   newPotentialValue;
 
-                                for (unsigned int idim = 0; idim < 3; idim++)
+                                for (dftfe::uInt idim = 0; idim < 3; idim++)
                                   inhomogBoundaryVecVselfDerR
                                     [idim][globalNodeId] =
                                       newPotentialValue / distance *
@@ -1149,7 +1156,7 @@ namespace dftfe
                   }     // cell locally owned
               }         // cell loop
 
-            const std::map<dealii::types::global_dof_index, int>
+            const std::map<dealii::types::global_dof_index, dftfe::Int>
               &closestAtomBinMap = d_closestAtomBin[iBin];
 
             bool checkPassed = true;
@@ -1157,20 +1164,20 @@ namespace dftfe
             for (; cell != endc; ++cell)
               if (cell->is_locally_owned())
                 {
-                  std::vector<unsigned int>
-                               faceIdsWithAtleastOneSolvedNonHangingNode;
-                  unsigned int closestAtomIdSum          = 0;
-                  unsigned int closestAtomId             = 0;
-                  unsigned int nonHangingNodeIdCountCell = 0;
-                  for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+                  std::vector<dftfe::uInt>
+                              faceIdsWithAtleastOneSolvedNonHangingNode;
+                  dftfe::uInt closestAtomIdSum          = 0;
+                  dftfe::uInt closestAtomId             = 0;
+                  dftfe::uInt nonHangingNodeIdCountCell = 0;
+                  for (dftfe::uInt iFace = 0; iFace < faces_per_cell; ++iFace)
                     {
-                      int  dirichletDofCount         = 0;
-                      bool isSolvedDofPresent        = false;
-                      int  nonHangingNodeIdCountFace = 0;
+                      dftfe::Int dirichletDofCount         = 0;
+                      bool       isSolvedDofPresent        = false;
+                      dftfe::Int nonHangingNodeIdCountFace = 0;
                       std::vector<dealii::types::global_dof_index>
                         iFaceGlobalDofIndices(dofs_per_face);
                       cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
-                      for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                      for (dftfe::uInt iFaceDof = 0; iFaceDof < dofs_per_face;
                            ++iFaceDof)
                         {
                           const dealii::types::global_dof_index nodeId =
@@ -1201,7 +1208,7 @@ namespace dftfe
                                 std::pair<dealii::types::global_dof_index,
                                           double>> *rowData =
                                 constraintMatrix.get_constraint_entries(nodeId);
-                              for (unsigned int j = 0; j < rowData->size(); ++j)
+                              for (dftfe::uInt j = 0; j < rowData->size(); ++j)
                                 {
                                   if (d_dftParams
                                         .createConstraintsFromSerialDofhandler)
@@ -1260,7 +1267,7 @@ namespace dftfe
                     }
                 } // cell locally owned
 
-            int temp = 0;
+            dftfe::Int temp = 0;
             if (!checkPassed)
               temp = 1;
 
@@ -1309,7 +1316,7 @@ namespace dftfe
         d_vselfBinConstraintMatrices[4 * iBin].close();
         constraintsVector.push_back(&(d_vselfBinConstraintMatrices[4 * iBin]));
 
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           {
             inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
             for (auto index : locally_relevant_dofs)
@@ -1340,7 +1347,7 @@ namespace dftfe
           }
 
         /*
-           for (unsigned int i = 0; i < inhomogBoundaryVec.locally_owned_size();
+           for (dftfe::uInt i = 0; i < inhomogBoundaryVec.locally_owned_size();
         ++i)
            {
            const dealii::types::global_dof_index
@@ -1370,7 +1377,7 @@ namespace dftfe
 
   } //
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   void
   vselfBinsManager<FEOrder, FEOrderElectro>::updateBinsBc(
     std::vector<const dealii::AffineConstraints<double> *> &constraintsVector,
@@ -1379,7 +1386,7 @@ namespace dftfe
     const dealii::AffineConstraints<double> &constraintMatrix,
     const std::vector<std::vector<double>>  &atomLocations,
     const std::vector<std::vector<double>>  &imagePositions,
-    const std::vector<int>                  &imageIds,
+    const std::vector<dftfe::Int>           &imageIds,
     const std::vector<double>               &imageCharges,
     const bool                               vselfPerturbationUpdateForStress)
 
@@ -1388,14 +1395,13 @@ namespace dftfe
 
     d_atomLocations = atomLocations;
 
-    const unsigned int numberImageCharges = imageIds.size();
-    const unsigned int numberGlobalAtoms  = atomLocations.size();
-    const unsigned int totalNumberAtoms =
-      numberGlobalAtoms + numberImageCharges;
+    const dftfe::uInt numberImageCharges = imageIds.size();
+    const dftfe::uInt numberGlobalAtoms  = atomLocations.size();
+    const dftfe::uInt totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
-    const unsigned int vertices_per_cell =
+    const dftfe::uInt vertices_per_cell =
       dealii::GeometryInfo<3>::vertices_per_cell;
-    const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+    const dftfe::uInt dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 
     const dealii::IndexSet &locally_owned_dofs =
       dofHandler.locally_owned_dofs();
@@ -1419,27 +1425,27 @@ namespace dftfe
                                 mpi_communicator);
 
     std::vector<distributedCPUVec<double>> inhomogBoundaryVecVselfDerR(3);
-    for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt idim = 0; idim < 3; idim++)
       inhomogBoundaryVecVselfDerR[idim].reinit(inhomogBoundaryVec);
 
-    const int numberBins = d_bins.size();
+    const dftfe::Int numberBins = d_bins.size();
     d_dofClosestChargeLocationMap.resize(numberBins);
     //
     // set constraint matrices for each bin
     //
-    for (int iBin = 0; iBin < numberBins; ++iBin)
+    for (dftfe::Int iBin = 0; iBin < numberBins; ++iBin)
       {
         inhomogBoundaryVec = 0.0;
-        for (unsigned int idim = 0; idim < 3; idim++)
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
           inhomogBoundaryVecVselfDerR[idim] = 0.0;
 
         std::map<dealii::types::global_dof_index, dealii::Point<3>>
           &dofClosestChargeLocationMap = d_dofClosestChargeLocationMap[iBin];
 
-        const std::map<dealii::types::global_dof_index, int>
+        const std::map<dealii::types::global_dof_index, dftfe::Int>
           &closestAtomMapCurrentBin = d_closestAtomBin[iBin];
 
-        const std::map<dealii::types::global_dof_index, int>
+        const std::map<dealii::types::global_dof_index, dftfe::Int>
           &boundaryFlagMapCurrentBin = d_boundaryFlag[iBin];
 
         dealii::DoFHandler<3>::active_cell_iterator cell =
@@ -1453,16 +1459,16 @@ namespace dftfe
                   dofs_per_cell);
                 cell->get_dof_indices(cell_dof_indices);
 
-                for (unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+                for (dftfe::uInt iNode = 0; iNode < dofs_per_cell; ++iNode)
                   {
                     const dealii::types::global_dof_index globalNodeId =
                       cell_dof_indices[iNode];
                     if (!onlyHangingNodeConstraints.is_constrained(
                           globalNodeId))
                       {
-                        const int closestAtomId =
+                        const dftfe::Int closestAtomId =
                           closestAtomMapCurrentBin.find(globalNodeId)->second;
-                        const int boundaryId =
+                        const dftfe::Int boundaryId =
                           boundaryFlagMapCurrentBin.find(globalNodeId)->second;
 
                         double           closestAtomCharge;
@@ -1484,7 +1490,7 @@ namespace dftfe
                           }
                         else
                           {
-                            const int imageId =
+                            const dftfe::Int imageId =
                               closestAtomId - numberGlobalAtoms;
                             closestAtomCharge      = imageCharges[imageId];
                             closestAtomLocation[0] = imagePositions[imageId][0];
@@ -1513,7 +1519,7 @@ namespace dftfe
                                 // d_vselfBinField[iBin][globalNodeId] =
                                 //  newPotentialValue;
 
-                                for (unsigned int idim = 0; idim < 3; idim++)
+                                for (dftfe::uInt idim = 0; idim < 3; idim++)
                                   inhomogBoundaryVecVselfDerR
                                     [idim][globalNodeId] =
                                       newPotentialValue / distance *
@@ -1570,11 +1576,11 @@ namespace dftfe
 
             if (!vselfPerturbationUpdateForStress)
               {
-                for (unsigned int idim = 0; idim < 3; idim++)
+                for (dftfe::uInt idim = 0; idim < 3; idim++)
                   d_vselfBinConstraintMatrices[4 * iBin + idim + 1].reinit(
                     locally_relevant_dofs);
 
-                for (unsigned int idim = 0; idim < 3; idim++)
+                for (dftfe::uInt idim = 0; idim < 3; idim++)
                   {
                     inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
                     for (auto index : locally_relevant_dofs)
@@ -1608,7 +1614,7 @@ namespace dftfe
               }
             else
               {
-                for (unsigned int idim = 0; idim < 3; idim++)
+                for (dftfe::uInt idim = 0; idim < 3; idim++)
                   constraintsVector.push_back(
                     &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
               }
@@ -1632,7 +1638,7 @@ namespace dftfe
 
             if (!vselfPerturbationUpdateForStress)
               {
-                for (unsigned int idim = 0; idim < 3; idim++)
+                for (dftfe::uInt idim = 0; idim < 3; idim++)
                   {
                     inhomogBoundaryVecVselfDerR[idim].update_ghost_values();
                     d_constraintsOnlyHangingInfo.distribute(
@@ -1655,7 +1661,7 @@ namespace dftfe
               }
             else
               {
-                for (unsigned int idim = 0; idim < 3; idim++)
+                for (dftfe::uInt idim = 0; idim < 3; idim++)
                   constraintsVector.push_back(
                     &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
               }
@@ -1663,7 +1669,7 @@ namespace dftfe
       } // bin loop
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   void
   vselfBinsManager<FEOrder, FEOrderElectro>::locateAtomsInBins(
     const dealii::DoFHandler<3> &dofHandler)
@@ -1673,31 +1679,31 @@ namespace dftfe
     const dealii::IndexSet &locally_owned_dofs =
       dofHandler.locally_owned_dofs();
 
-    const unsigned int numberBins = d_boundaryFlag.size();
+    const dftfe::uInt numberBins = d_boundaryFlag.size();
     d_atomsInBin.resize(numberBins);
 
 
-    for (int iBin = 0; iBin < numberBins; ++iBin)
+    for (dftfe::Int iBin = 0; iBin < numberBins; ++iBin)
       {
-        unsigned int vertices_per_cell =
+        dftfe::uInt vertices_per_cell =
           dealii::GeometryInfo<3>::vertices_per_cell;
         dealii::DoFHandler<3>::active_cell_iterator cell =
                                                       dofHandler.begin_active(),
                                                     endc = dofHandler.end();
 
-        std::set<int>   &atomsInBinSet = d_bins[iBin];
-        std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),
-                                           atomsInBinSet.end());
-        unsigned int     numberGlobalAtomsInBin = atomsInCurrentBin.size();
-        std::set<unsigned int> atomsTolocate;
-        for (unsigned int i = 0; i < numberGlobalAtomsInBin; i++)
+        std::set<dftfe::Int>   &atomsInBinSet = d_bins[iBin];
+        std::vector<dftfe::Int> atomsInCurrentBin(atomsInBinSet.begin(),
+                                                  atomsInBinSet.end());
+        dftfe::uInt           numberGlobalAtomsInBin = atomsInCurrentBin.size();
+        std::set<dftfe::uInt> atomsTolocate;
+        for (dftfe::uInt i = 0; i < numberGlobalAtomsInBin; i++)
           atomsTolocate.insert(i);
 
         for (; cell != endc; ++cell)
           {
             if (cell->is_locally_owned())
               {
-                for (unsigned int i = 0; i < vertices_per_cell; ++i)
+                for (dftfe::uInt i = 0; i < vertices_per_cell; ++i)
                   {
                     const dealii::types::global_dof_index nodeID =
                       cell->vertex_dof_index(i, 0);
@@ -1705,12 +1711,12 @@ namespace dftfe
                     //
                     // loop over all atoms to locate the corresponding nodes
                     //
-                    for (std::set<unsigned int>::iterator it =
+                    for (std::set<dftfe::uInt>::iterator it =
                            atomsTolocate.begin();
                          it != atomsTolocate.end();
                          ++it)
                       {
-                        const int        chargeId = atomsInCurrentBin[*it];
+                        const dftfe::Int chargeId = atomsInCurrentBin[*it];
                         dealii::Point<3> atomCoord(
                           d_atomLocations[chargeId][2],
                           d_atomLocations[chargeId][3],
@@ -1774,43 +1780,43 @@ namespace dftfe
       } // iBin loop
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::map<int, std::set<int>> &
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  const std::map<dftfe::Int, std::set<dftfe::Int>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getAtomIdsBins() const
   {
     return d_bins;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::map<int, std::set<int>> &
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  const std::map<dftfe::Int, std::set<dftfe::Int>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getAtomImageIdsBins() const
   {
     return d_binsImages;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::vector<std::map<dealii::types::global_dof_index, int>> &
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getBoundaryFlagsBins() const
   {
     return d_boundaryFlag;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::vector<std::map<dealii::types::global_dof_index, int>> &
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getBoundaryFlagsBinsOnlyChargeId()
     const
   {
     return d_boundaryFlagOnlyChargeId;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::vector<std::map<dealii::types::global_dof_index, int>> &
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getClosestAtomIdsBins() const
   {
     return d_closestAtomBin;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   const std::vector<
     std::map<dealii::types::global_dof_index, dealii::Point<3>>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getClosestAtomLocationsBins() const
@@ -1818,36 +1824,36 @@ namespace dftfe
     return d_dofClosestChargeLocationMap;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   const std::vector<distributedCPUVec<double>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getVselfFieldBins() const
   {
     return d_vselfFieldBins;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   const std::vector<distributedCPUVec<double>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getVselfFieldDerRBins() const
   {
     return d_vselfFieldDerRBins;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   const std::vector<distributedCPUVec<double>> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getPerturbedVselfFieldBins() const
   {
     return d_vselfFieldPerturbedBins;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
-  const std::map<unsigned int, unsigned int> &
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  const std::map<dftfe::uInt, dftfe::uInt> &
   vselfBinsManager<FEOrder, FEOrderElectro>::getAtomIdBinIdMapLocalAllImages()
     const
   {
     return d_atomIdBinIdMapLocalAllImages;
   }
 
-  template <unsigned int FEOrder, unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   double
   vselfBinsManager<FEOrder, FEOrderElectro>::getStoredAdaptiveBallRadius() const
   {

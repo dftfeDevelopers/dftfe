@@ -33,11 +33,11 @@
 
 
 
-int
-main(int argc, char *argv[])
+dftfe::Int
+main(dftfe::Int argc, char *argv[])
 {
   MPI_Init(&argc, &argv);
-  int world_rank;
+  dftfe::Int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
   dftfe::dftfeWrapper::globalHandlesInitialize();
@@ -56,7 +56,7 @@ main(int argc, char *argv[])
   atomicPositionsCart[1][1] = 10.0;
   atomicPositionsCart[1][2] = 10.0;
 
-  std::vector<unsigned int> atomicNumbers(atomicPositionsCart.size());
+  std::vector<dftfe::uInt> atomicNumbers(atomicPositionsCart.size());
   atomicNumbers[0] = 8;
   atomicNumbers[1] = 6;
 

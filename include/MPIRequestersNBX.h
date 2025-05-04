@@ -161,26 +161,26 @@ namespace dftfe
          */
 
       public:
-        MPIRequestersNBX(const std::vector<size_type> &targetIDs,
-                         const MPI_Comm               &comm);
+        MPIRequestersNBX(const std::vector<dftfe::uInt> &targetIDs,
+                         const MPI_Comm                 &comm);
         //
         // default Constructor for serial (without MPI) compilation
         //
         MPIRequestersNBX() = default;
 
-        std::vector<size_type>
+        std::vector<dftfe::uInt>
         getRequestingRankIds() override;
 
       private:
         /**
          * List of processes this processor wants to send requests to.
          */
-        std::vector<size_type> d_targetIDs;
+        std::vector<dftfe::uInt> d_targetIDs;
 
         /**
          * Buffers for sending requests.
          */
-        std::vector<int> d_sendBuffers;
+        std::vector<dftfe::Int> d_sendBuffers;
 
         /**
          * Requests for sending requests.
@@ -195,7 +195,7 @@ namespace dftfe
          * resized and consequently its elements (the pointers) are moved
          * around.
          */
-        std::vector<std::unique_ptr<int>> d_recvBuffers;
+        std::vector<std::unique_ptr<dftfe::Int>> d_recvBuffers;
 
         /**
          * Requests for receiving requests.
@@ -215,7 +215,7 @@ namespace dftfe
         /**
          * List of processes who have made a request to this process.
          */
-        std::set<size_type> d_requestingProcesses;
+        std::set<dftfe::uInt> d_requestingProcesses;
 
         int d_numProcessors;
         int d_myRank;

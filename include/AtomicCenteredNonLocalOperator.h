@@ -75,7 +75,7 @@ namespace dftfe
      * @param[in] kPointIndex specifies the k-point of interest
      */
     void
-    initialiseOperatorActionOnX(unsigned int kPointIndex);
+    initialiseOperatorActionOnX(dftfe::uInt kPointIndex);
     /**
      * @brief initialises the multivector object, waveFunctionBlockSize and resizes various internal data members.
      * @param[in] waveFunctionBlockSize sets the wavefunction block size for the
@@ -85,7 +85,7 @@ namespace dftfe
      */
     void
     initialiseFlattenedDataStructure(
-      unsigned int waveFunctionBlockSize,
+      dftfe::uInt waveFunctionBlockSize,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
         &sphericalFunctionKetTimesVectorParFlattened);
     /**
@@ -111,8 +111,8 @@ namespace dftfe
         basisOperationsPtr,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                         BLASWrapperHostPtr,
-      const unsigned int quadratureIndex);
+                        BLASWrapperHostPtr,
+      const dftfe::uInt quadratureIndex);
     /**
      * @brief calls internal function: initialisePartitioner, initialiseKpoint and computeCMatrixEntries
      * @param[in] updateSparsity flag on whether the sparstiy patten was
@@ -140,8 +140,8 @@ namespace dftfe
         basisOperationsPtr,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                         BLASWrapperHostPtr,
-      const unsigned int quadratureIndex,
+                        BLASWrapperHostPtr,
+      const dftfe::uInt quadratureIndex,
       const std::shared_ptr<
         AtomicCenteredNonLocalOperator<ValueTypeSrc, memorySpace>>
         nonLocalOperatorSrc);
@@ -171,41 +171,41 @@ namespace dftfe
     // Getter functions
     // Returns the vector that takes in nonlocalElementIndex and returns the
     // cellID
-    const std::vector<unsigned int> &
+    const std::vector<dftfe::uInt> &
     getNonlocalElementToCellIdVector() const;
     // Returns the number of atoms in current processor
-    unsigned int
+    dftfe::uInt
     getTotalAtomInCurrentProcessor() const;
 
-    const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace> &
+    const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> &
     getFlattenedNonLocalCellDofIndexToProcessDofIndexMap() const;
 
-    unsigned int
+    dftfe::uInt
     getTotalNonLocalElementsInCurrentProcessor() const;
 
-    unsigned int
+    dftfe::uInt
     getTotalNonLocalEntriesCurrentProcessor() const;
 
-    unsigned int
+    dftfe::uInt
     getMaxSingleAtomEntries() const;
 
     bool
-    atomSupportInElement(unsigned int iElem) const;
+    atomSupportInElement(dftfe::uInt iElem) const;
 
-    unsigned int
-    getGlobalDofAtomIdSphericalFnPair(const unsigned int atomId,
-                                      const unsigned int alpha) const;
+    dftfe::uInt
+    getGlobalDofAtomIdSphericalFnPair(const dftfe::uInt atomId,
+                                      const dftfe::uInt alpha) const;
 
-    unsigned int
-    getLocalIdOfDistributedVec(const unsigned int globalId) const;
+    dftfe::uInt
+    getLocalIdOfDistributedVec(const dftfe::uInt globalId) const;
 
-    std::vector<unsigned int> &
+    std::vector<dftfe::uInt> &
     getNonLocalElemIdToLocalElemIdMap() const;
 
-    std::vector<unsigned int> &
+    std::vector<dftfe::uInt> &
     getAtomWiseNumberCellsInCompactSupport() const;
 
-    std::vector<unsigned int> &
+    std::vector<dftfe::uInt> &
     getAtomWiseNumberCellsAccumulated() const;
 
     const std::vector<ValueType> &
@@ -214,42 +214,42 @@ namespace dftfe
     const std::vector<ValueType> &
     getAtomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues() const;
 
-    const std::map<unsigned int, std::vector<unsigned int>> &
+    const std::map<dftfe::uInt, std::vector<dftfe::uInt>> &
     getCellIdToAtomIdsLocalCompactSupportMap() const;
 
-    const std::vector<unsigned int> &
+    const std::vector<dftfe::uInt> &
     getNonTrivialSphericalFnsPerCell() const;
 
-    const std::vector<unsigned int> &
+    const std::vector<dftfe::uInt> &
     getNonTrivialSphericalFnsCellStartIndex() const;
 
-    const unsigned int
+    const dftfe::uInt
     getTotalNonTrivialSphericalFnsOverAllCells() const;
 
 
-    const std::vector<unsigned int> &
+    const std::vector<dftfe::uInt> &
     getNonTrivialAllCellsSphericalFnAlphaToElemIdMap() const;
 
     /**
      * @brief Required in configurational forces. Cummulative sphercial Fn Id. The size is numCells in processor
      */
-    const std::map<unsigned int, std::vector<unsigned int>> &
+    const std::map<dftfe::uInt, std::vector<dftfe::uInt>> &
     getAtomIdToNonTrivialSphericalFnCellStartIndex() const;
 
     /**
      * @brief Returns the Flattened vector of sphericalFunctionIDs in order of atomIDs of atoms in processor.
      */
-    const std::vector<unsigned int> &
+    const std::vector<dftfe::uInt> &
     getSphericalFnTimesVectorFlattenedVectorLocalIds() const;
 
-    const std::vector<unsigned int> &
+    const std::vector<dftfe::uInt> &
     getOwnedAtomIdsInCurrentProcessor() const;
     /**
      * @brief Computes C^{T}D^{-1}C at the global level for atomId. This is required in PAW
      */
     void
     computeCconjtransCMatrix(
-      const unsigned int atomId,
+      const dftfe::uInt atomId,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
         BLASWrapperPtr,
@@ -278,9 +278,9 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                        &sphericalFunctionKetTimesVectorParFlattened,
-      const bool         flagCopyResultsToMatrix = true,
-      const unsigned int kPointIndex             = 0);
+                       &sphericalFunctionKetTimesVectorParFlattened,
+      const bool        flagCopyResultsToMatrix = true,
+      const dftfe::uInt kPointIndex             = 0);
 
     /**
      * @brief After AllReduce function is called this will copy to the nonLocalOperatorClassDatastructure.
@@ -312,8 +312,8 @@ namespace dftfe
      * elements
      */
     void
-    applyCconjtransOnX(const ValueType                            *X,
-                       const std::pair<unsigned int, unsigned int> cellRange);
+    applyCconjtransOnX(const ValueType                          *X,
+                       const std::pair<dftfe::uInt, dftfe::uInt> cellRange);
 
 
     /**
@@ -334,7 +334,7 @@ namespace dftfe
      * current processor. NOTE!! One must be careful here
      */
     const ValueType *
-    getCconjtansXLocalDataStructure(const unsigned int iAtom) const;
+    getCconjtansXLocalDataStructure(const dftfe::uInt iAtom) const;
 
     /**
      * @brief completes the VCconjX on nodal vector src. The src vector must have all ghost nodes and constraint nodes updated.
@@ -350,7 +350,7 @@ namespace dftfe
     void
     applyVCconjtransOnX(
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-      const unsigned int                                         kPointIndex,
+      const dftfe::uInt                                          kPointIndex,
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
@@ -374,7 +374,7 @@ namespace dftfe
     void
     applyCVCconjtransOnX(
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-      const unsigned int                                         kPointIndex,
+      const dftfe::uInt                                          kPointIndex,
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
@@ -389,8 +389,8 @@ namespace dftfe
      * elements
      */
     void
-    applyCOnVCconjtransX(ValueType                                  *Xout,
-                         const std::pair<unsigned int, unsigned int> cellRange);
+    applyCOnVCconjtransX(ValueType                                *Xout,
+                         const std::pair<dftfe::uInt, dftfe::uInt> cellRange);
 
 
     /**
@@ -405,11 +405,13 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &Xout);
 
     std::vector<ValueType>
-    getCmatrixEntries(int kPointIndex, unsigned int atomId, int iElem) const;
+    getCmatrixEntries(dftfe::Int  kPointIndex,
+                      dftfe::uInt atomId,
+                      dftfe::Int  iElem) const;
 
     bool
     atomPresentInCellRange(
-      const std::pair<unsigned int, unsigned int> cellRange) const;
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange) const;
     /**
      * @brief Called only for GPU runs where the coupling matrix has to be padded
      * @param[in] entries COupling matrix entries without padding in the atomId
@@ -427,14 +429,14 @@ namespace dftfe
      * @brief Returns C matrix entries for chargeId and it compact support element Id.
      */
     const std::vector<ValueType> &
-    getCmatrixEntriesConjugate(const unsigned int chargeId,
-                               const unsigned int iElemComp) const;
+    getCmatrixEntriesConjugate(const dftfe::uInt chargeId,
+                               const dftfe::uInt iElemComp) const;
     /**
      * @brief Returns C conj matrix entries for chargeId and it compact support element Id.
      */
     const std::vector<ValueType> &
-    getCmatrixEntriesTranspose(const unsigned int chargeId,
-                               const unsigned int iElemComp) const;
+    getCmatrixEntriesTranspose(const dftfe::uInt chargeId,
+                               const dftfe::uInt iElemComp) const;
     /**
      * @brief Returns global C matrix of all atoms.
      */
@@ -458,7 +460,7 @@ namespace dftfe
     void
     applyVCconjtransOnXCellLevel(
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-      const unsigned int                                         kPointIndex,
+      const dftfe::uInt                                          kPointIndex,
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
@@ -481,7 +483,7 @@ namespace dftfe
     void
     applyVCconjtransOnXUsingGlobalC(
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace> &src,
-      const unsigned int                                         kPointIndex,
+      const dftfe::uInt                                          kPointIndex,
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
@@ -497,8 +499,8 @@ namespace dftfe
       d_atomCenteredSphericalFunctionContainer;
     std::shared_ptr<
       const utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
-                              d_mpiPatternP2P;
-    std::vector<unsigned int> d_numberCellsForEachAtom;
+                             d_mpiPatternP2P;
+    std::vector<dftfe::uInt> d_numberCellsForEachAtom;
 
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
@@ -512,25 +514,25 @@ namespace dftfe
       d_atomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues;
 
     /// map from cell number to set of non local atom ids (local numbering)
-    std::map<unsigned int, std::vector<unsigned int>>
+    std::map<dftfe::uInt, std::vector<dftfe::uInt>>
       d_cellIdToAtomIdsLocalCompactSupportMap;
 
     /// vector of size num physical cells
-    std::vector<unsigned int> d_nonTrivialSphericalFnPerCell;
+    std::vector<dftfe::uInt> d_nonTrivialSphericalFnPerCell;
 
     /// vector of size num physical cell with starting index for each cell for
     /// the above array
-    std::vector<unsigned int> d_nonTrivialSphericalFnsCellStartIndex;
+    std::vector<dftfe::uInt> d_nonTrivialSphericalFnsCellStartIndex;
 
-    std::vector<unsigned int> d_nonTrivialAllCellsSphericalFnAlphaToElemIdMap;
+    std::vector<dftfe::uInt> d_nonTrivialAllCellsSphericalFnAlphaToElemIdMap;
 
     /// map from local nonlocal atomid to vector over cells
-    std::map<unsigned int, std::vector<unsigned int>>
+    std::map<dftfe::uInt, std::vector<dftfe::uInt>>
       d_atomIdToNonTrivialSphericalFnCellStartIndex;
 
-    unsigned int d_sumNonTrivialSphericalFnOverAllCells;
+    dftfe::uInt d_sumNonTrivialSphericalFnOverAllCells;
 
-    std::vector<unsigned int> d_sphericalFnTimesVectorFlattenedVectorLocalIds;
+    std::vector<dftfe::uInt> d_sphericalFnTimesVectorFlattenedVectorLocalIds;
 
     // The above set of variables are needed in force class
 
@@ -542,43 +544,43 @@ namespace dftfe
     std::vector<distributedCPUVec<double>> d_SphericalFunctionKetTimesVectorPar;
 #endif
 
-    std::map<std::pair<unsigned int, unsigned int>, unsigned int>
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>, dftfe::uInt>
       d_sphericalFunctionIdsNumberingMapCurrentProcess;
 
-    std::vector<unsigned int> d_OwnedAtomIdsInCurrentProcessor;
-    dealii::IndexSet          d_locallyOwnedAtomCenteredFnIdsCurrentProcess;
-    dealii::IndexSet          d_ghostAtomCenteredFnIdsCurrentProcess;
-    std::map<std::pair<unsigned int, unsigned int>, unsigned int>
+    std::vector<dftfe::uInt> d_OwnedAtomIdsInCurrentProcessor;
+    dealii::IndexSet         d_locallyOwnedAtomCenteredFnIdsCurrentProcess;
+    dealii::IndexSet         d_ghostAtomCenteredFnIdsCurrentProcess;
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>, dftfe::uInt>
       d_AtomCenteredFnIdsNumberingMapCurrentProcess;
     std::vector<std::vector<
       std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>>>
                                d_CMatrixEntries;
     dealii::ConditionalOStream pcout;
     const MPI_Comm             d_mpi_communicator;
-    const unsigned int         d_this_mpi_process;
-    const unsigned int         d_n_mpi_processes;
+    const dftfe::uInt          d_this_mpi_process;
+    const dftfe::uInt          d_n_mpi_processes;
     dealii::IndexSet           d_locallyOwnedSphericalFunctionIdsCurrentProcess;
     dealii::IndexSet           d_ghostSphericalFunctionIdsCurrentProcess;
 
-    unsigned int d_totalAtomsInCurrentProc; // number of atoms of interst with
-                                            // compact in current processor
-    unsigned int
+    dftfe::uInt d_totalAtomsInCurrentProc; // number of atoms of interst with
+                                           // compact in current processor
+    dftfe::uInt
       d_totalNonlocalElems; // number of nonlocal FE celss having nonlocal
                             // contribution in current processor
-    unsigned int d_totalNonLocalEntries; // Total number of nonlocal components
-    unsigned int
+    dftfe::uInt d_totalNonLocalEntries; // Total number of nonlocal components
+    dftfe::uInt
       d_maxSingleAtomContribution; // maximum number of nonlocal indexes across
                                    // all atoms of interset
-    std::vector<unsigned int> d_numberCellsAccumNonLocalAtoms;
-    dftfe::utils::MemoryStorage<unsigned int, memorySpace>
-                 d_iElemNonLocalToElemIndexMap;
-    unsigned int d_numberNodesPerElement; // Access from BasisOperator WHile
-                                          // filling CMatrixEntries
-    unsigned int d_locallyOwnedCells;
-    unsigned int d_numberWaveFunctions;
-    unsigned int d_kPointIndex;
-    bool         d_memoryOptMode;
-    bool         d_isMallocCalled = false;
+    std::vector<dftfe::uInt> d_numberCellsAccumNonLocalAtoms;
+    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
+                d_iElemNonLocalToElemIndexMap;
+    dftfe::uInt d_numberNodesPerElement; // Access from BasisOperator WHile
+                                         // filling CMatrixEntries
+    dftfe::uInt d_locallyOwnedCells;
+    dftfe::uInt d_numberWaveFunctions;
+    dftfe::uInt d_kPointIndex;
+    bool        d_memoryOptMode;
+    bool        d_isMallocCalled = false;
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
       d_CMatrixEntriesTranspose;
@@ -616,7 +618,7 @@ namespace dftfe
         dataTypes::number,
         double,
         dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
-      const unsigned int                  quadratureIndex);
+      const dftfe::uInt                   quadratureIndex);
 
     template <typename ValueTypeSrc>
     void
@@ -628,8 +630,8 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
-      const unsigned int quadratureIndex);
+                        basisOperationsPtr,
+      const dftfe::uInt quadratureIndex);
 
     template <typename ValueTypeSrc>
     void
@@ -641,40 +643,40 @@ namespace dftfe
         dftfe::basis::FEBasisOperations<dataTypes::number,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
-                         basisOperationsPtr,
-      const unsigned int quadratureIndex);
+                        basisOperationsPtr,
+      const dftfe::uInt quadratureIndex);
 
 
     std::map<
-      unsigned int,
+      dftfe::uInt,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
       d_sphericalFnTimesWavefunMatrix;
-    std::vector<dftfe::global_size_type>
+    std::vector<dftfe::uInt>
       d_flattenedNonLocalCellDofIndexToProcessDofIndexVector;
-    dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
       d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
-    std::vector<unsigned int> d_nonlocalElemIdToCellIdVector;
-    bool                      d_computeSphericalFnTimesX;
-    bool                      d_useGlobalCMatrix;
-    std::vector<unsigned int> d_atomStartIndexGlobal;
-    unsigned int              d_totalNumSphericalFunctionsGlobal;
+    std::vector<dftfe::uInt> d_nonlocalElemIdToCellIdVector;
+    bool                     d_computeSphericalFnTimesX;
+    bool                     d_useGlobalCMatrix;
+    std::vector<dftfe::uInt> d_atomStartIndexGlobal;
+    dftfe::uInt              d_totalNumSphericalFunctionsGlobal;
 
     std::vector<
       std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>>
       d_CMatrixGlobal;
 
-    std::set<unsigned int>    d_setOfAtomicNumber;
-    std::vector<unsigned int> d_mapAtomIdToSpeciesIndex,
+    std::set<dftfe::uInt>    d_setOfAtomicNumber;
+    std::vector<dftfe::uInt> d_mapAtomIdToSpeciesIndex,
       d_mapiAtomToSpeciesIndex;
     std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>
-                              d_dotProductAtomicWaveInputWaveTemp;
-    std::vector<unsigned int> d_mapIAtomicNumToDotProd;
-    std::vector<unsigned int> d_mapiAtomToDotProd;
+                             d_dotProductAtomicWaveInputWaveTemp;
+    std::vector<dftfe::uInt> d_mapIAtomicNumToDotProd;
+    std::vector<dftfe::uInt> d_mapiAtomToDotProd;
 
-    unsigned int d_totalLocallyOwnedNodes;
+    dftfe::uInt d_totalLocallyOwnedNodes;
 
-    std::vector<unsigned int> d_mapiAtomTosphFuncWaveStart;
-    std::map<unsigned int, std::vector<unsigned int>> d_listOfiAtomInSpecies;
+    std::vector<dftfe::uInt> d_mapiAtomTosphFuncWaveStart;
+    std::map<dftfe::uInt, std::vector<dftfe::uInt>> d_listOfiAtomInSpecies;
 
     /**
      * @brief computes Global Cmatrix on HOST.
@@ -729,7 +731,7 @@ namespace dftfe
     ValueType  *d_wfcStartPointer;
     ValueType **devicePointerCDagger, **devicePointerCDaggerOutTemp,
       **deviceWfcPointers;
-    std::vector<unsigned int> d_nonlocalElemIdToLocalElemIdMap;
+    std::vector<dftfe::uInt> d_nonlocalElemIdToLocalElemIdMap;
 
     // The below memory storage objects receives the copy of the distributed
     // ketTimesWfc data in a padded form. THe padding is done by
@@ -751,21 +753,25 @@ namespace dftfe
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesVectorAllCellsReductionDevice;
 
+    std::vector<dftfe::uInt> d_mapSphericalFnTimesVectorAllCellsReduction;
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
+      d_mapSphericalFnTimesVectorAllCellsReductionDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_couplingMatrixTimesVectorDevice;
 
-    std::vector<unsigned int> d_sphericalFnIdsParallelNumberingMap;
-    std::vector<int>          d_sphericalFnIdsPaddedParallelNumberingMap;
-    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
+    std::vector<dftfe::uInt> d_sphericalFnIdsParallelNumberingMap;
+    std::vector<dftfe::Int>  d_sphericalFnIdsPaddedParallelNumberingMap;
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnIdsParallelNumberingMapDevice;
-    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE>
-                     d_sphericalFnIdsPaddedParallelNumberingMapDevice;
-    std::vector<int> d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec;
-    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnIdsPaddedParallelNumberingMapDevice;
+    std::vector<dftfe::Int>
+      d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec;
+    dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
       d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice;
-    std::vector<unsigned int> d_cellNodeIdMapNonLocalToLocal;
+    std::vector<dftfe::uInt> d_cellNodeIdMapNonLocalToLocal;
 
-    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
       d_cellNodeIdMapNonLocalToLocalDevice;
 #endif
   };

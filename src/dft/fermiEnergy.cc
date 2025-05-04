@@ -30,15 +30,15 @@ namespace dftfe
                             const double              &TVal,
                             const dftParameters       &dftParams)
     {
-      int    numberkPoints     = eigenValues.size();
-      int    numberEigenValues = eigenValues[0].size();
-      double functionValue     = 0.0;
-      double temp1, temp2;
+      dftfe::Int numberkPoints     = eigenValues.size();
+      dftfe::Int numberEigenValues = eigenValues[0].size();
+      double     functionValue     = 0.0;
+      double     temp1, temp2;
 
 
-      for (unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
+      for (dftfe::uInt kPoint = 0; kPoint < numberkPoints; ++kPoint)
         {
-          for (unsigned int i = 0; i < numberEigenValues; i++)
+          for (dftfe::uInt i = 0; i < numberEigenValues; i++)
             {
               temp1 = (eigenValues[kPoint][i] - x) / (C_kb * TVal);
               if (temp1 <= 0.0)
@@ -67,14 +67,14 @@ namespace dftfe
       const double                           &TVal,
       const dftParameters                    &dftParams)
     {
-      int    numberkPoints      = eigenValues.size();
-      int    numberEigenValues  = eigenValues[0].size();
-      double functionDerivative = 0.0;
-      double temp1, temp2;
+      dftfe::Int numberkPoints      = eigenValues.size();
+      dftfe::Int numberEigenValues  = eigenValues[0].size();
+      double     functionDerivative = 0.0;
+      double     temp1, temp2;
 
-      for (unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
+      for (dftfe::uInt kPoint = 0; kPoint < numberkPoints; ++kPoint)
         {
-          for (unsigned int i = 0; i < numberEigenValues; i++)
+          for (dftfe::uInt i = 0; i < numberEigenValues; i++)
             {
               temp1 = (eigenValues[kPoint][i] - x) / (C_kb * TVal);
               if (temp1 <= 0.0)
@@ -100,23 +100,23 @@ namespace dftfe
   } // namespace internal
 
   // compute fermi energy
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_fermienergy(
     const std::vector<std::vector<double>> &eigenValuesInput,
     const double                            numElectronsInput)
   {
-    int    count = std::ceil(static_cast<double>(numElectronsInput) /
-                          (2.0 - d_dftParamsPtr->spinPolarized));
-    double TVal  = d_dftParamsPtr->TVal;
+    dftfe::Int count = std::ceil(static_cast<double>(numElectronsInput) /
+                                 (2.0 - d_dftParamsPtr->spinPolarized));
+    double     TVal  = d_dftParamsPtr->TVal;
 
 
     std::vector<double> eigenValuesAllkPoints;
-    for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+    for (dftfe::Int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
-        for (int statesIter = 0; statesIter < eigenValuesInput[0].size();
+        for (dftfe::Int statesIter = 0; statesIter < eigenValuesInput[0].size();
              ++statesIter)
           {
             eigenValuesAllkPoints.push_back(
@@ -126,9 +126,9 @@ namespace dftfe
 
     std::sort(eigenValuesAllkPoints.begin(), eigenValuesAllkPoints.end());
 
-    unsigned int maxNumberFermiEnergySolveIterations = 100;
-    double       fe;
-    double       R = 1.0;
+    dftfe::uInt maxNumberFermiEnergySolveIterations = 100;
+    double      fe;
+    double      R = 1.0;
 
 #ifdef USE_COMPLEX
     //
@@ -151,7 +151,8 @@ namespace dftfe
     xLeft  = dealii::Utilities::MPI::min(initialGuessLeft, interpoolcomm);
 
 
-    for (int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
+    for (dftfe::Int iter = 0; iter < maxNumberFermiEnergySolveIterations;
+         ++iter)
       {
         double yRightLocal = internal::FermiDiracFunctionValue(
           xRight, eigenValuesInput, d_kPointWeights, TVal, *d_dftParamsPtr);
@@ -204,7 +205,7 @@ namespace dftfe
     // compute residual and find FermiEnergy using Newton-Raphson solve
     //
     // double R = 1.0;
-    unsigned int iter          = 0;
+    dftfe::uInt  iter          = 0;
     const double newtonIterTol = 1e-10;
     double       functionValue, functionDerivativeValue;
 
@@ -250,11 +251,11 @@ namespace dftfe
             << fermiEnergy << std::endl;
 
 
-    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      for (unsigned int spinIndex = 0;
+    for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      for (dftfe::uInt spinIndex = 0;
            spinIndex < (1 + d_dftParamsPtr->spinPolarized);
            ++spinIndex)
-        for (unsigned int iEigenVec = 0; iEigenVec < d_numEigenValues;
+        for (dftfe::uInt iEigenVec = 0; iEigenVec < d_numEigenValues;
              ++iEigenVec)
           d_partialOccupancies[kPoint][d_numEigenValues * spinIndex +
                                        iEigenVec] =
@@ -267,22 +268,22 @@ namespace dftfe
 
 
   // compute fermi energy pure state
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_fermienergy_purestate(
     const std::vector<std::vector<double>> &eigenValuesInput,
     const double                            numElectronsInput)
   {
-    int count =
+    dftfe::Int count =
       std::ceil(numElectronsInput / (2.0 - d_dftParamsPtr->spinPolarized));
 
 
     std::vector<double> eigenValuesAllkPoints;
-    for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+    for (dftfe::Int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
-        for (int statesIter = 0; statesIter < eigenValuesInput[0].size();
+        for (dftfe::Int statesIter = 0; statesIter < eigenValuesInput[0].size();
              ++statesIter)
           {
             eigenValuesAllkPoints.push_back(
@@ -303,11 +304,11 @@ namespace dftfe
               << fermiEnergy << std::endl;
       }
 
-    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      for (unsigned int spinIndex = 0;
+    for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      for (dftfe::uInt spinIndex = 0;
            spinIndex < (1 + d_dftParamsPtr->spinPolarized);
            ++spinIndex)
-        for (unsigned int iEigenVec = 0; iEigenVec < d_numEigenValues;
+        for (dftfe::uInt iEigenVec = 0; iEigenVec < d_numEigenValues;
              ++iEigenVec)
           {
             if (eigenValues[kPoint][d_numEigenValues * spinIndex + iEigenVec] >
@@ -322,22 +323,23 @@ namespace dftfe
 
 
   // compute fermi energy constrained magnetization pure state
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     compute_fermienergy_constraintMagnetization_purestate(
       const std::vector<std::vector<double>> &eigenValuesInput)
   {
-    int countUp   = numElectronsUp;
-    int countDown = numElectronsDown;
+    dftfe::Int countUp   = numElectronsUp;
+    dftfe::Int countDown = numElectronsDown;
     //
     //
     std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
-    for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+    for (dftfe::Int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
-        for (int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
+        for (dftfe::Int statesIter = 0; statesIter < d_numEigenValues;
+             ++statesIter)
           {
             eigenValuesAllkPointsUp.push_back(
               eigenValuesInput[kPoint][statesIter]);
@@ -374,12 +376,12 @@ namespace dftfe
           << fermiEnergyDown << std::endl;
       }
 
-    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      for (unsigned int spinIndex = 0; spinIndex < 2; ++spinIndex)
+    for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      for (dftfe::uInt spinIndex = 0; spinIndex < 2; ++spinIndex)
         {
           const double fermiEnergySpinIndex =
             spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
-          for (unsigned int iEigenVec = 0; iEigenVec < d_numEigenValues;
+          for (dftfe::uInt iEigenVec = 0; iEigenVec < d_numEigenValues;
                ++iEigenVec)
             {
               if (eigenValues[kPoint][d_numEigenValues * spinIndex +
@@ -394,17 +396,17 @@ namespace dftfe
   }
 
   // compute fermi energy constrained magnetization
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     compute_fermienergy_constraintMagnetization(
       const std::vector<std::vector<double>> &eigenValuesInput)
   {
-    int    countUp   = std::ceil(numElectronsUp);
-    int    countDown = std::ceil(numElectronsDown);
-    double TVal      = d_dftParamsPtr->TVal;
+    dftfe::Int countUp   = std::ceil(numElectronsUp);
+    dftfe::Int countDown = std::ceil(numElectronsDown);
+    double     TVal      = d_dftParamsPtr->TVal;
 
 
     //
@@ -415,9 +417,10 @@ namespace dftfe
       eigenValuesInput.size());
 
     std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
-    for (int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+    for (dftfe::Int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
-        for (int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
+        for (dftfe::Int statesIter = 0; statesIter < d_numEigenValues;
+             ++statesIter)
           {
             eigenValuesAllkPointsUp.push_back(
               eigenValuesInput[kPoint][statesIter]);
@@ -435,9 +438,9 @@ namespace dftfe
     std::sort(eigenValuesAllkPointsDown.begin(),
               eigenValuesAllkPointsDown.end());
 
-    unsigned int maxNumberFermiEnergySolveIterations = 100;
-    double       fe;
-    double       R = 1.0;
+    dftfe::uInt maxNumberFermiEnergySolveIterations = 100;
+    double      fe;
+    double      R = 1.0;
 
 #ifdef USE_COMPLEX
     //
@@ -460,7 +463,8 @@ namespace dftfe
     xLeft  = dealii::Utilities::MPI::min(initialGuessLeft, interpoolcomm);
 
 
-    for (int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
+    for (dftfe::Int iter = 0; iter < maxNumberFermiEnergySolveIterations;
+         ++iter)
       {
         double yRightLocal = internal::FermiDiracFunctionValue(
           xRight, eigenValuesInputUp, d_kPointWeights, TVal, *d_dftParamsPtr);
@@ -517,7 +521,7 @@ namespace dftfe
     // compute residual and find FermiEnergy using Newton-Raphson solve
     //
     // double R = 1.0;
-    unsigned int iter          = 0;
+    dftfe::uInt  iter          = 0;
     const double newtonIterTol = 1e-10;
     double       functionValue, functionDerivativeValue;
 
@@ -578,7 +582,8 @@ namespace dftfe
     xLeft  = dealii::Utilities::MPI::min(initialGuessLeft, interpoolcomm);
 
 
-    for (int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
+    for (dftfe::Int iter = 0; iter < maxNumberFermiEnergySolveIterations;
+         ++iter)
       {
         double yRightLocal = internal::FermiDiracFunctionValue(
           xRight, eigenValuesInputDown, d_kPointWeights, TVal, *d_dftParamsPtr);
@@ -689,12 +694,12 @@ namespace dftfe
           << fermiEnergyDown << std::endl;
       }
 
-    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      for (unsigned int spinIndex = 0; spinIndex < 2; ++spinIndex)
+    for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+      for (dftfe::uInt spinIndex = 0; spinIndex < 2; ++spinIndex)
         {
           const double fermiEnergySpinIndex =
             spinIndex == 0 ? fermiEnergyUp : fermiEnergyDown;
-          for (unsigned int iEigenVec = 0; iEigenVec < d_numEigenValues;
+          for (dftfe::uInt iEigenVec = 0; iEigenVec < d_numEigenValues;
                ++iEigenVec)
             d_partialOccupancies[kPoint][d_numEigenValues * spinIndex +
                                          iEigenVec] =

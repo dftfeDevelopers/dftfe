@@ -31,15 +31,15 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::loadPSIFiles(
-    unsigned int  Z,
-    unsigned int  n,
-    unsigned int  l,
-    unsigned int &fileReadFlag)
+    dftfe::uInt  Z,
+    dftfe::uInt  n,
+    dftfe::uInt  l,
+    dftfe::uInt &fileReadFlag)
   {
     if (radValues[Z][n].count(l) > 0)
       {
@@ -104,16 +104,16 @@ namespace dftfe
     //
     if (fileReadFlag > 0)
       {
-        double       maxTruncationRadius = 0.0;
-        unsigned int truncRowId          = 0;
+        double      maxTruncationRadius = 0.0;
+        dftfe::uInt truncRowId          = 0;
         if (!d_dftParamsPtr->reproducible_output)
           pcout << "reading data from file: " << psiFile << std::endl;
 
-        int                 numRows = values.size() - 1;
+        dftfe::Int          numRows = values.size() - 1;
         std::vector<double> xData(numRows), yData(numRows);
 
         // x
-        for (int irow = 0; irow < numRows; ++irow)
+        for (dftfe::Int irow = 0; irow < numRows; ++irow)
           {
             xData[irow] = values[irow][0];
           }
@@ -122,7 +122,7 @@ namespace dftfe
         x.setcontent(numRows, &xData[0]);
 
         // y
-        for (int irow = 0; irow < numRows; ++irow)
+        for (dftfe::Int irow = 0; irow < numRows; ++irow)
           {
             yData[irow] = values[irow][1];
 
@@ -151,8 +151,8 @@ namespace dftfe
   //
   // determine orbital ordering
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::determineOrbitalFilling()
@@ -160,8 +160,8 @@ namespace dftfe
     //
     // create a stencil following orbital filling order
     //
-    std::vector<unsigned int>              level;
-    std::vector<std::vector<unsigned int>> stencil;
+    std::vector<dftfe::uInt>              level;
+    std::vector<std::vector<dftfe::uInt>> stencil;
 
     // 1s
     level.clear();
@@ -266,26 +266,26 @@ namespace dftfe
 
 
 
-    const unsigned int numberGlobalAtoms  = atomLocations.size();
-    const int          numberImageCharges = d_imageIds.size();
-    const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+    const dftfe::uInt numberGlobalAtoms  = atomLocations.size();
+    const dftfe::Int  numberImageCharges = d_imageIds.size();
+    const dftfe::Int  totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
-    unsigned int errorReadFile            = 0;
-    unsigned int fileReadFlag             = 0;
-    unsigned int waveFunctionCount        = 0;
-    unsigned int totalNumberWaveFunctions = d_numEigenValues;
+    dftfe::uInt errorReadFile            = 0;
+    dftfe::uInt fileReadFlag             = 0;
+    dftfe::uInt waveFunctionCount        = 0;
+    dftfe::uInt totalNumberWaveFunctions = d_numEigenValues;
 
-    for (std::vector<std::vector<unsigned int>>::iterator it = stencil.begin();
+    for (std::vector<std::vector<dftfe::uInt>>::iterator it = stencil.begin();
          it < stencil.end();
          it++)
       {
-        unsigned int n = (*it)[0], l = (*it)[1];
+        dftfe::uInt n = (*it)[0], l = (*it)[1];
 
-        for (int m = -l; m <= (int)l; m++)
+        for (dftfe::Int m = -l; m <= (dftfe::Int)l; m++)
           {
-            for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+            for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
               {
-                unsigned int Z = atomLocations[iAtom][0];
+                dftfe::uInt Z = atomLocations[iAtom][0];
 
                 //
                 // fill levels
@@ -365,8 +365,8 @@ namespace dftfe
   }
 
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::readPSIRadialValues()
@@ -374,13 +374,13 @@ namespace dftfe
     const dealii::IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
     std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs;
     locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
-    unsigned int numberDofs = locallyOwnedDOFs.size();
+    dftfe::uInt numberDofs = locallyOwnedDOFs.size();
 
     std::fill(d_eigenVectorsFlattenedHost.begin(),
               d_eigenVectorsFlattenedHost.end(),
               0.0);
 
-    const unsigned int numberGlobalAtoms = atomLocations.size();
+    const dftfe::uInt numberGlobalAtoms = atomLocations.size();
 
     if (d_dftParamsPtr->verbosity >= 1)
       pcout
@@ -402,8 +402,8 @@ namespace dftfe
          it < waveFunctionsVector.end();
          it++)
       {
-        const unsigned int chargeId = it->atomID;
-        dealii::Point<3>   atomCoord;
+        const dftfe::uInt chargeId = it->atomID;
+        dealii::Point<3>  atomCoord;
 
         if (chargeId < atomLocations.size())
           {
@@ -439,7 +439,7 @@ namespace dftfe
       std::mt19937 randomIntGenerator(this_mpi_process * d_nOMPThreads +
                                       omp_get_thread_num());
 #pragma omp for
-      for (unsigned int dof = 0; dof < numberDofs; dof++)
+      for (dftfe::uInt dof = 0; dof < numberDofs; dof++)
         {
           const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
           dealii::Point<3>                      node  = d_supportPoints[dofID];
@@ -448,16 +448,15 @@ namespace dftfe
               //
               // loop over wave functions
               //
-              unsigned int numKpoints =
-                (d_dftParamsPtr->reproducible_output ?
-                   ((1 + d_dftParamsPtr->spinPolarized) *
-                    d_kPointWeights.size()) :
-                   (1 + d_dftParamsPtr->spinPolarized));
+              dftfe::uInt numKpoints = (d_dftParamsPtr->reproducible_output ?
+                                          ((1 + d_dftParamsPtr->spinPolarized) *
+                                           d_kPointWeights.size()) :
+                                          (1 + d_dftParamsPtr->spinPolarized));
               if (d_dftParamsPtr->solverMode == "BANDS")
                 numKpoints = 1;
-              for (int kPoint = 0; kPoint < numKpoints; ++kPoint)
+              for (dftfe::Int kPoint = 0; kPoint < numKpoints; ++kPoint)
                 {
-                  // unsigned int waveFunction=0;
+                  // dftfe::uInt waveFunction=0;
                   for (std::vector<orbital>::iterator it =
                          waveFunctionsVectorTruncated.begin();
                        it < waveFunctionsVectorTruncated.end();
@@ -468,7 +467,7 @@ namespace dftfe
                       // globalChargeId (Fix me: Examine whether periodic image
                       // contributions have to be included or not) currently not
                       // including
-                      std::vector<int> imageIdsList;
+                      std::vector<dftfe::Int> imageIdsList;
                       if (d_dftParamsPtr->periodicX ||
                           d_dftParamsPtr->periodicY ||
                           d_dftParamsPtr->periodicZ)
@@ -481,8 +480,8 @@ namespace dftfe
                           imageIdsList.push_back(it->atomID);
                         }
 
-                      const unsigned int waveId = it->waveID;
-                      for (int iImageAtomCount = 0;
+                      const dftfe::uInt waveId = it->waveID;
+                      for (dftfe::Int iImageAtomCount = 0;
                            iImageAtomCount < imageIdsList.size();
                            ++iImageAtomCount)
                         {
@@ -490,7 +489,7 @@ namespace dftfe
                           // find coordinates of atom correspoding to this wave
                           // function and imageAtom
                           //
-                          int chargeId = imageIdsList[iImageAtomCount];
+                          dftfe::Int chargeId = imageIdsList[iImageAtomCount];
                           dealii::Point<3> atomCoord;
 
                           if (chargeId < numberGlobalAtoms)
@@ -584,7 +583,7 @@ namespace dftfe
                       dataTypes::number *temp =
                         d_eigenVectorsFlattenedHost.data() +
                         kPoint * d_numEigenValues * numberDofs;
-                      for (unsigned int iWave = waveFunctionsVector.size();
+                      for (dftfe::uInt iWave = waveFunctionsVector.size();
                            iWave < d_numEigenValues;
                            ++iWave)
                         {
@@ -609,19 +608,19 @@ namespace dftfe
 
     if (!d_dftParamsPtr->reproducible_output)
       {
-        unsigned int numKpoints =
+        dftfe::uInt numKpoints =
           (1 + d_dftParamsPtr->spinPolarized) * d_kPointWeights.size();
         if (d_dftParamsPtr->solverMode == "BANDS")
           numKpoints = 1;
-        for (unsigned int kPoint = 1; kPoint < numKpoints; ++kPoint)
+        for (dftfe::uInt kPoint = 1; kPoint < numKpoints; ++kPoint)
           {
             dataTypes::number *temp1 = d_eigenVectorsFlattenedHost.data() +
                                        kPoint * d_numEigenValues * numberDofs;
 
             dataTypes::number *temp2 = d_eigenVectorsFlattenedHost.data();
 
-            for (unsigned int idof = 0; idof < numberDofs; idof++)
-              for (unsigned int iwave = 0; iwave < d_numEigenValues; iwave++)
+            for (dftfe::uInt idof = 0; idof < numberDofs; idof++)
+              for (dftfe::uInt iwave = 0; iwave < d_numEigenValues; iwave++)
                 temp1[idof * d_numEigenValues + iwave] =
                   temp2[idof * d_numEigenValues + iwave];
           }
@@ -641,8 +640,8 @@ namespace dftfe
   }
 
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::readPSI()

@@ -24,6 +24,7 @@
 
 #ifndef DFTFE_STRINGOPERATIONS_H
 #define DFTFE_STRINGOPERATIONS_H
+#include <TypeConfig.h>
 namespace dftfe
 {
   namespace utils
@@ -31,7 +32,7 @@ namespace dftfe
     namespace stringOps
     {
       bool
-      strToInt(const std::string s, int &i);
+      strToInt(const std::string s, dftfe::Int &i);
 
       bool
       strToDouble(const std::string s, double &x);

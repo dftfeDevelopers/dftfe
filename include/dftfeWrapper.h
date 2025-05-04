@@ -21,6 +21,7 @@
 #include <mpi.h>
 #include <string>
 #include <vector>
+#include <TypeConfig.h>
 
 namespace dftfe
 {
@@ -63,7 +64,7 @@ namespace dftfe
                  const bool        setDeviceToMPITaskBindingInternally = false,
                  const std::string solverMode                          = "GS",
                  const std::string restartFilesPath                    = ".",
-                 const int         _verbosity                          = 1,
+                 const dftfe::Int  _verbosity                          = 1,
                  const bool        useDevice                           = false);
 
     /**
@@ -78,7 +79,7 @@ namespace dftfe
                  const bool        setDeviceToMPITaskBindingInternally = false,
                  const std::string solverMode                          = "GS",
                  const std::string restartFilesPath                    = ".",
-                 const int         _verbosity                          = 1,
+                 const dftfe::Int  _verbosity                          = 1,
                  const bool        useDevice                           = false,
                  const bool        isScfRestart                        = true);
 
@@ -138,25 +139,25 @@ namespace dftfe
      * the DFT-FE code. Default behaviour is false which assumes the binding has
      * been externally set.
      */
-    dftfeWrapper(const MPI_Comm                        &mpi_comm_parent,
-                 const bool                             useDevice,
-                 const std::vector<std::vector<double>> atomicPositionsCart,
-                 const std::vector<unsigned int>        atomicNumbers,
-                 const std::vector<std::vector<double>> cell,
-                 const std::vector<bool>                pbc,
-                 const std::vector<unsigned int>        mpGrid =
-                   std::vector<unsigned int>{1, 1, 1},
-                 const std::vector<bool> mpGridShift = std::vector<bool>{false,
-                                                                         false,
-                                                                         false},
-                 const bool              spinPolarizedDFT       = false,
-                 const double            startMagnetization     = 0.0,
-                 const double            fermiDiracSmearingTemp = 500.0,
-                 const unsigned int      npkpt                  = 0,
-                 const double            meshSize               = 0.8,
-                 const double            scfMixingParameter     = 0.2,
-                 const int               verbosity              = -1,
-                 const bool setDeviceToMPITaskBindingInternally = false);
+    dftfeWrapper(
+      const MPI_Comm                        &mpi_comm_parent,
+      const bool                             useDevice,
+      const std::vector<std::vector<double>> atomicPositionsCart,
+      const std::vector<dftfe::uInt>         atomicNumbers,
+      const std::vector<std::vector<double>> cell,
+      const std::vector<bool>                pbc,
+      const std::vector<dftfe::uInt> mpGrid = std::vector<dftfe::uInt>{1, 1, 1},
+      const std::vector<bool>        mpGridShift      = std::vector<bool>{false,
+                                                                          false,
+                                                                          false},
+      const bool                     spinPolarizedDFT = false,
+      const double                   startMagnetization     = 0.0,
+      const double                   fermiDiracSmearingTemp = 500.0,
+      const dftfe::uInt              npkpt                  = 0,
+      const double                   meshSize               = 0.8,
+      const double                   scfMixingParameter     = 0.2,
+      const dftfe::Int               verbosity              = -1,
+      const bool setDeviceToMPITaskBindingInternally        = false);
 
 
     ~dftfeWrapper();
@@ -171,7 +172,7 @@ namespace dftfe
            const bool        setDeviceToMPITaskBindingInternally = false,
            const std::string solverMode                          = "GS",
            const std::string restartFilesPath                    = ".",
-           const int         _verbosity                          = 1,
+           const dftfe::Int  _verbosity                          = 1,
            const bool        useDevice                           = false);
 
     /**
@@ -187,7 +188,7 @@ namespace dftfe
            const bool        setDeviceToMPITaskBindingInternally = false,
            const std::string solverMode                          = "GS",
            const std::string restartFilesPath                    = ".",
-           const int         _verbosity                          = 1,
+           const dftfe::Int  _verbosity                          = 1,
            const bool        useDevice                           = false,
            const bool        isScfRestart                        = true);
 
@@ -195,22 +196,23 @@ namespace dftfe
     reinit(const MPI_Comm                        &mpi_comm_parent,
            const bool                             useDevice,
            const std::vector<std::vector<double>> atomicPositionsCart,
-           const std::vector<unsigned int>        atomicNumbers,
+           const std::vector<dftfe::uInt>         atomicNumbers,
            const std::vector<std::vector<double>> cell,
            const std::vector<bool>                pbc,
-           const std::vector<unsigned int>        mpGrid =
-             std::vector<unsigned int>{1, 1, 1},
-           const std::vector<bool> mpGridShift        = std::vector<bool>{false,
+           const std::vector<dftfe::uInt> mpGrid = std::vector<dftfe::uInt>{1,
+                                                                            1,
+                                                                            1},
+           const std::vector<bool>        mpGridShift = std::vector<bool>{false,
                                                                           false,
                                                                           false},
-           const bool              spinPolarizedDFT   = false,
-           const double            startMagnetization = 0.0,
-           const double            fermiDiracSmearingTemp              = 500.0,
-           const unsigned int      npkpt                               = 0,
-           const double            meshSize                            = 0.8,
-           const double            scfMixingParameter                  = 0.2,
-           const int               verbosity                           = -1,
-           const bool              setDeviceToMPITaskBindingInternally = false);
+           const bool                     spinPolarizedDFT       = false,
+           const double                   startMagnetization     = 0.0,
+           const double                   fermiDiracSmearingTemp = 500.0,
+           const dftfe::uInt              npkpt                  = 0,
+           const double                   meshSize               = 0.8,
+           const double                   scfMixingParameter     = 0.2,
+           const dftfe::Int               verbosity              = -1,
+           const bool setDeviceToMPITaskBindingInternally        = false);
 
     void
     clear();
@@ -344,7 +346,7 @@ namespace dftfe
      *
      *  @return vector of atomic numbers
      */
-    std::vector<int>
+    std::vector<dftfe::Int>
     getAtomicNumbers() const;
 
 
@@ -353,7 +355,7 @@ namespace dftfe
      *
      *  @return array of number of valence for each atom
      */
-    std::vector<int>
+    std::vector<dftfe::Int>
     getValenceElectronNumbers() const;
 
 

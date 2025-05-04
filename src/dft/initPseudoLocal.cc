@@ -26,22 +26,22 @@ namespace dftfe
   //
   // Initialize rho by reading in single-atom electron-density and fit a spline
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initLocalPseudoPotential(
     const dealii::DoFHandler<3>             &_dofHandler,
-    const unsigned int                       lpspQuadratureId,
+    const dftfe::uInt                        lpspQuadratureId,
     const dealii::MatrixFree<3, double>     &_matrix_free_data,
-    const unsigned int                       _phiExtDofHandlerIndex,
+    const dftfe::uInt                        _phiExtDofHandlerIndex,
     const dealii::AffineConstraints<double> &_phiExtConstraintMatrix,
     const std::map<dealii::types::global_dof_index, dealii::Point<3>>
                                                     &_supportPoints,
     const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinManager,
     distributedCPUVec<double>                       &phiExt,
     std::map<dealii::CellId, std::vector<double>>   &_pseudoValues,
-    std::map<unsigned int, std::map<dealii::CellId, std::vector<double>>>
+    std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
       &_pseudoValuesAtoms)
   {
     _pseudoValues.clear();
@@ -50,9 +50,8 @@ namespace dftfe
     //
     // Reading single atom rho initial guess
     //
-    std::map<unsigned int, std::vector<std::vector<double>>>
-                                   pseudoPotentialData;
-    std::map<unsigned int, double> outerMostDataPoint;
+    std::map<dftfe::uInt, std::vector<std::vector<double>>> pseudoPotentialData;
+    std::map<dftfe::uInt, double>                           outerMostDataPoint;
     // FIXME: the truncation tolerance can potentially be loosened
     // further for production runs where more accurate meshes are used
     const double truncationTol =
@@ -70,7 +69,7 @@ namespace dftfe
         //
         // loop over atom types
         //
-        for (std::set<unsigned int>::iterator it = atomTypes.begin();
+        for (std::set<dftfe::uInt>::iterator it = atomTypes.begin();
              it != atomTypes.end();
              it++)
           {
@@ -82,7 +81,7 @@ namespace dftfe
     else
       {
         maxTail = maxAllowedTail;
-        for (std::set<unsigned int>::iterator it = atomTypes.begin();
+        for (std::set<dftfe::uInt>::iterator it = atomTypes.begin();
              it != atomTypes.end();
              it++)
           outerMostDataPoint[*it] = maxAllowedTail;
@@ -97,14 +96,14 @@ namespace dftfe
     //
     // Initialize pseudopotential
     //
-    const unsigned int n_q_points =
+    const dftfe::uInt n_q_points =
       _matrix_free_data.get_quadrature(lpspQuadratureId).size();
 
-    const int numberGlobalCharges = atomLocations.size();
+    const dftfe::Int numberGlobalCharges = atomLocations.size();
     //
     // get number of image charges used only for periodic
     //
-    const int numberImageCharges = d_imageIds.size();
+    const dftfe::Int numberImageCharges = d_imageIds.size();
 
     // distributedCPUVec<double> phiExt;
     //_matrix_free_data.initialize_dof_vector(phiExt,_phiExtDofHandlerIndex);
@@ -115,23 +114,23 @@ namespace dftfe
     init_1 = MPI_Wtime();
 
     const std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
-                      &partitioner = phiExt.get_partitioner();
-    const unsigned int localSize   = partitioner->locally_owned_size();
-    const unsigned int n_ghosts    = partitioner->n_ghost_indices();
-    const unsigned int totalSize   = localSize + n_ghosts;
+                     &partitioner = phiExt.get_partitioner();
+    const dftfe::uInt localSize   = partitioner->locally_owned_size();
+    const dftfe::uInt n_ghosts    = partitioner->n_ghost_indices();
+    const dftfe::uInt totalSize   = localSize + n_ghosts;
 
 
-    const std::vector<std::map<dealii::types::global_dof_index, int>>
+    const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>>
       &boundaryNodeMapBinsOnlyChargeId =
         vselfBinManager.getBoundaryFlagsBinsOnlyChargeId();
     const std::vector<
       std::map<dealii::types::global_dof_index, dealii::Point<3>>>
       &dofClosestChargeLocationMapBins =
         vselfBinManager.getClosestAtomLocationsBins();
-    const std::map<unsigned int, unsigned int> &atomIdBinIdMap =
+    const std::map<dftfe::uInt, dftfe::uInt> &atomIdBinIdMap =
       vselfBinManager.getAtomIdBinIdMapLocalAllImages();
 
-    const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
+    const dftfe::uInt dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
 
     dealii::BoundingBox<3> boundingBoxTria(
       vectorTools::createBoundingBoxTriaLocallyOwned(_dofHandler));
@@ -145,7 +144,7 @@ namespace dftfe
     std::vector<double> atomsImagesCharges(
       (numberGlobalCharges + numberImageCharges));
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int iAtom = 0;
+    for (dftfe::uInt iAtom = 0;
          iAtom < numberGlobalCharges + numberImageCharges;
          iAtom++)
       {
@@ -161,7 +160,7 @@ namespace dftfe
           }
         else
           {
-            const unsigned int iImageCharge = iAtom - numberGlobalCharges;
+            const dftfe::uInt iImageCharge = iAtom - numberGlobalCharges;
             atomsImagesPositions[iAtom * 3 + 0] =
               d_imagePositions[iImageCharge][0];
             atomsImagesPositions[iAtom * 3 + 1] =
@@ -177,7 +176,7 @@ namespace dftfe
           }
       }
 
-    for (unsigned int iCell = 0;
+    for (dftfe::uInt iCell = 0;
          iCell < d_basisOperationsPtrElectroHost->nCells();
          ++iCell)
       {
@@ -186,21 +185,21 @@ namespace dftfe
         pseudoVLoc.resize(n_q_points, 0.0);
       }
 
-    const int numberDofs = phiExt.locally_owned_size();
+    const dftfe::Int numberDofs = phiExt.locally_owned_size();
     // kpoint group parallelization data structures
-    const unsigned int numberKptGroups =
+    const dftfe::uInt numberKptGroups =
       dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
 
-    const unsigned int kptGroupTaskId =
+    const dftfe::uInt kptGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-    std::vector<int> kptGroupLowHighPlusOneIndicesStep1;
+    std::vector<dftfe::Int> kptGroupLowHighPlusOneIndicesStep1;
 
     if (numberDofs > 0)
       dftUtils::createKpointParallelizationIndices(
         interpoolcomm, numberDofs, kptGroupLowHighPlusOneIndicesStep1);
 
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int localDofId = 0; localDofId < phiExt.locally_owned_size();
+    for (dftfe::uInt localDofId = 0; localDofId < phiExt.locally_owned_size();
          ++localDofId)
       {
         if (localDofId <
@@ -216,15 +215,15 @@ namespace dftfe
               {
                 dealii::Point<3> atom;
                 double           atomCharge;
-                int              atomicNumber;
-                int              chargeId;
+                dftfe::Int       atomicNumber;
+                dftfe::Int       chargeId;
                 double           distanceToAtom;
                 double           sumVal = 0.0;
                 double           val;
                 double           diffx;
                 double           diffy;
                 double           diffz;
-                for (unsigned int iAtom = 0;
+                for (dftfe::uInt iAtom = 0;
                      iAtom < (atomLocations.size() + numberImageCharges);
                      ++iAtom)
                   {
@@ -244,7 +243,7 @@ namespace dftfe
                           }
                         else
                           {
-                            const unsigned int iImageCharge =
+                            const dftfe::uInt iImageCharge =
                               iAtom - numberGlobalCharges;
                             chargeId = d_imageIds[iImageCharge];
                           }
@@ -252,9 +251,9 @@ namespace dftfe
                         if (atomIdBinIdMap.find(chargeId) !=
                             atomIdBinIdMap.end())
                           {
-                            const unsigned int binId =
+                            const dftfe::uInt binId =
                               atomIdBinIdMap.find(chargeId)->second;
-                            const int boundaryFlagChargeId =
+                            const dftfe::Int boundaryFlagChargeId =
                               boundaryNodeMapBinsOnlyChargeId[binId]
                                 .find(dofId)
                                 ->second;
@@ -315,16 +314,16 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     init_2 = MPI_Wtime();
 
-    const int numMacroCells = _matrix_free_data.n_cell_batches();
+    const dftfe::Int numMacroCells = _matrix_free_data.n_cell_batches();
 
-    std::vector<int> kptGroupLowHighPlusOneIndicesStep2;
+    std::vector<dftfe::Int> kptGroupLowHighPlusOneIndicesStep2;
 
     if (numMacroCells > 0)
       dftUtils::createKpointParallelizationIndices(
         interpoolcomm, numMacroCells, kptGroupLowHighPlusOneIndicesStep2);
     d_basisOperationsPtrElectroHost->reinit(0, 0, lpspQuadratureId);
 #pragma omp parallel for num_threads(d_nOMPThreads)
-    for (unsigned int macrocell = 0;
+    for (dftfe::uInt macrocell = 0;
          macrocell < _matrix_free_data.n_cell_batches();
          ++macrocell)
       {
@@ -333,11 +332,11 @@ namespace dftfe
             macrocell >= kptGroupLowHighPlusOneIndicesStep2[2 * kptGroupTaskId])
           {
             dealii::Point<3> atom;
-            int              atomicNumber;
+            dftfe::Int       atomicNumber;
             double           atomCharge;
 
 
-            for (unsigned int iSubCell = 0;
+            for (dftfe::uInt iSubCell = 0;
                  iSubCell <
                  _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
                  ++iSubCell)
@@ -349,7 +348,7 @@ namespace dftfe
                 dealii::CellId subCellId = subCellPtr->id();
 
                 std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
-                unsigned int         cellIndex =
+                dftfe::uInt          cellIndex =
                   d_basisOperationsPtrElectroHost->cellIndex(subCellId);
                 double        value, distanceToAtom, distanceToAtomInv;
                 const double *quadPointPtr =
@@ -357,7 +356,7 @@ namespace dftfe
                   cellIndex * n_q_points * 3;
 
                 // loop over quad points
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt q = 0; q < n_q_points; ++q)
                   {
                     const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
                                                      quadPointPtr[q * 3 + 1],
@@ -369,7 +368,7 @@ namespace dftfe
                     double diffy;
                     double diffz;
                     // loop over atoms
-                    for (unsigned int iAtom = 0;
+                    for (dftfe::uInt iAtom = 0;
                          iAtom < numberGlobalCharges + numberImageCharges;
                          iAtom++)
                       {
@@ -395,7 +394,7 @@ namespace dftfe
                               }
                             else
                               {
-                                const unsigned int iImageCharge =
+                                const dftfe::uInt iImageCharge =
                                   iAtom - numberGlobalCharges;
                                 atomicNumber = std::round(
                                   atomLocations[d_imageIds[iImageCharge]][0]);
@@ -444,7 +443,7 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: mismatch in quadrature rule usage in initLocalPseudoPotential."));
 
-    for (unsigned int macrocell = 0;
+    for (dftfe::uInt macrocell = 0;
          macrocell < _matrix_free_data.n_cell_batches();
          ++macrocell)
       {
@@ -455,7 +454,7 @@ namespace dftfe
             feEvalObj.reinit(macrocell);
             feEvalObj.read_dof_values(phiExt);
             feEvalObj.evaluate(dealii::EvaluationFlags::values);
-            for (unsigned int iSubCell = 0;
+            for (dftfe::uInt iSubCell = 0;
                  iSubCell <
                  _matrix_free_data.n_active_entries_per_cell_batch(macrocell);
                  ++iSubCell)
@@ -467,7 +466,7 @@ namespace dftfe
                 dealii::CellId       subCellId  = subCellPtr->id();
                 std::vector<double> &pseudoVLoc = _pseudoValues[subCellId];
                 // loop over quad points
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt q = 0; q < n_q_points; ++q)
                   {
                     pseudoVLoc[q] -= feEvalObj.get_value(q)[iSubCell];
                   } // loop over quad points
@@ -480,13 +479,13 @@ namespace dftfe
           d_basisOperationsPtrElectroHost->nCells() * n_q_points, 0.0);
 
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0;
+        for (dftfe::uInt iCell = 0;
              iCell < d_basisOperationsPtrElectroHost->nCells();
              ++iCell)
           {
             std::vector<double> &pseudoVLoc =
               _pseudoValues[d_basisOperationsPtrElectroHost->cellID(iCell)];
-            for (unsigned int q = 0; q < n_q_points; ++q)
+            for (dftfe::uInt q = 0; q < n_q_points; ++q)
               tempPseudoValuesFlattened[iCell * n_q_points + q] = pseudoVLoc[q];
           }
 
@@ -499,13 +498,13 @@ namespace dftfe
         MPI_Barrier(interpoolcomm);
 
 #pragma omp parallel for num_threads(d_nOMPThreads)
-        for (unsigned int iCell = 0;
+        for (dftfe::uInt iCell = 0;
              iCell < d_basisOperationsPtrElectroHost->nCells();
              ++iCell)
           {
             std::vector<double> &pseudoVLoc =
               _pseudoValues[d_basisOperationsPtrElectroHost->cellID(iCell)];
-            for (unsigned int q = 0; q < n_q_points; ++q)
+            for (dftfe::uInt q = 0; q < n_q_points; ++q)
               pseudoVLoc[q] = tempPseudoValuesFlattened[iCell * n_q_points + q];
           }
       }
@@ -520,7 +519,7 @@ namespace dftfe
     MPI_Barrier(d_mpiCommParent);
     init_3 = MPI_Wtime();
 
-    std::vector<int> kptGroupLowHighPlusOneIndicesStep3;
+    std::vector<dftfe::Int> kptGroupLowHighPlusOneIndicesStep3;
 
     if (d_basisOperationsPtrElectroHost->nCells() > 0)
       dftUtils::createKpointParallelizationIndices(
@@ -530,7 +529,7 @@ namespace dftfe
 
     std::vector<double> pseudoVLocAtom(n_q_points);
 #pragma omp parallel for num_threads(d_nOMPThreads) firstprivate(pseudoVLocAtom)
-    for (unsigned int iCell = 0;
+    for (dftfe::uInt iCell = 0;
          iCell < d_basisOperationsPtrElectroHost->nCells();
          ++iCell)
       {
@@ -541,14 +540,14 @@ namespace dftfe
             // compute values for the current elements
 
             dealii::Point<3> atom;
-            int              atomicNumber;
+            dftfe::Int       atomicNumber;
             double           atomCharge;
             const double    *quadPointPtr =
               d_basisOperationsPtrElectroHost->quadPoints().data() +
               iCell * n_q_points * 3;
 
             // loop over atoms
-            for (unsigned int iAtom = 0;
+            for (dftfe::uInt iAtom = 0;
                  iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
                  iAtom++)
               {
@@ -565,7 +564,7 @@ namespace dftfe
                   }
                 else
                   {
-                    const unsigned int iImageCharge =
+                    const dftfe::uInt iImageCharge =
                       iAtom - numberGlobalCharges;
                     atom[0] = d_imagePositionsTrunc[iImageCharge][0];
                     atom[1] = d_imagePositionsTrunc[iImageCharge][1];
@@ -592,7 +591,7 @@ namespace dftfe
                 double       value, distanceToAtom;
                 const double cutoff = outerMostDataPoint[atomicNumber];
                 // loop over quad points
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt q = 0; q < n_q_points; ++q)
                   {
                     const dealii::Point<3> quadPoint(quadPointPtr[q * 3],
                                                      quadPointPtr[q * 3 + 1],
@@ -637,13 +636,13 @@ namespace dftfe
         std::vector<double> sendData;
         int                 sendCount = 0;
         // loop over atoms
-        for (unsigned int iAtom = 0;
+        for (dftfe::uInt iAtom = 0;
              iAtom < numberGlobalCharges + d_imagePositionsTrunc.size();
              iAtom++)
           {
             if (_pseudoValuesAtoms.find(iAtom) != _pseudoValuesAtoms.end())
               {
-                for (unsigned int iCell = 0;
+                for (dftfe::uInt iCell = 0;
                      iCell < d_basisOperationsPtrElectroHost->nCells();
                      ++iCell)
                   {
@@ -674,8 +673,14 @@ namespace dftfe
           }
 
         std::vector<int> recvCounts(numberKptGroups, 0);
-        int              ierr = MPI_Allgather(
-          &sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT, interpoolcomm);
+        int              ierr =
+          MPI_Allgather(&sendCount,
+                        1,
+                        dftfe::dataTypes::mpi_type_id(&sendCount),
+                        &recvCounts[0],
+                        1,
+                        dftfe::dataTypes::mpi_type_id(recvCounts.data()),
+                        interpoolcomm);
 
         if (ierr)
           AssertThrow(false,
@@ -683,13 +688,13 @@ namespace dftfe
                         "DFT-FE Error: MPI Error in init local psp"));
 
 
-        const int recvDataSize =
+        const dftfe::Int recvDataSize =
           std::accumulate(recvCounts.begin(), recvCounts.end(), 0);
 
 
         std::vector<int> displacements(numberKptGroups, 0);
         int              disp = 0;
-        for (int i = 0; i < numberKptGroups; ++i)
+        for (dftfe::Int i = 0; i < numberKptGroups; ++i)
           {
             displacements[i] = disp;
             disp += recvCounts[i];
@@ -712,10 +717,11 @@ namespace dftfe
                         "DFT-FE Error: MPI Error in init local psp"));
 
 
-        for (unsigned int i = 0; i < recvDataSize / (2 + n_q_points); i++)
+        for (dftfe::uInt i = 0; i < recvDataSize / (2 + n_q_points); i++)
           {
-            const int iatom = std::round(recvData[i * (2 + n_q_points) + 0]);
-            const unsigned int elementId =
+            const dftfe::Int iatom =
+              std::round(recvData[i * (2 + n_q_points) + 0]);
+            const dftfe::uInt elementId =
               std::round(recvData[i * (2 + n_q_points) + 1]);
 
 
@@ -726,7 +732,7 @@ namespace dftfe
                 if (_pseudoValuesAtoms[iatom].find(writeCellId) ==
                     _pseudoValuesAtoms[iatom].end())
                   {
-                    for (unsigned int q = 0; q < n_q_points; ++q)
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
                       pseudoVLocAtom[q] =
                         recvData[i * (2 + n_q_points) + 2 + q];
 

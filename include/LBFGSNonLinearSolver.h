@@ -45,13 +45,13 @@ namespace dftfe
      * @param mpi_comm_parent The mpi communicator used.
      */
     LBFGSNonLinearSolver(
-      const bool         usePreconditioner,
-      const double       maxUpdate,
-      const unsigned int maxNumberIterations,
-      const int          maxNumPastSteps,
-      const unsigned int debugLevel,
-      const MPI_Comm    &mpi_comm_parent,
-      const bool         isCurvatureOnlyLineSearchStoppingCondition = false);
+      const bool        usePreconditioner,
+      const double      maxUpdate,
+      const dftfe::uInt maxNumberIterations,
+      const dftfe::Int  maxNumPastSteps,
+      const dftfe::uInt debugLevel,
+      const MPI_Comm   &mpi_comm_parent,
+      const bool        isCurvatureOnlyLineSearchStoppingCondition = false);
 
     /**
      * @brief Destructor.
@@ -172,20 +172,20 @@ namespace dftfe
 
     /// storage for number of unknowns to be solved for in the nonlinear
     /// problem.
-    unsigned int d_numberUnknowns;
+    dftfe::uInt d_numberUnknowns;
 
     /// storage for current bfgs iteration count.
-    unsigned int d_iter;
+    dftfe::uInt d_iter;
 
     /// storage for history.
     std::deque<std::vector<double>> d_deltaGq, d_deltaXq;
     std::deque<double>              d_rhoq;
 
     /// storage for the maximum number of past steps to be stored.
-    const int d_maxNumPastSteps;
+    const dftfe::Int d_maxNumPastSteps;
 
     /// storage for the number of past steps currently stored.
-    int d_numPastSteps;
+    dftfe::Int d_numPastSteps;
 
     /// storage for inf norm of the update step.
     double d_normDeltaXnew;

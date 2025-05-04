@@ -35,9 +35,9 @@ namespace dftfe
     wfcContractionsForceKernelsAllH(
       std::shared_ptr<
         dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
-                        &basisOperationsPtr,
-      const unsigned int densityQuadratureId,
-      const unsigned int nlpspQuadratureId,
+                       &basisOperationsPtr,
+      const dftfe::uInt densityQuadratureId,
+      const dftfe::uInt nlpspQuadratureId,
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         &BLASWrapperPtr,
       std::shared_ptr<dftfe::oncvClass<dataTypes::number, memorySpace>>
@@ -45,16 +45,16 @@ namespace dftfe
       std::shared_ptr<hubbard<dataTypes::number, memorySpace>> hubbardClassPtr,
       const bool                                               useHubbard,
       const dataTypes::number                                 *X,
-      const unsigned int                      spinPolarizedFlag,
-      const unsigned int                      spinIndex,
+      const dftfe::uInt                       spinPolarizedFlag,
+      const dftfe::uInt                       spinIndex,
       const std::vector<std::vector<double>> &eigenValuesH,
       const std::vector<std::vector<double>> &partialOccupanciesH,
       const std::vector<double>              &kPointCoordinates,
-      const unsigned int                      MLoc,
-      const unsigned int                      N,
-      const unsigned int                      numCells,
-      const unsigned int                      numQuads,
-      const unsigned int                      numQuadsNLP,
+      const dftfe::uInt                       MLoc,
+      const dftfe::uInt                       N,
+      const dftfe::uInt                       numCells,
+      const dftfe::uInt                       numQuads,
+      const dftfe::uInt                       numQuadsNLP,
       double                                 *eshelbyTensorQuadValuesH,
       dataTypes::number *
         projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattenedH,

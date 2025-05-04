@@ -23,6 +23,8 @@
 #include <algorithm>
 #include <type_traits>
 #include <Exceptions.h>
+#include <TypeConfig.h>
+
 namespace dftfe
 {
   namespace utils
@@ -37,11 +39,11 @@ namespace dftfe
       , d_contiguousRanges(0)
       , d_numEntriesBefore(0)
     {
-      bool isValid = std::is_same<size_type, T>::value ||
-                     std::is_same<global_size_type, T>::value;
+      bool isValid = std::is_same<dftfe::uInt, T>::value ||
+                     std::is_same<dftfe::uInt, T>::value;
       utils::throwException<utils::InvalidArgument>(
         isValid,
-        "OptimizedIndexSet expects the template parameter to be of type unsigned int or unsigned long int.");
+        "OptimizedIndexSet expects the template parameter to be of type dftfe::uInt or unsigned long int.");
       if (!inputSet.empty())
         {
           typename std::set<T>::const_iterator itLastRange = inputSet.begin();
@@ -65,8 +67,8 @@ namespace dftfe
 
           d_numContiguousRanges = d_contiguousRanges.size() / 2;
           d_numEntriesBefore.resize(d_numContiguousRanges, 0);
-          size_type cumulativeEntries = 0;
-          for (unsigned int i = 0; i < d_numContiguousRanges; ++i)
+          dftfe::uInt cumulativeEntries = 0;
+          for (dftfe::uInt i = 0; i < d_numContiguousRanges; ++i)
             {
               d_numEntriesBefore[i] = cumulativeEntries;
               cumulativeEntries +=
@@ -77,9 +79,9 @@ namespace dftfe
 
     template <typename T>
     void
-    OptimizedIndexSet<T>::getPosition(const T   &index,
-                                      size_type &pos,
-                                      bool      &found) const
+    OptimizedIndexSet<T>::getPosition(const T     &index,
+                                      dftfe::uInt &pos,
+                                      bool        &found) const
     {
       found = false;
       /*
@@ -110,12 +112,12 @@ namespace dftfe
                                  index);
       if (up != d_contiguousRanges.end())
         {
-          size_type upPos = std::distance(d_contiguousRanges.begin(), up);
+          dftfe::uInt upPos = std::distance(d_contiguousRanges.begin(), up);
           if (upPos % 2 == 1)
             {
-              found             = true;
-              size_type rangeId = upPos / 2;
-              pos               = d_numEntriesBefore[rangeId] + index -
+              found               = true;
+              dftfe::uInt rangeId = upPos / 2;
+              pos                 = d_numEntriesBefore[rangeId] + index -
                     d_contiguousRanges[upPos - 1];
             }
         }

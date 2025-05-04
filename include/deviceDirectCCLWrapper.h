@@ -21,6 +21,7 @@
 
 #    include <complex>
 #    include <mpi.h>
+#    include <TypeConfig.h>
 #    include <DeviceTypeConfig.h>
 
 #    if defined(DFTFE_WITH_CUDA_NCCL)
@@ -67,54 +68,54 @@ namespace dftfe
 
       ~DeviceCCLWrapper();
 
-      int
+      dftfe::Int
       deviceDirectAllReduceWrapper(const float    *send,
                                    float          *recv,
-                                   int             size,
+                                   dftfe::Int      size,
                                    deviceStream_t &stream);
 
 
-      int
+      dftfe::Int
       deviceDirectAllReduceWrapper(const double   *send,
                                    double         *recv,
-                                   int             size,
+                                   dftfe::Int      size,
                                    deviceStream_t &stream);
 
 
-      int
+      dftfe::Int
       deviceDirectAllReduceWrapper(const std::complex<double> *send,
                                    std::complex<double>       *recv,
-                                   int                         size,
+                                   dftfe::Int                  size,
                                    double                     *tempReal,
                                    double                     *tempImag,
                                    deviceStream_t             &stream);
 
-      int
+      dftfe::Int
       deviceDirectAllReduceWrapper(const std::complex<float> *send,
                                    std::complex<float>       *recv,
-                                   int                        size,
+                                   dftfe::Int                 size,
                                    float                     *tempReal,
                                    float                     *tempImag,
                                    deviceStream_t            &stream);
 
 
-      int
+      dftfe::Int
       deviceDirectAllReduceMixedPrecGroupWrapper(const double   *send1,
                                                  const float    *send2,
                                                  double         *recv1,
                                                  float          *recv2,
-                                                 int             size1,
-                                                 int             size2,
+                                                 dftfe::Int      size1,
+                                                 dftfe::Int      size2,
                                                  deviceStream_t &stream);
 
-      int
+      dftfe::Int
       deviceDirectAllReduceMixedPrecGroupWrapper(
         const std::complex<double> *send1,
         const std::complex<float>  *send2,
         std::complex<double>       *recv1,
         std::complex<float>        *recv2,
-        int                         size1,
-        int                         size2,
+        dftfe::Int                  size1,
+        dftfe::Int                  size2,
         double                     *tempReal1,
         float                      *tempReal2,
         double                     *tempImag1,
@@ -126,7 +127,7 @@ namespace dftfe
       inline void
       deviceDirectAllReduceWrapper(const std::complex<float> *send,
                                    std::complex<float>       *recv,
-                                   int                        size,
+                                   dftfe::Int                 size,
                                    deviceStream_t            &stream)
       {}
 
@@ -134,7 +135,7 @@ namespace dftfe
       inline void
       deviceDirectAllReduceWrapper(const std::complex<double> *send,
                                    std::complex<double>       *recv,
-                                   int                         size,
+                                   dftfe::Int                  size,
                                    deviceStream_t             &stream)
       {}
 
@@ -144,8 +145,8 @@ namespace dftfe
         const std::complex<float>  *send2,
         std::complex<double>       *recv1,
         std::complex<float>        *recv2,
-        int                         size1,
-        int                         size2,
+        dftfe::Int                  size1,
+        dftfe::Int                  size2,
         deviceStream_t             &stream)
       {}
 
@@ -153,7 +154,7 @@ namespace dftfe
       inline void
       deviceDirectAllReduceWrapper(const double   *send,
                                    double         *recv,
-                                   int             size,
+                                   dftfe::Int      size,
                                    double         *tempReal,
                                    double         *tempImag,
                                    deviceStream_t &stream)
@@ -162,7 +163,7 @@ namespace dftfe
       inline void
       deviceDirectAllReduceWrapper(const float    *send,
                                    float          *recv,
-                                   int             size,
+                                   dftfe::Int      size,
                                    float          *tempReal,
                                    float          *tempImag,
                                    deviceStream_t &stream)
@@ -173,8 +174,8 @@ namespace dftfe
                                                  const float    *send2,
                                                  double         *recv1,
                                                  float          *recv2,
-                                                 int             size1,
-                                                 int             size2,
+                                                 dftfe::Int      size1,
+                                                 dftfe::Int      size2,
                                                  double         *tempReal1,
                                                  float          *tempReal2,
                                                  double         *tempImag1,

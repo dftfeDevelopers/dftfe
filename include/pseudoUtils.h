@@ -33,10 +33,10 @@ namespace dftfe
   {
     // some inline functions
     inline void
-    exchangeLocalList(const std::vector<unsigned int> &masterNodeIdList,
-                      std::vector<unsigned int>       &globalMasterNodeIdList,
-                      unsigned int                     numMeshPartitions,
-                      const MPI_Comm                  &mpi_communicator)
+    exchangeLocalList(const std::vector<dftfe::uInt> &masterNodeIdList,
+                      std::vector<dftfe::uInt>       &globalMasterNodeIdList,
+                      dftfe::uInt                     numMeshPartitions,
+                      const MPI_Comm                 &mpi_communicator)
     {
       int numberMasterNodesOnLocalProc = masterNodeIdList.size();
 
@@ -44,13 +44,14 @@ namespace dftfe
 
       MPI_Allgather(&numberMasterNodesOnLocalProc,
                     1,
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(
+                      &numberMasterNodesOnLocalProc),
                     masterNodeIdListSizes,
                     1,
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(masterNodeIdListSizes),
                     mpi_communicator);
 
-      int newMasterNodeIdListSize =
+      dftfe::Int newMasterNodeIdListSize =
         std::accumulate(&(masterNodeIdListSizes[0]),
                         &(masterNodeIdListSizes[numMeshPartitions]),
                         0);
@@ -61,16 +62,17 @@ namespace dftfe
 
       mpiOffsets[0] = 0;
 
-      for (int i = 1; i < numMeshPartitions; ++i)
+      for (dftfe::Int i = 1; i < numMeshPartitions; ++i)
         mpiOffsets[i] = masterNodeIdListSizes[i - 1] + mpiOffsets[i - 1];
 
       MPI_Allgatherv(&(masterNodeIdList[0]),
                      numberMasterNodesOnLocalProc,
-                     MPI_INT,
+                     dftfe::dataTypes::mpi_type_id(masterNodeIdList.data()),
                      &(globalMasterNodeIdList[0]),
                      &(masterNodeIdListSizes[0]),
                      &(mpiOffsets[0]),
-                     MPI_INT,
+                     dftfe::dataTypes::mpi_type_id(
+                       globalMasterNodeIdList.data()),
                      mpi_communicator);
 
 
@@ -82,14 +84,14 @@ namespace dftfe
 
 
     inline void
-    exchangeNumberingMap(std::map<int, int> &localMap,
-                         unsigned int        numMeshPartitions,
-                         const MPI_Comm     &mpi_communicator)
+    exchangeNumberingMap(std::map<dftfe::Int, dftfe::Int> &localMap,
+                         dftfe::uInt                       numMeshPartitions,
+                         const MPI_Comm                   &mpi_communicator)
 
     {
-      std::map<int, int>::iterator iter;
+      std::map<dftfe::Int, dftfe::Int>::iterator iter;
 
-      std::vector<int> localSpreadVec;
+      std::vector<dftfe::Int> localSpreadVec;
 
       iter = localMap.begin();
       while (iter != localMap.end())
@@ -105,36 +107,36 @@ namespace dftfe
 
       MPI_Allgather(&localSpreadVecSize,
                     1,
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(&localSpreadVecSize),
                     spreadVecSizes,
                     1,
-                    MPI_INT,
+                    dftfe::dataTypes::mpi_type_id(spreadVecSizes),
                     mpi_communicator);
 
-      int globalSpreadVecSize =
+      dftfe::Int globalSpreadVecSize =
         std::accumulate(&(spreadVecSizes[0]),
                         &(spreadVecSizes[numMeshPartitions]),
                         0);
 
-      std::vector<int> globalSpreadVec(globalSpreadVecSize);
+      std::vector<dftfe::Int> globalSpreadVec(globalSpreadVecSize);
 
       int *mpiOffsets = new int[numMeshPartitions];
 
       mpiOffsets[0] = 0;
 
-      for (int i = 1; i < numMeshPartitions; ++i)
+      for (dftfe::Int i = 1; i < numMeshPartitions; ++i)
         mpiOffsets[i] = spreadVecSizes[i - 1] + mpiOffsets[i - 1];
 
       MPI_Allgatherv(&(localSpreadVec[0]),
                      localSpreadVecSize,
-                     MPI_INT,
+                     dftfe::dataTypes::mpi_type_id(localSpreadVec.data()),
                      &(globalSpreadVec[0]),
                      &(spreadVecSizes[0]),
                      &(mpiOffsets[0]),
-                     MPI_INT,
+                     dftfe::dataTypes::mpi_type_id(globalSpreadVec.data()),
                      mpi_communicator);
 
-      for (int i = 0; i < globalSpreadVecSize; i = i + 2)
+      for (dftfe::Int i = 0; i < globalSpreadVecSize; i = i + 2)
         localMap[globalSpreadVec[i]] = globalSpreadVec[i + 1];
 
 
@@ -154,11 +156,11 @@ namespace dftfe
     }
 
     inline void
-    getSphericalHarmonicVal(const double theta,
-                            const double phi,
-                            const int    l,
-                            const int    m,
-                            double      &sphericalHarmonicVal)
+    getSphericalHarmonicVal(const double     theta,
+                            const double     phi,
+                            const dftfe::Int l,
+                            const dftfe::Int m,
+                            double          &sphericalHarmonicVal)
     {
       if (m < 0)
         sphericalHarmonicVal =

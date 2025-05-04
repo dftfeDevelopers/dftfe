@@ -83,9 +83,9 @@ namespace dftfe
       std::vector<double> Q(3, 0.0);
       std::vector<double> R(3);
 
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         {
-          for (int j = 0; j < 3; ++j)
+          for (dftfe::Int j = 0; j < 3; ++j)
             {
               P[i] += latticeVectors[3 * j + i] * xred1[j];
               Q[i] += latticeVectors[3 * j + i] * xred2[j];
@@ -105,7 +105,7 @@ namespace dftfe
 
 
       std::vector<double> nearestPtCoords(3);
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         nearestPtCoords[i] = P[i] + t * surfaceNormal[i];
 
       //
@@ -141,7 +141,7 @@ namespace dftfe
 
       std::vector<double> returnValue(3);
 
-      for (int i = 0; i < 3; ++i)
+      for (dftfe::Int i = 0; i < 3; ++i)
         returnValue[i] = roundToCell(nearestPtCoords[i]);
 
       return returnValue;
@@ -198,11 +198,11 @@ namespace dftfe
           // compute distance between fracPtA (closest point on surface A) and
           // xreduced
           //
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             dFrac[i] = xreduced[i] - fracPtA[i];
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distA =
@@ -219,14 +219,14 @@ namespace dftfe
           std::vector<double> fracPtB = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface2Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtB[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distB =
@@ -243,14 +243,14 @@ namespace dftfe
           std::vector<double> fracPtC = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface3Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtC[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distC =
@@ -267,14 +267,14 @@ namespace dftfe
           std::vector<double> fracPtD = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface1Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtD[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distD =
@@ -291,14 +291,14 @@ namespace dftfe
           std::vector<double> fracPtE = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface2Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtE[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distE =
@@ -316,14 +316,14 @@ namespace dftfe
           std::vector<double> fracPtF = getNearestPointOnGivenSurface(
             latticeVectors, xreduced, surfacePoint, surface3Normal);
 
-          for (int i = 0; i < 3; ++i)
+          for (dftfe::Int i = 0; i < 3; ++i)
             {
               dFrac[i] = xreduced[i] - fracPtF[i];
               dReal[i] = 0.0;
             }
 
-          for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
+          for (dftfe::Int i = 0; i < 3; ++i)
+            for (dftfe::Int j = 0; j < 3; ++j)
               dReal[i] += latticeVectors[3 * j + i] * dFrac[j];
 
           double distF =
@@ -338,13 +338,13 @@ namespace dftfe
     }
   } // namespace internaldft
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::generateImageCharges(
     const double                      pspCutOff,
-    std::vector<int>                 &imageIds,
+    std::vector<dftfe::Int>          &imageIds,
     std::vector<double>              &imageCharges,
     std::vector<std::vector<double>> &imagePositions)
   {
@@ -388,8 +388,8 @@ namespace dftfe
     // compute the ratio between pspCutOff and maxMagnitude and multiply by a
     // factor 2 to decide number of image atom layers
     //
-    double ratio        = pspCutOff / minMagnitude;
-    int    numberLayers = std::ceil(ratio * 2);
+    double     ratio        = pspCutOff / minMagnitude;
+    dftfe::Int numberLayers = std::ceil(ratio * 2);
 
 
 
@@ -398,19 +398,19 @@ namespace dftfe
     //
     std::vector<double> shift(3, 0.0);
 
-    for (int i = 0; i < 3; ++i)
+    for (dftfe::Int i = 0; i < 3; ++i)
       {
-        for (int j = 0; j < 3; ++j)
+        for (dftfe::Int j = 0; j < 3; ++j)
           {
             shift[i] += d_domainBoundingVectors[j][i] / 2.0;
           }
       }
 
     std::vector<double> latticeVectors(9, 0.0);
-    int                 count = 0;
-    for (int i = 0; i < 3; ++i)
+    dftfe::Int          count = 0;
+    for (dftfe::Int i = 0; i < 3; ++i)
       {
-        for (int j = 0; j < 3; ++j)
+        for (dftfe::Int j = 0; j < 3; ++j)
           {
             latticeVectors[count] = d_domainBoundingVectors[i][j];
             count++;
@@ -421,54 +421,54 @@ namespace dftfe
     imagePositions.clear();
     imageCharges.clear();
 
-    std::vector<int>    imageIdsKptPool;
-    std::vector<int>    imageIdsGathered;
-    std::vector<double> imagePositionsFlattenedKptPool;
-    std::vector<double> imagePositionsFlattened;
+    std::vector<dftfe::Int> imageIdsKptPool;
+    std::vector<dftfe::Int> imageIdsGathered;
+    std::vector<double>     imagePositionsFlattenedKptPool;
+    std::vector<double>     imagePositionsFlattened;
 
     // kpoint group parallelization data structures
-    const unsigned int numberKptGroups =
+    const dftfe::uInt numberKptGroups =
       dealii::Utilities::MPI::n_mpi_processes(interpoolcomm);
 
     // std::cout<<"hello: "<<numberKptGroups<<std::endl;
-    const unsigned int kptGroupTaskId =
+    const dftfe::uInt kptGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-    std::vector<int> kptGroupLowHighPlusOneIndices;
+    std::vector<dftfe::Int> kptGroupLowHighPlusOneIndices;
     dftUtils::createKpointParallelizationIndices(interpoolcomm,
                                                  atomLocations.size(),
                                                  kptGroupLowHighPlusOneIndices);
     // std::cout<<"hello2: "<<kptGroupLowHighPlusOneIndices[2 *
     // kptGroupTaskId]<<std::endl; std::cout<<"hello2:
     // "<<kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1]<<std::endl;
-    for (int i = 0; i < atomLocations.size(); ++i)
+    for (dftfe::Int i = 0; i < atomLocations.size(); ++i)
       {
         if (i < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
             i >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
           {
-            const int    iCharge = i;
-            const double fracX   = atomLocations[i][2];
-            const double fracY   = atomLocations[i][3];
-            const double fracZ   = atomLocations[i][4];
+            const dftfe::Int iCharge = i;
+            const double     fracX   = atomLocations[i][2];
+            const double     fracY   = atomLocations[i][3];
+            const double     fracZ   = atomLocations[i][4];
 
-            int izmin = -numberLayers;
-            int iymin = -numberLayers;
-            int ixmin = -numberLayers;
+            dftfe::Int izmin = -numberLayers;
+            dftfe::Int iymin = -numberLayers;
+            dftfe::Int ixmin = -numberLayers;
 
-            int izmax = numberLayers + 1;
-            int iymax = numberLayers + 1;
-            int ixmax = numberLayers + 1;
+            dftfe::Int izmax = numberLayers + 1;
+            dftfe::Int iymax = numberLayers + 1;
+            dftfe::Int ixmax = numberLayers + 1;
 
 
 
-            for (int iz = izmin; iz < izmax; ++iz)
+            for (dftfe::Int iz = izmin; iz < izmax; ++iz)
               {
                 if (periodicZ == 0)
                   iz = izmax;
-                for (int iy = iymin; iy < iymax; ++iy)
+                for (dftfe::Int iy = iymin; iy < iymax; ++iy)
                   {
                     if (periodicY == 0)
                       iy = iymax;
-                    for (int ix = ixmin; ix < ixmax; ++ix)
+                    for (dftfe::Int ix = ixmin; ix < ixmax; ++ix)
                       {
                         if (periodicX == 0)
                           ix = ixmax;
@@ -506,13 +506,13 @@ namespace dftfe
                               {
                                 imageIdsKptPool.push_back(iCharge);
 
-                                for (int ii = 0; ii < 3; ++ii)
-                                  for (int jj = 0; jj < 3; ++jj)
+                                for (dftfe::Int ii = 0; ii < 3; ++ii)
+                                  for (dftfe::Int jj = 0; jj < 3; ++jj)
                                     currentImageChargePosition[ii] +=
                                       d_domainBoundingVectors[jj][ii] *
                                       newFrac[jj];
 
-                                for (int ii = 0; ii < 3; ++ii)
+                                for (dftfe::Int ii = 0; ii < 3; ++ii)
                                   currentImageChargePosition[ii] -= shift[ii];
 
                                 // imagePositions.push_back(currentImageChargePosition);
@@ -542,8 +542,13 @@ namespace dftfe
         imageIdsKptPool.resize(1, -1);
         imagePositionsFlattenedKptPool.resize(3, 0.0);
       }
-    int ierr = MPI_Allgather(
-      &sendCount, 1, MPI_INT, &recvCounts[0], 1, MPI_INT, interpoolcomm);
+    int ierr = MPI_Allgather(&sendCount,
+                             1,
+                             dftfe::dataTypes::mpi_type_id(&sendCount),
+                             &recvCounts[0],
+                             1,
+                             dftfe::dataTypes::mpi_type_id(recvCounts.data()),
+                             interpoolcomm);
 
     if (ierr)
       AssertThrow(false,
@@ -551,7 +556,7 @@ namespace dftfe
                     "DFT-FE Error: MPI Error in generate image charges"));
 
 
-    const int numImageCharges =
+    const dftfe::Int numImageCharges =
       std::accumulate(recvCounts.begin(), recvCounts.end(), 0);
 
     if (numImageCharges > 0)
@@ -565,7 +570,7 @@ namespace dftfe
         std::vector<int> displacementsImagePos(numberKptGroups, 0);
         std::vector<int> recvCountsPos(numberKptGroups, 0);
         int              disp = 0;
-        for (int i = 0; i < numberKptGroups; ++i)
+        for (dftfe::Int i = 0; i < numberKptGroups; ++i)
           {
             displacementsImageIds[i] = disp;
             displacementsImagePos[i] = disp * 3;
@@ -574,20 +579,21 @@ namespace dftfe
           }
 
 
-        ierr = MPI_Allgatherv(&imageIdsKptPool[0],
-                              sendCount,
-                              MPI_INT,
-                              &imageIdsGathered[0],
-                              &recvCounts[0],
-                              &displacementsImageIds[0],
-                              MPI_INT,
-                              interpoolcomm);
+        ierr =
+          MPI_Allgatherv(&imageIdsKptPool[0],
+                         sendCount,
+                         dftfe::dataTypes::mpi_type_id(imageIdsKptPool.data()),
+                         &imageIdsGathered[0],
+                         &recvCounts[0],
+                         &displacementsImageIds[0],
+                         dftfe::dataTypes::mpi_type_id(imageIdsGathered.data()),
+                         interpoolcomm);
 
         if (ierr)
           AssertThrow(false,
                       dealii::ExcMessage(
                         "DFT-FE Error: MPI Error in generate image charges"));
-        const int sendCountPos = sendCount * 3;
+        const dftfe::Int sendCountPos = sendCount * 3;
         ierr = MPI_Allgatherv(&imagePositionsFlattenedKptPool[0],
                               sendCountPos,
                               MPI_DOUBLE,
@@ -602,9 +608,9 @@ namespace dftfe
                       dealii::ExcMessage(
                         "DFT-FE Error: MPI Error in generate image charges"));
 
-        int              numNonTrivialImageCharges = 0;
-        std::vector<int> nonTrivialToFullIndexMap;
-        for (int i = 0; i < numImageCharges; ++i)
+        dftfe::Int              numNonTrivialImageCharges = 0;
+        std::vector<dftfe::Int> nonTrivialToFullIndexMap;
+        for (dftfe::Int i = 0; i < numImageCharges; ++i)
           {
             if (imageIdsGathered[i] != -1)
               {
@@ -617,7 +623,7 @@ namespace dftfe
         imageCharges.resize(numNonTrivialImageCharges);
         imagePositions.resize(numNonTrivialImageCharges,
                               std::vector<double>(3, 0.0));
-        for (int i = 0; i < numNonTrivialImageCharges; ++i)
+        for (dftfe::Int i = 0; i < numNonTrivialImageCharges; ++i)
           {
             double atomCharge;
             if (d_dftParamsPtr->isPseudopotential)
@@ -637,19 +643,19 @@ namespace dftfe
     MPI_Barrier(interpoolcomm);
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     createMasterChargeIdToImageIdMaps(
       const double                            pspCutOff,
-      const std::vector<int>                 &imageIds,
+      const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &imagePositions,
-      std::vector<std::vector<int>>          &globalChargeIdToImageIdMap)
+      std::vector<std::vector<dftfe::Int>>   &globalChargeIdToImageIdMap)
   {
-    const unsigned int numImageCharges     = imageIds.size();
-    const unsigned int numberGlobalCharges = atomLocations.size();
+    const dftfe::uInt numImageCharges     = imageIds.size();
+    const dftfe::uInt numberGlobalCharges = atomLocations.size();
     globalChargeIdToImageIdMap.clear();
     globalChargeIdToImageIdMap.resize(numberGlobalCharges);
 
@@ -659,7 +665,7 @@ namespace dftfe
     tempDisp[0] = pspCutOff;
     tempDisp[1] = pspCutOff;
     tempDisp[2] = pspCutOff;
-    for (int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+    for (dftfe::Int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
       {
         dealii::Point<3> atomCoord;
         atomCoord[0] = atomLocations[iCharge][2];
@@ -678,7 +684,7 @@ namespace dftfe
           globalChargeIdToImageIdMap[iCharge].push_back(iCharge);
       }
 
-    for (int iImage = 0; iImage < numImageCharges; ++iImage)
+    for (dftfe::Int iImage = 0; iImage < numImageCharges; ++iImage)
       {
         dealii::Point<3> atomCoord;
         atomCoord[0] = imagePositions[iImage][0];
@@ -699,7 +705,7 @@ namespace dftfe
           //
           // Get the masterChargeId corresponding to the current image atom
           //
-          const int masterChargeId = imageIds[iImage];
+          const dftfe::Int masterChargeId = imageIds[iImage];
 
           //
           // insert into the map

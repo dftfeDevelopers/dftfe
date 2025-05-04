@@ -20,8 +20,8 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::applyHomogeneousDirichletBC(
@@ -34,11 +34,11 @@ namespace dftfe
     dealii::DoFTools::extract_locally_relevant_dofs(_dofHandler,
                                                     locallyRelevantDofs);
 
-    const unsigned int vertices_per_cell =
+    const dftfe::uInt vertices_per_cell =
       dealii::GeometryInfo<3>::vertices_per_cell;
-    const unsigned int dofs_per_cell  = _dofHandler.get_fe().dofs_per_cell;
-    const unsigned int faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
-    const unsigned int dofs_per_face  = _dofHandler.get_fe().dofs_per_face;
+    const dftfe::uInt dofs_per_cell  = _dofHandler.get_fe().dofs_per_cell;
+    const dftfe::uInt faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
+    const dftfe::uInt dofs_per_face  = _dofHandler.get_fe().dofs_per_face;
 
     std::vector<dealii::types::global_dof_index> cellGlobalDofIndices(
       dofs_per_cell);
@@ -53,13 +53,13 @@ namespace dftfe
       if (cell->is_locally_owned() || cell->is_ghost())
         {
           cell->get_dof_indices(cellGlobalDofIndices);
-          for (unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+          for (dftfe::uInt iFace = 0; iFace < faces_per_cell; ++iFace)
             {
-              const unsigned int boundaryId = cell->face(iFace)->boundary_id();
+              const dftfe::uInt boundaryId = cell->face(iFace)->boundary_id();
               if (boundaryId == 0)
                 {
                   cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
-                  for (unsigned int iFaceDof = 0; iFaceDof < dofs_per_face;
+                  for (dftfe::uInt iFaceDof = 0; iFaceDof < dofs_per_face;
                        ++iFaceDof)
                     {
                       const dealii::types::global_dof_index nodeId =

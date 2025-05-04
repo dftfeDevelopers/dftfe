@@ -32,7 +32,7 @@ namespace dftfe
       namespace
       {
         inline double
-        Am(const int m)
+        Am(const dftfe::Int m)
         {
           if (m == 0)
             return 1.0 / sqrt(2 * M_PI);
@@ -41,7 +41,7 @@ namespace dftfe
         }
 
         inline double
-        Blm(const int l, const int m)
+        Blm(const dftfe::Int l, const dftfe::Int m)
         {
           if (m == 0)
             return sqrt((2.0 * l + 1) / 2.0);
@@ -84,14 +84,14 @@ namespace dftfe
       }
 
       double
-      Clm(const int l, const int m)
+      Clm(const dftfe::Int l, const dftfe::Int m)
       {
-        int modM = std::abs(m);
+        dftfe::Int modM = std::abs(m);
         return Am(modM) * Blm(l, modM);
       }
 
       double
-      Qm(const int m, const double phi)
+      Qm(const dftfe::Int m, const double phi)
       {
         if (m > 0)
           return cos(m * phi);
@@ -102,7 +102,7 @@ namespace dftfe
       }
 
       double
-      dQmDPhi(const int m, const double phi)
+      dQmDPhi(const dftfe::Int m, const double phi)
       {
         if (m > 0)
           return -m * sin(m * phi);
@@ -113,7 +113,7 @@ namespace dftfe
       }
 
       double
-      d2QmDPhi2(const int m, const double phi)
+      d2QmDPhi2(const dftfe::Int m, const double phi)
       {
         if (m > 0)
           return -m * m * cos(m * phi);
@@ -124,7 +124,7 @@ namespace dftfe
       }
 
       double
-      Plm(const int l, const int m, const double theta)
+      Plm(const dftfe::Int l, const dftfe::Int m, const double theta)
       {
         const double cosTheta = cos(theta);
         if (std::abs(m) > l)
@@ -139,7 +139,7 @@ namespace dftfe
       }
 
       double
-      dPlmDTheta(const int l, const int m, const double theta)
+      dPlmDTheta(const dftfe::Int l, const dftfe::Int m, const double theta)
       {
         if (std::abs(m) > l)
           return 0.0;
@@ -149,8 +149,8 @@ namespace dftfe
 
         else if (m < 0)
           {
-            const int    modM   = std::abs(m);
-            const double factor = pow(-1, m) *
+            const dftfe::Int modM   = std::abs(m);
+            const double     factor = pow(-1, m) *
                                   boost::math::factorial<double>(l - modM) /
                                   boost::math::factorial<double>(l + modM);
             return factor * dPlmDTheta(l, modM, theta);
@@ -173,7 +173,7 @@ namespace dftfe
       }
 
       double
-      d2PlmDTheta2(const int l, const int m, const double theta)
+      d2PlmDTheta2(const dftfe::Int l, const dftfe::Int m, const double theta)
       {
         if (std::abs(m) > l)
           return 0.0;
@@ -183,8 +183,8 @@ namespace dftfe
 
         else if (m < 0)
           {
-            const int    modM   = std::abs(m);
-            const double factor = pow(-1, m) *
+            const dftfe::Int modM   = std::abs(m);
+            const double     factor = pow(-1, m) *
                                   boost::math::factorial<double>(l - modM) /
                                   boost::math::factorial<double>(l + modM);
             return factor * d2PlmDTheta2(l, modM, theta);
@@ -205,9 +205,12 @@ namespace dftfe
       }
 
       double
-      YlmReal(const int l, const int m, const double theta, const double phi)
+      YlmReal(const dftfe::Int l,
+              const dftfe::Int m,
+              const double     theta,
+              const double     phi)
       {
-        int          modM = std::abs(m);
+        dftfe::Int   modM = std::abs(m);
         const double C    = Clm(l, m);
         const double P    = Plm(l, modM, theta);
         const double Q    = Qm(m, phi);
@@ -215,10 +218,13 @@ namespace dftfe
       }
 
       std::vector<double>
-      dYlmReal(const int l, const int m, const double theta, const double phi)
+      dYlmReal(const dftfe::Int l,
+               const dftfe::Int m,
+               const double     theta,
+               const double     phi)
       {
         std::vector<double> returnValue(2, 0.0);
-        int                 modM = std::abs(m);
+        dftfe::Int          modM = std::abs(m);
         const double        C    = Clm(l, m);
         const double        P    = Plm(l, modM, theta);
         const double        dP   = dPlmDTheta(l, modM, theta);
@@ -230,10 +236,13 @@ namespace dftfe
       }
 
       std::vector<double>
-      d2YlmReal(const int l, const int m, const double theta, const double phi)
+      d2YlmReal(const dftfe::Int l,
+                const dftfe::Int m,
+                const double     theta,
+                const double     phi)
       {
         std::vector<double> returnValue(2, 0.0);
-        int                 modM = std::abs(m);
+        dftfe::Int          modM = std::abs(m);
         const double        C    = Clm(l, m);
         const double        P    = Plm(l, modM, theta);
         const double        d2P  = d2PlmDTheta2(l, modM, theta);

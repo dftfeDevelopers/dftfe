@@ -23,7 +23,7 @@
 #include <linearAlgebraOperationsDeviceKernels.h>
 #include <vectorUtilities.h>
 
-static const unsigned int order_lookup[][2] = {
+static const dftfe::uInt order_lookup[][2] = {
   {500, 24}, // <= 500 ~> chebyshevOrder = 24
   {750, 30},
   {1000, 39},
@@ -48,10 +48,12 @@ namespace dftfe
   {
     namespace internal
     {
-      unsigned int
-      setChebyshevOrder(const unsigned int d_upperBoundUnWantedSpectrum)
+      dftfe::uInt
+      setChebyshevOrder(const dftfe::uInt d_upperBoundUnWantedSpectrum)
       {
-        for (int i = 0; i < sizeof(order_lookup) / sizeof(order_lookup[0]); i++)
+        for (dftfe::Int i = 0;
+             i < sizeof(order_lookup) / sizeof(order_lookup[0]);
+             i++)
           {
             if (d_upperBoundUnWantedSpectrum <= order_lookup[i][0])
               return order_lookup[i][1];
@@ -114,8 +116,8 @@ namespace dftfe
                             &BLASWrapperPtr,
     elpaScalaManager        &elpaScala,
     dataTypes::number       *eigenVectorsFlattenedDevice,
-    const unsigned int       flattenedSize,
-    const unsigned int       totalNumberWaveFunctions,
+    const dftfe::uInt        flattenedSize,
+    const dftfe::uInt        totalNumberWaveFunctions,
     std::vector<double>     &eigenValues,
     std::vector<double>     &residualNorms,
     utils::DeviceCCLWrapper &devicecclMpiCommDomain,
@@ -137,23 +139,23 @@ namespace dftfe
     //
     // allocate memory for full flattened array on device and fill it up
     //
-    const unsigned int localVectorSize =
+    const dftfe::uInt localVectorSize =
       flattenedSize / totalNumberWaveFunctions;
 
     // band group parallelization data structures
-    const unsigned int numberBandGroups =
+    const dftfe::uInt numberBandGroups =
       dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
 
 
-    const unsigned int bandGroupTaskId =
+    const dftfe::uInt bandGroupTaskId =
       dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    std::vector<dftfe::uInt> bandGroupLowHighPlusOneIndices;
     dftUtils::createBandParallelizationIndices(interBandGroupComm,
                                                totalNumberWaveFunctions,
                                                bandGroupLowHighPlusOneIndices);
 
 
-    const unsigned int vectorsBlockSize =
+    const dftfe::uInt vectorsBlockSize =
       std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
     distributedDeviceVec<dataTypes::number> *XBlock =
@@ -278,7 +280,7 @@ namespace dftfe
       }
 
 
-    unsigned int chebyshevOrder = d_dftParams.chebyshevOrder;
+    dftfe::uInt chebyshevOrder = d_dftParams.chebyshevOrder;
 
     //
     // set Chebyshev order
@@ -328,24 +330,24 @@ namespace dftfe
 
     // two blocks of wavefunctions are filtered simultaneously when overlap
     // compute communication in chebyshev filtering is toggled on
-    const unsigned int numSimultaneousBlocks =
+    const dftfe::uInt numSimultaneousBlocks =
       d_dftParams.overlapComputeCommunCheby ? 2 : 1;
-    unsigned int       numSimultaneousBlocksCurrent = numSimultaneousBlocks;
-    const unsigned int numWfcsInBandGroup =
+    dftfe::uInt       numSimultaneousBlocksCurrent = numSimultaneousBlocks;
+    const dftfe::uInt numWfcsInBandGroup =
       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] -
       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId];
-    int startIndexBandParal = totalNumberWaveFunctions;
-    int numVectorsBandParal = 0;
-    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions;
+    dftfe::Int startIndexBandParal = totalNumberWaveFunctions;
+    dftfe::Int numVectorsBandParal = 0;
+    for (dftfe::uInt jvec = 0; jvec < totalNumberWaveFunctions;
          jvec += numSimultaneousBlocksCurrent * vectorsBlockSize)
       {
         // Correct block dimensions if block "goes off edge of" the matrix
-        const unsigned int BVec = vectorsBlockSize;
+        const dftfe::uInt BVec = vectorsBlockSize;
 
         // handle edge case when total number of blocks in a given band
         // group is not even in case of overlapping computation and
         // communciation in chebyshev filtering
-        const unsigned int leftIndexBandGroupMargin =
+        const dftfe::uInt leftIndexBandGroupMargin =
           (jvec / numWfcsInBandGroup) * numWfcsInBandGroup;
         numSimultaneousBlocksCurrent =
           ((jvec + numSimultaneousBlocks * BVec - leftIndexBandGroupMargin) <=
@@ -396,7 +398,7 @@ namespace dftfe
                 if (d_dftParams.overlapComputeCommunCheby &&
                     numSimultaneousBlocksCurrent == 2)
                   {
-                    for (unsigned int i = 0; i < 2 * BVec; i++)
+                    for (dftfe::uInt i = 0; i < 2 * BVec; i++)
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
@@ -445,7 +447,7 @@ namespace dftfe
                   }
                 else
                   {
-                    for (unsigned int i = 0; i < BVec; i++)
+                    for (dftfe::uInt i = 0; i < BVec; i++)
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
@@ -488,7 +490,7 @@ namespace dftfe
                 if (d_dftParams.overlapComputeCommunCheby &&
                     numSimultaneousBlocksCurrent == 2)
                   {
-                    for (unsigned int i = 0; i < 2 * BVec; i++)
+                    for (dftfe::uInt i = 0; i < 2 * BVec; i++)
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
@@ -561,7 +563,7 @@ namespace dftfe
                   }
                 else
                   {
-                    for (unsigned int i = 0; i < BVec; i++)
+                    for (dftfe::uInt i = 0; i < BVec; i++)
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
@@ -668,7 +670,7 @@ namespace dftfe
 
                 if (d_dftParams.useReformulatedChFSI && !isFirstFilteringCall)
                   {
-                    for (unsigned int i = 0; i < BVec; i++)
+                    for (dftfe::uInt i = 0; i < BVec; i++)
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
@@ -919,8 +921,8 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
                                 &BLASWrapperPtr,
       dataTypes::number         *eigenVectorsFlattenedDevice,
-      const unsigned int         flattenedSize,
-      const unsigned int         totalNumberWaveFunctions,
+      const dftfe::uInt          flattenedSize,
+      const dftfe::uInt          totalNumberWaveFunctions,
       const std::vector<double> &eigenValues,
       const double               fermiEnergy,
       std::vector<double>       &densityMatDerFermiEnergy,
@@ -944,11 +946,11 @@ namespace dftfe
     //
     // allocate memory for full flattened array on device and fill it up
     //
-    const unsigned int localVectorSize =
+    const dftfe::uInt localVectorSize =
       flattenedSize / totalNumberWaveFunctions;
 
 
-    const unsigned int vectorsBlockSize =
+    const dftfe::uInt vectorsBlockSize =
       std::min(d_dftParams.chebyWfcBlockSize, totalNumberWaveFunctions);
 
     distributedDeviceVec<dataTypes::number> *XBlock =

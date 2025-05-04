@@ -27,23 +27,23 @@ namespace dftfe
   {
     void
     pointWiseScaleWithDiagonal(const double      *diagonal,
-                               const unsigned int numberFields,
-                               const unsigned int numberDofs,
+                               const dftfe::uInt  numberFields,
+                               const dftfe::uInt  numberDofs,
                                dataTypes::number *fieldsArrayFlattened)
     {
-      const unsigned int inc = 1;
-
-      for (unsigned int i = 0; i < numberDofs; ++i)
+      const unsigned int inc             = 1;
+      unsigned int       numberFieldsTmp = numberFields;
+      for (dftfe::uInt i = 0; i < numberDofs; ++i)
         {
 #ifdef USE_COMPLEX
           double scalingCoeff = diagonal[i];
-          zdscal_(&numberFields,
+          zdscal_(&numberFieldsTmp,
                   &scalingCoeff,
                   &fieldsArrayFlattened[i * numberFields],
                   &inc);
 #else
           double scalingCoeff = diagonal[i];
-          dscal_(&numberFields,
+          dscal_(&numberFieldsTmp,
                  &scalingCoeff,
                  &fieldsArrayFlattened[i * numberFields],
                  &inc);
@@ -53,12 +53,12 @@ namespace dftfe
   } // namespace internal
 
   //
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   dataTypes::number
   dftClass<FEOrder, FEOrderElectro, memorySpace>::computeTraceXtHX(
-    unsigned int numberWaveFunctionsEstimate)
+    dftfe::uInt numberWaveFunctionsEstimate)
   {
     // //
     // // set up poisson solver
@@ -222,7 +222,7 @@ namespace dftfe
 
 
     // dataTypes::number trXtHX = 0.0;
-    // for (unsigned int i = 0; i < numberWaveFunctionsEstimate; ++i)
+    // for (dftfe::uInt i = 0; i < numberWaveFunctionsEstimate; ++i)
     //   {
     //     trXtHX += ProjHam[d_numEigenValues * i + i];
     //   }
@@ -230,12 +230,12 @@ namespace dftfe
     // return trXtHX;
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::computeTraceXtKX(
-    unsigned int numberWaveFunctionsEstimate)
+    dftfe::uInt numberWaveFunctionsEstimate)
   {
     //     //
     //     // create kohnShamDFTOperatorClass object
@@ -309,7 +309,7 @@ namespace dftfe
     // #ifdef USE_COMPLEX
     //     trXtKX = 0.0;
     // #else
-    //     for (unsigned int i = 0; i < numberWaveFunctionsEstimate; ++i)
+    //     for (dftfe::uInt i = 0; i < numberWaveFunctionsEstimate; ++i)
     //       {
     //         trXtKX += ProjHam[d_numEigenValues * i + i];
     //       }
@@ -321,13 +321,13 @@ namespace dftfe
 
 
   // chebyshev solver
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::kohnShamEigenSpaceCompute(
-    const unsigned int spinType,
-    const unsigned int kPointIndex,
+    const dftfe::uInt spinType,
+    const dftfe::uInt kPointIndex,
     KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
                                                    &kohnShamDFTEigenOperator,
     elpaScalaManager                               &elpaScala,
@@ -349,7 +349,7 @@ namespace dftfe
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
 
-    for (unsigned int i = 0; i < d_numEigenValues; i++)
+    for (dftfe::uInt i = 0; i < d_numEigenValues; i++)
       {
         eigenValuesTemp[i] =
           eigenValues[kPointIndex][spinType * d_numEigenValues + i];
@@ -421,7 +421,7 @@ namespace dftfe
           d_upperBoundUnwantedSpectrumValues
             [(1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType]);
       }
-    const unsigned int wfcStartIndex =
+    const dftfe::uInt wfcStartIndex =
       d_dftParamsPtr->solverMode == "BANDS" ?
         0 :
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
@@ -450,7 +450,7 @@ namespace dftfe
     //
 
 
-    for (unsigned int i = 0; i < d_numEigenValues; i++)
+    for (dftfe::uInt i = 0; i < d_numEigenValues; i++)
       {
         if (d_dftParamsPtr->verbosity >= 4)
           pcout << "eigen value " << std::setw(3) << i << ": "
@@ -479,13 +479,13 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE
   // chebyshev solver
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::kohnShamEigenSpaceCompute(
-    const unsigned int spinType,
-    const unsigned int kPointIndex,
+    const dftfe::uInt spinType,
+    const dftfe::uInt kPointIndex,
     KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
                      &kohnShamDFTEigenOperator,
     elpaScalaManager &elpaScala,
@@ -493,7 +493,7 @@ namespace dftfe
                         &subspaceIterationSolverDevice,
     std::vector<double> &residualNormWaveFunctions,
     const bool           computeResidual,
-    const unsigned int   numberRayleighRitzAvoidancePasses,
+    const dftfe::uInt    numberRayleighRitzAvoidancePasses,
     const bool           useMixedPrec,
     const bool           isFirstScf)
   {
@@ -506,7 +506,7 @@ namespace dftfe
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
     if (d_dftParamsPtr->useSinglePrecCheby ||
         d_dftParamsPtr->useReformulatedChFSI)
-      for (unsigned int i = 0; i < d_numEigenValues; i++)
+      for (dftfe::uInt i = 0; i < d_numEigenValues; i++)
         {
           eigenValuesTemp[i] =
             eigenValues[kPointIndex][spinType * d_numEigenValues + i];
@@ -520,7 +520,7 @@ namespace dftfe
                                          spinType]);
 
 
-    const unsigned int wfcStartIndex =
+    const dftfe::uInt wfcStartIndex =
       d_dftParamsPtr->solverMode == "BANDS" ?
         0 :
         ((1 + d_dftParamsPtr->spinPolarized) * kPointIndex + spinType) *
@@ -555,7 +555,7 @@ namespace dftfe
     // copy the eigenValues and corresponding residual norms back to data
     // members
     //
-    for (unsigned int i = 0; i < d_numEigenValues; i++)
+    for (dftfe::uInt i = 0; i < d_numEigenValues; i++)
       {
         if (d_dftParamsPtr->verbosity >= 4)
           pcout << "eigen value " << std::setw(3) << i << ": "
@@ -580,14 +580,14 @@ namespace dftfe
 #endif
 
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     kohnShamEigenSpaceFirstOrderDensityMatResponse(
-      const unsigned int spinType,
-      const unsigned int kPointIndex,
+      const dftfe::uInt spinType,
+      const dftfe::uInt kPointIndex,
       KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::HOST>
                        &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala)
@@ -613,7 +613,7 @@ namespace dftfe
     //       matrix_free_data.get_vector_partitioner()->locally_owned_size());
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
-    for (unsigned int i = 0; i < d_numEigenValues; i++)
+    for (dftfe::uInt i = 0; i < d_numEigenValues; i++)
       {
         eigenValuesTemp[i] =
           eigenValues[kPointIndex][spinType * d_numEigenValues + i];
@@ -660,14 +660,14 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE
   // chebyshev solver
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
     kohnShamEigenSpaceFirstOrderDensityMatResponse(
-      const unsigned int spinType,
-      const unsigned int kPointIndex,
+      const dftfe::uInt spinType,
+      const dftfe::uInt kPointIndex,
       KohnShamDFTBaseOperator<dftfe::utils::MemorySpace::DEVICE>
                        &kohnShamDFTEigenOperator,
       elpaScalaManager &elpaScala,
@@ -682,7 +682,7 @@ namespace dftfe
       }
 
     std::vector<double> eigenValuesTemp(d_numEigenValues, 0.0);
-    for (unsigned int i = 0; i < d_numEigenValues; i++)
+    for (dftfe::uInt i = 0; i < d_numEigenValues; i++)
       {
         eigenValuesTemp[i] =
           eigenValues[kPointIndex][spinType * d_numEigenValues + i];
@@ -716,8 +716,8 @@ namespace dftfe
 
   // compute the maximum of the residual norm of the highest state of interest
   // across all K points
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -725,13 +725,13 @@ namespace dftfe
       const std::vector<std::vector<double>>
         &residualNormWaveFunctionsAllkPoints,
       const std::vector<std::vector<double>> &eigenValuesAllkPoints,
-      const unsigned int                      highestState,
+      const dftfe::uInt                       highestState,
       std::vector<double>                    &maxResidualsAllkPoints)
   {
     double maxHighestOccupiedStateResNorm = -1e+6;
     maxResidualsAllkPoints.clear();
     maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size());
-    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+    for (dftfe::Int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
         maxResidualsAllkPoints[kPoint] = *std::max_element(
           residualNormWaveFunctionsAllkPoints[kPoint].begin(),
@@ -747,8 +747,8 @@ namespace dftfe
   }
   // compute the maximum of the residual norm of the highest occupied state
   // among all k points
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   double
   dftClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -762,17 +762,17 @@ namespace dftfe
     double maxHighestOccupiedStateResNorm = -1e+6;
     maxResidualsAllkPoints.clear();
     maxResidualsAllkPoints.resize(eigenValuesAllkPoints.size(), -1e+6);
-    for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
+    for (dftfe::Int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint)
       {
-        unsigned int highestOccupiedState = 0;
+        dftfe::uInt highestOccupiedState = 0;
 
-        for (unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
+        for (dftfe::uInt i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
           {
             if (d_partialOccupancies[kPoint][i] > 1e-3)
               highestOccupiedState = i;
           }
 
-        for (unsigned int i = 0; i <= highestOccupiedState; i++)
+        for (dftfe::uInt i = 0; i <= highestOccupiedState; i++)
           {
             if (residualNormWaveFunctionsAllkPoints[kPoint][i] >
                 maxResidualsAllkPoints[kPoint])

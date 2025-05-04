@@ -22,16 +22,16 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::computeFloatingAtomsForces()
   {
-    unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
+    dftfe::uInt vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     const std::vector<std::vector<double>> &atomLocations =
       dftPtr->atomLocations;
-    const int numberGlobalAtoms = atomLocations.size();
+    const dftfe::Int numberGlobalAtoms = atomLocations.size();
     d_globalAtomsForces.clear();
     d_globalAtomsForces.resize(numberGlobalAtoms * 3, 0.0);
 
@@ -70,8 +70,8 @@ namespace dftfe
 #endif
 
     // add to total Gaussian force
-    for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
-      for (unsigned int idim = 0; idim < 3; idim++)
+    for (dftfe::uInt iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+      for (dftfe::uInt idim = 0; idim < 3; idim++)
 #ifdef USE_COMPLEX
         d_globalAtomsForces[iAtom * 3 + idim] =
           d_forceAtomsFloating[iAtom * 3 + idim] +

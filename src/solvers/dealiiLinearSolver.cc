@@ -40,8 +40,8 @@ namespace dftfe
   void
   dealiiLinearSolver::solve(dealiiLinearSolverProblem &problem,
                             const double               absTolerance,
-                            const unsigned int         maxNumberIterations,
-                            const int                  debugLevel,
+                            const dftfe::uInt          maxNumberIterations,
+                            const dftfe::Int           debugLevel,
                             bool                       distributeFlag)
   {
     int this_process;
@@ -64,8 +64,8 @@ namespace dftfe
 
     distributedCPUVec<double> &x = problem.getX();
 
-    double res = 0.0, initial_res = 0.0;
-    int    it = 0;
+    double     res = 0.0, initial_res = 0.0;
+    dftfe::Int it = 0;
 
     try
       {
@@ -99,7 +99,7 @@ namespace dftfe
             else
               {
                 // gvec.equ(-1., rhs);
-                for (unsigned int i = 0; i < gvec.locally_owned_size(); i++)
+                for (dftfe::uInt i = 0; i < gvec.locally_owned_size(); i++)
                   gvec.local_element(i) = -rhs.local_element(i);
               }
 
@@ -138,7 +138,7 @@ namespace dftfe
                             dealii::ExcMessage("Division by zero\n"));
                 alpha = gh / alpha;
 
-                for (unsigned int i = 0; i < x.locally_owned_size(); i++)
+                for (dftfe::uInt i = 0; i < x.locally_owned_size(); i++)
                   x.local_element(i) += alpha * dvec.local_element(i);
                 // x.add(alpha, dvec);
 

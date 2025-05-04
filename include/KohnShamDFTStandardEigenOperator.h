@@ -56,9 +56,9 @@ namespace dftfe
                                                pseudopotentialClassPtr,
       std::shared_ptr<excManager<memorySpace>> excManagerPtr,
       dftParameters                           *dftParamsPtr,
-      const unsigned int                       densityQuadratureID,
-      const unsigned int                       lpspQuadratureID,
-      const unsigned int                       feOrderPlusOneQuadratureID,
+      const dftfe::uInt                        densityQuadratureID,
+      const dftfe::uInt                        lpspQuadratureID,
+      const dftfe::uInt                        feOrderPlusOneQuadratureID,
       const MPI_Comm                          &mpi_comm_parent,
       const MPI_Comm                          &mpi_comm_domain);
 

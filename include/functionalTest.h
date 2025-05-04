@@ -33,11 +33,11 @@ namespace functionalTest
     const MPI_Comm                         &mpi_comm_domain,
     const MPI_Comm                         &interpoolcomm,
     const MPI_Comm                         &interbandgroup_comm,
-    const unsigned int                      FEOrder,
+    const dftfe::uInt                       FEOrder,
     const dftfe::dftParameters             &dftParams,
     const std::vector<std::vector<double>> &atomLocations,
     const std::vector<std::vector<double>> &imageAtomLocations,
-    const std::vector<int>                 &imageIds,
+    const std::vector<dftfe::Int>          &imageIds,
     const std::vector<double>              &nearestAtomDistances,
     const std::vector<std::vector<double>> &domainBoundingVectors,
     const bool                              generateSerialTria,
@@ -56,13 +56,13 @@ namespace functionalTest
                                                             BLASWrapperPtr,
     std::vector<const dealii::AffineConstraints<double> *> &constraintMatrixVec,
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                      &inputVec,
-    const unsigned int matrixFreeVectorComponent,
-    const unsigned int matrixFreeQuadratureComponentRhsDensity,
-    const unsigned int matrixFreeQuadratureComponentAX,
-    const unsigned int verbosity,
-    const MPI_Comm    &mpi_comm_parent,
-    const MPI_Comm    &mpi_comm_domain);
+                     &inputVec,
+    const dftfe::uInt matrixFreeVectorComponent,
+    const dftfe::uInt matrixFreeQuadratureComponentRhsDensity,
+    const dftfe::uInt matrixFreeQuadratureComponentAX,
+    const dftfe::uInt verbosity,
+    const MPI_Comm   &mpi_comm_parent,
+    const MPI_Comm   &mpi_comm_domain);
 
   void
   testAccumulateInsert(const MPI_Comm &mpiComm);

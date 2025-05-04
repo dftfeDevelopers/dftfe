@@ -30,7 +30,7 @@
 #  include <cstring>
 
 
-int
+dftfe::Int
 MDI_Plugin_init_dftfe(void *plugin_state)
 {
   MDI_Set_plugin_state(plugin_state);
@@ -42,8 +42,8 @@ MDI_Plugin_init_dftfe(void *plugin_state)
   // open DFT-FE
   dftfe::dftfeWrapper::globalHandlesInitialize(mpi_world_comm);
 
-  int    mdi_argc;
-  char **mdi_argv;
+  dftfe::Int mdi_argc;
+  char     **mdi_argv;
   // launch MDI engine in endless loop
   dftfe::MDIEngine mdiEngine(mpi_world_comm, mdi_argc, mdi_argv);
 
@@ -52,7 +52,7 @@ MDI_Plugin_init_dftfe(void *plugin_state)
   return 0;
 }
 
-int
+dftfe::Int
 MDI_Plugin_open_dftfe(void *plugin_state)
 {
   MDI_Set_plugin_state(plugin_state);
@@ -64,8 +64,8 @@ MDI_Plugin_open_dftfe(void *plugin_state)
   // open DFT-FE
   dftfe::dftfeWrapper::globalHandlesInitialize(mpi_world_comm);
 
-  int    mdi_argc;
-  char **mdi_argv;
+  dftfe::Int mdi_argc;
+  char     **mdi_argv;
   // launch MDI engine in endless loop
   dftfe::MDIEngine mdiEngine(mpi_world_comm, mdi_argc, mdi_argv);
 
@@ -73,7 +73,7 @@ MDI_Plugin_open_dftfe(void *plugin_state)
 }
 
 
-int
+dftfe::Int
 MDI_Plugin_close_dftfe()
 {
   dftfe::dftfeWrapper::globalHandlesFinalize();
@@ -81,7 +81,7 @@ MDI_Plugin_close_dftfe()
 }
 
 
-int
+dftfe::Int
 dftfe_execute_mdi_command(const char *command, MDI_Comm comm, void *class_obj)
 {
   auto mdi_engine = (dftfe::MDIEngine *)class_obj;

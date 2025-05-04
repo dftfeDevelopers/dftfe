@@ -28,6 +28,13 @@ namespace dftfe
     laplacianSpinDown
   };
 
+  enum class WfcDescriptorDataAttributes
+  {
+    tauTotal,
+    tauSpinUp,
+    tauSpinDown
+  };
+
   template <dftfe::utils::MemorySpace memorySpace>
   class AuxDensityMatrix
   {
@@ -38,11 +45,17 @@ namespace dftfe
      */
     virtual void
     applyLocalOperations(
-      const std::pair<unsigned int, unsigned int> &quadIndexRange,
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
       std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
         &densityData) = 0;
 
 
+
+    virtual void
+    applyLocalOperations(
+      const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
+      std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+        &wfcData) = 0;
 
     /**
      * @brief Compute aux basis overlap matrix batchwise contribution from
@@ -67,8 +80,8 @@ namespace dftfe
       const std::unordered_map<std::string, std::vector<dataTypes::number>>
         &projectionInputsDataType,
       const std::unordered_map<std::string, std::vector<double>>
-               &projectionInputsReal,
-      const int iSpin) = 0;
+                      &projectionInputsReal,
+      const dftfe::Int iSpin) = 0;
 
     /**
      * @brief for MPI accumulation

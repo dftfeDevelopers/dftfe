@@ -38,7 +38,7 @@ namespace dftfe
    *
    * @author Gourab Panigrahi
    */
-  template <unsigned int FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   class kerkerSolverProblemDevice : public linearSolverProblemDevice
   {
   public:
@@ -64,8 +64,8 @@ namespace dftfe
       dealii::AffineConstraints<double> &constraintMatrix,
       distributedCPUVec<double>         &x,
       double                             kerkerMixingParameter,
-      const unsigned int                 matrixFreeVectorComponent,
-      const unsigned int                 matrixFreeQuadratureComponent);
+      const dftfe::uInt                  matrixFreeVectorComponent,
+      const dftfe::uInt                  matrixFreeQuadratureComponent);
 
 
     /**
@@ -196,7 +196,7 @@ namespace dftfe
 
     // number of cells local to each mpi task, number of degrees of freedom
     // locally owned and total degrees of freedom including ghost
-    int d_nLocalCells, d_xLocalDof, d_xLen;
+    dftfe::Int d_nLocalCells, d_xLocalDof, d_xLen;
 
     // kerker mixing constant
     double d_gamma;
@@ -204,13 +204,14 @@ namespace dftfe
     // shape function value, gradient, jacobian and map for matrixfree
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunction, d_jacobianFactor;
-    dftfe::utils::MemoryStorage<int, dftfe::utils::MemorySpace::DEVICE> d_map;
+    dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
+      d_map;
 
     // Pointers to shape function value, gradient, jacobian and map for
     // matrixfree
-    double *d_shapeFunctionPtr;
-    double *d_jacobianFactorPtr;
-    int    *d_mapPtr;
+    double     *d_shapeFunctionPtr;
+    double     *d_jacobianFactorPtr;
+    dftfe::Int *d_mapPtr;
 
     // constraints
     dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>
@@ -218,10 +219,10 @@ namespace dftfe
 
     /// matrix free index required to access the DofHandler and
     /// dealii::AffineConstraints<double> objects corresponding to the problem
-    unsigned int d_matrixFreeVectorComponent;
+    dftfe::uInt d_matrixFreeVectorComponent;
 
     /// matrix free quadrature index
-    unsigned int d_matrixFreeQuadratureComponent;
+    dftfe::uInt d_matrixFreeQuadratureComponent;
 
 
     /// pointer to electron density cell and grad residual data
@@ -239,8 +240,8 @@ namespace dftfe
 
     const MPI_Comm             d_mpiCommParent;
     const MPI_Comm             mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
   };
 

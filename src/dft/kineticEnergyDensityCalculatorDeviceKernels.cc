@@ -25,28 +25,28 @@ namespace dftfe
   namespace
   {
     __global__ void
-    computeKedGradKedFromInterpolatedValues(const unsigned int numVectors,
-                                            const unsigned int numCells,
-                                            const unsigned int nQuadsPerCell,
-                                            const double       kCoordSq,
-                                            double            *kCoord,
-                                            double            *wfcContributions,
+    computeKedGradKedFromInterpolatedValues(const dftfe::uInt numVectors,
+                                            const dftfe::uInt numCells,
+                                            const dftfe::uInt nQuadsPerCell,
+                                            const double      kCoordSq,
+                                            double           *kCoord,
+                                            double           *wfcContributions,
                                             double *gradwfcContributions,
                                             double *kedCellsWfcContributions)
     {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
-      const unsigned int numberEntries     = numEntriesPerCell * numCells;
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-      for (unsigned int index = globalThreadId; index < numberEntries;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
           const double psi = wfcContributions[index];
 
-          unsigned int iCell          = index / numEntriesPerCell;
-          unsigned int intraCellIndex = index - iCell * numEntriesPerCell;
-          unsigned int iQuad          = intraCellIndex / numVectors;
-          unsigned int iVec           = intraCellIndex - iQuad * numVectors;
+          dftfe::uInt  iCell          = index / numEntriesPerCell;
+          dftfe::uInt  intraCellIndex = index - iCell * numEntriesPerCell;
+          dftfe::uInt  iQuad          = intraCellIndex / numVectors;
+          dftfe::uInt  iVec           = intraCellIndex - iQuad * numVectors;
           const double gradPsiX       = //[iVec * numCells * numVectors + + 0]
             gradwfcContributions[intraCellIndex +
                                  numEntriesPerCell * 3 * iCell];
@@ -67,30 +67,30 @@ namespace dftfe
 
     __global__ void
     computeKedGradKedFromInterpolatedValues(
-      const unsigned int                 numVectors,
-      const unsigned int                 numCells,
-      const unsigned int                 nQuadsPerCell,
+      const dftfe::uInt                  numVectors,
+      const dftfe::uInt                  numCells,
+      const dftfe::uInt                  nQuadsPerCell,
       const double                       kCoordSq,
       double                            *kCoord,
       dftfe::utils::deviceDoubleComplex *wfcContributions,
       dftfe::utils::deviceDoubleComplex *gradwfcContributions,
       double                            *kedCellsWfcContributions)
     {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
-      const unsigned int numberEntries     = numEntriesPerCell * numCells;
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-      for (unsigned int index = globalThreadId; index < numberEntries;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
           const dftfe::utils::deviceDoubleComplex psi = wfcContributions[index];
           kedCellsWfcContributions[index] =
             kCoordSq * (psi.x * psi.x + psi.y * psi.y);
 
-          unsigned int iCell          = index / numEntriesPerCell;
-          unsigned int intraCellIndex = index - iCell * numEntriesPerCell;
-          unsigned int iQuad          = intraCellIndex / numVectors;
-          unsigned int iVec           = intraCellIndex - iQuad * numVectors;
+          dftfe::uInt iCell          = index / numEntriesPerCell;
+          dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
+          dftfe::uInt iQuad          = intraCellIndex / numVectors;
+          dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
           const dftfe::utils::deviceDoubleComplex gradPsiX =
             gradwfcContributions[intraCellIndex +
                                  numEntriesPerCell * 3 * iCell];
@@ -124,23 +124,23 @@ namespace dftfe
   void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
-                                               &BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    const unsigned int                          nQuadsPerCell,
-    double                                     *partialOccupVec,
-    double                                     *kcoord,
-    NumberType                                 *wfcQuadPointData,
-    NumberType                                 *gradWfcQuadPointData,
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *partialOccupVec,
+    double                                   *kcoord,
+    NumberType                               *wfcQuadPointData,
+    NumberType                               *gradWfcQuadPointData,
     double         *kineticEnergyDensityCellsWfcContributions,
     double         *kineticEnergyDensity,
     const MPI_Comm &mpiCommDomain)
   {
-    const unsigned int cellsBlockSize      = cellRange.second - cellRange.first;
-    const unsigned int vectorsBlockSize    = vecRange.second - vecRange.first;
-    const double       scalarCoeffAlphaKed = 1.0;
-    const double       scalarCoeffBetaKed  = 1.0;
-    const double       kcoordSq =
+    const dftfe::uInt cellsBlockSize      = cellRange.second - cellRange.first;
+    const dftfe::uInt vectorsBlockSize    = vecRange.second - vecRange.first;
+    const double      scalarCoeffAlphaKed = 1.0;
+    const double      scalarCoeffBetaKed  = 1.0;
+    const double      kcoordSq =
       kcoord[0] * kcoord[0] + kcoord[1] * kcoord[1] + kcoord[2] * kcoord[2];
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
@@ -150,22 +150,7 @@ namespace dftfe
     kCoordStdVec[1] = kcoord[1];
     kCoordStdVec[2] = kcoord[2];
     kCoordDevice.copyFrom(kCoordStdVec);
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    computeKedGradKedFromInterpolatedValues<<<
-      (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-        dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
-      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      vectorsBlockSize,
-      cellsBlockSize,
-      nQuadsPerCell,
-      kcoordSq,
-      dftfe::utils::makeDataTypeDeviceCompatible(kCoordDevice.data()),
-      dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        kineticEnergyDensityCellsWfcContributions));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
+    DFTFE_LAUNCH_KERNEL(
       computeKedGradKedFromInterpolatedValues,
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
@@ -181,7 +166,6 @@ namespace dftfe
       dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
       dftfe::utils::makeDataTypeDeviceCompatible(
         kineticEnergyDensityCellsWfcContributions));
-#endif
     BLASWrapperPtr.xgemm('T',
                          'N',
                          cellsBlockSize * nQuadsPerCell,
@@ -199,14 +183,14 @@ namespace dftfe
   template void
   computeKineticEnergyDensityFromInterpolatedValues(
     const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
-                                               &BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    const unsigned int                          nQuadsPerCell,
-    double                                     *partialOccupVec,
-    double                                     *kcoord,
-    dataTypes::number                          *wfcQuadPointData,
-    dataTypes::number                          *gradWfcQuadPointData,
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *partialOccupVec,
+    double                                   *kcoord,
+    dataTypes::number                        *wfcQuadPointData,
+    dataTypes::number                        *gradWfcQuadPointData,
     double         *kineticEnergyCellsWfcContributions,
     double         *kineticEnergyDensity,
     const MPI_Comm &mpiCommDomain);

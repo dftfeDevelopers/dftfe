@@ -56,17 +56,17 @@ namespace dftfe
      * with secant based line search. In future releases, we will have more
      * options like BFGS solver.
      *
-     * @return int total geometry update calls
+     * @return dftfe::Int total geometry update calls
      */
-    int
+    dftfe::Int
     run();
 
     /**
      * @brief Obtain number of unknowns (total number of force components to be relaxed).
      *
-     * @return int Number of unknowns.
+     * @return dftfe::Int Number of unknowns.
      */
-    unsigned int
+    dftfe::uInt
     getNumberUnknowns() const;
 
     /**
@@ -118,14 +118,14 @@ namespace dftfe
     solution(std::vector<double> &solution);
 
     /// not implemented
-    std::vector<unsigned int>
+    std::vector<dftfe::uInt>
     getUnknownCountFlag() const;
 
   private:
     /// storage for relaxation flags and external force components for each
     /// global atom. each atom has three flags corresponding to three components
     /// (0- no relax, 1- relax) and three external force components
-    std::vector<unsigned int>        d_relaxationFlags;
+    std::vector<dftfe::uInt>         d_relaxationFlags;
     std::vector<double>              d_externalForceOnAtom;
     std::vector<std::vector<double>> d_atomLocationsInitial;
     std::string                      d_restartPath;
@@ -133,21 +133,21 @@ namespace dftfe
     bool                             d_isRestart;
     bool                             d_solverRestart;
     bool                             d_isScfRestart;
-    int                              d_solver;
+    dftfe::Int                       d_solver;
     /// maximum force component to be relaxed
     double d_maximumAtomForceToBeRelaxed;
 
     /// total number of calls to update()
-    int d_totalUpdateCalls;
+    dftfe::Int d_totalUpdateCalls;
 
     /// pointer to dft class
     dftBase                         *d_dftPtr;
     std::unique_ptr<nonLinearSolver> d_nonLinearSolverPtr;
 
     /// parallel communication objects
-    const MPI_Comm     mpi_communicator;
-    const unsigned int n_mpi_processes;
-    const unsigned int this_mpi_process;
+    const MPI_Comm    mpi_communicator;
+    const dftfe::uInt n_mpi_processes;
+    const dftfe::uInt this_mpi_process;
 
     /// conditional stream object
     dealii::ConditionalOStream pcout;

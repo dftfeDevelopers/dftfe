@@ -40,7 +40,7 @@ namespace dftfe
      *
      * @author Vishal Subramanian, Bikash Kanungo
      */
-    template <size_type dim>
+    template <dftfe::uInt dim>
     class Cell
     {
     public:
@@ -58,17 +58,17 @@ namespace dftfe
       getVertices(std::vector<std::vector<double>> &points) const;
 
       virtual void
-      getVertex(size_type i, std::vector<double> &point) const;
+      getVertex(dftfe::uInt i, std::vector<double> &point) const;
 
       virtual std::vector<double>
       getParametricPoint(const std::vector<double> &realPoint) const;
 
       virtual void
-      getShapeFuncValues(unsigned int               numPointsInCell,
+      getShapeFuncValues(dftfe::uInt                numPointsInCell,
                          const std::vector<double> &coordinatesOfPointsInCell,
                          std::vector<dataTypes::number> &shapeFuncValues,
-                         unsigned int cellShapeFuncStartIndex,
-                         unsigned int numDofsPerElement) const = 0;
+                         dftfe::uInt cellShapeFuncStartIndex,
+                         dftfe::uInt numDofsPerElement) const = 0;
 
     private:
       std::vector<double> d_lowerLeft, d_upperRight;

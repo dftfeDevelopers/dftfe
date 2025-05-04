@@ -4,6 +4,7 @@
 
 #include "CompositeData.h"
 #include <vector>
+#include <TypeConfig.h>
 
 namespace dftfe
 {
@@ -20,11 +21,11 @@ namespace dftfe
       virtual void
       getMPIDataType(MPI_Datatype *mpi_datatype) override;
 
-      virtual int
+      virtual dftfe::Int
       getNumberCharsPerCompositeData() override;
 
     private:
-      unsigned int        d_charspernum;
+      dftfe::uInt         d_charspernum;
       std::vector<double> d_vals;
     };
   } // namespace dftUtils

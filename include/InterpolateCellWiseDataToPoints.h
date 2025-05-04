@@ -73,8 +73,8 @@ namespace dftfe
         std::shared_ptr<InterpolateFromCellToLocalPoints<memorySpace>>>
                                               interpolateLocalObj,
       const std::vector<std::vector<double>> &targetPts,
-      const std::vector<unsigned int>        &numDofsPerElem,
-      const unsigned int                      verbosity,
+      const std::vector<dftfe::uInt>         &numDofsPerElem,
+      const dftfe::uInt                       verbosity,
       const MPI_Comm                         &mpiComm);
     /**
      * @brief This function interpolates from the data to the points passed to the constructor.
@@ -107,13 +107,13 @@ namespace dftfe
       const std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
                                                               &BLASWrapperPtr,
       const dftfe::linearAlgebra::MultiVector<T, memorySpace> &inputVec,
-      const unsigned int                                       numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type, memorySpace>
+      const dftfe::uInt                                        numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
                                                   &mapVecToCells,
       dftfe::utils::MemoryStorage<T, memorySpace> &outputData,
-      const unsigned int                           blockSizeOfInputData,
-      const unsigned int                           blockSizeOfOutputData,
-      const unsigned int                           startIndexOfInputData,
+      const dftfe::uInt                            blockSizeOfInputData,
+      const dftfe::uInt                            blockSizeOfOutputData,
+      const dftfe::uInt                            startIndexOfInputData,
       bool                                         resizeData = false);
 
     /**
@@ -143,16 +143,16 @@ namespace dftfe
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
                                  &BLASWrapperPtr,
       const distributedCPUVec<T> &inputVec,
-      const unsigned int          numberOfVectors,
-      const dftfe::utils::MemoryStorage<dftfe::global_size_type,
+      const dftfe::uInt           numberOfVectors,
+      const dftfe::utils::MemoryStorage<dftfe::uInt,
                                         dftfe::utils::MemorySpace::HOST>
         &mapVecToCells,
       dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
-                        &outputData,
-      const unsigned int blockSizeOfInputData,
-      const unsigned int blockSizeOfOutputData,
-      const unsigned int startIndexOfInputData,
-      bool               resizeData = false);
+                       &outputData,
+      const dftfe::uInt blockSizeOfInputData,
+      const dftfe::uInt blockSizeOfOutputData,
+      const dftfe::uInt startIndexOfInputData,
+      bool              resizeData = false);
 
   private:
     void
@@ -162,8 +162,8 @@ namespace dftfe
     dftfe::utils::MapPointsToCells<3, 8>
       d_mapPoints; /// TODO check if M=8 is optimal
                    //    std::vector<T> d_shapeFuncValues;
-    std::vector<size_type> d_cellPointStartIndex, d_cellShapeFuncStartIndex;
-    const MPI_Comm         d_mpiComm;
+    std::vector<dftfe::uInt> d_cellPointStartIndex, d_cellShapeFuncStartIndex;
+    const MPI_Comm           d_mpiComm;
 
     std::shared_ptr<
       dftfe::utils::mpi::MPIPatternP2P<dftfe::utils::MemorySpace::HOST>>
@@ -179,37 +179,37 @@ namespace dftfe
       d_mpiCommPtrMemSpace;
 
 
-    dftfe::utils::MemoryStorage<global_size_type, memorySpace>
+    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
       d_mapPointToProcLocalMemSpace;
 
 
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       d_cellLevelParentNodalMemSpace;
 
-    size_type                 d_numPointsLocal;
-    size_type                 d_numCells;
-    std::vector<unsigned int> d_numDofsPerElement;
-    std::vector<unsigned int> d_cumulativeDofs;
-    size_type                 totalDofsInCells;
+    dftfe::uInt              d_numPointsLocal;
+    dftfe::uInt              d_numCells;
+    std::vector<dftfe::uInt> d_numDofsPerElement;
+    std::vector<dftfe::uInt> d_cumulativeDofs;
+    dftfe::uInt              totalDofsInCells;
 
-    std::vector<size_type> d_numPointsInCell;
+    std::vector<dftfe::uInt> d_numPointsInCell;
 
-    std::vector<std::vector<size_type>> d_mapCellLocalToProcLocal;
+    std::vector<std::vector<dftfe::uInt>> d_mapCellLocalToProcLocal;
 
 
-    size_type d_numLocalPtsSze;
+    dftfe::uInt d_numLocalPtsSze;
 
-    size_type d_pointsFoundInProc;
+    dftfe::uInt d_pointsFoundInProc;
 
-    std::vector<global_size_type>                 d_ghostGlobalIds;
-    std::pair<global_size_type, global_size_type> d_localRange;
+    std::vector<dftfe::uInt>            d_ghostGlobalIds;
+    std::pair<dftfe::uInt, dftfe::uInt> d_localRange;
 
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       d_tempOutputMemSpace;
 
     std::vector<std::shared_ptr<InterpolateFromCellToLocalPoints<memorySpace>>>
-                 d_interpolateLocalObj;
-    unsigned int d_verbosity;
+                d_interpolateLocalObj;
+    dftfe::uInt d_verbosity;
   }; // end of class InterpolateCellWiseDataToPoints
 } // end of namespace dftfe
 

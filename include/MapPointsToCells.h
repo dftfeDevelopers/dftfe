@@ -44,11 +44,11 @@ namespace dftfe
      *
      * @author Vishal Subramanian, Bikash Kanungo
      */
-    template <size_type dim, size_type M>
+    template <dftfe::uInt dim, dftfe::uInt M>
     class MapPointsToCells
     {
     public:
-      MapPointsToCells(const unsigned int verbosity, const MPI_Comm &mpiComm);
+      MapPointsToCells(const dftfe::uInt verbosity, const MPI_Comm &mpiComm);
 
       /**
        * @brief The init().
@@ -68,18 +68,18 @@ namespace dftfe
       void
       init(std::vector<std::shared_ptr<const Cell<dim>>> srcCells,
            const std::vector<std::vector<double>>       &targetPts,
-           std::vector<std::vector<double>>    &mapCellsToRealCoordinates,
-           std::vector<std::vector<size_type>> &mapCellLocalToProcLocal,
-           std::pair<global_size_type, global_size_type> &locallyOwnedRange,
-           std::vector<global_size_type>                 &ghostGlobalIds,
-           const double                                   paramCoordsTol);
+           std::vector<std::vector<double>>      &mapCellsToRealCoordinates,
+           std::vector<std::vector<dftfe::uInt>> &mapCellLocalToProcLocal,
+           std::pair<dftfe::uInt, dftfe::uInt>   &locallyOwnedRange,
+           std::vector<dftfe::uInt>              &ghostGlobalIds,
+           const double                           paramCoordsTol);
 
 
     private:
       const MPI_Comm d_mpiComm;
       int            d_numMPIRank;
       int            d_thisRank;
-      unsigned int   d_verbosity;
+      dftfe::uInt    d_verbosity;
 
     }; // end of class MapPointsToCells
   }    // end of namespace utils

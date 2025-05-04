@@ -94,14 +94,14 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excDensityLLMGGAClass<memorySpace>::computeRhoTauDependentXCData(
-    AuxDensityMatrix<memorySpace>               &auxDensityMatrix,
-    const std::pair<unsigned int, unsigned int> &quadIndexRange,
+    AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
+    const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &xDataOut,
     std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
       &cDataOut) const
   {
-    const unsigned int nquad = quadIndexRange.second - quadIndexRange.first;
+    const dftfe::uInt nquad = quadIndexRange.second - quadIndexRange.first;
     std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
     for (const auto &element : xDataOut)
       outputDataAttributes.push_back(element.first);
@@ -624,9 +624,9 @@ namespace dftfe
     const dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
                                                                       &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-    const unsigned int inputVecSize,
-    const unsigned int kPointIndex,
-    const unsigned int spinIndex)
+    const dftfe::uInt inputVecSize,
+    const dftfe::uInt kPointIndex,
+    const dftfe::uInt spinIndex)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -635,9 +635,9 @@ namespace dftfe
     const dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
                                                                           &src,
     dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace> &dst,
-    const unsigned int inputVecSize,
-    const unsigned int kPointIndex,
-    const unsigned int spinIndex)
+    const dftfe::uInt inputVecSize,
+    const dftfe::uInt kPointIndex,
+    const dftfe::uInt spinIndex)
   {}
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -671,7 +671,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   excDensityLLMGGAClass<memorySpace>::reinitKPointDependentVariables(
-    unsigned int kPointIndex)
+    dftfe::uInt kPointIndex)
   {}
 
   template class excDensityLLMGGAClass<dftfe::utils::MemorySpace::HOST>;

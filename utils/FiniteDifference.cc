@@ -9,8 +9,8 @@ namespace dftfe
   {
     std::vector<double>
     FiniteDifference::getStencilGridOneVariableCentral(
-      const unsigned int totalStencilSize,
-      const double       h)
+      const dftfe::uInt totalStencilSize,
+      const double      h)
     {
       std::vector<double> stencil(totalStencilSize, 0);
 
@@ -19,7 +19,7 @@ namespace dftfe
                                      totalStencilSize % 2 == 1,
                                    errMsg);
 
-      for (unsigned int i = 0; i < totalStencilSize; i++)
+      for (dftfe::uInt i = 0; i < totalStencilSize; i++)
         stencil[i] = (-std::floor(totalStencilSize / 2) * h + i * h);
 
       return stencil;
@@ -28,11 +28,11 @@ namespace dftfe
 
     void
     FiniteDifference::firstOrderDerivativeOneVariableCentral(
-      const unsigned int totalStencilSize,
-      const double       h,
-      const unsigned int numQuadPoints,
-      const double      *stencilDataAllQuadPoints,
-      double            *firstOrderDerivative)
+      const dftfe::uInt totalStencilSize,
+      const double      h,
+      const dftfe::uInt numQuadPoints,
+      const double     *stencilDataAllQuadPoints,
+      double           *firstOrderDerivative)
     {
       std::string errMsg = "Stencil size invalid. ";
       dftfe::utils::throwException(totalStencilSize > 2 &&
@@ -42,7 +42,7 @@ namespace dftfe
       switch (totalStencilSize)
         {
           case 3:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (-1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -52,7 +52,7 @@ namespace dftfe
               }
             break;
           case 5:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -66,7 +66,7 @@ namespace dftfe
               }
             break;
           case 7:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (-1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -84,7 +84,7 @@ namespace dftfe
               }
             break;
           case 9:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (3.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -106,7 +106,7 @@ namespace dftfe
               }
             break;
           case 11:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (-2.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -132,7 +132,7 @@ namespace dftfe
               }
             break;
           case 13:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (5.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -170,11 +170,11 @@ namespace dftfe
 
     void
     FiniteDifference::firstOrderDerivativeOneVariableCentral(
-      const unsigned int totalStencilSize,
-      const double      *h,
-      const unsigned int numQuadPoints,
-      const double      *stencilDataAllQuadPoints,
-      double            *firstOrderDerivative)
+      const dftfe::uInt totalStencilSize,
+      const double     *h,
+      const dftfe::uInt numQuadPoints,
+      const double     *stencilDataAllQuadPoints,
+      double           *firstOrderDerivative)
     {
       std::string errMsg = "Stencil size invalid. ";
       dftfe::utils::throwException(totalStencilSize > 2 &&
@@ -184,7 +184,7 @@ namespace dftfe
       switch (totalStencilSize)
         {
           case 3:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (-1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -194,7 +194,7 @@ namespace dftfe
               }
             break;
           case 5:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -208,7 +208,7 @@ namespace dftfe
               }
             break;
           case 7:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (-1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -226,7 +226,7 @@ namespace dftfe
               }
             break;
           case 9:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (3.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -248,7 +248,7 @@ namespace dftfe
               }
             break;
           case 11:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (-2.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -274,7 +274,7 @@ namespace dftfe
               }
             break;
           case 13:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 firstOrderDerivative[iquad] =
                   (5.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -312,11 +312,11 @@ namespace dftfe
 
     void
     FiniteDifference::secondOrderDerivativeOneVariableCentral(
-      const unsigned int totalStencilSize,
-      const double       h,
-      const unsigned int numQuadPoints,
-      const double      *stencilDataAllQuadPoints,
-      double            *secondOrderDerivative)
+      const dftfe::uInt totalStencilSize,
+      const double      h,
+      const dftfe::uInt numQuadPoints,
+      const double     *stencilDataAllQuadPoints,
+      double           *secondOrderDerivative)
     {
       std::string errMsg = "Stencil size invalid. ";
       dftfe::utils::throwException(totalStencilSize > 2 &&
@@ -326,7 +326,7 @@ namespace dftfe
       switch (totalStencilSize)
         {
           case 3:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -338,7 +338,7 @@ namespace dftfe
               }
             break;
           case 5:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (-1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -354,7 +354,7 @@ namespace dftfe
               }
             break;
           case 7:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (2.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -374,7 +374,7 @@ namespace dftfe
               }
             break;
           case 9:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (-9.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -398,7 +398,7 @@ namespace dftfe
               }
             break;
           case 11:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (8.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -426,7 +426,7 @@ namespace dftfe
               }
             break;
           case 13:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (-50.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -466,11 +466,11 @@ namespace dftfe
 
     void
     FiniteDifference::secondOrderDerivativeOneVariableCentral(
-      const unsigned int totalStencilSize,
-      const double      *h,
-      const unsigned int numQuadPoints,
-      const double      *stencilDataAllQuadPoints,
-      double            *secondOrderDerivative)
+      const dftfe::uInt totalStencilSize,
+      const double     *h,
+      const dftfe::uInt numQuadPoints,
+      const double     *stencilDataAllQuadPoints,
+      double           *secondOrderDerivative)
     {
       std::string errMsg = "Stencil size invalid. ";
       dftfe::utils::throwException(totalStencilSize > 2 &&
@@ -480,7 +480,7 @@ namespace dftfe
       switch (totalStencilSize)
         {
           case 3:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -492,7 +492,7 @@ namespace dftfe
               }
             break;
           case 5:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (-1.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -508,7 +508,7 @@ namespace dftfe
               }
             break;
           case 7:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (2.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -528,7 +528,7 @@ namespace dftfe
               }
             break;
           case 9:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (-9.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +
@@ -552,7 +552,7 @@ namespace dftfe
               }
             break;
           case 11:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (8.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] -
@@ -580,7 +580,7 @@ namespace dftfe
               }
             break;
           case 13:
-            for (unsigned int iquad = 0; iquad < numQuadPoints; iquad++)
+            for (dftfe::uInt iquad = 0; iquad < numQuadPoints; iquad++)
               {
                 secondOrderDerivative[iquad] =
                   (-50.0 * stencilDataAllQuadPoints[iquad * totalStencilSize] +

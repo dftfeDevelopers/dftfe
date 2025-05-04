@@ -26,14 +26,14 @@ namespace dftfe
   // Constructor.
   //
   cgPRPNonLinearSolver::cgPRPNonLinearSolver(
-    const unsigned int maxNumberIterations,
-    const unsigned int debugLevel,
-    const MPI_Comm    &mpi_comm_parent,
-    const double       lineSearchTolerance,
-    const unsigned int lineSearchMaxIterations,
-    const double       lineSearchDampingParameter,
-    const double       maxIncrementSolLinf,
-    const bool         isCurvatureOnlyLineSearchStoppingCondition)
+    const dftfe::uInt maxNumberIterations,
+    const dftfe::uInt debugLevel,
+    const MPI_Comm   &mpi_comm_parent,
+    const double      lineSearchTolerance,
+    const dftfe::uInt lineSearchMaxIterations,
+    const double      lineSearchDampingParameter,
+    const double      maxIncrementSolLinf,
+    const bool        isCurvatureOnlyLineSearchStoppingCondition)
     : d_lineSearchTolerance(lineSearchTolerance)
     , d_lineSearchMaxIterations(lineSearchMaxIterations)
     , d_lineSearchDampingParameter(lineSearchDampingParameter)
@@ -78,7 +78,7 @@ namespace dftfe
     //
     // iterate over unknowns
     //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       {
         const double factor = d_unknownCountFlag[i];
         const double r      = -d_gradient[i];
@@ -110,7 +110,7 @@ namespace dftfe
     //
     // iterate over unknowns
     //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       {
         const double factor    = d_unknownCountFlag[i];
         const double direction = d_conjugateDirection[i];
@@ -139,7 +139,7 @@ namespace dftfe
     //
     // iterate over unknowns
     //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       {
         const double factor    = d_unknownCountFlag[i];
         const double direction = d_conjugateDirection[i];
@@ -166,7 +166,7 @@ namespace dftfe
     //
     // iterate over unknowns
     //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       {
         const double factor = d_unknownCountFlag[i];
         const double r      = -d_gradient[i];
@@ -202,7 +202,7 @@ namespace dftfe
     //
     // iterate over unknowns
     //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       {
         d_conjugateDirection[i] *= d_beta;
         d_conjugateDirection[i] += -d_gradient[i];
@@ -216,10 +216,10 @@ namespace dftfe
   cgPRPNonLinearSolver::save(const std::string &checkpointFileName)
   {
     std::vector<std::vector<double>> data;
-    for (unsigned int i = 0; i < d_conjugateDirection.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_conjugateDirection.size(); ++i)
       data.push_back(std::vector<double>(1, d_conjugateDirection[i]));
 
-    for (unsigned int i = 0; i < d_steepestDirectionOld.size(); ++i)
+    for (dftfe::uInt i = 0; i < d_steepestDirectionOld.size(); ++i)
       data.push_back(std::vector<double>(1, d_steepestDirectionOld[i]));
 
     data.push_back(std::vector<double>(1, d_alphaChk));
@@ -246,12 +246,12 @@ namespace dftfe
     dftUtils::readFile(1, data, checkpointFileName);
 
     d_conjugateDirection.resize(d_numberUnknowns);
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       d_conjugateDirection[i] = data[i][0];
 
     d_steepestDirectionOld.resize(d_numberUnknowns);
     d_gradient.resize(d_numberUnknowns);
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       {
         d_steepestDirectionOld[i] = data[d_numberUnknowns + i][0];
         d_gradient[i]             = -data[d_numberUnknowns + i][0];
@@ -296,7 +296,7 @@ namespace dftfe
     //
     // iterate over unknowns
     //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       {
         const double factor   = d_unknownCountFlag[i];
         const double gradient = d_gradient[i];
@@ -318,20 +318,20 @@ namespace dftfe
   //
   // Compute the total number of unknowns in all processors.
   //
-  unsigned int
+  dftfe::uInt
   cgPRPNonLinearSolver::computeTotalNumberUnknowns() const
   {
     //
     // initialize total number of unknowns
     //
-    unsigned int totalNumberUnknowns = 0;
+    dftfe::uInt totalNumberUnknowns = 0;
 
     //
     // iterate over unknowns
     //
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+    for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
       {
-        const unsigned int factor = d_unknownCountFlag[i];
+        const dftfe::uInt factor = d_unknownCountFlag[i];
 
         totalNumberUnknowns += factor;
       }
@@ -362,21 +362,25 @@ namespace dftfe
     //
     // get the size of solution
     //
-    const std::vector<double>::size_type solutionSize = d_numberUnknowns;
+    const dftfe::uInt solutionSize = d_numberUnknowns;
     incrementVector.resize(d_numberUnknowns);
 
 
-    for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
+    for (dftfe::uInt i = 0; i < solutionSize; ++i)
       incrementVector[i] = alpha * direction[i];
 
-    int isIncrementBoundExceeded = 0;
-    for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
+    dftfe::Int isIncrementBoundExceeded = 0;
+    for (dftfe::uInt i = 0; i < solutionSize; ++i)
       {
         if (std::abs(incrementVector[i]) > d_maxSolutionIncrementLinf)
           isIncrementBoundExceeded = 1;
       }
 
-    MPI_Bcast(&(isIncrementBoundExceeded), 1, MPI_INT, 0, mpi_communicator);
+    MPI_Bcast(&(isIncrementBoundExceeded),
+              1,
+              dftfe::dataTypes::mpi_type_id(&isIncrementBoundExceeded),
+              0,
+              mpi_communicator);
 
     if (isIncrementBoundExceeded == 1)
       {
@@ -401,10 +405,10 @@ namespace dftfe
   nonLinearSolver::ReturnValueType
   cgPRPNonLinearSolver::lineSearch(nonlinearSolverProblem &problem,
                                    const double            tolerance,
-                                   const unsigned int      maxNumberIterations,
-                                   const unsigned int      debugLevel,
+                                   const dftfe::uInt       maxNumberIterations,
+                                   const dftfe::uInt       debugLevel,
                                    const std::string       checkpointFileName,
-                                   const int               startingIter,
+                                   const dftfe::Int        startingIter,
                                    const bool              isCheckpointRestart)
   {
     //
@@ -496,7 +500,7 @@ namespace dftfe
     //
     // begin iteration (using secant method)
     //
-    for (int iter = ((startingIter >= 0) ? startingIter : 0);
+    for (dftfe::Int iter = ((startingIter >= 0) ? startingIter : 0);
          iter < maxNumberIterations;
          ++iter)
       {
@@ -547,10 +551,10 @@ namespace dftfe
         // FIXME: check whether >1 or >=1 is the correct choice
         if (iter >= 1)
           {
-            int isSuccess = 0;
+            dftfe::Int isSuccess = 0;
 
             d_gradMax = 0.0;
-            for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+            for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
               {
                 if (std::abs(d_gradient[i]) > d_gradMax)
                   d_gradMax = std::abs(d_gradient[i]);
@@ -572,7 +576,11 @@ namespace dftfe
                 isSuccess = 1;
               }
 
-            MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
+            MPI_Bcast(&(isSuccess),
+                      1,
+                      dftfe::dataTypes::mpi_type_id(&isSuccess),
+                      0,
+                      mpi_communicator);
 
             if (isSuccess == 1)
               {
@@ -699,7 +707,7 @@ namespace dftfe
         // compute deltaNew
         d_deltaNew = 0.0;
         d_gradMax  = 0.0;
-        for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+        for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
           {
             const double r = d_steepestDirectionOld[i];
             d_deltaNew += d_unknownCountFlag[i] * r * r;
@@ -711,11 +719,15 @@ namespace dftfe
     //
     // check for convergence
     //
-    unsigned int isSuccess = 0;
+    dftfe::uInt isSuccess = 0;
     if (problem.isConverged())
       isSuccess = 1;
 
-    MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
+    MPI_Bcast(&(isSuccess),
+              1,
+              dftfe::dataTypes::mpi_type_id(&isSuccess),
+              0,
+              mpi_communicator);
     if (isSuccess == 1)
       return SUCCESS;
 
@@ -774,7 +786,7 @@ namespace dftfe
         if (d_debugLevel >= 2)
           pcout << " CG- d_beta: " << d_beta << std::endl;
 
-        unsigned int isBetaZero = 0;
+        dftfe::uInt isBetaZero = 0;
         if (d_beta <= 0 || d_isCGRestartDueToLargeIncrement)
           {
             if (d_debugLevel >= 2 && d_beta <= 0)
@@ -782,7 +794,11 @@ namespace dftfe
             isBetaZero                       = 1;
             d_isCGRestartDueToLargeIncrement = false;
           }
-        MPI_Bcast(&(isBetaZero), 1, MPI_INT, 0, mpi_communicator);
+        MPI_Bcast(&(isBetaZero),
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&isBetaZero),
+                  0,
+                  mpi_communicator);
         if (isBetaZero == 1)
           d_beta = 0;
         //
@@ -800,10 +816,10 @@ namespace dftfe
         //
         // check for convergence
         //
-        unsigned int isBreak = 0;
+        dftfe::uInt isBreak = 0;
 
         d_gradMax = 0.0;
-        for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+        for (dftfe::uInt i = 0; i < d_numberUnknowns; ++i)
           {
             if (std::abs(d_gradient[i]) > d_gradMax)
               d_gradMax = std::abs(d_gradient[i]);
@@ -811,7 +827,11 @@ namespace dftfe
 
         if (problem.isConverged())
           isBreak = 1;
-        MPI_Bcast(&(isSuccess), 1, MPI_INT, 0, mpi_communicator);
+        MPI_Bcast(&(isSuccess),
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&isSuccess),
+                  0,
+                  mpi_communicator);
         if (isBreak == 1)
           break;
       }

@@ -51,13 +51,13 @@ namespace dftfe
      * @tparam dim Dimension of the box
      * @param M maximum allowable nodes in a branch of RTreePoint (i.e., maximum number of child nodes a parent node can have)
      */
-    template <size_type dim, size_type M>
+    template <dftfe::uInt dim, dftfe::uInt M>
     class RTreePoint
     {
     public:
       using BPoint       = BG::model::point<double, dim, BG::cs::cartesian>;
       using BBox         = BG::model::box<BPoint>;
-      using BPointI      = std::pair<BPoint, size_type>;
+      using BPointI      = std::pair<BPoint, dftfe::uInt>;
       using BRTreePointI = BGI::rtree<BPointI, BGI::quadratic<M>>;
       /**
        * @brief Constructor
@@ -66,7 +66,7 @@ namespace dftfe
        */
       RTreePoint(const std::vector<std::vector<double>> &srcPts);
 
-      std::vector<size_type>
+      std::vector<dftfe::uInt>
       getPointIdsInsideBox(const std::vector<double> &lowerLeft,
                            const std::vector<double> &upperRight);
 
@@ -74,9 +74,9 @@ namespace dftfe
       /**
        * @brief Returns the indices of the n nearest point to the input point
        */
-      std::vector<size_type>
+      std::vector<dftfe::uInt>
       getPointIdsNearInputPoint(const std::vector<double> &inputPoint,
-                                unsigned int               nNearestNeighbours);
+                                dftfe::uInt                nNearestNeighbours);
 
     private:
       //

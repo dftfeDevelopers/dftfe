@@ -34,12 +34,12 @@ namespace dftfe
    * @author Krishnendu Ghosh, krisg@umich.edu
    */
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   class symmetryClass
   {
-    // template <unsigned int T1, unsigned int T2>
+    // template <dftfe::uInt T1, dftfe::uInt T2>
     friend class dftClass<FEOrder, FEOrderElectro, memorySpace>;
 
   public:
@@ -79,7 +79,7 @@ namespace dftfe
      * @param [in] flag type of coordinate transformation, 1 takes crys. to cart. -1 takes cart. to crys.
      */
     dealii::Point<3>
-    crys2cart(dealii::Point<3> p, int flag);
+    crys2cart(dealii::Point<3> p, dftfe::Int flag);
 
 
   private:
@@ -96,56 +96,62 @@ namespace dftfe
      * parallel objects
      */
     const MPI_Comm             d_mpiCommParent, mpi_communicator, interpoolcomm;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
     /**
      * Space group symmetry related data
      */
     std::vector<std::vector<std::vector<double>>> symmMat;
-    unsigned int                                  numSymm;
+    dftfe::uInt                                   numSymm;
     double                                        translation[500][3];
-    std::vector<std::vector<int>>                 symmUnderGroup;
-    std::vector<int>                              numSymmUnderGroup;
+    std::vector<std::vector<dftfe::Int>>          symmUnderGroup;
+    std::vector<dftfe::Int>                       numSymmUnderGroup;
     /**
      * Data members required for storing mapping tables locally
      */
-    std::map<dealii::CellId,
-             std::vector<std::tuple<int, std::vector<double>, int>>>
+    std::map<
+      dealii::CellId,
+      std::vector<std::tuple<dftfe::Int, std::vector<double>, dftfe::Int>>>
       cellMapTable;
-    std::vector<std::vector<std::vector<std::tuple<int, int, int>>>>
+    std::vector<
+      std::vector<std::vector<std::tuple<dftfe::Int, dftfe::Int, dftfe::Int>>>>
       mappedGroup;
-    std::map<int, typename dealii::DoFHandler<3>::active_cell_iterator>
-                                  dealIICellId;
-    std::map<dealii::CellId, int> globalCellId;
-    std::vector<int>              ownerProcGlobal;
+    std::map<dftfe::Int, typename dealii::DoFHandler<3>::active_cell_iterator>
+                                         dealIICellId;
+    std::map<dealii::CellId, dftfe::Int> globalCellId;
+    std::vector<dftfe::Int>              ownerProcGlobal;
     /**
      * Data members required for communicating mapping tables
      */
-    std::vector<std::vector<std::vector<std::vector<int>>>> mappedGroupSend0;
-    std::vector<std::vector<std::vector<std::vector<int>>>> mappedGroupSend2;
+    std::vector<std::vector<std::vector<std::vector<dftfe::Int>>>>
+      mappedGroupSend0;
+    std::vector<std::vector<std::vector<std::vector<dftfe::Int>>>>
+      mappedGroupSend2;
     std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>
-                                               mappedGroupSend1;
-    std::vector<std::vector<std::vector<int>>> mappedGroupRecvd0;
-    std::vector<std::vector<std::vector<int>>> mappedGroupRecvd2;
+                                                      mappedGroupSend1;
+    std::vector<std::vector<std::vector<dftfe::Int>>> mappedGroupRecvd0;
+    std::vector<std::vector<std::vector<dftfe::Int>>> mappedGroupRecvd2;
     std::vector<std::vector<std::vector<std::vector<double>>>>
-                                                            mappedGroupRecvd1;
-    std::vector<std::vector<std::vector<std::vector<int>>>> send_buf_size;
-    std::vector<std::vector<std::vector<std::vector<int>>>> recv_buf_size;
+      mappedGroupRecvd1;
+    std::vector<std::vector<std::vector<std::vector<dftfe::Int>>>>
+      send_buf_size;
+    std::vector<std::vector<std::vector<std::vector<dftfe::Int>>>>
+                                                               recv_buf_size;
     std::vector<std::vector<std::vector<std::vector<double>>>> rhoRecvd,
       gradRhoRecvd;
-    std::vector<std::vector<std::vector<std::vector<int>>>> groupOffsets;
+    std::vector<std::vector<std::vector<std::vector<dftfe::Int>>>> groupOffsets;
     /**
      * Data sizes and offsets required for MPI scattering and gathering of
      * mapping tables and symmetrized density They have to be data members since
      * the same sizes and offsets are used in both communication mapping tables
      * and symmetrized density
      */
-    unsigned int     totPoints;
+    dftfe::uInt      totPoints;
     std::vector<int> mpi_scatter_offset, send_scatter_size, recv_size,
       mpi_scatterGrad_offset, send_scatterGrad_size;
-    std::vector<int> mpi_offsets0, mpi_offsets1, mpiGrad_offsets1;
-    std::vector<int> recvdData0, recvdData2, recvdData3;
+    std::vector<int>        mpi_offsets0, mpi_offsets1, mpiGrad_offsets1;
+    std::vector<dftfe::Int> recvdData0, recvdData2, recvdData3;
     std::vector<std::vector<double>> recvdData1;
     std::vector<int>                 recv_size0, recv_size1, recvGrad_size1;
     //

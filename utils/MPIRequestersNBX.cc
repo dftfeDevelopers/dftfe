@@ -23,6 +23,8 @@
 #include <MPITags.h>
 #include <Exceptions.h>
 #include <string>
+#include <dftfeDataTypes.h>
+
 namespace dftfe
 {
   namespace utils
@@ -30,8 +32,8 @@ namespace dftfe
     namespace mpi
     {
       MPIRequestersNBX::MPIRequestersNBX(
-        const std::vector<size_type> &targetIDs,
-        const MPI_Comm               &comm)
+        const std::vector<dftfe::uInt> &targetIDs,
+        const MPI_Comm                 &comm)
         : d_targetIDs(targetIDs)
         , d_comm(comm)
         , d_recvBuffers(0)
@@ -39,7 +41,7 @@ namespace dftfe
       {
         d_myRank           = 0;
         d_numProcessors    = 1;
-        int         err    = MPI_Comm_size(d_comm, &d_numProcessors);
+        dftfe::Int  err    = MPI_Comm_size(d_comm, &d_numProcessors);
         std::string errMsg = "Error occured while using MPI_Comm_size. "
                              "Error code: " +
                              std::to_string(err);
@@ -52,7 +54,7 @@ namespace dftfe
         throwException(err == MPI_SUCCESS, errMsg);
       }
 
-      std::vector<size_type>
+      std::vector<dftfe::uInt>
       MPIRequestersNBX::getRequestingRankIds()
       {
         startLocalSend();
@@ -67,30 +69,35 @@ namespace dftfe
 
         finish();
 
-        return std::vector<size_type>(d_requestingProcesses.begin(),
-                                      d_requestingProcesses.end());
+        return std::vector<dftfe::uInt>(d_requestingProcesses.begin(),
+                                        d_requestingProcesses.end());
       }
 
       void
       MPIRequestersNBX::startLocalSend()
       {
-        const size_type numTargets = d_targetIDs.size();
-        const int       tag = static_cast<int>(MPITags::MPI_REQUESTERS_NBX_TAG);
+        const dftfe::uInt numTargets = d_targetIDs.size();
+        const int tag = static_cast<int>(MPITags::MPI_REQUESTERS_NBX_TAG);
 
         d_sendRequests.resize(numTargets);
         d_sendBuffers.resize(numTargets);
-        for (unsigned int i = 0; i < numTargets; ++i)
+        for (dftfe::uInt i = 0; i < numTargets; ++i)
           {
-            const unsigned int rank = d_targetIDs[i];
+            const dftfe::uInt rank = d_targetIDs[i];
             throwException<DomainError>(
               rank < d_numProcessors,
               "Target rank " + std::to_string(rank) +
                 " is outside the range of number of processors(i.e., " +
                 std::to_string(d_numProcessors) + ")");
 
-            int &sendBuffer = d_sendBuffers[i];
-            auto err        = MPI_Issend(
-              &sendBuffer, 1, MPI_INT, rank, tag, d_comm, &d_sendRequests[i]);
+            dftfe::Int &sendBuffer = d_sendBuffers[i];
+            auto        err        = MPI_Issend(&sendBuffer,
+                                  1,
+                                  dftfe::dataTypes::mpi_type_id(&sendBuffer),
+                                  rank,
+                                  tag,
+                                  d_comm,
+                                  &d_sendRequests[i]);
 
             std::string errMsg = "Error occured while using MPI_Issend. "
                                  "Error code: " +
@@ -137,14 +144,15 @@ namespace dftfe
             throwException(hasRankAlreadySent == false, errMsg);
             d_requestingProcesses.insert(sourceRank);
 
-            d_recvBuffers.emplace_back(std::make_unique<int>());
+            d_recvBuffers.emplace_back(std::make_unique<dftfe::Int>());
 
             // avoids copy of MPI_Request which can lead to MPI errors
             d_recvRequests.emplace_back(std::make_unique<MPI_Request>());
 
             err    = MPI_Irecv(d_recvBuffers.back().get(),
                             1,
-                            MPI_INT,
+                            dftfe::dataTypes::mpi_type_id(
+                              d_recvBuffers.back().get()),
                             sourceRank,
                             tag,
                             d_comm,
@@ -217,9 +225,9 @@ namespace dftfe
 
         if (d_recvRequests.size() > 0)
           {
-            for (size_type i = 0; i < d_recvRequests.size(); i++)
+            for (dftfe::uInt i = 0; i < d_recvRequests.size(); i++)
               {
-                const int err =
+                const dftfe::Int err =
                   MPI_Wait(d_recvRequests.back().get(), MPI_STATUS_IGNORE);
                 std::string errMsg = "Error occured while using MPI_Waitall. "
                                      " Error code: " +
@@ -228,7 +236,7 @@ namespace dftfe
               }
           }
 
-        int         err    = MPI_Wait(&d_barrierRequest, MPI_STATUS_IGNORE);
+        dftfe::Int  err    = MPI_Wait(&d_barrierRequest, MPI_STATUS_IGNORE);
         std::string errMsg = "Error occured while using MPI_Wait. "
                              " Error code: " +
                              std::to_string(err);

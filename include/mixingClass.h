@@ -34,7 +34,9 @@ namespace dftfe
     gradRho,
     magZ,
     gradMagZ,
-    hubbardOccupation
+    hubbardOccupation,
+    tau,
+    tauMagZ
   };
 
   /**
@@ -47,11 +49,11 @@ namespace dftfe
   class MixingScheme
   {
   public:
-    MixingScheme(const MPI_Comm    &mpi_comm_parent,
-                 const MPI_Comm    &mpi_comm_domain,
-                 const unsigned int verbosity);
+    MixingScheme(const MPI_Comm   &mpi_comm_parent,
+                 const MPI_Comm   &mpi_comm_domain,
+                 const dftfe::uInt verbosity);
 
-    unsigned int
+    dftfe::uInt
     lengthOfHistory();
 
     /**
@@ -74,7 +76,7 @@ namespace dftfe
      *
      */
     void
-    popOldHistory(unsigned int mixingHistory);
+    popOldHistory(dftfe::uInt mixingHistory);
 
     /**
      * @brief Clears all the the history.
@@ -107,7 +109,7 @@ namespace dftfe
     void
     addVariableToInHist(const mixingVariable mixingVariableName,
                         const double        *inputVariableToInHist,
-                        const unsigned int   length);
+                        const dftfe::uInt    length);
 
     /**
      * @brief Adds to the residual history
@@ -116,7 +118,7 @@ namespace dftfe
     void
     addVariableToResidualHist(const mixingVariable mixingVariableName,
                               const double        *inputVariableToResidualHist,
-                              const unsigned int   length);
+                              const dftfe::uInt    length);
 
     /**
      * @brief Computes the input for the next iteration based on the anderson coefficients
@@ -125,20 +127,20 @@ namespace dftfe
     void
     mixVariable(const mixingVariable mixingVariableName,
                 double              *outputVariable,
-                const unsigned int   lenVar);
+                const dftfe::uInt    lenVar);
 
 
     void
     getOptimizedResidual(const mixingVariable mixingVariableName,
                          double              *outputVariable,
-                         const unsigned int   lenVar);
+                         const dftfe::uInt    lenVar);
 
 
     void
     mixPreconditionedResidual(const mixingVariable mixingVariableName,
                               double              *inputVariable,
                               double              *outputVariable,
-                              const unsigned int   lenVar);
+                              const dftfe::uInt    lenVar);
 
 
   private:
@@ -165,11 +167,14 @@ namespace dftfe
     std::vector<double> d_A, d_c;
     double              d_cFinal;
 
+  public:
     std::map<
       mixingVariable,
       std::deque<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>>
       d_variableHistoryIn, d_variableHistoryResidual;
+
+  private:
     std::map<
       mixingVariable,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
@@ -184,9 +189,9 @@ namespace dftfe
     bool                             d_adaptiveMixingParameterDecLastIteration;
     bool                             d_adaptiveMixingParameterDecAllIterations;
     bool                             d_adaptiveMixingParameterIncAllIterations;
-    unsigned int                     d_mixingHistory;
+    dftfe::uInt                      d_mixingHistory;
     std::map<mixingVariable, bool>   d_performMixing;
-    const int                        d_verbosity;
+    const dftfe::Int                 d_verbosity;
 
 
     /// conditional stream object

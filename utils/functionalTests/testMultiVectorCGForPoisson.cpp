@@ -40,13 +40,13 @@ namespace functionalTest
                                                             BLASWrapperPtr,
     std::vector<const dealii::AffineConstraints<double> *> &constraintMatrixVec,
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                      &inputVec,
-    const unsigned int matrixFreeVectorComponent,
-    const unsigned int matrixFreeQuadratureComponentRhsDensity,
-    const unsigned int matrixFreeQuadratureComponentAX,
-    const unsigned int verbosity,
-    const MPI_Comm    &mpi_comm_parent,
-    const MPI_Comm    &mpi_comm_domain)
+                     &inputVec,
+    const dftfe::uInt matrixFreeVectorComponent,
+    const dftfe::uInt matrixFreeQuadratureComponentRhsDensity,
+    const dftfe::uInt matrixFreeQuadratureComponentAX,
+    const dftfe::uInt verbosity,
+    const MPI_Comm   &mpi_comm_parent,
+    const MPI_Comm   &mpi_comm_domain)
   {
     dftfe::MultiVectorMinResSolver linearSolver(mpi_comm_parent,
                                                 mpi_comm_domain);
@@ -57,7 +57,7 @@ namespace functionalTest
     dealii::ConditionalOStream pcout(std::cout,
                                      (dealii::Utilities::MPI::this_mpi_process(
                                         mpi_comm_parent) == 0));
-    unsigned int               blockSizeInput = 5;
+    dftfe::uInt                blockSizeInput = 5;
     pcout << " setting block Size to " << blockSizeInput << "\n";
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -68,8 +68,8 @@ namespace functionalTest
                                matrixFreeQuadratureComponentRhsDensity,
                                true,  // TODO should this be set to true
                                true); // TODO should this be set to true
-    unsigned int totalLocallyOwnedCells = basisOperationsPtr->nCells();
-    unsigned int numQuadsPerCell        = basisOperationsPtr->nQuadsPerCell();
+    dftfe::uInt totalLocallyOwnedCells = basisOperationsPtr->nCells();
+    dftfe::uInt numQuadsPerCell        = basisOperationsPtr->nQuadsPerCell();
 
 
     const dealii::DoFHandler<3> *d_dofHandler;
@@ -97,7 +97,7 @@ namespace functionalTest
                      dftfe::basis::update_quadpoints |
                      dftfe::basis::update_transpose;
 
-    std::vector<unsigned int> quadVec;
+    std::vector<dftfe::uInt> quadVec;
     quadVec.resize(2);
     quadVec[0] = matrixFreeQuadratureComponentRhsDensity;
     quadVec[1] = matrixFreeQuadratureComponentAX;
@@ -138,13 +138,13 @@ namespace functionalTest
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       scaledInputVec;
     scaledInputVec.resize(inputVec.size());
-    for (unsigned int iBlockId = 0; iBlockId < blockSizeInput; iBlockId++)
+    for (dftfe::uInt iBlockId = 0; iBlockId < blockSizeInput; iBlockId++)
       {
         dftfe::distributedCPUVec<double> singleBoundaryCond;
         singleBoundaryCond.reinit(expectedOutput);
         singleBoundaryCond = 0.0;
         singleBoundaryCond.update_ghost_values();
-        for (unsigned int iNodeId = 0;
+        for (dftfe::uInt iNodeId = 0;
              iNodeId < singleBoundaryCond.locally_owned_size();
              iNodeId++)
           {
@@ -155,16 +155,16 @@ namespace functionalTest
       }
 
 
-    unsigned int                                iElem = 0;
+    dftfe::uInt                                 iElem = 0;
     dealii::DoFHandler<3>::active_cell_iterator cell =
                                                   d_dofHandler->begin_active(),
                                                 endc = d_dofHandler->end();
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
         {
-          for (unsigned int i = 0; i < numQuadsPerCell; i++)
+          for (dftfe::uInt i = 0; i < numQuadsPerCell; i++)
             {
-              for (unsigned int k = 0; k < blockSizeInput; k++)
+              for (dftfe::uInt k = 0; k < blockSizeInput; k++)
                 {
                   rhoQuadInputValuesHost[iElem * blockSizeInput *
                                            numQuadsPerCell +
@@ -175,7 +175,7 @@ namespace functionalTest
           iElem++;
         }
 
-    for (unsigned int k = 0; k < blockSizeInput; k++)
+    for (dftfe::uInt k = 0; k < blockSizeInput; k++)
       {
         expectedOutput = 0;
         double multFac = k + 1;
@@ -209,7 +209,7 @@ namespace functionalTest
         dealiiCGSolver.solve(phiTotalSolverProblem, 1e-10, 10000, verbosity);
 
         dealii::types::global_dof_index indexVec;
-        for (unsigned int i = 0; i < expectedOutput.locally_owned_size(); i++)
+        for (dftfe::uInt i = 0; i < expectedOutput.locally_owned_size(); i++)
           {
             indexVec = i * blockSizeInput + k;
             multiExpectedOutput.data()[indexVec] =
@@ -231,7 +231,7 @@ namespace functionalTest
 
     multiPoissonSolver.setDataForRhsVec(rhoQuadInputValuesHost);
 
-    unsigned int locallyOwnedSize = basisOpHost->nOwnedDofs();
+    dftfe::uInt locallyOwnedSize = basisOpHost->nOwnedDofs();
 
     linearSolver.solve(multiPoissonSolver,
                        BLASWrapperPtr,

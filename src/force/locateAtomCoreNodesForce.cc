@@ -22,31 +22,30 @@
 namespace dftfe
 {
   // source file for locating core atom nodes
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<FEOrder, FEOrderElectro, memorySpace>::locateAtomCoreNodesForce(
     const dealii::DoFHandler<3> &dofHandlerForce,
     const dealii::IndexSet      &locally_owned_dofsForce,
-    std::map<std::pair<unsigned int, unsigned int>, unsigned int>
-      &atomsForceDofs)
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>, dftfe::uInt> &atomsForceDofs)
   {
     atomsForceDofs.clear();
     const std::vector<std::vector<double>> &atomLocations =
       dftPtr->atomLocations;
-    unsigned int vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
+    dftfe::uInt vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     //
     // locating atom nodes
-    unsigned int           numAtoms = atomLocations.size();
-    std::set<unsigned int> atomsTolocate;
-    for (unsigned int i = 0; i < numAtoms; i++)
+    dftfe::uInt           numAtoms = atomLocations.size();
+    std::set<dftfe::uInt> atomsTolocate;
+    for (dftfe::uInt i = 0; i < numAtoms; i++)
       atomsTolocate.insert(i);
 
     // element loop
     for (auto cell : dofHandlerForce.active_cell_iterators())
       if (cell->is_locally_owned())
-        for (unsigned int i = 0; i < vertices_per_cell; ++i)
+        for (dftfe::uInt i = 0; i < vertices_per_cell; ++i)
           {
             const dealii::types::global_dof_index nodeID =
               cell->vertex_dof_index(i, 0);
@@ -54,7 +53,7 @@ namespace dftfe
             //
             // loop over all atoms to locate the corresponding nodes
             //
-            for (std::set<unsigned int>::iterator it = atomsTolocate.begin();
+            for (std::set<dftfe::uInt>::iterator it = atomsTolocate.begin();
                  it != atomsTolocate.end();
                  ++it)
               {
@@ -63,9 +62,9 @@ namespace dftfe
                                            atomLocations[*it][4]);
                 if (feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
                   {
-                    for (unsigned int idim = 0; idim < 3; idim++)
+                    for (dftfe::uInt idim = 0; idim < 3; idim++)
                       {
-                        const unsigned int forceNodeId =
+                        const dftfe::uInt forceNodeId =
                           cell->vertex_dof_index(i, idim);
                         if (locally_owned_dofsForce.is_element(forceNodeId))
                           {
@@ -75,9 +74,8 @@ namespace dftfe
                             // " , force component: "<< idim << " in processor "
                             // << this_mpi_process << " and added \n";
 
-                            atomsForceDofs[std::pair<unsigned int,
-                                                     unsigned int>(*it, idim)] =
-                              forceNodeId;
+                            atomsForceDofs[std::pair<dftfe::uInt, dftfe::uInt>(
+                              *it, idim)] = forceNodeId;
                           }
                       }
                     atomsTolocate.erase(*it);
@@ -87,7 +85,7 @@ namespace dftfe
           }         // vertices_per_cell loop
     MPI_Barrier(mpi_communicator);
 
-    const unsigned int totalForceNodesFound =
+    const dftfe::uInt totalForceNodesFound =
       dealii::Utilities::MPI::sum(atomsForceDofs.size(), mpi_communicator);
     AssertThrow(totalForceNodesFound == numAtoms * 3,
                 dealii::ExcMessage(

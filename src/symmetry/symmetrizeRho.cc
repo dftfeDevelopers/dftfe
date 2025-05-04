@@ -46,8 +46,8 @@ namespace dftfe
   //				Following routine computes total density by summing over all the
   // symmetry transformed points
   //=============================================================================================================================================
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   symmetryClass<FEOrder, FEOrderElectro, memorySpace>::
@@ -55,8 +55,8 @@ namespace dftfe
   {
     const dealii::Quadrature<3> &quadrature =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    const unsigned int num_quad_points = quadrature.size();
-    const unsigned int numCells = dftPtr->matrix_free_data.n_physical_cells();
+    const dftfe::uInt num_quad_points = quadrature.size();
+    const dftfe::uInt numCells = dftPtr->matrix_free_data.n_physical_cells();
     //
     dftPtr->d_densityOutQuadValues.resize(
       dftPtr->getParametersObject().spinPolarized == 1 ? 2 : 1);
@@ -71,10 +71,10 @@ namespace dftfe
         dftPtr->d_gradDensityOutQuadValues.resize(
           dftPtr->getParametersObject().spinPolarized == 1 ? 2 : 1);
       }
-    for (unsigned int iComp = 0; iComp < dftPtr->d_densityOutQuadValues.size();
+    for (dftfe::uInt iComp = 0; iComp < dftPtr->d_densityOutQuadValues.size();
          ++iComp)
       dftPtr->d_densityOutQuadValues[iComp].resize(numCells * num_quad_points);
-    for (unsigned int iComp = 0;
+    for (dftfe::uInt iComp = 0;
          iComp < dftPtr->d_gradDensityOutQuadValues.size();
          ++iComp)
       dftPtr->d_gradDensityOutQuadValues[iComp].resize(3 * numCells *
@@ -88,9 +88,9 @@ namespace dftfe
     // all the used symmetries
     //=============================================================================================================================================
     typename dealii::DoFHandler<3>::active_cell_iterator
-      cell             = (dftPtr->dofHandlerEigen).begin_active(),
-      endc             = (dftPtr->dofHandlerEigen).end();
-    unsigned int iCell = 0;
+      cell            = (dftPtr->dofHandlerEigen).begin_active(),
+      endc            = (dftPtr->dofHandlerEigen).end();
+    dftfe::uInt iCell = 0;
     for (; cell != endc; ++cell)
       {
         if (cell->is_locally_owned())
@@ -114,15 +114,15 @@ namespace dftfe
                   }
               }
             //
-            for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+            for (dftfe::uInt q_point = 0; q_point < num_quad_points; ++q_point)
               {
-                for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+                for (dftfe::uInt iSymm = 0; iSymm < numSymm; ++iSymm)
                   {
-                    const unsigned int proc = std::get<0>(
+                    const dftfe::uInt proc = std::get<0>(
                       mappedGroup[iSymm][globalCellId[cell->id()]][q_point]);
-                    const unsigned int group = std::get<1>(
+                    const dftfe::uInt group = std::get<1>(
                       mappedGroup[iSymm][globalCellId[cell->id()]][q_point]);
-                    const unsigned int point = std::get<2>(
+                    const dftfe::uInt point = std::get<2>(
                       mappedGroup[iSymm][globalCellId[cell->id()]][q_point]);
                     //
                     if (dftPtr->getParametersObject().spinPolarized == 1)
@@ -141,14 +141,14 @@ namespace dftfe
                       {
                         if (dftPtr->getParametersObject().spinPolarized == 1)
                           {
-                            for (unsigned int j = 0; j < 6; ++j)
+                            for (dftfe::uInt j = 0; j < 6; ++j)
                               gradRhoOutSpinPolarized[6 * q_point + j] +=
                                 gradRhoRecvd[iSymm][globalCellId[cell->id()]]
                                             [proc][6 * point + j];
                           }
                         else
                           {
-                            for (unsigned int j = 0; j < 3; ++j)
+                            for (dftfe::uInt j = 0; j < 3; ++j)
                               gradRhoOut[3 * q_point + j] +=
                                 gradRhoRecvd[iSymm][globalCellId[cell->id()]]
                                             [proc][3 * point + j];
@@ -175,12 +175,12 @@ namespace dftfe
                     if (dftPtr->getParametersObject().spinPolarized == 1)
                       {
                         //
-                        for (unsigned int j = 0; j < 3; ++j)
+                        for (dftfe::uInt j = 0; j < 3; ++j)
                           dftPtr->d_gradDensityOutQuadValues
                             [0][iCell * num_quad_points * 3 + 3 * q_point + j] =
                             gradRhoOutSpinPolarized[6 * q_point + j] +
                             gradRhoOutSpinPolarized[6 * q_point + j + 3];
-                        for (unsigned int j = 0; j < 3; ++j)
+                        for (dftfe::uInt j = 0; j < 3; ++j)
                           dftPtr->d_gradDensityOutQuadValues
                             [1][iCell * num_quad_points * 3 + 3 * q_point + j] =
                             gradRhoOutSpinPolarized[6 * q_point + j] -
@@ -188,7 +188,7 @@ namespace dftfe
                       }
                     else
                       {
-                        for (unsigned int j = 0; j < 3; ++j)
+                        for (dftfe::uInt j = 0; j < 3; ++j)
                           dftPtr->d_gradDensityOutQuadValues
                             [0][iCell * num_quad_points * 3 + 3 * q_point + j] =
                             gradRhoOut[3 * q_point + j];
@@ -210,8 +210,8 @@ namespace dftfe
   // back to the corresponding processors
   //=============================================================================================================================================
   //=============================================================================================================================================
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   symmetryClass<FEOrder, FEOrderElectro, memorySpace>::computeLocalrhoOut()
@@ -220,7 +220,7 @@ namespace dftfe
       (1 + dftPtr->getParametersObject().spinPolarized) *
       dftPtr->d_kPointWeights.size());
 
-    const unsigned int localVectorSize =
+    const dftfe::uInt localVectorSize =
       dftPtr->matrix_free_data.get_vector_partitioner()->locally_owned_size();
 
     distributedCPUVec<dataTypes::number> eigenVectorsFlattenedArrayFullBlock;
@@ -229,18 +229,17 @@ namespace dftfe
       dftPtr->d_numEigenValues,
       eigenVectorsFlattenedArrayFullBlock);
 
-    for (unsigned int kPoint = 0;
+    for (dftfe::uInt kPoint = 0;
          kPoint < (1 + dftPtr->getParametersObject().spinPolarized) *
                     dftPtr->d_kPointWeights.size();
          ++kPoint)
       {
         eigenVectors[kPoint].resize(dftPtr->d_numEigenValues);
-        for (unsigned int i = 0; i < dftPtr->d_numEigenValues; ++i)
+        for (dftfe::uInt i = 0; i < dftPtr->d_numEigenValues; ++i)
           eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
 
-        for (unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-          for (unsigned int iWave = 0; iWave < dftPtr->d_numEigenValues;
-               ++iWave)
+        for (dftfe::uInt iNode = 0; iNode < localVectorSize; ++iNode)
+          for (dftfe::uInt iWave = 0; iWave < dftPtr->d_numEigenValues; ++iWave)
             eigenVectorsFlattenedArrayFullBlock.local_element(
               iNode * dftPtr->d_numEigenValues + iWave) =
               dftPtr->d_eigenVectorsFlattenedHost
@@ -264,8 +263,8 @@ namespace dftfe
     //
     const dealii::Quadrature<3> &quadrature =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
-    const unsigned int num_quad_points = quadrature.size();
-    totPoints                          = recvdData1[0].size();
+    const dftfe::uInt num_quad_points = quadrature.size();
+    totPoints                         = recvdData1[0].size();
     double                              px, py, pz;
     std::vector<dealii::Vector<double>> tempPsiAlpha, tempPsiBeta;
     std::vector<std::vector<dealii::Tensor<1, 3, double>>> tempGradPsi,
@@ -301,15 +300,15 @@ namespace dftfe
             gradRhoTempSpinPolarized.resize(6 * totPoints, 0.0);
           }
       }
-    unsigned int numPointsDone = 0, numGroupsDone = 0;
-    for (unsigned int proc = 0; proc < n_mpi_processes; ++proc)
+    dftfe::uInt numPointsDone = 0, numGroupsDone = 0;
+    for (dftfe::uInt proc = 0; proc < n_mpi_processes; ++proc)
       {
         //
-        for (unsigned int iGroup = 0; iGroup < recv_size0[proc]; ++iGroup)
+        for (dftfe::uInt iGroup = 0; iGroup < recv_size0[proc]; ++iGroup)
           {
             //
-            const unsigned int numPoint = recvdData2[numGroupsDone + iGroup];
-            const unsigned int cellId   = recvdData0[numGroupsDone + iGroup];
+            const dftfe::uInt numPoint = recvdData2[numGroupsDone + iGroup];
+            const dftfe::uInt cellId   = recvdData0[numGroupsDone + iGroup];
             //
             tempPsiAlpha.resize(numPoint);
             tempPsiBeta.resize(numPoint);
@@ -321,7 +320,7 @@ namespace dftfe
                 tempGradPsiTempAlpha.resize(numPoint);
                 tempGradPsiTempBeta.resize(numPoint);
               }
-            for (unsigned int iList = 0; iList < numPoint; ++iList)
+            for (dftfe::uInt iList = 0; iList < numPoint; ++iList)
               {
                 //
                 px = recvdData1[0][numPointsDone + iList];
@@ -350,7 +349,7 @@ namespace dftfe
                                             dealii::update_JxW_values |
                                             dealii::update_quadrature_points);
             fe_values.reinit(dealIICellId[cellId]);
-            const unsigned int iSymm = recvdData3[numGroupsDone + iGroup];
+            const dftfe::uInt iSymm = recvdData3[numGroupsDone + iGroup];
             //
             //
             //=============================================================================================================================================
@@ -358,14 +357,13 @@ namespace dftfe
             // bands
             //				  	     Rho(r) = \sum_(n, Sk) | Psi (n, Sr + tau ) |^2
             //=============================================================================================================================================
-            for (unsigned int kPoint = 0;
+            for (dftfe::uInt kPoint = 0;
                  kPoint < (dftPtr->d_kPointWeights.size());
                  ++kPoint)
               {
                 if (symmUnderGroup[kPoint][iSymm] == 1)
                   {
-                    for (unsigned int i = 0; i < (dftPtr->d_numEigenValues);
-                         ++i)
+                    for (dftfe::uInt i = 0; i < (dftPtr->d_numEigenValues); ++i)
                       {
                         double partialOccupancyAlpha =
                           (dftPtr->d_partialOccupancies)[kPoint][i];
@@ -405,7 +403,7 @@ namespace dftfe
                                 tempGradPsiTempBeta);
                           }
                         //
-                        for (unsigned int iList = 0; iList < numPoint; ++iList)
+                        for (dftfe::uInt iList = 0; iList < numPoint; ++iList)
                           {
                             //
                             if (dftPtr->getParametersObject().spinPolarized ==
@@ -442,7 +440,7 @@ namespace dftfe
                                    tempPsiAlpha[iList](1));
                             if (isGradDensityDataRequired)
                               {
-                                for (unsigned int j = 0; j < 3; ++j)
+                                for (dftfe::uInt j = 0; j < 3; ++j)
                                   {
                                     tempGradPsi[iList][0][j] =
                                       tempGradPsiTempAlpha[iList][0][0] *
@@ -492,7 +490,7 @@ namespace dftfe
                                          tempGradPsi[iList][0][2] +
                                        tempPsiAlpha[iList](1) *
                                          tempGradPsi[iList][1][2]);
-                                    for (unsigned int j = 0; j < 3; ++j)
+                                    for (dftfe::uInt j = 0; j < 3; ++j)
                                       {
                                         tempGradPsi[iList][0][j] =
                                           tempGradPsiTempBeta[iList][0][0] *
@@ -629,7 +627,7 @@ namespace dftfe
     typename dealii::DoFHandler<3>::active_cell_iterator endc =
       (dftPtr->dofHandlerEigen).end();
     //
-    for (int sendProc = 0; sendProc < n_mpi_processes; ++sendProc)
+    for (dftfe::Int sendProc = 0; sendProc < n_mpi_processes; ++sendProc)
       {
         recvdData.resize(recv_size[sendProc]);
         MPI_Scatterv(&(sendData[0]),
@@ -642,15 +640,15 @@ namespace dftfe
                      sendProc,
                      mpi_communicator);
         //
-        cell                = (dftPtr->dofHandlerEigen).begin_active();
-        unsigned int offset = 0;
+        cell               = (dftPtr->dofHandlerEigen).begin_active();
+        dftfe::uInt offset = 0;
         for (; cell != endc; ++cell)
           {
             if (cell->is_locally_owned())
               {
-                for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+                for (dftfe::uInt iSymm = 0; iSymm < numSymm; ++iSymm)
                   {
-                    for (unsigned int i = 0;
+                    for (dftfe::uInt i = 0;
                          i < rhoRecvd[iSymm][globalCellId[cell->id()]][sendProc]
                                .size();
                          ++i)
@@ -675,7 +673,7 @@ namespace dftfe
         else
           sendData = gradRhoLocal;
         //
-        for (int sendProc = 0; sendProc < n_mpi_processes; ++sendProc)
+        for (dftfe::Int sendProc = 0; sendProc < n_mpi_processes; ++sendProc)
           {
             recvdData.resize(3 * recv_size[sendProc]);
             MPI_Scatterv(&(sendData[0]),
@@ -688,16 +686,16 @@ namespace dftfe
                          sendProc,
                          mpi_communicator);
             //
-            cell                = (dftPtr->dofHandlerEigen).begin_active();
-            unsigned int offset = 0;
+            cell               = (dftPtr->dofHandlerEigen).begin_active();
+            dftfe::uInt offset = 0;
             //
             for (; cell != endc; ++cell)
               {
                 if (cell->is_locally_owned())
                   {
-                    for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+                    for (dftfe::uInt iSymm = 0; iSymm < numSymm; ++iSymm)
                       {
-                        for (unsigned int i = 0;
+                        for (dftfe::uInt i = 0;
                              i < gradRhoRecvd[iSymm][globalCellId[cell->id()]]
                                              [sendProc]
                                                .size();

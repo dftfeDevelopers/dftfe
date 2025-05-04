@@ -38,14 +38,14 @@ namespace dftfe
      * @param[in] RcParameter coefficent for the bessel function
      * @param[in] RmaxParameter the maximum R afterwhich the function returns 0.
      */
-    AtomCenteredSphericalFunctionBessel(double       RcParameter,
-                                        double       RmaxParameter,
-                                        unsigned int lParameter);
+    AtomCenteredSphericalFunctionBessel(double      RcParameter,
+                                        double      RmaxParameter,
+                                        dftfe::uInt lParameter);
 
     double
     getRadialValue(double r) const override;
 
-    unsigned int
+    dftfe::uInt
     getQuantumNumbern() const;
 
     double

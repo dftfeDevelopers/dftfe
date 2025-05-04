@@ -21,8 +21,8 @@
 namespace dftfe
 {
   // source file for locating core atom nodes
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::locateAtomCoreNodes(
@@ -32,7 +32,7 @@ namespace dftfe
   {
     dealii::TimerOutput::Scope scope(computing_timer, "locate atom nodes");
     atomNodeIdToChargeValueMap.clear();
-    const unsigned int vertices_per_cell =
+    const dftfe::uInt vertices_per_cell =
       dealii::GeometryInfo<3>::vertices_per_cell;
 
     const bool isPseudopotential = d_dftParamsPtr->isPseudopotential;
@@ -49,14 +49,14 @@ namespace dftfe
                                                  supportPoints);
 
     // locating atom nodes
-    const unsigned int     numAtoms = atomLocations.size();
-    std::set<unsigned int> atomsTolocate;
-    for (unsigned int i = 0; i < numAtoms; i++)
+    const dftfe::uInt     numAtoms = atomLocations.size();
+    std::set<dftfe::uInt> atomsTolocate;
+    for (dftfe::uInt i = 0; i < numAtoms; i++)
       atomsTolocate.insert(i);
     // element loop
     for (; cell != endc; ++cell)
       if (cell->is_locally_owned())
-        for (unsigned int i = 0; i < vertices_per_cell; ++i)
+        for (dftfe::uInt i = 0; i < vertices_per_cell; ++i)
           {
             const dealii::types::global_dof_index nodeID =
               cell->vertex_dof_index(i, 0);
@@ -64,7 +64,7 @@ namespace dftfe
             //
             // loop over all atoms to locate the corresponding nodes
             //
-            for (std::set<unsigned int>::iterator it = atomsTolocate.begin();
+            for (std::set<dftfe::uInt>::iterator it = atomsTolocate.begin();
                  it != atomsTolocate.end();
                  ++it)
               {
@@ -130,7 +130,7 @@ namespace dftfe
           }         // vertices_per_cell loop
     MPI_Barrier(mpi_communicator);
 
-    const unsigned int totalAtomNodesFound =
+    const dftfe::uInt totalAtomNodesFound =
       dealii::Utilities::MPI::sum(atomNodeIdToChargeValueMap.size(),
                                   mpi_communicator);
     AssertThrow(totalAtomNodesFound == numAtoms,
@@ -138,8 +138,8 @@ namespace dftfe
                   "Atleast one atom doesn't lie on a triangulation vertex"));
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::locatePeriodicPinnedNodes(
@@ -155,9 +155,9 @@ namespace dftfe
 
     dealii::TimerOutput::Scope scope(computing_timer,
                                      "locate periodic pinned node");
-    const int                  numberImageCharges = d_imageIds.size();
-    const int                  numberGlobalAtoms  = atomLocations.size();
-    const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+    const dftfe::Int           numberImageCharges = d_imageIds.size();
+    const dftfe::Int           numberGlobalAtoms  = atomLocations.size();
+    const dftfe::Int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
     dealii::IndexSet locallyRelevantDofs;
     dealii::DoFTools::extract_locally_relevant_dofs(_dofHandler,
@@ -186,7 +186,7 @@ namespace dftfe
           double minDistance                     = 1e10;
           minNode                                = -1;
           dealii::Point<3> nodalPointCoordinates = iterMap->second;
-          for (unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
+          for (dftfe::uInt iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
             {
               dealii::Point<3> atomCoor;
 
@@ -237,14 +237,19 @@ namespace dftfe
     std::vector<std::vector<double>> pinnedLocations;
     std::vector<double>              temp(3, 0.0);
     std::vector<double>              tempLocal(3, 0.0);
-    unsigned int                     taskId = 0;
+    dftfe::uInt                      taskId = 0;
 
     if (std::abs(maxDistance - globalMaxDistance) < 1e-07)
       taskId = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
-    unsigned int maxTaskId;
+    dftfe::uInt maxTaskId;
 
-    MPI_Allreduce(&taskId, &maxTaskId, 1, MPI_INT, MPI_MAX, mpi_communicator);
+    MPI_Allreduce(&taskId,
+                  &maxTaskId,
+                  1,
+                  dftfe::dataTypes::mpi_type_id(&taskId),
+                  MPI_MAX,
+                  mpi_communicator);
 
     if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == maxTaskId)
       {
@@ -286,14 +291,14 @@ namespace dftfe
     pinnedLocations.push_back(temp);
 
 
-    const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
+    const dftfe::uInt dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
     dealii::DoFHandler<3>::active_cell_iterator cell =
                                                   _dofHandler.begin_active(),
                                                 endc = _dofHandler.end();
 
-    const unsigned int     numberNodes = pinnedLocations.size();
-    std::set<unsigned int> nodesTolocate;
-    for (unsigned int i = 0; i < numberNodes; i++)
+    const dftfe::uInt     numberNodes = pinnedLocations.size();
+    std::set<dftfe::uInt> nodesTolocate;
+    for (dftfe::uInt i = 0; i < numberNodes; i++)
       nodesTolocate.insert(i);
 
     std::vector<dealii::types::global_dof_index> cell_dof_indices(
@@ -303,7 +308,7 @@ namespace dftfe
         {
           cell->get_dof_indices(cell_dof_indices);
 
-          for (unsigned int i = 0; i < dofs_per_cell; ++i)
+          for (dftfe::uInt i = 0; i < dofs_per_cell; ++i)
             {
               const dealii::types::global_dof_index nodeID =
                 cell_dof_indices[i];
@@ -313,7 +318,7 @@ namespace dftfe
               //
               // loop over all atoms to locate the corresponding nodes
               //
-              for (std::set<unsigned int>::iterator it = nodesTolocate.begin();
+              for (std::set<dftfe::uInt>::iterator it = nodesTolocate.begin();
                    it != nodesTolocate.end();
                    ++it)
                 {

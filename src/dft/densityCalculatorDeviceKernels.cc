@@ -26,20 +26,20 @@ namespace dftfe
   {
     __global__ void
     computeRhoGradRhoFromInterpolatedValues(
-      const unsigned int numVectors,
-      const unsigned int numCells,
-      const unsigned int nQuadsPerCell,
-      double            *wfcContributions,
-      double            *gradwfcContributions,
-      double            *rhoCellsWfcContributions,
-      double            *gradRhoCellsWfcContributions,
-      const bool         isEvaluateGradRho)
+      const dftfe::uInt numVectors,
+      const dftfe::uInt numCells,
+      const dftfe::uInt nQuadsPerCell,
+      double           *wfcContributions,
+      double           *gradwfcContributions,
+      double           *rhoCellsWfcContributions,
+      double           *gradRhoCellsWfcContributions,
+      const bool        isEvaluateGradRho)
     {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
-      const unsigned int numberEntries     = numEntriesPerCell * numCells;
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-      for (unsigned int index = globalThreadId; index < numberEntries;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
           const double psi                = wfcContributions[index];
@@ -47,10 +47,10 @@ namespace dftfe
 
           if (isEvaluateGradRho)
             {
-              unsigned int iCell          = index / numEntriesPerCell;
-              unsigned int intraCellIndex = index - iCell * numEntriesPerCell;
-              unsigned int iQuad          = intraCellIndex / numVectors;
-              unsigned int iVec           = intraCellIndex - iQuad * numVectors;
+              dftfe::uInt  iCell          = index / numEntriesPerCell;
+              dftfe::uInt  intraCellIndex = index - iCell * numEntriesPerCell;
+              dftfe::uInt  iQuad          = intraCellIndex / numVectors;
+              dftfe::uInt  iVec           = intraCellIndex - iQuad * numVectors;
               const double gradPsiX = //[iVec * numCells * numVectors + + 0]
                 gradwfcContributions[intraCellIndex +
                                      numEntriesPerCell * 3 * iCell];
@@ -79,20 +79,20 @@ namespace dftfe
 
     __global__ void
     computeRhoGradRhoFromInterpolatedValues(
-      const unsigned int                 numVectors,
-      const unsigned int                 numCells,
-      const unsigned int                 nQuadsPerCell,
+      const dftfe::uInt                  numVectors,
+      const dftfe::uInt                  numCells,
+      const dftfe::uInt                  nQuadsPerCell,
       dftfe::utils::deviceDoubleComplex *wfcContributions,
       dftfe::utils::deviceDoubleComplex *gradwfcContributions,
       double                            *rhoCellsWfcContributions,
       double                            *gradRhoCellsWfcContributions,
       const bool                         isEvaluateGradRho)
     {
-      const unsigned int globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const unsigned int numEntriesPerCell = numVectors * nQuadsPerCell;
-      const unsigned int numberEntries     = numEntriesPerCell * numCells;
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-      for (unsigned int index = globalThreadId; index < numberEntries;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
           const dftfe::utils::deviceDoubleComplex psi = wfcContributions[index];
@@ -100,10 +100,10 @@ namespace dftfe
 
           if (isEvaluateGradRho)
             {
-              unsigned int iCell          = index / numEntriesPerCell;
-              unsigned int intraCellIndex = index - iCell * numEntriesPerCell;
-              unsigned int iQuad          = intraCellIndex / numVectors;
-              unsigned int iVec           = intraCellIndex - iQuad * numVectors;
+              dftfe::uInt iCell          = index / numEntriesPerCell;
+              dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
+              dftfe::uInt iQuad          = intraCellIndex / numVectors;
+              dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
               const dftfe::utils::deviceDoubleComplex gradPsiX =
                 gradwfcContributions[intraCellIndex +
                                      numEntriesPerCell * 3 * iCell];
@@ -129,46 +129,129 @@ namespace dftfe
             }
         }
     }
+
+    __global__ void
+    computeTauFromInterpolatedValues(const dftfe::uInt numVectors,
+                                     const dftfe::uInt numCells,
+                                     const dftfe::uInt nQuadsPerCell,
+                                     double           *wfcContributions,
+                                     double           *gradwfcContributions,
+                                     double           *kCoord,
+                                     double           *tauCellsWfcContributions)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const double psi = wfcContributions[index];
+
+          dftfe::uInt iCell          = index / numEntriesPerCell;
+          dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
+          dftfe::uInt iQuad          = intraCellIndex / numVectors;
+          dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
+
+          double gradPsiDirVal;
+          tauCellsWfcContributions[index] = 0.0;
+          for (dftfe::uInt dirIdx = 0; dirIdx < 3; dirIdx++)
+            {
+              gradPsiDirVal =
+                gradwfcContributions[intraCellIndex +
+                                     dirIdx * numEntriesPerCell +
+                                     numEntriesPerCell * 3 * iCell];
+
+              tauCellsWfcContributions[index] += gradPsiDirVal * gradPsiDirVal;
+            }
+          tauCellsWfcContributions[index] =
+            0.5 * tauCellsWfcContributions[index];
+        }
+    }
+
+
+    __global__ void
+    computeTauFromInterpolatedValues(
+      const dftfe::uInt                  numVectors,
+      const dftfe::uInt                  numCells,
+      const dftfe::uInt                  nQuadsPerCell,
+      dftfe::utils::deviceDoubleComplex *wfcContributions,
+      dftfe::utils::deviceDoubleComplex *gradwfcContributions,
+      double                            *kCoord,
+      double                            *tauCellsWfcContributions)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+      const double      kPointCoordSq =
+        kCoord[0] * kCoord[0] + kCoord[1] * kCoord[1] + kCoord[2] * kCoord[2];
+
+      for (dftfe::uInt index = globalThreadId; index < numberEntries;
+           index += blockDim.x * gridDim.x)
+        {
+          const dftfe::utils::deviceDoubleComplex psi = wfcContributions[index];
+
+          dftfe::uInt iCell          = index / numEntriesPerCell;
+          dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
+          dftfe::uInt iQuad          = intraCellIndex / numVectors;
+          dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
+
+          dftfe::utils::deviceDoubleComplex tempImag;
+
+          tempImag.x = 0.0;
+          tempImag.y = 0.0;
+
+          dftfe::utils::deviceDoubleComplex gradPsiDirVal;
+          tauCellsWfcContributions[index] = 0.0;
+          for (dftfe::uInt dirIdx = 0; dirIdx < 3; dirIdx++)
+            {
+              gradPsiDirVal =
+                gradwfcContributions[intraCellIndex +
+                                     dirIdx * numEntriesPerCell +
+                                     numEntriesPerCell * 3 * iCell];
+
+              tauCellsWfcContributions[index] +=
+                gradPsiDirVal.x * gradPsiDirVal.x +
+                gradPsiDirVal.y * gradPsiDirVal.y;
+
+              tempImag.x += kCoord[dirIdx] * gradPsiDirVal.x;
+              tempImag.y += kCoord[dirIdx] * gradPsiDirVal.y;
+            }
+
+          tauCellsWfcContributions[index] =
+            0.5 * tauCellsWfcContributions[index];
+          tauCellsWfcContributions[index] +=
+            0.5 * kPointCoordSq * (psi.x * psi.x + psi.y * psi.y);
+          tauCellsWfcContributions[index] +=
+            psi.x * tempImag.y - psi.y * tempImag.x;
+        }
+    }
+
   } // namespace
   template <typename NumberType>
   void
   computeRhoGradRhoFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                                               &BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    const unsigned int                          nQuadsPerCell,
-    double                                     *partialOccupVec,
-    NumberType                                 *wfcQuadPointData,
-    NumberType                                 *gradWfcQuadPointData,
-    double                                     *rhoCellsWfcContributions,
-    double                                     *gradRhoCellsWfcContributions,
-    double                                     *rho,
-    double                                     *gradRho,
-    const bool                                  isEvaluateGradRho)
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *partialOccupVec,
+    NumberType                               *wfcQuadPointData,
+    NumberType                               *gradWfcQuadPointData,
+    double                                   *rhoCellsWfcContributions,
+    double                                   *gradRhoCellsWfcContributions,
+    double                                   *rho,
+    double                                   *gradRho,
+    const bool                                isEvaluateGradRho)
   {
-    const unsigned int cellsBlockSize      = cellRange.second - cellRange.first;
-    const unsigned int vectorsBlockSize    = vecRange.second - vecRange.first;
-    const double       scalarCoeffAlphaRho = 1.0;
-    const double       scalarCoeffBetaRho  = 1.0;
-    const double       scalarCoeffAlphaGradRho = 1.0;
-    const double       scalarCoeffBetaGradRho  = 1.0;
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    computeRhoGradRhoFromInterpolatedValues<<<
-      (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-        dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
-      dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-      vectorsBlockSize,
-      cellsBlockSize,
-      nQuadsPerCell,
-      dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
-      dftfe::utils::makeDataTypeDeviceCompatible(rhoCellsWfcContributions),
-      dftfe::utils::makeDataTypeDeviceCompatible(gradRhoCellsWfcContributions),
-      isEvaluateGradRho);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
+    const dftfe::uInt cellsBlockSize      = cellRange.second - cellRange.first;
+    const dftfe::uInt vectorsBlockSize    = vecRange.second - vecRange.first;
+    const double      scalarCoeffAlphaRho = 1.0;
+    const double      scalarCoeffBetaRho  = 1.0;
+    const double      scalarCoeffAlphaGradRho = 1.0;
+    const double      scalarCoeffBetaGradRho  = 1.0;
+    DFTFE_LAUNCH_KERNEL(
       computeRhoGradRhoFromInterpolatedValues,
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
@@ -183,7 +266,6 @@ namespace dftfe
       dftfe::utils::makeDataTypeDeviceCompatible(rhoCellsWfcContributions),
       dftfe::utils::makeDataTypeDeviceCompatible(gradRhoCellsWfcContributions),
       isEvaluateGradRho);
-#endif
     BLASWrapperPtr->xgemv('T',
                           vectorsBlockSize,
                           cellsBlockSize * nQuadsPerCell,
@@ -212,21 +294,86 @@ namespace dftfe
                               1);
       }
   }
+
+  template <typename NumberType>
+  void
+  computeTauFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *partialOccupVec,
+    double                                   *kCoord,
+    NumberType                               *wfcQuadPointData,
+    NumberType                               *gradWfcQuadPointData,
+    double *kineticEnergyDensityCellsWfcContributions,
+    double *tau)
+  {
+    const dftfe::uInt cellsBlockSize   = cellRange.second - cellRange.first;
+    const dftfe::uInt vectorsBlockSize = vecRange.second - vecRange.first;
+    const double      scalarCoeffAlpha = 1.0;
+    const double      scalarCoeffBeta  = 1.0;
+
+    DFTFE_LAUNCH_KERNEL(
+      computeTauFromInterpolatedValues,
+      (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
+      dftfe::utils::DEVICE_BLOCK_SIZE,
+      0,
+      0,
+      vectorsBlockSize,
+      cellsBlockSize,
+      nQuadsPerCell,
+      dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
+      dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
+      dftfe::utils::makeDataTypeDeviceCompatible(kCoord),
+      dftfe::utils::makeDataTypeDeviceCompatible(
+        kineticEnergyDensityCellsWfcContributions));
+
+    BLASWrapperPtr->xgemv('T',
+                          vectorsBlockSize,
+                          cellsBlockSize * nQuadsPerCell,
+                          &scalarCoeffAlpha,
+                          kineticEnergyDensityCellsWfcContributions,
+                          vectorsBlockSize,
+                          partialOccupVec,
+                          1,
+                          &scalarCoeffBeta,
+                          tau + cellRange.first * nQuadsPerCell,
+                          1);
+  }
+
   template void
   computeRhoGradRhoFromInterpolatedValues(
     std::shared_ptr<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-                                               &BLASWrapperPtr,
-    const std::pair<unsigned int, unsigned int> cellRange,
-    const std::pair<unsigned int, unsigned int> vecRange,
-    const unsigned int                          nQuadsPerCell,
-    double                                     *partialOccupVec,
-    dataTypes::number                          *wfcQuadPointData,
-    dataTypes::number                          *gradWfcQuadPointData,
-    double                                     *rhoCellsWfcContributions,
-    double                                     *gradRhoCellsWfcContributions,
-    double                                     *rho,
-    double                                     *gradRho,
-    const bool                                  isEvaluateGradRho);
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *partialOccupVec,
+    dataTypes::number                        *wfcQuadPointData,
+    dataTypes::number                        *gradWfcQuadPointData,
+    double                                   *rhoCellsWfcContributions,
+    double                                   *gradRhoCellsWfcContributions,
+    double                                   *rho,
+    double                                   *gradRho,
+    const bool                                isEvaluateGradRho);
 
+  template void
+  computeTauFromInterpolatedValues(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                                             &BLASWrapperPtr,
+    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
+    const dftfe::uInt                         nQuadsPerCell,
+    double                                   *partialOccupVec,
+    double                                   *kCoord,
+    dataTypes::number                        *wfcQuadPointData,
+    dataTypes::number                        *gradWfcQuadPointData,
+    double *kineticEnergyDensityCellsWfcContributions,
+    double *tau);
 } // namespace dftfe

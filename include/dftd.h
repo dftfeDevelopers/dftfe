@@ -62,10 +62,10 @@ namespace dftfe
     getEnergyCorrection() const;
 
     double
-    getForceCorrection(int atomNo, int dim) const;
+    getForceCorrection(dftfe::Int atomNo, dftfe::Int dim) const;
 
     double
-    getStressCorrection(int dim1, int dim2) const;
+    getStressCorrection(dftfe::Int dim1, dftfe::Int dim2) const;
 
   private:
     int                   d_natoms;

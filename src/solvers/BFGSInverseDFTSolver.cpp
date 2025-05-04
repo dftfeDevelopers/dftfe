@@ -25,7 +25,7 @@ namespace dftfe
   {
     template <typename T>
     std::string
-    to_string_with_precision(const T a_value, const int n = 6)
+    to_string_with_precision(const T a_value, const dftfe::Int n = 6)
     {
       std::ostringstream out;
       out.precision(n);
@@ -41,31 +41,31 @@ namespace dftfe
            const double                     a,
            const double                     b)
     {
-      const unsigned int N = x.locally_owned_size();
-      for (unsigned int i = 0; i < N; ++i)
+      const dftfe::uInt N = x.locally_owned_size();
+      for (dftfe::uInt i = 0; i < N; ++i)
         y.local_element(i) = a * x.local_element(i) + b * y.local_element(i);
     }
 
     void
     vecScale(distributedCPUVec<double> &x, const double a)
     {
-      const unsigned int N = x.locally_owned_size();
-      for (unsigned int i = 0; i < N; ++i)
+      const dftfe::uInt N = x.locally_owned_size();
+      for (dftfe::uInt i = 0; i < N; ++i)
         x.local_element(i) *= a;
     }
 
   } // namespace
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::
-    BFGSInverseDFTSolver(int             numComponents,
+    BFGSInverseDFTSolver(dftfe::Int      numComponents,
                          double          tol,
                          double          lineSearchTol,
-                         unsigned int    maxNumIter,
-                         int             historySize,
-                         int             numLineSearch,
+                         dftfe::uInt     maxNumIter,
+                         dftfe::Int      historySize,
+                         dftfe::Int      numLineSearch,
                          const MPI_Comm &mpi_comm_parent)
     : d_numComponents(numComponents)
     , d_tol(tol)
@@ -81,19 +81,19 @@ namespace dftfe
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0))
   {}
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::
     inverseJacobianTimesVec(
       const distributedCPUVec<double> &g,
       distributedCPUVec<double>       &z,
-      const unsigned int               component,
+      const dftfe::uInt                component,
       InverseDFTSolverFunction<FEOrder, FEOrderElectro, memorySpace>
         &iDFTSolverFunction)
   {
-    int                       N            = d_k[component];
+    dftfe::Int                N            = d_k[component];
     distributedCPUVec<double> q            = g;
     auto                      itReverseY   = d_y[component].rbegin();
     auto                      itReverseS   = d_s[component].rbegin();
@@ -111,7 +111,7 @@ namespace dftfe
 
     std::vector<double> alpha(N, 0.0);
     std::vector<double> beta(N, 0.0);
-    for (int i = N - 1; i >= 0; --i)
+    for (dftfe::Int i = N - 1; i >= 0; --i)
       {
         std::vector<double> dotProd(1, 0.0);
         iDFTSolverFunction.dotProduct(*itReverseS, q, 1, dotProd);
@@ -129,7 +129,7 @@ namespace dftfe
     auto itY   = d_y[component].begin();
     auto itS   = d_s[component].begin();
     auto itRho = d_rho[component].begin();
-    for (int i = 0; i < N; ++i)
+    for (dftfe::Int i = 0; i < N; ++i)
       {
         std::vector<double> dotProd(1, 0.0);
         iDFTSolverFunction.dotProduct(*itY, z, 1, dotProd);
@@ -142,8 +142,8 @@ namespace dftfe
       }
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::fnormCP(
@@ -155,7 +155,7 @@ namespace dftfe
       &iDFTSolverFunction)
   {
     std::vector<distributedCPUVec<double>> xnew(d_numComponents);
-    for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
       {
         xnew[iComp].reinit(x[iComp], false);
         // xnew = x + alpha*p
@@ -164,7 +164,7 @@ namespace dftfe
       }
 
     std::vector<distributedCPUVec<double>> g(d_numComponents);
-    for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
       {
         g[iComp].reinit(x[iComp], false);
         g[iComp] = 0.0;
@@ -173,7 +173,7 @@ namespace dftfe
     std::vector<double> L(d_numComponents);
     iDFTSolverFunction.getForceVector(xnew, g, L);
     fnorms.resize(d_numComponents, 0.0);
-    for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
       {
         std::vector<double> dotProd(1, 0.0);
         iDFTSolverFunction.dotProduct(g[iComp], d_p[iComp], 1, dotProd);
@@ -181,19 +181,19 @@ namespace dftfe
       }
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::solveLineSearchCP(
     std::vector<std::vector<double>> &lambda,
     std::vector<std::vector<double>> &f,
-    const int                         maxIter,
+    const dftfe::Int                  maxIter,
     const double                      tolerance,
     InverseDFTSolverFunction<FEOrder, FEOrderElectro, memorySpace>
       &iDFTSolverFunction)
   {
-    for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
       {
         dftfe::utils::throwException(
           lambda[iComp].size() >= 2,
@@ -204,24 +204,24 @@ namespace dftfe
     std::vector<double> lambda1(d_numComponents);
     std::vector<double> f0(d_numComponents);
     std::vector<double> f1(d_numComponents);
-    for (unsigned int i = 0; i < maxIter; ++i)
+    for (dftfe::uInt i = 0; i < maxIter; ++i)
       {
-        int N = lambda[0].size();
-        int M = f[0].size();
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        dftfe::Int N = lambda[0].size();
+        dftfe::Int M = f[0].size();
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           {
             lambda0[iComp] = lambda[iComp][N - 2];
             lambda1[iComp] = lambda[iComp][N - 1];
           }
         if (M > 0)
           {
-            for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+            for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
               f0[iComp] = f[iComp][M - 1];
           }
         else
           {
             fnormCP(d_x, d_p, lambda0, f0, iDFTSolverFunction);
-            for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+            for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
               f[iComp].push_back(f0[iComp]);
           }
 
@@ -230,7 +230,7 @@ namespace dftfe
             }))
           {
             // remove the last element (i.e., lambda1)
-            for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+            for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
               lambda[iComp].pop_back();
 
             std::cout << "f0 in secantCP below tolerance" << std::endl;
@@ -238,7 +238,7 @@ namespace dftfe
           }
 
         this->fnormCP(d_x, d_p, lambda1, f1, iDFTSolverFunction);
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           f[iComp].push_back(f1[iComp]);
 
         if (std::all_of(f1.begin(), f1.end(), [tolerance](double x) {
@@ -252,7 +252,7 @@ namespace dftfe
         //
         // TODO Fetch the tolerance from dftParams
         //
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           {
             if (fabs((f1[iComp] - f0[iComp]) / f1[iComp]) < 1e-15)
               {
@@ -268,7 +268,7 @@ namespace dftfe
               }
           }
 
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           {
             double s =
               (f1[iComp] - f0[iComp]) / (lambda1[iComp] - lambda0[iComp]);
@@ -285,15 +285,15 @@ namespace dftfe
       }
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::
     solveLineSearchSecantLoss(
       std::vector<std::vector<double>> &lambda,
       std::vector<std::vector<double>> &f,
-      const int                         maxIter,
+      const dftfe::Int                  maxIter,
       const double                      tolerance,
       InverseDFTSolverFunction<FEOrder, FEOrderElectro, memorySpace>
         &iDFTSolverFunction)
@@ -303,15 +303,15 @@ namespace dftfe
       "BFGSInverseDFTSolver::solveLineSearchSecantLoss() not implemented yet.");
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::
     solveLineSearchSecantForceNorm(
       std::vector<std::vector<double>> &lambda,
       std::vector<std::vector<double>> &f,
-      const int                         maxIter,
+      const dftfe::Int                  maxIter,
       const double                      tolerance,
       InverseDFTSolverFunction<FEOrder, FEOrderElectro, memorySpace>
         &iDFTSolverFunction)
@@ -321,8 +321,8 @@ namespace dftfe
       "BFGSInverseDFTSolver::solveLineSearchSecantForceNorm() not implemented yet.");
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::solve(
@@ -341,7 +341,7 @@ namespace dftfe
     //
     d_g.resize(d_numComponents);
     d_p.resize(d_numComponents);
-    for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+    for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
       {
         d_g[iComp].reinit(d_x[iComp], false);
         d_p[iComp].reinit(d_x[iComp], false);
@@ -354,7 +354,7 @@ namespace dftfe
       }
 
     std::vector<double> L(d_numComponents);
-    for (unsigned int iter = 0; iter < d_maxNumIter; ++iter)
+    for (dftfe::uInt iter = 0; iter < d_maxNumIter; ++iter)
       {
         pcout << " bfgs iter = " << iter << "\n";
         if (iter == 0)
@@ -366,7 +366,7 @@ namespace dftfe
         std::vector<std::vector<double>> lsNorm(d_numComponents);
         std::vector<std::vector<double>> lambdas(d_numComponents);
         std::vector<bool>                hasConverged(d_numComponents, false);
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           {
             std::vector<double> dotProd(1, 0.0);
             iDFTSolverFunction.dotProduct(d_g[iComp], d_g[iComp], 1, dotProd);
@@ -411,7 +411,7 @@ namespace dftfe
           }
 
 
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           {
             pcout << " printing the loss val for iComp = " << iComp
                   << " loss = " << L[iComp] << "\n";
@@ -451,11 +451,11 @@ namespace dftfe
           }
 
         double optimalLambda = 1.0;
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           {
-            const unsigned int numLambdas = lambdas[iComp].size();
+            const dftfe::uInt numLambdas = lambdas[iComp].size();
             pcout << "Line search for component" << iComp << std::endl;
-            for (unsigned int i = 0; i < numLambdas - 1; ++i)
+            for (dftfe::uInt i = 0; i < numLambdas - 1; ++i)
               {
                 std::cout << "Lambda: " << lambdas[iComp][i]
                           << " Norm: " << lsNorm[iComp][i] << std::endl;
@@ -490,7 +490,7 @@ namespace dftfe
         // evaluate g(x_{k+1})
         iDFTSolverFunction.getForceVector(d_x, d_g, L);
 
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           {
             // add g(x_{k+1}) to y
             // to obtain y = g(x_{k+1}) - g(x_k)
@@ -514,7 +514,7 @@ namespace dftfe
               }
           }
 
-        for (unsigned int iComp = 0; iComp < d_numComponents; ++iComp)
+        for (dftfe::uInt iComp = 0; iComp < d_numComponents; ++iComp)
           {
             if (d_k[iComp] > d_historySize)
               {
@@ -527,8 +527,8 @@ namespace dftfe
       }
   }
 
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   std::vector<distributedCPUVec<double>>
   BFGSInverseDFTSolver<FEOrder, FEOrderElectro, memorySpace>::getSolution()

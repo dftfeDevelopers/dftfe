@@ -26,8 +26,8 @@
 
 namespace dftfe
 {
-  template <unsigned int              FEOrder,
-            unsigned int              FEOrderElectro,
+  template <dftfe::uInt               FEOrder,
+            dftfe::uInt               FEOrderElectro,
             dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<FEOrder, FEOrderElectro, memorySpace>::initCoreRho()
@@ -44,16 +44,16 @@ namespace dftfe
       << std::endl
       << "Reading data for core electron-density to be used in nonlinear core-correction....."
       << std::endl;
-    std::map<unsigned int, alglib::spline1dinterpolant> coreDenSpline;
-    std::map<unsigned int, std::vector<std::vector<double>>>
-                                   singleAtomCoreElectronDensity;
-    std::map<unsigned int, double> outerMostPointCoreDen;
-    const double                   truncationTol = 1e-12;
-    unsigned int                   fileReadFlag  = 0;
+    std::map<dftfe::uInt, alglib::spline1dinterpolant> coreDenSpline;
+    std::map<dftfe::uInt, std::vector<std::vector<double>>>
+                                  singleAtomCoreElectronDensity;
+    std::map<dftfe::uInt, double> outerMostPointCoreDen;
+    const double                  truncationTol = 1e-12;
+    dftfe::uInt                   fileReadFlag  = 0;
 
     double maxCoreRhoTail = 0.0;
     // loop over atom types
-    for (std::set<unsigned int>::iterator it = atomTypes.begin();
+    for (std::set<dftfe::uInt>::iterator it = atomTypes.begin();
          it != atomTypes.end();
          it++)
       {
@@ -75,17 +75,17 @@ namespace dftfe
     dealii::FEValues<3> fe_values(FE,
                                   quadrature_formula,
                                   dealii::update_quadrature_points);
-    const unsigned int  n_q_points = quadrature_formula.size();
+    const dftfe::uInt   n_q_points = quadrature_formula.size();
 
     //
     // get number of global charges
     //
-    const int numberGlobalCharges = atomLocations.size();
+    const dftfe::Int numberGlobalCharges = atomLocations.size();
 
     //
     // get number of image charges used only for periodic
     //
-    const int numberImageCharges = d_imageIdsTrunc.size();
+    const dftfe::Int numberImageCharges = d_imageIdsTrunc.size();
 
     //
     // loop over elements
@@ -94,13 +94,13 @@ namespace dftfe
       cell = dofHandler.begin_active(),
       endc = dofHandler.end();
     dealii::Tensor<1, 3, double> zeroTensor1;
-    for (unsigned int i = 0; i < 3; i++)
+    for (dftfe::uInt i = 0; i < 3; i++)
       zeroTensor1[i] = 0.0;
 
     dealii::Tensor<2, 3, double> zeroTensor2;
 
-    for (unsigned int i = 0; i < 3; i++)
-      for (unsigned int j = 0; j < 3; j++)
+    for (dftfe::uInt i = 0; i < 3; i++)
+      for (dftfe::uInt j = 0; j < 3; j++)
         zeroTensor2[i][j] = 0.0;
 
     bool isGradDensityDataDependent =
@@ -135,7 +135,7 @@ namespace dftfe
 
 
             // loop over atoms
-            for (unsigned int iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
+            for (dftfe::uInt iAtom = 0; iAtom < atomLocations.size(); ++iAtom)
               {
                 dealii::Point<3> atom(atomLocations[iAtom][2],
                                       atomLocations[iAtom][3],
@@ -150,7 +150,7 @@ namespace dftfe
                   continue;
 
                 // loop over quad points
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt q = 0; q < n_q_points; ++q)
                   {
                     dealii::Point<3> quadPoint = fe_values.quadrature_point(q);
                     dealii::Tensor<1, 3, double> diff = quadPoint - atom;
@@ -201,9 +201,9 @@ namespace dftfe
 
                     if (isGradDensityDataDependent)
                       {
-                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                           {
-                            for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                               {
                                 double temp = (radialDensitySecondDerivative -
                                                radialDensityFirstDerivative /
@@ -234,7 +234,7 @@ namespace dftfe
                     if (isGradDensityDataDependent)
                       hessianRhoCoreAtomCell.resize(n_q_points * 9, 0.0);
 
-                    for (unsigned int q = 0; q < n_q_points; ++q)
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
                       {
                         gradRhoCoreAtomCell[3 * q + 0] = gradRhoCoreAtom[q][0];
                         gradRhoCoreAtomCell[3 * q + 1] = gradRhoCoreAtom[q][1];
@@ -242,9 +242,9 @@ namespace dftfe
 
                         if (isGradDensityDataDependent)
                           {
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                               {
-                                for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                                for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                                   {
                                     hessianRhoCoreAtomCell[9 * q + 3 * iDim +
                                                            jDim] =
@@ -257,11 +257,11 @@ namespace dftfe
               }         // loop over atoms
 
             // loop over image charges
-            for (unsigned int iImageCharge = 0;
+            for (dftfe::uInt iImageCharge = 0;
                  iImageCharge < numberImageCharges;
                  ++iImageCharge)
               {
-                const int masterAtomId = d_imageIdsTrunc[iImageCharge];
+                const dftfe::Int masterAtomId = d_imageIdsTrunc[iImageCharge];
                 if (!d_oncvClassPtr->coreNuclearDensityPresent(
                       atomLocations[masterAtomId][0]))
                   continue;
@@ -277,7 +277,7 @@ namespace dftfe
                 bool isCoreRhoDataInCell = false;
 
                 // loop over quad points
-                for (unsigned int q = 0; q < n_q_points; ++q)
+                for (dftfe::uInt q = 0; q < n_q_points; ++q)
                   {
                     dealii::Point<3> quadPoint = fe_values.quadrature_point(q);
                     dealii::Tensor<1, 3, double> diff = quadPoint - imageAtom;
@@ -322,9 +322,9 @@ namespace dftfe
 
                     if (isGradDensityDataDependent)
                       {
-                        for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                           {
-                            for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                               {
                                 double temp = (radialDensitySecondDerivative -
                                                radialDensityFirstDerivative /
@@ -356,7 +356,7 @@ namespace dftfe
                     if (isGradDensityDataDependent)
                       hessianRhoCoreAtomCell.resize(n_q_points * 9);
 
-                    for (unsigned int q = 0; q < n_q_points; ++q)
+                    for (dftfe::uInt q = 0; q < n_q_points; ++q)
                       {
                         gradRhoCoreAtomCell[3 * q + 0] = gradRhoCoreAtom[q][0];
                         gradRhoCoreAtomCell[3 * q + 1] = gradRhoCoreAtom[q][1];
@@ -364,9 +364,9 @@ namespace dftfe
 
                         if (isGradDensityDataDependent)
                           {
-                            for (unsigned int iDim = 0; iDim < 3; ++iDim)
+                            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                               {
-                                for (unsigned int jDim = 0; jDim < 3; ++jDim)
+                                for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                                   {
                                     hessianRhoCoreAtomCell[9 * q + 3 * iDim +
                                                            jDim] =

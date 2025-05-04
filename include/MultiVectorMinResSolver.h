@@ -34,17 +34,17 @@ namespace dftfe
             BLASWrapperPtr,
           dftfe::linearAlgebra::MultiVector<double, memorySpace> &xMemSpace,
           dftfe::linearAlgebra::MultiVector<double, memorySpace> &NDBCVec,
-          unsigned int                                            locallyOwned,
-          unsigned int                                            blockSize,
+          dftfe::uInt                                             locallyOwned,
+          dftfe::uInt                                             blockSize,
           const double                                            absTolerance,
-          const unsigned int maxNumberIterations,
-          const unsigned int debugLevel     = 0,
-          bool               distributeFlag = true); // override;
+          const dftfe::uInt maxNumberIterations,
+          const dftfe::uInt debugLevel     = 0,
+          bool              distributeFlag = true); // override;
 
   private:
     const MPI_Comm             mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
   };
 } // namespace dftfe

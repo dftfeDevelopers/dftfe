@@ -33,17 +33,33 @@ namespace dftfe
     static const deviceError_t deviceSuccess = cudaSuccess;
 
     // vendor blas related typedef and static consts
-    typedef cublasHandle_t    deviceBlasHandle_t;
-    typedef cublasOperation_t deviceBlasOperation_t;
-    typedef cublasStatus_t    deviceBlasStatus_t;
-    typedef cublasMath_t      deviceBlasMath_t;
+    typedef cublasHandle_t      deviceBlasHandle_t;
+    typedef cublasOperation_t   deviceBlasOperation_t;
+    typedef cublasStatus_t      deviceBlasStatus_t;
+    typedef cublasComputeType_t deviceBlasComputeType_t;
+    typedef cudaDataType        deviceDataType_t;
 
-    static const cublasOperation_t DEVICEBLAS_OP_N    = CUBLAS_OP_N;
-    static const cublasOperation_t DEVICEBLAS_OP_T    = CUBLAS_OP_T;
-    static const cublasOperation_t DEVICEBLAS_OP_C    = CUBLAS_OP_C;
-    static const cublasMath_t DEVICEBLAS_DEFAULT_MATH = CUBLAS_DEFAULT_MATH;
-    static const cublasMath_t DEVICEBLAS_TF32_TENSOR_OP_MATH =
-      CUBLAS_TF32_TENSOR_OP_MATH;
+    static const cublasOperation_t   DEVICEBLAS_OP_N = CUBLAS_OP_N;
+    static const cublasOperation_t   DEVICEBLAS_OP_T = CUBLAS_OP_T;
+    static const cublasOperation_t   DEVICEBLAS_OP_C = CUBLAS_OP_C;
+    static const cublasComputeType_t DEVICEBLAS_COMPUTE_32F =
+      CUBLAS_COMPUTE_32F;
+    static const cublasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_TF32 =
+      CUBLAS_COMPUTE_32F_FAST_TF32;
+    static const cublasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_16BF =
+      CUBLAS_COMPUTE_32F_FAST_16BF;
+    static const cublasComputeType_t DEVICEBLAS_COMPUTE_32F_FAST_16F =
+      CUBLAS_COMPUTE_32F_FAST_16F;
+    static const cublasGemmAlgo_t DEVICEBLAS_GEMM_DEFAULT = CUBLAS_GEMM_DEFAULT;
+    static const cudaDataType     DEVICE_R_64F            = CUDA_R_64F;
+    static const cudaDataType     DEVICE_R_32F            = CUDA_R_32F;
+    static const cudaDataType     DEVICE_R_16F            = CUDA_R_16F;
+    static const cudaDataType     DEVICE_R_16BF           = CUDA_R_16BF;
+    static const cudaDataType     DEVICE_C_64F            = CUDA_C_64F;
+    static const cudaDataType     DEVICE_C_32F            = CUDA_C_32F;
+    static const cudaDataType     DEVICE_C_16F            = CUDA_C_16F;
+    static const cudaDataType     DEVICE_C_16BF           = CUDA_C_16BF;
+
   } // namespace utils
 } // namespace dftfe
 

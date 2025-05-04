@@ -688,11 +688,7 @@ namespace dftfe
           R"([Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.)");
 
         prm.declare_entry(
-          "EXCHANGE CORRELATION TYPE",
-          "GGA-PBE",
-          dealii::Patterns::Selection(
-            "LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U"),
-          R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen & Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
+          "EXCHANGE CORRELATION TYPE", "GGA-PBE", dealii::Patterns::Selection("LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U|MGGA-SCAN|MGGA-R2SCAN"), R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)]). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
 
         prm.declare_entry(
           "MODEL XC INPUT FILE",
@@ -1058,7 +1054,7 @@ namespace dftfe
 
           prm.declare_entry(
             "SUBSPACE PROJ SHEP GPU",
-            "true",
+            "false",
             dealii::Patterns::Bool(),
             "[Advanced] Solve a standard hermitian eigenvalue problem in the Rayleigh Ritz step instead of a generalized hermitian eigenvalue problem on GPUs. Default setting is true.");
 
@@ -1487,7 +1483,7 @@ namespace dftfe
                                   const bool         printParams,
                                   const std::string  mode,
                                   const std::string  restartFilesPath,
-                                  const int          _verbosity,
+                                  const dftfe::Int   _verbosity,
                                   const bool         _useDevice)
   {
     dealii::ParameterHandler prm;
@@ -1970,6 +1966,86 @@ namespace dftfe
         wfcBlockSize == chebyWfcBlockSize,
         dealii::ExcMessage(
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
+    if (XCType.substr(0, 4) == "MGGA")
+      {
+        AssertThrow(
+          !isCellStress,
+          dealii::ExcMessage(
+            "DFT-FE Error: Computation of CELL STRESS with MGGA functional is not completed yet."));
+        if (!floatingNuclearCharges)
+          AssertThrow(
+            !isIonForce,
+            dealii::ExcMessage(
+              "DFT-FE Error: Computation of ION FORCE with MGGA functional in all-electron calculation is not completed yet."));
+        AssertThrow(
+          !(mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+            mixingMethod == "ANDERSON_WITH_KERKER" ||
+            mixingMethod == "ANDERSON_WITH_RESTA"),
+          dealii::ExcMessage(
+            "DFT-FE Error: ANDERSON_WITH_RESTA or ANDERSON_WITH_KERKER or LRDM mixing scheme in MGGA functional is not completed yet."));
+      }
+
+    bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
+    if (isHubbard)
+      AssertThrow(
+        !(mixingMethod == "ANDERSON_WITH_KERKER" ||
+          mixingMethod == "ANDERSON_WITH_RESTA"),
+        dealii::ExcMessage(
+          "DFT-FE Error: ANDERSON_WITH_RESTA or ANDERSON_WITH_KERKER for Hubbard is not completed yet."));
+
+    if (dc_dispersioncorrectiontype == 1 || dc_dispersioncorrectiontype == 2)
+      {
+        bool customParameters = !(dc_dampingParameterFilename == "");
+        if (!customParameters)
+          {
+            if (XCType == "GGA-PBE")
+              {
+                if (dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    dc_d3dampingtype != 4,
+                    dealii::ExcMessage(std::string(
+                      "The OP damping functions has not been parametrized for this functional.")));
+              }
+            else if (XCType == "GGA-RPBE")
+              {
+                if (dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    dc_d3dampingtype == 0 || dc_d3dampingtype == 1,
+                    dealii::ExcMessage(std::string(
+                      "The OP, BJM and ZEROM damping functions have not been parametrized for this functional.")));
+              }
+            else if (XCType == "MGGA-R2SCAN")
+              {
+                if (dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    dc_d3dampingtype == 1,
+                    dealii::ExcMessage(std::string(
+                      "Only BJ damping function has been parametrized for this functional.")));
+
+                if (dc_dispersioncorrectiontype == 2)
+                  AssertThrow(
+                    !dc_d4MBD,
+                    dealii::ExcMessage(std::string(
+                      "D4 MBD has not been parametrized for this functional.")));
+              }
+
+            else if (XCType == "MGGA-SCAN")
+              {
+                if (dc_dispersioncorrectiontype == 1)
+                  AssertThrow(
+                    dc_d3dampingtype == 0 || dc_d3dampingtype == 1,
+                    dealii::ExcMessage(std::string(
+                      "Only ZERO and BJ damping functions have been parametrized for this functional.")));
+              }
+            else
+              {
+                AssertThrow(
+                  false,
+                  dealii::ExcMessage(std::string(
+                    "DFTD3/4 have not been parametrized for this functional.")));
+              }
+          }
+      }
   }
 
 
@@ -2183,8 +2259,9 @@ namespace dftfe
     // overlap compute communication cheby
 
     bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
-    bool isLocalXC =
-      (XCType.substr(0, 3) == "LDA") || (XCType.substr(0, 3) == "GGA");
+    bool isLocalXC = (XCType.substr(0, 3) == "LDA") ||
+                     (XCType.substr(0, 3) == "GGA") ||
+                     ((XCType.substr(0, 4) == "MGGA"));
     if (isHubbard || !isLocalXC)
       {
         overlapComputeCommunCheby = false;
