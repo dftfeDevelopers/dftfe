@@ -104,20 +104,6 @@ namespace dftfe
                 &constraintsVectorMatrixFree,
       const bool isElectrostaticsMesh);
 
-    /** @brief initializes and precomputes pseudopotential related data structuers required for configurational force
-     *  and stress computation.
-     *
-     *  This function is only activated for pseudopotential calculations and is
-     * currently called when initializing/reinitializing the dftClass object.
-     * This function initializes and precomputes the pseudopotential
-     * datastructures for local and non-local parts. Separate internal function
-     * calls are made for KB and ONCV projectors.
-     *
-     *  @return void.
-     */
-    void
-    initPseudoData();
-
     /** @brief computes the configurational force on all atoms corresponding to a Gaussian generator,
      *  which represents perturbation of the underlying space.
      *

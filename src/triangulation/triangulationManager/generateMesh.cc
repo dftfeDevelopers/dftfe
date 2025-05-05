@@ -761,16 +761,6 @@ namespace dftfe
       typename dealii::DoFHandler<3>::cell_iterator>>
       periodicity_vector;
 
-    // create unitVectorsXYZ
-    std::vector<std::vector<double>> unitVectorsXYZ;
-    unitVectorsXYZ.resize(3);
-
-    for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        unitVectorsXYZ[i].resize(3, 0.0);
-        unitVectorsXYZ[i][i] = 0.0;
-      }
-
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
     offsetVectors.resize(3);
@@ -779,8 +769,7 @@ namespace dftfe
       {
         for (dftfe::Int j = 0; j < 3; ++j)
           {
-            offsetVectors[i][j] =
-              unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
+            offsetVectors[i][j] = -d_domainBoundingVectors[i][j];
           }
       }
 

@@ -196,28 +196,13 @@ namespace dftfe
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerEigen,
                                                     constraintsNoneEigen);
 
-    // create unitVectorsXYZ
-    std::vector<std::vector<double>> unitVectorsXYZ;
-    unitVectorsXYZ.resize(3);
-
-    for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        unitVectorsXYZ[i].resize(3, 0.0);
-        unitVectorsXYZ[i][i] = 0.0;
-      }
-
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
     offsetVectors.resize(3);
 
     for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        for (dftfe::Int j = 0; j < 3; ++j)
-          {
-            offsetVectors[i][j] =
-              unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
-          }
-      }
+      for (dftfe::Int j = 0; j < 3; ++j)
+        offsetVectors[i][j] = -d_domainBoundingVectors[i][j];
 
     std::vector<dealii::GridTools::PeriodicFacePair<
       typename dealii::DoFHandler<3>::cell_iterator>>
@@ -228,12 +213,8 @@ namespace dftfe
                                                 d_dftParamsPtr->periodicY,
                                                 d_dftParamsPtr->periodicZ};
     for (dftfe::uInt d = 0; d < 3; ++d)
-      {
-        if (periodic[d] == 1)
-          {
-            periodicDirectionVector.push_back(d);
-          }
-      }
+      if (periodic[d] == 1)
+        periodicDirectionVector.push_back(d);
 
 
     for (dftfe::Int i = 0;

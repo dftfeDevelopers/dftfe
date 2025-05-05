@@ -138,28 +138,13 @@ namespace dftfe
                                                     d_constraintsMoveMesh);
     d_periodicity_vector.clear();
 
-    // create unitVectorsXYZ
-    std::vector<std::vector<double>> unitVectorsXYZ;
-    unitVectorsXYZ.resize(3);
-
-    for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        unitVectorsXYZ[i].resize(3, 0.0);
-        unitVectorsXYZ[i][i] = 0.0;
-      }
-
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
     offsetVectors.resize(3);
 
     for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        for (dftfe::Int j = 0; j < 3; ++j)
-          {
-            offsetVectors[i][j] =
-              unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
-          }
-      }
+      for (dftfe::Int j = 0; j < 3; ++j)
+        offsetVectors[i][j] = -domainBoundingVectors[i][j];
 
     const std::array<dftfe::Int, 3> periodic = {d_dftParams.periodicX,
                                                 d_dftParams.periodicY,
@@ -167,12 +152,8 @@ namespace dftfe
 
     std::vector<dftfe::Int> periodicDirectionVector;
     for (dftfe::uInt d = 0; d < 3; ++d)
-      {
-        if (periodic[d] == 1)
-          {
-            periodicDirectionVector.push_back(d);
-          }
-      }
+      if (periodic[d] == 1)
+        periodicDirectionVector.push_back(d);
 
     for (dftfe::Int i = 0;
          i < std::accumulate(periodic.begin(), periodic.end(), 0);
@@ -330,28 +311,13 @@ namespace dftfe
     // sanity check to make sure periodic boundary conditions are maintained
     MPI_Barrier(mpi_communicator);
 
-    // create unitVectorsXYZ
-    std::vector<std::vector<double>> unitVectorsXYZ;
-    unitVectorsXYZ.resize(3);
-
-    for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        unitVectorsXYZ[i].resize(3, 0.0);
-        unitVectorsXYZ[i][i] = 0.0;
-      }
-
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
     offsetVectors.resize(3);
 
     for (dftfe::Int i = 0; i < 3; ++i)
-      {
-        for (dftfe::Int j = 0; j < 3; ++j)
-          {
-            offsetVectors[i][j] =
-              unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
-          }
-      }
+      for (dftfe::Int j = 0; j < 3; ++j)
+        offsetVectors[i][j] = -d_domainBoundingVectors[i][j];
     /*
        if (d_dftParams.verbosity>=4)
        pcout << "Sanity check for periodic matched faces on moved
