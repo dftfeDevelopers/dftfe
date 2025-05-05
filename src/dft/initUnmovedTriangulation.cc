@@ -342,7 +342,10 @@ namespace dftfe
 
     d_excManagerPtr->init(d_dftParamsPtr->XCType,
                           true,
-                          d_dftParamsPtr->modelXCInputFile);
+                          d_dftParamsPtr->modelXCInputFile,
+                          dealii::Utilities::MPI::this_mpi_process(
+                            d_mpiCommParent) == 0 &&
+                            d_dftParamsPtr->verbosity >= 1);
 
     if (d_dftParamsPtr->auxBasisTypeXC == "FE")
       {
