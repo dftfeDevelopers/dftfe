@@ -118,7 +118,7 @@ namespace dftfe
       memorySpace == dftfe::utils::MemorySpace::HOST ? 1 : 50;
     d_cellsBlockSizeHX   = memorySpace == dftfe::utils::MemorySpace::HOST ?
                              1 :
-                             d_basisOperationsPtr->nCells();
+                             50; // d_basisOperationsPtr->nCells();
     d_numVectorsInternal = 0;
 
     d_useHubbard = false;
@@ -1552,6 +1552,8 @@ namespace dftfe
                   numberWavefunctions,
               cellRange);
           }
+
+
 #pragma omp critical(hx_assembly)
         d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
           numberWavefunctions,

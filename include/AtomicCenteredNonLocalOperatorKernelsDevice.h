@@ -85,6 +85,8 @@ namespace dftfe
     void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt offset,
+      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,

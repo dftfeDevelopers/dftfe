@@ -165,6 +165,8 @@ namespace dftfe
     __global__ void
     addNonLocalContributionDeviceKernel(
       const dftfe::uInt  totalNonLocalElements,
+      const dftfe::uInt  offset,
+      const dftfe::uInt  offset2,
       const dftfe::uInt  numberWfc,
       const dftfe::uInt  numberNodesPerElement,
       const dftfe::uInt *iElemNonLocalToElemIndexMap,
@@ -179,20 +181,23 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::uInt iElem = index / (numberWfc * numberNodesPerElement);
-          const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const dftfe::uInt elemIndex =
+            iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
           const dftfe::uInt index2 =
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
           const dftfe::uInt wfcIndex = index2 % numberWfc;
           atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
                           iDof * numberWfc + wfcIndex],
-                    xVec[index]);
+                    xVec[index + offset2 * numberWfc * numberNodesPerElement]);
         }
     }
 
     __global__ void
     addNonLocalContributionDeviceKernel(
       const dftfe::uInt  totalNonLocalElements,
+      const dftfe::uInt  offset,
+      const dftfe::uInt  offset2,
       const dftfe::uInt  numberWfc,
       const dftfe::uInt  numberNodesPerElement,
       const dftfe::uInt *iElemNonLocalToElemIndexMap,
@@ -207,7 +212,8 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::uInt iElem = index / (numberWfc * numberNodesPerElement);
-          const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const dftfe::uInt elemIndex =
+            iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
           const dftfe::uInt index2 =
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
@@ -222,6 +228,8 @@ namespace dftfe
     __global__ void
     addNonLocalContributionDeviceKernel(
       const dftfe::uInt                        totalNonLocalElements,
+      const dftfe::uInt                        offset,
+      const dftfe::uInt                        offset2,
       const dftfe::uInt                        numberWfc,
       const dftfe::uInt                        numberNodesPerElement,
       const dftfe::uInt                       *iElemNonLocalToElemIndexMap,
@@ -236,7 +244,8 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::uInt iElem = index / (numberWfc * numberNodesPerElement);
-          const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const dftfe::uInt elemIndex =
+            iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
           const dftfe::uInt index2 =
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
@@ -256,6 +265,8 @@ namespace dftfe
     __global__ void
     addNonLocalContributionDeviceKernel(
       const dftfe::uInt                       totalNonLocalElements,
+      const dftfe::uInt                       offset,
+      const dftfe::uInt                       offset2,
       const dftfe::uInt                       numberWfc,
       const dftfe::uInt                       numberNodesPerElement,
       const dftfe::uInt                      *iElemNonLocalToElemIndexMap,
@@ -270,7 +281,8 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::uInt iElem = index / (numberWfc * numberNodesPerElement);
-          const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const dftfe::uInt elemIndex =
+            iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
           const dftfe::uInt index2 =
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
@@ -566,6 +578,8 @@ namespace dftfe
     void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt offset,
+      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,
@@ -585,6 +599,8 @@ namespace dftfe
                           0,
                           0,
                           totalNonLocalElements,
+                          offset,
+                          offset2,
                           numberWfc,
                           numberNodesPerElement,
                           iElemNonLocalToElemIndexMap.begin(),
@@ -796,6 +812,8 @@ namespace dftfe
     template void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt offset,
+      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,
@@ -809,6 +827,8 @@ namespace dftfe
     template void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt offset,
+      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,

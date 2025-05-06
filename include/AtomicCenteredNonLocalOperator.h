@@ -759,10 +759,8 @@ namespace dftfe
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_cellHamMatrixTimesWaveMatrixNonLocalDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                           d_sphericalFnTimesVectorAllCellsDevice;
-    std::vector<ValueType> d_sphericalFnTimesVectorAllCellsReduction;
-    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-      d_sphericalFnTimesVectorAllCellsReductionDevice;
+      d_sphericalFnTimesVectorAllCellsDevice;
+
 
     std::vector<dftfe::uInt> d_mapSphericalFnTimesVectorAllCellsReduction;
     dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
@@ -780,10 +778,7 @@ namespace dftfe
       d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec;
     dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
       d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice;
-    std::vector<dftfe::uInt> d_cellNodeIdMapNonLocalToLocal;
 
-    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
-      d_cellNodeIdMapNonLocalToLocalDevice;
 #endif
   };
 
