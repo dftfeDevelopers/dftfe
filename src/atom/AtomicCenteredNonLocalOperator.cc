@@ -893,6 +893,7 @@ namespace dftfe
         d_mapiAtomTosphFuncWaveStart.resize(d_totalAtomsInCurrentProc);
 
         std::map<dftfe::uInt, dftfe::uInt> atomIdToNumShapeFnsAccumulated;
+        std::map<dftfe::uInt, dftfe::uInt> atomIdToMaxShapeFnsAccumulated;
         for (dftfe::Int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; iAtom++)
           {
             const dftfe::uInt        atomId = atomIdsInCurrentProcess[iAtom];
@@ -931,6 +932,8 @@ namespace dftfe
               }
 
             atomIdToNumShapeFnsAccumulated[atomId] = numShapeFnsAccum;
+            atomIdToMaxShapeFnsAccumulated[atomId] =
+              iAtom * d_maxSingleAtomContribution;
             numShapeFnsAccum += numberSphericalFunctions;
           }
 
@@ -1006,7 +1009,7 @@ namespace dftfe
                           atomIdToNumShapeFnsAccumulated[atomId] + alpha;
                         d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec
                           [countElem * d_maxSingleAtomContribution + alpha] =
-                            atomIdToNumShapeFnsAccumulated[atomId] + alpha;
+                            atomIdToMaxShapeFnsAccumulated[atomId] + alpha;
                       }
                     d_elementIdToNonLocalElementIdMap[iElem].push_back(
                       std::make_pair(atomId, countElem));
@@ -2001,18 +2004,33 @@ namespace dftfe
                   copyPaddedMemoryStorageVectorToDistributeVectorDevice(
                     d_sphericalFnTimesVectorDevice,
                     sphericalFunctionKetTimesVectorParFlattened);
-                //                   dftfe::utils::MemoryStorage<ValueType,
-                //                   dftfe::utils::MemorySpace::HOST>
-                //                   temp(d_sphericalFnTimesVectorAllCellsDevice.size(),0.0);
+                // dftfe::utils::MemoryStorage<ValueType,
+                // dftfe::utils::MemorySpace::HOST>
+                // temp(d_sphericalFnTimesVectorAllCellsDevice.size(),0.0);
                 // temp.copyFrom(d_sphericalFnTimesVectorAllCellsDevice);
+                // double sumValue = 0.0;
                 // for(int iiTask = 0; iiTask < d_n_mpi_processes; iiTask++)
                 //   {
-                //     for(int ii = 0; ii <
-                //     d_sphericalFnTimesVectorAllCellsDevice.size(); ii++)
+                //     if(iiTask == d_this_mpi_process)
+                //     {
+                //       for(int ii = 0; ii
+                //       <d_sphericalFnTimesVectorAllCellsDevice.size(); ii++)
                 //       {
                 //         std::cout << "iiTask: " << iiTask << " ii: " << ii <<
-                //         " value: " << temp[ii] << std::endl;
+                //         " value: " << temp[ii] << std::endl; sumValue +=
+                //         temp[ii];
                 //       }
+                //     }
+                //     MPI_Barrier(d_mpi_communicator);
+                //   }
+                // for(int iiTask = 0; iiTask < d_n_mpi_processes; iiTask++)
+                //   {
+                //     if(iiTask == d_this_mpi_process)
+                //     {
+                //       std::cout << "iiTask: " << iiTask << " sum: " <<
+                //       sumValue << std::endl;
+                //     }
+                //     MPI_Barrier(d_mpi_communicator);
                 //   }
               }
             else if (couplingtype == CouplingStructure::dense)
@@ -2250,12 +2268,15 @@ namespace dftfe
             // temp.copyFrom(d_sphericalFnTimesWavefunctionMatrix);
             // for(int iiTask = 0; iiTask < d_n_mpi_processes; iiTask++)
             //   {
-            //     for(int ii = 0; ii <
-            //     d_sphericalFnTimesWavefunctionMatrix.size(); ii++)
+            //     if(iiTask == d_this_mpi_process)
+            //     {
+            //       for(int ii = 0; ii
+            //       <d_sphericalFnTimesWavefunctionMatrix.size(); ii++)
             //       {
             //         std::cout << "iiTask: " << iiTask << " ii: " << ii << "
             //         value: " << temp[ii] << std::endl;
             //       }
+            //     }
             //   }
           }
       }
