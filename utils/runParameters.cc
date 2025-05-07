@@ -54,7 +54,7 @@ namespace dftfe
                         "[Standard] Use GPU for compute.");
 
       prm.declare_entry("RESTART FOLDER",
-                        ".",
+                        "restartFolder",
                         dealii::Patterns::Anything(),
                         "[Standard] Folder to store restart files.");
       prm.enter_subsection("NEB");
