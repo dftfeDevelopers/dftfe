@@ -34,22 +34,20 @@ namespace dftfe
    * @author Krishnendu Ghosh, krisg@umich.edu
    */
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   class symmetryClass
   {
     // template <dftfe::uInt T1, dftfe::uInt T2>
-    friend class dftClass<FEOrder, FEOrderElectro, memorySpace>;
+    friend class dftClass<memorySpace>;
 
   public:
     /**
      * symmetryClass constructor
      */
-    symmetryClass(dftClass<FEOrder, FEOrderElectro, memorySpace> *_dftPtr,
-                  const MPI_Comm &mpi_comm_parent,
-                  const MPI_Comm &mpi_comm_domain,
-                  const MPI_Comm &_interpoolcomm);
+    symmetryClass(dftClass<memorySpace> *_dftPtr,
+                  const MPI_Comm        &mpi_comm_parent,
+                  const MPI_Comm        &mpi_comm_domain,
+                  const MPI_Comm        &_interpoolcomm);
     /**
      * Main driver routine to generate and communicate mapping tables
      */
@@ -83,7 +81,7 @@ namespace dftfe
 
 
   private:
-    dftClass<FEOrder, FEOrderElectro, memorySpace> *dftPtr;
+    dftClass<memorySpace> *dftPtr;
     /**
      * dealii based FE data structres
      */

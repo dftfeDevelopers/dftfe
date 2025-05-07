@@ -22,7 +22,8 @@
 #include <constraintMatrixInfo.h>
 #include <dealiiLinearSolver.h>
 #include <dftUtils.h>
-#include <poissonSolverProblem.h>
+#include <poissonSolverProblemWrapper.h>
+#include <feevaluationWrapper.h>
 #ifdef DFTFE_WITH_DEVICE
 #  include <solveVselfInBinsDevice.h>
 #endif
@@ -316,9 +317,9 @@ namespace dftfe
     }
   } // namespace
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   void
-  vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBins(
+  vselfBinsManager::solveVselfInBins(
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
@@ -418,7 +419,9 @@ namespace dftfe
                                 mpi_communicator,
                                 dealiiLinearSolver::CG);
 
-    poissonSolverProblem<FEOrder, FEOrderElectro> vselfSolverProblem(
+    poissonSolverProblemWrapperClass vselfSolverProblem(
+      d_dftParams.finiteElementPolynomialOrder,
+      d_dftParams.finiteElementPolynomialOrderElectrostatics,
       mpi_communicator);
 
     std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints;
@@ -695,7 +698,9 @@ namespace dftfe
                 MPI_Barrier(d_mpiCommParent);
                 selfenergy_time = MPI_Wtime();
 
-                dealii::FEEvaluation<3, -1> fe_eval_sc(
+                FEEvaluationWrapperClass<1> fe_eval_sc(
+                  -1,
+                  1,
                   matrix_free_data,
                   constraintMatrixIdVself,
                   smearedChargeQuadratureId);
@@ -818,9 +823,9 @@ namespace dftfe
   }
 
 #ifdef DFTFE_WITH_DEVICE
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   void
-  vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBinsDevice(
+  vselfBinsManager::solveVselfInBinsDevice(
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
@@ -1093,13 +1098,18 @@ namespace dftfe
 
         std::map<dealii::CellId, std::vector<double>> &bQuadValuesBin =
           bQuadValuesBins[iBin];
-
-        dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1> fe_eval(
-          matrix_free_data, constraintMatrixId, matrixFreeQuadratureIdAX);
-
-        dealii::FEEvaluation<3, -1> fe_eval_sc(matrix_free_data,
+        FEEvaluationWrapperClass<1> fe_eval(
+          d_dftParams.finiteElementPolynomialOrderElectrostatics,
+          d_dftParams.finiteElementPolynomialOrderElectrostatics + 1,
+          matrix_free_data,
+          constraintMatrixId,
+          matrixFreeQuadratureIdAX);
+        FEEvaluationWrapperClass<1> fe_eval_sc(-1,
+                                               1,
+                                               matrix_free_data,
                                                constraintMatrixId,
                                                smearedChargeQuadratureId);
+
 
         dealii::VectorizedArray<double> quarter =
           dealii::make_vectorized_array(1.0 / (4.0 * M_PI));
@@ -1213,16 +1223,19 @@ namespace dftfe
 
               tempvec.update_ghost_values();
               constraintsMatrixDataInfo2.distribute(tempvec);
-
-              dealii::FEEvaluation<3, FEOrderElectro, FEOrderElectro + 1>
-                fe_eval2(matrix_free_data,
-                         constraintMatrixId2,
-                         matrixFreeQuadratureIdAX);
-
-              dealii::FEEvaluation<3, -1> fe_eval_sc2(
+              FEEvaluationWrapperClass<1> fe_eval2(
+                d_dftParams.finiteElementPolynomialOrderElectrostatics,
+                d_dftParams.finiteElementPolynomialOrderElectrostatics + 1,
+                matrix_free_data,
+                constraintMatrixId2,
+                matrixFreeQuadratureIdAX);
+              FEEvaluationWrapperClass<1> fe_eval_sc2(
+                -1,
+                1,
                 matrix_free_data,
                 constraintMatrixId2,
                 smearedChargeQuadratureId);
+
 
               for (dftfe::uInt macrocell = 0;
                    macrocell < matrix_free_data.n_cell_batches();
@@ -1410,24 +1423,28 @@ namespace dftfe
     //
     // Device poisson solve
     //
-    poissonDevice::solveVselfInBins(cellGradNIGradNJIntergralDevice,
-                                    BLASWrapperPtr,
-                                    matrix_free_data,
-                                    mfBaseDofHandlerIndex,
-                                    hangingPeriodicConstraintMatrix,
-                                    &rhsFlattened[0],
-                                    diagonalA.begin(),
-                                    &inhomoIdsColoredVecFlattened[0],
-                                    localSize,
-                                    ghostSize,
-                                    numberPoissonSolves,
-                                    d_mpiCommParent,
-                                    mpi_communicator,
-                                    &vselfBinsFieldsFlattened[0],
-                                    d_dftParams.verbosity,
-                                    d_dftParams.maxLinearSolverIterations,
-                                    d_dftParams.absLinearSolverTolerance,
-                                    FEOrderElectro != FEOrder ? true : false);
+    poissonDevice::solveVselfInBins(
+      cellGradNIGradNJIntergralDevice,
+      BLASWrapperPtr,
+      matrix_free_data,
+      mfBaseDofHandlerIndex,
+      hangingPeriodicConstraintMatrix,
+      &rhsFlattened[0],
+      diagonalA.begin(),
+      &inhomoIdsColoredVecFlattened[0],
+      localSize,
+      ghostSize,
+      numberPoissonSolves,
+      d_mpiCommParent,
+      mpi_communicator,
+      &vselfBinsFieldsFlattened[0],
+      d_dftParams.verbosity,
+      d_dftParams.maxLinearSolverIterations,
+      d_dftParams.absLinearSolverTolerance,
+      d_dftParams.finiteElementPolynomialOrderElectrostatics !=
+          d_dftParams.finiteElementPolynomialOrder ?
+        true :
+        false);
 
     MPI_Barrier(d_mpiCommParent);
     time = MPI_Wtime() - time;
@@ -1500,7 +1517,9 @@ namespace dftfe
                 MPI_Barrier(d_mpiCommParent);
                 selfenergy_time = MPI_Wtime();
 
-                dealii::FEEvaluation<3, -1> fe_eval_sc(
+                FEEvaluationWrapperClass<1> fe_eval_sc(
+                  -1,
+                  1,
                   matrix_free_data,
                   constraintMatrixId,
                   smearedChargeQuadratureId);
@@ -1641,9 +1660,9 @@ namespace dftfe
   }
 #endif
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   void
-  vselfBinsManager<FEOrder, FEOrderElectro>::solveVselfInBinsPerturbedDomain(
+  vselfBinsManager::solveVselfInBinsPerturbedDomain(
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>

@@ -20,30 +20,27 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    interpolateDensityNodalDataToQuadratureDataGeneral(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-                                      &basisOperationsPtr,
-      const dftfe::uInt                dofHandlerId,
-      const dftfe::uInt                quadratureId,
-      const distributedCPUVec<double> &nodalField,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureGradValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureTauValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                &quadratureHessianValueData,
-      const bool isEvaluateGradData,
-      const bool isEvaluateTauData,
-      const bool isEvaluateHessianData)
+  dftClass<memorySpace>::interpolateDensityNodalDataToQuadratureDataGeneral(
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+                                    &basisOperationsPtr,
+    const dftfe::uInt                dofHandlerId,
+    const dftfe::uInt                quadratureId,
+    const distributedCPUVec<double> &nodalField,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadratureValueData,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadratureGradValueData,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadratureTauValueData,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              &quadratureHessianValueData,
+    const bool isEvaluateGradData,
+    const bool isEvaluateTauData,
+    const bool isEvaluateHessianData)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
@@ -69,15 +66,16 @@ namespace dftfe
       }
 
 
-    dealii::FEEvaluation<
-      3,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1,
-      double>
-      feEvalObj(basisOperationsPtr->matrixFreeData(),
-                dofHandlerId,
-                quadratureId);
+    FEEvaluationWrapperClass<1> feEvalObj(
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      C_num1DQuad(C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      basisOperationsPtr->matrixFreeData(),
+      dofHandlerId,
+      quadratureId);
 
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
     //        dealii::ExcMessage("DFT-FE Error: mismatch in
@@ -163,24 +161,21 @@ namespace dftfe
   //
   // interpolate nodal data to quadrature values using FEEvaluation
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-                                      &basisOperationsPtr,
-      const dftfe::uInt                dofHandlerId,
-      const dftfe::uInt                quadratureId,
-      const distributedCPUVec<double> &nodalField,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                &quadratureGradValueData,
-      const bool isEvaluateGradData)
+  dftClass<memorySpace>::interpolateElectroNodalDataToQuadratureDataGeneral(
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+                                    &basisOperationsPtr,
+    const dftfe::uInt                dofHandlerId,
+    const dftfe::uInt                quadratureId,
+    const distributedCPUVec<double> &nodalField,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadratureValueData,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              &quadratureGradValueData,
+    const bool isEvaluateGradData)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
@@ -194,15 +189,14 @@ namespace dftfe
         quadratureGradValueData.resize(3 * nQuadsPerCell * nCells);
       }
 
-    dealii::FEEvaluation<
-      3,
-      FEOrderElectro,
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1,
-      double>
-      feEvalObj(basisOperationsPtr->matrixFreeData(),
-                dofHandlerId,
-                quadratureId);
+    FEEvaluationWrapperClass<1> feEvalObj(
+      d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics,
+      C_num1DQuad(C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      basisOperationsPtr->matrixFreeData(),
+      dofHandlerId,
+      quadratureId);
 
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
     //        dealii::ExcMessage("DFT-FE Error: mismatch in
@@ -265,24 +259,21 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    interpolateDensityNodalDataToQuadratureDataLpsp(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-                                      &basisOperationsPtr,
-      const dftfe::uInt                dofHandlerId,
-      const dftfe::uInt                quadratureId,
-      const distributedCPUVec<double> &nodalField,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                &quadratureGradValueData,
-      const bool isEvaluateGradData)
+  dftClass<memorySpace>::interpolateDensityNodalDataToQuadratureDataLpsp(
+    const std::shared_ptr<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
+                                    &basisOperationsPtr,
+    const dftfe::uInt                dofHandlerId,
+    const dftfe::uInt                quadratureId,
+    const distributedCPUVec<double> &nodalField,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadratureValueData,
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              &quadratureGradValueData,
+    const bool isEvaluateGradData)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
@@ -298,14 +289,15 @@ namespace dftfe
 
 
 
-    dealii::FEEvaluation<3,
-                         C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-                         C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                         1,
-                         double>
-      feEvalObj(basisOperationsPtr->matrixFreeData(),
-                dofHandlerId,
-                quadratureId);
+    FEEvaluationWrapperClass<1> feEvalObj(
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      C_num1DQuadLPSP(d_dftParamsPtr->finiteElementPolynomialOrder) *
+        C_numCopies1DQuadLPSP(),
+      basisOperationsPtr->matrixFreeData(),
+      dofHandlerId,
+      quadratureId);
 
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeData.get_vector_partitioner(dofHandlerId)),
     //        dealii::ExcMessage("DFT-FE Error: mismatch in
@@ -373,22 +365,23 @@ namespace dftfe
   //
   // compute field l2 norm
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::fieldGradl2Norm(
+  dftClass<memorySpace>::fieldGradl2Norm(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
     const distributedCPUVec<double>     &nodalField)
 
   {
-    dealii::FEEvaluation<
-      3,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1,
-      double>
-                      fe_evalField(matrixFreeDataObject, 0, 0);
+    FEEvaluationWrapperClass<1> fe_evalField(
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      C_num1DQuad(C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      matrixFreeDataObject,
+      0,
+      0);
     const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
     nodalField.update_ghost_values();
 
@@ -429,11 +422,9 @@ namespace dftfe
     return dealii::Utilities::MPI::sum(value, mpi_communicator);
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::l2ProjectionQuadToNodal(
+  dftClass<memorySpace>::l2ProjectionQuadToNodal(
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
@@ -470,11 +461,9 @@ namespace dftfe
   //
   // compute mass Vector
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeRhoNodalMassVector(
+  dftClass<memorySpace>::computeRhoNodalMassVector(
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &massVec)
   {
@@ -490,7 +479,10 @@ namespace dftfe
       distributedMassVec, d_densityDofHandlerIndexElectro);
 
     dealii::QGaussLobatto<3> quadrature(
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1);
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics) +
+      1);
     dealii::FEValues<3> fe_values(d_dofHandlerRhoNodal.get_fe(),
                                   quadrature,
                                   dealii::update_values |

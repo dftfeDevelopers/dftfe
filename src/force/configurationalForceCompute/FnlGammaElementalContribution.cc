@@ -24,35 +24,27 @@ namespace dftfe
   //(locally used function) compute Fnl contibution due to Gamma(Rj) for given
   // set
   // of cells
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    FnlGammaAtomsElementalContribution(
-      std::map<dftfe::uInt, std::vector<double>>
-                                          &forceContributionFnlGammaAtoms,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      dealii::FEEvaluation<3,
-                           1,
-                           C_num1DQuadNLPSP<FEOrder>() *
-                             C_numCopies1DQuadNLPSP(),
-                           3>             &forceEvalNLP,
-      const std::shared_ptr<
-        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-                                      nonLocalOp,
-      dftfe::uInt                     numNonLocalAtomsCurrentProcess,
-      const std::vector<dftfe::Int>  &globalChargeIdNonLocalAtoms,
-      const std::vector<dftfe::uInt> &numberPseudoWaveFunctionsPerAtom,
-      const dftfe::uInt               cell,
-      const std::map<dealii::CellId, dftfe::uInt> &cellIdToCellNumberMap,
+  forceClass<memorySpace>::FnlGammaAtomsElementalContribution(
+    std::map<dftfe::uInt, std::vector<double>> &forceContributionFnlGammaAtoms,
+    const dealii::MatrixFree<3, double>        &matrixFreeData,
+    FEEvaluationWrapperClass<3>                &forceEvalNLP,
+    const std::shared_ptr<
+      AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                                    nonLocalOp,
+    dftfe::uInt                     numNonLocalAtomsCurrentProcess,
+    const std::vector<dftfe::Int>  &globalChargeIdNonLocalAtoms,
+    const std::vector<dftfe::uInt> &numberPseudoWaveFunctionsPerAtom,
+    const dftfe::uInt               cell,
+    const std::map<dealii::CellId, dftfe::uInt> &cellIdToCellNumberMap,
 #ifdef USE_COMPLEX
-      const std::vector<dataTypes::number>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+    const std::vector<dataTypes::number>
+      &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
 #endif
-      const std::vector<dataTypes::number> &zetaDeltaVQuadsFlattened,
-      const std::vector<dataTypes::number>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened)
+    const std::vector<dataTypes::number> &zetaDeltaVQuadsFlattened,
+    const std::vector<dataTypes::number>
+      &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened)
   {
     const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
@@ -223,27 +215,24 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    FnlGammaxElementalContribution(
-      dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &FVectQuads,
-      const dealii::MatrixFree<3, double>                      &matrixFreeData,
-      const dftfe::uInt                                         numQuadPoints,
-      const std::shared_ptr<
-        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-                                      nonLocalOp,
-      const dftfe::uInt               numNonLocalAtomsCurrentProcess,
-      const std::vector<dftfe::Int>  &globalChargeIdNonLocalAtoms,
-      const std::vector<dftfe::uInt> &numberPseudoWaveFunctionsPerAtom,
-      const dftfe::uInt               cell,
-      const std::map<dealii::CellId, dftfe::uInt> &cellIdToCellNumberMap,
-      const std::vector<dataTypes::number>        &zetaDeltaVQuadsFlattened,
-      const std::vector<dataTypes::number>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened)
+  forceClass<memorySpace>::FnlGammaxElementalContribution(
+    dealii::AlignedVector<dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
+                                        &FVectQuads,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const dftfe::uInt                    numQuadPoints,
+    const std::shared_ptr<
+      AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                                    nonLocalOp,
+    const dftfe::uInt               numNonLocalAtomsCurrentProcess,
+    const std::vector<dftfe::Int>  &globalChargeIdNonLocalAtoms,
+    const std::vector<dftfe::uInt> &numberPseudoWaveFunctionsPerAtom,
+    const dftfe::uInt               cell,
+    const std::map<dealii::CellId, dftfe::uInt> &cellIdToCellNumberMap,
+    const std::vector<dataTypes::number>        &zetaDeltaVQuadsFlattened,
+    const std::vector<dataTypes::number>
+      &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened)
   {
     const dftfe::uInt numSubCells =
       matrixFreeData.n_active_entries_per_cell_batch(cell);
@@ -360,14 +349,11 @@ namespace dftfe
 
   //(locally used function) accumulate and distribute Fnl contibution due to
   // Gamma(Rj)
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    distributeForceContributionFnlGammaAtoms(
-      const std::map<dftfe::uInt, std::vector<double>>
-        &forceContributionFnlGammaAtoms)
+  forceClass<memorySpace>::distributeForceContributionFnlGammaAtoms(
+    const std::map<dftfe::uInt, std::vector<double>>
+      &forceContributionFnlGammaAtoms)
   {
     for (dftfe::uInt iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
       {

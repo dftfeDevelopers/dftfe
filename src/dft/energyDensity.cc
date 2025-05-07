@@ -34,11 +34,9 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeAndPrintKE(
+  dftClass<memorySpace>::computeAndPrintKE(
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &kineticEnergyDensityValues)
   {

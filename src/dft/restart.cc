@@ -42,11 +42,9 @@ namespace dftfe
                               const std::vector<bool>   &periodicBc);
   } // namespace internal
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::saveTriaInfoAndRhoNodalData()
+  dftClass<memorySpace>::saveTriaInfoAndRhoNodalData()
   {
     d_basisOperationsPtrElectroHost->reinit(0,
                                             0,
@@ -96,7 +94,9 @@ namespace dftfe
 
     d_mesh.saveTriangulationsSolutionVectors(
       d_dftParamsPtr->restartFolder,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
       1,
       solutionVectors,
       interpoolcomm,
@@ -105,11 +105,9 @@ namespace dftfe
     pcout << "...checkpointing done." << std::endl;
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::loadTriaInfoAndRhoNodalData()
+  dftClass<memorySpace>::loadTriaInfoAndRhoNodalData()
   {
     pcout << "Reading tria info and rho data from checkpoint in progress..."
           << std::endl;
@@ -127,7 +125,9 @@ namespace dftfe
 
     d_mesh.loadTriangulationsSolutionVectors(
       d_dftParamsPtr->restartFolder,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
       1,
       solutionVectors);
 
@@ -150,12 +150,9 @@ namespace dftfe
       }
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    writeDomainAndAtomCoordinates()
+  dftClass<memorySpace>::writeDomainAndAtomCoordinates()
   {
     dftUtils::writeDataIntoFile(d_domainBoundingVectors,
                                 "domainBoundingVectorsCurrent.chk",
@@ -302,11 +299,9 @@ namespace dftfe
       }
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::writeDomainAndAtomCoordinates(
+  dftClass<memorySpace>::writeDomainAndAtomCoordinates(
     const std::string Path) const
   {
     dftUtils::writeDataIntoFile(d_domainBoundingVectors,
@@ -378,12 +373,10 @@ namespace dftfe
       }
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    writeStructureEnergyForcesDataPostProcess(const std::string Path) const
+  dftClass<memorySpace>::writeStructureEnergyForcesDataPostProcess(
+    const std::string Path) const
   {
     const dftfe::Int                 numberGlobalAtoms = atomLocations.size();
     std::vector<std::vector<double>> data(
@@ -451,11 +444,9 @@ namespace dftfe
     dftUtils::writeDataIntoFile(data, Path, d_mpiCommParent);
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::loadQuadratureData(
+  dftClass<memorySpace>::loadQuadratureData(
     const std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,
@@ -610,11 +601,9 @@ namespace dftfe
     pcout << "Reading Quad data done..." << std::endl;
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::saveQuadratureData(
+  dftClass<memorySpace>::saveQuadratureData(
     const std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
                                       double,

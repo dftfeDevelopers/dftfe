@@ -26,11 +26,9 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
+  dftClass<memorySpace>::totalCharge(
     const dealii::DoFHandler<3>                         &dofHandlerOfField,
     const std::map<dealii::CellId, std::vector<double>> *rhoQuadValues)
   {
@@ -62,11 +60,9 @@ namespace dftfe
     return dealii::Utilities::MPI::sum(normValue, mpi_communicator);
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
+  dftClass<memorySpace>::totalCharge(
     const dealii::DoFHandler<3> &dofHandlerOfField,
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &rhoQuadValues)
@@ -104,11 +100,9 @@ namespace dftfe
   //
   // compute total charge using nodal point values
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
+  dftClass<memorySpace>::totalCharge(
     const dealii::DoFHandler<3>     &dofHandlerOfField,
     const distributedCPUVec<double> &rhoNodalField)
   {
@@ -144,23 +138,22 @@ namespace dftfe
   //
   // compute total charge using nodal point values by using FEEvaluation object
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::totalCharge(
+  dftClass<memorySpace>::totalCharge(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
     const distributedCPUVec<double>     &nodalField)
   {
-    dealii::FEEvaluation<
-      3,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1,
-      double>
-                                    fe_evalField(matrixFreeDataObject,
-                   d_densityDofHandlerIndexElectro,
-                   d_densityQuadratureIdElectro);
+    FEEvaluationWrapperClass<1> fe_evalField(
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      C_num1DQuad(C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      matrixFreeDataObject,
+      d_densityDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro);
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
     const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
@@ -206,11 +199,9 @@ namespace dftfe
   //
   // compute total charge
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::totalMagnetization(
+  dftClass<memorySpace>::totalMagnetization(
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &magQuadValues)
   {
@@ -258,24 +249,25 @@ namespace dftfe
   //
   // compute field l2 norm
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::rhofieldl2Norm(
+  dftClass<memorySpace>::rhofieldl2Norm(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
     const distributedCPUVec<double>     &nodalField,
     const dftfe::uInt                    dofHandlerId,
     const dftfe::uInt                    quadratureId)
 
   {
-    dealii::FEEvaluation<
-      3,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1,
-      double>
-      fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
+    FEEvaluationWrapperClass<1> fe_evalField(
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      C_num1DQuad(C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      matrixFreeDataObject,
+      dofHandlerId,
+      quadratureId);
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
     const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
@@ -314,11 +306,9 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::rhofieldInnerProduct(
+  dftClass<memorySpace>::rhofieldInnerProduct(
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
     const distributedCPUVec<double>     &nodalField1,
     const distributedCPUVec<double>     &nodalField2,
@@ -326,13 +316,16 @@ namespace dftfe
     const dftfe::uInt                    quadratureId)
 
   {
-    dealii::FEEvaluation<
-      3,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1,
-      double>
-      fe_evalField(matrixFreeDataObject, dofHandlerId, quadratureId);
+    FEEvaluationWrapperClass<1> fe_evalField(
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      C_num1DQuad(C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      matrixFreeDataObject,
+      dofHandlerId,
+      quadratureId);
     dealii::VectorizedArray<double> valueVectorized =
       dealii::make_vectorized_array(0.0);
     const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
@@ -387,11 +380,9 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeMultipoleMoments(
+  dftClass<memorySpace>::computeMultipoleMoments(
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
@@ -490,15 +481,14 @@ namespace dftfe
       {
         if (!d_smearedChargeMomentsComputed)
           {
-            dealii::FEEvaluation<3,
-                                 C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-                                 C_num1DQuadSmearedCharge() *
-                                   C_numCopies1DQuadSmearedCharge(),
-                                 1,
-                                 double>
-              FEEvalb(matrixFreeDataObject,
-                      d_densityDofHandlerIndexElectro,
-                      d_smearedChargeQuadratureIdElectro);
+            FEEvaluationWrapperClass<1> FEEvalb(
+              C_rhoNodalPolyOrder(
+                d_dftParamsPtr->finiteElementPolynomialOrder,
+                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+              C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
+              matrixFreeDataObject,
+              d_densityDofHandlerIndexElectro,
+              d_smearedChargeQuadratureIdElectro);
             d_smearedChargeMoments.clear();
             d_smearedChargeMoments.resize(13, 0.0);
             for (dftfe::uInt iMacroCell = 0;
@@ -558,16 +548,17 @@ namespace dftfe
             d_smearedChargeMomentsComputed = true;
           }
       }
-    std::vector<double> moments(13, 0.0);
-    dealii::FEEvaluation<
-      3,
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>(),
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1,
-      double>
-      FEEvalRho(matrixFreeDataObject,
-                d_densityDofHandlerIndexElectro,
-                d_densityQuadratureIdElectro);
+    std::vector<double>         moments(13, 0.0);
+    FEEvaluationWrapperClass<1> FEEvalRho(
+      C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      C_num1DQuad(C_rhoNodalPolyOrder(
+        d_dftParamsPtr->finiteElementPolynomialOrder,
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      matrixFreeDataObject,
+      d_densityDofHandlerIndexElectro,
+      d_densityQuadratureIdElectro);
     for (dftfe::uInt iMacroCell = 0;
          iMacroCell < matrixFreeDataObject.n_cell_batches();
          ++iMacroCell)

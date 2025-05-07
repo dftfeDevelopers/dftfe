@@ -36,9 +36,8 @@ namespace dftfe
   const double C_AngToBohr           = 1.0 / 0.529177210903;
 
   /// 1d quadrature rule order
-  template <dftfe::uInt FEOrder>
-  constexpr dftfe::uInt
-  C_num1DQuad()
+  inline dftfe::uInt
+  C_num1DQuad(dftfe::uInt FEOrder)
   {
     return FEOrder + 1;
   }
@@ -90,32 +89,29 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_HIGHERQUAD_PSP
   /// rho nodal polynomial order
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
-  constexpr dftfe::uInt
-  C_rhoNodalPolyOrder()
+  inline dftfe::uInt
+  C_rhoNodalPolyOrder(dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro)
   {
     return ((FEOrder + 2) > FEOrderElectro ? (FEOrder + 2) : FEOrderElectro);
   }
 
   /// 1d quadrature rule order for non-local part of pseudopotential
-  template <dftfe::uInt FEOrder>
-  constexpr dftfe::uInt
-  C_num1DQuadNLPSP()
+  inline dftfe::uInt
+  C_num1DQuadNLPSP(dftfe::uInt FEOrder)
   {
     return 14; // Can be changed from 14 to 18 Step 1
   }
 
   /// number of copies 1d quad rule non-local PSP
-  constexpr dftfe::uInt
+  inline dftfe::uInt
   C_numCopies1DQuadNLPSP()
   {
     return 1;
   }
 
   /// 1d quadrature rule order for local part of pseudopotential
-  template <dftfe::uInt FEOrder>
-  constexpr dftfe::uInt
-  C_num1DQuadLPSP()
+  inline dftfe::uInt
+  C_num1DQuadLPSP(dftfe::uInt FEOrder)
   {
     return 14;
   }
@@ -129,17 +125,15 @@ namespace dftfe
 #else
 
   /// rho nodal polynomial order
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
-  constexpr dftfe::uInt
-  C_rhoNodalPolyOrder()
+  inline dftfe::uInt
+  C_rhoNodalPolyOrder(dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro)
   {
     return ((FEOrder + 2) > FEOrderElectro ? (FEOrder + 2) : FEOrderElectro);
   }
 
   /// 1d quadrature rule order for non-local part of pseudopotential
-  template <dftfe::uInt FEOrder>
-  constexpr dftfe::uInt
-  C_num1DQuadNLPSP()
+  inline dftfe::uInt
+  C_num1DQuadNLPSP(dftfe::uInt FEOrder)
   {
     return 10;
   }
@@ -152,9 +146,8 @@ namespace dftfe
   }
 
   /// 1d quadrature rule order for local part of pseudopotential
-  template <dftfe::uInt FEOrder>
-  constexpr dftfe::uInt
-  C_num1DQuadLPSP()
+  inline dftfe::uInt
+  C_num1DQuadLPSP(dftfe::uInt FEOrder)
   {
     return 10;
   }

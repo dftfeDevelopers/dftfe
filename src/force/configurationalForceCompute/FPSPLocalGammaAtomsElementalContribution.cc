@@ -24,31 +24,25 @@ namespace dftfe
 {
   //(locally used function) compute FPSPLocal contibution due to Gamma(Rj) for
   // given set of cells
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    FPSPLocalGammaAtomsElementalContribution(
-      std::map<dftfe::uInt, std::vector<double>>
-                                          &forceContributionFPSPLocalGammaAtoms,
-      dealii::FEValues<3>                 &feValues,
-      dealii::FEFaceValues<3>             &feFaceValues,
-      dealii::FEEvaluation<3,
-                           1,
-                           C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                           3>             &forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
-      const dftfe::uInt                    cell,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>> &rhoQuads,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
-      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                                      &pseudoVLocAtoms,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
-      const std::vector<std::map<dealii::CellId, dftfe::uInt>>
-        &cellsVselfBallsClosestAtomIdDofHandler)
+  forceClass<memorySpace>::FPSPLocalGammaAtomsElementalContribution(
+    std::map<dftfe::uInt, std::vector<double>>
+                                        &forceContributionFPSPLocalGammaAtoms,
+    dealii::FEValues<3>                 &feValues,
+    dealii::FEFaceValues<3>             &feFaceValues,
+    FEEvaluationWrapperClass<3>         &forceEval,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const dftfe::uInt                    phiTotDofHandlerIndexElectro,
+    const dftfe::uInt                    cell,
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &rhoQuads,
+    const dealii::AlignedVector<
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+                           &pseudoVLocAtoms,
+    const vselfBinsManager &vselfBinsManager,
+    const std::vector<std::map<dealii::CellId, dftfe::uInt>>
+      &cellsVselfBallsClosestAtomIdDofHandler)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
     for (dftfe::uInt idim = 0; idim < 3; idim++)
@@ -399,18 +393,15 @@ namespace dftfe
   //(locally used function) accumulate and distribute FPSPLocal contibution due
   // to
   // Gamma(Rj)
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    distributeForceContributionFPSPLocalGammaAtoms(
-      const std::map<dftfe::uInt, std::vector<double>>
-        &forceContributionFPSPLocalGammaAtoms,
-      const std::map<std::pair<dftfe::uInt, dftfe::uInt>, dftfe::uInt>
-                                              &atomsForceDofs,
-      const dealii::AffineConstraints<double> &constraintsNoneForce,
-      distributedCPUVec<double>               &configForceVectorLinFE)
+  forceClass<memorySpace>::distributeForceContributionFPSPLocalGammaAtoms(
+    const std::map<dftfe::uInt, std::vector<double>>
+      &forceContributionFPSPLocalGammaAtoms,
+    const std::map<std::pair<dftfe::uInt, dftfe::uInt>, dftfe::uInt>
+                                            &atomsForceDofs,
+    const dealii::AffineConstraints<double> &constraintsNoneForce,
+    distributedCPUVec<double>               &configForceVectorLinFE)
   {
     for (dftfe::uInt iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
       {

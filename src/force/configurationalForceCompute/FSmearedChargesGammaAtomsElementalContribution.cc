@@ -23,24 +23,20 @@ namespace dftfe
 {
   //(locally used function) compute FPhiTotSmearedCharges contibution due to
   // Gamma(Rj) for given set of cells
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    FPhiTotSmearedChargesGammaAtomsElementalContribution(
-      std::map<dftfe::uInt, std::vector<double>>
-        &forceContributionSmearedChargesGammaAtoms,
-      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dftfe::uInt                    cell,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradPhiTotQuads,
-      const std::vector<dftfe::uInt> &nonTrivialAtomIdsMacroCell,
-      const std::map<dealii::CellId, std::vector<dftfe::Int>>
-        &bQuadAtomIdsAllAtoms,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>>
-        &smearedbQuads)
+  forceClass<memorySpace>::FPhiTotSmearedChargesGammaAtomsElementalContribution(
+    std::map<dftfe::uInt, std::vector<double>>
+                                &forceContributionSmearedChargesGammaAtoms,
+    FEEvaluationWrapperClass<3> &forceEval,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const dftfe::uInt                    cell,
+    const dealii::AlignedVector<
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradPhiTotQuads,
+    const std::vector<dftfe::uInt> &nonTrivialAtomIdsMacroCell,
+    const std::map<dealii::CellId, std::vector<dftfe::Int>>
+      &bQuadAtomIdsAllAtoms,
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &smearedbQuads)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
     for (dftfe::uInt idim = 0; idim < 3; idim++)
@@ -96,25 +92,20 @@ namespace dftfe
 
   //(locally used function) compute FVselfSmearedCharges contibution due to
   // Gamma(Rj) for given set of cells
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    FVselfSmearedChargesGammaAtomsElementalContribution(
-      std::map<dftfe::uInt, std::vector<double>>
-        &forceContributionSmearedChargesGammaAtoms,
-      dealii::FEEvaluation<3, -1, 1, 3>   &forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dftfe::uInt                    cell,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>>
-                                     &gradVselfBinQuads,
-      const std::vector<dftfe::uInt> &nonTrivialAtomIdsMacroCell,
-      const std::map<dealii::CellId, std::vector<dftfe::Int>>
-        &bQuadAtomIdsAllAtoms,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>>
-        &smearedbQuads)
+  forceClass<memorySpace>::FVselfSmearedChargesGammaAtomsElementalContribution(
+    std::map<dftfe::uInt, std::vector<double>>
+                                &forceContributionSmearedChargesGammaAtoms,
+    FEEvaluationWrapperClass<3> &forceEval,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const dftfe::uInt                    cell,
+    const dealii::AlignedVector<
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradVselfBinQuads,
+    const std::vector<dftfe::uInt> &nonTrivialAtomIdsMacroCell,
+    const std::map<dealii::CellId, std::vector<dftfe::Int>>
+      &bQuadAtomIdsAllAtoms,
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &smearedbQuads)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
     for (dftfe::uInt idim = 0; idim < 3; idim++)

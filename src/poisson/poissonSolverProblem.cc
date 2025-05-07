@@ -20,7 +20,7 @@
 #include <constants.h>
 #include <poissonSolverProblem.h>
 #include <vectorUtilities.h>
-
+#include <feevaluationWrapper.h>
 namespace dftfe
 {
   //
@@ -230,13 +230,12 @@ namespace dftfe
     // rhs contribution from electronic charge
     if (d_rhoValuesPtr)
       {
-        dealii::FEEvaluation<
-          3,
+        FEEvaluationWrapperClass<1> fe_eval_density(
           FEOrderElectro,
-          C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()>
-          fe_eval_density(*d_matrixFreeDataPtr,
-                          d_matrixFreeVectorComponent,
-                          d_matrixFreeQuadratureComponentRhsDensity);
+          C_num1DQuad(C_rhoNodalPolyOrder(FEOrder, FEOrderElectro)),
+          *d_matrixFreeDataPtr,
+          d_matrixFreeVectorComponent,
+          d_matrixFreeQuadratureComponentRhsDensity);
 
         dealii::AlignedVector<dealii::VectorizedArray<double>> rhoQuads(
           fe_eval_density.n_q_points, dealii::make_vectorized_array(0.0));

@@ -141,11 +141,9 @@ namespace dftfe
 
 
   // compute tdos
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_tdos(
+  dftClass<memorySpace>::compute_tdos(
     const std::vector<std::vector<double>> &eigenValuesInput,
     const std::string                      &dosFileName)
   {
@@ -362,11 +360,9 @@ namespace dftfe
 
 
   // compute local density of states
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_ldos(
+  dftClass<memorySpace>::compute_ldos(
     const std::vector<std::vector<double>> &eigenValuesInput,
     const std::string                      &ldosFileName)
   {
@@ -457,7 +453,8 @@ namespace dftfe
       }
 
     // access finite-element data
-    dealii::QGauss<3>   quadrature_formula(C_num1DQuad<FEOrder>());
+    dealii::QGauss<3> quadrature_formula(
+      C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrder));
     dealii::FEValues<3> fe_values(dofHandler.get_fe(),
                                   quadrature_formula,
                                   dealii::update_values |

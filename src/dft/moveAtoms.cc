@@ -126,15 +126,12 @@ namespace dftfe
   // displacement input. Depending on the maximum displacement magnitude this
   // function decides wether to do auto remeshing or move mesh using Gaussian
   // functions.
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    updateAtomPositionsAndMoveMesh(
-      const std::vector<dealii::Tensor<1, 3, double>> &globalAtomsDisplacements,
-      const double                                     maxJacobianRatioFactor,
-      const bool useSingleAtomSolutionsOverride)
+  dftClass<memorySpace>::updateAtomPositionsAndMoveMesh(
+    const std::vector<dealii::Tensor<1, 3, double>> &globalAtomsDisplacements,
+    const double                                     maxJacobianRatioFactor,
+    const bool useSingleAtomSolutionsOverride)
   {
     bool             isAutoRemeshSupressed = false;
     const dftfe::Int numberGlobalAtoms     = atomLocations.size();
@@ -517,14 +514,20 @@ namespace dftfe
 
                 d_dofHandlerPRefined.clear();
                 d_dofHandlerPRefined.reinit(d_mesh.getParallelMeshMoved());
-                d_dofHandlerPRefined.distribute_dofs(dealii::FE_Q<3>(
-                  dealii::QGaussLobatto<1>(FEOrderElectro + 1)));
+                d_dofHandlerPRefined.distribute_dofs(
+                  dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
+                    d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics +
+                    1)));
 
                 d_dofHandlerRhoNodal.clear();
                 d_dofHandlerRhoNodal.reinit(d_mesh.getParallelMeshMoved());
                 d_dofHandlerRhoNodal.distribute_dofs(
                   dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
-                    C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1)));
+                    C_rhoNodalPolyOrder(
+                      d_dftParamsPtr->finiteElementPolynomialOrder,
+                      d_dftParamsPtr
+                        ->finiteElementPolynomialOrderElectrostatics) +
+                    1)));
 
                 forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
                                       d_mesh.getSerialMeshUnmoved(),
