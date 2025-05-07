@@ -19,6 +19,7 @@
 #ifndef poissonSolverProblemWrapper_H_
 #define poissonSolverProblemWrapper_H_
 #include <variant>
+#include <memory>
 #include <headers.h>
 #include <poissonSolverProblem.h>
 #ifdef DFTFE_WITH_DEVICE
@@ -33,9 +34,9 @@ namespace dftfe
   }
   using poissonSolverProblemObject = std::variant<
 #define poissonSolverProblemWrapperTemplates(T1, T2) \
-  poissonSolverProblem<T1, T2>,
+  std::shared_ptr<poissonSolverProblem<T1, T2>>,
 #define poissonSolverProblemWrapperTemplatesL(T1, T2) \
-  poissonSolverProblem<T1, T2>
+  std::shared_ptr<poissonSolverProblem<T1, T2>>
 #include "poissonSolverProblemWrapper.def"
 #undef poissonSolverProblemWrapperTemplates
 #undef poissonSolverProblemWrapperTemplatesL
@@ -49,14 +50,16 @@ namespace dftfe
     const dftfe::Int key = encode(feOrder, feOrderElectro);
     switch (key)
       {
-#define poissonSolverProblemWrapperTemplates(T1, T2) \
-  case encode(T1, T2):                               \
-    return poissonSolverProblemObject(               \
-      poissonSolverProblem<T1, T2>(std::forward<Args>(args)...));
+#define poissonSolverProblemWrapperTemplates(T1, T2)  \
+  case encode(T1, T2):                                \
+    return poissonSolverProblemObject(                \
+      std::make_shared<poissonSolverProblem<T1, T2>>( \
+        std::forward<Args>(args)...));
 #define poissonSolverProblemWrapperTemplatesL(T1, T2) \
   case encode(T1, T2):                                \
     return poissonSolverProblemObject(                \
-      poissonSolverProblem<T1, T2>(std::forward<Args>(args)...));
+      std::make_shared<poissonSolverProblem<T1, T2>>( \
+        std::forward<Args>(args)...));
 #include "poissonSolverProblemWrapper.def"
 #undef poissonSolverProblemWrapperTemplates
 #undef poissonSolverProblemWrapperTemplatesL
@@ -82,21 +85,21 @@ namespace dftfe
     getX()
     {
       return std::visit(
-        [](auto &t) -> distributedCPUVec<double> & { return t.getX(); },
+        [](auto &t) -> distributedCPUVec<double> & { return t->getX(); },
         d_poissonSolverProblemObject);
     }
 
     void
     vmult(distributedCPUVec<double> &Ax, distributedCPUVec<double> &x)
     {
-      std::visit([&](auto &t) { t.vmult(Ax, x); },
+      std::visit([&](auto &t) { t->vmult(Ax, x); },
                  d_poissonSolverProblemObject);
     }
 
     void
     computeRhs(distributedCPUVec<double> &rhs)
     {
-      std::visit([&](auto &t) { t.computeRhs(rhs); },
+      std::visit([&](auto &t) { t->computeRhs(rhs); },
                  d_poissonSolverProblemObject);
     }
 
@@ -105,14 +108,15 @@ namespace dftfe
                         const distributedCPUVec<double> &src,
                         const double                     omega) const
     {
-      std::visit([&](auto const &t) { t.precondition_Jacobi(dst, src, omega); },
+      std::visit([&](
+                   auto const &t) { t->precondition_Jacobi(dst, src, omega); },
                  d_poissonSolverProblemObject);
     }
 
     void
     distributeX()
     {
-      std::visit([](auto &t) { t.distributeX(); },
+      std::visit([](auto &t) { t->distributeX(); },
                  d_poissonSolverProblemObject);
     }
 
@@ -135,14 +139,14 @@ namespace dftfe
     void
     clear()
     {
-      std::visit([](auto &t) { t.clear(); }, d_poissonSolverProblemObject);
+      std::visit([](auto &t) { t->clear(); }, d_poissonSolverProblemObject);
     }
 
     template <typename... Args>
     void
     reinit(Args &&...args)
     {
-      std::visit([&](auto &t) { t.reinit(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->reinit(std::forward<Args>(args)...); },
                  d_poissonSolverProblemObject);
     }
 
@@ -153,9 +157,9 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
   using poissonSolverProblemDeviceObject = std::variant<
 #  define poissonSolverProblemWrapperTemplates(T1, T2) \
-    poissonSolverProblemDevice<T1, T2>,
+    std::shared_ptr<poissonSolverProblemDevice<T1, T2>>,
 #  define poissonSolverProblemWrapperTemplatesL(T1, T2) \
-    poissonSolverProblemDevice<T1, T2>
+    std::shared_ptr<poissonSolverProblemDevice<T1, T2>>
 #  include "poissonSolverProblemWrapper.def"
 #  undef poissonSolverProblemWrapperTemplates
 #  undef poissonSolverProblemWrapperTemplatesL
@@ -171,14 +175,16 @@ namespace dftfe
     const dftfe::Int key = encode(feOrder, feOrderElectro);
     switch (key)
       {
-#  define poissonSolverProblemWrapperTemplates(T1, T2) \
-    case encode(T1, T2):                               \
-      return poissonSolverProblemDeviceObject(         \
-        poissonSolverProblemDevice<T1, T2>(std::forward<Args>(args)...));
-#  define poissonSolverProblemWrapperTemplatesL(T1, T2) \
-    case encode(T1, T2):                                \
-      return poissonSolverProblemDeviceObject(          \
-        poissonSolverProblemDevice<T1, T2>(std::forward<Args>(args)...));
+#  define poissonSolverProblemWrapperTemplates(T1, T2)        \
+    case encode(T1, T2):                                      \
+      return poissonSolverProblemDeviceObject(                \
+        std::make_shared<poissonSolverProblemDevice<T1, T2>>( \
+          std::forward<Args>(args)...));
+#  define poissonSolverProblemWrapperTemplatesL(T1, T2)       \
+    case encode(T1, T2):                                      \
+      return poissonSolverProblemDeviceObject(                \
+        std::make_shared<poissonSolverProblemDevice<T1, T2>>( \
+          std::forward<Args>(args)...));
 #  include "poissonSolverProblemWrapper.def"
 #  undef poissonSolverProblemWrapperTemplates
 #  undef poissonSolverProblemWrapperTemplatesL
@@ -207,7 +213,7 @@ namespace dftfe
     getX()
     {
       return std::visit(
-        [](auto &t) -> distributedDeviceVec<double> & { return t.getX(); },
+        [](auto &t) -> distributedDeviceVec<double> & { return t->getX(); },
         d_poissonSolverProblemObject);
     }
 
@@ -216,7 +222,7 @@ namespace dftfe
     {
       return std::visit(
         [](auto &t) -> distributedDeviceVec<double> & {
-          return t.getPreconditioner();
+          return t->getPreconditioner();
         },
         d_poissonSolverProblemObject);
     }
@@ -225,7 +231,7 @@ namespace dftfe
     computeAX(distributedDeviceVec<double> &dst,
               distributedDeviceVec<double> &src)
     {
-      std::visit([&](auto &t) { t.computeAX(dst, src); },
+      std::visit([&](auto &t) { t->computeAX(dst, src); },
                  d_poissonSolverProblemObject);
     }
 
@@ -233,41 +239,41 @@ namespace dftfe
     void
     computeRhs(distributedCPUVec<double> &rhs)
     {
-      std::visit([&](auto &t) { t.computeRhs(rhs); },
+      std::visit([&](auto &t) { t->computeRhs(rhs); },
                  d_poissonSolverProblemObject);
     }
 
     void
     setX()
     {
-      std::visit([](auto &t) { t.setX(); }, d_poissonSolverProblemObject);
+      std::visit([](auto &t) { t->setX(); }, d_poissonSolverProblemObject);
     }
 
     void
     distributeX()
     {
-      std::visit([](auto &t) { t.distributeX(); },
+      std::visit([](auto &t) { t->distributeX(); },
                  d_poissonSolverProblemObject);
     }
 
     void
     copyXfromDeviceToHost()
     {
-      std::visit([](auto &t) { t.copyXfromDeviceToHost(); },
+      std::visit([](auto &t) { t->copyXfromDeviceToHost(); },
                  d_poissonSolverProblemObject);
     }
 
     void
     clear()
     {
-      std::visit([](auto &t) { t.clear(); }, d_poissonSolverProblemObject);
+      std::visit([](auto &t) { t->clear(); }, d_poissonSolverProblemObject);
     }
 
     template <typename... Args>
     void
     reinit(Args &&...args)
     {
-      std::visit([&](auto &t) { t.reinit(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->reinit(std::forward<Args>(args)...); },
                  d_poissonSolverProblemObject);
     }
 

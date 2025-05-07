@@ -19,6 +19,7 @@
 #ifndef kerkerSolverProblemWrapper_H_
 #define kerkerSolverProblemWrapper_H_
 #include <variant>
+#include <memory>
 #include <headers.h>
 #include <kerkerSolverProblem.h>
 #ifdef DFTFE_WITH_DEVICE
@@ -27,8 +28,10 @@
 namespace dftfe
 {
   using kerkerSolverProblemObject = std::variant<
-#define kerkerSolverProblemWrapperTemplates(T1) kerkerSolverProblem<T1>,
-#define kerkerSolverProblemWrapperTemplatesL(T1) kerkerSolverProblem<T1>
+#define kerkerSolverProblemWrapperTemplates(T1) \
+  std::shared_ptr<kerkerSolverProblem<T1>>,
+#define kerkerSolverProblemWrapperTemplatesL(T1) \
+  std::shared_ptr<kerkerSolverProblem<T1>>
 #include "kerkerSolverProblemWrapper.def"
 #undef kerkerSolverProblemWrapperTemplates
 #undef kerkerSolverProblemWrapperTemplatesL
@@ -42,11 +45,11 @@ namespace dftfe
 #define kerkerSolverProblemWrapperTemplates(T1) \
   case T1:                                      \
     return kerkerSolverProblemObject(           \
-      kerkerSolverProblem<T1>(std::forward<Args>(args)...));
+      std::make_shared<kerkerSolverProblem<T1>>(std::forward<Args>(args)...));
 #define kerkerSolverProblemWrapperTemplatesL(T1) \
   case T1:                                       \
     return kerkerSolverProblemObject(            \
-      kerkerSolverProblem<T1>(std::forward<Args>(args)...));
+      std::make_shared<kerkerSolverProblem<T1>>(std::forward<Args>(args)...));
 #include "kerkerSolverProblemWrapper.def"
 #undef kerkerSolverProblemWrapperTemplates
 #undef kerkerSolverProblemWrapperTemplatesL
@@ -74,20 +77,21 @@ namespace dftfe
     getX()
     {
       return std::visit(
-        [](auto &t) -> distributedCPUVec<double> & { return t.getX(); },
+        [](auto &t) -> distributedCPUVec<double> & { return t->getX(); },
         d_kerkerSolverProblemObject);
     }
 
     void
     vmult(distributedCPUVec<double> &Ax, distributedCPUVec<double> &x)
     {
-      std::visit([&](auto &t) { t.vmult(Ax, x); }, d_kerkerSolverProblemObject);
+      std::visit([&](auto &t) { t->vmult(Ax, x); },
+                 d_kerkerSolverProblemObject);
     }
 
     void
     computeRhs(distributedCPUVec<double> &rhs)
     {
-      std::visit([&](auto &t) { t.computeRhs(rhs); },
+      std::visit([&](auto &t) { t->computeRhs(rhs); },
                  d_kerkerSolverProblemObject);
     }
 
@@ -96,14 +100,16 @@ namespace dftfe
                         const distributedCPUVec<double> &src,
                         const double                     omega) const
     {
-      std::visit([&](auto const &t) { t.precondition_Jacobi(dst, src, omega); },
+      std::visit([&](
+                   auto const &t) { t->precondition_Jacobi(dst, src, omega); },
                  d_kerkerSolverProblemObject);
     }
 
     void
     distributeX()
     {
-      std::visit([](auto &t) { t.distributeX(); }, d_kerkerSolverProblemObject);
+      std::visit([](auto &t) { t->distributeX(); },
+                 d_kerkerSolverProblemObject);
     }
 
     void
@@ -126,7 +132,7 @@ namespace dftfe
     void
     reinit(Args &&...args)
     {
-      std::visit([&](auto &t) { t.reinit(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->reinit(std::forward<Args>(args)...); },
                  d_kerkerSolverProblemObject);
     }
 
@@ -134,7 +140,7 @@ namespace dftfe
     void
     init(Args &&...args)
     {
-      std::visit([&](auto &t) { t.init(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->init(std::forward<Args>(args)...); },
                  d_kerkerSolverProblemObject);
     }
 
@@ -144,8 +150,10 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE
   using kerkerSolverProblemDeviceObject = std::variant<
-#  define kerkerSolverProblemWrapperTemplates(T1) kerkerSolverProblemDevice<T1>,
-#  define kerkerSolverProblemWrapperTemplatesL(T1) kerkerSolverProblemDevice<T1>
+#  define kerkerSolverProblemWrapperTemplates(T1) \
+    std::shared_ptr<kerkerSolverProblemDevice<T1>>,
+#  define kerkerSolverProblemWrapperTemplatesL(T1) \
+    std::shared_ptr<kerkerSolverProblemDevice<T1>>
 #  include "kerkerSolverProblemWrapper.def"
 #  undef kerkerSolverProblemWrapperTemplates
 #  undef kerkerSolverProblemWrapperTemplatesL
@@ -158,14 +166,16 @@ namespace dftfe
   {
     switch (feOrder)
       {
-#  define kerkerSolverProblemWrapperTemplates(T1) \
-    case T1:                                      \
-      return kerkerSolverProblemDeviceObject{     \
-        kerkerSolverProblemDevice<T1>(std::forward<Args>(args)...)};
-#  define kerkerSolverProblemWrapperTemplatesL(T1) \
-    case T1:                                       \
-      return kerkerSolverProblemDeviceObject{      \
-        kerkerSolverProblemDevice<T1>(std::forward<Args>(args)...)};
+#  define kerkerSolverProblemWrapperTemplates(T1)        \
+    case T1:                                             \
+      return kerkerSolverProblemDeviceObject{            \
+        std::make_shared<kerkerSolverProblemDevice<T1>>( \
+          std::forward<Args>(args)...)};
+#  define kerkerSolverProblemWrapperTemplatesL(T1)       \
+    case T1:                                             \
+      return kerkerSolverProblemDeviceObject{            \
+        std::make_shared<kerkerSolverProblemDevice<T1>>( \
+          std::forward<Args>(args)...)};
 #  include "kerkerSolverProblemWrapper.def"
 #  undef kerkerSolverProblemWrapperTemplates
 #  undef kerkerSolverProblemWrapperTemplatesL
@@ -193,16 +203,16 @@ namespace dftfe
     getX()
     {
       return std::visit(
-        [](auto &t) -> distributedDeviceVec<double> & { return t.getX(); },
+        [](auto &t) -> distributedDeviceVec<double> & { return t->getX(); },
         d_kerkerSolverProblemObject);
     }
 
     distributedDeviceVec<double> &
     getPreconditioner()
     {
-      std::visit(
+      return std::visit(
         [](auto &t) -> distributedDeviceVec<double> & {
-          return t.getPreconditioner();
+          return t->getPreconditioner();
         },
         d_kerkerSolverProblemObject);
     }
@@ -211,7 +221,7 @@ namespace dftfe
     computeAX(distributedDeviceVec<double> &dst,
               distributedDeviceVec<double> &src)
     {
-      std::visit([&](auto &t) { t.computeAX(dst, src); },
+      std::visit([&](auto &t) { t->computeAX(dst, src); },
                  d_kerkerSolverProblemObject);
     }
 
@@ -219,26 +229,27 @@ namespace dftfe
     void
     computeRhs(distributedCPUVec<double> &rhs)
     {
-      std::visit([&](auto &t) { t.computeRhs(rhs); },
+      std::visit([&](auto &t) { t->computeRhs(rhs); },
                  d_kerkerSolverProblemObject);
     }
 
     void
     setX()
     {
-      std::visit([](auto &t) { t.setX(); }, d_kerkerSolverProblemObject);
+      std::visit([](auto &t) { t->setX(); }, d_kerkerSolverProblemObject);
     }
 
     void
     distributeX()
     {
-      std::visit([](auto &t) { t.distributeX(); }, d_kerkerSolverProblemObject);
+      std::visit([](auto &t) { t->distributeX(); },
+                 d_kerkerSolverProblemObject);
     }
 
     void
     copyXfromDeviceToHost()
     {
-      std::visit([](auto &t) { t.copyXfromDeviceToHost(); },
+      std::visit([](auto &t) { t->copyXfromDeviceToHost(); },
                  d_kerkerSolverProblemObject);
     }
 
@@ -246,7 +257,7 @@ namespace dftfe
     void
     reinit(Args &&...args)
     {
-      std::visit([&](auto &t) { t.reinit(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->reinit(std::forward<Args>(args)...); },
                  d_kerkerSolverProblemObject);
     }
 
@@ -254,7 +265,7 @@ namespace dftfe
     void
     init(Args &&...args)
     {
-      std::visit([&](auto &t) { t.init(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->init(std::forward<Args>(args)...); },
                  d_kerkerSolverProblemObject);
     }
 

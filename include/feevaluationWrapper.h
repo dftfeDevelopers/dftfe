@@ -19,6 +19,7 @@
 #ifndef FEEvaluationWrapper_H_
 #define FEEvaluationWrapper_H_
 #include <variant>
+#include <memory>
 #include <headers.h>
 namespace dftfe
 {
@@ -33,20 +34,21 @@ namespace dftfe
   {
     using type = std::variant<
 #define FEEvaluationWrapperTemplates(T1, T2) \
-  dealii::FEEvaluation<3, T1, T2, components>,
+  std::shared_ptr<dealii::FEEvaluation<3, T1, T2, components>>,
 #include "feevaluationWrapper.def"
 #undef FEEvaluationWrapperTemplates
-      dealii::FEEvaluation<3, -1, 1, components>>;
+      std::shared_ptr<dealii::FEEvaluation<3, -1, 1, components>>>;
   };
 
   template <>
   struct FEEvalTrait<3>
   {
     using type = std::variant<
-#define FEEvaluationWrapperTemplates(T1, T2) dealii::FEEvaluation<3, T1, T2, 3>,
+#define FEEvaluationWrapperTemplates(T1, T2) \
+  std::shared_ptr<dealii::FEEvaluation<3, T1, T2, 3>>,
 #include "feevaluationWrapper3Comp.def"
 #undef FEEvaluationWrapperTemplates
-      dealii::FEEvaluation<3, -1, 1, 3>>;
+      std::shared_ptr<dealii::FEEvaluation<3, -1, 1, 3>>>;
   };
 
 
@@ -65,16 +67,16 @@ namespace dftfe
       {
         switch (key)
           {
-#define FEEvaluationWrapperTemplates(T1, T2)       \
-  case encodeFEEvaluation(T1, T2):                 \
-    return FEEvaluationObject<components>(         \
-      dealii::FEEvaluation<3, T1, T2, components>( \
+#define FEEvaluationWrapperTemplates(T1, T2)                         \
+  case encodeFEEvaluation(T1, T2):                                   \
+    return FEEvaluationObject<components>(                           \
+      std::make_shared<dealii::FEEvaluation<3, T1, T2, components>>( \
         std::forward<Args>(args)...));
 #include "feevaluationWrapper.def"
 #undef FEEvaluationWrapperTemplates
             default:
               return FEEvaluationObject<components>(
-                dealii::FEEvaluation<3, -1, 1, components>(
+                std::make_shared<dealii::FEEvaluation<3, -1, 1, components>>(
                   std::forward<Args>(args)...));
           };
       }
@@ -82,16 +84,16 @@ namespace dftfe
       {
         switch (key)
           {
-#define FEEvaluationWrapperTemplates(T1, T2)       \
-  case encodeFEEvaluation(T1, T2):                 \
-    return FEEvaluationObject<components>(         \
-      dealii::FEEvaluation<3, T1, T2, components>( \
+#define FEEvaluationWrapperTemplates(T1, T2)                         \
+  case encodeFEEvaluation(T1, T2):                                   \
+    return FEEvaluationObject<components>(                           \
+      std::make_shared<dealii::FEEvaluation<3, T1, T2, components>>( \
         std::forward<Args>(args)...));
 #include "feevaluationWrapper3Comp.def"
 #undef FEEvaluationWrapperTemplates
             default:
               return FEEvaluationObject<components>(
-                dealii::FEEvaluation<3, -1, 1, components>(
+                std::make_shared<dealii::FEEvaluation<3, -1, 1, components>>(
                   std::forward<Args>(args)...));
           };
       }
@@ -121,7 +123,7 @@ namespace dftfe
     void
     reinit(Args &&...args)
     {
-      std::visit([&](auto &t) { t.reinit(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->reinit(std::forward<Args>(args)...); },
                  d_FEEvaluationObject);
     }
 
@@ -129,9 +131,9 @@ namespace dftfe
     void
     read_dof_values(Args &&...args)
     {
-      std::visit([&](
-                   auto &t) { t.read_dof_values(std::forward<Args>(args)...); },
-                 d_FEEvaluationObject);
+      std::visit(
+        [&](auto &t) { t->read_dof_values(std::forward<Args>(args)...); },
+        d_FEEvaluationObject);
     }
 
     template <typename... Args>
@@ -139,7 +141,7 @@ namespace dftfe
     read_dof_values_plain(Args &&...args)
     {
       std::visit(
-        [&](auto &t) { t.read_dof_values_plain(std::forward<Args>(args)...); },
+        [&](auto &t) { t->read_dof_values_plain(std::forward<Args>(args)...); },
         d_FEEvaluationObject);
     }
 
@@ -147,7 +149,7 @@ namespace dftfe
     void
     evaluate(Args &&...args)
     {
-      std::visit([&](auto &t) { t.evaluate(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->evaluate(std::forward<Args>(args)...); },
                  d_FEEvaluationObject);
     }
 
@@ -155,16 +157,16 @@ namespace dftfe
     void
     submit_gradient(Args &&...args)
     {
-      std::visit([&](
-                   auto &t) { t.submit_gradient(std::forward<Args>(args)...); },
-                 d_FEEvaluationObject);
+      std::visit(
+        [&](auto &t) { t->submit_gradient(std::forward<Args>(args)...); },
+        d_FEEvaluationObject);
     }
 
     template <typename... Args>
     void
     submit_value(Args &&...args)
     {
-      std::visit([&](auto &t) { t.submit_value(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->submit_value(std::forward<Args>(args)...); },
                  d_FEEvaluationObject);
     }
 
@@ -174,7 +176,7 @@ namespace dftfe
     {
       return std::visit(
         [&](auto &t) -> decltype(auto) {
-          return t.get_value(std::forward<Args>(args)...);
+          return t->get_value(std::forward<Args>(args)...);
         },
         d_FEEvaluationObject);
     }
@@ -185,7 +187,7 @@ namespace dftfe
     {
       return std::visit(
         [&](auto &t) -> decltype(auto) {
-          return t.get_gradient(std::forward<Args>(args)...);
+          return t->get_gradient(std::forward<Args>(args)...);
         },
         d_FEEvaluationObject);
     }
@@ -196,7 +198,7 @@ namespace dftfe
     {
       return std::visit(
         [&](auto &t) -> decltype(auto) {
-          return t.integrate_value(std::forward<Args>(args)...);
+          return t->integrate_value(std::forward<Args>(args)...);
         },
         d_FEEvaluationObject);
     }
@@ -207,7 +209,7 @@ namespace dftfe
     {
       return std::visit(
         [&](auto &t) -> decltype(auto) {
-          return t.get_hessian(std::forward<Args>(args)...);
+          return t->get_hessian(std::forward<Args>(args)...);
         },
         d_FEEvaluationObject);
     }
@@ -216,7 +218,7 @@ namespace dftfe
     void
     integrate(Args &&...args)
     {
-      std::visit([&](auto &t) { t.integrate(std::forward<Args>(args)...); },
+      std::visit([&](auto &t) { t->integrate(std::forward<Args>(args)...); },
                  d_FEEvaluationObject);
     }
 
@@ -226,7 +228,7 @@ namespace dftfe
     {
       return std::visit(
         [&](auto &t) -> decltype(auto) {
-          return t.quadrature_point(std::forward<Args>(args)...);
+          return t->quadrature_point(std::forward<Args>(args)...);
         },
         d_FEEvaluationObject);
     }
@@ -237,7 +239,7 @@ namespace dftfe
     {
       return std::visit(
         [&](auto &t) -> decltype(auto) {
-          return t.JxW(std::forward<Args>(args)...);
+          return t->JxW(std::forward<Args>(args)...);
         },
         d_FEEvaluationObject);
     }
@@ -248,7 +250,7 @@ namespace dftfe
     {
       std::visit(
         [&](auto &t) {
-          t.distribute_local_to_global(std::forward<Args>(args)...);
+          t->distribute_local_to_global(std::forward<Args>(args)...);
         },
         d_FEEvaluationObject);
     }
