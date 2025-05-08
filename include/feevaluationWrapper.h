@@ -53,7 +53,7 @@ namespace dftfe
 
 
   template <dftfe::Int components>
-  using FEEvaluationObject = FEEvalTrait<components>::type;
+  using FEEvaluationObject = typename FEEvalTrait<components>::type;
 
 
   template <dftfe::Int components, class... Args>
