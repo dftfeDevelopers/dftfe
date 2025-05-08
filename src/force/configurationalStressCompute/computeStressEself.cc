@@ -46,9 +46,7 @@ namespace dftfe
     //
     // First add configurational stress contribution from the volume integral
     //
-    dealii::QGauss<3>   quadrature(C_num1DQuad(C_rhoNodalPolyOrder(
-      d_dftParams.finiteElementPolynomialOrder,
-      d_dftParams.finiteElementPolynomialOrderElectrostatics)));
+    dealii::QGauss<3>   quadrature(d_dftParams.densityQuadratureRule);
     dealii::FEValues<3> feVselfValues(dofHandlerElectro.get_fe(),
                                       quadrature,
                                       dealii::update_gradients |
@@ -108,9 +106,7 @@ namespace dftfe
     //
     // second add configurational stress contribution from the surface integral
     //
-    dealii::QGauss<3 - 1>   faceQuadrature(C_num1DQuad(C_rhoNodalPolyOrder(
-      d_dftParams.finiteElementPolynomialOrder,
-      d_dftParams.finiteElementPolynomialOrderElectrostatics)));
+    dealii::QGauss<3 - 1>   faceQuadrature(d_dftParams.densityQuadratureRule);
     dealii::FEFaceValues<3> feVselfFaceValues(
       dofHandlerElectro.get_fe(),
       faceQuadrature,

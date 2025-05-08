@@ -112,9 +112,7 @@ namespace dftfe
     d_dofHandlerRhoNodal.reinit(triaObject);
     d_dofHandlerRhoNodal.distribute_dofs(
       dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
-        C_rhoNodalPolyOrder(
-          d_dftParamsPtr->finiteElementPolynomialOrder,
-          d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics) +
+        d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal +
         1)));
 
     d_locallyRelevantDofsRhoNodal.clear();
@@ -372,9 +370,7 @@ namespace dftfe
 
     std::vector<dealii::Quadrature<1>> quadratureVector;
     quadratureVector.push_back(
-      dealii::QGauss<1>(C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics))));
+      dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));
     quadratureVector.push_back(
       dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP(
                              d_dftParamsPtr->finiteElementPolynomialOrder)),

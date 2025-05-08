@@ -67,12 +67,8 @@ namespace dftfe
 
 
     FEEvaluationWrapperClass<1> feEvalObj(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
+      d_dftParamsPtr->densityQuadratureRule,
       basisOperationsPtr->matrixFreeData(),
       dofHandlerId,
       quadratureId);
@@ -191,9 +187,7 @@ namespace dftfe
 
     FEEvaluationWrapperClass<1> feEvalObj(
       d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics,
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      d_dftParamsPtr->densityQuadratureRule,
       basisOperationsPtr->matrixFreeData(),
       dofHandlerId,
       quadratureId);
@@ -290,9 +284,7 @@ namespace dftfe
 
 
     FEEvaluationWrapperClass<1> feEvalObj(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
       C_num1DQuadLPSP(d_dftParamsPtr->finiteElementPolynomialOrder) *
         C_numCopies1DQuadLPSP(),
       basisOperationsPtr->matrixFreeData(),
@@ -373,12 +365,8 @@ namespace dftfe
 
   {
     FEEvaluationWrapperClass<1> fe_evalField(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
+      d_dftParamsPtr->densityQuadratureRule,
       matrixFreeDataObject,
       0,
       0);
@@ -479,9 +467,7 @@ namespace dftfe
       distributedMassVec, d_densityDofHandlerIndexElectro);
 
     dealii::QGaussLobatto<3> quadrature(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics) +
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal +
       1);
     dealii::FEValues<3> fe_values(d_dofHandlerRhoNodal.get_fe(),
                                   quadrature,

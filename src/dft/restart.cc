@@ -94,9 +94,7 @@ namespace dftfe
 
     d_mesh.saveTriangulationsSolutionVectors(
       d_dftParamsPtr->restartFolder,
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
       1,
       solutionVectors,
       interpoolcomm,
@@ -125,9 +123,7 @@ namespace dftfe
 
     d_mesh.loadTriangulationsSolutionVectors(
       d_dftParamsPtr->restartFolder,
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
       1,
       solutionVectors);
 

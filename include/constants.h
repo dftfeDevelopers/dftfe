@@ -88,12 +88,7 @@ namespace dftfe
   }
 
 #ifdef DFTFE_WITH_HIGHERQUAD_PSP
-  /// rho nodal polynomial order
-  inline dftfe::uInt
-  C_rhoNodalPolyOrder(dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro)
-  {
-    return ((FEOrder + 2) > FEOrderElectro ? (FEOrder + 2) : FEOrderElectro);
-  }
+
 
   /// 1d quadrature rule order for non-local part of pseudopotential
   inline dftfe::uInt
@@ -124,12 +119,7 @@ namespace dftfe
   }
 #else
 
-  /// rho nodal polynomial order
-  inline dftfe::uInt
-  C_rhoNodalPolyOrder(dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro)
-  {
-    return ((FEOrder + 2) > FEOrderElectro ? (FEOrder + 2) : FEOrderElectro);
-  }
+
 
   /// 1d quadrature rule order for non-local part of pseudopotential
   inline dftfe::uInt

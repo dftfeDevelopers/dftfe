@@ -41,9 +41,7 @@ namespace dftfe
     //
     // First add configurational force contribution from the volume integral
     //
-    dealii::QGauss<3>   quadrature(C_num1DQuad(C_rhoNodalPolyOrder(
-      d_dftParams.finiteElementPolynomialOrder,
-      d_dftParams.finiteElementPolynomialOrderElectrostatics)));
+    dealii::QGauss<3>   quadrature(d_dftParams.densityQuadratureRule);
     dealii::FEValues<3> feForceValues(FEForce,
                                       quadrature,
                                       dealii::update_gradients |
@@ -334,9 +332,7 @@ namespace dftfe
 
     if (!d_dftParams.floatingNuclearCharges)
       {
-        dealii::QGauss<3 - 1>   faceQuadrature(C_num1DQuad(C_rhoNodalPolyOrder(
-          d_dftParams.finiteElementPolynomialOrder,
-          d_dftParams.finiteElementPolynomialOrderElectrostatics)));
+        dealii::QGauss<3 - 1>   faceQuadrature(d_dftParams.densityQuadratureRule);
         dealii::FEFaceValues<3> feForceFaceValues(
           FEForce,
           faceQuadrature,
@@ -498,18 +494,14 @@ namespace dftfe
   {
     FEEvaluationWrapperClass<3> forceEval(
       1,
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParams.finiteElementPolynomialOrder,
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
+      d_dftParams.densityQuadratureRule,
       dftPtr->matrix_free_data,
       d_forceDofHandlerIndex,
       0);
 
     FEEvaluationWrapperClass<1> eshelbyEval(
       d_dftParams.finiteElementPolynomialOrderElectrostatics,
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParams.finiteElementPolynomialOrder,
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
+      d_dftParams.densityQuadratureRule,
       dftPtr->d_matrixFreeDataPRefined,
       dftPtr->d_phiExtDofHandlerIndexElectro,
       0); // no constraints
@@ -543,18 +535,14 @@ namespace dftfe
   {
     FEEvaluationWrapperClass<3> forceEval(
       1,
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParams.finiteElementPolynomialOrder,
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
+      d_dftParams.densityQuadratureRule,
       dftPtr->matrix_free_data,
       d_forceDofHandlerIndex,
       0);
 
     FEEvaluationWrapperClass<1> eshelbyEval(
       d_dftParams.finiteElementPolynomialOrderElectrostatics,
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParams.finiteElementPolynomialOrder,
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
+      d_dftParams.densityQuadratureRule,
       dftPtr->d_matrixFreeDataPRefined,
       dftPtr->d_phiExtDofHandlerIndexElectro,
       0); // no constraints

@@ -78,9 +78,7 @@ namespace dftfe
 
     FEEvaluationWrapperClass<3> forceEval(
       1,
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParams.finiteElementPolynomialOrder,
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
+      d_dftParams.densityQuadratureRule,
       matrixFreeData,
       d_forceDofHandlerIndex,
       dftPtr->d_densityQuadratureId);
@@ -1139,18 +1137,14 @@ namespace dftfe
   {
     FEEvaluationWrapperClass<3> forceEvalElectro(
       1,
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParams.finiteElementPolynomialOrder,
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
+      d_dftParams.densityQuadratureRule,
       matrixFreeDataElectro,
       d_forceDofHandlerIndexElectro,
       dftPtr->d_densityQuadratureIdElectro);
 
     FEEvaluationWrapperClass<1> phiTotEvalElectro(
       d_dftParams.finiteElementPolynomialOrderElectrostatics,
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParams.finiteElementPolynomialOrder,
-        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
+      d_dftParams.densityQuadratureRule,
       matrixFreeDataElectro,
       phiTotDofHandlerIndexElectro,
       dftPtr->d_densityQuadratureIdElectro);

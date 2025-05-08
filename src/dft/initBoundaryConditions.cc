@@ -52,10 +52,9 @@ namespace dftfe
           << "FE interpolating polynomial order for electrostatics solve: "
           << d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics << "\n"
           << "FE interpolating polynomial order for nodal electron density computation: "
-          << C_rhoNodalPolyOrder(
-               d_dftParamsPtr->finiteElementPolynomialOrder,
-               d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)
-          << "\n"
+          << d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal  << "\n"
+          << "quadrature rule for electron density and kinetic energy density computation: "
+          << d_dftParamsPtr->densityQuadratureRule << "\n"
           << "number of elements: "
           << dofHandler.get_triangulation().n_global_active_cells() << "\n"
           << "number of degrees of freedom for the Kohn-Sham eigenvalue problem : "
@@ -218,17 +217,13 @@ namespace dftfe
 
     std::vector<dealii::Quadrature<1>> quadratureVector;
     quadratureVector.push_back(
-      dealii::QGauss<1>(C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics))));
+      dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));
     quadratureVector.push_back(
       dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadNLPSP(
                              d_dftParamsPtr->finiteElementPolynomialOrder)),
                            C_numCopies1DQuadNLPSP()));
     quadratureVector.push_back(dealii::QGaussLobatto<1>(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics) +
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal +
       1));
     quadratureVector.push_back(
       dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP(

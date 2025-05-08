@@ -145,12 +145,8 @@ namespace dftfe
     const distributedCPUVec<double>     &nodalField)
   {
     FEEvaluationWrapperClass<1> fe_evalField(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
+      d_dftParamsPtr->densityQuadratureRule,
       matrixFreeDataObject,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro);
@@ -259,12 +255,8 @@ namespace dftfe
 
   {
     FEEvaluationWrapperClass<1> fe_evalField(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
+      d_dftParamsPtr->densityQuadratureRule,
       matrixFreeDataObject,
       dofHandlerId,
       quadratureId);
@@ -317,12 +309,8 @@ namespace dftfe
 
   {
     FEEvaluationWrapperClass<1> fe_evalField(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
+      d_dftParamsPtr->densityQuadratureRule,
       matrixFreeDataObject,
       dofHandlerId,
       quadratureId);
@@ -482,9 +470,7 @@ namespace dftfe
         if (!d_smearedChargeMomentsComputed)
           {
             FEEvaluationWrapperClass<1> FEEvalb(
-              C_rhoNodalPolyOrder(
-                d_dftParamsPtr->finiteElementPolynomialOrder,
-                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+              d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
               C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
               matrixFreeDataObject,
               d_densityDofHandlerIndexElectro,
@@ -550,12 +536,8 @@ namespace dftfe
       }
     std::vector<double>         moments(13, 0.0);
     FEEvaluationWrapperClass<1> FEEvalRho(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
-      C_num1DQuad(C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
+      d_dftParamsPtr->densityQuadratureRule,
       matrixFreeDataObject,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro);

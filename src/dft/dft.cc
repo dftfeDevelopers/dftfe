@@ -2291,9 +2291,7 @@ namespace dftfe
     // is on use higher polynomial order dofHandler
     //
     kerkerSolverProblemWrapperClass kerkerPreconditionedResidualSolverProblem(
-      C_rhoNodalPolyOrder(
-        d_dftParamsPtr->finiteElementPolynomialOrder,
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
       d_mpiCommParent,
       mpi_communicator);
 
@@ -2301,9 +2299,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
     kerkerSolverProblemDeviceWrapperClass
       kerkerPreconditionedResidualSolverProblemDevice(
-        C_rhoNodalPolyOrder(
-          d_dftParamsPtr->finiteElementPolynomialOrder,
-          d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics),
+        d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
         d_mpiCommParent,
         mpi_communicator);
 #endif

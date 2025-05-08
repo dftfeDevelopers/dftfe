@@ -266,7 +266,7 @@ namespace dftfe
       {
         FEEvaluationWrapperClass<1> fe_eval_density(
           FEOrderElectro,
-          C_num1DQuad(C_rhoNodalPolyOrder(FEOrder, FEOrderElectro)),
+          -1,
           *d_matrixFreeDataPtr,
           d_matrixFreeVectorComponent,
           d_matrixFreeQuadratureComponentRhsDensity);
