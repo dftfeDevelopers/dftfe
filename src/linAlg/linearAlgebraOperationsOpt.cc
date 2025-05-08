@@ -292,7 +292,7 @@ namespace dftfe
 
       operatorMatrix.HX(X, 1.0, 0.0, 0.0, tempVec);
       operatorMatrix.overlapInverseMatrixTimesX(tempVec, 1.0, 0.0, 0.0, Y);
-      // std::exit(0);
+
 
       BLASWrapperPtr->xdot(local_size,
                            tempVec.data(),

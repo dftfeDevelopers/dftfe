@@ -220,7 +220,7 @@ namespace dftfe
           const dftfe::uInt wfcIndex = index2 % numberWfc;
           atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
                           iDof * numberWfc + wfcIndex],
-                    xVec[index]);
+                    xVec[index + offset2 * numberWfc * numberNodesPerElement]);
         }
     }
 
@@ -250,14 +250,16 @@ namespace dftfe
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
           const dftfe::uInt wfcIndex = index2 % numberWfc;
-          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                          iDof * numberWfc + wfcIndex]
-                       .x,
-                    xVec[index].x);
-          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                          iDof * numberWfc + wfcIndex]
-                       .y,
-                    xVec[index].y);
+          atomicAdd(
+            &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                  iDof * numberWfc + wfcIndex]
+               .x,
+            xVec[index + offset2 * numberWfc * numberNodesPerElement].x);
+          atomicAdd(
+            &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                  iDof * numberWfc + wfcIndex]
+               .y,
+            xVec[index + offset2 * numberWfc * numberNodesPerElement].y);
         }
     }
 
@@ -287,14 +289,16 @@ namespace dftfe
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
           const dftfe::uInt wfcIndex = index2 % numberWfc;
-          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                          iDof * numberWfc + wfcIndex]
-                       .x,
-                    xVec[index].x);
-          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                          iDof * numberWfc + wfcIndex]
-                       .y,
-                    xVec[index].y);
+          atomicAdd(
+            &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                  iDof * numberWfc + wfcIndex]
+               .x,
+            xVec[index + offset2 * numberWfc * numberNodesPerElement].x);
+          atomicAdd(
+            &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                  iDof * numberWfc + wfcIndex]
+               .y,
+            xVec[index + offset2 * numberWfc * numberNodesPerElement].y);
         }
     }
 

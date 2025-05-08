@@ -109,8 +109,6 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
     else
       {
-        if (d_kPointIndex != kPointIndex)
-          d_reinitialiseKPoint = true;
         d_kPointIndex = kPointIndex;
 
         if (!d_useGlobalCMatrix)
@@ -2004,34 +2002,6 @@ namespace dftfe
                   copyPaddedMemoryStorageVectorToDistributeVectorDevice(
                     d_sphericalFnTimesVectorDevice,
                     sphericalFunctionKetTimesVectorParFlattened);
-                // dftfe::utils::MemoryStorage<ValueType,
-                // dftfe::utils::MemorySpace::HOST>
-                // temp(d_sphericalFnTimesVectorAllCellsDevice.size(),0.0);
-                // temp.copyFrom(d_sphericalFnTimesVectorAllCellsDevice);
-                // double sumValue = 0.0;
-                // for(int iiTask = 0; iiTask < d_n_mpi_processes; iiTask++)
-                //   {
-                //     if(iiTask == d_this_mpi_process)
-                //     {
-                //       for(int ii = 0; ii
-                //       <d_sphericalFnTimesVectorAllCellsDevice.size(); ii++)
-                //       {
-                //         std::cout << "iiTask: " << iiTask << " ii: " << ii <<
-                //         " value: " << temp[ii] << std::endl; sumValue +=
-                //         temp[ii];
-                //       }
-                //     }
-                //     MPI_Barrier(d_mpi_communicator);
-                //   }
-                // for(int iiTask = 0; iiTask < d_n_mpi_processes; iiTask++)
-                //   {
-                //     if(iiTask == d_this_mpi_process)
-                //     {
-                //       std::cout << "iiTask: " << iiTask << " sum: " <<
-                //       sumValue << std::endl;
-                //     }
-                //     MPI_Barrier(d_mpi_communicator);
-                //   }
               }
             else if (couplingtype == CouplingStructure::dense)
               {
@@ -2743,8 +2713,8 @@ namespace dftfe
                 d_cellHamMatrixTimesWaveMatrixNonLocalDevice,
                 Xout);
           }
-      }
 #endif
+      }
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -3989,6 +3959,10 @@ namespace dftfe
         dftfe::uInt numShapeFnsAccum = 0;
 
         dftfe::Int totalElements = 0;
+        d_mapiAtomTosphFuncWaveStart.resize(d_totalAtomsInCurrentProc);
+
+        std::map<dftfe::uInt, dftfe::uInt> atomIdToNumShapeFnsAccumulated;
+        std::map<dftfe::uInt, dftfe::uInt> atomIdToMaxShapeFnsAccumulated;
         for (dftfe::Int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; iAtom++)
           {
             const dftfe::uInt        atomId = atomIdsInCurrentProcess[iAtom];
@@ -4015,83 +3989,102 @@ namespace dftfe
                                          .get_partitioner()
                                          ->global_to_local(globalId);
 
+                if (alpha == 0)
+                  {
+                    d_mapiAtomTosphFuncWaveStart[iAtom] = countAlpha;
+                  }
                 d_sphericalFnIdsParallelNumberingMap[countAlpha] = id;
                 d_sphericalFnIdsPaddedParallelNumberingMap
                   [iAtom * d_maxSingleAtomContribution + alpha] = id;
-                for (dftfe::uInt iElemComp = 0;
-                     iElemComp < totalAtomIdElementIterators;
-                     iElemComp++)
-                  {
-                    d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec
-                      [d_numberCellsAccumNonLocalAtoms[iAtom] *
-                         d_maxSingleAtomContribution +
-                       iElemComp * d_maxSingleAtomContribution + alpha] =
-                        iAtom * d_maxSingleAtomContribution + alpha;
-                  }
+
                 countAlpha++;
               }
 
-
-            for (dftfe::uInt iElemComp = 0;
-                 iElemComp < totalAtomIdElementIterators;
-                 ++iElemComp)
-              {
-                const dftfe::uInt elementId =
-                  elementIndexesInAtomCompactSupport[iElemComp];
-                d_nonlocalElemIdToLocalElemIdMap[countElem] = elementId;
-                d_elementIdToNonLocalElementIdMap[elementId].push_back(
-                  std::make_pair(atomId, countElem));
-                for (dftfe::uInt ikpoint = 0; ikpoint < d_kPointWeights.size();
-                     ikpoint++)
-                  for (dftfe::uInt iNode = 0; iNode < d_numberNodesPerElement;
-                       ++iNode)
-                    {
-                      for (dftfe::uInt alpha = 0;
-                           alpha < numberSphericalFunctions;
-                           ++alpha)
-                        {
-                          d_cellHamiltonianMatrixNonLocalFlattenedConjugate
-                            [ikpoint * d_totalNonlocalElems *
-                               d_numberNodesPerElement *
-                               d_maxSingleAtomContribution +
-                             countElem * d_maxSingleAtomContribution *
-                               d_numberNodesPerElement +
-                             d_numberNodesPerElement * alpha + iNode] =
-                              d_CMatrixEntriesConjugate
-                                [atomId][iElemComp]
-                                [ikpoint * d_numberNodesPerElement *
-                                   numberSphericalFunctions +
-                                 d_numberNodesPerElement * alpha + iNode];
-
-                          d_cellHamiltonianMatrixNonLocalFlattenedTranspose
-                            [ikpoint * d_totalNonlocalElems *
-                               d_numberNodesPerElement *
-                               d_maxSingleAtomContribution +
-                             countElem * d_numberNodesPerElement *
-                               d_maxSingleAtomContribution +
-                             d_maxSingleAtomContribution * iNode + alpha] =
-                              d_CMatrixEntriesTranspose
-                                [atomId][iElemComp]
-                                [ikpoint * d_numberNodesPerElement *
-                                   numberSphericalFunctions +
-                                 numberSphericalFunctions * iNode + alpha];
-                        }
-                    }
-
-
-
-                for (dftfe::uInt alpha = 0; alpha < numberSphericalFunctions;
-                     ++alpha)
-                  {
-                    const dftfe::uInt index =
-                      countElem * d_maxSingleAtomContribution + alpha;
-                    d_mapSphericalFnTimesVectorAllCellsReduction[index] =
-                      numShapeFnsAccum + alpha;
-                  }
-                countElem++;
-              }
-
+            atomIdToNumShapeFnsAccumulated[atomId] = numShapeFnsAccum;
+            atomIdToMaxShapeFnsAccumulated[atomId] =
+              iAtom * d_maxSingleAtomContribution;
             numShapeFnsAccum += numberSphericalFunctions;
+          }
+
+        const std::map<dftfe::uInt, std::vector<dftfe::Int>> sparsityPattern =
+          d_atomCenteredSphericalFunctionContainer->getSparsityPattern();
+        for (dftfe::uInt iElem = 0; iElem < d_locallyOwnedCells; iElem++)
+          {
+            if (atomSupportInElement(iElem))
+              {
+                const std::vector<dftfe::Int> &atomIdsInCell =
+                  d_atomCenteredSphericalFunctionContainer->getAtomIdsInElement(
+                    iElem);
+                for (dftfe::uInt iAtom = 0; iAtom < atomIdsInCell.size();
+                     iAtom++)
+                  {
+                    dftfe::uInt atomId = atomIdsInCell[iAtom];
+                    dftfe::uInt Znum   = atomicNumber[atomId];
+                    dftfe::uInt numberSphericalFunctions =
+                      d_atomCenteredSphericalFunctionContainer
+                        ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+                    const dftfe::Int nonZeroElementMatrixId =
+                      sparsityPattern.find(atomId)->second[iElem];
+                    if (!d_useGlobalCMatrix)
+                      {
+                        for (dftfe::uInt ikpoint = 0;
+                             ikpoint < d_kPointWeights.size();
+                             ikpoint++)
+                          for (dftfe::uInt iNode = 0;
+                               iNode < d_numberNodesPerElement;
+                               ++iNode)
+                            {
+                              for (dftfe::uInt alpha = 0;
+                                   alpha < numberSphericalFunctions;
+                                   ++alpha)
+                                {
+                                  d_cellHamiltonianMatrixNonLocalFlattenedConjugate
+                                    [ikpoint * d_totalNonlocalElems *
+                                       d_numberNodesPerElement *
+                                       d_maxSingleAtomContribution +
+                                     countElem * d_maxSingleAtomContribution *
+                                       d_numberNodesPerElement +
+                                     d_numberNodesPerElement * alpha +
+                                     iNode] = d_CMatrixEntriesConjugate
+                                      [atomId][nonZeroElementMatrixId]
+                                      [ikpoint * d_numberNodesPerElement *
+                                         numberSphericalFunctions +
+                                       d_numberNodesPerElement * alpha + iNode];
+
+                                  d_cellHamiltonianMatrixNonLocalFlattenedTranspose
+                                    [ikpoint * d_totalNonlocalElems *
+                                       d_numberNodesPerElement *
+                                       d_maxSingleAtomContribution +
+                                     countElem * d_numberNodesPerElement *
+                                       d_maxSingleAtomContribution +
+                                     d_maxSingleAtomContribution * iNode +
+                                     alpha] = d_CMatrixEntriesTranspose
+                                      [atomId][nonZeroElementMatrixId]
+                                      [ikpoint * d_numberNodesPerElement *
+                                         numberSphericalFunctions +
+                                       numberSphericalFunctions * iNode +
+                                       alpha];
+                                }
+                            }
+                      }
+                    d_nonlocalElemIdToLocalElemIdMap[countElem] = iElem;
+                    for (dftfe::uInt alpha = 0;
+                         alpha < numberSphericalFunctions;
+                         ++alpha)
+                      {
+                        const dftfe::uInt index =
+                          countElem * d_maxSingleAtomContribution + alpha;
+                        d_mapSphericalFnTimesVectorAllCellsReduction[index] =
+                          atomIdToNumShapeFnsAccumulated[atomId] + alpha;
+                        d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec
+                          [countElem * d_maxSingleAtomContribution + alpha] =
+                            atomIdToMaxShapeFnsAccumulated[atomId] + alpha;
+                      }
+                    d_elementIdToNonLocalElementIdMap[iElem].push_back(
+                      std::make_pair(atomId, countElem));
+                    countElem++;
+                  }
+              }
           }
 
         d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice.resize(
