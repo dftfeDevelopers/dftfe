@@ -376,11 +376,7 @@ namespace dftfe
     std::vector<std::vector<std::map<dftfe::uInt, std::vector<double>>>>
       pdosKernelWithoutSmearFunction;
     pdosKernelWithoutSmearFunction.resize(numSpinComponents);
-    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-      {
-        d_nonLocalOperator->initialiseCellWaveFunctionPointers(
-          tempCellNodalData, cellsBlockSize);
-      }
+
     for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
       {
         pdosKernelWithoutSmearFunction[spinIndex].resize(kPointWeights.size());
@@ -412,8 +408,7 @@ namespace dftfe
                 // atom) summed over all atoms that have compact support on
                 // the elements in the processor
 
-                d_nonLocalOperator->initialiseFlattenedDataStructure(
-                  currentBlockSize, resVec);
+
 
                 if ((jvec + currentBlockSize) <=
                       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
@@ -466,6 +461,17 @@ namespace dftfe
                                 tempCellNodalData.resize(currentCellsBlockSize *
                                                          currentBlockSize *
                                                          numNodesPerElement);
+                                d_nonLocalOperator
+                                  ->initialiseFlattenedDataStructure(
+                                    currentBlockSize, resVec);
+                                if constexpr (memorySpace ==
+                                              dftfe::utils::MemorySpace::DEVICE)
+                                  {
+                                    d_nonLocalOperator
+                                      ->initialiseCellWaveFunctionPointers(
+                                        tempCellNodalData,
+                                        currentCellsBlockSize);
+                                  }
 
                                 previousSize =
                                   currentCellsBlockSize * currentBlockSize;

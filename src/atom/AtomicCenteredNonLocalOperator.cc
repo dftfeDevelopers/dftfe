@@ -2817,7 +2817,6 @@ namespace dftfe
       {
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           {
-            dftfe::utils::deviceSynchronize();
             if (true)
               {
                 d_cellsBlockSize           = cellsBlockSize;
