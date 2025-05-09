@@ -112,8 +112,7 @@ namespace dftfe
     d_dofHandlerRhoNodal.reinit(triaObject);
     d_dofHandlerRhoNodal.distribute_dofs(
       dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
-        d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal +
-        1)));
+        d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1)));
 
     d_locallyRelevantDofsRhoNodal.clear();
     dealii::DoFTools::extract_locally_relevant_dofs(

@@ -52,7 +52,7 @@ namespace dftfe
           << "FE interpolating polynomial order for electrostatics solve: "
           << d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics << "\n"
           << "FE interpolating polynomial order for nodal electron density computation: "
-          << d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal  << "\n"
+          << d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal << "\n"
           << "quadrature rule for electron density and kinetic energy density computation: "
           << d_dftParamsPtr->densityQuadratureRule << "\n"
           << "number of elements: "
@@ -223,8 +223,7 @@ namespace dftfe
                              d_dftParamsPtr->finiteElementPolynomialOrder)),
                            C_numCopies1DQuadNLPSP()));
     quadratureVector.push_back(dealii::QGaussLobatto<1>(
-      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal +
-      1));
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1));
     quadratureVector.push_back(
       dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP(
                              d_dftParamsPtr->finiteElementPolynomialOrder)),

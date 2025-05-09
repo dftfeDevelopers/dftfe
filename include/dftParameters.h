@@ -35,11 +35,12 @@ namespace dftfe
   class dftParameters
   {
   public:
-    dftfe::uInt finiteElementPolynomialOrder,finiteElementPolynomialOrderRhoNodal,
+    dftfe::uInt finiteElementPolynomialOrder,
+      finiteElementPolynomialOrderRhoNodal,
       finiteElementPolynomialOrderElectrostatics, n_refinement_steps,
       numberEigenValues, spinPolarized, nkx, nky, nkz, offsetFlagX, offsetFlagY,
       offsetFlagZ;
-    dftfe::uInt densityQuadratureRule;  
+    dftfe::uInt densityQuadratureRule;
     dftfe::uInt chebyshevOrder, numPass, numSCFIterations,
       maxLinearSolverIterations, mixingHistory, npool,
       numberWaveFunctionsForEstimate, numLevels,

@@ -92,7 +92,8 @@ namespace dftfe
   symmetryClass<memorySpace>::initSymmetry()
   {
     //
-    dealii::QGauss<3>    quadrature(dftPtr->getParametersObject().densityQuadratureRule);
+    dealii::QGauss<3> quadrature(
+      dftPtr->getParametersObject().densityQuadratureRule);
     dealii::FEValues<3>  fe_values(dftPtr->FEEigen,
                                   quadrature,
                                   dealii::update_values |
