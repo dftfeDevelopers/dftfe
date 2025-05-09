@@ -26,8 +26,8 @@ namespace dftfe
   //
   // constructor
   //
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
-  poissonSolverProblem<FEOrder, FEOrderElectro>::poissonSolverProblem(
+  template <dftfe::uInt FEOrderElectro>
+  poissonSolverProblem<FEOrderElectro>::poissonSolverProblem(
     const MPI_Comm &mpi_comm)
     : mpi_communicator(mpi_comm)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
@@ -45,9 +45,9 @@ namespace dftfe
     d_smearedChargeValuesPtr        = NULL;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::clear()
+  poissonSolverProblem<FEOrderElectro>::clear()
   {
     d_diagonalA.reinit(0);
     d_rhsSmearedCharge.reinit(0);
@@ -63,9 +63,9 @@ namespace dftfe
     d_smearedChargeValuesPtr        = NULL;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::reinit(
+  poissonSolverProblem<FEOrderElectro>::reinit(
     const std::shared_ptr<
       dftfe::basis::
         FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
@@ -139,9 +139,9 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::distributeX()
+  poissonSolverProblem<FEOrderElectro>::distributeX()
   {
     d_constraintsInfo.distribute(*d_xPtr);
 
@@ -149,17 +149,17 @@ namespace dftfe
       meanValueConstraintDistribute(*d_xPtr);
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   distributedCPUVec<double> &
-  poissonSolverProblem<FEOrder, FEOrderElectro>::getX()
+  poissonSolverProblem<FEOrderElectro>::getX()
   {
     return *d_xPtr;
   }
 
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::computeRhs(
+  poissonSolverProblem<FEOrderElectro>::computeRhs(
     distributedCPUVec<double> &rhs)
   {
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
@@ -426,9 +426,9 @@ namespace dftfe
   }
 
   // Matrix-Free Jacobi preconditioner application
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::precondition_Jacobi(
+  poissonSolverProblem<FEOrderElectro>::precondition_Jacobi(
     distributedCPUVec<double>       &dst,
     const distributedCPUVec<double> &src,
     const double                     omega) const
@@ -444,9 +444,9 @@ namespace dftfe
   // Compute and fill value at mean value constrained dof
   // u_o= -\sum_{i \neq o} a_i * u_i where i runs over all dofs
   // except the mean value constrained dof (o^{th})
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::meanValueConstraintDistribute(
+  poissonSolverProblem<FEOrderElectro>::meanValueConstraintDistribute(
     distributedCPUVec<double> &vec) const
   {
     // -\sum_{i \neq o} a_i * u_i computation which involves summation across
@@ -460,9 +460,9 @@ namespace dftfe
 
   // Distribute value at mean value constrained dof (u_o) to all other dofs
   // u_i+= -a_i * u_o, and subsequently set u_o to 0
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::
+  poissonSolverProblem<FEOrderElectro>::
     meanValueConstraintDistributeSlaveToMaster(
       distributedCPUVec<double> &vec) const
   {
@@ -483,9 +483,9 @@ namespace dftfe
     meanValueConstraintSetZero(vec);
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::meanValueConstraintSetZero(
+  poissonSolverProblem<FEOrderElectro>::meanValueConstraintSetZero(
     distributedCPUVec<double> &vec) const
   {
     if (d_isMeanValueConstraintComputed)
@@ -497,9 +497,9 @@ namespace dftfe
   //
   // Compute mean value constraint which is required in case of fully periodic
   // boundary conditions
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::computeMeanValueConstraint()
+  poissonSolverProblem<FEOrderElectro>::computeMeanValueConstraint()
   {
     // allocate parallel distibuted vector to store mean value constraint
     d_meanValueConstraintVec.reinit(*d_xPtr);
@@ -634,9 +634,9 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::computeDiagonalA()
+  poissonSolverProblem<FEOrderElectro>::computeDiagonalA()
   {
     d_diagonalA.reinit(*d_xPtr);
     d_diagonalA = 0;
@@ -693,9 +693,9 @@ namespace dftfe
   }
 
   // Ax
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::AX(
+  poissonSolverProblem<FEOrderElectro>::AX(
     const dealii::MatrixFree<3, double>       &matrixFreeData,
     distributedCPUVec<double>                 &dst,
     const distributedCPUVec<double>           &src,
@@ -726,11 +726,10 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   void
-  poissonSolverProblem<FEOrder, FEOrderElectro>::vmult(
-    distributedCPUVec<double> &Ax,
-    distributedCPUVec<double> &x)
+  poissonSolverProblem<FEOrderElectro>::vmult(distributedCPUVec<double> &Ax,
+                                              distributedCPUVec<double> &x)
   {
     Ax = 0.0;
 

@@ -161,20 +161,16 @@ namespace dftfe
                                       0.0,
                                       dftParams)
     , d_phiTotalSolverProblemDevice(
-        dftParams.finiteElementPolynomialOrder,
         dftParams.finiteElementPolynomialOrderElectrostatics,
         mpi_comm_domain)
     , d_phiPrimeSolverProblemDevice(
-        dftParams.finiteElementPolynomialOrder,
         dftParams.finiteElementPolynomialOrderElectrostatics,
         mpi_comm_domain)
 #endif
     , d_phiTotalSolverProblem(
-        dftParams.finiteElementPolynomialOrder,
         dftParams.finiteElementPolynomialOrderElectrostatics,
         mpi_comm_domain)
     , d_phiPrimeSolverProblem(
-        dftParams.finiteElementPolynomialOrder,
         dftParams.finiteElementPolynomialOrderElectrostatics,
         mpi_comm_domain)
     , d_mixingScheme(mpi_comm_parent, mpi_comm_domain, dftParams.verbosity)

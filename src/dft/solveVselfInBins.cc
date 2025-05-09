@@ -420,9 +420,7 @@ namespace dftfe
                                 dealiiLinearSolver::CG);
 
     poissonSolverProblemWrapperClass vselfSolverProblem(
-      d_dftParams.finiteElementPolynomialOrder,
-      d_dftParams.finiteElementPolynomialOrderElectrostatics,
-      mpi_communicator);
+      d_dftParams.finiteElementPolynomialOrderElectrostatics, mpi_communicator);
 
     std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints;
     dealii::DoFTools::map_dofs_to_support_points(
