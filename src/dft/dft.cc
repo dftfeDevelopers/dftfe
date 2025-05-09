@@ -177,6 +177,7 @@ namespace dftfe
   {
     d_nOMPThreads = 1;
     d_useHubbard  = false;
+#ifdef _OPENMP
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
         try
@@ -201,6 +202,7 @@ namespace dftfe
                       "When specifying the <DFTFE_NUM_THREADS> environment "
                       "variable, it needs to be a positive number."));
       }
+#endif
     if (d_dftParamsPtr->verbosity > 0)
       pcout << "Threads per MPI task: " << d_nOMPThreads << std::endl;
 

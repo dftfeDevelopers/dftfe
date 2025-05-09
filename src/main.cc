@@ -183,6 +183,9 @@ main(int argc, char *argv[])
 #  else
       std::cout << "without GPU support, ";
 #  endif
+#  ifdef _OPENMP
+      std::cout << "with OpenMP support, ";
+#  endif
 #  ifdef DFTFE_WITH_64BIT_INT
       std::cout << "with 64 bit integers, ";
 #  else
