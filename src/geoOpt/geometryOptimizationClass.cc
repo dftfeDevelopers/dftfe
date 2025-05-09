@@ -41,12 +41,12 @@ namespace dftfe
     , d_restartFilesPath(restartFilesPath)
     , d_verbosity(verbosity)
   {
-    init(parameter_file, useDevice);
     if (d_restartFilesPath != "." &&
         dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
       }
+    init(parameter_file, useDevice);
   }
 
   void
