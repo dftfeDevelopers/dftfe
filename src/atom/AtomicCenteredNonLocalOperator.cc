@@ -2236,18 +2236,23 @@ namespace dftfe
             // dftfe::utils::MemorySpace::HOST>
             // temp(d_sphericalFnTimesWavefunctionMatrix.size(),0.0);
             // temp.copyFrom(d_sphericalFnTimesWavefunctionMatrix);
-            // for(int iiTask = 0; iiTask < d_n_mpi_processes; iiTask++)
-            //   {
-            //     if(iiTask == d_this_mpi_process)
-            //     {
-            //       for(int ii = 0; ii
-            //       <d_sphericalFnTimesWavefunctionMatrix.size(); ii++)
+            // ValueType sumValue = 0;
+            //       for(int ii = 0;
+            //       ii<d_sphericalFnTimesWavefunctionMatrix.size(); ii++)
             //       {
-            //         std::cout << "iiTask: " << iiTask << " ii: " << ii << "
-            //         value: " << temp[ii] << std::endl;
+            //         sumValue += temp[ii];
             //       }
-            //     }
-            //   }
+            //    for(int iTask = 0; iTask < d_n_mpi_processes; iTask++)
+            //    {
+            //      if(iTask == d_this_mpi_process)
+            //      {
+            //        std::cout << "iTask and sumValue: " <<iTask<<" "<<
+            //        sumValue << std::endl;
+            //      }
+            //      MPI_Barrier(d_mpi_communicator);
+            //    }
+            //    MPI_Barrier(d_mpi_communicator);
+            //    pcout<<"--------------------"<<std::endl;
           }
       }
 #endif
@@ -2828,6 +2833,8 @@ namespace dftfe
                 if (cellRemSize > 0)
                   numCellBatches += 1;
                 d_numCellBatches = numCellBatches;
+                std::cout << "Initialise Cell WFC: " << d_numCellBatches << " "
+                          << d_numberWaveFunctions << std::endl;
                 d_nonLocalElementsInCellRange.clear();
                 d_nonLocalElementsInCellRange.resize(numCellBatches, 0);
                 d_wfcStartPointerInCellRange.clear();
@@ -2851,8 +2858,9 @@ namespace dftfe
                       }
                     d_wfcStartPointerInCellRange[iCellBatch] =
                       cellWaveFunctionMatrix.begin() +
-                      startCell * d_numberNodesPerElement *
-                        d_numberWaveFunctions;
+                      (d_memoryOptMode ? 0 :
+                                         startCell * d_numberNodesPerElement *
+                                           d_numberWaveFunctions);
                   }
                 freeDeviceVectors();
                 hostWfcPointersInCellRange.clear();
@@ -2930,8 +2938,9 @@ namespace dftfe
 
                             hostWfcPointersInCellRange[iCellBatch][i] =
                               cellWaveFunctionMatrix.begin() +
-                              (iCell)*d_numberNodesPerElement *
-                                d_numberWaveFunctions;
+                              (d_memoryOptMode ? iCell - startCell : iCell) *
+                                d_numberNodesPerElement * d_numberWaveFunctions;
+
 
                             hostPointerCDaggerInCellRange[iCellBatch][i] =
                               d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice
