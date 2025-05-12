@@ -31,8 +31,10 @@ namespace dftfe
     {
       d_BLASWrapperPtr = BLASWrapperPtr;
       d_nOMPThreads    = 1;
+#ifdef _OPENMP
       if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
         d_nOMPThreads = std::stoi(std::string(penv));
+#endif
     }
 
     template <typename ValueTypeBasisCoeff,

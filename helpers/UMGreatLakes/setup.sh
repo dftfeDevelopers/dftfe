@@ -49,7 +49,6 @@ withHigherQuadPSP=OFF
 build_type=Release
 
 testing=ON
-minimal_compile=ON
 ###########################################################################
 #Usually, no changes are needed below this line
 #
@@ -71,7 +70,7 @@ function cmake_real() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
 	-DWITH_NCCL=$withNCCL -DCMAKE_PREFIX_PATH="$ELPA_PATH;$NCCL_PATH"\
 	-DWITH_COMPLEX=OFF -DWITH_GPU=$withGPU -DCMAKE_CUDA_FLAGS="$cuda_flags"\
-	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
+	-DWITH_TESTING=$testing  \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
 }
@@ -86,7 +85,7 @@ function cmake_cplx() {
 	-DXML_INCLUDE_DIR=$xmlIncludeDir \
 	-DCMAKE_PREFIX_PATH="$ELPA_PATH" \
 	-DWITH_COMPLEX=ON \
-	-DWITH_TESTING=$testing -DMINIMAL_COMPILE=$minimal_compile \
+	-DWITH_TESTING=$testing  \
   -DHIGHERQUAD_PSP=$withHigherQuadPSP\
 	  $1
 }

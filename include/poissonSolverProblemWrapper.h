@@ -27,38 +27,30 @@
 #endif
 namespace dftfe
 {
-  constexpr dftfe::Int
-  encode(dftfe::Int a, dftfe::Int b)
-  {
-    return a * 100 + b;
-  }
   using poissonSolverProblemObject = std::variant<
-#define poissonSolverProblemWrapperTemplates(T1, T2) \
-  std::shared_ptr<poissonSolverProblem<T1, T2>>,
-#define poissonSolverProblemWrapperTemplatesL(T1, T2) \
-  std::shared_ptr<poissonSolverProblem<T1, T2>>
+#define poissonSolverProblemWrapperTemplates(T1) \
+  std::shared_ptr<poissonSolverProblem<T1>>,
+#define poissonSolverProblemWrapperTemplatesL(T1) \
+  std::shared_ptr<poissonSolverProblem<T1>>
 #include "poissonSolverProblemWrapper.def"
 #undef poissonSolverProblemWrapperTemplates
 #undef poissonSolverProblemWrapperTemplatesL
     >;
   template <class... Args>
   inline poissonSolverProblemObject
-  createPoissonSolverProblemObject(dftfe::Int feOrder,
-                                   dftfe::Int feOrderElectro,
-                                   Args &&...args)
+  createPoissonSolverProblemObject(dftfe::Int feOrderElectro, Args &&...args)
   {
-    const dftfe::Int key = encode(feOrder, feOrderElectro);
-    switch (key)
+    switch (feOrderElectro)
       {
-#define poissonSolverProblemWrapperTemplates(T1, T2)  \
-  case encode(T1, T2):                                \
-    return poissonSolverProblemObject(                \
-      std::make_shared<poissonSolverProblem<T1, T2>>( \
+#define poissonSolverProblemWrapperTemplates(T1)  \
+  case T1:                                        \
+    return poissonSolverProblemObject(            \
+      std::make_shared<poissonSolverProblem<T1>>( \
         std::forward<Args>(args)...));
-#define poissonSolverProblemWrapperTemplatesL(T1, T2) \
-  case encode(T1, T2):                                \
-    return poissonSolverProblemObject(                \
-      std::make_shared<poissonSolverProblem<T1, T2>>( \
+#define poissonSolverProblemWrapperTemplatesL(T1) \
+  case T1:                                        \
+    return poissonSolverProblemObject(            \
+      std::make_shared<poissonSolverProblem<T1>>( \
         std::forward<Args>(args)...));
 #include "poissonSolverProblemWrapper.def"
 #undef poissonSolverProblemWrapperTemplates
@@ -74,11 +66,10 @@ namespace dftfe
   {
   public:
     /// Constructor
-    poissonSolverProblemWrapperClass(const dftfe::Int feOrder,
-                                     const dftfe::Int feOrderElectro,
+    poissonSolverProblemWrapperClass(const dftfe::Int feOrderElectro,
                                      const MPI_Comm  &mpi_comm)
       : d_poissonSolverProblemObject(
-          createPoissonSolverProblemObject(feOrder, feOrderElectro, mpi_comm))
+          createPoissonSolverProblemObject(feOrderElectro, mpi_comm))
     {}
 
     distributedCPUVec<double> &
@@ -156,10 +147,10 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_DEVICE
   using poissonSolverProblemDeviceObject = std::variant<
-#  define poissonSolverProblemWrapperTemplates(T1, T2) \
-    std::shared_ptr<poissonSolverProblemDevice<T1, T2>>,
-#  define poissonSolverProblemWrapperTemplatesL(T1, T2) \
-    std::shared_ptr<poissonSolverProblemDevice<T1, T2>>
+#  define poissonSolverProblemWrapperTemplates(T1) \
+    std::shared_ptr<poissonSolverProblemDevice<T1>>,
+#  define poissonSolverProblemWrapperTemplatesL(T1) \
+    std::shared_ptr<poissonSolverProblemDevice<T1>>
 #  include "poissonSolverProblemWrapper.def"
 #  undef poissonSolverProblemWrapperTemplates
 #  undef poissonSolverProblemWrapperTemplatesL
@@ -168,22 +159,20 @@ namespace dftfe
 
   template <class... Args>
   inline poissonSolverProblemDeviceObject
-  createPoissonSolverProblemDeviceObject(dftfe::Int feOrder,
-                                         dftfe::Int feOrderElectro,
+  createPoissonSolverProblemDeviceObject(dftfe::Int feOrderElectro,
                                          Args &&...args)
   {
-    const dftfe::Int key = encode(feOrder, feOrderElectro);
-    switch (key)
+    switch (feOrderElectro)
       {
-#  define poissonSolverProblemWrapperTemplates(T1, T2)        \
-    case encode(T1, T2):                                      \
-      return poissonSolverProblemDeviceObject(                \
-        std::make_shared<poissonSolverProblemDevice<T1, T2>>( \
+#  define poissonSolverProblemWrapperTemplates(T1)        \
+    case T1:                                              \
+      return poissonSolverProblemDeviceObject(            \
+        std::make_shared<poissonSolverProblemDevice<T1>>( \
           std::forward<Args>(args)...));
-#  define poissonSolverProblemWrapperTemplatesL(T1, T2)       \
-    case encode(T1, T2):                                      \
-      return poissonSolverProblemDeviceObject(                \
-        std::make_shared<poissonSolverProblemDevice<T1, T2>>( \
+#  define poissonSolverProblemWrapperTemplatesL(T1)       \
+    case T1:                                              \
+      return poissonSolverProblemDeviceObject(            \
+        std::make_shared<poissonSolverProblemDevice<T1>>( \
           std::forward<Args>(args)...));
 #  include "poissonSolverProblemWrapper.def"
 #  undef poissonSolverProblemWrapperTemplates
@@ -200,13 +189,10 @@ namespace dftfe
   {
   public:
     /// Constructor
-    poissonSolverProblemDeviceWrapperClass(const dftfe::Int feOrder,
-                                           const dftfe::Int feOrderElectro,
+    poissonSolverProblemDeviceWrapperClass(const dftfe::Int feOrderElectro,
                                            const MPI_Comm  &mpi_comm)
       : d_poissonSolverProblemObject(
-          createPoissonSolverProblemDeviceObject(feOrder,
-                                                 feOrderElectro,
-                                                 mpi_comm))
+          createPoissonSolverProblemDeviceObject(feOrderElectro, mpi_comm))
     {}
 
     distributedDeviceVec<double> &

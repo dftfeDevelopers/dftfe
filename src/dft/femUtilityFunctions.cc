@@ -467,8 +467,7 @@ namespace dftfe
       distributedMassVec, d_densityDofHandlerIndexElectro);
 
     dealii::QGaussLobatto<3> quadrature(
-      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal +
-      1);
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1);
     dealii::FEValues<3> fe_values(d_dofHandlerRhoNodal.get_fe(),
                                   quadrature,
                                   dealii::update_values |

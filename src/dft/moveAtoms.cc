@@ -523,8 +523,7 @@ namespace dftfe
                 d_dofHandlerRhoNodal.reinit(d_mesh.getParallelMeshMoved());
                 d_dofHandlerRhoNodal.distribute_dofs(
                   dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
-                    d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal +
-                    1)));
+                    d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1)));
 
                 forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
                                       d_mesh.getSerialMeshUnmoved(),

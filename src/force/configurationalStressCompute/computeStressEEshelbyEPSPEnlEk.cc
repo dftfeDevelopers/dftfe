@@ -73,12 +73,11 @@ namespace dftfe
 
     const bool useHubbard = dftPtr->isHubbardCorrectionsUsed();
 
-    FEEvaluationWrapperClass<3> forceEval(
-      1,
-      d_dftParams.densityQuadratureRule,
-      matrixFreeData,
-      d_forceDofHandlerIndex,
-      dftPtr->d_densityQuadratureId);
+    FEEvaluationWrapperClass<3> forceEval(1,
+                                          d_dftParams.densityQuadratureRule,
+                                          matrixFreeData,
+                                          d_forceDofHandlerIndex,
+                                          dftPtr->d_densityQuadratureId);
     FEEvaluationWrapperClass<3> forceEvalNLP(
       1,
       C_num1DQuadNLPSP(d_dftParams.finiteElementPolynomialOrder) *

@@ -332,7 +332,7 @@ namespace dftfe
 
     if (!d_dftParams.floatingNuclearCharges)
       {
-        dealii::QGauss<3 - 1>   faceQuadrature(d_dftParams.densityQuadratureRule);
+        dealii::QGauss<3 - 1> faceQuadrature(d_dftParams.densityQuadratureRule);
         dealii::FEFaceValues<3> feForceFaceValues(
           FEForce,
           faceQuadrature,
@@ -492,12 +492,11 @@ namespace dftfe
   void
   forceClass<memorySpace>::computeConfigurationalForcePhiExtLinFE()
   {
-    FEEvaluationWrapperClass<3> forceEval(
-      1,
-      d_dftParams.densityQuadratureRule,
-      dftPtr->matrix_free_data,
-      d_forceDofHandlerIndex,
-      0);
+    FEEvaluationWrapperClass<3> forceEval(1,
+                                          d_dftParams.densityQuadratureRule,
+                                          dftPtr->matrix_free_data,
+                                          d_forceDofHandlerIndex,
+                                          0);
 
     FEEvaluationWrapperClass<1> eshelbyEval(
       d_dftParams.finiteElementPolynomialOrderElectrostatics,
@@ -533,12 +532,11 @@ namespace dftfe
   void
   forceClass<memorySpace>::computeConfigurationalForceEselfNoSurfaceLinFE()
   {
-    FEEvaluationWrapperClass<3> forceEval(
-      1,
-      d_dftParams.densityQuadratureRule,
-      dftPtr->matrix_free_data,
-      d_forceDofHandlerIndex,
-      0);
+    FEEvaluationWrapperClass<3> forceEval(1,
+                                          d_dftParams.densityQuadratureRule,
+                                          dftPtr->matrix_free_data,
+                                          d_forceDofHandlerIndex,
+                                          0);
 
     FEEvaluationWrapperClass<1> eshelbyEval(
       d_dftParams.finiteElementPolynomialOrderElectrostatics,

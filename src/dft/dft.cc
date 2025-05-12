@@ -161,26 +161,23 @@ namespace dftfe
                                       0.0,
                                       dftParams)
     , d_phiTotalSolverProblemDevice(
-        dftParams.finiteElementPolynomialOrder,
         dftParams.finiteElementPolynomialOrderElectrostatics,
         mpi_comm_domain)
     , d_phiPrimeSolverProblemDevice(
-        dftParams.finiteElementPolynomialOrder,
         dftParams.finiteElementPolynomialOrderElectrostatics,
         mpi_comm_domain)
 #endif
     , d_phiTotalSolverProblem(
-        dftParams.finiteElementPolynomialOrder,
         dftParams.finiteElementPolynomialOrderElectrostatics,
         mpi_comm_domain)
     , d_phiPrimeSolverProblem(
-        dftParams.finiteElementPolynomialOrder,
         dftParams.finiteElementPolynomialOrderElectrostatics,
         mpi_comm_domain)
     , d_mixingScheme(mpi_comm_parent, mpi_comm_domain, dftParams.verbosity)
   {
     d_nOMPThreads = 1;
     d_useHubbard  = false;
+#ifdef _OPENMP
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
         try
@@ -205,6 +202,7 @@ namespace dftfe
                       "When specifying the <DFTFE_NUM_THREADS> environment "
                       "variable, it needs to be a positive number."));
       }
+#endif
     if (d_dftParamsPtr->verbosity > 0)
       pcout << "Threads per MPI task: " << d_nOMPThreads << std::endl;
 
