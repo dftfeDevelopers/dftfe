@@ -1576,10 +1576,8 @@ namespace dftfe
                   d_rhoOutNodalValuesSplit,
                   d_densityInQuadValues[0],
                   d_gradDensityInQuadValues[0],
-                  d_tauInQuadValues[0],
                   d_gradDensityInQuadValues[0],
-                  isGradDensityDataDependent,
-                  isTauMGGA);
+                  isGradDensityDataDependent);
 
                 addAtomicRhoQuadValuesGradients(d_densityInQuadValues[0],
                                                 d_gradDensityInQuadValues[0],
@@ -1607,10 +1605,8 @@ namespace dftfe
               d_densityOutNodalValues[0],
               d_densityInQuadValues[0],
               d_gradDensityInQuadValues[0],
-              d_tauInQuadValues[0],
               d_gradDensityInQuadValues[0],
-              isGradDensityDataDependent,
-              isTauMGGA);
+              isGradDensityDataDependent);
 
             normalizeRhoInQuadValues();
 
@@ -1633,10 +1629,8 @@ namespace dftfe
               d_rhoOutNodalValuesSplit,
               d_densityInQuadValues[0],
               d_gradDensityInQuadValues[0],
-              d_tauInQuadValues[0],
               d_gradDensityInQuadValues[0],
-              isGradDensityDataDependent,
-              isTauMGGA);
+              isGradDensityDataDependent);
 
             addAtomicRhoQuadValuesGradients(d_densityInQuadValues[0],
                                             d_gradDensityInQuadValues[0],
@@ -2703,10 +2697,8 @@ namespace dftfe
                       d_densityInNodalValues[iComp],
                       d_densityInQuadValues[iComp],
                       d_gradDensityInQuadValues[iComp],
-                      d_tauInQuadValues[iComp],
                       d_gradDensityInQuadValues[iComp],
-                      isGradDensityDataDependent,
-                      isTauMGGA);
+                      isGradDensityDataDependent);
                   }
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")

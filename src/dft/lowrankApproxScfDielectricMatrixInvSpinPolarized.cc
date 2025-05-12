@@ -791,10 +791,8 @@ namespace dftfe
         d_densityInNodalValues[iComp],
         d_densityInQuadValues[iComp],
         d_gradDensityInQuadValues[iComp],
-        d_tauInQuadValues[iComp],
         d_gradDensityInQuadValues[iComp],
-        isGradDensityDataDependent,
-        isTauMGGA);
+        isGradDensityDataDependent);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

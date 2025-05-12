@@ -1004,11 +1004,8 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &quadratureGradValueData,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureTauValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                 &quadratureHessianValueData,
       const bool isEvaluateGradData    = false,
-      const bool isEvaluateTauData     = false,
       const bool isEvaluateHessianData = false);
 
 
@@ -1798,10 +1795,6 @@ namespace dftfe
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       d_tauInQuadValues, d_tauOutQuadValues, d_tauResidualQuadValues;
-    std::vector<
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      d_tauInNodalValues, d_tauOutNodalValues, d_tauResidualNodalValues;
-
 
     // std::map<dealii::CellId, std::vector<double>> d_phiInValues,
     // d_phiOutValues;

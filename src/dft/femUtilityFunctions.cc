@@ -35,11 +35,8 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &quadratureGradValueData,
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      &quadratureTauValueData,
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
               &quadratureHessianValueData,
     const bool isEvaluateGradData,
-    const bool isEvaluateTauData,
     const bool isEvaluateHessianData)
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
@@ -58,13 +55,6 @@ namespace dftfe
         quadratureHessianValueData.clear();
         quadratureHessianValueData.resize(9 * nQuadsPerCell * nCells);
       }
-
-    if (isEvaluateTauData)
-      {
-        quadratureTauValueData.clear();
-        quadratureTauValueData.resize(nQuadsPerCell * nCells);
-      }
-
 
     FEEvaluationWrapperClass<1> feEvalObj(
       d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
