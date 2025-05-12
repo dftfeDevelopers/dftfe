@@ -29,11 +29,9 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::clearRhoData()
+  dftClass<memorySpace>::clearRhoData()
   {
     d_mixingScheme.clearHistory();
 
@@ -46,11 +44,9 @@ namespace dftfe
     d_fvSpin1containerVals.clear();
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::initRho()
+  dftClass<memorySpace>::initRho()
   {
     computingTimerStandard.enter_subsection("initialize density");
 
@@ -977,11 +973,9 @@ namespace dftfe
   //
   //
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeRhoInitialGuessFromPSI(
+  dftClass<memorySpace>::computeRhoInitialGuessFromPSI(
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 
   {
@@ -1469,11 +1463,9 @@ namespace dftfe
   //
   // Normalize rho
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::normalizeRhoInQuadValues()
+  dftClass<memorySpace>::normalizeRhoInQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
@@ -1521,12 +1513,9 @@ namespace dftfe
   //
   // Normalize rho mag
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    normalizeRhoMagInInitialGuessQuadValues()
+  dftClass<memorySpace>::normalizeRhoMagInInitialGuessQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
@@ -1572,11 +1561,9 @@ namespace dftfe
   //
   // Normalize rho
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::normalizeRhoOutQuadValues()
+  dftClass<memorySpace>::normalizeRhoOutQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
@@ -1619,12 +1606,9 @@ namespace dftfe
       pcout << "Total charge out after scaling: " << chargeAfterScaling
             << std::endl;
   }
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    loadDensityFromQuadratureValues()
+  dftClass<memorySpace>::loadDensityFromQuadratureValues()
   {
     clearRhoData();
     computingTimerStandard.enter_subsection("load Quad density");

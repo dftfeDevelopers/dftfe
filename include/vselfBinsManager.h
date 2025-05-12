@@ -27,11 +27,9 @@ namespace dftfe
 {
   /**
    * @brief Categorizes atoms into bins for efficient solution of nuclear electrostatic self-potential.
-   * template parameter FEOrderElectro is the finite element polynomial order.
    *
    * @author Sambit Das, Phani Motamarri
    */
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   class vselfBinsManager
   {
   public:

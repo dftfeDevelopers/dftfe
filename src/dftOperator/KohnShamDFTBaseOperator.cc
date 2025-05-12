@@ -81,6 +81,7 @@ namespace dftfe
                       dealii::TimerOutput::wall_times)
   {
     d_nOMPThreads = 1;
+#ifdef _OPENMP
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
         try
@@ -105,6 +106,7 @@ namespace dftfe
                       "When specifying the <DFTFE_NUM_THREADS> environment "
                       "variable, it needs to be a positive number."));
       }
+#endif
     d_nOMPThreads =
       memorySpace == dftfe::utils::MemorySpace::DEVICE ? 1 : d_nOMPThreads;
     if (d_dftParamsPtr->isPseudopotential)

@@ -46,12 +46,9 @@ namespace dftfe
   //				Following routine computes total density by summing over all the
   // symmetry transformed points
   //=============================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  symmetryClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeAndSymmetrize_rhoOut()
+  symmetryClass<memorySpace>::computeAndSymmetrize_rhoOut()
   {
     const dealii::Quadrature<3> &quadrature =
       dftPtr->matrix_free_data.get_quadrature(dftPtr->d_densityQuadratureId);
@@ -210,11 +207,9 @@ namespace dftfe
   // back to the corresponding processors
   //=============================================================================================================================================
   //=============================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  symmetryClass<FEOrder, FEOrderElectro, memorySpace>::computeLocalrhoOut()
+  symmetryClass<memorySpace>::computeLocalrhoOut()
   {
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors(
       (1 + dftPtr->getParametersObject().spinPolarized) *

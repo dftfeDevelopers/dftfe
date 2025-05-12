@@ -23,11 +23,9 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::initBoundaryConditions(
+  dftClass<memorySpace>::initBoundaryConditions(
     const bool recomputeBasisData,
     const bool meshOnlyDeformed,
     const bool vselfPerturbationUpdateForStress)
@@ -50,11 +48,13 @@ namespace dftfe
               << std::endl;
         pcout
           << "FE interpolating polynomial order for Kohn-Sham eigenvalue problem: "
-          << FEOrder << "\n"
+          << d_dftParamsPtr->finiteElementPolynomialOrder << "\n"
           << "FE interpolating polynomial order for electrostatics solve: "
-          << FEOrderElectro << "\n"
+          << d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics << "\n"
           << "FE interpolating polynomial order for nodal electron density computation: "
-          << C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() << "\n"
+          << d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal << "\n"
+          << "quadrature rule for electron density and kinetic energy density computation: "
+          << d_dftParamsPtr->densityQuadratureRule << "\n"
           << "number of elements: "
           << dofHandler.get_triangulation().n_global_active_cells() << "\n"
           << "number of degrees of freedom for the Kohn-Sham eigenvalue problem : "
@@ -216,17 +216,20 @@ namespace dftfe
     d_constraintsVector.push_back(&constraintsNoneEigen); // For Eigen;
 
     std::vector<dealii::Quadrature<1>> quadratureVector;
-    quadratureVector.push_back(dealii::QGauss<1>(
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
     quadratureVector.push_back(
-      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadNLPSP<FEOrder>()),
+      dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));
+    quadratureVector.push_back(
+      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadNLPSP(
+                             d_dftParamsPtr->finiteElementPolynomialOrder)),
                            C_numCopies1DQuadNLPSP()));
     quadratureVector.push_back(dealii::QGaussLobatto<1>(
-      C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1));
+      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1));
     quadratureVector.push_back(
-      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
+      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP(
+                             d_dftParamsPtr->finiteElementPolynomialOrder)),
                            C_numCopies1DQuadLPSP()));
-    quadratureVector.push_back(dealii::QGauss<1>(C_num1DQuad<FEOrder>()));
+    quadratureVector.push_back(dealii::QGauss<1>(
+      C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrder)));
     // SparsityPattern VEctor
     quadratureVector.push_back(dealii::QGauss<1>(8));
     d_densityQuadratureId         = 0;
@@ -424,7 +427,8 @@ namespace dftfe
                                              d_densityDofHandlerIndex,
                                              quadratureIndices,
                                              updateFlags);
-            if (FEOrder == FEOrderElectro)
+            if (d_dftParamsPtr->finiteElementPolynomialOrder ==
+                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)
               d_basisOperationsPtrDevice->computeCellStiffnessMatrix(
                 d_feOrderPlusOneQuadratureId, 50, true, false);
           }

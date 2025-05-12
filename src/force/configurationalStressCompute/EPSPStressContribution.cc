@@ -22,17 +22,12 @@
 namespace dftfe
 {
   // compute EPSP contribution stress (local pseudopotential)
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::addEPSPStressContribution(
+  forceClass<memorySpace>::addEPSPStressContribution(
     dealii::FEValues<3>                 &feValues,
     dealii::FEFaceValues<3>             &feFaceValues,
-    dealii::FEEvaluation<3,
-                         1,
-                         C_num1DQuadLPSP<FEOrder>() * C_numCopies1DQuadLPSP(),
-                         3>             &forceEval,
+    FEEvaluationWrapperClass<3>         &forceEval,
     const dealii::MatrixFree<3, double> &matrixFreeData,
     const dftfe::uInt                    phiTotDofHandlerIndexElectro,
     const dftfe::uInt                    cell,
@@ -40,8 +35,8 @@ namespace dftfe
     const dealii::AlignedVector<
       dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &gradRhoQuads,
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                                    &pseudoVLocAtoms,
-    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
+                           &pseudoVLocAtoms,
+    const vselfBinsManager &vselfBinsManager,
     const std::vector<std::map<dealii::CellId, dftfe::uInt>>
       &cellsVselfBallsClosestAtomIdDofHandler)
   {

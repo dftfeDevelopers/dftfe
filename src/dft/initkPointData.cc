@@ -164,11 +164,9 @@ namespace dftfe
   // generate the k-grid
   //============================================================================================================================================
   //============================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::readkPointData()
+  dftClass<memorySpace>::readkPointData()
   {
     const dftfe::Int                 numberColumnskPointDataFile = 4;
     std::vector<std::vector<double>> kPointData;
@@ -332,11 +330,9 @@ namespace dftfe
   // successive relaxation steps
   //============================================================================================================================================
   //============================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::recomputeKPointCoordinates()
+  dftClass<memorySpace>::recomputeKPointCoordinates()
   {
     if (d_dftParamsPtr->verbosity >= 4)
       {
@@ -379,11 +375,9 @@ namespace dftfe
   // k-points across pools
   //============================================================================================================================================
   //============================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::generateMPGrid()
+  dftClass<memorySpace>::generateMPGrid()
   {
     dftfe::uInt nkx = d_dftParamsPtr->nkx;
     dftfe::uInt nky = d_dftParamsPtr->nky;

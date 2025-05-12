@@ -21,15 +21,12 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    accumulateForceContributionGammaAtomsFloating(
-      const std::map<dftfe::uInt, std::vector<double>>
-                          &forceContributionLocalGammaAtoms,
-      std::vector<double> &accumForcesVector)
+  forceClass<memorySpace>::accumulateForceContributionGammaAtomsFloating(
+    const std::map<dftfe::uInt, std::vector<double>>
+                        &forceContributionLocalGammaAtoms,
+    std::vector<double> &accumForcesVector)
   {
     for (dftfe::uInt iAtom = 0; iAtom < dftPtr->atomLocations.size(); iAtom++)
       {

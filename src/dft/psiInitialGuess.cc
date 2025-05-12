@@ -31,15 +31,12 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::loadPSIFiles(
-    dftfe::uInt  Z,
-    dftfe::uInt  n,
-    dftfe::uInt  l,
-    dftfe::uInt &fileReadFlag)
+  dftClass<memorySpace>::loadPSIFiles(dftfe::uInt  Z,
+                                      dftfe::uInt  n,
+                                      dftfe::uInt  l,
+                                      dftfe::uInt &fileReadFlag)
   {
     if (radValues[Z][n].count(l) > 0)
       {
@@ -151,11 +148,9 @@ namespace dftfe
   //
   // determine orbital ordering
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::determineOrbitalFilling()
+  dftClass<memorySpace>::determineOrbitalFilling()
   {
     //
     // create a stencil following orbital filling order
@@ -365,11 +360,9 @@ namespace dftfe
   }
 
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::readPSIRadialValues()
+  dftClass<memorySpace>::readPSIRadialValues()
   {
     const dealii::IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
     std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs;
@@ -640,11 +633,9 @@ namespace dftfe
   }
 
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::readPSI()
+  dftClass<memorySpace>::readPSI()
   {
     computing_timer.enter_subsection("initialize wave functions");
     readPSIRadialValues();
