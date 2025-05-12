@@ -17,6 +17,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
 FE interpolating polynomial order for electrostatics solve: 3
 FE interpolating polynomial order for nodal electron density computation: 5
+quadrature rule for electron density and kinetic energy density computation: 6
 number of elements: 64
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 2197
 -------------------------------------------------
@@ -288,7 +289,7 @@ File: pdosData_atom#0_wfc#2(3d).out
          9.6889	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	
         11.1889	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	
         12.6889	         0.0019	         0.5335	         0.0007	         0.0001	         0.0007	         0.0001	         0.0000	         0.2665	         0.0007	         0.0001	         0.0000	         0.2665	
-        14.1889	         1.0611	         1.4379	         0.3537	         0.4793	         0.3537	         0.4793	         0.0000	         0.0000	         0.3537	         0.4793	         0.0000	         0.0000	
+        14.1889	         1.0610	         1.4379	         0.3537	         0.4793	         0.3537	         0.4793	         0.0000	         0.0000	         0.3537	         0.4793	         0.0000	         0.0000	
         15.6889	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	
         17.1888	         0.0199	         0.0115	         0.0066	         0.0000	         0.0066	         0.0000	         0.0001	         0.0057	         0.0066	         0.0000	         0.0001	         0.0057	
         18.6888	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	         0.0000	
