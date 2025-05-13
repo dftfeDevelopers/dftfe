@@ -784,17 +784,14 @@ namespace dftfe
        ExcFamilyType::TauMGGA);
 
     for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size(); ++iComp)
-      interpolateDensityNodalDataToQuadratureDataGeneral(
-        d_basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost->interpolate(
+        d_densityInNodalValues[iComp],
         d_densityDofHandlerIndexElectro,
         d_densityQuadratureIdElectro,
-        d_densityInNodalValues[iComp],
         d_densityInQuadValues[iComp],
         d_gradDensityInQuadValues[iComp],
-        d_tauInQuadValues[iComp],
         d_gradDensityInQuadValues[iComp],
-        isGradDensityDataDependent,
-        isTauMGGA);
+        isGradDensityDataDependent);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

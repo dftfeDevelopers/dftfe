@@ -57,17 +57,14 @@ namespace dftfe
         // interpolate nodal rhoOut data to quadrature data
         for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
              ++iComp)
-          interpolateDensityNodalDataToQuadratureDataGeneral(
-            d_basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost->interpolate(
+            d_densityOutNodalValues[iComp],
             d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
-            d_densityOutNodalValues[iComp],
             d_densityOutQuadValues[iComp],
             d_gradDensityOutQuadValues[iComp],
-            d_tauOutQuadValues[iComp],
             d_gradDensityOutQuadValues[iComp],
-            isGradDensityDataDependent,
-            isTauMGGA);
+            isGradDensityDataDependent);
 
         if (d_dftParamsPtr->verbosity >= 3)
           {
@@ -172,12 +169,12 @@ namespace dftfe
         d_rhoOutNodalValuesDistributed = d_densityOutNodalValues[0];
         d_rhoOutNodalValuesDistributed.update_ghost_values();
         d_constraintsRhoNodalInfo.distribute(d_rhoOutNodalValuesDistributed);
-        interpolateDensityNodalDataToQuadratureDataLpsp(
-          d_basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost->interpolate(
+          d_densityOutNodalValues[0],
           d_densityDofHandlerIndexElectro,
           d_lpspQuadratureIdElectro,
-          d_densityOutNodalValues[0],
           d_densityTotalOutValuesLpspQuad,
+          d_gradDensityTotalOutValuesLpspQuad,
           d_gradDensityTotalOutValuesLpspQuad,
           true);
       }
@@ -245,7 +242,6 @@ namespace dftfe
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
       {
         d_densityInNodalValues = d_densityOutNodalValues;
-        d_tauInNodalValues     = d_tauOutNodalValues;
 
         // normalize rho
         const double charge =
@@ -261,17 +257,14 @@ namespace dftfe
 
         for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
-          interpolateDensityNodalDataToQuadratureDataGeneral(
-            d_basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost->interpolate(
+            d_densityInNodalValues[iComp],
             d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
-            d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            d_tauInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            isGradDensityDataDependent,
-            isTauMGGA);
+            isGradDensityDataDependent);
 
         d_densityOutQuadValues.resize(d_densityInNodalValues.size());
         for (dftfe::uInt iComp = 0; iComp < d_densityOutQuadValues.size();
@@ -285,14 +278,6 @@ namespace dftfe
                  ++iComp)
               d_gradDensityOutQuadValues[iComp].resize(
                 d_gradDensityInQuadValues[iComp].size());
-          }
-
-        if (isTauMGGA)
-          {
-            d_tauOutQuadValues.resize(d_tauInNodalValues.size());
-            for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
-                 ++iComp)
-              d_tauOutQuadValues[iComp].resize(d_tauInQuadValues[iComp].size());
           }
       }
 

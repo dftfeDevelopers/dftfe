@@ -3,23 +3,7 @@ number of atoms types: 3
 Total number of k-points 12
 Found 0 GPUs
 MPI rank 0 uses GPU #3
-MPI rank 2 uses GPU #5
-MPI rank 5 uses GPU #2
-MPI rank 8 uses GPU #5
-MPI rank 6 uses GPU #3
-MPI rank 7 uses GPU #4
-MPI rank 3 uses GPU #0
-MPI rank 4 uses GPU #1
-MPI rank 1 uses GPU #4
-MPI rank 6 uses GPU #0
-MPI rank 5 uses GPU #5
-MPI rank 7 uses GPU #1
-MPI rank 2 uses GPU #2
-MPI rank 4 uses GPU #4
-MPI rank 1 uses GPU #1
-MPI rank 8 uses GPU #2
-MPI rank 3 uses GPU #3
-Found -1305785456 GPUs
+Found 866001232 GPUs
 MPI rank 0 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 7.488597237999999656e+00 0.000000000000000000e+00 0.000000000000000000e+00
@@ -39,6 +23,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
 FE interpolating polynomial order for electrostatics solve: 2
 FE interpolating polynomial order for nodal electron density computation: 4
+quadrature rule for electron density and kinetic energy density computation: 5
 number of elements: 800
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 7497
 -------------------------------------------------

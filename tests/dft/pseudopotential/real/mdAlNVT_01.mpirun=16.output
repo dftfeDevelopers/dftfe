@@ -51,6 +51,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
 FE interpolating polynomial order for electrostatics solve: 3
 FE interpolating polynomial order for nodal electron density computation: 5
+quadrature rule for electron density and kinetic energy density computation: 6
 number of elements: 1728
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
 -------------------------------------------------
@@ -119,6 +120,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
 FE interpolating polynomial order for electrostatics solve: 3
 FE interpolating polynomial order for nodal electron density computation: 5
+quadrature rule for electron density and kinetic energy density computation: 6
 number of elements: 1728
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
 -------------------------------------------------
@@ -180,6 +182,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
 FE interpolating polynomial order for electrostatics solve: 3
 FE interpolating polynomial order for nodal electron density computation: 5
+quadrature rule for electron density and kinetic energy density computation: 6
 number of elements: 1728
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
 -------------------------------------------------
@@ -241,6 +244,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
 FE interpolating polynomial order for electrostatics solve: 3
 FE interpolating polynomial order for nodal electron density computation: 5
+quadrature rule for electron density and kinetic energy density computation: 6
 number of elements: 1728
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 50653
 -------------------------------------------------
