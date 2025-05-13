@@ -687,11 +687,10 @@ namespace dftfe
        ExcFamilyType::TauMGGA);
 
     // interpolate nodal data to quadrature data
-    interpolateDensityNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
+    d_basisOperationsPtrElectroHost->interpolate(
+      d_densityInNodalValues[0],
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
-      d_densityInNodalValues[0],
       d_densityInQuadValues[0],
       d_gradDensityInQuadValues[0],
       d_gradDensityInQuadValues[0],

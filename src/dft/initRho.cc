@@ -407,11 +407,10 @@ namespace dftfe
           }
         for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
-          interpolateDensityNodalDataToQuadratureDataGeneral(
-            d_basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost->interpolate(
+            d_densityInNodalValues[iComp],
             d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
-            d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
@@ -436,11 +435,10 @@ namespace dftfe
                   }
               }
 
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost->interpolate(
+              d_densityInNodalValues[1],
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_densityInNodalValues[1],
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
               d_gradDensityInQuadValues[1],
@@ -469,11 +467,10 @@ namespace dftfe
                                      d_densityInNodalValues[1])
                       << std::endl;
               }
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost->interpolate(
+              d_densityInNodalValues[1],
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_densityInNodalValues[1],
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
               d_gradDensityInQuadValues[1],
@@ -1769,11 +1766,10 @@ namespace dftfe
         // interpolate nodal rhoOut data to quadrature data
         for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
-          interpolateDensityNodalDataToQuadratureDataGeneral(
-            d_basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost->interpolate(
+            d_densityInNodalValues[iComp],
             d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
-            d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],

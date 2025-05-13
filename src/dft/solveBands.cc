@@ -277,13 +277,12 @@ namespace dftfe
       }
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotRhoIn,
-      d_phiInQuadValues,
-      dummy);
+    d_basisOperationsPtrElectroHost->interpolate(d_phiTotRhoIn,
+                                                 d_phiTotDofHandlerIndexElectro,
+                                                 d_densityQuadratureIdElectro,
+                                                 d_phiInQuadValues,
+                                                 dummy,
+                                                 dummy);
 
     //
     // impose integral phi equals 0

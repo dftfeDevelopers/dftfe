@@ -1569,11 +1569,10 @@ namespace dftfe
 
                 initAtomicRho();
 
-                interpolateDensityNodalDataToQuadratureDataGeneral(
-                  d_basisOperationsPtrElectroHost,
+                d_basisOperationsPtrElectroHost->interpolate(
+                  d_rhoOutNodalValuesSplit,
                   d_densityDofHandlerIndexElectro,
                   d_densityQuadratureIdElectro,
-                  d_rhoOutNodalValuesSplit,
                   d_densityInQuadValues[0],
                   d_gradDensityInQuadValues[0],
                   d_gradDensityInQuadValues[0],
@@ -1598,11 +1597,10 @@ namespace dftfe
                  d_dftParamsPtr->spinPolarized != 1 &&
                  d_dftParamsPtr->solverMode == "MD")
           {
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost->interpolate(
+              d_densityOutNodalValues[0],
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_densityOutNodalValues[0],
               d_densityInQuadValues[0],
               d_gradDensityInQuadValues[0],
               d_gradDensityInQuadValues[0],
@@ -1622,11 +1620,10 @@ namespace dftfe
                  d_dftParamsPtr->solverMode == "MD")
           {
             initAtomicRho();
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost->interpolate(
+              d_rhoOutNodalValuesSplit,
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_rhoOutNodalValuesSplit,
               d_densityInQuadValues[0],
               d_gradDensityInQuadValues[0],
               d_gradDensityInQuadValues[0],
@@ -2690,11 +2687,10 @@ namespace dftfe
                      iComp < d_densityInNodalValues.size();
                      ++iComp)
                   {
-                    interpolateDensityNodalDataToQuadratureDataGeneral(
-                      d_basisOperationsPtrElectroHost,
+                    d_basisOperationsPtrElectroHost->interpolate(
+                      d_densityInNodalValues[iComp],
                       d_densityDofHandlerIndexElectro,
                       d_densityQuadratureIdElectro,
-                      d_densityInNodalValues[iComp],
                       d_densityInQuadValues[iComp],
                       d_gradDensityInQuadValues[iComp],
                       d_gradDensityInQuadValues[iComp],
@@ -3098,12 +3094,12 @@ namespace dftfe
 
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           dummy;
-        interpolateElectroNodalDataToQuadratureDataGeneral(
-          d_basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost->interpolate(
+          d_phiTotRhoIn,
           d_phiTotDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
-          d_phiTotRhoIn,
           d_phiInQuadValues,
+          dummy,
           dummy);
 
         if (d_dftParamsPtr->confiningPotential)
@@ -3312,12 +3308,12 @@ namespace dftfe
                                     d_densityOutQuadValues[0],
                                     d_densityOutNodalValues[0]);
 
-            interpolateDensityNodalDataToQuadratureDataLpsp(
-              d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost->interpolate(
+              d_densityOutNodalValues[0],
               d_densityDofHandlerIndexElectro,
               d_lpspQuadratureIdElectro,
-              d_densityOutNodalValues[0],
               d_densityTotalOutValuesLpspQuad,
+              d_gradDensityTotalOutValuesLpspQuad,
               d_gradDensityTotalOutValuesLpspQuad,
               true);
 #endif
@@ -3442,12 +3438,12 @@ namespace dftfe
                                d_dftParamsPtr->verbosity);
               }
 
-            interpolateElectroNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost->interpolate(
+              d_phiTotRhoOut,
               d_phiTotDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_phiTotRhoOut,
               d_phiOutQuadValues,
+              dummy,
               dummy);
             computing_timer.leave_subsection("phiTot solve");
           }
@@ -3894,13 +3890,12 @@ namespace dftfe
       }
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
 
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotRhoOut,
-      d_phiOutQuadValues,
-      dummy);
+    d_basisOperationsPtrElectroHost->interpolate(d_phiTotRhoOut,
+                                                 d_phiTotDofHandlerIndexElectro,
+                                                 d_densityQuadratureIdElectro,
+                                                 d_phiOutQuadValues,
+                                                 dummy,
+                                                 dummy);
 
 
     //

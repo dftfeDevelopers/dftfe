@@ -33,7 +33,7 @@ namespace dftfe
 #endif
     kerkerSolverProblemWrapperClass &kerkerPreconditionedResidualSolverProblem,
     dealiiLinearSolver              &CGSolver,
-    const distributedCPUVec<double> &residualRho,
+    distributedCPUVec<double>       &residualRho,
     distributedCPUVec<double>       &preCondTotalDensityResidualVector)
   {
     preCondTotalDensityResidualVector = 0.0;
@@ -43,11 +43,10 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       residualQuadValues;
     d_densityResidualQuadValues.resize(1);
-    interpolateDensityNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
+    d_basisOperationsPtrElectroHost->interpolate(
+      residualRho,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
-      residualRho,
       d_densityResidualQuadValues[0],
       dummy,
       dummy,

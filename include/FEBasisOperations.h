@@ -1039,6 +1039,20 @@ namespace dftfe
         mpiPatternP2P;
 
 
+      void
+      interpolate(
+        distributedCPUVec<double> &nodalField,
+        const dftfe::uInt          dofHandlerId,
+        const dftfe::uInt          quadratureId,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &quadratureValueData,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &quadratureGradValueData,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                  &quadratureHessianValueData,
+        const bool isEvaluateGradData    = false,
+        const bool isEvaluateHessianData = false) const;
+
       /**
        * @brief Interpolate process level nodal data to cell level quadrature data.
        * @param[in] nodalData process level nodal data, the multivector should

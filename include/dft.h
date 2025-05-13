@@ -215,12 +215,12 @@ namespace dftfe
 
     void
     computeOutputDensityDirectionalDerivative(
-      const distributedCPUVec<double> &v,
-      const distributedCPUVec<double> &vSpin0,
-      const distributedCPUVec<double> &vSpin1,
-      distributedCPUVec<double>       &fv,
-      distributedCPUVec<double>       &fvSpin0,
-      distributedCPUVec<double>       &fvSpin1);
+      distributedCPUVec<double> &v,
+      distributedCPUVec<double> &vSpin0,
+      distributedCPUVec<double> &vSpin1,
+      distributedCPUVec<double> &fv,
+      distributedCPUVec<double> &fvSpin0,
+      distributedCPUVec<double> &fvSpin1);
 
     /**
      * @brief Copies the residual residualValues=outValues-inValues
@@ -670,30 +670,6 @@ namespace dftfe
                                 &quadratureValueData,
       distributedCPUVec<double> &nodalField);
 
-    /**
-     *@brief interpolate nodal data to quadrature data using FEEvaluation
-     *
-     *@param[in] matrixFreeData matrix free data object
-     *@param[in] nodalField nodal data to be interpolated
-     *@param[out] quadratureValueData to be computed at quadrature points
-     *@param[out] quadratureGradValueData to be computed at quadrature points
-     *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
-     */
-    void
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-                                      &basisOperationsPtr,
-      const dftfe::uInt                dofHandlerId,
-      const dftfe::uInt                quadratureId,
-      const distributedCPUVec<double> &nodalField,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                &quadratureGradValueData,
-      const bool isEvaluateGradData = false);
-
     /// map of atom node number and atomic weight
     std::map<dealii::types::global_dof_index, double> &
     getAtomNodeToChargeMap();
@@ -982,60 +958,6 @@ namespace dftfe
 
 
     /**
-     *@brief interpolate rho nodal data to quadrature data using FEEvaluation
-     *
-     *@param[in] basisOperationsPtr basisoperationsPtr object
-     *@param[in] nodalField nodal data to be interpolated
-     *@param[out] quadratureValueData to be computed at quadrature points
-     *@param[out] quadratureGradValueData to be computed at quadrature points
-     *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
-     */
-    void
-    interpolateDensityNodalDataToQuadratureDataGeneral(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-                                      &basisOperationsPtr,
-      const dftfe::uInt                dofHandlerId,
-      const dftfe::uInt                quadratureId,
-      const distributedCPUVec<double> &nodalField,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureGradValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                &quadratureHessianValueData,
-      const bool isEvaluateGradData    = false,
-      const bool isEvaluateHessianData = false);
-
-
-
-    /**
-     *@brief interpolate rho nodal data to quadrature data using FEEvaluation
-     *
-     *@param[in] basisOperationsPtr basisoperationsPtr object
-     *@param[in] nodalField nodal data to be interpolated
-     *@param[out] quadratureValueData to be computed at quadrature points
-     *@param[out] quadratureGradValueData to be computed at quadrature points
-     *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
-     */
-    void
-    interpolateDensityNodalDataToQuadratureDataLpsp(
-      const std::shared_ptr<
-        dftfe::basis::
-          FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>
-                                      &basisOperationsPtr,
-      const dftfe::uInt                dofHandlerId,
-      const dftfe::uInt                quadratureId,
-      const distributedCPUVec<double> &nodalField,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &quadratureValueData,
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                &quadratureGradValueData,
-      const bool isEvaluateGradData);
-
-
-    /**
      *@brief add atomic densities at quadrature points
      *
      */
@@ -1268,10 +1190,10 @@ namespace dftfe
       linearSolverCGDevice &CGSolverDevice,
 #endif
       kerkerSolverProblemWrapperClass
-                         &kerkerPreconditionedResidualSolverProblem,
-      dealiiLinearSolver &CGSolver,
-      const distributedCPUVec<double> &residualRho,
-      distributedCPUVec<double>       &preCondTotalDensityResidualVector);
+                                &kerkerPreconditionedResidualSolverProblem,
+      dealiiLinearSolver        &CGSolver,
+      distributedCPUVec<double> &residualRho,
+      distributedCPUVec<double> &preCondTotalDensityResidualVector);
 
     double
     lowrankApproxScfDielectricMatrixInv(const dftfe::uInt scfIter);
