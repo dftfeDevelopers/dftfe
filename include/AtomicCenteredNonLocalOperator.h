@@ -162,7 +162,8 @@ namespace dftfe
     void
     initialiseCellWaveFunctionPointers(
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-        &cellWaveFunctionMatrix);
+                       &cellWaveFunctionMatrix,
+      const dftfe::uInt cellsBlockSize);
 
     void
     freeDeviceVectors();
@@ -580,7 +581,8 @@ namespace dftfe
     dftfe::uInt d_numberWaveFunctions;
     dftfe::uInt d_kPointIndex;
     bool        d_memoryOptMode;
-    bool        d_isMallocCalled = false;
+    bool        d_isMallocCalled     = false;
+    bool        d_reinitialiseKPoint = true;
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
       d_CMatrixEntriesTranspose;
@@ -722,57 +724,74 @@ namespace dftfe
         &sphericalFunctionKetTimesVectorParFlattened);
 
 
-    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>
-      d_tempConjtansX;
-    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                d_sphericalFnTimesWavefunctionMatrix;
-    ValueType **hostPointerCDagger, **hostPointerCDaggeOutTemp,
-      **hostWfcPointers;
-    ValueType  *d_wfcStartPointer;
-    ValueType **devicePointerCDagger, **devicePointerCDaggerOutTemp,
-      **deviceWfcPointers;
-    std::vector<dftfe::uInt> d_nonlocalElemIdToLocalElemIdMap;
 
+    ValueType *d_wfcStartPointer;
+
+    std::vector<ValueType **> deviceWfcPointersInCellRange,
+      devicePointerCDaggerInCellRange, devicePointerCDaggerOutTempInCellRange;
+    std::vector<ValueType **> hostWfcPointersInCellRange,
+      hostPointerCDaggerInCellRange, hostPointerCDaggerOutTempInCellRange;
+    std::vector<ValueType *> d_wfcStartPointerInCellRange;
+    dftfe::uInt              d_cellsBlockSize, d_numCellBatches;
+    std::vector<dftfe::uInt> d_nonLocalElementsInCellRange;
+
+    std::vector<dftfe::uInt> d_nonlocalElemIdToLocalElemIdMap;
+    std::vector<std::vector<std::pair<dftfe::uInt, dftfe::uInt>>>
+      d_elementIdToNonLocalElementIdMap;
     // The below memory storage objects receives the copy of the distributed
     // ketTimesWfc data in a padded form. THe padding is done by
     // copyDistributedVectorToPaddedMemoryStorageVector
     dftfe::utils::MemoryStorage<ValueType, memorySpace>
       d_sphericalFnTimesVectorDevice;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnTimesWavefunctionMatrix;
     // Data structures moved from KSOperatorDevice
+
+    // CconjTranspose and CTranspose entries flattened with iElem as outermost
+    // index
     std::vector<ValueType> d_cellHamiltonianMatrixNonLocalFlattenedConjugate;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice;
     std::vector<ValueType> d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice;
+
+    // Output of CVCconjTransX flattened with iElem as outermost index: size is
+    // totalNonLocalElements times p^3 times N
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_cellHamMatrixTimesWaveMatrixNonLocalDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                           d_sphericalFnTimesVectorAllCellsDevice;
-    std::vector<ValueType> d_sphericalFnTimesVectorAllCellsReduction;
-    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-      d_sphericalFnTimesVectorAllCellsReductionDevice;
+      d_sphericalFnTimesVectorAllCellsDevice;
 
+    // Map from cell level atom wise contribution to sphericalFn vector
     std::vector<dftfe::uInt> d_mapSphericalFnTimesVectorAllCellsReduction;
     dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
       d_mapSphericalFnTimesVectorAllCellsReductionDevice;
+
+
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_couplingMatrixTimesVectorDevice;
 
-    std::vector<dftfe::uInt> d_sphericalFnIdsParallelNumberingMap;
-    std::vector<dftfe::Int>  d_sphericalFnIdsPaddedParallelNumberingMap;
-    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
-      d_sphericalFnIdsParallelNumberingMapDevice;
+    // Map from padded nonlocal projector index of iAtom to parallel dealii
+    // vector index.
+    std::vector<dftfe::Int> d_sphericalFnIdsPaddedParallelNumberingMap;
     dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnIdsPaddedParallelNumberingMapDevice;
+
+    // Map from projector index of iAtom in processor to parallel dealii vector
+    // index.
+    std::vector<dftfe::uInt> d_sphericalFnIdsParallelNumberingMap;
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnIdsParallelNumberingMapDevice;
+
+
+    // Map from padded nonlocal vector to totalNonLocalElements*maxSphericalFn
+    // cellWise vector.
     std::vector<dftfe::Int>
       d_indexMapFromPaddedNonLocalVecToParallelNonLocalVec;
     dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
       d_indexMapFromPaddedNonLocalVecToParallelNonLocalVecDevice;
-    std::vector<dftfe::uInt> d_cellNodeIdMapNonLocalToLocal;
 
-    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
-      d_cellNodeIdMapNonLocalToLocalDevice;
 #endif
   };
 
