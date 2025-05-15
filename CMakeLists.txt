@@ -2,7 +2,8 @@
 #  CMakeList file for DFT-FE
 ##
 CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17
+    CACHE STRING "Minimum required C++ standard (default is 17)")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Set the name of the project and target:
@@ -29,10 +30,9 @@ IF (WITH_GPU)
       enable_language(CUDA)
     ELSEIF ("${GPU_LANG}" STREQUAL "hip")
       enable_language(HIP)
-    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
     ELSE ()
       MESSAGE(FATAL_ERROR "\n"
-    "*** Could not find valid GPU_LANG=cuda/hip/sycl ***\n\n"
+    "*** Could not find valid GPU_LANG=cuda/hip ***\n\n"
     )
     ENDIF()
 ENDIF()
@@ -42,6 +42,29 @@ ADD_EXECUTABLE(${TARGET}   src/main.cc)
 set_property(TARGET "dftfe_exe" PROPERTY OUTPUT_NAME "dftfe")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+# Retrieve the current Git commit hash
+execute_process(
+    COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Retrieve the current Git branch name
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Configure the header file with the retrieved Git information
+configure_file(
+    ${CMAKE_SOURCE_DIR}/include/git_info.h.in
+    ${CMAKE_SOURCE_DIR}/include/git_info.h
+    @ONLY
+)
 
 
 if(ENABLE_MPI)
@@ -66,6 +89,7 @@ SET(TARGET_SRC
   ./src/excManager/excDensityLDAClass.cpp
   ./src/excManager/excDensityGGAClass.cpp
   ./src/excManager/excDensityLLMGGAClass.cpp
+  ./src/excManager/excTauMGGAClass.cpp
   ./src/excManager/excManager.cpp
   ./src/excManager/AuxDensityMatrixFE.cpp
   ./src/excManager/ExcDFTPlusU.cpp
@@ -162,6 +186,7 @@ SET(TARGET_SRC
   ./src/dft/publicMethods.cc
   ./src/dft/restart.cc
   ./src/dft/solveNSCF.cc
+  ./src/dft/solveBands.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInv.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInvSpinPolarized.cc
   ./src/dft/computeOutputDensityDirectionalDerivative.cc
@@ -217,13 +242,12 @@ SET(DEVICE_SRC
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
   ./src/dft/solveVselfInBinsDeviceKernels.cc
-  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.cc
   ./src/linAlg/linearAlgebraOperationsDeviceKernels.cc
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.cu.cc
-  ./utils/BLASWrapperDevice.cu.cc
+  ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./utils/matrixFreeDeviceKernels.cc
@@ -238,40 +262,17 @@ SET(DEVICE_SRC
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
   ./src/dft/solveVselfInBinsDeviceKernels.cc
-  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.cc
   ./src/linAlg/linearAlgebraOperationsDeviceKernels.cc
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.hip.cc
-  ./utils/BLASWrapperDevice.hip.cc
+  ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
-  )
-
-  ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
-  SET(DEVICE_SRC
-  ./utils/MemoryTransferKernelsDevice.cc
-  ./utils/DeviceKernelsGeneric.sycl.cc
-  ./utils/DeviceDirectCCLWrapper.cc
-  ./src/dft/densityCalculatorDeviceKernels.sycl.cc
-  ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.sycl.cc
-  ./src/dft/solveVselfInBinsDeviceKernels.sycl.cc
-  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.sycl.cc
-  ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.sycl.cc
-  ./src/linAlg/linearAlgebraOperationsDeviceKernels.sycl.cc
-  ./src/force/forceWfcContractionsDeviceKernels.sycl.cc
-  ./utils/constraintMatrixInfoDeviceKernels.sycl.cc
-  ./utils/DeviceAPICalls.sycl.cc
-  ./utils/BLASWrapperDevice.sycl.cc
-  ./utils/MPICommunicatorP2PKernelsDevice.sycl.cc
-  ./src/solvers/linearSolverCGDeviceKernels.sycl.cc
-  ./utils/matrixFreeDeviceKernels.sycl.cc
-  ./utils/FEBasisOperationsKernelsInternalDevice.sycl.cc
-  ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.sycl.cc
   )
 
 ENDIF()
@@ -287,8 +288,6 @@ IF (WITH_GPU)
        ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
           ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
        ENDIF()
-    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
-      set_source_files_properties(${DEVICE_SRC} PROPERTIES COMPILE_FLAGS ${CMAKE_SYCL_FLAGS})
     ENDIF()
 ENDIF()
 IF (WITH_GPU)
@@ -356,6 +355,10 @@ IF (HIGHERQUAD_PSP)
   ADD_DEFINITIONS(-DDFTFE_WITH_HIGHERQUAD_PSP)
 ENDIF()
 
+IF (USE_64BIT_INT)
+  ADD_DEFINITIONS(-DDFTFE_WITH_64BIT_INT)
+ENDIF()
+
 #
 #Set use complex/use real flag
 #
@@ -380,9 +383,6 @@ IF (WITH_GPU)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_NVIDIA)
   ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AMD)
-  ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_INTEL)
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_MKL)
   ENDIF()
 
   IF ("${GPU_LANG}" STREQUAL "cuda")
@@ -397,18 +397,6 @@ IF (WITH_GPU)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_HIP)
     find_package(hipblas)
     target_link_libraries(${TARGETLIB} PUBLIC roc::hipblas)
-  ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
-    MESSAGE(STATUS "DFTFE with GPU LANG SYCL")
-    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_SYCL)
-    find_package(IntelSYCL REQUIRED)
-    target_link_libraries(${TARGETLIB} PUBLIC sycl)
-    set(MKL_INTERFACE lp64)
-    set(ENABLE_SCALAPACK ON)
-    set(MKL_MPI mpich)
-    find_package(MKL REQUIRED)
-    target_link_libraries(${TARGETLIB} PUBLIC MKL::MKL)
-    target_link_libraries(${TARGETLIB} PUBLIC MKL::MKL_SYCL)
-    set_target_properties(${TARGETLIB} PROPERTIES LINK_FLAGS ${CMAKE_SYCL_FLAGS})
   ENDIF()
   IF (WITH_GPU_AWARE_MPI)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AWARE_MPI)
