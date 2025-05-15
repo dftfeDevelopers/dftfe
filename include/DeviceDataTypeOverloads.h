@@ -25,6 +25,8 @@
 #      include "DeviceDataTypeOverloads.cu.h"
 #    elif DFTFE_WITH_DEVICE_LANG_HIP
 #      include "DeviceDataTypeOverloads.hip.h"
+#    elif DFTFE_WITH_DEVICE_LANG_SYCL
+#      include "DeviceDataTypeOverloads.sycl.h"
 #    endif
 
 #  endif // dftfeDeviceDataTypeOverloads_h
