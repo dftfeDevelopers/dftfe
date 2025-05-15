@@ -156,11 +156,12 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE_AMD
       initialize();
 #endif
+
       dftfe::utils::deviceBlasStatus_t status;
       status     = create();
-      status     = setStream(NULL);
       d_opType   = tensorOpDataType::fp32;
       d_streamId = dftfe::utils::defaultStream;
+      status     = setStream(d_streamId);
     }
 
     dftfe::utils::deviceBlasHandle_t &
