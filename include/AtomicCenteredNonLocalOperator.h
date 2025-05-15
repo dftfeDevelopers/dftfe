@@ -51,6 +51,13 @@ namespace dftfe
     blockDiagonal
   };
 
+  enum class allReduceVectorType
+  {
+    CconjTransX,
+    DconjTransX,
+    DDyadicRconjTransX
+  };
+
 
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -75,7 +82,9 @@ namespace dftfe
      * @param[in] kPointIndex specifies the k-point of interest
      */
     void
-    initialiseOperatorActionOnX(dftfe::uInt kPointIndex);
+    initialiseOperatorActionOnX(dftfe::uInt               kPointIndex,
+                                const allReduceVectorType AllReduceVectorType =
+                                  allReduceVectorType::CconjTransX);
     /**
      * @brief initialises the multivector object, waveFunctionBlockSize and resizes various internal data members.
      * @param[in] waveFunctionBlockSize sets the wavefunction block size for the
@@ -87,7 +96,9 @@ namespace dftfe
     initialiseFlattenedDataStructure(
       dftfe::uInt waveFunctionBlockSize,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &sphericalFunctionKetTimesVectorParFlattened);
+                               &sphericalFunctionKetTimesVectorParFlattened,
+      const allReduceVectorType AllReduceVectorType =
+        allReduceVectorType::CconjTransX);
     /**
      * @brief calls internal function: initialisePartitioner, initialiseKpoint and computeCMatrixEntries
      * @param[in] updateSparsity flag on whether the sparstiy patten was
@@ -162,8 +173,10 @@ namespace dftfe
     void
     initialiseCellWaveFunctionPointers(
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                       &cellWaveFunctionMatrix,
-      const dftfe::uInt cellsBlockSize);
+                               &cellWaveFunctionMatrix,
+      const dftfe::uInt         cellsBlockSize,
+      const allReduceVectorType AllReduceVectorType =
+        allReduceVectorType::CconjTransX);
 
     void
     freeDeviceVectors();
@@ -279,9 +292,8 @@ namespace dftfe
       const CouplingStructure                                    couplingtype,
       const dftfe::utils::MemoryStorage<ValueType, memorySpace> &couplingMatrix,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                       &sphericalFunctionKetTimesVectorParFlattened,
-      const bool        flagCopyResultsToMatrix = true,
-      const dftfe::uInt kPointIndex             = 0);
+                &sphericalFunctionKetTimesVectorParFlattened,
+      const bool flagCopyResultsToMatrix = true);
 
     /**
      * @brief After AllReduce function is called this will copy to the nonLocalOperatorClassDatastructure.
@@ -303,8 +315,10 @@ namespace dftfe
     void
     applyAllReduceOnCconjtransX(
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                &sphericalFunctionKetTimesVectorParFlattened,
-      const bool skipComm = false);
+                               &sphericalFunctionKetTimesVectorParFlattened,
+      const bool                skipComm = false,
+      const allReduceVectorType AllReduceVectorType =
+        allReduceVectorType::CconjTransX);
 
     /**
      * @brief computes the results of CconjtransX on the cells of interst specied by cellRange
@@ -316,6 +330,15 @@ namespace dftfe
     applyCconjtransOnX(const ValueType                          *X,
                        const std::pair<dftfe::uInt, dftfe::uInt> cellRange);
 
+    /**
+     * @brief computes the results of CconjtransX on the cells of interst specied by cellRange
+     * @param[in] X input cell level vector
+     * @param[in] cellRange start and end element id in list of nonlocal
+     * elements
+     */
+    void
+    applyDconjtransOnX(const ValueType                          *X,
+                       const std::pair<dftfe::uInt, dftfe::uInt> cellRange);
 
     /**
      * @brief computes the results of CconjtransX on nodal X vector
@@ -653,6 +676,16 @@ namespace dftfe
       dftfe::uInt,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
       d_sphericalFnTimesWavefunMatrix;
+    std::map<
+      dftfe::uInt,
+      dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
+      d_sphericalFnTimesGradientWavefunMatrix;
+
+    std::map<
+      dftfe::uInt,
+      dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
+      d_sphericalFnTimesGradientWavefunDyadicXMatrix;
+
     std::vector<dftfe::uInt>
       d_flattenedNonLocalCellDofIndexToProcessDofIndexVector;
     dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
@@ -726,6 +759,7 @@ namespace dftfe
 
 
     ValueType *d_wfcStartPointer;
+    ValueType *d_distributedVectorCconjTransX;
 
     std::vector<ValueType **> deviceWfcPointersInCellRange,
       devicePointerCDaggerInCellRange, devicePointerCDaggerOutTempInCellRange;
@@ -745,16 +779,22 @@ namespace dftfe
       d_sphericalFnTimesVectorDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesWavefunctionMatrix;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnTimesGradientWavefunctionMatrix;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnTimesGradientWavefunctionDyadicXMatrix;
     // Data structures moved from KSOperatorDevice
 
     // CconjTranspose and CTranspose entries flattened with iElem as outermost
     // index
-    std::vector<ValueType> d_cellHamiltonianMatrixNonLocalFlattenedConjugate;
+    std::vector<ValueType>
+      d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugate;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-      d_cellHamiltonianMatrixNonLocalFlattenedConjugateDevice;
-    std::vector<ValueType> d_cellHamiltonianMatrixNonLocalFlattenedTranspose;
+      d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice;
+    std::vector<ValueType>
+      d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionTranspose;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-      d_cellHamiltonianMatrixNonLocalFlattenedTransposeDevice;
+      d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionTransposeDevice;
 
     // Output of CVCconjTransX flattened with iElem as outermost index: size is
     // totalNonLocalElements times p^3 times N
