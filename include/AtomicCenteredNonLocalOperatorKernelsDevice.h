@@ -47,7 +47,8 @@ namespace dftfe
       const dftfe::uInt  totalEntries,
       const ValueType   *sphericalFnTimesWfcParallelVec,
       ValueType         *sphericalFnTimesWfcDealiiParallelVec,
-      const dftfe::uInt *indexMapDealiiParallelNumbering);
+      const dftfe::uInt *indexMapDealiiParallelNumbering,
+      const dftfe::uInt  dimension = 1);
 
     template <typename ValueType>
     void

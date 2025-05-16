@@ -2266,13 +2266,41 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
         else
           {
-            dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
-              copyToDealiiParallelNonLocalVec(
-                d_numberWaveFunctions,
-                d_totalNonLocalEntries,
-                d_sphericalFnTimesWavefunctionMatrix.begin(),
-                sphericalFunctionKetTimesVectorParFlattened.begin(),
-                d_sphericalFnIdsParallelNumberingMapDevice.begin());
+            if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+              {
+                dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
+                  copyToDealiiParallelNonLocalVec(
+                    d_numberWaveFunctions,
+                    d_totalNonLocalEntries,
+                    d_sphericalFnTimesWavefunctionMatrix.begin(),
+                    sphericalFunctionKetTimesVectorParFlattened.begin(),
+                    d_sphericalFnIdsParallelNumberingMapDevice.begin(),
+                    1);
+              }
+            else if (AllReduceVectorType == allReduceVectorType::DconjTransX)
+              {
+                dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
+                  copyToDealiiParallelNonLocalVec(
+                    d_numberWaveFunctions,
+                    d_totalNonLocalEntries,
+                    d_sphericalFnTimesGradientWavefunctionMatrix.begin(),
+                    sphericalFunctionKetTimesVectorParFlattened.begin(),
+                    d_sphericalFnIdsParallelNumberingMapDevice.begin(),
+                    3);
+              }
+            else if (AllReduceVectorType ==
+                     allReduceVectorType::DDyadicRconjTransX)
+              {
+                dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
+                  copyToDealiiParallelNonLocalVec(
+                    d_numberWaveFunctions,
+                    d_totalNonLocalEntries,
+                    d_sphericalFnTimesGradientWavefunctionDyadicXMatrix.begin(),
+                    sphericalFunctionKetTimesVectorParFlattened.begin(),
+                    d_sphericalFnIdsParallelNumberingMapDevice.begin(),
+                    9);
+              }
+
 
             if (!skipComm)
               {
@@ -4891,6 +4919,87 @@ namespace dftfe
                                const dftfe::uInt iElemComp) const
   {
     return (d_CMatrixEntriesTranspose[chargeId][iElemComp]);
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
+    computeInnerProductOverSphericalFnsWaveFns(
+      const dftfe::Int vectorDimension,
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+        &VCconjTransXsphericalFunctionKetTimesVectorParFlattened,
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+                             &sphericalFunctionKetTimesVectorParFlattened,
+      const bool              reinitFlag,
+      std::vector<ValueType> &outputVector)
+  {
+    const std::vector<dftfe::uInt> &atomicNumber =
+      d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
+    const dftfe::uInt numberOfAtoms = atomicNumber.size();
+    if (reinitFlag == true)
+      {
+        outputVector.clear();
+        if (vectorDimension == 1)
+          {
+            outputVector.resize(numberOfAtoms, 0.0);
+          }
+        if (vectorDimension == 3)
+          {
+            outputVector.resize(numberOfAtoms * 3, 0.0);
+          }
+        else if (vectorDimension == 9)
+          {
+            outputVector.resize(9, 0.0);
+          }
+        else
+          {
+            AssertThrow(
+              false,
+              dealii::ExcMessage(
+                "computeInnerProductOverSphericalFnsWaveFns: vector dimension not supported"));
+          }
+      }
+    else
+      {
+        AssertThrow(
+          outputVector.size() == vectorDimension == 9 ?
+            9 :
+            numberOfAtoms * vectorDimension,
+          dealii::ExcMessage(
+            "computeInnerProductOverSphericalFnsWaveFns: output vector size mismatch"));
+      }
+    for (dftfe::Int iAtom = 0; iAtom < d_OwnedAtomIdsInCurrentProcessor.size();
+         iAtom++)
+      {
+        dftfe::uInt atomId = d_OwnedAtomIdsInCurrentProcessor[iAtom];
+        dftfe::uInt Znum   = atomicNumber[atomId];
+        dftfe::uInt numberOfSphericalFunctions =
+          d_atomCenteredSphericalFunctionContainer
+            ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
+        const dftfe::uInt id =
+          d_SphericalFunctionKetTimesVectorPar[0]
+            .get_partitioner()
+            ->global_to_local(
+              d_sphericalFunctionIdsNumberingMapCurrentProcess[std::make_pair(
+                atomId, 0)]);
+        for (dftfe::Int iDim = 0; iDim < vectorDimension; iDim++)
+          {
+            dftfe::uInt location =
+              vectorDimension == 9 ? iDim : atomId * vectorDimension + iDim;
+            ValueType temp = 0.0;
+            d_BLASWrapperPtr->xdot(
+              d_numberWaveFunctions * numberOfSphericalFunctions,
+              VCconjTransXsphericalFunctionKetTimesVectorParFlattened.begin() +
+                id * d_numberWaveFunctions,
+              1,
+              sphericalFunctionKetTimesVectorParFlattened.begin() +
+                id * vectorDimension * d_numberWaveFunctions +
+                iDim * d_numberWaveFunctions * numberOfSphericalFunctions,
+              1,
+              &temp);
+            outputVector[location] += temp;
+          }
+      }
   }
 
   template class AtomicCenteredNonLocalOperator<

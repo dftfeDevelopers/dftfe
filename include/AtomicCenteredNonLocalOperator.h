@@ -87,10 +87,16 @@ namespace dftfe
                                   allReduceVectorType::CconjTransX);
     /**
      * @brief initialises the multivector object, waveFunctionBlockSize and resizes various internal data members.
+     * !!!! It is very imporant to ensure that the vector of allReduceVectorType
+     * CconjTransX for which the coupling matrix/V matrix is to be applied on is
+     * initialised last. If not, applyV function wil Assert out. !!!!
      * @param[in] waveFunctionBlockSize sets the wavefunction block size for the
      * action of the nonlocal operator.
+     * * @param[in] AllReduceVectorType specifies the type of allreduce
+     * operation
      * @param[out] sphericalFunctionKetTimesVectorParFlattened, the multivector
      * that is initialised based on blocksize and partitioner.
+     *
      */
     void
     initialiseFlattenedDataStructure(
@@ -274,6 +280,8 @@ namespace dftfe
     // Calls for both device and host
     /**
      * @brief compute the action of coupling matrix on sphericalFunctionKetTimesVectorParFlattened.
+     * !!!! This function only acts on distributed vector of type CconjTransX
+     * and not for other types. !!!
      * @param[in] couplingtype structure of coupling matrix
      * @param[in] couplingMatrix entires of the coupling matrix V in
      * CVCconjtrans. Ensure that the coupling matrix is padded. Refer to
@@ -513,6 +521,29 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
                 &sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
+
+    /**
+     * @brief Computes the inner products summing over the sphericalFn and WaveFns for each atom
+     * @param[in] vectorDimension dimension of
+     * sphericalFunctionKetTimesVectorParFlattened vector type
+     * @param[in] VCconjTransXsphericalFunctionKetTimesVectorParFlattened
+     * VCconjTransX vector type.
+     * @param[in] sphericalFunctionKetTimesVectorParFlattened distributed vector
+     * of dimension vectorDimension.
+     * @param[in] reinitFlag flag to reinit the vector. @Nikhil make sure you
+     * set this correctly in the block loop
+     * @param[out] outputVector output vector  whose dimensions depend on
+     * vectorDimension
+     */
+    void
+    computeInnerProductOverSphericalFnsWaveFns(
+      const dftfe::Int vectorDimension,
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+        &VCconjTransXsphericalFunctionKetTimesVectorParFlattened,
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+                             &sphericalFunctionKetTimesVectorParFlattened,
+      const bool              reinitFlag,
+      std::vector<ValueType> &outputVector);
 
     bool                d_AllReduceCompleted;
     std::vector<double> d_kPointWeights;
