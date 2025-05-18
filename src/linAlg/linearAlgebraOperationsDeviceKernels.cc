@@ -218,11 +218,11 @@ namespace dftfe
               const dftfe::uInt waveIndex = i % numVectors;
               const dftfe::utils::deviceDoubleComplex diff =
                 dftfe::utils::makeComplex(
-                  Y[i].x - X[dofIndex * N + startingVecId + waveIndex].x *
+                  dftfe::utils::realPartDevice(Y[i]) - dftfe::utils::realPartDevice(X[dofIndex * N + startingVecId + waveIndex]) *
                              eigenValues[startingVecId + waveIndex],
-                  Y[i].y - X[dofIndex * N + startingVecId + waveIndex].y *
+                  dftfe::utils::imagPartDevice(Y[i]) - dftfe::utils::imagPartDevice(X[dofIndex * N + startingVecId + waveIndex]) *
                              eigenValues[startingVecId + waveIndex]);
-              r[i] = diff.x * diff.x + diff.y * diff.y;
+              r[i] = dftfe::utils::realPartDevice(diff) * dftfe::utils::realPartDevice(diff) + dftfe::utils::imagPartDevice(diff) * dftfe::utils::imagPartDevice(diff);
             }
         },
         const dftfe::uInt                        numVectors,
@@ -318,7 +318,7 @@ namespace dftfe
             {
               const dftfe::uInt dofIndex  = i / numVectors;
               const dftfe::uInt waveIndex = i % numVectors;
-              r[i]                        = Y[i].x * Y[i].x + Y[i].y * Y[i].y;
+              r[i]                        = dftfe::utils::realPartDevice(Y[i]) * dftfe::utils::realPartDevice(Y[i]) + dftfe::utils::imagPartDevice(Y[i]) * dftfe::utils::imagPartDevice(Y[i]);
             }
         },
         const dftfe::uInt                        numVectors,

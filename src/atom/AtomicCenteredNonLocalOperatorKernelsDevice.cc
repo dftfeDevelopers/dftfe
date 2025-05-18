@@ -190,7 +190,7 @@ namespace dftfe
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
-            atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+            dftfe::utils::atomicAddWrapper(&yVec[elemIndex * numberNodesPerElement * numberWfc +
                             iDof * numberWfc + wfcIndex],
                       xVec[index]);
           }
@@ -220,7 +220,7 @@ namespace dftfe
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
-            atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+            dftfe::utils::atomicAddWrapper(&yVec[elemIndex * numberNodesPerElement * numberWfc +
                             iDof * numberWfc + wfcIndex],
                       xVec[index]);
           }
@@ -250,14 +250,14 @@ namespace dftfe
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
-            atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                            iDof * numberWfc + wfcIndex]
-                         .x,
-                      xVec[index].x);
-            atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                            iDof * numberWfc + wfcIndex]
-                         .y,
-                      xVec[index].y);
+
+            auto add_real = reinterpret_cast<double*>(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                            iDof * numberWfc + wfcIndex])[0];
+            auto add_imag = reinterpret_cast<double*>(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                            iDof * numberWfc + wfcIndex])[1];
+
+            dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(xVec[index]));
+            dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(xVec[index]));
           }
       },
       const dftfe::uInt                        totalNonLocalElements,
@@ -285,14 +285,14 @@ namespace dftfe
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
-            atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                            iDof * numberWfc + wfcIndex]
-                         .x,
-                      xVec[index].x);
-            atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                            iDof * numberWfc + wfcIndex]
-                         .y,
-                      xVec[index].y);
+
+            auto add_real = reinterpret_cast<double*>(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                            iDof * numberWfc + wfcIndex])[0];
+            auto add_imag = reinterpret_cast<double*>(&yVec[elemIndex * numberNodesPerElement * numberWfc +
+                            iDof * numberWfc + wfcIndex])[1];
+
+            dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(xVec[index]));
+            dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(xVec[index]));
           }
       },
       const dftfe::uInt                       totalNonLocalElements,
@@ -349,7 +349,7 @@ namespace dftfe
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
 
             if (toIndex < totalNonLocalEntries)
-              atomicAdd(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
+              dftfe::utils::atomicAddWrapper(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
                         sphericalFnTimesXCellLevel[index]);
           }
       },
@@ -377,7 +377,7 @@ namespace dftfe
 
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
             if (toIndex < totalNonLocalEntries)
-              atomicAdd(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
+              dftfe::utils::atomicAddWrapper(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
                         sphericalFnTimesXCellLevel[index]);
           }
       },
@@ -406,12 +406,13 @@ namespace dftfe
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
             if (toIndex < totalNonLocalEntries)
               {
-                atomicAdd(
-                  &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex].x,
-                  sphericalFnTimesXCellLevel[index].x);
-                atomicAdd(
-                  &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex].y,
-                  sphericalFnTimesXCellLevel[index].y);
+                auto add_real = reinterpret_cast<double*>(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex])[0];
+                auto add_imag = reinterpret_cast<double*>(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex])[1];
+
+                dftfe::utils::atomicAddWrapper(add_real, 
+                                              dftfe::utils::realPartDevice(sphericalFnTimesXCellLevel[index]));
+                dftfe::utils::atomicAddWrapper(add_imag, 
+                                              dftfe::utils::imagPartDevice(sphericalFnTimesXCellLevel[index]));
               }
           }
       },
@@ -440,12 +441,13 @@ namespace dftfe
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
             if (toIndex < totalNonLocalEntries)
               {
-                atomicAdd(
-                  &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex].x,
-                  sphericalFnTimesXCellLevel[index].x);
-                atomicAdd(
-                  &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex].y,
-                  sphericalFnTimesXCellLevel[index].y);
+                auto add_real = reinterpret_cast<double*>(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex])[0];
+                auto add_imag = reinterpret_cast<double*>(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex])[1];
+
+                dftfe::utils::atomicAddWrapper(add_real, 
+                                              dftfe::utils::realPartDevice(sphericalFnTimesXCellLevel[index]));
+                dftfe::utils::atomicAddWrapper(add_imag, 
+                                              dftfe::utils::imagPartDevice(sphericalFnTimesXCellLevel[index]));
               }
           }
       },

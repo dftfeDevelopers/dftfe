@@ -82,7 +82,7 @@ namespace dftfe
             const dftfe::utils::deviceDoubleComplex psi =
               wfcContributions[index];
             kedCellsWfcContributions[index] =
-              kCoordSq * (psi.x * psi.x + psi.y * psi.y);
+              kCoordSq * (dftfe::utils::realPartDevice(psi) * dftfe::utils::realPartDevice(psi) + dftfe::utils::imagPartDevice(psi) * dftfe::utils::imagPartDevice(psi));
 
             dftfe::uInt iCell          = index / numEntriesPerCell;
             dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
@@ -92,28 +92,28 @@ namespace dftfe
               gradwfcContributions[intraCellIndex +
                                    numEntriesPerCell * 3 * iCell];
             kedCellsWfcContributions[index] +=
-              0.5 * (gradPsiX.x * gradPsiX.x + gradPsiX.y * gradPsiX.y);
+              0.5 * (dftfe::utils::realPartDevice(gradPsiX) * dftfe::utils::realPartDevice(gradPsiX) + dftfe::utils::imagPartDevice(gradPsiX) * dftfe::utils::imagPartDevice(gradPsiX));
 
             const dftfe::utils::deviceDoubleComplex gradPsiY =
               gradwfcContributions[intraCellIndex + numEntriesPerCell +
                                    numEntriesPerCell * 3 * iCell];
             kedCellsWfcContributions[index] +=
-              0.5 * (gradPsiY.x * gradPsiY.x + gradPsiY.y * gradPsiY.y);
+              0.5 * (dftfe::utils::realPartDevice(gradPsiY) * dftfe::utils::realPartDevice(gradPsiY) + dftfe::utils::imagPartDevice(gradPsiY) * dftfe::utils::imagPartDevice(gradPsiY));
 
             const dftfe::utils::deviceDoubleComplex gradPsiZ =
               gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
                                    numEntriesPerCell * 3 * iCell];
             kedCellsWfcContributions[index] +=
-              0.5 * (gradPsiZ.x * gradPsiZ.x + gradPsiZ.y * gradPsiZ.y);
+              0.5 * (dftfe::utils::realPartDevice(gradPsiZ) * dftfe::utils::realPartDevice(gradPsiZ) + dftfe::utils::imagPartDevice(gradPsiZ) * dftfe::utils::imagPartDevice(gradPsiZ));
 
             kedCellsWfcContributions[index] +=
-              kCoord[0] * (psi.x * gradPsiX.y - psi.y * gradPsiX.x);
+              kCoord[0] * (dftfe::utils::realPartDevice(psi) * dftfe::utils::imagPartDevice(gradPsiX) - dftfe::utils::imagPartDevice(psi) * dftfe::utils::realPartDevice(gradPsiX));
 
             kedCellsWfcContributions[index] +=
-              kCoord[1] * (psi.x * gradPsiY.y - psi.y * gradPsiY.x);
+              kCoord[1] * (dftfe::utils::realPartDevice(psi) * dftfe::utils::imagPartDevice(gradPsiY) - dftfe::utils::imagPartDevice(psi) * dftfe::utils::realPartDevice(gradPsiY));
 
             kedCellsWfcContributions[index] +=
-              kCoord[2] * (psi.x * gradPsiZ.y - psi.y * gradPsiZ.x);
+              kCoord[2] * (dftfe::utils::realPartDevice(psi) * dftfe::utils::imagPartDevice(gradPsiZ) - dftfe::utils::imagPartDevice(psi) * dftfe::utils::realPartDevice(gradPsiZ));
           }
       },
       const dftfe::uInt                  numVectors,

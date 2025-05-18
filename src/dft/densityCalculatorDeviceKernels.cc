@@ -92,7 +92,7 @@ namespace dftfe
           {
             const dftfe::utils::deviceDoubleComplex psi =
               wfcContributions[index];
-            rhoCellsWfcContributions[index] = psi.x * psi.x + psi.y * psi.y;
+            rhoCellsWfcContributions[index] = dftfe::utils::realPartDevice(psi) * dftfe::utils::realPartDevice(psi) + dftfe::utils::imagPartDevice(psi) * dftfe::utils::imagPartDevice(psi);
 
             if (isEvaluateGradRho)
               {
@@ -105,7 +105,7 @@ namespace dftfe
                                        numEntriesPerCell * 3 * iCell];
                 gradRhoCellsWfcContributions[iVec + 3 * iQuad * numVectors +
                                              numEntriesPerCell * 3 * iCell] =
-                  2.0 * (psi.x * gradPsiX.x + psi.y * gradPsiX.y);
+                  2.0 * (dftfe::utils::realPartDevice(psi) * dftfe::utils::realPartDevice(gradPsiX) + dftfe::utils::imagPartDevice(psi) * dftfe::utils::imagPartDevice(gradPsiX));
 
                 const dftfe::utils::deviceDoubleComplex gradPsiY =
                   gradwfcContributions[intraCellIndex + numEntriesPerCell +
@@ -113,7 +113,7 @@ namespace dftfe
                 gradRhoCellsWfcContributions[iVec + numVectors +
                                              3 * iQuad * numVectors +
                                              numEntriesPerCell * 3 * iCell] =
-                  2.0 * (psi.x * gradPsiY.x + psi.y * gradPsiY.y);
+                  2.0 * (dftfe::utils::realPartDevice(psi) * dftfe::utils::realPartDevice(gradPsiY) + dftfe::utils::imagPartDevice(psi) * dftfe::utils::imagPartDevice(gradPsiY));
 
                 const dftfe::utils::deviceDoubleComplex gradPsiZ =
                   gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
@@ -121,7 +121,7 @@ namespace dftfe
                 gradRhoCellsWfcContributions[iVec + 2 * numVectors +
                                              3 * iQuad * numVectors +
                                              numEntriesPerCell * 3 * iCell] =
-                  2.0 * (psi.x * gradPsiZ.x + psi.y * gradPsiZ.y);
+                  2.0 * (dftfe::utils::realPartDevice(psi) * dftfe::utils::realPartDevice(gradPsiZ) + dftfe::utils::imagPartDevice(psi) * dftfe::utils::imagPartDevice(gradPsiZ));
               }
           }
       },
@@ -200,8 +200,7 @@ namespace dftfe
 
             dftfe::utils::deviceDoubleComplex tempImag;
 
-            tempImag.x = 0.0;
-            tempImag.y = 0.0;
+            tempImag = dftfe::utils::makeComplex(0.0, 0.0);
 
             dftfe::utils::deviceDoubleComplex gradPsiDirVal;
             tauCellsWfcContributions[index] = 0.0;
@@ -213,19 +212,20 @@ namespace dftfe
                                        numEntriesPerCell * 3 * iCell];
 
                 tauCellsWfcContributions[index] +=
-                  gradPsiDirVal.x * gradPsiDirVal.x +
-                  gradPsiDirVal.y * gradPsiDirVal.y;
+                  dftfe::utils::realPartDevice(gradPsiDirVal) * dftfe::utils::realPartDevice(gradPsiDirVal) +
+                  dftfe::utils::imagPartDevice(gradPsiDirVal) * dftfe::utils::imagPartDevice(gradPsiDirVal);
 
-                tempImag.x += kCoord[dirIdx] * gradPsiDirVal.x;
-                tempImag.y += kCoord[dirIdx] * gradPsiDirVal.y;
+                tempImag = dftfe::utils::makeComplex(
+                                      dftfe::utils::realPartDevice(tempImag) + kCoord[dirIdx] * dftfe::utils::realPartDevice(gradPsiDirVal),
+                                      dftfe::utils::imagPartDevice(tempImag) + kCoord[dirIdx] * dftfe::utils::imagPartDevice(gradPsiDirVal));
               }
 
             tauCellsWfcContributions[index] =
               0.5 * tauCellsWfcContributions[index];
             tauCellsWfcContributions[index] +=
-              0.5 * kPointCoordSq * (psi.x * psi.x + psi.y * psi.y);
+              0.5 * kPointCoordSq * (dftfe::utils::realPartDevice(psi) * dftfe::utils::realPartDevice(psi) + dftfe::utils::imagPartDevice(psi) * dftfe::utils::imagPartDevice(psi));
             tauCellsWfcContributions[index] +=
-              psi.x * tempImag.y - psi.y * tempImag.x;
+              dftfe::utils::realPartDevice(psi) * dftfe::utils::imagPartDevice(tempImag) - dftfe::utils::imagPartDevice(psi) * dftfe::utils::realPartDevice(tempImag);
           }
       },
       const dftfe::uInt                  numVectors,
