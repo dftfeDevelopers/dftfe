@@ -2,6 +2,7 @@
 
 namespace dftfe
 {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   template <typename Type, dftfe::Int blockSize>
   __global__ void
   applyPreconditionAndComputeDotProductKernel(Type            *d_dvec,
@@ -72,8 +73,18 @@ namespace dftfe
     if (tid == 0)
       atomicAdd(&d_devSum[0], localSum);
   }
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+  template <typename Type, dftfe::Int blockSize>
+  __global__ void
+  applyPreconditionAndComputeDotProductKernel(Type            *d_dvec,
+                                              Type            *d_devSum,
+                                              const Type      *d_rvec,
+                                              const Type      *d_jacobi,
+                                              const dftfe::Int N){}
+#endif
 
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   template <typename Type, dftfe::Int blockSize>
   __global__ void
   applyPreconditionComputeDotProductAndSaddKernel(Type            *d_qvec,
@@ -143,8 +154,18 @@ namespace dftfe
     if (tid == 0)
       atomicAdd(&d_devSum[0], localSum);
   }
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+  template <typename Type, dftfe::Int blockSize>
+  __global__ void
+  applyPreconditionComputeDotProductAndSaddKernel(Type            *d_qvec,
+                                                  Type            *d_devSum,
+                                                  const Type      *d_rvec,
+                                                  const Type      *d_jacobi,
+                                                  const dftfe::Int N){}
+#endif
 
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   template <typename Type, dftfe::Int blockSize>
   __global__ void
   scaleXRandComputeNormKernel(Type            *x,
@@ -220,6 +241,18 @@ namespace dftfe
     if (tid == 0)
       atomicAdd(&d_devSum[0], localSum);
   }
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+  template <typename Type, dftfe::Int blockSize>
+  __global__ void
+  scaleXRandComputeNormKernel(Type            *x,
+                              Type            *d_rvec,
+                              Type            *d_devSum,
+                              const Type      *d_qvec,
+                              const Type      *d_dvec,
+                              const Type       alpha,
+                              const dftfe::Int N){}
+#endif
+
   void
   applyPreconditionAndComputeDotProductDevice(double          *d_dvec,
                                               double          *d_devSum,
