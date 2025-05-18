@@ -25,6 +25,16 @@ namespace dftfe
 {
   namespace utils
   {
+
+    template<typename T>
+    inline void atomicAddWrapper(T* addr, T value) {
+        auto atomic_add = sycl::atomic_ref<T, sycl::memory_order::relaxed, 
+                                            sycl::memory_scope::device, 
+                                            sycl::access::address_space::global_space>
+                                            (addr[0]);
+        atomic_add += value;
+    }
+    
     inline std::complex<double> makeComplex(double realPart, double imagPart)
     {
       return std::complex<double>(realPart, imagPart);

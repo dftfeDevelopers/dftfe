@@ -116,55 +116,31 @@ namespace dftfe
      * @brief Copy array from device to host
      * @param count The memory size in bytes of the array
      */
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     deviceError_t
     deviceMemcpyAsyncD2H(void          *dst,
                          const void    *src,
                          std::size_t    count,
-                         deviceStream_t stream = 0);
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    deviceError_t
-    deviceMemcpyAsyncD2H(void          *dst,
-                         const void    *src,
-                         std::size_t    count,
-                         deviceStream_t stream = sycl::queue{sycl::gpu_selector_v});
-#endif
+                         deviceStream_t stream = dftfe::utils::defaultStream);
 
     /**
      * @brief Copy array from device to device
      * @param count The memory size in bytes of the array
      */
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     deviceError_t
     deviceMemcpyAsyncD2D(void          *dst,
                          const void    *src,
                          std::size_t    count,
-                         deviceStream_t stream = 0);
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    deviceError_t
-    deviceMemcpyAsyncD2D(void          *dst,
-                         const void    *src,
-                         std::size_t    count,
-                         deviceStream_t stream = sycl::queue{sycl::gpu_selector_v});
-#endif
+                         deviceStream_t stream = dftfe::utils::defaultStream);
 
     /**
      * @brief Copy array from host to device
      * @param count The memory size in bytes of the array
      */
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     deviceError_t
     deviceMemcpyAsyncH2D(void          *dst,
                          const void    *src,
                          std::size_t    count,
-                         deviceStream_t stream = 0);
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    deviceError_t
-    deviceMemcpyAsyncH2D(void          *dst,
-                         const void    *src,
-                         std::size_t    count,
-                         deviceStream_t stream = sycl::queue{sycl::gpu_selector_v});
-#endif
+                         deviceStream_t stream = dftfe::utils::defaultStream);
 
 
     deviceError_t
@@ -182,13 +158,8 @@ namespace dftfe
     deviceError_t
     deviceEventDestroy(deviceEvent_t event);
 
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     deviceError_t
-    deviceEventRecord(deviceEvent_t event, deviceStream_t stream = 0);
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    deviceError_t
-    deviceEventRecord(deviceEvent_t event, deviceStream_t stream = sycl::queue{sycl::gpu_selector_v});
-#endif
+    deviceEventRecord(deviceEvent_t event, deviceStream_t stream = dftfe::utils::defaultStream);
 
     deviceError_t
     deviceEventSynchronize(deviceEvent_t event);

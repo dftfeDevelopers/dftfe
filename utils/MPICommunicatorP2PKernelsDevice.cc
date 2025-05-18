@@ -77,14 +77,11 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              sendBuffer[i].x =
-                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId]
-                  .x;
-              sendBuffer[i].y =
-                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId]
-                  .y;
+              sendBuffer[i] = dftfe::utils::makeComplex(
+                dftfe::utils::realPartDevice(dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                          intraBlockId]),
+                dftfe::utils::imagPartDevice(dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                          intraBlockId]));
             }
         },
         const dftfe::uInt                        totalFlattenedSize,
@@ -106,7 +103,7 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
               const ValueType2  recvVal      = recvBuffer[i];
-              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+              dftfe::utils::atomicAddWrapper(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                                      blockSize +
                                    intraBlockId],
                         recvVal);
@@ -131,16 +128,13 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
 
-              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize +
-                                   intraBlockId]
-                           .x,
-                        dftfe::utils::realPartDevice(recvBuffer[i]));
-              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize +
-                                   intraBlockId]
-                           .y,
-                        dftfe::utils::imagPartDevice(recvBuffer[i]));
+              auto add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId])[0];
+              auto add_imag = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId])[1];
+
+              dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
+              dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
             }
         },
         const dftfe::uInt                       totalFlattenedSize,
@@ -162,16 +156,13 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
 
-              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize +
-                                   intraBlockId]
-                           .x,
-                        dftfe::utils::realPartDevice(recvBuffer[i]));
-              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize +
-                                   intraBlockId]
-                           .y,
-                        dftfe::utils::imagPartDevice(recvBuffer[i]));
+              auto add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId])[0];
+              auto add_imag = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId])[1];
+
+              dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
+              dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
             }
         },
         const dftfe::uInt                        totalFlattenedSize,
@@ -197,16 +188,13 @@ namespace dftfe
               const double recvValImag =
                 dftfe::utils::imagPartDevice(recvBuffer[i]);
 
-              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize +
-                                   intraBlockId]
-                           .x,
-                        recvValReal);
-              atomicAdd(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize +
-                                   intraBlockId]
-                           .y,
-                        recvValImag);
+              auto add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId])[0];
+              auto add_imag = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId])[1];
+
+              dftfe::utils::atomicAddWrapper(add_real, recvValReal);
+              dftfe::utils::atomicAddWrapper(add_imag, recvValImag);
             }
         },
         const dftfe::uInt                       totalFlattenedSize,

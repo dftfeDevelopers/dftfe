@@ -719,23 +719,13 @@ namespace dftfe
     public:
       BLASWrapper();
 
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       template <typename ValueType1, typename ValueType2>
       static void
       copyValueType1ArrToValueType2ArrDeviceCall(
         const dftfe::uInt                  size,
         const ValueType1                  *valueType1Arr,
         ValueType2                        *valueType2Arr,
-        const dftfe::utils::deviceStream_t streamId = 0);
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-template <typename ValueType1, typename ValueType2>
-      static void
-      copyValueType1ArrToValueType2ArrDeviceCall(
-        const dftfe::uInt                  size,
-        const ValueType1                  *valueType1Arr,
-        ValueType2                        *valueType2Arr,
-        const dftfe::utils::deviceStream_t streamId = sycl::queue{sycl::gpu_selector_v});
-#endif
+        const dftfe::utils::deviceStream_t streamId = dftfe::utils::defaultStream);
 
       template <typename ValueType>
       void

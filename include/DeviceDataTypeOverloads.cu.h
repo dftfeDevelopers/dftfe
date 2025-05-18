@@ -25,6 +25,12 @@ namespace dftfe
 {
   namespace utils
   {
+
+    template<typename T>
+    __device__ inline void atomicAddWrapper(T* addr, T value) {
+        atomicAdd(addr, value);
+    }
+    
     __forceinline__ __device__ cuDoubleComplex
     makeComplex(double realPart, double imagPart)
     {

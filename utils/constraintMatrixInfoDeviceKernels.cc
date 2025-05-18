@@ -171,10 +171,10 @@ namespace dftfe
                     dftfe::utils::add(
                       xVec[xVecStartingIdRow + intraBlockIndex],
                       dftfe::utils::makeComplex(
-                        xVec[xVecStartingIdColumn + intraBlockIndex].x *
+                        dftfe::utils::realPartDevice(xVec[xVecStartingIdColumn + intraBlockIndex]) *
                           constraintColumnValuesAllRowsUnflattened
                             [startingColumnNumber + i],
-                        xVec[xVecStartingIdColumn + intraBlockIndex].y *
+                        dftfe::utils::imagPartDevice(xVec[xVecStartingIdColumn + intraBlockIndex]) *
                           constraintColumnValuesAllRowsUnflattened
                             [startingColumnNumber + i])));
                 }
@@ -226,10 +226,10 @@ namespace dftfe
                     dftfe::utils::add(
                       xVec[xVecStartingIdRow + intraBlockIndex],
                       dftfe::utils::makeComplex(
-                        xVec[xVecStartingIdColumn + intraBlockIndex].x *
+                        dftfe::utils::realPartDevice(xVec[xVecStartingIdColumn + intraBlockIndex]) *
                           constraintColumnValuesAllRowsUnflattened
                             [startingColumnNumber + i],
-                        xVec[xVecStartingIdColumn + intraBlockIndex].y *
+                        dftfe::utils::imagPartDevice(xVec[xVecStartingIdColumn + intraBlockIndex]) *
                           constraintColumnValuesAllRowsUnflattened
                             [startingColumnNumber + i])));
                 }
@@ -273,7 +273,7 @@ namespace dftfe
                       [startingColumnNumber + i];
                   const std::size_t xVecStartingIdColumn =
                     constrainedColumnId * contiguousBlockSize;
-                  atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex]),
+                  dftfe::utils::atomicAddWrapper(&(xVec[xVecStartingIdColumn + intraBlockIndex]),
                             constraintColumnValuesAllRowsUnflattened
                                 [startingColumnNumber + i] *
                               xVec[xVecStartingIdRow + intraBlockIndex]);
@@ -323,13 +323,14 @@ namespace dftfe
                       constraintColumnValuesAllRowsUnflattened
                         [startingColumnNumber + i],
                       xVec[xVecStartingIdRow + intraBlockIndex]);
-                  atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex].x),
-                            tempComplval.x);
-                  atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex].y),
-                            tempComplval.y);
+
+                  auto add_real = reinterpret_cast<double*>(&xVec[xVecStartingIdColumn + intraBlockIndex])[0];
+                  auto add_imag = reinterpret_cast<double*>(&xVec[xVecStartingIdColumn + intraBlockIndex])[1];
+
+                  dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(tempComplval));
+                  dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(tempComplval));
                 }
-              xVec[xVecStartingIdRow + intraBlockIndex].x = 0.0;
-              xVec[xVecStartingIdRow + intraBlockIndex].y = 0.0;
+              xVec[xVecStartingIdRow + intraBlockIndex] = dftfe::utils::makeComplex(0.0, 0.0);
             }
         },
         const dftfe::uInt                  contiguousBlockSize,
@@ -369,7 +370,8 @@ namespace dftfe
                       [startingColumnNumber + i];
                   const std::size_t xVecStartingIdColumn =
                     constrainedColumnId * contiguousBlockSize;
-                  atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex]),
+
+                  dftfe::utils::atomicAddWrapper(&(xVec[xVecStartingIdColumn + intraBlockIndex]),
                             constraintColumnValuesAllRowsUnflattened
                                 [startingColumnNumber + i] *
                               xVec[xVecStartingIdRow + intraBlockIndex]);
@@ -419,13 +421,14 @@ namespace dftfe
                       constraintColumnValuesAllRowsUnflattened
                         [startingColumnNumber + i],
                       xVec[xVecStartingIdRow + intraBlockIndex]);
-                  atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex].x),
-                            tempComplval.x);
-                  atomicAdd(&(xVec[xVecStartingIdColumn + intraBlockIndex].y),
-                            tempComplval.y);
+
+                  auto add_real = reinterpret_cast<double*>(&xVec[xVecStartingIdColumn + intraBlockIndex])[0];
+                  auto add_imag = reinterpret_cast<double*>(&xVec[xVecStartingIdColumn + intraBlockIndex])[1];
+
+                  dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(tempComplval));
+                  dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(tempComplval));
                 }
-              xVec[xVecStartingIdRow + intraBlockIndex].x = 0.0;
-              xVec[xVecStartingIdRow + intraBlockIndex].y = 0.0;
+              xVec[xVecStartingIdRow + intraBlockIndex] = dftfe::utils::makeComplex(0.0, 0.0);
             }
         },
         const dftfe::uInt                 contiguousBlockSize,

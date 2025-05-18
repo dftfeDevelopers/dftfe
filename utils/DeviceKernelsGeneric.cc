@@ -56,8 +56,8 @@ namespace dftfe
         for (dftfe::uInt idx = globalThreadId; idx < size;
              idx += nThreadsPerBlock * nThreadBlock)
           {
-            realArr[idx] = complexArr[idx].x;
-            imagArr[idx] = complexArr[idx].y;
+            realArr[idx] = dftfe::utils::realPartDevice(complexArr[idx]);
+            imagArr[idx] = dftfe::utils::imagPartDevice(complexArr[idx]);
           }
       },
       const dftfe::uInt       size,
@@ -75,8 +75,7 @@ namespace dftfe
         for (dftfe::uInt idx = globalThreadId; idx < size;
              idx += nThreadsPerBlock * nThreadBlock)
           {
-            complexArr[idx].x = realArr[idx];
-            complexArr[idx].y = imagArr[idx];
+            complexArr[idx] = dftfe::utils::makeComplex(realArr[idx], imagArr[idx]);
           }
       },
       const dftfe::uInt    size,
