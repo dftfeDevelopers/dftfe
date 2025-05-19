@@ -287,13 +287,12 @@ namespace dftfe
       }
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotRhoIn,
-      d_phiInQuadValues,
-      dummy);
+    d_basisOperationsPtrElectroHost->interpolate(d_phiTotRhoIn,
+                                                 d_phiTotDofHandlerIndexElectro,
+                                                 d_densityQuadratureIdElectro,
+                                                 d_phiInQuadValues,
+                                                 dummy,
+                                                 dummy);
 
     //
     // impose integral phi equals 0
@@ -605,13 +604,12 @@ namespace dftfe
                        d_dftParamsPtr->verbosity);
       }
 
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotRhoOut,
-      d_phiOutQuadValues,
-      dummy);
+    d_basisOperationsPtrElectroHost->interpolate(d_phiTotRhoOut,
+                                                 d_phiTotDofHandlerIndexElectro,
+                                                 d_densityQuadratureIdElectro,
+                                                 d_phiOutQuadValues,
+                                                 dummy,
+                                                 dummy);
 
     computing_timer.leave_subsection("phiTot solve");
 
