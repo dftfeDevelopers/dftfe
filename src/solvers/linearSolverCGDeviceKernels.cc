@@ -260,6 +260,7 @@ namespace dftfe
                                               const double    *d_jacobi,
                                               const dftfe::Int N)
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
     DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
@@ -275,6 +276,7 @@ namespace dftfe
                         d_rvec,
                         d_jacobi,
                         N);
+#endif
   }
 
 
@@ -285,6 +287,7 @@ namespace dftfe
                                                   const double    *d_jacobi,
                                                   const dftfe::Int N)
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
@@ -302,6 +305,7 @@ namespace dftfe
                         d_rvec,
                         d_jacobi,
                         N);
+#endif
   }
 
 
@@ -314,6 +318,7 @@ namespace dftfe
                               const double     alpha,
                               const dftfe::Int N)
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
 
@@ -332,6 +337,7 @@ namespace dftfe
       d_dvec,
       alpha,
       N);
+#endif
   }
 
 } // namespace dftfe

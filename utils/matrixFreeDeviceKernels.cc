@@ -856,6 +856,7 @@ namespace dftfe
     const Type       *J,
     const dftfe::Int *map)
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
                           computeAXKernelPoisson<double, M, N, K, dim>),
                         blocks,
@@ -867,6 +868,7 @@ namespace dftfe
                         P,
                         J,
                         map);
+#endif
   }
 
   template <typename Type,
@@ -886,6 +888,7 @@ namespace dftfe
     const dftfe::Int *map,
     const Type        coeffHelmholtz)
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
                           computeAXKernelHelmholtz<double, M, N, K, dim>),
                         blocks,
@@ -898,6 +901,7 @@ namespace dftfe
                         J,
                         map,
                         coeffHelmholtz);
+#endif
   }
   template <typename Type,
             dftfe::Int M,
