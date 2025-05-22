@@ -1,6 +1,6 @@
 /******************************************************************************
- * Copyright (c) 2021.                                                        *
- * The Regents of the University of Michigan and DFT-EFE developers.          *
+ * Copyright (c) 2017-2025. * The Regents of the University of Michigan and
+ *DFT-EFE developers.          *
  *                                                                            *
  * This file is part of the DFT-EFE code.                                     *
  *                                                                            *
