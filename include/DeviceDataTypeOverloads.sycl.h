@@ -26,9 +26,9 @@ namespace dftfe
   namespace utils
   {
 
-    template<typename T>
-    inline void atomicAddWrapper(T* addr, T value) {
-        auto atomic_add = sycl::atomic_ref<T, sycl::memory_order::relaxed, 
+    template<typename T1, typename T2>
+    inline void atomicAddWrapper(T1* addr, T2 value) {
+        auto atomic_add = sycl::atomic_ref<T1, sycl::memory_order::relaxed, 
                                             sycl::memory_scope::device, 
                                             sycl::access::address_space::global_space>
                                             (addr[0]);

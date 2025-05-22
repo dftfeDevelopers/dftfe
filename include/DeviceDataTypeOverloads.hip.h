@@ -28,8 +28,8 @@ namespace dftfe
   namespace utils
   {
 
-    template<typename T>
-    __device__ inline void atomicAddWrapper(T* addr, T value) {
+    template<typename T1, typename T2>
+    __device__ inline void atomicAddWrapper(T1* addr, T2 value) {
         atomicAdd(addr, value);
     }
     
