@@ -26,21 +26,19 @@ namespace dftfe
   //
   // Initialize rho by reading in single-atom electron-density and fit a spline
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::initLocalPseudoPotential(
+  dftClass<memorySpace>::initLocalPseudoPotential(
     const dealii::DoFHandler<3>             &_dofHandler,
     const dftfe::uInt                        lpspQuadratureId,
     const dealii::MatrixFree<3, double>     &_matrix_free_data,
     const dftfe::uInt                        _phiExtDofHandlerIndex,
     const dealii::AffineConstraints<double> &_phiExtConstraintMatrix,
     const std::map<dealii::types::global_dof_index, dealii::Point<3>>
-                                                    &_supportPoints,
-    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinManager,
-    distributedCPUVec<double>                       &phiExt,
-    std::map<dealii::CellId, std::vector<double>>   &_pseudoValues,
+                                                  &_supportPoints,
+    const vselfBinsManager                        &vselfBinManager,
+    distributedCPUVec<double>                     &phiExt,
+    std::map<dealii::CellId, std::vector<double>> &_pseudoValues,
     std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
       &_pseudoValuesAtoms)
   {
@@ -432,11 +430,14 @@ namespace dftfe
           }         // intercomm paral
       }             // cell loop
 
-    dealii::FEEvaluation<3,
-                         FEOrderElectro,
-                         C_num1DQuadLPSP<FEOrderElectro>() *
-                           C_numCopies1DQuadLPSP()>
-      feEvalObj(_matrix_free_data, _phiExtDofHandlerIndex, lpspQuadratureId);
+    FEEvaluationWrapperClass<1> feEvalObj(
+      d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics,
+      C_num1DQuadLPSP(
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics) *
+        C_numCopies1DQuadLPSP(),
+      _matrix_free_data,
+      _phiExtDofHandlerIndex,
+      lpspQuadratureId);
     AssertThrow(
       _matrix_free_data.get_quadrature(lpspQuadratureId).size() ==
         feEvalObj.n_q_points,

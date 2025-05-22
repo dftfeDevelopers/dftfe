@@ -24,14 +24,13 @@ namespace dftfe
 {
   // compute localization lengths currently implemented for spin unpolarized
   // case
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_localizationLength(
+  dftClass<memorySpace>::compute_localizationLength(
     const std::string &locLengthFileName)
   {
-    dealii::QGauss<3>   quadrature_formula(C_num1DQuad<FEOrder>());
+    dealii::QGauss<3> quadrature_formula(
+      C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrder));
     dealii::FEValues<3> fe_values(dofHandler.get_fe(),
                                   quadrature_formula,
                                   dealii::update_values |

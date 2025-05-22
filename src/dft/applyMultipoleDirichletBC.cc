@@ -19,11 +19,9 @@
 #include <dft.h>
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::applyMultipoleDirichletBC(
+  dftClass<memorySpace>::applyMultipoleDirichletBC(
     const dealii::DoFHandler<3>             &_dofHandler,
     const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
     dealii::AffineConstraints<double>       &constraintMatrix)

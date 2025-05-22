@@ -23,22 +23,18 @@
 namespace dftfe
 {
   // implement nodal anderson mixing scheme with Kerker
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    applyKerkerPreconditionerToTotalDensityResidual(
+  dftClass<memorySpace>::applyKerkerPreconditionerToTotalDensityResidual(
 #ifdef DFTFE_WITH_DEVICE
-      kerkerSolverProblemDevice<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-                           &kerkerPreconditionedResidualSolverProblemDevice,
-      linearSolverCGDevice &CGSolverDevice,
+    kerkerSolverProblemDeviceWrapperClass
+                         &kerkerPreconditionedResidualSolverProblemDevice,
+    linearSolverCGDevice &CGSolverDevice,
 #endif
-      kerkerSolverProblem<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>
-                         &kerkerPreconditionedResidualSolverProblem,
-      dealiiLinearSolver &CGSolver,
-      const distributedCPUVec<double> &residualRho,
-      distributedCPUVec<double>       &preCondTotalDensityResidualVector)
+    kerkerSolverProblemWrapperClass &kerkerPreconditionedResidualSolverProblem,
+    dealiiLinearSolver              &CGSolver,
+    distributedCPUVec<double>       &residualRho,
+    distributedCPUVec<double>       &preCondTotalDensityResidualVector)
   {
     preCondTotalDensityResidualVector = 0.0;
     // create FEEval object to be used subsequently
@@ -47,13 +43,11 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       residualQuadValues;
     d_densityResidualQuadValues.resize(1);
-    interpolateDensityNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
+    d_basisOperationsPtrElectroHost->interpolate(
+      residualRho,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
-      residualRho,
       d_densityResidualQuadValues[0],
-      dummy,
       dummy,
       dummy,
       false);

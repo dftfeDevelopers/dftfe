@@ -19,9 +19,8 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
   void
-  vselfBinsManager<FEOrder, FEOrderElectro>::createAtomBinsSanityCheck(
+  vselfBinsManager::createAtomBinsSanityCheck(
     const dealii::DoFHandler<3>             &dofHandler,
     const dealii::AffineConstraints<double> &onlyHangingNodeConstraints)
   {

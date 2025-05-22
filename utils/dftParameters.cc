@@ -463,7 +463,16 @@ namespace dftfe
           "0",
           dealii::Patterns::Integer(0, 24),
           "[Standard] The degree of the finite-element interpolating polynomial for the electrostatics part of the Kohn-Sham Hamiltonian. It is automatically set to POLYNOMIAL ORDER if POLYNOMIAL ORDER ELECTROSTATICS set to default value of zero.");
-
+        prm.declare_entry(
+          "POLYNOMIAL ORDER DENSITY NODAL",
+          "0",
+          dealii::Patterns::Integer(0, 24),
+          "[Standard] The degree of the finite-element interpolating polynomial for interpolating electron density. It is automatically set to max of POLYNOMIAL ORDER+2 and POLYNOMIAL ORDER ELECTROSTATICS  if POLYNOMIAL ORDER DENSITY NODAL set to default value of zero.");
+        prm.declare_entry(
+          "DENSITY QUADRATURE RULE",
+          "0",
+          dealii::Patterns::Integer(0, 24),
+          "[Standard] The quadrtaure rule used for computing the electron density. It is automatically set to 16 for MGGA exchange-correlation functional or max of POLYNOMIAL ORDER DENSITY NODAL +1 for other exchange-correlation functionals if DENSITY QUADTRATURE RULE set to default value of zero.");
         prm.enter_subsection("Auto mesh generation parameters");
         {
           prm.declare_entry(
@@ -1625,6 +1634,14 @@ namespace dftfe
         prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS") == 0 ?
           prm.get_integer("POLYNOMIAL ORDER") :
           prm.get_integer("POLYNOMIAL ORDER ELECTROSTATICS");
+      finiteElementPolynomialOrderRhoNodal =
+        prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL") == 0 ?
+          (finiteElementPolynomialOrder + 2 >
+               finiteElementPolynomialOrderElectrostatics ?
+             finiteElementPolynomialOrder + 2 :
+             finiteElementPolynomialOrderElectrostatics) :
+          prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL");
+      densityQuadratureRule = prm.get_integer("DENSITY QUADRATURE RULE");
       prm.enter_subsection("Auto mesh generation parameters");
       {
         outerAtomBallRadius   = prm.get_double("ATOM BALL RADIUS");
@@ -2253,6 +2270,12 @@ namespace dftfe
         spinMixingEnhancementFactor = 1.0;
       }
 
+    if (densityQuadratureRule == 0)
+      {
+        densityQuadratureRule = XCType.substr(0, 4) == "MGGA" ?
+                                  16 :
+                                  finiteElementPolynomialOrderRhoNodal + 1;
+      }
 
 
     // checking if the XC type is compatible with

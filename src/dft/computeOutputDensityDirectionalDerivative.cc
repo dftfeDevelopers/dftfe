@@ -22,18 +22,15 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeOutputDensityDirectionalDerivative(
-      const distributedCPUVec<double> &v,
-      const distributedCPUVec<double> &vSpin0,
-      const distributedCPUVec<double> &vSpin1,
-      distributedCPUVec<double>       &fv,
-      distributedCPUVec<double>       &fvSpin0,
-      distributedCPUVec<double>       &fvSpin1)
+  dftClass<memorySpace>::computeOutputDensityDirectionalDerivative(
+    distributedCPUVec<double> &v,
+    distributedCPUVec<double> &vSpin0,
+    distributedCPUVec<double> &vSpin1,
+    distributedCPUVec<double> &fv,
+    distributedCPUVec<double> &fvSpin0,
+    distributedCPUVec<double> &fvSpin1)
   {
     computing_timer.enter_subsection("Output density direction derivative");
 
@@ -72,16 +69,13 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> charge;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
     std::map<dealii::CellId, std::vector<double>> dummyMap;
-    interpolateDensityNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
+    d_basisOperationsPtrElectroHost->interpolate(
+      v,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
-      v,
       charge,
       dummy,
       dummy,
-      dummy,
-      false,
       false,
       false);
 
@@ -162,12 +156,12 @@ namespace dftfe
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       electrostaticPotPrimeValues;
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
+    d_basisOperationsPtrElectroHost->interpolate(
+      d_phiPrime,
       d_phiPrimeDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
-      d_phiPrime,
       electrostaticPotPrimeValues,
+      dummy,
       dummy,
       false);
 
@@ -182,18 +176,14 @@ namespace dftfe
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       gradRhoPrimeValues(2);
-    interpolateDensityNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
+    d_basisOperationsPtrElectroHost->interpolate(
+      v,
       d_densityDofHandlerIndexElectro,
       d_densityQuadratureIdElectro,
-      v,
       rhoPrimeValues[0],
       gradRhoPrimeValues[0],
       dummy,
-      dummy,
-      isGradDensityDataDependent,
-      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-       ExcFamilyType::TauMGGA));
+      isGradDensityDataDependent);
 
 
     if (d_dftParamsPtr->spinPolarized == 1)
@@ -208,32 +198,24 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           gradvSpin1Values;
 
-        interpolateDensityNodalDataToQuadratureDataGeneral(
-          d_basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost->interpolate(
+          vSpin0,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
-          vSpin0,
           vSpin0Values,
           gradvSpin0Values,
           dummy,
-          dummy,
           isGradDensityDataDependent,
-          (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-           ExcFamilyType::TauMGGA),
           false);
 
-        interpolateDensityNodalDataToQuadratureDataGeneral(
-          d_basisOperationsPtrElectroHost,
+        d_basisOperationsPtrElectroHost->interpolate(
+          vSpin1,
           d_densityDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
-          vSpin1,
           vSpin1Values,
           gradvSpin1Values,
           dummy,
-          dummy,
           isGradDensityDataDependent,
-          (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
-           ExcFamilyType::TauMGGA),
           false);
 
         rhoPrimeValues[0].resize(vSpin0Values.size());
@@ -333,15 +315,12 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeRhoNodalFirstOrderResponseFromPSIAndPSIPrime(
-      distributedCPUVec<double> &fv,
-      distributedCPUVec<double> &fvSpin0,
-      distributedCPUVec<double> &fvSpin1)
+  dftClass<memorySpace>::computeRhoNodalFirstOrderResponseFromPSIAndPSIPrime(
+    distributedCPUVec<double> &fv,
+    distributedCPUVec<double> &fvSpin0,
+    distributedCPUVec<double> &fvSpin1)
   {
     distributedCPUVec<double> fvHam, fvFermiEnergy;
     fvHam.reinit(fv);

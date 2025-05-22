@@ -417,12 +417,10 @@ namespace dftfe
   } // namespace internalLowrankJacInv
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   double
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    lowrankApproxScfDielectricMatrixInvSpinPolarized(const dftfe::uInt scfIter)
+  dftClass<memorySpace>::lowrankApproxScfDielectricMatrixInvSpinPolarized(
+    const dftfe::uInt scfIter)
   {
     int this_process;
     MPI_Comm_rank(d_mpiCommParent, &this_process);
@@ -786,17 +784,14 @@ namespace dftfe
        ExcFamilyType::TauMGGA);
 
     for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size(); ++iComp)
-      interpolateDensityNodalDataToQuadratureDataGeneral(
-        d_basisOperationsPtrElectroHost,
+      d_basisOperationsPtrElectroHost->interpolate(
+        d_densityInNodalValues[iComp],
         d_densityDofHandlerIndexElectro,
         d_densityQuadratureIdElectro,
-        d_densityInNodalValues[iComp],
         d_densityInQuadValues[iComp],
         d_gradDensityInQuadValues[iComp],
-        d_tauInQuadValues[iComp],
         d_gradDensityInQuadValues[iComp],
-        isGradDensityDataDependent,
-        isTauMGGA);
+        isGradDensityDataDependent);
 
     MPI_Barrier(d_mpiCommParent);
     total_time = MPI_Wtime() - total_time;

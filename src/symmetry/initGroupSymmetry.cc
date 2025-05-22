@@ -34,16 +34,14 @@ namespace dftfe
   //================================================================================================================================================
   //							Class constructor
   //================================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
-  symmetryClass<FEOrder, FEOrderElectro, memorySpace>::symmetryClass(
-    dftClass<FEOrder, FEOrderElectro, memorySpace> *_dftPtr,
-    const MPI_Comm                                 &mpi_comm_parent,
-    const MPI_Comm                                 &mpi_comm_domain,
-    const MPI_Comm                                 &_interpoolcomm)
+  template <dftfe::utils::MemorySpace memorySpace>
+  symmetryClass<memorySpace>::symmetryClass(dftClass<memorySpace> *_dftPtr,
+                                            const MPI_Comm &mpi_comm_parent,
+                                            const MPI_Comm &mpi_comm_domain,
+                                            const MPI_Comm &_interpoolcomm)
     : dftPtr(_dftPtr)
-    , FE(dealii::QGaussLobatto<1>(FEOrder + 1))
+    , FE(dealii::QGaussLobatto<1>(
+        _dftPtr->getParametersObject().finiteElementPolynomialOrder + 1))
     , d_mpiCommParent(mpi_comm_parent)
     , mpi_communicator(mpi_comm_domain)
     , interpoolcomm(_interpoolcomm)
@@ -59,11 +57,9 @@ namespace dftfe
   //================================================================================================================================================
   //					Wiping out mapping tables; needed between relaxation steps
   //================================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  symmetryClass<FEOrder, FEOrderElectro, memorySpace>::clearMaps()
+  symmetryClass<memorySpace>::clearMaps()
   {
     mappedGroup.clear();
     mappedGroupSend0.clear();
@@ -91,15 +87,13 @@ namespace dftfe
   // communicate mapping tables
   //================================================================================================================================================
   //================================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  symmetryClass<FEOrder, FEOrderElectro, memorySpace>::initSymmetry()
+  symmetryClass<memorySpace>::initSymmetry()
   {
     //
     dealii::QGauss<3> quadrature(
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
+      dftPtr->getParametersObject().densityQuadratureRule);
     dealii::FEValues<3>  fe_values(dftPtr->FEEigen,
                                   quadrature,
                                   dealii::update_values |
@@ -721,13 +715,9 @@ namespace dftfe
   // cartesian and flag==-1 does the other way around.
   //================================================================================================================================================
   //================================================================================================================================================
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   dealii::Point<3>
-  symmetryClass<FEOrder, FEOrderElectro, memorySpace>::crys2cart(
-    dealii::Point<3> p,
-    dftfe::Int       flag)
+  symmetryClass<memorySpace>::crys2cart(dealii::Point<3> p, dftfe::Int flag)
   {
     dealii::Point<3> ptemp;
     if (flag == 1)

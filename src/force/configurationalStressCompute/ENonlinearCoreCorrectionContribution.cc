@@ -24,26 +24,19 @@
 namespace dftfe
 {
   // compute nonlinear core correction contribution to stress
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    addENonlinearCoreCorrectionStressContribution(
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3>                                &forceEval,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dftfe::uInt                    cell,
-      const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
-      const dealii::AlignedVector<
-        dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &derExcGradRho,
-      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoCoreAtoms,
-      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-        &hessianRhoCoreAtoms)
+  forceClass<memorySpace>::addENonlinearCoreCorrectionStressContribution(
+    FEEvaluationWrapperClass<3>         &forceEval,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const dftfe::uInt                    cell,
+    const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
+    const dealii::AlignedVector<
+      dealii::Tensor<1, 3, dealii::VectorizedArray<double>>> &derExcGradRho,
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+      &gradRhoCoreAtoms,
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+      &hessianRhoCoreAtoms)
   {
     dealii::Tensor<1, 3, dealii::VectorizedArray<double>> zeroTensor1;
     for (dftfe::uInt idim = 0; idim < 3; idim++)
@@ -193,17 +186,11 @@ namespace dftfe
   }
 
   // compute nonlinear core correction contribution to stress
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  forceClass<memorySpace>::
     addENonlinearCoreCorrectionStressContributionSpinPolarized(
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3>                                &forceEval,
+      FEEvaluationWrapperClass<3>         &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const dftfe::uInt                    cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>

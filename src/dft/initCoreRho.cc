@@ -26,11 +26,9 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::initCoreRho()
+  dftClass<memorySpace>::initCoreRho()
   {
     // clear existing data
     d_rhoCore.clear();

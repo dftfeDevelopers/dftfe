@@ -109,7 +109,7 @@ namespace functionalTest
                       updateFlags);
 
     // set up solver functions for Poisson
-    dftfe::poissonSolverProblem<2, 2> phiTotalSolverProblem(mpi_comm_domain);
+    dftfe::poissonSolverProblem<2> phiTotalSolverProblem(mpi_comm_domain);
 
     dftfe::distributedCPUVec<double>      expectedOutput;
     dftfe::distributedCPUMultiVec<double> multiExpectedOutput;
