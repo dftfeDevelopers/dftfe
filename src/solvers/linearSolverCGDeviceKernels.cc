@@ -75,7 +75,7 @@ namespace dftfe
   }
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
   template <typename Type, dftfe::Int blockSize>
-  __global__ void
+  void
   applyPreconditionAndComputeDotProductKernel(Type            *d_dvec,
                                               Type            *d_devSum,
                                               const Type      *d_rvec,
@@ -156,7 +156,7 @@ namespace dftfe
   }
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
   template <typename Type, dftfe::Int blockSize>
-  __global__ void
+  void
   applyPreconditionComputeDotProductAndSaddKernel(Type            *d_qvec,
                                                   Type            *d_devSum,
                                                   const Type      *d_rvec,
@@ -243,7 +243,7 @@ namespace dftfe
   }
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
   template <typename Type, dftfe::Int blockSize>
-  __global__ void
+  void
   scaleXRandComputeNormKernel(Type            *x,
                               Type            *d_rvec,
                               Type            *d_devSum,

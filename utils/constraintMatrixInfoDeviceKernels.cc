@@ -422,8 +422,8 @@ namespace dftfe
                         [startingColumnNumber + i],
                       xVec[xVecStartingIdRow + intraBlockIndex]);
 
-                  auto add_real = reinterpret_cast<double*>(&xVec[xVecStartingIdColumn + intraBlockIndex]);
-                  auto add_imag = add_real + 1;
+                  auto* add_real = reinterpret_cast<double*>(&xVec[xVecStartingIdColumn + intraBlockIndex]);
+                  auto* add_imag = add_real + 1;
 
                   dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(tempComplval));
                   dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(tempComplval));
