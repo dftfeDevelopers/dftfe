@@ -50,7 +50,7 @@ namespace dftfe
     static const oneapi::mkl::blas::compute_mode DEVICEBLAS_TF32_TENSOR_OP_MATH = 
             oneapi::mkl::blas::compute_mode::float_to_tf32;
 
-    static const sycl::queue defaultStream{sycl::gpu_selector_v};
+    mutable sycl::queue defaultStream{sycl::gpu_selector_v};
 
   } // namespace utils
 } // namespace dftfe
