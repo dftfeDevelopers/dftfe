@@ -73,14 +73,6 @@ namespace dftfe
     if (tid == 0)
       atomicAdd(&d_devSum[0], localSum);
   }
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-  template <typename Type, dftfe::Int blockSize>
-  void
-  applyPreconditionAndComputeDotProductKernel(Type            *d_dvec,
-                                              Type            *d_devSum,
-                                              const Type      *d_rvec,
-                                              const Type      *d_jacobi,
-                                              const dftfe::Int N){}
 #endif
 
 
@@ -154,14 +146,6 @@ namespace dftfe
     if (tid == 0)
       atomicAdd(&d_devSum[0], localSum);
   }
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-  template <typename Type, dftfe::Int blockSize>
-  void
-  applyPreconditionComputeDotProductAndSaddKernel(Type            *d_qvec,
-                                                  Type            *d_devSum,
-                                                  const Type      *d_rvec,
-                                                  const Type      *d_jacobi,
-                                                  const dftfe::Int N){}
 #endif
 
 
@@ -241,16 +225,6 @@ namespace dftfe
     if (tid == 0)
       atomicAdd(&d_devSum[0], localSum);
   }
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-  template <typename Type, dftfe::Int blockSize>
-  void
-  scaleXRandComputeNormKernel(Type            *x,
-                              Type            *d_rvec,
-                              Type            *d_devSum,
-                              const Type      *d_qvec,
-                              const Type      *d_dvec,
-                              const Type       alpha,
-                              const dftfe::Int N){}
 #endif
 
   void

@@ -401,18 +401,6 @@ namespace dftfe
           atomicAdd(&V[map[j + i * K + mapShift]], y[j]);
       }
   }
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-  template <typename Type,
-            dftfe::Int M,
-            dftfe::Int N,
-            dftfe::Int K,
-            dftfe::Int dim>
-  void
-  computeAXKernelPoisson(Type             *V,
-                         const Type       *U,
-                         const Type       *P,
-                         const Type       *J,
-                         const dftfe::Int *map){}
 #endif
 
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
@@ -825,18 +813,6 @@ namespace dftfe
           atomicAdd(&V[map[j + i * K + mapShift]], y[j]);
       }
   }
-#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-  template <typename Type,
-            dftfe::Int M,
-            dftfe::Int N,
-            dftfe::Int K,
-            dftfe::Int dim>
-  void
-  computeAXKernelPoisson(Type             *V,
-                         const Type       *U,
-                         const Type       *P,
-                         const Type       *J,
-                         const dftfe::Int *map){}
 #endif
 
 

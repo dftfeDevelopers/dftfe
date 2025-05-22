@@ -242,7 +242,7 @@ namespace dftfe
         {
           const dftfe::uInt numGangsPerBVec =
             (BVec + nThreadsPerBlock - 1) / nThreadsPerBlock;
-          const dftfe::uInt gangBlockId = blockIdx.x / numGangsPerBVec;
+          const dftfe::uInt gangBlockId = (globalThreadId / nThreadsPerBlock) / numGangsPerBVec;
           const dftfe::uInt localThreadId =
             globalThreadId - gangBlockId * numGangsPerBVec * nThreadsPerBlock;
 
@@ -266,7 +266,7 @@ namespace dftfe
         {
           const dftfe::uInt numGangsPerBVec =
             (BVec + nThreadsPerBlock - 1) / nThreadsPerBlock;
-          const dftfe::uInt gangBlockId = blockIdx.x / numGangsPerBVec;
+          const dftfe::uInt gangBlockId = (globalThreadId / nThreadsPerBlock) / numGangsPerBVec;
           const dftfe::uInt localThreadId =
             globalThreadId - gangBlockId * numGangsPerBVec * nThreadsPerBlock;
 
