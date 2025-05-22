@@ -207,6 +207,8 @@ namespace dftfe
     // z-coord)
     std::vector<double> d_atomCoords;
 
+    dftfe::uInt d_locallyOwnedCells;
+
     // A vector of size = number of atoms of interest
     // the Ith atom in d_atomicNumbers has its coordinates
     // in d_atomCoords[3*I+0], d_atomCoords[3*I+1], d_atomCoords[3*I+2]

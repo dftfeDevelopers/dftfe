@@ -657,6 +657,20 @@ namespace dftfe
       unsigned int incyTmp = INCY;
       *result              = ddot_(&nTmp, X, &incxTmp, Y, &incyTmp);
     }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(const dftfe::uInt N,
+                                                       const float      *X,
+                                                       const dftfe::uInt INCX,
+                                                       const float      *Y,
+                                                       const dftfe::uInt INCY,
+                                                       float *result) const
+    {
+      unsigned int nTmp    = N;
+      unsigned int incxTmp = INCX;
+      unsigned int incyTmp = INCY;
+      *result              = sdot_(&nTmp, X, &incxTmp, Y, &incyTmp);
+    }
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(
       const dftfe::uInt           N,
@@ -671,6 +685,21 @@ namespace dftfe
       unsigned int incyTmp = INCY;
       *result              = zdotc_(&nTmp, X, &incxTmp, Y, &incyTmp);
     }
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(
+      const dftfe::uInt          N,
+      const std::complex<float> *X,
+      const dftfe::uInt          INCX,
+      const std::complex<float> *Y,
+      const dftfe::uInt          INCY,
+      std::complex<float>       *result) const
+    {
+      unsigned int nTmp    = N;
+      unsigned int incxTmp = INCX;
+      unsigned int incyTmp = INCY;
+      *result              = cdotc_(&nTmp, X, &incxTmp, Y, &incyTmp);
+    }
+
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xdot(

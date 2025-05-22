@@ -929,6 +929,24 @@ namespace dftfe
                                     result);
       DEVICEBLAS_API_CHECK(status);
     }
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(const dftfe::uInt N,
+                                                         const float      *X,
+                                                         const dftfe::uInt INCX,
+                                                         const float      *Y,
+                                                         const dftfe::uInt INCY,
+                                                         float *result) const
+    {
+      dftfe::utils::deviceBlasStatus_t status =
+        DFTFE_DEVICE_BLAS_INT(Sdot)(d_deviceBlasHandle,
+                                    dftfe::Int(N),
+                                    X,
+                                    dftfe::Int(INCX),
+                                    Y,
+                                    dftfe::Int(INCY),
+                                    result);
+      DEVICEBLAS_API_CHECK(status);
+    }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
@@ -966,6 +984,26 @@ namespace dftfe
     {
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
         Zdotc)(d_deviceBlasHandle,
+               dftfe::Int(N),
+               dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+               dftfe::Int(INCX),
+               dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+               dftfe::Int(INCY),
+               dftfe::utils::makeDataTypeDeviceBlasCompatible(result));
+      DEVICEBLAS_API_CHECK(status);
+    }
+
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(
+      const dftfe::uInt          N,
+      const std::complex<float> *X,
+      const dftfe::uInt          INCX,
+      const std::complex<float> *Y,
+      const dftfe::uInt          INCY,
+      std::complex<float>       *result) const
+    {
+      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
+        Cdotc)(d_deviceBlasHandle,
                dftfe::Int(N),
                dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
                dftfe::Int(INCX),

@@ -118,12 +118,12 @@ namespace dftfe
         pseudopotentialClassPtr->getNonLocalOperatorSinglePrec();
     d_cellsBlockSizeHamiltonianConstruction =
       memorySpace == dftfe::utils::MemorySpace::HOST ? 1 : 50;
-    d_cellsBlockSizeHX   = memorySpace == dftfe::utils::MemorySpace::HOST ?
-                             1 :
-                             d_basisOperationsPtr->nCells();
+    d_cellsBlockSizeHX =
+      memorySpace == dftfe::utils::MemorySpace::HOST ?
+        1 :
+        (d_dftParamsPtr->memOptMode ? 50 : d_basisOperationsPtr->nCells());
     d_numVectorsInternal = 0;
-
-    d_useHubbard = false;
+    d_useHubbard         = false;
     if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
         ExcFamilyType::DFTPlusU)
       {
@@ -923,14 +923,18 @@ namespace dftfe
     const dftfe::uInt nCells       = d_basisOperationsPtr->nCells();
     const dftfe::uInt nDofsPerCell = d_basisOperationsPtr->nDofsPerCell();
     if (d_cellWaveFunctionMatrixSrc.size() <
-        nCells * nDofsPerCell * numWaveFunctions)
-      d_cellWaveFunctionMatrixSrc.resize(nCells * nDofsPerCell *
-                                         numWaveFunctions);
+        (d_dftParamsPtr->memOptMode ? d_cellsBlockSizeHX : nCells) *
+          nDofsPerCell * numWaveFunctions)
+      d_cellWaveFunctionMatrixSrc.resize(
+        (d_dftParamsPtr->memOptMode ? d_cellsBlockSizeHX : nCells) *
+        nDofsPerCell * numWaveFunctions);
     if (d_dftParamsPtr->useSinglePrecCheby &&
         d_cellWaveFunctionMatrixSrcSinglePrec.size() <
-          nCells * nDofsPerCell * numWaveFunctions)
-      d_cellWaveFunctionMatrixSrcSinglePrec.resize(nCells * nDofsPerCell *
-                                                   numWaveFunctions);
+          (d_dftParamsPtr->memOptMode ? d_cellsBlockSizeHX : nCells) *
+            nDofsPerCell * numWaveFunctions)
+      d_cellWaveFunctionMatrixSrcSinglePrec.resize(
+        (d_dftParamsPtr->memOptMode ? d_cellsBlockSizeHX : nCells) *
+        nDofsPerCell * numWaveFunctions);
     if (d_cellWaveFunctionMatrixDst.size() <
         d_nOMPThreads * d_cellsBlockSizeHX * nDofsPerCell * numWaveFunctions)
       d_cellWaveFunctionMatrixDst.resize(d_nOMPThreads * d_cellsBlockSizeHX *
@@ -953,8 +957,10 @@ namespace dftfe
             d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
               numWaveFunctions,
               d_pseudopotentialNonLocalProjectorTimesVectorBlock);
+
             d_pseudopotentialNonLocalOperator
-              ->initialiseCellWaveFunctionPointers(d_cellWaveFunctionMatrixSrc);
+              ->initialiseCellWaveFunctionPointers(d_cellWaveFunctionMatrixSrc,
+                                                   d_cellsBlockSizeHX);
           }
         else
           {
@@ -973,7 +979,7 @@ namespace dftfe
                 d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
             d_pseudopotentialNonLocalOperatorSinglePrec
               ->initialiseCellWaveFunctionPointers(
-                d_cellWaveFunctionMatrixSrcSinglePrec);
+                d_cellWaveFunctionMatrixSrcSinglePrec, d_cellsBlockSizeHX);
           }
         else
           d_pseudopotentialNonLocalOperatorSinglePrec
@@ -1315,7 +1321,9 @@ namespace dftfe
           numDoFsPerCell * (cellRange.second - cellRange.first),
           src.data(),
           d_cellWaveFunctionMatrixSrcSinglePrec.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
+            (d_dftParamsPtr->memOptMode ?
+               0 :
+               cellRange.first * numDoFsPerCell * numberWavefunctions),
           d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
               .data() +
             cellRange.first * numDoFsPerCell);
@@ -1324,7 +1332,9 @@ namespace dftfe
           {
             d_pseudopotentialNonLocalOperatorSinglePrec->applyCconjtransOnX(
               d_cellWaveFunctionMatrixSrcSinglePrec.data() +
-                cellRange.first * numDoFsPerCell * numberWavefunctions,
+                (d_dftParamsPtr->memOptMode ?
+                   0 :
+                   cellRange.first * numDoFsPerCell * numberWavefunctions),
               cellRange);
           }
       }
@@ -1347,7 +1357,17 @@ namespace dftfe
       {
         std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-
+        if (d_dftParamsPtr->memOptMode)
+          {
+            d_BLASWrapperPtr->stridedCopyToBlock(
+              numberWavefunctions,
+              numDoFsPerCell * (cellRange.second - cellRange.first),
+              src.data(),
+              d_cellWaveFunctionMatrixSrcSinglePrec.data(),
+              d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+                  .data() +
+                cellRange.first * numDoFsPerCell);
+          }
         d_BLASWrapperPtr->xgemmStridedBatched(
           'N',
           'N',
@@ -1356,7 +1376,9 @@ namespace dftfe
           numDoFsPerCell,
           &scalarCoeffAlpha,
           d_cellWaveFunctionMatrixSrcSinglePrec.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
+            (d_dftParamsPtr->memOptMode ?
+               0 :
+               cellRange.first * numDoFsPerCell * numberWavefunctions),
           numberWavefunctions,
           numDoFsPerCell * numberWavefunctions,
           d_cellHamiltonianMatrixSinglePrec[d_HamiltonianIndex].data() +
@@ -1450,7 +1472,6 @@ namespace dftfe
     const dftfe::uInt numberWavefunctions = src.numVectors();
     if (d_numVectorsInternal != numberWavefunctions)
       reinitNumberWavefunctions(numberWavefunctions);
-
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
       d_basisOperationsPtr->reinit(numberWavefunctions,
                                    d_cellsBlockSizeHX,
@@ -1492,7 +1513,9 @@ namespace dftfe
           numDoFsPerCell * (cellRange.second - cellRange.first),
           src.data(),
           d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
+            (d_dftParamsPtr->memOptMode ?
+               0 :
+               cellRange.first * numDoFsPerCell * numberWavefunctions),
           d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
               .data() +
             cellRange.first * numDoFsPerCell);
@@ -1501,7 +1524,9 @@ namespace dftfe
           {
             d_pseudopotentialNonLocalOperator->applyCconjtransOnX(
               d_cellWaveFunctionMatrixSrc.data() +
-                cellRange.first * numDoFsPerCell * numberWavefunctions,
+                (d_dftParamsPtr->memOptMode ?
+                   0 :
+                   cellRange.first * numDoFsPerCell * numberWavefunctions),
               cellRange);
           }
       }
@@ -1522,7 +1547,17 @@ namespace dftfe
       {
         std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-
+        if (d_dftParamsPtr->memOptMode)
+          {
+            d_BLASWrapperPtr->stridedCopyToBlock(
+              numberWavefunctions,
+              numDoFsPerCell * (cellRange.second - cellRange.first),
+              src.data(),
+              d_cellWaveFunctionMatrixSrc.data(),
+              d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+                  .data() +
+                cellRange.first * numDoFsPerCell);
+          }
         d_BLASWrapperPtr->xgemmStridedBatched(
           'N',
           'N',
@@ -1531,7 +1566,9 @@ namespace dftfe
           numDoFsPerCell,
           &scalarCoeffAlpha,
           d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
+            (d_dftParamsPtr->memOptMode ?
+               0 :
+               cellRange.first * numDoFsPerCell * numberWavefunctions),
           numberWavefunctions,
           numDoFsPerCell * numberWavefunctions,
           d_cellHamiltonianMatrix[d_HamiltonianIndex].data() +
@@ -1553,6 +1590,8 @@ namespace dftfe
                   numberWavefunctions,
               cellRange);
           }
+
+
 #pragma omp critical(hx_assembly)
         d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
           numberWavefunctions,
@@ -1670,7 +1709,9 @@ namespace dftfe
             cellRange.first * numDoFsPerCell,
           src.data(),
           d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
+            (d_dftParamsPtr->memOptMode ?
+               0 :
+               cellRange.first * numDoFsPerCell * numberWavefunctions),
           d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
               .data() +
             cellRange.first * numDoFsPerCell);
@@ -1679,7 +1720,9 @@ namespace dftfe
           {
             d_pseudopotentialNonLocalOperator->applyCconjtransOnX(
               d_cellWaveFunctionMatrixSrc.data() +
-                cellRange.first * numDoFsPerCell * numberWavefunctions,
+                (d_dftParamsPtr->memOptMode ?
+                   0 :
+                   cellRange.first * numDoFsPerCell * numberWavefunctions),
               cellRange);
           }
       }
@@ -1700,7 +1743,21 @@ namespace dftfe
       {
         std::pair<dftfe::uInt, dftfe::uInt> cellRange(
           iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-
+        if (d_dftParamsPtr->memOptMode)
+          {
+            d_BLASWrapperPtr->stridedBlockScaleCopy(
+              numberWavefunctions,
+              numDoFsPerCell * (cellRange.second - cellRange.first),
+              1.0,
+              d_basisOperationsPtr->cellInverseSqrtMassVectorBasisData()
+                  .data() +
+                cellRange.first * numDoFsPerCell,
+              src.data(),
+              d_cellWaveFunctionMatrixSrc.data(),
+              d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+                  .data() +
+                cellRange.first * numDoFsPerCell);
+          }
         d_BLASWrapperPtr->xgemmStridedBatched(
           'N',
           'N',
@@ -1709,7 +1766,9 @@ namespace dftfe
           numDoFsPerCell,
           &scalarCoeffAlpha,
           d_cellWaveFunctionMatrixSrc.data() +
-            cellRange.first * numDoFsPerCell * numberWavefunctions,
+            (d_dftParamsPtr->memOptMode ?
+               0 :
+               cellRange.first * numDoFsPerCell * numberWavefunctions),
           numberWavefunctions,
           numDoFsPerCell * numberWavefunctions,
           d_cellHamiltonianMatrix[d_HamiltonianIndex].data() +

@@ -89,22 +89,27 @@ namespace dftfe
     copyToDealiiParallelNonLocalVecKernel(
       const dftfe::uInt  numWfcs,
       const dftfe::uInt  totalPseudoWfcs,
+      const dftfe::uInt  dimension,
       const ValueType   *sphericalFnTimesWfcParallelVec,
       ValueType         *sphericalFnTimesWfcDealiiParallelVec,
       const dftfe::uInt *indexMapDealiiParallelNumbering)
     {
       const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numberEntries  = totalPseudoWfcs * numWfcs;
+      const dftfe::uInt numberEntries  = totalPseudoWfcs * numWfcs * dimension;
 
       for (dftfe::uInt index = globalThreadId; index < numberEntries;
            index += blockDim.x * gridDim.x)
         {
-          const dftfe::uInt blockIndex      = index / numWfcs;
-          const dftfe::uInt intraBlockIndex = index % numWfcs;
+          const dftfe::uInt dim        = index / (numWfcs * totalPseudoWfcs);
+          const dftfe::uInt index2     = index % (numWfcs * totalPseudoWfcs);
+          const dftfe::uInt blockIndex = index2 / numWfcs;
+          const dftfe::uInt intraBlockIndex = index2 % numWfcs;
           const dftfe::uInt mappedIndex =
             indexMapDealiiParallelNumbering[blockIndex];
 
-          sphericalFnTimesWfcDealiiParallelVec[mappedIndex * numWfcs +
+          sphericalFnTimesWfcDealiiParallelVec[mappedIndex * numWfcs *
+                                                 dimension +
+                                               dim * numWfcs +
                                                intraBlockIndex] =
             sphericalFnTimesWfcParallelVec[index];
         }
@@ -165,6 +170,8 @@ namespace dftfe
     __global__ void
     addNonLocalContributionDeviceKernel(
       const dftfe::uInt  totalNonLocalElements,
+      const dftfe::uInt  offset,
+      const dftfe::uInt  offset2,
       const dftfe::uInt  numberWfc,
       const dftfe::uInt  numberNodesPerElement,
       const dftfe::uInt *iElemNonLocalToElemIndexMap,
@@ -179,20 +186,23 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::uInt iElem = index / (numberWfc * numberNodesPerElement);
-          const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const dftfe::uInt elemIndex =
+            iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
           const dftfe::uInt index2 =
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
           const dftfe::uInt wfcIndex = index2 % numberWfc;
           atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
                           iDof * numberWfc + wfcIndex],
-                    xVec[index]);
+                    xVec[index + offset2 * numberWfc * numberNodesPerElement]);
         }
     }
 
     __global__ void
     addNonLocalContributionDeviceKernel(
       const dftfe::uInt  totalNonLocalElements,
+      const dftfe::uInt  offset,
+      const dftfe::uInt  offset2,
       const dftfe::uInt  numberWfc,
       const dftfe::uInt  numberNodesPerElement,
       const dftfe::uInt *iElemNonLocalToElemIndexMap,
@@ -207,14 +217,15 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::uInt iElem = index / (numberWfc * numberNodesPerElement);
-          const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const dftfe::uInt elemIndex =
+            iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
           const dftfe::uInt index2 =
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
           const dftfe::uInt wfcIndex = index2 % numberWfc;
           atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
                           iDof * numberWfc + wfcIndex],
-                    xVec[index]);
+                    xVec[index + offset2 * numberWfc * numberNodesPerElement]);
         }
     }
 
@@ -222,6 +233,8 @@ namespace dftfe
     __global__ void
     addNonLocalContributionDeviceKernel(
       const dftfe::uInt                        totalNonLocalElements,
+      const dftfe::uInt                        offset,
+      const dftfe::uInt                        offset2,
       const dftfe::uInt                        numberWfc,
       const dftfe::uInt                        numberNodesPerElement,
       const dftfe::uInt                       *iElemNonLocalToElemIndexMap,
@@ -236,19 +249,22 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::uInt iElem = index / (numberWfc * numberNodesPerElement);
-          const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const dftfe::uInt elemIndex =
+            iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
           const dftfe::uInt index2 =
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
           const dftfe::uInt wfcIndex = index2 % numberWfc;
-          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                          iDof * numberWfc + wfcIndex]
-                       .x,
-                    xVec[index].x);
-          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                          iDof * numberWfc + wfcIndex]
-                       .y,
-                    xVec[index].y);
+          atomicAdd(
+            &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                  iDof * numberWfc + wfcIndex]
+               .x,
+            xVec[index + offset2 * numberWfc * numberNodesPerElement].x);
+          atomicAdd(
+            &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                  iDof * numberWfc + wfcIndex]
+               .y,
+            xVec[index + offset2 * numberWfc * numberNodesPerElement].y);
         }
     }
 
@@ -256,6 +272,8 @@ namespace dftfe
     __global__ void
     addNonLocalContributionDeviceKernel(
       const dftfe::uInt                       totalNonLocalElements,
+      const dftfe::uInt                       offset,
+      const dftfe::uInt                       offset2,
       const dftfe::uInt                       numberWfc,
       const dftfe::uInt                       numberNodesPerElement,
       const dftfe::uInt                      *iElemNonLocalToElemIndexMap,
@@ -270,19 +288,22 @@ namespace dftfe
            index += blockDim.x * gridDim.x)
         {
           const dftfe::uInt iElem = index / (numberWfc * numberNodesPerElement);
-          const dftfe::uInt elemIndex = iElemNonLocalToElemIndexMap[iElem];
+          const dftfe::uInt elemIndex =
+            iElemNonLocalToElemIndexMap[iElem + offset2] - offset;
           const dftfe::uInt index2 =
             index % (numberWfc * numberNodesPerElement);
           const dftfe::uInt iDof     = index2 / numberWfc;
           const dftfe::uInt wfcIndex = index2 % numberWfc;
-          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                          iDof * numberWfc + wfcIndex]
-                       .x,
-                    xVec[index].x);
-          atomicAdd(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                          iDof * numberWfc + wfcIndex]
-                       .y,
-                    xVec[index].y);
+          atomicAdd(
+            &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                  iDof * numberWfc + wfcIndex]
+               .x,
+            xVec[index + offset2 * numberWfc * numberNodesPerElement].x);
+          atomicAdd(
+            &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                  iDof * numberWfc + wfcIndex]
+               .y,
+            xVec[index + offset2 * numberWfc * numberNodesPerElement].y);
         }
     }
 
@@ -496,16 +517,19 @@ namespace dftfe
       const dftfe::uInt  totalEntries,
       const ValueType   *sphericalFnTimesWfcParallelVec,
       ValueType         *sphericalFnTimesWfcDealiiParallelVec,
-      const dftfe::uInt *indexMapDealiiParallelNumbering)
+      const dftfe::uInt *indexMapDealiiParallelNumbering,
+      const dftfe::uInt  dimension)
     {
       DFTFE_LAUNCH_KERNEL(copyToDealiiParallelNonLocalVecKernel,
-                          (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE * totalEntries,
+                          (numWfcs * totalEntries * dimension +
+                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
                           0,
                           0,
                           numWfcs,
                           totalEntries,
+                          dimension,
                           dftfe::utils::makeDataTypeDeviceCompatible(
                             sphericalFnTimesWfcParallelVec),
                           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -566,6 +590,8 @@ namespace dftfe
     void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt offset,
+      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,
@@ -585,6 +611,8 @@ namespace dftfe
                           0,
                           0,
                           totalNonLocalElements,
+                          offset,
+                          offset2,
                           numberWfc,
                           numberNodesPerElement,
                           iElemNonLocalToElemIndexMap.begin(),
@@ -687,7 +715,8 @@ namespace dftfe
       const dftfe::uInt        totalEntries,
       const dataTypes::number *sphericalFnTimesWfcParallelVec,
       dataTypes::number       *sphericalFnTimesWfcDealiiParallelVec,
-      const dftfe::uInt       *indexMapDealiiParallelNumbering);
+      const dftfe::uInt       *indexMapDealiiParallelNumbering,
+      const dftfe::uInt        dimension);
 
     template void
     copyToDealiiParallelNonLocalVec(
@@ -695,7 +724,8 @@ namespace dftfe
       const dftfe::uInt            totalEntries,
       const dataTypes::numberFP32 *sphericalFnTimesWfcParallelVec,
       dataTypes::numberFP32       *sphericalFnTimesWfcDealiiParallelVec,
-      const dftfe::uInt           *indexMapDealiiParallelNumbering);
+      const dftfe::uInt           *indexMapDealiiParallelNumbering,
+      const dftfe::uInt            dimension);
 
     template void
     copyFromDealiiParallelNonLocalVecToPaddedVector(
@@ -796,6 +826,8 @@ namespace dftfe
     template void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt offset,
+      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,
@@ -809,6 +841,8 @@ namespace dftfe
     template void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt offset,
+      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,

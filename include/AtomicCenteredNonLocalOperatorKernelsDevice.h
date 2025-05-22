@@ -47,7 +47,8 @@ namespace dftfe
       const dftfe::uInt  totalEntries,
       const ValueType   *sphericalFnTimesWfcParallelVec,
       ValueType         *sphericalFnTimesWfcDealiiParallelVec,
-      const dftfe::uInt *indexMapDealiiParallelNumbering);
+      const dftfe::uInt *indexMapDealiiParallelNumbering,
+      const dftfe::uInt  dimension = 1);
 
     template <typename ValueType>
     void
@@ -85,6 +86,8 @@ namespace dftfe
     void
     addNonLocalContribution(
       const dftfe::uInt totalNonLocalElements,
+      const dftfe::uInt offset,
+      const dftfe::uInt offset2,
       const dftfe::uInt numberWfc,
       const dftfe::uInt numberNodesPerElement,
       const dftfe::utils::MemoryStorage<dftfe::uInt,
