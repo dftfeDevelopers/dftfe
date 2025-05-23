@@ -140,12 +140,12 @@ namespace dftfe
     deviceSetValue(long int *devPtr, long int value, std::size_t size);
 
     template void
-    deviceSetValue(size_type *devPtr, size_type value, std::size_t size);
+    deviceSetValue(unsigned int *devPtr, unsigned int value, std::size_t size);
 
     template void
-    deviceSetValue(global_size_type *devPtr,
-                   global_size_type  value,
-                   std::size_t       size);
+    deviceSetValue(unsigned long int *devPtr,
+                   unsigned long int  value,
+                   std::size_t        size);
 
     template void
     deviceSetValue(double *devPtr, double value, std::size_t size);

@@ -156,6 +156,7 @@ namespace dftfe
     kCoordStdVec[1] = kcoord[1];
     kCoordStdVec[2] = kcoord[2];
     kCoordDevice.copyFrom(kCoordStdVec);
+    auto kCoordDevice_data = dftfe::utils::makeDataTypeDeviceCompatible(kCoordDevice.data());
     DFTFE_LAUNCH_KERNEL(
       computeKedGradKedFromInterpolatedValues,
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -167,7 +168,7 @@ namespace dftfe
       cellsBlockSize,
       nQuadsPerCell,
       kcoordSq,
-      dftfe::utils::makeDataTypeDeviceCompatible(kCoordDevice.data()),
+      kCoordDevice_data,
       dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
       dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
       dftfe::utils::makeDataTypeDeviceCompatible(

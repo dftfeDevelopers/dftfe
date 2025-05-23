@@ -83,7 +83,7 @@ namespace dftfe
           {                                                                 \
             stream.parallel_for(sycl::nd_range<1>(grid, block),             \
                                 [=](sycl::nd_item<1> ind) {                 \
-                                  kernel(ind, __VA_ARGS__)                  \
+                                  kernel(ind, __VA_ARGS__);                 \
                                 });                                         \
         } while (0)
 #    else
