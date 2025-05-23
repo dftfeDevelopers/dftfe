@@ -1152,7 +1152,7 @@ namespace dftfe
                 dftfe::uInt numberSphericalFunctions =
                   d_atomCenteredSphericalFunctionContainer
                     ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
-                d_sphericalFnTimesGradientWavefunDyadicXMatrix[atomId].resize(
+                d_sphericalFnTimesWavefunMatrix[atomId].resize(
                   numberSphericalFunctions * d_numberWaveFunctions,
                   ValueType(0.0));
               }
@@ -2460,7 +2460,6 @@ namespace dftfe
                         ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
                     const dftfe::Int nonZeroElementMatrixId =
                       sparsityPattern.find(atomId)->second[iElem];
-
                     d_BLASWrapperPtr->xgemm(
                       'N',
                       'N',
