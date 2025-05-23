@@ -1096,10 +1096,6 @@ namespace dftfe
                                &sphericalFunctionKetTimesVectorParFlattened,
       const allReduceVectorType AllReduceVectorType)
   {
-    if (AllReduceVectorType == allReduceVectorType::CconjTransX)
-      d_distributedVectorCconjTransX =
-        sphericalFunctionKetTimesVectorParFlattened.begin();
-
     std::vector<dftfe::uInt> tempNonLocalCellDofVector(
       d_flattenedNonLocalCellDofIndexToProcessDofIndexVector.size());
     std::transform(
@@ -1140,6 +1136,8 @@ namespace dftfe
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
               waveFunctionBlockSize,
               sphericalFunctionKetTimesVectorParFlattened);
+            d_distributedVectorCconjTransX =
+              sphericalFunctionKetTimesVectorParFlattened.begin();
             d_sphericalFnTimesWavefunMatrix.clear();
             const std::vector<dftfe::uInt> atomIdsInProcessor =
               d_atomCenteredSphericalFunctionContainer
@@ -3111,9 +3109,9 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
     initialiseCellWaveFunctionPointers(
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                               &cellWaveFunctionMatrix,
-      const dftfe::uInt         cellsBlockSize,
-      const allReduceVectorType AllReduceVectorType)
+                                            &cellWaveFunctionMatrix,
+      const dftfe::uInt                      cellsBlockSize,
+      const std::vector<allReduceVectorType> AllReduceVectorType)
   {
     if (!d_useGlobalCMatrix)
       {
@@ -3159,20 +3157,57 @@ namespace dftfe
                                          startCell * d_numberNodesPerElement *
                                            d_numberWaveFunctions);
                   }
-                freeDeviceVectors();
+                freeDeviceVectors(AllReduceVectorType);
+
                 hostWfcPointersInCellRange.clear();
                 hostPointerCDaggerInCellRange.clear();
-                hostPointerCDaggerOutTempInCellRange.clear();
-                hostWfcPointersInCellRange.resize(numCellBatches);
-                hostPointerCDaggerInCellRange.resize(numCellBatches);
-                hostPointerCDaggerOutTempInCellRange.resize(numCellBatches);
+                for (dftfe::Int iVec = 0; iVec < AllReduceVectorType.size();
+                     iVec++)
+                  {
+                    if (AllReduceVectorType[iVec] ==
+                        allReduceVectorType::CconjTransX)
+                      {
+                        hostPointerCDaggerOutTempInCellRange.clear();
+                        hostPointerCDaggerInCellRange.resize(numCellBatches);
+                        hostPointerCDaggerOutTempInCellRange.resize(
+                          numCellBatches);
+                        devicePointerCDaggerInCellRange.clear();
+                        devicePointerCDaggerOutTempInCellRange.clear();
+                        devicePointerCDaggerInCellRange.resize(numCellBatches);
+                        devicePointerCDaggerOutTempInCellRange.resize(
+                          numCellBatches);
+                      }
+                    else if (AllReduceVectorType[iVec] ==
+                             allReduceVectorType::DconjTransX)
+                      {
+                        hostPointerDDaggerOutTempInCellRange.clear();
+                        hostPointerDDaggerInCellRange.resize(numCellBatches);
+                        hostPointerDDaggerOutTempInCellRange.resize(
+                          numCellBatches);
+                        devicePointerDDaggerInCellRange.clear();
+                        devicePointerDDaggerOutTempInCellRange.clear();
+                        devicePointerDDaggerInCellRange.resize(numCellBatches);
+                        devicePointerDDaggerOutTempInCellRange.resize(
+                          numCellBatches);
+                      }
+                    else if (AllReduceVectorType[iVec] ==
+                             allReduceVectorType::DDyadicRconjTransX)
+                      {
+                        hostPointerDdyadicRDaggerOutTempInCellRange.clear();
+                        hostPointerDdyadicRDaggerInCellRange.resize(
+                          numCellBatches);
+                        hostPointerDdyadicRDaggerOutTempInCellRange.resize(
+                          numCellBatches);
+                        devicePointerDdyadicRDaggerInCellRange.clear();
+                        devicePointerDdyadicRDaggerOutTempInCellRange.clear();
+                        devicePointerDdyadicRDaggerInCellRange.resize(
+                          numCellBatches);
+                        devicePointerDdyadicRDaggerOutTempInCellRange.resize(
+                          numCellBatches);
+                      }
+                  }
 
-                deviceWfcPointersInCellRange.clear();
-                devicePointerCDaggerInCellRange.clear();
-                devicePointerCDaggerOutTempInCellRange.clear();
-                deviceWfcPointersInCellRange.resize(numCellBatches);
-                devicePointerCDaggerInCellRange.resize(numCellBatches);
-                devicePointerCDaggerOutTempInCellRange.resize(numCellBatches);
+
                 for (dftfe::uInt iCellBatch = 0; iCellBatch < numCellBatches;
                      ++iCellBatch)
                   {
@@ -3184,29 +3219,64 @@ namespace dftfe
                     dftfe::utils::deviceMalloc(
                       (void **)&deviceWfcPointersInCellRange[iCellBatch],
                       nonLocalElements * sizeof(ValueType *));
-                    if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+                    for (dftfe::Int iVec = 0; iVec < AllReduceVectorType.size();
+                         iVec++)
                       {
-                        hostPointerCDaggerInCellRange[iCellBatch] =
-                          (ValueType **)malloc(nonLocalElements *
-                                               sizeof(ValueType *));
-                        hostPointerCDaggerOutTempInCellRange[iCellBatch] =
-                          (ValueType **)malloc(nonLocalElements *
-                                               sizeof(ValueType *));
-                        dftfe::utils::deviceMalloc(
-                          (void **)&devicePointerCDaggerInCellRange[iCellBatch],
-                          nonLocalElements * sizeof(ValueType *));
-                        dftfe::utils::deviceMalloc(
-                          (void **)&devicePointerCDaggerOutTempInCellRange
-                            [iCellBatch],
-                          nonLocalElements * sizeof(ValueType *));
-                      }
-                    else if (AllReduceVectorType ==
-                             allReduceVectorType::DconjTransX)
-                      {
-                      }
-                    else if (AllReduceVectorType ==
-                             allReduceVectorType::DDyadicRconjTransX)
-                      {
+                        if (AllReduceVectorType[iVec] ==
+                            allReduceVectorType::CconjTransX)
+                          {
+                            hostPointerCDaggerInCellRange[iCellBatch] =
+                              (ValueType **)malloc(nonLocalElements *
+                                                   sizeof(ValueType *));
+                            hostPointerCDaggerOutTempInCellRange[iCellBatch] =
+                              (ValueType **)malloc(nonLocalElements *
+                                                   sizeof(ValueType *));
+                            dftfe::utils::deviceMalloc(
+                              (void *
+                                 *)&devicePointerCDaggerInCellRange[iCellBatch],
+                              nonLocalElements * sizeof(ValueType *));
+                            dftfe::utils::deviceMalloc(
+                              (void **)&devicePointerCDaggerOutTempInCellRange
+                                [iCellBatch],
+                              nonLocalElements * sizeof(ValueType *));
+                          }
+                        else if (AllReduceVectorType[iVec] ==
+                                 allReduceVectorType::DconjTransX)
+                          {
+                            hostPointerDDaggerInCellRange[iCellBatch] =
+                              (ValueType **)malloc(nonLocalElements * 3 *
+                                                   sizeof(ValueType *));
+                            hostPointerDDaggerOutTempInCellRange[iCellBatch] =
+                              (ValueType **)malloc(nonLocalElements * 3 *
+                                                   sizeof(ValueType *));
+                            dftfe::utils::deviceMalloc(
+                              (void *
+                                 *)&devicePointerDDaggerInCellRange[iCellBatch],
+                              nonLocalElements * 3 * sizeof(ValueType *));
+                            dftfe::utils::deviceMalloc(
+                              (void **)&devicePointerDDaggerOutTempInCellRange
+                                [iCellBatch],
+                              nonLocalElements * 3 * sizeof(ValueType *));
+                          }
+                        else if (AllReduceVectorType[iVec] ==
+                                 allReduceVectorType::DDyadicRconjTransX)
+                          {
+                            hostPointerDdyadicRDaggerInCellRange[iCellBatch] =
+                              (ValueType **)malloc(nonLocalElements * 9 *
+                                                   sizeof(ValueType *));
+                            hostPointerDdyadicRDaggerOutTempInCellRange
+                              [iCellBatch] = (ValueType **)malloc(
+                                nonLocalElements * 9 * sizeof(ValueType *));
+                            dftfe::utils::deviceMalloc(
+                              (void **)&devicePointerDdyadicRDaggerInCellRange
+                                [iCellBatch],
+                              nonLocalElements * 9 * sizeof(ValueType *));
+                            dftfe::utils::deviceMalloc(
+                              (void *
+                                 *)&devicePointerDdyadicRDaggerOutTempInCellRange
+                                [iCellBatch],
+                              nonLocalElements * 9 * sizeof(ValueType *));
+                          }
                       }
 
                     dftfe::uInt startCell = iCellBatch * cellsBlockSize;
@@ -3249,43 +3319,70 @@ namespace dftfe
                               cellWaveFunctionMatrix.begin() +
                               (d_memoryOptMode ? iCell - startCell : iCell) *
                                 d_numberNodesPerElement * d_numberWaveFunctions;
+                            for (dftfe::Int iVec = 0;
+                                 iVec < AllReduceVectorType.size();
+                                 iVec++)
+                              {
+                                if (AllReduceVectorType[iVec] ==
+                                    allReduceVectorType::CconjTransX)
+                                  {
+                                    hostPointerCDaggerInCellRange[iCellBatch][i] =
+                                      d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
+                                        .begin() +
+                                      countElem * d_numberNodesPerElement *
+                                        d_maxSingleAtomContribution;
+                                    hostPointerCDaggerOutTempInCellRange
+                                      [iCellBatch][i] =
+                                        d_sphericalFnTimesVectorAllCellsDevice
+                                          .begin() +
+                                        countElem * d_numberWaveFunctions *
+                                          d_maxSingleAtomContribution;
+                                  }
+                                else if (AllReduceVectorType[iVec] ==
+                                         allReduceVectorType::DconjTransX)
+                                  {
+                                    for (dftfe::Int iDim = 0; iDim < 3; iDim++)
+                                      {
+                                        // hostPointerDDaggerInCellRange[iCellBatch][i]
+                                        // =
+                                        //   d_IntegralFEMGradientShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
+                                        //     .begin() +
+                                        //   countElem * d_numberNodesPerElement
+                                        //   *
+                                        //     d_maxSingleAtomContribution;
+                                        // hostPointerDDaggerOutTempInCellRange
+                                        //   [iCellBatch][i] =
+                                        //     d_sphericalFnTimesVectorAllCellsDevice
+                                        //       .begin() +
+                                        //     countElem * d_numberWaveFunctions
+                                        //     *
+                                        //       d_maxSingleAtomContribution;
+                                      }
+                                  }
+                                else if (AllReduceVectorType[iVec] ==
+                                         allReduceVectorType::
+                                           DDyadicRconjTransX)
+                                  {
+                                    for (dftfe::Int iDim = 0; iDim < 9; iDim++)
+                                      {
+                                        //                                   hostPointerDdyadicRDaggerInCellRange[iCellBatch][i]
+                                        //                                   =
+                                        //   d_IntegralFEMGradientShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
+                                        //     .begin() +
+                                        //   countElem * d_numberNodesPerElement
+                                        //   *
+                                        //     d_maxSingleAtomContribution;
+                                        // hostPointerDdyadicRDaggerOutTempInCellRange
+                                        //   [iCellBatch][i] =
+                                        //     d_sphericalFnTimesVectorAllCellsDevice
+                                        //       .begin() +
+                                        //     countElem * d_numberWaveFunctions
+                                        //     *
+                                        //       d_maxSingleAtomContribution;
+                                      }
+                                  }
+                              }
 
-                            if (AllReduceVectorType ==
-                                allReduceVectorType::CconjTransX)
-                              {
-                                hostPointerCDaggerInCellRange[iCellBatch][i] =
-                                  d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
-                                    .begin() +
-                                  countElem * d_numberNodesPerElement *
-                                    d_maxSingleAtomContribution;
-                              }
-                            else
-                              {
-                                // hostPointerDDaggerInCellRange[iCellBatch][i]
-                                // =
-                                // d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionDevice
-                                //   .begin() +
-                                // countElem * d_numberNodesPerElement *
-                                //   d_maxSingleAtomContribution;
-                              }
-                            if (AllReduceVectorType ==
-                                allReduceVectorType::CconjTransX)
-                              {
-                                hostPointerCDaggerOutTempInCellRange
-                                  [iCellBatch][i] =
-                                    d_sphericalFnTimesVectorAllCellsDevice
-                                      .begin() +
-                                    countElem * d_numberWaveFunctions *
-                                      d_maxSingleAtomContribution;
-                              }
-                            else
-                              {
-                                // hostPointerDDaggerOutTempInCellRange
-                                //   [iCellBatch][i] =
-                                //     d_sphericalFnTimesVectorAllCellsDevice.begin()
-                                //     + countElem * d_numberWaveFunctions *
-                                //       d_maxSingleAtomContribution;
-                              }
 
                             i++;
                           } // iAtom
@@ -3294,7 +3391,7 @@ namespace dftfe
                       deviceWfcPointersInCellRange[iCellBatch],
                       hostWfcPointersInCellRange[iCellBatch],
                       nonLocalElements * sizeof(ValueType *));
-                    if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+                    if (true)
                       {
                         dftfe::utils::deviceMemcpyH2D(
                           devicePointerCDaggerInCellRange[iCellBatch],
@@ -3316,7 +3413,8 @@ namespace dftfe
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
-  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::freeDeviceVectors()
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::freeDeviceVectors(
+    const std::vector<allReduceVectorType> AllReduceVectorType)
   {
     if (!d_useGlobalCMatrix)
       {
@@ -3328,14 +3426,55 @@ namespace dftfe
                      ++iCellBatch)
                   {
                     free(hostWfcPointersInCellRange[iCellBatch]);
-                    free(hostPointerCDaggerInCellRange[iCellBatch]);
-                    free(hostPointerCDaggerOutTempInCellRange[iCellBatch]);
                     dftfe::utils::deviceFree(
                       deviceWfcPointersInCellRange[iCellBatch]);
-                    dftfe::utils::deviceFree(
-                      devicePointerCDaggerInCellRange[iCellBatch]);
-                    dftfe::utils::deviceFree(
-                      devicePointerCDaggerOutTempInCellRange[iCellBatch]);
+                  }
+
+                for (int iVec = 0; iVec < AllReduceVectorType.size(); ++iVec)
+                  {
+                    for (dftfe::uInt iCellBatch = 0;
+                         iCellBatch < d_numCellBatches;
+                         ++iCellBatch)
+                      {
+                        if (AllReduceVectorType[iVec] ==
+                            allReduceVectorType::CconjTransX)
+                          {
+                            free(hostPointerCDaggerInCellRange[iCellBatch]);
+                            free(
+                              hostPointerCDaggerOutTempInCellRange[iCellBatch]);
+                            dftfe::utils::deviceFree(
+                              devicePointerCDaggerInCellRange[iCellBatch]);
+                            dftfe::utils::deviceFree(
+                              devicePointerCDaggerOutTempInCellRange
+                                [iCellBatch]);
+                          }
+                        else if (AllReduceVectorType[iVec] ==
+                                 allReduceVectorType::DconjTransX)
+                          {
+                            free(hostPointerDDaggerInCellRange[iCellBatch]);
+                            free(
+                              hostPointerDDaggerOutTempInCellRange[iCellBatch]);
+                            dftfe::utils::deviceFree(
+                              devicePointerDDaggerInCellRange[iCellBatch]);
+                            dftfe::utils::deviceFree(
+                              devicePointerDDaggerOutTempInCellRange
+                                [iCellBatch]);
+                          }
+                        else if (AllReduceVectorType[iVec] ==
+                                 allReduceVectorType::DDyadicRconjTransX)
+                          {
+                            free(
+                              hostPointerDdyadicRDaggerInCellRange[iCellBatch]);
+                            free(hostPointerDdyadicRDaggerOutTempInCellRange
+                                   [iCellBatch]);
+                            dftfe::utils::deviceFree(
+                              devicePointerDdyadicRDaggerInCellRange
+                                [iCellBatch]);
+                            dftfe::utils::deviceFree(
+                              devicePointerDdyadicRDaggerOutTempInCellRange
+                                [iCellBatch]);
+                          }
+                      }
                   }
               }
             d_isMallocCalled = false;

@@ -179,13 +179,15 @@ namespace dftfe
     void
     initialiseCellWaveFunctionPointers(
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                               &cellWaveFunctionMatrix,
-      const dftfe::uInt         cellsBlockSize,
-      const allReduceVectorType AllReduceVectorType =
-        allReduceVectorType::CconjTransX);
+                                            &cellWaveFunctionMatrix,
+      const dftfe::uInt                      cellsBlockSize,
+      const std::vector<allReduceVectorType> AllReduceVectorType = {
+        allReduceVectorType::CconjTransX});
 
     void
-    freeDeviceVectors();
+    freeDeviceVectors(
+      const std::vector<allReduceVectorType> AllReduceVectorType = {
+        allReduceVectorType::CconjTransX});
 #endif
 
     // Getter functions
@@ -793,9 +795,15 @@ namespace dftfe
     ValueType *d_distributedVectorCconjTransX;
 
     std::vector<ValueType **> deviceWfcPointersInCellRange,
-      devicePointerCDaggerInCellRange, devicePointerCDaggerOutTempInCellRange;
+      devicePointerCDaggerInCellRange, devicePointerCDaggerOutTempInCellRange,
+      devicePointerDDaggerInCellRange, devicePointerDDaggerOutTempInCellRange,
+      devicePointerDdyadicRDaggerInCellRange,
+      devicePointerDdyadicRDaggerOutTempInCellRange;
     std::vector<ValueType **> hostWfcPointersInCellRange,
-      hostPointerCDaggerInCellRange, hostPointerCDaggerOutTempInCellRange;
+      hostPointerCDaggerInCellRange, hostPointerCDaggerOutTempInCellRange,
+      hostPointerDDaggerInCellRange, hostPointerDDaggerOutTempInCellRange,
+      hostPointerDdyadicRDaggerInCellRange,
+      hostPointerDdyadicRDaggerOutTempInCellRange;
     std::vector<ValueType *> d_wfcStartPointerInCellRange;
     dftfe::uInt              d_cellsBlockSize, d_numCellBatches;
     std::vector<dftfe::uInt> d_nonLocalElementsInCellRange;
