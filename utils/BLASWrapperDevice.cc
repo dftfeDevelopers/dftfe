@@ -59,7 +59,7 @@ namespace dftfe
 {
   namespace utils
   {
-#if hipblasVersionMajor >= 2 || defined(DFTFE_WITH_DEVICE_NVIDIA)
+#if hipblasVersionMajor >= 2 || defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_INTEL)
     template <typename T>
     inline auto
     makeDataTypeDeviceBlasCompatible(T &&x)
