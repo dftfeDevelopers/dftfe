@@ -299,17 +299,15 @@ namespace dftfe
                 dftfe::utils::imagPartDevice(recvBuffer[i]);
 
               dftfe::utils::copyValue(
-                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                reinterpret_cast<double*>(dataArray.data()+ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
-                           intraBlockId]
-                   .x,
+                           intraBlockId),
                 recvValReal);
 
               dftfe::utils::copyValue(
-                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                reinterpret_cast<double*>(dataArray.data()+ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
-                           intraBlockId]
-                   .y,
+                           intraBlockId) + 1,
                 recvValImag);
             }
         },

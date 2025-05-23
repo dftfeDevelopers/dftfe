@@ -21,6 +21,8 @@
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
+#include <oneapi/mkl.hpp>
+#include <oneapi/mkl/blas.hpp>
 #ifdef DFTFE_WITH_DEVICE_AMD
 #  define HIPBLAS_V2
 #  include <rocblas.h>
