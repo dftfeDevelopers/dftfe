@@ -60,7 +60,9 @@ More information
    - Principal developers  
        - Dr. Sambit Das (University of Michigan Ann Arbor, USA)
        - Prof. Phani Motamarri (Indian Institute of Science, India)
-    
+       - Nikhil Kodali         (Indian Institute of Science, India)    
+       - Kartick Ramakrishnan  (Indian Institute of Science, India)
+
  - A complete list of the many authors that have contributed to DFT-FE can be found at [authors](authors).    
 
 License

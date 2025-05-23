@@ -1,3 +1,5 @@
+Copyright (c) 2017-2025 The Regents of the University of Michigan
+
 The origins of DFT-FE were in the  [Computational Materials Physics Group](http://www-personal.umich.edu/~vikramg)
 at the University of Michigan, Ann Arbor, with Vikram Gavini, Professor of Mechanical Engineering and 
 Materials Science & Engineering, as the principal investigator broadly overseeing the effort. The current
@@ -16,57 +18,39 @@ lists are in alphabetical order based on the last name.
 
    Mentors/Development leads
    =========================
-   Sambit Das         - University of Michigan, USA
-   Vikram Gavini      - University of Michigan, USA
-   Phani Motamarri    - Indian Institute of Science, India
- 
-Copyright (c) 2017-2025 The Regents of the University of Michigan
+   Sambit Das         - University of Michigan, USA 2017-present
+   Vikram Gavini      - University of Michigan, USA 2015-present
+   Phani Motamarri    - University of Michigan, USA 2015-2019; Indian Institute of Science, India 2019-present 
 
-    Principal developers
-    ====================
-    Sambit Das         - University of Michigan, USA
+   Principal developers
+   ====================
+   Sambit Das         - University of Michigan, USA 2017-present
+   Krishnendu Ghosh   - University of Michigan, USA 2017-2020
+   Phani Motamarri    - University of Michigan, USA 2015-2019; Indian Institute of Science, India 2019-present
+   Shiva Rudraraju    - University of Michigan, USA 2015-2018
+   Nikhil Kodali         - Indian Institute of Science, India 2021-present    
+   Kartick Ramakrishnan  - Indian Institute of Science, India 2020-present
 
-    Principal developers emeriti
-    =============================
-    Krishnendu Ghosh   - University of Michigan, USA
-    Phani Motamarri    - University of Michigan, USA
-    Shiva Rudraraju    - University of Michigan, USA 2015-2018
-
-    Contributors
-    ============
-    Sambit Das         - University of Michigan, USA
-    Bikash Kanungo     - University of Michigan, USA
-    Shukan Parekh      - University of Michigan, USA Summer 2019
-    Vishal Subramanian - University of Michigan, USA
-
+   Contributors
+   ============
+   Sambit Das         - University of Michigan, USA 2017-present
+   Krishnendu Ghosh   - University of Michigan, USA 2017-2020
+   Phani Motamarri    - University of Michigan, USA 2015-2019; Indian Institute of Science, India 2019-present
+   Shiva Rudraraju    - University of Michigan, USA 2015-2018
+   Nikhil Kodali         - Indian Institute of Science, India 2021-present    
+   Kartick Ramakrishnan  - Indian Institute of Science, India 2020-present   
+   Bikash Kanungo     - University of Michigan, USA 2023-present
+   Shukan Parekh      - University of Michigan, USA Summer 2019
+   Vishal Subramanian - University of Michigan, USA 2022-present
+   Ian C. Lin            - University of Michigan, USA 2018-2019
+   Srinibas Nandi        - Indian Institute of Science, India 2023-present
+   Gourab Panigrahi      - Indian Institute of Science, India 2021-present
+   Rudra Panch           - Indian Institute of Technology, Madras, India
+   Kartikey Srivastava   - Birla Institute of Technology And Science - Pilani, India Summer 2024
 
 Authors affiliated to other institutions (alphabetical in last name)
         
-    Mentors/Development leads
-    =========================
-    Phani Motamarri       - Indian Institute of Science, India
-    
-    Principal developers
-    ====================
-    Nikhil Kodali         - Indian Institute of Science, India    
-    Phani Motamarri       - Indian Institute of Science, India
-    Kartick Ramakrishnan  - Indian Institute of Science, India
-    
-
-    Contributors
-    ============
-    Denis Davydov         - University of Erlangen-Nuremberg, Germany
-    Krishnendu Ghosh      - University of Michigan, USA 2017-2020  
-    Nikhil Kodali         - Indian Institute of Science, India
-    Ian C. Lin            - University of Michigan, USA 2018-2019
-    Phani Motamarri       - Indian Institute of Science, India
-    Srinibas Nandi        - Indian Institute of Science, India
-    Gourab Panigrahi      - Indian Institute of Science, India
-    Rudra Panch           - Indian Institute of Technology, Madras, India
-    David M. Rogers       - Oak Ridge National Laboratory, USA
-    Kartick Ramakrishnan  - Indian Institute of Science, India
-    Kartikey Srivastava   - Birla Institute of Technology And Science - Pilani, India Summer 2024
-   
-    
-
-
+  Contributors
+  ============
+  Denis Davydov         - University of Erlangen-Nuremberg, Germany
+  David M. Rogers       - Oak Ridge National Laboratory, USA
