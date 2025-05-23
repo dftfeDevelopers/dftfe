@@ -582,10 +582,9 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
-            auto add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
+            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
 
             dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::mult(
                                           dftfe::utils::realPartDevice(addFromVec[index]), coeff));
@@ -617,11 +616,10 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
 
-            auto add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
-
+            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
+            
             dftfe::utils::atomicAddWrapper(add_real, 
                                           dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
             dftfe::utils::atomicAddWrapper(add_imag, 
@@ -706,11 +704,10 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
-            auto add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
-
+            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
+            
             dftfe::utils::atomicAddWrapper(add_real, 
                                           dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
             dftfe::utils::atomicAddWrapper(add_imag, 
@@ -740,11 +737,10 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
 
-            auto add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
-
+            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
+            
             dftfe::utils::atomicAddWrapper(add_real, 
                                           dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
             dftfe::utils::atomicAddWrapper(add_imag, 
@@ -827,11 +823,10 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
-            auto add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
-
+            auto* add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
+            
             dftfe::utils::atomicAddWrapper(add_real, 
                                           dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
             dftfe::utils::atomicAddWrapper(add_imag, 
@@ -862,11 +857,10 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
 
-            auto add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
-
+            auto* add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
+            
             dftfe::utils::atomicAddWrapper(add_real, 
                                           dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
             dftfe::utils::atomicAddWrapper(add_imag, 
@@ -951,11 +945,10 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
-            auto add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
-
+            auto* add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
+            
             dftfe::utils::atomicAddWrapper(add_real, 
                                           dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
             dftfe::utils::atomicAddWrapper(add_imag, 
@@ -986,11 +979,10 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
 
-            auto add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
-
+            auto* add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
+            
             dftfe::utils::atomicAddWrapper(add_real, 
                                           dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
             dftfe::utils::atomicAddWrapper(add_imag, 
@@ -1019,11 +1011,10 @@ namespace dftfe
             dftfe::uInt blockIndex      = index / contiguousBlockSize;
             dftfe::uInt intraBlockIndex = index % contiguousBlockSize;
 
-            auto add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[0];
-            auto add_imag = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex])[1];
-
+            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                         intraBlockIndex]);
+            auto* add_imag = add_real + 1;
+            
             dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(addFromVec[index]));
             dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(addFromVec[index]));
           }

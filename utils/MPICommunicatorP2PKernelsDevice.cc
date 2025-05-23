@@ -128,11 +128,10 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
 
-              auto add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId])[0];
-              auto add_imag = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId])[1];
-
+              auto* add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId]);
+              auto* add_imag = add_real + 1;
+            
               dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
               dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
             }
@@ -156,11 +155,10 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
 
-              auto add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId])[0];
-              auto add_imag = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId])[1];
-
+              auto* add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId]);
+              auto* add_imag = add_real + 1;
+              
               dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
               dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
             }
@@ -188,11 +186,10 @@ namespace dftfe
               const double recvValImag =
                 dftfe::utils::imagPartDevice(recvBuffer[i]);
 
-              auto add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId])[0];
-              auto add_imag = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId])[1];
-
+              auto* add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                     blockSize + intraBlockId]);
+              auto* add_imag = add_real + 1;
+              
               dftfe::utils::atomicAddWrapper(add_real, recvValReal);
               dftfe::utils::atomicAddWrapper(add_imag, recvValImag);
             }
