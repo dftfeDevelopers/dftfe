@@ -299,13 +299,13 @@ namespace dftfe
                 dftfe::utils::imagPartDevice(recvBuffer[i]);
 
               dftfe::utils::copyValue(
-                reinterpret_cast<double*>(dataArray.data()+ownedLocalIndicesForTargetProcs[blockId] *
+                reinterpret_cast<double*>(dataArray->data()+ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
                            intraBlockId),
                 recvValReal);
 
               dftfe::utils::copyValue(
-                reinterpret_cast<double*>(dataArray.data()+ownedLocalIndicesForTargetProcs[blockId] *
+                reinterpret_cast<double*>(dataArray->data()+ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
                            intraBlockId) + 1,
                 recvValImag);
@@ -333,6 +333,7 @@ namespace dftfe
         MemoryStorage<ValueTypeComm, utils::MemorySpace::DEVICE> &sendBuffer,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
+      auto sendBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
       DFTFE_LAUNCH_KERNEL(
         gatherSendBufferDeviceKernel,
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
@@ -346,7 +347,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
         dftfe::utils::makeDataTypeDeviceCompatible(
           ownedLocalIndicesForTargetProcs.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data()));
+        sendBuffer_data);
     }
 
     template <typename ValueType>
