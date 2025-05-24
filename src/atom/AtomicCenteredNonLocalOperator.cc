@@ -1102,7 +1102,7 @@ namespace dftfe
       d_flattenedNonLocalCellDofIndexToProcessDofIndexVector.begin(),
       d_flattenedNonLocalCellDofIndexToProcessDofIndexVector.end(),
       tempNonLocalCellDofVector.begin(),
-      [&](auto &c) { return c * waveFunctionBlockSize; });
+      [&waveFunctionBlockSize](auto &c) { return c * waveFunctionBlockSize; });
     d_flattenedNonLocalCellDofIndexToProcessDofIndexMap.clear();
     d_flattenedNonLocalCellDofIndexToProcessDofIndexMap.resize(
       d_flattenedNonLocalCellDofIndexToProcessDofIndexVector.size());
@@ -1219,6 +1219,8 @@ namespace dftfe
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
               waveFunctionBlockSize,
               sphericalFunctionKetTimesVectorParFlattened);
+            d_distributedVectorCconjTransX =
+              sphericalFunctionKetTimesVectorParFlattened.begin();
             d_sphericalFnTimesVectorAllCellsDevice.clear();
             d_sphericalFnTimesVectorAllCellsDevice.resize(
               d_totalNonlocalElems * d_numberWaveFunctions *
@@ -2349,24 +2351,29 @@ namespace dftfe
                     const dftfe::Int nonZeroElementMatrixId =
                       sparsityPattern.find(atomId)->second[iElem];
 
-                    d_BLASWrapperPtr->xgemm(
-                      'N',
-                      'N',
-                      d_numberWaveFunctions,
-                      numberSphericalFunctions,
-                      d_numberNodesPerElement,
-                      &one,
-                      &X[(iElem - cellRange.first) * d_numberNodesPerElement *
-                         d_numberWaveFunctions],
-                      d_numberWaveFunctions,
-                      &d_CMatrixEntriesConjugate[atomId][nonZeroElementMatrixId]
-                                                [d_kPointIndex *
-                                                 d_numberNodesPerElement *
-                                                 numberSphericalFunctions],
-                      d_numberNodesPerElement,
-                      &one,
-                      &d_sphericalFnTimesWavefunMatrix[atomId][0],
-                      d_numberWaveFunctions);
+                    for (dftfe::Int dim = 0; dim < 3; dim++)
+                      d_BLASWrapperPtr->xgemm(
+                        'N',
+                        'N',
+                        d_numberWaveFunctions,
+                        numberSphericalFunctions,
+                        d_numberNodesPerElement,
+                        &one,
+                        &X[(iElem - cellRange.first) * d_numberNodesPerElement *
+                           d_numberWaveFunctions],
+                        d_numberWaveFunctions,
+                        &d_DMatrixEntriesConjugate
+                          [atomId][nonZeroElementMatrixId]
+                          [3 * d_kPointIndex * d_numberNodesPerElement *
+                             numberSphericalFunctions +
+                           dim * d_numberNodesPerElement *
+                             numberSphericalFunctions],
+                        d_numberNodesPerElement,
+                        &one,
+                        &d_sphericalFnTimesGradientWavefunMatrix
+                          [atomId][dim * d_numberWaveFunctions *
+                                   numberSphericalFunctions],
+                        d_numberWaveFunctions);
                   } // iAtom
               }
           } // iElem
@@ -2384,36 +2391,6 @@ namespace dftfe
             "DFT-FE Error: Inconsistent X called. Make sure the input X is correct."));
         const ValueType scalarCoeffAlpha = ValueType(1.0),
                         scalarCoeffBeta  = ValueType(0.0);
-
-        d_BLASWrapperPtr->xgemmBatched(
-          'N',
-          'N',
-          d_numberWaveFunctions,
-          d_maxSingleAtomContribution,
-          d_numberNodesPerElement,
-          &scalarCoeffAlpha,
-          (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
-          d_numberWaveFunctions,
-          (const ValueType **)devicePointerCDaggerInCellRange[iCellBatch],
-          d_numberNodesPerElement,
-          &scalarCoeffBeta,
-          devicePointerCDaggerOutTempInCellRange[iCellBatch],
-          d_numberWaveFunctions,
-          d_nonLocalElementsInCellRange[iCellBatch]);
-
-        if (iCellBatch == d_numCellBatches - 1)
-          {
-            d_sphericalFnTimesWavefunctionMatrix.setValue(ValueType(0.0));
-            dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
-              assembleAtomLevelContributionsFromCellLevel(
-                d_numberWaveFunctions,
-                d_totalNonlocalElems,
-                d_maxSingleAtomContribution,
-                d_totalNonLocalEntries,
-                d_sphericalFnTimesVectorAllCellsDevice,
-                d_mapSphericalFnTimesVectorAllCellsReductionDevice,
-                d_sphericalFnTimesWavefunctionMatrix);
-          }
       }
 #endif
   }
@@ -2495,7 +2472,6 @@ namespace dftfe
             "DFT-FE Error: Inconsistent X called. Make sure the input X is correct."));
         const ValueType scalarCoeffAlpha = ValueType(1.0),
                         scalarCoeffBeta  = ValueType(0.0);
-
         d_BLASWrapperPtr->xgemmBatched(
           'N',
           'N',
@@ -2511,7 +2487,6 @@ namespace dftfe
           devicePointerCDaggerOutTempInCellRange[iCellBatch],
           d_numberWaveFunctions,
           d_nonLocalElementsInCellRange[iCellBatch]);
-
         if (iCellBatch == d_numCellBatches - 1)
           {
             d_sphericalFnTimesWavefunctionMatrix.setValue(ValueType(0.0));
@@ -2524,27 +2499,6 @@ namespace dftfe
                 d_sphericalFnTimesVectorAllCellsDevice,
                 d_mapSphericalFnTimesVectorAllCellsReductionDevice,
                 d_sphericalFnTimesWavefunctionMatrix);
-            // dftfe::utils::MemoryStorage<ValueType,
-            // dftfe::utils::MemorySpace::HOST>
-            // temp(d_sphericalFnTimesWavefunctionMatrix.size(),0.0);
-            // temp.copyFrom(d_sphericalFnTimesWavefunctionMatrix);
-            // ValueType sumValue = 0;
-            //       for(int ii = 0;
-            //       ii<d_sphericalFnTimesWavefunctionMatrix.size(); ii++)
-            //       {
-            //         sumValue += temp[ii];
-            //       }
-            //    for(int iTask = 0; iTask < d_n_mpi_processes; iTask++)
-            //    {
-            //      if(iTask == d_this_mpi_process)
-            //      {
-            //        std::cout << "iTask and sumValue: " <<iTask<<" "<<
-            //        sumValue << std::endl;
-            //      }
-            //      MPI_Barrier(d_mpi_communicator);
-            //    }
-            //    MPI_Barrier(d_mpi_communicator);
-            //    pcout<<"--------------------"<<std::endl;
           }
       }
 #endif
@@ -3127,8 +3081,7 @@ namespace dftfe
                 if (cellRemSize > 0)
                   numCellBatches += 1;
                 d_numCellBatches = numCellBatches;
-                std::cout << "Initialise Cell WFC: " << d_numCellBatches << " "
-                          << d_numberWaveFunctions << std::endl;
+
                 d_nonLocalElementsInCellRange.clear();
                 d_nonLocalElementsInCellRange.resize(numCellBatches, 0);
                 d_wfcStartPointerInCellRange.clear();
@@ -3157,9 +3110,11 @@ namespace dftfe
                                            d_numberWaveFunctions);
                   }
                 freeDeviceVectors(AllReduceVectorType);
-
                 hostWfcPointersInCellRange.clear();
                 hostPointerCDaggerInCellRange.clear();
+                deviceWfcPointersInCellRange.clear();
+                hostWfcPointersInCellRange.resize(numCellBatches);
+                deviceWfcPointersInCellRange.resize(numCellBatches);
                 for (dftfe::Int iVec = 0; iVec < AllReduceVectorType.size();
                      iVec++)
                   {

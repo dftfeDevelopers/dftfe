@@ -642,6 +642,7 @@ namespace dftfe
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
       d_CMatrixEntriesTranspose;
+    std::vector<std::vector<std::vector<ValueType>>> d_DMatrixEntriesConjugate;
 
 
 
