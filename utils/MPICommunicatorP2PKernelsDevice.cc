@@ -333,6 +333,9 @@ namespace dftfe
         MemoryStorage<ValueTypeComm, utils::MemorySpace::DEVICE> &sendBuffer,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
+      auto dataArray_data = dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
+      auto ownedLocalIndicesForTargetProcs_data = dftfe::utils::makeDataTypeDeviceCompatible(
+                                                    ownedLocalIndicesForTargetProcs.data());
       auto sendBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
       DFTFE_LAUNCH_KERNEL(
         gatherSendBufferDeviceKernel,
@@ -344,9 +347,8 @@ namespace dftfe
         deviceCommStream,
         ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          ownedLocalIndicesForTargetProcs.data()),
+        dataArray_data,
+        ownedLocalIndicesForTargetProcs_data,
         sendBuffer_data);
     }
 
@@ -365,6 +367,10 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
+      auto recvBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
+      auto ownedLocalIndicesForTargetProcs_data = dftfe::utils::makeDataTypeDeviceCompatible(
+                                                    ownedLocalIndicesForTargetProcs.data());
+      auto sendBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
       DFTFE_LAUNCH_KERNEL(
         accumAddFromRecvBufferDeviceKernel,
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
@@ -375,10 +381,9 @@ namespace dftfe
         deviceCommStream,
         ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          ownedLocalIndicesForTargetProcs.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+        recvBuffer_data,
+        ownedLocalIndicesForTargetProcs_data,
+        sendBuffer_data);
     }
 
     template <typename ValueType>
@@ -396,6 +401,10 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
+      auto recvBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
+      auto ownedLocalIndicesForTargetProcs_data = dftfe::utils::makeDataTypeDeviceCompatible(
+                                                    ownedLocalIndicesForTargetProcs.data());
+      auto dataArray_data = dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
       DFTFE_LAUNCH_KERNEL(
         accumInsertFromRecvBufferDeviceKernel,
         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
@@ -406,10 +415,9 @@ namespace dftfe
         deviceCommStream,
         ownedLocalIndicesForTargetProcs.size() * blockSize,
         blockSize,
-        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          ownedLocalIndicesForTargetProcs.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()));
+        recvBuffer_data,
+        ownedLocalIndicesForTargetProcs_data,
+        dataArray_data);
     }
 
     template <typename ValueType>

@@ -1389,8 +1389,8 @@ namespace dftfe
 #  endif
 
       /// storage for deviceblas handle
-      dftfe::utils::deviceBlasHandle_t d_deviceBlasHandle;
-      dftfe::utils::deviceStream_t     d_streamId;
+      mutable dftfe::utils::deviceBlasHandle_t d_deviceBlasHandle;
+      mutable dftfe::utils::deviceStream_t     d_streamId;
       tensorOpDataType                 d_opType;
 
       dftfe::utils::deviceBlasStatus_t
