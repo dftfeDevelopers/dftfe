@@ -64,9 +64,15 @@ namespace dftfe
             const dftfe::utils::deviceDoubleComplex psi      = wfc[index];
             const dftfe::utils::deviceDoubleComplex psiPrime = wfcPrime[index];
             rhoResponseFermiEnergyCellsWfcContributions[index] =
-              dftfe::utils::realPartDevice(psi) * dftfe::utils::realPartDevice(psi) + dftfe::utils::imagPartDevice(psi) * dftfe::utils::imagPartDevice(psi);
+              dftfe::utils::realPartDevice(psi) *
+                dftfe::utils::realPartDevice(psi) +
+              dftfe::utils::imagPartDevice(psi) *
+                dftfe::utils::imagPartDevice(psi);
             rhoResponseHamCellsWfcContributions[index] =
-              dftfe::utils::realPartDevice(psi) * dftfe::utils::realPartDevice(psiPrime) + dftfe::utils::imagPartDevice(psi) * dftfe::utils::imagPartDevice(psiPrime);
+              dftfe::utils::realPartDevice(psi) *
+                dftfe::utils::realPartDevice(psiPrime) +
+              dftfe::utils::imagPartDevice(psi) *
+                dftfe::utils::imagPartDevice(psiPrime);
           }
       },
       const dftfe::uInt                        numVectors,

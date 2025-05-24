@@ -77,11 +77,15 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              sendBuffer[i] = dftfe::utils::makeComplex(
-                dftfe::utils::realPartDevice(dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId]),
-                dftfe::utils::imagPartDevice(dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId]));
+              sendBuffer[i]                  = dftfe::utils::makeComplex(
+                dftfe::utils::realPartDevice(
+                  dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                              blockSize +
+                            intraBlockId]),
+                dftfe::utils::imagPartDevice(
+                  dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                              blockSize +
+                            intraBlockId]));
             }
         },
         const dftfe::uInt                        totalFlattenedSize,
@@ -103,10 +107,11 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
               const ValueType2  recvVal      = recvBuffer[i];
-              dftfe::utils::atomicAddWrapper(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize +
-                                   intraBlockId],
-                        recvVal);
+              dftfe::utils::atomicAddWrapper(
+                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                             blockSize +
+                           intraBlockId],
+                recvVal);
             }
         },
         const dftfe::uInt  totalFlattenedSize,
@@ -128,12 +133,16 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
 
-              auto* add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId]);
-              auto* add_imag = add_real + 1;
-            
-              dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
-              dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
+              auto *add_real = reinterpret_cast<double *>(
+                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                             blockSize +
+                           intraBlockId]);
+              auto *add_imag = add_real + 1;
+
+              dftfe::utils::atomicAddWrapper(
+                add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
+              dftfe::utils::atomicAddWrapper(
+                add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
             }
         },
         const dftfe::uInt                       totalFlattenedSize,
@@ -155,12 +164,16 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
 
-              auto* add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId]);
-              auto* add_imag = add_real + 1;
-              
-              dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
-              dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
+              auto *add_real = reinterpret_cast<double *>(
+                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                             blockSize +
+                           intraBlockId]);
+              auto *add_imag = add_real + 1;
+
+              dftfe::utils::atomicAddWrapper(
+                add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
+              dftfe::utils::atomicAddWrapper(
+                add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
             }
         },
         const dftfe::uInt                        totalFlattenedSize,
@@ -186,10 +199,12 @@ namespace dftfe
               const double recvValImag =
                 dftfe::utils::imagPartDevice(recvBuffer[i]);
 
-              auto* add_real = reinterpret_cast<double*>(&dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                     blockSize + intraBlockId]);
-              auto* add_imag = add_real + 1;
-              
+              auto *add_real = reinterpret_cast<double *>(
+                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                             blockSize +
+                           intraBlockId]);
+              auto *add_imag = add_real + 1;
+
               dftfe::utils::atomicAddWrapper(add_real, recvValReal);
               dftfe::utils::atomicAddWrapper(add_imag, recvValImag);
             }
@@ -299,15 +314,18 @@ namespace dftfe
                 dftfe::utils::imagPartDevice(recvBuffer[i]);
 
               dftfe::utils::copyValue(
-                reinterpret_cast<double*>(dataArray+ownedLocalIndicesForTargetProcs[blockId] *
-                             blockSize +
-                           intraBlockId),
+                reinterpret_cast<double *>(
+                  dataArray +
+                  ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                  intraBlockId),
                 recvValReal);
 
               dftfe::utils::copyValue(
-                reinterpret_cast<double*>(dataArray+ownedLocalIndicesForTargetProcs[blockId] *
-                             blockSize +
-                           intraBlockId) + 1,
+                reinterpret_cast<double *>(
+                  dataArray +
+                  ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                  intraBlockId) +
+                  1,
                 recvValImag);
             }
         },
@@ -333,23 +351,25 @@ namespace dftfe
         MemoryStorage<ValueTypeComm, utils::MemorySpace::DEVICE> &sendBuffer,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-      const auto * dataArray_data= dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
-      const auto * ownedLocalIndicesForTargetProcs_data= dftfe::utils::makeDataTypeDeviceCompatible(ownedLocalIndicesForTargetProcs.data());
-      auto * sendBuffer_data= dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
-      const dftfe::uInt numIndices = ownedLocalIndicesForTargetProcs.size() * blockSize;
-      DFTFE_LAUNCH_KERNEL(
-        gatherSendBufferDeviceKernel,
-        (numIndices) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream,
-        numIndices,
-        blockSize,
-        dataArray_data,
-        ownedLocalIndicesForTargetProcs_data,
-        sendBuffer_data);
+      const auto *dataArray_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
+      const auto *ownedLocalIndicesForTargetProcs_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          ownedLocalIndicesForTargetProcs.data());
+      auto *sendBuffer_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
+      const dftfe::uInt numIndices =
+        ownedLocalIndicesForTargetProcs.size() * blockSize;
+      DFTFE_LAUNCH_KERNEL(gatherSendBufferDeviceKernel,
+                          (numIndices) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          deviceCommStream,
+                          numIndices,
+                          blockSize,
+                          dataArray_data,
+                          ownedLocalIndicesForTargetProcs_data,
+                          sendBuffer_data);
     }
 
     template <typename ValueType>
@@ -367,23 +387,25 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-      const auto * recvBuffer_data= dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
-      const auto * ownedLocalIndicesForTargetProcs_data= dftfe::utils::makeDataTypeDeviceCompatible(ownedLocalIndicesForTargetProcs.data());
-      auto * dataArray_data= dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
-      const dftfe::uInt numIndices = ownedLocalIndicesForTargetProcs.size() * blockSize;
-      DFTFE_LAUNCH_KERNEL(
-        accumAddFromRecvBufferDeviceKernel,
-        (numIndices) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream,
-        numIndices,
-        blockSize,
-        recvBuffer_data,
-        ownedLocalIndicesForTargetProcs_data,
-        dataArray_data);
+      const auto *recvBuffer_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
+      const auto *ownedLocalIndicesForTargetProcs_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          ownedLocalIndicesForTargetProcs.data());
+      auto *dataArray_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
+      const dftfe::uInt numIndices =
+        ownedLocalIndicesForTargetProcs.size() * blockSize;
+      DFTFE_LAUNCH_KERNEL(accumAddFromRecvBufferDeviceKernel,
+                          (numIndices) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          deviceCommStream,
+                          numIndices,
+                          blockSize,
+                          recvBuffer_data,
+                          ownedLocalIndicesForTargetProcs_data,
+                          dataArray_data);
     }
 
     template <typename ValueType>
@@ -401,23 +423,25 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-      const auto * recvBuffer_data= dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
-      const auto * ownedLocalIndicesForTargetProcs_data= dftfe::utils::makeDataTypeDeviceCompatible(ownedLocalIndicesForTargetProcs.data());
-      auto * dataArray_data= dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
-      const dftfe::uInt numIndices = ownedLocalIndicesForTargetProcs.size() * blockSize;
-      DFTFE_LAUNCH_KERNEL(
-        accumInsertFromRecvBufferDeviceKernel,
-        (numIndices) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream,
-        numIndices,
-        blockSize,
-        recvBuffer_data,
-        ownedLocalIndicesForTargetProcs_data,
-        dataArray_data);
+      const auto *recvBuffer_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
+      const auto *ownedLocalIndicesForTargetProcs_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          ownedLocalIndicesForTargetProcs.data());
+      auto *dataArray_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
+      const dftfe::uInt numIndices =
+        ownedLocalIndicesForTargetProcs.size() * blockSize;
+      DFTFE_LAUNCH_KERNEL(accumInsertFromRecvBufferDeviceKernel,
+                          (numIndices) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          deviceCommStream,
+                          numIndices,
+                          blockSize,
+                          recvBuffer_data,
+                          ownedLocalIndicesForTargetProcs_data,
+                          dataArray_data);
     }
 
     template <typename ValueType>

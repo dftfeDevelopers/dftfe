@@ -31,14 +31,18 @@ namespace dftfe
     namespace
     {
       template <typename ValueType>
-      void setValueKernel(sycl::nd_item<1> ind, ValueType *devPtr, ValueType value, std::size_t size)
+      void
+      setValueKernel(sycl::nd_item<1> ind,
+                     ValueType       *devPtr,
+                     ValueType        value,
+                     std::size_t      size)
       {
         const std::size_t globalThreadId = ind.get_global_id(0);
-        std::size_t n_workgroups = ind.get_group_range(0);
-        std::size_t n_workitems = ind.get_local_range(0);
+        std::size_t       n_workgroups   = ind.get_group_range(0);
+        std::size_t       n_workitems    = ind.get_local_range(0);
 
         for (std::size_t idx = globalThreadId; idx < size;
-            idx += n_workgroups * n_workitems)
+             idx += n_workgroups * n_workitems)
           {
             devPtr[idx] = value;
           }
@@ -56,14 +60,17 @@ namespace dftfe
     deviceMemGetInfo(std::size_t *free, std::size_t *total)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try{
-          *free = queue.get_device().get_info<sycl::info::device::local_mem_size>();
-          *total = queue.get_device().get_info<sycl::info::device::global_mem_size>();
-      }
-      catch(const deviceError_t &e)
-      {
+      try
+        {
+          *free =
+            queue.get_device().get_info<sycl::info::device::local_mem_size>();
+          *total =
+            queue.get_device().get_info<sycl::info::device::global_mem_size>();
+        }
+      catch (const deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
@@ -81,37 +88,40 @@ namespace dftfe
     }
 
     deviceError_t
-    setDevice(int deviceId){
+    setDevice(int deviceId)
+    {
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
     deviceMalloc(void **devPtr, std::size_t size)
     {
-        dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-        try {
-            *devPtr = sycl::malloc_device(size,queue);
-            queue.wait();
-        } 
-        catch (const dftfe::utils::deviceError_t &e) 
+      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
+      try
         {
-            return e;
+          *devPtr = sycl::malloc_device(size, queue);
+          queue.wait();
         }
-        return dftfe::utils::deviceSuccess;
+      catch (const dftfe::utils::deviceError_t &e)
+        {
+          return e;
+        }
+      return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
     deviceMemset(void *devPtr, int value, std::size_t count)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try {
-          queue.memset(devPtr,value,count);
+      try
+        {
+          queue.memset(devPtr, value, count);
           queue.wait();
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
@@ -120,14 +130,16 @@ namespace dftfe
     deviceSetValue(ValueType *devPtr, ValueType value, std::size_t size)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-        std::size_t total_workitems = (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) * dftfe::utils::DEVICE_BLOCK_SIZE;
-        deviceEvent_t event = queue.parallel_for(
-                                    sycl::nd_range<1>(total_workitems,
-                                    dftfe::utils::DEVICE_BLOCK_SIZE), 
-                                    [=](sycl::nd_item<1> ind){
-            setValueKernel(ind, devPtr, value, size);
-        });
-        DEVICE_API_CHECK(event);
+      std::size_t                  total_workitems =
+        (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
+      deviceEvent_t event =
+        queue.parallel_for(sycl::nd_range<1>(total_workitems,
+                                             dftfe::utils::DEVICE_BLOCK_SIZE),
+                           [=](sycl::nd_item<1> ind) {
+                             setValueKernel(ind, devPtr, value, size);
+                           });
+      DEVICE_API_CHECK(event);
     }
 
     template void
@@ -167,13 +179,14 @@ namespace dftfe
     deviceFree(void *devPtr)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try {
+      try
+        {
           sycl::free(devPtr, queue);
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
@@ -181,14 +194,15 @@ namespace dftfe
     deviceHostMalloc(void **hostPtr, std::size_t size)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try {
-          *hostPtr = sycl::malloc_host(size,queue);
+      try
+        {
+          *hostPtr = sycl::malloc_host(size, queue);
           queue.wait();
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
@@ -196,13 +210,14 @@ namespace dftfe
     deviceHostFree(void *hostPtr)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try {
+      try
+        {
           sycl::free(hostPtr, queue);
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
@@ -210,13 +225,14 @@ namespace dftfe
     deviceMemcpyD2H(void *dst, const void *src, std::size_t count)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try {
+      try
+        {
           queue.memcpy(dst, src, count);
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
@@ -224,31 +240,33 @@ namespace dftfe
     deviceMemcpyD2D(void *dst, const void *src, std::size_t count)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try {
+      try
+        {
           queue.memcpy(dst, src, count);
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
     deviceError_t
     deviceMemcpyH2D(void *dst, const void *src, std::size_t count)
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try {
+      try
+        {
           queue.memcpy(dst, src, count);
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceMemcpyD2H_2D(void *      dst,
+    deviceMemcpyD2H_2D(void       *dst,
                        std::size_t dpitch,
                        const void *src,
                        std::size_t spitch,
@@ -256,14 +274,14 @@ namespace dftfe
                        std::size_t height)
     {
       // dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height);
-      // DEVICE_API_CHECK(event);
+      // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
+      // dpitch, src, spitch, width, height); DEVICE_API_CHECK(event);
       return dftfe::utils::deviceSuccess;
     }
 
 
     deviceError_t
-    deviceMemcpyD2D_2D(void *      dst,
+    deviceMemcpyD2D_2D(void       *dst,
                        std::size_t dpitch,
                        const void *src,
                        std::size_t spitch,
@@ -271,13 +289,13 @@ namespace dftfe
                        std::size_t height)
     {
       // dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height);
-      // DEVICE_API_CHECK(event);
+      // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
+      // dpitch, src, spitch, width, height); DEVICE_API_CHECK(event);
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceMemcpyH2D_2D(void *      dst,
+    deviceMemcpyH2D_2D(void       *dst,
                        std::size_t dpitch,
                        const void *src,
                        std::size_t spitch,
@@ -285,8 +303,8 @@ namespace dftfe
                        std::size_t height)
     {
       // dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst, dpitch, src, spitch, width, height);
-      // DEVICE_API_CHECK(event);
+      // deviceEvent_t event = queue.sycl::_V1::queue::ext_oneapi_memcpy2d(dst,
+      // dpitch, src, spitch, width, height); DEVICE_API_CHECK(event);
       return dftfe::utils::deviceSuccess;
     }
 
@@ -294,60 +312,65 @@ namespace dftfe
     deviceSynchronize()
     {
       dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
-      try {
+      try
+        {
           queue.wait();
-      } 
-      catch (const dftfe::utils::deviceError_t &e) {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceMemcpyAsyncD2H(void *         dst,
-                         const void *   src,
+    deviceMemcpyAsyncD2H(void          *dst,
+                         const void    *src,
                          std::size_t    count,
                          deviceStream_t stream)
     {
-      try {
+      try
+        {
           stream.memcpy(dst, src, count);
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceMemcpyAsyncD2D(void *         dst,
-                         const void *   src,
+    deviceMemcpyAsyncD2D(void          *dst,
+                         const void    *src,
                          std::size_t    count,
                          deviceStream_t stream)
     {
-      try {
+      try
+        {
           stream.memcpy(dst, src, count);
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceMemcpyAsyncH2D(void *         dst,
-                         const void *   src,
+    deviceMemcpyAsyncH2D(void          *dst,
+                         const void    *src,
                          std::size_t    count,
                          deviceStream_t stream)
     {
-      try {
+      try
+        {
           stream.memcpy(dst, src, count);
-      } 
-      catch (const dftfe::utils::deviceError_t &e) 
-      {
+        }
+      catch (const dftfe::utils::deviceError_t &e)
+        {
           return e;
-      }
+        }
       return dftfe::utils::deviceSuccess;
     }
 

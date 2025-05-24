@@ -27,21 +27,26 @@ namespace dftfe
   namespace utils
   {
 
-    template<typename T1, typename T2>
-    inline void atomicAddWrapper(T1* addr, T2 value) {
-        auto atomic_add = sycl::atomic_ref<T1, sycl::memory_order::relaxed, 
-                                            sycl::memory_scope::device, 
-                                            sycl::access::address_space::global_space>
-                                            (addr[0]);
-        atomic_add += value;
+    template <typename T1, typename T2>
+    inline void
+    atomicAddWrapper(T1 *addr, T2 value)
+    {
+      auto atomic_add =
+        sycl::atomic_ref<T1,
+                         sycl::memory_order::relaxed,
+                         sycl::memory_scope::device,
+                         sycl::access::address_space::global_space>(addr[0]);
+      atomic_add += value;
     }
-    
-    inline std::complex<double> makeComplex(double realPart, double imagPart)
+
+    inline std::complex<double>
+    makeComplex(double realPart, double imagPart)
     {
       return std::complex<double>(realPart, imagPart);
     }
 
-    inline std::complex<float> makeComplex(float realPart, float imagPart)
+    inline std::complex<float>
+    makeComplex(float realPart, float imagPart)
     {
       return std::complex<float>(realPart, imagPart);
     }
@@ -49,22 +54,26 @@ namespace dftfe
     //
     // copyValue for homogeneous types
     //
-    inline void copyValue(double *a, const double b)
+    inline void
+    copyValue(double *a, const double b)
     {
       *a = b;
     }
 
-    inline void copyValue(float *a, const float b)
+    inline void
+    copyValue(float *a, const float b)
     {
       *a = b;
     }
 
-    inline void copyValue(std::complex<double> *a, const std::complex<double> b)
+    inline void
+    copyValue(std::complex<double> *a, const std::complex<double> b)
     {
       *a = b;
     }
 
-    inline void copyValue(std::complex<float> *a, const std::complex<float> b)
+    inline void
+    copyValue(std::complex<float> *a, const std::complex<float> b)
     {
       *a = b;
     }
@@ -72,108 +81,128 @@ namespace dftfe
     //
     // copyValue for heteregenous types
     //
-    inline void copyValue(float *a, const double b)
+    inline void
+    copyValue(float *a, const double b)
     {
       *a = b;
     }
 
-    inline void copyValue(double *a, const float b)
+    inline void
+    copyValue(double *a, const float b)
     {
       *a = b;
     }
 
-    inline void copyValue(std::complex<double> *a, const std::complex<float> b)
+    inline void
+    copyValue(std::complex<double> *a, const std::complex<float> b)
     {
       *a = std::complex<double>(b.real(), b.imag());
     }
 
-    inline void copyValue(std::complex<float> *a, const std::complex<double> b)
+    inline void
+    copyValue(std::complex<float> *a, const std::complex<double> b)
     {
       *a = std::complex<float>(b.real(), b.imag());
     }
 
-    inline void copyValue(std::complex<double> *a, const double b)
+    inline void
+    copyValue(std::complex<double> *a, const double b)
     {
       *a = std::complex<double>(b, 0);
     }
 
-    inline void copyValue(std::complex<float> *a, const float b)
+    inline void
+    copyValue(std::complex<float> *a, const float b)
     {
       *a = std::complex<float>(b, 0);
     }
 
-    inline void copyValue(std::complex<double> *a, const float b)
+    inline void
+    copyValue(std::complex<double> *a, const float b)
     {
       *a = std::complex<double>(b, 0);
     }
 
-    inline void copyValue(std::complex<float> *a, const double b)
+    inline void
+    copyValue(std::complex<float> *a, const double b)
     {
       *a = std::complex<float>(b, 0);
     }
 
     // real part obverloads
 
-    inline double realPartDevice(double a)
+    inline double
+    realPartDevice(double a)
     {
       return a;
     }
 
-    inline float realPartDevice(float a)
+    inline float
+    realPartDevice(float a)
     {
       return a;
     }
 
-    inline double realPartDevice(std::complex<double> a)
+    inline double
+    realPartDevice(std::complex<double> a)
     {
       return a.real();
     }
 
-    inline float realPartDevice(std::complex<float> a)
+    inline float
+    realPartDevice(std::complex<float> a)
     {
       return a.real();
     }
 
     // imag part obverloads
 
-    inline double imagPartDevice(double a)
+    inline double
+    imagPartDevice(double a)
     {
       return 0;
     }
 
-    inline float imagPartDevice(float a)
+    inline float
+    imagPartDevice(float a)
     {
       return 0;
     }
 
-    inline double imagPartDevice(std::complex<double> a)
+    inline double
+    imagPartDevice(std::complex<double> a)
     {
       return a.imag();
     }
 
-    inline float imagPartDevice(std::complex<float> a)
+    inline float
+    imagPartDevice(std::complex<float> a)
     {
       return a.imag();
     }
 
     // abs obverloads
 
-    inline double abs(double a)
+    inline double
+    abs(double a)
     {
       return fabs(a);
     }
 
-    inline float abs(float a)
+    inline float
+    abs(float a)
     {
       return fabs(a);
     }
 
-    inline double abs(std::complex<double> a)
+    inline double
+    abs(std::complex<double> a)
     {
       return std::abs(a);
     }
 
-    inline float abs(std::complex<float> a)
+    inline float
+    abs(std::complex<float> a)
     {
       return std::abs(a);
     }
@@ -182,37 +211,44 @@ namespace dftfe
     // conjugate overloads
     //
 
-    inline unsigned int conj(unsigned int a)
+    inline unsigned int
+    conj(unsigned int a)
     {
       return a;
     }
 
-    inline unsigned long int conj(unsigned long int a)
+    inline unsigned long int
+    conj(unsigned long int a)
     {
       return a;
     }
 
-    inline int conj(int a)
+    inline int
+    conj(int a)
     {
       return a;
     }
 
-    inline float conj(float a)
+    inline float
+    conj(float a)
     {
       return a;
     }
 
-    inline double conj(double a)
+    inline double
+    conj(double a)
     {
       return a;
     }
 
-    inline std::complex<double> conj(std::complex<double> a)
+    inline std::complex<double>
+    conj(std::complex<double> a)
     {
       return std::conj(a);
     }
 
-    inline std::complex<float> conj(std::complex<float> a)
+    inline std::complex<float>
+    conj(std::complex<float> a)
     {
       return std::conj(a);
     }
@@ -221,37 +257,44 @@ namespace dftfe
     //
     // mult for real homogeneous types e.g. (double, double)
     //
-    inline unsigned int mult(unsigned int a, unsigned int b)
+    inline unsigned int
+    mult(unsigned int a, unsigned int b)
     {
       return a * b;
     }
 
-    inline unsigned long int mult(unsigned long int a, unsigned long int b)
+    inline unsigned long int
+    mult(unsigned long int a, unsigned long int b)
     {
       return a * b;
     }
 
-    inline int mult(int a, int b)
+    inline int
+    mult(int a, int b)
     {
       return a * b;
     }
 
-    inline double mult(double a, double b)
+    inline double
+    mult(double a, double b)
     {
       return a * b;
     }
 
-    inline float mult(float a, float b)
+    inline float
+    mult(float a, float b)
     {
       return a * b;
     }
 
-    inline double mult(float a, double b)
+    inline double
+    mult(float a, double b)
     {
       return a * b;
     }
 
-    inline double mult(double a, float b)
+    inline double
+    mult(double a, float b)
     {
       return a * b;
     }
@@ -261,12 +304,14 @@ namespace dftfe
     // mult for complex homogenous types
     // (e.g., std::complex<double> and std::complex<double>)
     //
-    inline std::complex<double> mult(std::complex<double> a, std::complex<double> b)
+    inline std::complex<double>
+    mult(std::complex<double> a, std::complex<double> b)
     {
       return a * b;
     }
 
-    inline std::complex<float> mult(std::complex<float> a, std::complex<float> b)
+    inline std::complex<float>
+    mult(std::complex<float> a, std::complex<float> b)
     {
       return a * b;
     }
@@ -276,175 +321,209 @@ namespace dftfe
     // mult for complex heterogeneous types e.g. (std::complex<double>,
     // std::complex<float>)
     //
-    inline std::complex<double> mult(std::complex<float> a, std::complex<double> b)
+    inline std::complex<double>
+    mult(std::complex<float> a, std::complex<double> b)
     {
       return std::complex<double>(a.real(), a.imag()) * b;
     }
 
-    inline std::complex<double> mult(std::complex<double> a, std::complex<float> b)
+    inline std::complex<double>
+    mult(std::complex<double> a, std::complex<float> b)
     {
       return a * std::complex<double>(b.real(), b.imag());
     }
 
 
     //
-    // mult for real-complex heterogeneous types e.g. (double, std::complex<float>)
+    // mult for real-complex heterogeneous types e.g. (double,
+    // std::complex<float>)
     //
-    inline std::complex<double> mult(double a, std::complex<double> b)
+    inline std::complex<double>
+    mult(double a, std::complex<double> b)
     {
       return std::complex<double>(a * b.real(), a * b.imag());
     }
 
-    inline std::complex<double> mult(std::complex<double> a, double b)
+    inline std::complex<double>
+    mult(std::complex<double> a, double b)
     {
       return std::complex<double>(b * a.real(), b * a.imag());
     }
 
-    inline std::complex<float> mult(float a, std::complex<float> b)
+    inline std::complex<float>
+    mult(float a, std::complex<float> b)
     {
       return std::complex<float>(a * b.real(), a * b.imag());
     }
 
-    inline std::complex<float> mult(std::complex<float> a, float b)
+    inline std::complex<float>
+    mult(std::complex<float> a, float b)
     {
       return std::complex<float>(b * a.real(), b * a.imag());
     }
 
-    inline std::complex<double> mult(double a, std::complex<float> b)
+    inline std::complex<double>
+    mult(double a, std::complex<float> b)
     {
       return std::complex<double>(a * b.real(), a * b.imag());
     }
 
-    inline std::complex<double> mult(std::complex<float> a, double b)
+    inline std::complex<double>
+    mult(std::complex<float> a, double b)
     {
       return std::complex<double>(b * a.real(), b * a.imag());
     }
 
 
-    inline unsigned int add(unsigned int a, unsigned int b)
+    inline unsigned int
+    add(unsigned int a, unsigned int b)
     {
       return a + b;
     }
 
-    inline unsigned long int add(unsigned long int a, unsigned long int b)
+    inline unsigned long int
+    add(unsigned long int a, unsigned long int b)
     {
       return a + b;
     }
 
-    inline int add(int a, int b)
+    inline int
+    add(int a, int b)
     {
       return a + b;
     }
 
-    inline double add(double a, double b)
+    inline double
+    add(double a, double b)
     {
       return a + b;
     }
 
-    inline float add(float a, float b)
+    inline float
+    add(float a, float b)
     {
       return a + b;
     }
 
-    inline std::complex<double> add(std::complex<double> a, std::complex<double> b)
+    inline std::complex<double>
+    add(std::complex<double> a, std::complex<double> b)
     {
       return a + b;
     }
 
 
-    inline std::complex<float> add(std::complex<float> a, std::complex<float> b)
+    inline std::complex<float>
+    add(std::complex<float> a, std::complex<float> b)
     {
       return a + b;
     }
 
-    inline double add(double a, float b)
+    inline double
+    add(double a, float b)
     {
       return a + b;
     }
 
-    inline double add(float a, double b)
+    inline double
+    add(float a, double b)
     {
       return a + b;
     }
 
-    inline std::complex<double> add(std::complex<double> a, std::complex<float> b)
+    inline std::complex<double>
+    add(std::complex<double> a, std::complex<float> b)
     {
       return a + std::complex<double>(b.real(), b.imag());
     }
 
 
-    inline std::complex<double> add(std::complex<float> a, std::complex<double> b)
+    inline std::complex<double>
+    add(std::complex<float> a, std::complex<double> b)
     {
       return std::complex<double>(a.real(), a.imag()) + b;
     }
 
 
-    inline unsigned int sub(unsigned int a, unsigned int b)
+    inline unsigned int
+    sub(unsigned int a, unsigned int b)
     {
       return a - b;
     }
 
-    inline unsigned long int sub(unsigned long int a, unsigned long int b)
+    inline unsigned long int
+    sub(unsigned long int a, unsigned long int b)
     {
       return a - b;
     }
 
-    inline int sub(int a, int b)
+    inline int
+    sub(int a, int b)
     {
       return a - b;
     }
 
-    inline double sub(double a, double b)
+    inline double
+    sub(double a, double b)
     {
       return a - b;
     }
 
-    inline float sub(float a, float b)
+    inline float
+    sub(float a, float b)
     {
       return a - b;
     }
 
-    inline std::complex<double> sub(std::complex<double> a, std::complex<double> b)
+    inline std::complex<double>
+    sub(std::complex<double> a, std::complex<double> b)
     {
       return a - b;
     }
 
-    inline std::complex<float> sub(std::complex<float> a, std::complex<float> b)
+    inline std::complex<float>
+    sub(std::complex<float> a, std::complex<float> b)
     {
       return a - b;
     }
 
-    inline unsigned int div(unsigned int a, unsigned int b)
+    inline unsigned int
+    div(unsigned int a, unsigned int b)
     {
       return a / b;
     }
 
-    inline unsigned long int div(unsigned long int a, unsigned long int b)
+    inline unsigned long int
+    div(unsigned long int a, unsigned long int b)
     {
       return a / b;
     }
 
-    inline int div(int a, int b)
+    inline int
+    div(int a, int b)
     {
       return a / b;
     }
 
-    inline double div(double a, double b)
+    inline double
+    div(double a, double b)
     {
       return a / b;
     }
 
-    inline float div(float a, float b)
+    inline float
+    div(float a, float b)
     {
       return a / b;
     }
 
-    inline std::complex<double> div(std::complex<double> a, std::complex<double> b)
+    inline std::complex<double>
+    div(std::complex<double> a, std::complex<double> b)
     {
       return a / b;
     }
 
-    inline std::complex<float> div(std::complex<float> a, std::complex<float> b)
+    inline std::complex<float>
+    div(std::complex<float> a, std::complex<float> b)
     {
       return a / b;
     }
@@ -453,46 +532,55 @@ namespace dftfe
     // div for complex heterogeneous types e.g. (std::complex<double>,
     // std::complex<float>)
     //
-    inline std::complex<double> div(std::complex<float> a, std::complex<double> b)
+    inline std::complex<double>
+    div(std::complex<float> a, std::complex<double> b)
     {
       return std::complex<double>(a.real(), a.imag()) / b;
     }
 
-    inline std::complex<double> div(std::complex<double> a, std::complex<float> b)
+    inline std::complex<double>
+    div(std::complex<double> a, std::complex<float> b)
     {
       return a / std::complex<double>(b.real(), b.imag());
     }
 
 
     //
-    // div for real-complex heterogeneous types e.g. (double, std::complex<float>)
+    // div for real-complex heterogeneous types e.g. (double,
+    // std::complex<float>)
     //
-    inline std::complex<double> div(double a, std::complex<double> b)
+    inline std::complex<double>
+    div(double a, std::complex<double> b)
     {
       return std::complex<double>(a / b.real(), a / b.imag());
     }
 
-    inline std::complex<double> div(std::complex<double> a, double b)
+    inline std::complex<double>
+    div(std::complex<double> a, double b)
     {
       return std::complex<double>(b / a.real(), b / a.imag());
     }
 
-    inline std::complex<float> div(float a, std::complex<float> b)
+    inline std::complex<float>
+    div(float a, std::complex<float> b)
     {
       return std::complex<float>(a / b.real(), a / b.imag());
     }
 
-    inline std::complex<float> div(std::complex<float> a, float b)
+    inline std::complex<float>
+    div(std::complex<float> a, float b)
     {
       return std::complex<float>(b / a.real(), b / a.imag());
     }
 
-    inline std::complex<double> div(double a, std::complex<float> b)
+    inline std::complex<double>
+    div(double a, std::complex<float> b)
     {
       return std::complex<double>(a / b.real(), a / b.imag());
     }
 
-    inline std::complex<double> div(std::complex<float> a, double b)
+    inline std::complex<double>
+    div(std::complex<float> a, double b)
     {
       return std::complex<double>(b / a.real(), b / a.imag());
     }

@@ -75,7 +75,8 @@ namespace dftfe
         for (dftfe::uInt idx = globalThreadId; idx < size;
              idx += nThreadsPerBlock * nThreadBlock)
           {
-            complexArr[idx] = dftfe::utils::makeComplex(realArr[idx], imagArr[idx]);
+            complexArr[idx] =
+              dftfe::utils::makeComplex(realArr[idx], imagArr[idx]);
           }
       },
       const dftfe::uInt    size,

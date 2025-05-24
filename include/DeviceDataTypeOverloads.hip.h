@@ -28,11 +28,13 @@ namespace dftfe
   namespace utils
   {
 
-    template<typename T1, typename T2>
-    __device__ inline void atomicAddWrapper(T1* addr, T2 value) {
-        atomicAdd(addr, value);
+    template <typename T1, typename T2>
+    __device__ inline void
+    atomicAddWrapper(T1 *addr, T2 value)
+    {
+      atomicAdd(addr, value);
     }
-    
+
     __forceinline__ __device__ hipDoubleComplex
     makeComplex(double realPart, double imagPart)
     {

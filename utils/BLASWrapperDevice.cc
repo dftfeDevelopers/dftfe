@@ -60,7 +60,8 @@ namespace dftfe
 {
   namespace utils
   {
-#if hipblasVersionMajor >= 2 || defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_INTEL)
+#if hipblasVersionMajor >= 2 || defined(DFTFE_WITH_DEVICE_NVIDIA) || \
+  defined(DFTFE_WITH_DEVICE_INTEL)
     template <typename T>
     inline auto
     makeDataTypeDeviceBlasCompatible(T &&x)
@@ -175,9 +176,9 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       copyValueType1ArrToValueType2ArrDeviceCall(
-        const dftfe::uInt                  size,
-        const ValueType1                  *valueType1Arr,
-        ValueType2                        *valueType2Arr,
+        const dftfe::uInt            size,
+        const ValueType1            *valueType1Arr,
+        ValueType2                  *valueType2Arr,
         dftfe::utils::deviceStream_t streamId)
     {
       DFTFE_LAUNCH_KERNEL(
@@ -212,11 +213,11 @@ namespace dftfe
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
         copy)(d_streamId,
-               n,
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-               incx,
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-               incy);
+              n,
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+              incx,
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+              incy);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -241,11 +242,11 @@ namespace dftfe
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
         copy)(d_streamId,
-               n,
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-               incx,
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-               incy);
+              n,
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+              incx,
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+              incy);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -263,7 +264,7 @@ namespace dftfe
         DFTFE_DEVICE_BLAS_INT(Dcopy)(d_deviceBlasHandle, n, x, incx, y, incy);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(copy)(d_streamId, n, x, incx, y, incy);
       DEVICE_API_CHECK(event);
 #endif
@@ -282,7 +283,7 @@ namespace dftfe
         DFTFE_DEVICE_BLAS_INT(Scopy)(d_deviceBlasHandle, n, x, incx, y, incy);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(copy)(d_streamId, n, x, incx, y, incy);
       DEVICE_API_CHECK(event);
 #endif
@@ -352,21 +353,21 @@ namespace dftfe
                                       dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(gemm)(d_streamId,
-                                      transa,
-                                      transb,
-                                      dftfe::Int(m),
-                                      dftfe::Int(n),
-                                      dftfe::Int(k),
-                                      alpha,
-                                      A,
-                                      dftfe::Int(lda),
-                                      B,
-                                      dftfe::Int(ldb),
-                                      beta,
-                                      C,
-                                      dftfe::Int(ldc));
+                                    transa,
+                                    transb,
+                                    dftfe::Int(m),
+                                    dftfe::Int(n),
+                                    dftfe::Int(k),
+                                    alpha,
+                                    A,
+                                    dftfe::Int(lda),
+                                    B,
+                                    dftfe::Int(ldb),
+                                    beta,
+                                    C,
+                                    dftfe::Int(ldc));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -440,21 +441,21 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(gemm)(d_streamId,
-                                      transa,
-                                      transb,
-                                      dftfe::Int(m),
-                                      dftfe::Int(n),
-                                      dftfe::Int(k),
-                                      alpha,
-                                      A,
-                                      dftfe::Int(lda),
-                                      B,
-                                      dftfe::Int(ldb),
-                                      beta,
-                                      C,
-                                      dftfe::Int(ldc));
+                                    transa,
+                                    transb,
+                                    dftfe::Int(m),
+                                    dftfe::Int(n),
+                                    dftfe::Int(k),
+                                    alpha,
+                                    A,
+                                    dftfe::Int(lda),
+                                    B,
+                                    dftfe::Int(ldb),
+                                    beta,
+                                    C,
+                                    dftfe::Int(ldc));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -512,21 +513,21 @@ namespace dftfe
                                      dftfe::Int(ldc));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(gemm)(d_streamId,
-                                     transa,
-                                     transb,
-                                     dftfe::Int(m),
-                                     dftfe::Int(n),
-                                     dftfe::Int(k),
-                                     alpha,
-                                     A,
-                                     dftfe::Int(lda),
-                                     B,
-                                     dftfe::Int(ldb),
-                                     beta,
-                                     C,
-                                     dftfe::Int(ldc));
+                                    transa,
+                                    transb,
+                                    dftfe::Int(m),
+                                    dftfe::Int(n),
+                                    dftfe::Int(k),
+                                    alpha,
+                                    A,
+                                    dftfe::Int(lda),
+                                    B,
+                                    dftfe::Int(ldb),
+                                    beta,
+                                    C,
+                                    dftfe::Int(ldc));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -586,22 +587,21 @@ namespace dftfe
                dftfe::Int(ldc));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
-        DFTFE_DEVICE_BLAS_INT(gemm)(
-               d_streamId,
-               transa,
-               transb,
-               dftfe::Int(m),
-               dftfe::Int(n),
-               dftfe::Int(k),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
-               dftfe::Int(lda),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(B),
-               dftfe::Int(ldb),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(C),
-               dftfe::Int(ldc));
+      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
+        gemm)(d_streamId,
+              transa,
+              transb,
+              dftfe::Int(m),
+              dftfe::Int(n),
+              dftfe::Int(k),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
+              dftfe::Int(lda),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(B),
+              dftfe::Int(ldb),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(C),
+              dftfe::Int(ldc));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -645,7 +645,7 @@ namespace dftfe
                                      dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(gemv)(d_streamId,
                                     transa,
                                     dftfe::Int(m),
@@ -703,7 +703,7 @@ namespace dftfe
                                      dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(gemv)(d_streamId,
                                     transa,
                                     dftfe::Int(m),
@@ -762,20 +762,19 @@ namespace dftfe
                dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
-        DFTFE_DEVICE_BLAS_INT(
-          gemv)(d_streamId,
-                transa,
-                dftfe::Int(m),
-                dftfe::Int(n),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
-                dftfe::Int(lda),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-                dftfe::Int(incx),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-                dftfe::Int(incy));
+      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
+        gemv)(d_streamId,
+              transa,
+              dftfe::Int(m),
+              dftfe::Int(n),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
+              dftfe::Int(lda),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+              dftfe::Int(incx),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+              dftfe::Int(incy));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -822,20 +821,19 @@ namespace dftfe
                dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
-        DFTFE_DEVICE_BLAS_INT(
-          gemv)(d_streamId,
-                transa,
-                dftfe::Int(m),
-                dftfe::Int(n),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
-                dftfe::Int(lda),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-                dftfe::Int(incx),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-                dftfe::Int(incy));
+      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
+        gemv)(d_streamId,
+              transa,
+              dftfe::Int(m),
+              dftfe::Int(n),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
+              dftfe::Int(lda),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+              dftfe::Int(incx),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+              dftfe::Int(incy));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -849,7 +847,7 @@ namespace dftfe
         DFTFE_DEVICE_BLAS(Create)(&d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      d_streamId = sycl::queue{sycl::gpu_selector_v};
+      d_streamId         = sycl::queue{sycl::gpu_selector_v};
       d_deviceBlasHandle = sycl::queue{sycl::gpu_selector_v};
       dftfe::utils::deviceBlasStatus_t status = dftfe::utils::deviceBlasSuccess;
 #endif
@@ -906,7 +904,7 @@ namespace dftfe
                                      dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t      event =
         DFTFE_DEVICE_BLAS_INT(axpy)(d_streamId,
                                     dftfe::Int(n),
                                     alpha,
@@ -938,15 +936,14 @@ namespace dftfe
                dftfe::Int(incy));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
-        DFTFE_DEVICE_BLAS_INT(axpy)(
-               d_streamId,
-               dftfe::Int(n),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-               dftfe::Int(incx),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-               dftfe::Int(incy));
+      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
+        axpy)(d_streamId,
+              dftfe::Int(n),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+              dftfe::Int(incx),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+              dftfe::Int(incy));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1153,7 +1150,7 @@ namespace dftfe
                                     result);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(dot)(d_streamId,
                                    dftfe::Int(N),
                                    X,
@@ -1188,7 +1185,7 @@ namespace dftfe
                                     &localResult);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(dot)(d_streamId,
                                    dftfe::Int(N),
                                    X,
@@ -1244,8 +1241,8 @@ namespace dftfe
       const MPI_Comm             &mpi_communicator,
       std::complex<double>       *result) const
     {
-      std::complex<double> localResult        = 0.0;
-      *result                                 = 0.0;
+      std::complex<double> localResult = 0.0;
+      *result                          = 0.0;
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
         Zdotc)(d_deviceBlasHandle,
@@ -1337,7 +1334,7 @@ namespace dftfe
                                                    dftfe::Int(batchCount));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
+      dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(gemm_batch)(d_streamId,
                                           transa,
                                           transb,
@@ -1426,26 +1423,25 @@ namespace dftfe
           dftfe::Int(batchCount));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = 
-        DFTFE_DEVICE_BLAS_INT(gemm_batch)(
-          d_streamId,
-          transa,
-          transb,
-          dftfe::Int(m),
-          dftfe::Int(n),
-          dftfe::Int(k),
-          dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-          dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
-          dftfe::Int(lda),
-          strideA,
-          dftfe::utils::makeDataTypeDeviceBlasCompatible(B),
-          dftfe::Int(ldb),
-          strideB,
-          dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-          dftfe::utils::makeDataTypeDeviceBlasCompatible(C),
-          dftfe::Int(ldc),
-          strideC,
-          dftfe::Int(batchCount));
+      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
+        gemm_batch)(d_streamId,
+                    transa,
+                    transb,
+                    dftfe::Int(m),
+                    dftfe::Int(n),
+                    dftfe::Int(k),
+                    dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+                    dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
+                    dftfe::Int(lda),
+                    strideA,
+                    dftfe::utils::makeDataTypeDeviceBlasCompatible(B),
+                    dftfe::Int(ldb),
+                    strideB,
+                    dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+                    dftfe::utils::makeDataTypeDeviceBlasCompatible(C),
+                    dftfe::Int(ldc),
+                    strideC,
+                    dftfe::Int(batchCount));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1525,25 +1521,25 @@ namespace dftfe
                               dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
-          gemm_batch)(d_streamId,
-                      transa,
-                      transb,
-                      dftfe::Int(m),
-                      dftfe::Int(n),
-                      dftfe::Int(k),
-                      alpha,
-                      A,
-                      dftfe::Int(lda),
-                      strideA,
-                      B,
-                      dftfe::Int(ldb),
-                      strideB,
-                      beta,
-                      C,
-                      dftfe::Int(ldc),
-                      strideC,
-                      dftfe::Int(batchCount));
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(gemm_batch)(d_streamId,
+                                          transa,
+                                          transb,
+                                          dftfe::Int(m),
+                                          dftfe::Int(n),
+                                          dftfe::Int(k),
+                                          alpha,
+                                          A,
+                                          dftfe::Int(lda),
+                                          strideA,
+                                          B,
+                                          dftfe::Int(ldb),
+                                          strideB,
+                                          beta,
+                                          C,
+                                          dftfe::Int(ldc),
+                                          strideC,
+                                          dftfe::Int(batchCount));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1590,7 +1586,7 @@ namespace dftfe
         {
           // Assert Statement
         }
-        
+
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasComputeType_t computeType =
         dftfe::utils::DEVICEBLAS_COMPUTE_32F;
@@ -1626,25 +1622,25 @@ namespace dftfe
                               dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
-          gemm_batch)(d_streamId,
-                      transa,
-                      transb,
-                      dftfe::Int(m),
-                      dftfe::Int(n),
-                      dftfe::Int(k),
-                      alpha,
-                      A,
-                      dftfe::Int(lda),
-                      strideA,
-                      B,
-                      dftfe::Int(ldb),
-                      strideB,
-                      beta,
-                      C,
-                      dftfe::Int(ldc),
-                      strideC,
-                      dftfe::Int(batchCount));
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(gemm_batch)(d_streamId,
+                                          transa,
+                                          transb,
+                                          dftfe::Int(m),
+                                          dftfe::Int(n),
+                                          dftfe::Int(k),
+                                          alpha,
+                                          A,
+                                          dftfe::Int(lda),
+                                          strideA,
+                                          B,
+                                          dftfe::Int(ldb),
+                                          strideB,
+                                          beta,
+                                          C,
+                                          dftfe::Int(ldc),
+                                          strideC,
+                                          dftfe::Int(batchCount));
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1705,18 +1701,30 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-        const long group_size=1;
-        const int m_local = int(m);
-        const int n_local = int(n);
-        const int k_local = int(k);
-        const int lda_local = int(lda);
-        const int ldb_local = int(ldb);
-        const int ldc_local = int(ldc);
-      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
-          gemm_batch)(d_streamId,
-                      &transa, &transb, &m_local, &n_local, &k_local, alpha,
-                                                                        A, &lda_local, B, &ldb_local, beta,
-                                                                        C, &ldc_local, 1, &batchCount);
+      const long                  group_size = 1;
+      const int                   m_local    = int(m);
+      const int                   n_local    = int(n);
+      const int                   k_local    = int(k);
+      const int                   lda_local  = int(lda);
+      const int                   ldb_local  = int(ldb);
+      const int                   ldc_local  = int(ldc);
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(gemm_batch)(d_streamId,
+                                          &transa,
+                                          &transb,
+                                          &m_local,
+                                          &n_local,
+                                          &k_local,
+                                          alpha,
+                                          A,
+                                          &lda_local,
+                                          B,
+                                          &ldb_local,
+                                          beta,
+                                          C,
+                                          &ldc_local,
+                                          1,
+                                          &batchCount);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1781,18 +1789,30 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-        const long group_size=1;
-        const int m_local = int(m);
-        const int n_local = int(n);
-        const int k_local = int(k);
-        const int lda_local = int(lda);
-        const int ldb_local = int(ldb);
-        const int ldc_local = int(ldc);
-      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
-          gemm_batch)(d_streamId,
-                      &transa, &transb, &m_local, &n_local, &k_local, alpha,
-                                                                        A, &lda_local, B, &ldb_local, beta,
-                                                                        C, &ldc_local, 1, &batchCount);
+      const long                  group_size = 1;
+      const int                   m_local    = int(m);
+      const int                   n_local    = int(n);
+      const int                   k_local    = int(k);
+      const int                   lda_local  = int(lda);
+      const int                   ldb_local  = int(ldb);
+      const int                   ldc_local  = int(ldc);
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(gemm_batch)(d_streamId,
+                                          &transa,
+                                          &transb,
+                                          &m_local,
+                                          &n_local,
+                                          &k_local,
+                                          alpha,
+                                          A,
+                                          &lda_local,
+                                          B,
+                                          &ldb_local,
+                                          beta,
+                                          C,
+                                          &ldc_local,
+                                          1,
+                                          &batchCount);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1869,18 +1889,30 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-        const long group_size=1;
-        const int m_local = int(m);
-        const int n_local = int(n);
-        const int k_local = int(k);
-        const int lda_local = int(lda);
-        const int ldb_local = int(ldb);
-        const int ldc_local = int(ldc);
-      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
-          gemm_batch)(d_streamId,
-                     &transa, &transb, &m_local, &n_local, &k_local, alpha,
-                                                                        A, &lda_local, B, &ldb_local, beta,
-                                                                        C, &ldc_local, 1, &batchCount);
+      const long                  group_size = 1;
+      const int                   m_local    = int(m);
+      const int                   n_local    = int(n);
+      const int                   k_local    = int(k);
+      const int                   lda_local  = int(lda);
+      const int                   ldb_local  = int(ldb);
+      const int                   ldc_local  = int(ldc);
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(gemm_batch)(d_streamId,
+                                          &transa,
+                                          &transb,
+                                          &m_local,
+                                          &n_local,
+                                          &k_local,
+                                          alpha,
+                                          A,
+                                          &lda_local,
+                                          B,
+                                          &ldb_local,
+                                          beta,
+                                          C,
+                                          &ldc_local,
+                                          1,
+                                          &batchCount);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1957,19 +1989,31 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-        const long group_size=1;
-        const int m_local = int(m);
-        const int n_local = int(n);
-        const int k_local = int(k);
-        const int lda_local = int(lda);
-        const int ldb_local = int(ldb);
-        const int ldc_local = int(ldc);
+      const long group_size = 1;
+      const int  m_local    = int(m);
+      const int  n_local    = int(n);
+      const int  k_local    = int(k);
+      const int  lda_local  = int(lda);
+      const int  ldb_local  = int(ldb);
+      const int  ldc_local  = int(ldc);
 
-      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
-          gemm_batch)(d_streamId,
-                      &transa, &transb, &m_local, &n_local, &k_local, alpha,
-                                                                        A, &lda_local, B, &ldb_local, beta,
-                                                                        C, &ldc_local, 1, &batchCount);
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(gemm_batch)(d_streamId,
+                                          &transa,
+                                          &transb,
+                                          &m_local,
+                                          &n_local,
+                                          &k_local,
+                                          alpha,
+                                          A,
+                                          &lda_local,
+                                          B,
+                                          &ldb_local,
+                                          beta,
+                                          C,
+                                          &ldc_local,
+                                          1,
+                                          &batchCount);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1982,8 +2026,8 @@ namespace dftfe
       const MPI_Comm             &mpi_communicator,
       double                     *result) const
     {
-      double localresult                      = 0.0;
-      *result                                 = 0.0;
+      double localresult = 0.0;
+      *result            = 0.0;
 
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
@@ -1994,11 +2038,11 @@ namespace dftfe
                 &localresult);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
-          nrm2)(d_streamId,
-                dftfe::Int(n),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-                dftfe::Int(incx),
-                &localresult);
+        nrm2)(d_streamId,
+              dftfe::Int(n),
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+              dftfe::Int(incx),
+              &localresult);
       DEVICE_API_CHECK(event);
 #endif
       localresult *= localresult;
@@ -2015,14 +2059,14 @@ namespace dftfe
       const MPI_Comm   &mpi_communicator,
       double           *result) const
     {
-      double localresult                      = 0.0;
-      *result                                 = 0.0;
+      double localresult = 0.0;
+      *result            = 0.0;
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(Dnrm2)(
         d_deviceBlasHandle, dftfe::Int(n), x, dftfe::Int(incx), &localresult);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(nrm2)(
-        d_streamId, dftfe::Int(n), x, dftfe::Int(incx), &localresult);
+      dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
+        nrm2)(d_streamId, dftfe::Int(n), x, dftfe::Int(incx), &localresult);
       DEVICE_API_CHECK(event);
 #endif
       localresult *= localresult;

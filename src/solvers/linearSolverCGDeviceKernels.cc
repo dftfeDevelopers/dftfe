@@ -40,7 +40,7 @@ namespace dftfe
     smem[tid] = localSum;
     __syncthreads();
 
-#pragma unroll
+#  pragma unroll
     for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
@@ -56,17 +56,17 @@ namespace dftfe
         if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
-#pragma unroll
+#  pragma unroll
         for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             unsigned mask = 0xffffffff;
             localSum += __shfl_down_sync(mask, localSum, offset);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
             localSum +=
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
-#endif
+#  endif
           }
       }
 
@@ -114,7 +114,7 @@ namespace dftfe
     smem[tid] = localSum;
     __syncthreads();
 
-#pragma unroll
+#  pragma unroll
     for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
@@ -129,17 +129,17 @@ namespace dftfe
         if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
-#pragma unroll
+#  pragma unroll
         for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             unsigned mask = 0xffffffff;
             localSum += __shfl_down_sync(mask, localSum, offset);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
             localSum +=
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
-#endif
+#  endif
           }
       }
 
@@ -192,7 +192,7 @@ namespace dftfe
     smem[tid] = localSum;
     __syncthreads();
 
-#pragma unroll
+#  pragma unroll
     for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
@@ -208,17 +208,17 @@ namespace dftfe
         if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
-#pragma unroll
+#  pragma unroll
         for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             unsigned mask = 0xffffffff;
             localSum += __shfl_down_sync(mask, localSum, offset);
-#elif DFTFE_WITH_DEVICE_LANG_HIP
+#  elif DFTFE_WITH_DEVICE_LANG_HIP
             localSum +=
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
-#endif
+#  endif
           }
       }
 

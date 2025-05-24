@@ -1626,7 +1626,8 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
         OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
-      dftfe::utils::deviceStream_t streamDeviceCCL = dftfe::utils::defaultStream;
+      dftfe::utils::deviceStream_t streamDeviceCCL =
+        dftfe::utils::defaultStream;
 
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
@@ -2201,7 +2202,8 @@ namespace dftfe
                   0,
                   N * vectorsBlockSize * sizeof(dataTypes::numberFP32));
 
-      dftfe::utils::deviceStream_t streamDeviceCCL = dftfe::utils::defaultStream;
+      dftfe::utils::deviceStream_t streamDeviceCCL =
+        dftfe::utils::defaultStream;
 
       const dataTypes::number     scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number     scalarCoeffBeta  = dataTypes::number(0);

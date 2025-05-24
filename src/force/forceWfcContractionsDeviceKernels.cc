@@ -153,108 +153,178 @@ namespace dftfe
 
               const double identityFactor =
                 partOcc *
-                ((dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiXConj, gradPsiX)) +
-                  dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiYConj, gradPsiY)) +
-                  dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiZConj, gradPsiZ))) +
-                 2.0 * (kcoordx * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) +
-                        kcoordy * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) +
-                        kcoordz * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ))) +
+                ((dftfe::utils::realPartDevice(
+                    dftfe::utils::mult(gradPsiXConj, gradPsiX)) +
+                  dftfe::utils::realPartDevice(
+                    dftfe::utils::mult(gradPsiYConj, gradPsiY)) +
+                  dftfe::utils::realPartDevice(
+                    dftfe::utils::mult(gradPsiZConj, gradPsiZ))) +
+                 2.0 * (kcoordx * dftfe::utils::imagPartDevice(
+                                    dftfe::utils::mult(psiConj, gradPsiX)) +
+                        kcoordy * dftfe::utils::imagPartDevice(
+                                    dftfe::utils::mult(psiConj, gradPsiY)) +
+                        kcoordz * dftfe::utils::imagPartDevice(
+                                    dftfe::utils::mult(psiConj, gradPsiZ))) +
                  (kcoordx * kcoordx + kcoordy * kcoordy + kcoordz * kcoordz -
                   2.0 * eigenValue) *
-                   dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)));
+                   dftfe::utils::realPartDevice(
+                     dftfe::utils::mult(psiConj, psi)));
               if (addEk)
                 {
                   if (eshelbyIndex == 0)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiXConj, gradPsiX)) +
-                      -2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiX)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordx -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordx -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordx * kcoordx +
                       identityFactor;
                   else if (eshelbyIndex == 1)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiXConj, gradPsiY)) +
-                      -2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiY)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordy -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordx -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordx * kcoordy;
                   else if (eshelbyIndex == 2)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiXConj, gradPsiZ)) +
-                      -2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiZ)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordz -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordx -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordx * kcoordz;
                   else if (eshelbyIndex == 3)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiYConj, gradPsiX)) +
-                      -2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiX)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordx -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordy -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordy * kcoordx;
                   else if (eshelbyIndex == 4)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiYConj, gradPsiY)) +
-                      -2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiY)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordy -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordy -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordy * kcoordy +
                       identityFactor;
                   else if (eshelbyIndex == 5)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiYConj, gradPsiZ)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiZ)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordz -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordy -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordy * kcoordz;
                   else if (eshelbyIndex == 6)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiZConj, gradPsiX)) +
-                      -2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiX)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordx -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordz -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordz * kcoordx;
                   else if (eshelbyIndex == 7)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiZConj, gradPsiY)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiY)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordy -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordz -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordz * kcoordy;
                   else if (eshelbyIndex == 8)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiZConj, gradPsiZ)) +
-                      -2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiZ)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordz -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordz -
-                      2.0 * partOcc * dftfe::utils::realPartDevice(dftfe::utils::mult(psiConj, psi)) *
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
                         kcoordz * kcoordz +
                       identityFactor;
                 }
@@ -263,58 +333,85 @@ namespace dftfe
                   if (eshelbyIndex == 0)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiXConj, gradPsiX)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiX)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordx +
                       identityFactor;
                   else if (eshelbyIndex == 1)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiXConj, gradPsiY)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiY)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordy;
                   else if (eshelbyIndex == 2)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiXConj, gradPsiZ)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiX)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiZ)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
                         kcoordz;
                   else if (eshelbyIndex == 3)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiYConj, gradPsiX)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiX)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordx;
                   else if (eshelbyIndex == 4)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiYConj, gradPsiY)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiY)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordy +
                       identityFactor;
                   else if (eshelbyIndex == 5)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiYConj, gradPsiZ)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiY)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiZ)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
                         kcoordz;
                   else if (eshelbyIndex == 6)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiZConj, gradPsiX)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiX)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordx;
                   else if (eshelbyIndex == 7)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiZConj, gradPsiY)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiY)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordy;
                   else if (eshelbyIndex == 8)
                     eshelbyTensor[index] =
                       -2.0 * partOcc *
-                        dftfe::utils::realPartDevice(dftfe::utils::mult(gradPsiZConj, gradPsiZ)) -
-                      2.0 * partOcc * dftfe::utils::imagPartDevice(dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiZ)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
                         kcoordz +
                       identityFactor;
                 }
@@ -399,9 +496,9 @@ namespace dftfe
                   [projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId] *
                      numPsi +
                    wfcId]);
-              nlpContractionContribution[index] =
-                dftfe::utils::makeComplex(partialOccupancies[wfcId] * dftfe::utils::realPartDevice(temp),
-                                          partialOccupancies[wfcId] * dftfe::utils::imagPartDevice(temp));
+              nlpContractionContribution[index] = dftfe::utils::makeComplex(
+                partialOccupancies[wfcId] * dftfe::utils::realPartDevice(temp),
+                partialOccupancies[wfcId] * dftfe::utils::imagPartDevice(temp));
             }
         },
         const dftfe::uInt                        numPsi,

@@ -190,9 +190,10 @@ namespace dftfe
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
-            dftfe::utils::atomicAddWrapper(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                            iDof * numberWfc + wfcIndex],
-                      xVec[index]);
+            dftfe::utils::atomicAddWrapper(
+              &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                    iDof * numberWfc + wfcIndex],
+              xVec[index]);
           }
       },
       const dftfe::uInt  totalNonLocalElements,
@@ -220,9 +221,10 @@ namespace dftfe
               index % (numberWfc * numberNodesPerElement);
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
-            dftfe::utils::atomicAddWrapper(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                            iDof * numberWfc + wfcIndex],
-                      xVec[index]);
+            dftfe::utils::atomicAddWrapper(
+              &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                    iDof * numberWfc + wfcIndex],
+              xVec[index]);
           }
       },
       const dftfe::uInt  totalNonLocalElements,
@@ -251,12 +253,15 @@ namespace dftfe
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
 
-            auto* add_real = reinterpret_cast<double*>(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                            iDof * numberWfc + wfcIndex]);
-            auto* add_imag = add_real + 1;
-              
-            dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(xVec[index]));
-            dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(xVec[index]));
+            auto *add_real = reinterpret_cast<double *>(
+              &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                    iDof * numberWfc + wfcIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real, dftfe::utils::realPartDevice(xVec[index]));
+            dftfe::utils::atomicAddWrapper(
+              add_imag, dftfe::utils::imagPartDevice(xVec[index]));
           }
       },
       const dftfe::uInt                        totalNonLocalElements,
@@ -285,12 +290,15 @@ namespace dftfe
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
 
-            auto* add_real = reinterpret_cast<double*>(&yVec[elemIndex * numberNodesPerElement * numberWfc +
-                            iDof * numberWfc + wfcIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(xVec[index]));
-            dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(xVec[index]));
+            auto *add_real = reinterpret_cast<double *>(
+              &yVec[elemIndex * numberNodesPerElement * numberWfc +
+                    iDof * numberWfc + wfcIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real, dftfe::utils::realPartDevice(xVec[index]));
+            dftfe::utils::atomicAddWrapper(
+              add_imag, dftfe::utils::imagPartDevice(xVec[index]));
           }
       },
       const dftfe::uInt                       totalNonLocalElements,
@@ -347,8 +355,9 @@ namespace dftfe
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
 
             if (toIndex < totalNonLocalEntries)
-              dftfe::utils::atomicAddWrapper(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
-                        sphericalFnTimesXCellLevel[index]);
+              dftfe::utils::atomicAddWrapper(
+                &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
+                sphericalFnTimesXCellLevel[index]);
           }
       },
       const dftfe::uInt  numWfc,
@@ -375,8 +384,9 @@ namespace dftfe
 
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
             if (toIndex < totalNonLocalEntries)
-              dftfe::utils::atomicAddWrapper(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
-                        sphericalFnTimesXCellLevel[index]);
+              dftfe::utils::atomicAddWrapper(
+                &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex],
+                sphericalFnTimesXCellLevel[index]);
           }
       },
       const dftfe::uInt  numWfc,
@@ -404,13 +414,18 @@ namespace dftfe
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
             if (toIndex < totalNonLocalEntries)
               {
-                auto* add_real = reinterpret_cast<double*>(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex]);
-                auto* add_imag = add_real + 1;
+                auto *add_real = reinterpret_cast<double *>(
+                  &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex]);
+                auto *add_imag = add_real + 1;
 
-                dftfe::utils::atomicAddWrapper(add_real, 
-                                              dftfe::utils::realPartDevice(sphericalFnTimesXCellLevel[index]));
-                dftfe::utils::atomicAddWrapper(add_imag, 
-                                              dftfe::utils::imagPartDevice(sphericalFnTimesXCellLevel[index]));
+                dftfe::utils::atomicAddWrapper(
+                  add_real,
+                  dftfe::utils::realPartDevice(
+                    sphericalFnTimesXCellLevel[index]));
+                dftfe::utils::atomicAddWrapper(
+                  add_imag,
+                  dftfe::utils::imagPartDevice(
+                    sphericalFnTimesXCellLevel[index]));
               }
           }
       },
@@ -439,13 +454,18 @@ namespace dftfe
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
             if (toIndex < totalNonLocalEntries)
               {
-                auto* add_real = reinterpret_cast<double*>(&sphericalFnTimesX[toIndex * numWfc + intraBlockIndex]);
-                auto* add_imag = add_real + 1;
+                auto *add_real = reinterpret_cast<double *>(
+                  &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex]);
+                auto *add_imag = add_real + 1;
 
-                dftfe::utils::atomicAddWrapper(add_real, 
-                                              dftfe::utils::realPartDevice(sphericalFnTimesXCellLevel[index]));
-                dftfe::utils::atomicAddWrapper(add_imag, 
-                                              dftfe::utils::imagPartDevice(sphericalFnTimesXCellLevel[index]));
+                dftfe::utils::atomicAddWrapper(
+                  add_real,
+                  dftfe::utils::realPartDevice(
+                    sphericalFnTimesXCellLevel[index]));
+                dftfe::utils::atomicAddWrapper(
+                  add_imag,
+                  dftfe::utils::imagPartDevice(
+                    sphericalFnTimesXCellLevel[index]));
               }
           }
       },
@@ -604,9 +624,10 @@ namespace dftfe
     {
       const dftfe::uInt totalEntries =
         totalNonLocalElements * numberWfc * numberNodesPerElement;
-      const auto * nonLocalContribution_data= dftfe::utils::makeDataTypeDeviceCompatible(
-                            nonLocalContribution.data());
-      const auto * iElemNonLocalToElemIndexMap_data= iElemNonLocalToElemIndexMap.data();
+      const auto *nonLocalContribution_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(nonLocalContribution.data());
+      const auto *iElemNonLocalToElemIndexMap_data =
+        iElemNonLocalToElemIndexMap.data();
       DFTFE_LAUNCH_KERNEL(addNonLocalContributionDeviceKernel,
                           (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -639,24 +660,26 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal)
     {
-      const auto * nonLocalContribution_data= dftfe::utils::makeDataTypeDeviceCompatible(
-                            nonLocalContribution.begin() +
+      const auto *nonLocalContribution_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          nonLocalContribution.begin() +
           numberCellsTraversed * numberNodesPerElement * numberWfc);
-      const auto * cellNodeIdMapNonLocalToLocal_data= cellNodeIdMapNonLocalToLocal.begin() +
-          numberCellsTraversed * numberNodesPerElement;
-      DFTFE_LAUNCH_KERNEL(
-        addNonLocalContributionDeviceKernel,
-        (numberWfc + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE * numberCellsForAtom *
-          numberNodesPerElement,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        dftfe::utils::defaultStream,
-        numberWfc,
-        numberCellsForAtom * numberNodesPerElement,
-        nonLocalContribution_data,
-        dftfe::utils::makeDataTypeDeviceCompatible(TotalContribution),
-        cellNodeIdMapNonLocalToLocal_data);
+      const auto *cellNodeIdMapNonLocalToLocal_data =
+        cellNodeIdMapNonLocalToLocal.begin() +
+        numberCellsTraversed * numberNodesPerElement;
+      DFTFE_LAUNCH_KERNEL(addNonLocalContributionDeviceKernel,
+                          (numberWfc + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE *
+                            numberCellsForAtom * numberNodesPerElement,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          dftfe::utils::defaultStream,
+                          numberWfc,
+                          numberCellsForAtom * numberNodesPerElement,
+                          nonLocalContribution_data,
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            TotalContribution),
+                          cellNodeIdMapNonLocalToLocal_data);
     }
 
     template <typename ValueType>
@@ -677,25 +700,27 @@ namespace dftfe
     {
       const dftfe::uInt totalEntries =
         totalNonlocalElems * numberWaveFunctions * maxSingleAtomContribution;
-      const auto *sphericalFnTimesVectorAllCellsDevice_data=dftfe::utils::makeDataTypeDeviceCompatible(
+      const auto *sphericalFnTimesVectorAllCellsDevice_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(
           sphericalFnTimesVectorAllCellsDevice.begin());
-      const auto *mapSphericalFnTimesVectorAllCellsReductionDevice_data= mapSphericalFnTimesVectorAllCellsReductionDevice.begin();
-      auto *sphericalFnTimesWavefunctionMatrix_data= dftfe::utils::makeDataTypeDeviceCompatible(
+      const auto *mapSphericalFnTimesVectorAllCellsReductionDevice_data =
+        mapSphericalFnTimesVectorAllCellsReductionDevice.begin();
+      auto *sphericalFnTimesWavefunctionMatrix_data =
+        dftfe::utils::makeDataTypeDeviceCompatible(
           sphericalFnTimesWavefunctionMatrix.begin());
-      DFTFE_LAUNCH_KERNEL(
-        assembleAtomLevelContributionsFromCellLevelKernel,
-        (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
-          dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        dftfe::utils::defaultStream,
-        numberWaveFunctions,
-        totalNonlocalElems,
-        maxSingleAtomContribution,
-        totalNonlocalEntries,
-        sphericalFnTimesVectorAllCellsDevice_data,
-        mapSphericalFnTimesVectorAllCellsReductionDevice_data,
-        sphericalFnTimesWavefunctionMatrix_data);
+      DFTFE_LAUNCH_KERNEL(assembleAtomLevelContributionsFromCellLevelKernel,
+                          (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          dftfe::utils::defaultStream,
+                          numberWaveFunctions,
+                          totalNonlocalElems,
+                          maxSingleAtomContribution,
+                          totalNonlocalEntries,
+                          sphericalFnTimesVectorAllCellsDevice_data,
+                          mapSphericalFnTimesVectorAllCellsReductionDevice_data,
+                          sphericalFnTimesWavefunctionMatrix_data);
     }
 
     template void

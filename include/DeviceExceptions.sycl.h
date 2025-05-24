@@ -17,28 +17,31 @@
 #ifndef dftfeDeviceExceptions_syclh
 #define dftfeDeviceExceptions_syclh
 
-#define DEVICE_API_CHECK(event)                                   \
-{                                                                 \
-    try{                                                          \
-        event.wait();                                              \
-    }                                                             \
-    catch(const sycl::exception &e){                              \
-        std::cerr<<"SYCL error on or before line number"<<        \
-                     __LINE__ <<" in file: "<<                    \
-                     __FILE__ <<". Error code: "<<                \
-                     e.what()<<".\n";                             \
-    }                                                             \
-}
+#define DEVICE_API_CHECK(event)                                               \
+  {                                                                           \
+    try                                                                       \
+      {                                                                       \
+        event.wait();                                                         \
+      }                                                                       \
+    catch (const sycl::exception &e)                                          \
+      {                                                                       \
+        std::cerr << "SYCL error on or before line number" << __LINE__        \
+                  << " in file: " << __FILE__ << ". Error code: " << e.what() \
+                  << ".\n";                                                   \
+      }                                                                       \
+  }
 
-#define DEVICEBLAS_API_CHECK(event)                                          \
-{                                                                            \
-    event.wait();                                                            \
-    if(event.get_info<sycl::info::event::command_execution_status>().code()  \
-                != dftfe::utils::deviceBlasSuccess){                         \
-        std::cerr<<"SYCL error on or before line number"<<                   \
-                     __LINE__ <<" in file: "<<                               \
-                     __FILE__ <<".\n";                                       \ 
-    }                                                                        \
-}
+#define DEVICEBLAS_API_CHECK(event)                                    \
+  {                                                                    \
+    event.wait();                                                      \
+    if (event.get_info<sycl::info::event::command_execution_status>()  \
+          .code() != dftfe::utils::deviceBlasSuccess)                  \
+      {                                                                \
+        std::cerr << "SYCL error on or before line number" << __LINE__ \
+                  << " in file: " << __FILE__ << ".\n";                \
+        \
+                                                                 \
+      }                                                                \
+  }
 
 #endif // dftfeDeviceExceptions_syclh

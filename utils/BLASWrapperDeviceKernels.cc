@@ -61,7 +61,8 @@ namespace dftfe
         for (dftfe::uInt idx = globalThreadId; idx < size;
              idx += nThreadsPerBlock * nThreadBlock)
           {
-            complexArr[idx] = dftfe::utils::makeComplex(realArr[idx], imagArr[idx]);
+            complexArr[idx] =
+              dftfe::utils::makeComplex(realArr[idx], imagArr[idx]);
           }
       },
       const dftfe::uInt    size,
@@ -500,9 +501,10 @@ namespace dftfe
           {
             dftfe::uInt blockIndex      = index / contiguousBlockSize;
             dftfe::uInt intraBlockIndex = index % contiguousBlockSize;
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      addFromVec[index]);
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              addFromVec[index]);
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -526,9 +528,10 @@ namespace dftfe
             dftfe::uInt  blockIndex      = index / contiguousBlockSize;
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      dftfe::utils::mult(addFromVec[index], coeff));
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              dftfe::utils::mult(addFromVec[index], coeff));
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -554,9 +557,10 @@ namespace dftfe
             dftfe::uInt  blockIndex      = index / contiguousBlockSize;
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      dftfe::utils::mult(addFromVec[index], coeff));
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              dftfe::utils::mult(addFromVec[index], coeff));
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -582,14 +586,19 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
-            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
+            auto *add_real = reinterpret_cast<double *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
 
-            dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::mult(
-                                          dftfe::utils::realPartDevice(addFromVec[index]), coeff));
-            dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::mult(
-                                          dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_real,
+              dftfe::utils::mult(
+                dftfe::utils::realPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_imag,
+              dftfe::utils::mult(
+                dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
           }
       },
       const dftfe::uInt                        contiguousBlockSize,
@@ -616,14 +625,19 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
 
-            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, 
-                                          dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
-            dftfe::utils::atomicAddWrapper(add_imag, 
-                                          dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
+            auto *add_real = reinterpret_cast<double *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real,
+              dftfe::utils::mult(
+                dftfe::utils::realPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_imag,
+              dftfe::utils::mult(
+                dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
           }
       },
       const dftfe::uInt                        contiguousBlockSize,
@@ -648,9 +662,10 @@ namespace dftfe
             dftfe::uInt  blockIndex      = index / contiguousBlockSize;
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      dftfe::utils::mult(addFromVec[index], coeff));
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              dftfe::utils::mult(addFromVec[index], coeff));
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -676,9 +691,10 @@ namespace dftfe
             dftfe::uInt  blockIndex      = index / contiguousBlockSize;
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      dftfe::utils::mult(addFromVec[index], coeff));
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              dftfe::utils::mult(addFromVec[index], coeff));
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -704,14 +720,19 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
-            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, 
-                                          dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
-            dftfe::utils::atomicAddWrapper(add_imag, 
-                                          dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
+            auto *add_real = reinterpret_cast<double *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real,
+              dftfe::utils::mult(
+                dftfe::utils::realPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_imag,
+              dftfe::utils::mult(
+                dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
           }
       },
       const dftfe::uInt                       contiguousBlockSize,
@@ -737,14 +758,19 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
 
-            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, 
-                                          dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
-            dftfe::utils::atomicAddWrapper(add_imag, 
-                                          dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
+            auto *add_real = reinterpret_cast<double *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real,
+              dftfe::utils::mult(
+                dftfe::utils::realPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_imag,
+              dftfe::utils::mult(
+                dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
           }
       },
       const dftfe::uInt                       contiguousBlockSize,
@@ -768,9 +794,10 @@ namespace dftfe
             dftfe::uInt  blockIndex      = index / contiguousBlockSize;
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      dftfe::utils::mult(addFromVec[index], coeff));
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              dftfe::utils::mult(addFromVec[index], coeff));
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -795,9 +822,10 @@ namespace dftfe
             dftfe::uInt  blockIndex      = index / contiguousBlockSize;
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      dftfe::utils::mult(addFromVec[index], coeff));
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              dftfe::utils::mult(addFromVec[index], coeff));
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -823,14 +851,19 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
-            auto* add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, 
-                                          dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
-            dftfe::utils::atomicAddWrapper(add_imag, 
-                                          dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
+            auto *add_real = reinterpret_cast<float *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real,
+              dftfe::utils::mult(
+                dftfe::utils::realPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_imag,
+              dftfe::utils::mult(
+                dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
           }
       },
       const dftfe::uInt                       contiguousBlockSize,
@@ -857,14 +890,19 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
 
-            auto* add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, 
-                                          dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
-            dftfe::utils::atomicAddWrapper(add_imag, 
-                                          dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
+            auto *add_real = reinterpret_cast<float *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real,
+              dftfe::utils::mult(
+                dftfe::utils::realPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_imag,
+              dftfe::utils::mult(
+                dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
           }
       },
       const dftfe::uInt                       contiguousBlockSize,
@@ -889,9 +927,10 @@ namespace dftfe
             dftfe::uInt  blockIndex      = index / contiguousBlockSize;
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      dftfe::utils::mult(addFromVec[index], coeff));
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              dftfe::utils::mult(addFromVec[index], coeff));
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -917,9 +956,10 @@ namespace dftfe
             dftfe::uInt  blockIndex      = index / contiguousBlockSize;
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
-            dftfe::utils::atomicAddWrapper(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                                intraBlockIndex],
-                      dftfe::utils::mult(addFromVec[index], coeff));
+            dftfe::utils::atomicAddWrapper(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex],
+              dftfe::utils::mult(addFromVec[index], coeff));
           }
       },
       const dftfe::uInt  contiguousBlockSize,
@@ -945,14 +985,19 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
-            auto* add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, 
-                                          dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
-            dftfe::utils::atomicAddWrapper(add_imag, 
-                                          dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
+            auto *add_real = reinterpret_cast<float *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real,
+              dftfe::utils::mult(
+                dftfe::utils::realPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_imag,
+              dftfe::utils::mult(
+                dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
           }
       },
       const dftfe::uInt                       contiguousBlockSize,
@@ -979,14 +1024,19 @@ namespace dftfe
             dftfe::uInt  intraBlockIndex = index % contiguousBlockSize;
             const double coeff           = a;
 
-            auto* add_real = reinterpret_cast<float*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, 
-                                          dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff));
-            dftfe::utils::atomicAddWrapper(add_imag, 
-                                          dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
+            auto *add_real = reinterpret_cast<float *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real,
+              dftfe::utils::mult(
+                dftfe::utils::realPartDevice(addFromVec[index]), coeff));
+            dftfe::utils::atomicAddWrapper(
+              add_imag,
+              dftfe::utils::mult(
+                dftfe::utils::imagPartDevice(addFromVec[index]), coeff));
           }
       },
       const dftfe::uInt                       contiguousBlockSize,
@@ -1011,12 +1061,15 @@ namespace dftfe
             dftfe::uInt blockIndex      = index / contiguousBlockSize;
             dftfe::uInt intraBlockIndex = index % contiguousBlockSize;
 
-            auto* add_real = reinterpret_cast<double*>(&addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
-                         intraBlockIndex]);
-            auto* add_imag = add_real + 1;
-            
-            dftfe::utils::atomicAddWrapper(add_real, dftfe::utils::realPartDevice(addFromVec[index]));
-            dftfe::utils::atomicAddWrapper(add_imag, dftfe::utils::imagPartDevice(addFromVec[index]));
+            auto *add_real = reinterpret_cast<double *>(
+              &addToVec[addToVecStartingContiguousBlockIds[blockIndex] +
+                        intraBlockIndex]);
+            auto *add_imag = add_real + 1;
+
+            dftfe::utils::atomicAddWrapper(
+              add_real, dftfe::utils::realPartDevice(addFromVec[index]));
+            dftfe::utils::atomicAddWrapper(
+              add_imag, dftfe::utils::imagPartDevice(addFromVec[index]));
           }
       },
       const dftfe::uInt                        contiguousBlockSize,
@@ -1130,10 +1183,15 @@ namespace dftfe
         for (dftfe::Int i = globalThreadId; i < vecSize;
              i += nThreadsPerBlock * nThreadBlock)
           {
-            outputVec[i] = dftfe::utils::makeComplex(dftfe::utils::realPartDevice(yVec[i]) * dftfe::utils::realPartDevice(xVec[i]) - 
-                                        dftfe::utils::imagPartDevice(yVec[i]) * dftfe::utils::imagPartDevice(xVec[i]), 
-                                        dftfe::utils::realPartDevice(yVec[i]) * dftfe::utils::imagPartDevice(xVec[i]) + 
-                                        dftfe::utils::imagPartDevice(yVec[i]) * dftfe::utils::realPartDevice(xVec[i]));
+            outputVec[i] = dftfe::utils::makeComplex(
+              dftfe::utils::realPartDevice(yVec[i]) *
+                  dftfe::utils::realPartDevice(xVec[i]) -
+                dftfe::utils::imagPartDevice(yVec[i]) *
+                  dftfe::utils::imagPartDevice(xVec[i]),
+              dftfe::utils::realPartDevice(yVec[i]) *
+                  dftfe::utils::imagPartDevice(xVec[i]) +
+                dftfe::utils::imagPartDevice(yVec[i]) *
+                  dftfe::utils::realPartDevice(xVec[i]));
           }
       },
       const dftfe::uInt                        vecSize,
@@ -1184,10 +1242,15 @@ namespace dftfe
         for (dftfe::Int i = globalThreadId; i < vecSize;
              i += nThreadsPerBlock * nThreadBlock)
           {
-            outputVec[i] = dftfe::utils::makeComplex(dftfe::utils::realPartDevice(yVec[i]) * dftfe::utils::realPartDevice(xVec[i]) + 
-                                        dftfe::utils::imagPartDevice(yVec[i]) * dftfe::utils::imagPartDevice(xVec[i]), 
-                                        dftfe::utils::imagPartDevice(yVec[i]) * dftfe::utils::realPartDevice(xVec[i]) - 
-                                        dftfe::utils::realPartDevice(yVec[i]) * dftfe::utils::imagPartDevice(xVec[i]));
+            outputVec[i] = dftfe::utils::makeComplex(
+              dftfe::utils::realPartDevice(yVec[i]) *
+                  dftfe::utils::realPartDevice(xVec[i]) +
+                dftfe::utils::imagPartDevice(yVec[i]) *
+                  dftfe::utils::imagPartDevice(xVec[i]),
+              dftfe::utils::imagPartDevice(yVec[i]) *
+                  dftfe::utils::realPartDevice(xVec[i]) -
+                dftfe::utils::realPartDevice(yVec[i]) *
+                  dftfe::utils::imagPartDevice(xVec[i]));
           }
       },
       const dftfe::uInt                        vecSize,
@@ -1293,11 +1356,15 @@ namespace dftfe
           {
             dftfe::uInt  blockIndex = index / contiguousBlockSize;
             const double coeff      = dftfe::utils::mult(a, s[blockIndex]);
-            addToVec[index] = dftfe::utils::makeComplex(
+            addToVec[index]         = dftfe::utils::makeComplex(
               dftfe::utils::add(dftfe::utils::realPartDevice(addToVec[index]),
-                                dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff)),
+                                dftfe::utils::mult(dftfe::utils::realPartDevice(
+                                                     addFromVec[index]),
+                                                   coeff)),
               dftfe::utils::add(dftfe::utils::imagPartDevice(addToVec[index]),
-                                dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff)));
+                                dftfe::utils::mult(dftfe::utils::imagPartDevice(
+                                                     addFromVec[index]),
+                                                   coeff)));
           }
       },
       const dftfe::uInt                       contiguousBlockSize,
@@ -1320,11 +1387,19 @@ namespace dftfe
           {
             dftfe::uInt  blockIndex = index / contiguousBlockSize;
             const double coeff      = dftfe::utils::mult(a, s[blockIndex]);
-            addToVec[index] = dftfe::utils::makeComplex(
-              dftfe::utils::add(dftfe::utils::mult(dftfe::utils::realPartDevice(addToVec[index]), b),
-                                dftfe::utils::mult(dftfe::utils::realPartDevice(addFromVec[index]), coeff)),
-              dftfe::utils::add(dftfe::utils::mult(dftfe::utils::imagPartDevice(addToVec[index]), b),
-                                dftfe::utils::mult(dftfe::utils::imagPartDevice(addFromVec[index]), coeff)));
+            addToVec[index]         = dftfe::utils::makeComplex(
+              dftfe::utils::add(dftfe::utils::mult(dftfe::utils::realPartDevice(
+                                                     addToVec[index]),
+                                                   b),
+                                dftfe::utils::mult(dftfe::utils::realPartDevice(
+                                                     addFromVec[index]),
+                                                   coeff)),
+              dftfe::utils::add(dftfe::utils::mult(dftfe::utils::imagPartDevice(
+                                                     addToVec[index]),
+                                                   b),
+                                dftfe::utils::mult(dftfe::utils::imagPartDevice(
+                                                     addFromVec[index]),
+                                                   coeff)));
           }
       },
       const dftfe::uInt                       contiguousBlockSize,

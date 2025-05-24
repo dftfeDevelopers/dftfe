@@ -35,20 +35,25 @@ namespace dftfe
     // static deviceError_t deviceSuccess(success_code);
 
     // vendor blas related typedef and static consts
-    typedef sycl::queue                                   deviceBlasHandle_t;
-    typedef oneapi::mkl::transpose                          deviceBlasOperation_t;
-    typedef oneapi::mkl::blas::compute_mode                 deviceBlasMath_t;
-    typedef sycl::info::event_command_status     deviceBlasStatus_t;
-    
-    static const sycl::info::event_command_status deviceBlasSuccess = sycl::info::event_command_status::complete;
+    typedef sycl::queue                      deviceBlasHandle_t;
+    typedef oneapi::mkl::transpose           deviceBlasOperation_t;
+    typedef oneapi::mkl::blas::compute_mode  deviceBlasMath_t;
+    typedef sycl::info::event_command_status deviceBlasStatus_t;
 
-    static const oneapi::mkl::transpose DEVICEBLAS_OP_N = oneapi::mkl::transpose::nontrans;
-    static const oneapi::mkl::transpose DEVICEBLAS_OP_T = oneapi::mkl::transpose::trans;
-    static const oneapi::mkl::transpose DEVICEBLAS_OP_C = oneapi::mkl::transpose::conjtrans;
-    static const oneapi::mkl::blas::compute_mode DEVICEBLAS_DEFAULT_MATH = 
-            oneapi::mkl::blas::compute_mode::standard;
-    static const oneapi::mkl::blas::compute_mode DEVICEBLAS_TF32_TENSOR_OP_MATH = 
-            oneapi::mkl::blas::compute_mode::float_to_tf32;
+    static const sycl::info::event_command_status deviceBlasSuccess =
+      sycl::info::event_command_status::complete;
+
+    static const oneapi::mkl::transpose DEVICEBLAS_OP_N =
+      oneapi::mkl::transpose::nontrans;
+    static const oneapi::mkl::transpose DEVICEBLAS_OP_T =
+      oneapi::mkl::transpose::trans;
+    static const oneapi::mkl::transpose DEVICEBLAS_OP_C =
+      oneapi::mkl::transpose::conjtrans;
+    static const oneapi::mkl::blas::compute_mode DEVICEBLAS_DEFAULT_MATH =
+      oneapi::mkl::blas::compute_mode::standard;
+    static const oneapi::mkl::blas::compute_mode
+      DEVICEBLAS_TF32_TENSOR_OP_MATH =
+        oneapi::mkl::blas::compute_mode::float_to_tf32;
 
     static sycl::queue defaultStream{sycl::gpu_selector_v};
 

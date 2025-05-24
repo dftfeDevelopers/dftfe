@@ -218,11 +218,18 @@ namespace dftfe
               const dftfe::uInt waveIndex = i % numVectors;
               const dftfe::utils::deviceDoubleComplex diff =
                 dftfe::utils::makeComplex(
-                  dftfe::utils::realPartDevice(Y[i]) - dftfe::utils::realPartDevice(X[dofIndex * N + startingVecId + waveIndex]) *
-                             eigenValues[startingVecId + waveIndex],
-                  dftfe::utils::imagPartDevice(Y[i]) - dftfe::utils::imagPartDevice(X[dofIndex * N + startingVecId + waveIndex]) *
-                             eigenValues[startingVecId + waveIndex]);
-              r[i] = dftfe::utils::realPartDevice(diff) * dftfe::utils::realPartDevice(diff) + dftfe::utils::imagPartDevice(diff) * dftfe::utils::imagPartDevice(diff);
+                  dftfe::utils::realPartDevice(Y[i]) -
+                    dftfe::utils::realPartDevice(
+                      X[dofIndex * N + startingVecId + waveIndex]) *
+                      eigenValues[startingVecId + waveIndex],
+                  dftfe::utils::imagPartDevice(Y[i]) -
+                    dftfe::utils::imagPartDevice(
+                      X[dofIndex * N + startingVecId + waveIndex]) *
+                      eigenValues[startingVecId + waveIndex]);
+              r[i] = dftfe::utils::realPartDevice(diff) *
+                       dftfe::utils::realPartDevice(diff) +
+                     dftfe::utils::imagPartDevice(diff) *
+                       dftfe::utils::imagPartDevice(diff);
             }
         },
         const dftfe::uInt                        numVectors,
@@ -242,7 +249,8 @@ namespace dftfe
         {
           const dftfe::uInt numGangsPerBVec =
             (BVec + nThreadsPerBlock - 1) / nThreadsPerBlock;
-          const dftfe::uInt gangBlockId = (globalThreadId / nThreadsPerBlock) / numGangsPerBVec;
+          const dftfe::uInt gangBlockId =
+            (globalThreadId / nThreadsPerBlock) / numGangsPerBVec;
           const dftfe::uInt localThreadId =
             globalThreadId - gangBlockId * numGangsPerBVec * nThreadsPerBlock;
 
@@ -266,7 +274,8 @@ namespace dftfe
         {
           const dftfe::uInt numGangsPerBVec =
             (BVec + nThreadsPerBlock - 1) / nThreadsPerBlock;
-          const dftfe::uInt gangBlockId = (globalThreadId / nThreadsPerBlock) / numGangsPerBVec;
+          const dftfe::uInt gangBlockId =
+            (globalThreadId / nThreadsPerBlock) / numGangsPerBVec;
           const dftfe::uInt localThreadId =
             globalThreadId - gangBlockId * numGangsPerBVec * nThreadsPerBlock;
 
@@ -318,7 +327,10 @@ namespace dftfe
             {
               const dftfe::uInt dofIndex  = i / numVectors;
               const dftfe::uInt waveIndex = i % numVectors;
-              r[i]                        = dftfe::utils::realPartDevice(Y[i]) * dftfe::utils::realPartDevice(Y[i]) + dftfe::utils::imagPartDevice(Y[i]) * dftfe::utils::imagPartDevice(Y[i]);
+              r[i]                        = dftfe::utils::realPartDevice(Y[i]) *
+                       dftfe::utils::realPartDevice(Y[i]) +
+                     dftfe::utils::imagPartDevice(Y[i]) *
+                       dftfe::utils::imagPartDevice(Y[i]);
             }
         },
         const dftfe::uInt                        numVectors,

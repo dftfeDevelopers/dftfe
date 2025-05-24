@@ -78,7 +78,6 @@ namespace dftfe
       /// Vector of size d_numContiguousRanges which stores the accumulated
       /// number of elements in d_set prior to the i-th contiguous range
       std::vector<dftfe::uInt> d_numEntriesBefore;
-
     };
 
   } // end of namespace utils

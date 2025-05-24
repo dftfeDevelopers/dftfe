@@ -722,9 +722,9 @@ namespace dftfe
       template <typename ValueType1, typename ValueType2>
       static void
       copyValueType1ArrToValueType2ArrDeviceCall(
-        const dftfe::uInt                  size,
-        const ValueType1                  *valueType1Arr,
-        ValueType2                        *valueType2Arr,
+        const dftfe::uInt            size,
+        const ValueType1            *valueType1Arr,
+        ValueType2                  *valueType2Arr,
         dftfe::utils::deviceStream_t streamId = dftfe::utils::defaultStream);
 
       template <typename ValueType>
@@ -1391,7 +1391,7 @@ namespace dftfe
       /// storage for deviceblas handle
       mutable dftfe::utils::deviceBlasHandle_t d_deviceBlasHandle;
       mutable dftfe::utils::deviceStream_t     d_streamId;
-      tensorOpDataType                 d_opType;
+      tensorOpDataType                         d_opType;
 
       dftfe::utils::deviceBlasStatus_t
       create();

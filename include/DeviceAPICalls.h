@@ -159,7 +159,8 @@ namespace dftfe
     deviceEventDestroy(deviceEvent_t event);
 
     deviceError_t
-    deviceEventRecord(deviceEvent_t event, deviceStream_t stream = dftfe::utils::defaultStream);
+    deviceEventRecord(deviceEvent_t  event,
+                      deviceStream_t stream = dftfe::utils::defaultStream);
 
     deviceError_t
     deviceEventSynchronize(deviceEvent_t event);
