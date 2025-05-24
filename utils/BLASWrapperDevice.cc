@@ -50,8 +50,7 @@
 #  endif
 #  define DFTFE_DEVICE_BLAS(name) hipblas##name
 #elif defined(DFTFE_WITH_DEVICE_INTEL)
-#  define DFTFE_DEVICE_BLAS_INT(name) oneapi::mkl::blas::column_major::##name
-#  define DFTFE_DEVICE_BLAS(name) hipblas##name
+#  define DFTFE_DEVICE_BLAS_INT(name) oneapi::mkl::blas::column_major::name
 #else
 #  error \
     "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD)"
@@ -179,7 +178,7 @@ namespace dftfe
         const dftfe::uInt                  size,
         const ValueType1                  *valueType1Arr,
         ValueType2                        *valueType2Arr,
-        const dftfe::utils::deviceStream_t streamId)
+        dftfe::utils::deviceStream_t streamId)
     {
       DFTFE_LAUNCH_KERNEL(
         copyValueType1ArrToValueType2ArrDeviceKernel,
@@ -360,13 +359,13 @@ namespace dftfe
                                       dftfe::Int(m),
                                       dftfe::Int(n),
                                       dftfe::Int(k),
-                                      (const void *)alpha,
-                                      (const void *)A,
+                                      alpha,
+                                      A,
                                       dftfe::Int(lda),
-                                      (const void *)B,
+                                      B,
                                       dftfe::Int(ldb),
-                                      (const void *)beta,
-                                      (void *)C,
+                                      beta,
+                                      C,
                                       dftfe::Int(ldc));
       DEVICE_API_CHECK(event);
 #endif
@@ -448,13 +447,13 @@ namespace dftfe
                                       dftfe::Int(m),
                                       dftfe::Int(n),
                                       dftfe::Int(k),
-                                      (const void *)alpha,
-                                      (const void *)A,
+                                      alpha,
+                                      A,
                                       dftfe::Int(lda),
-                                      (const void *)B,
+                                      B,
                                       dftfe::Int(ldb),
-                                      (const void *)beta,
-                                      (void *)C,
+                                      beta,
+                                      C,
                                       dftfe::Int(ldc));
       DEVICE_API_CHECK(event);
 #endif
@@ -1533,15 +1532,15 @@ namespace dftfe
                       dftfe::Int(m),
                       dftfe::Int(n),
                       dftfe::Int(k),
-                      (const void *)alpha,
-                      (const void *)A,
+                      alpha,
+                      A,
                       dftfe::Int(lda),
                       strideA,
-                      (const void *)B,
+                      B,
                       dftfe::Int(ldb),
                       strideB,
-                      (const void *)beta,
-                      (void *)C,
+                      beta,
+                      C,
                       dftfe::Int(ldc),
                       strideC,
                       dftfe::Int(batchCount));
@@ -1634,15 +1633,15 @@ namespace dftfe
                       dftfe::Int(m),
                       dftfe::Int(n),
                       dftfe::Int(k),
-                      (const void *)alpha,
-                      (const void *)A,
+                      alpha,
+                      A,
                       dftfe::Int(lda),
                       strideA,
-                      (const void *)B,
+                      B,
                       dftfe::Int(ldb),
                       strideB,
-                      (const void *)beta,
-                      (void *)C,
+                      beta,
+                      C,
                       dftfe::Int(ldc),
                       strideC,
                       dftfe::Int(batchCount));
@@ -1706,22 +1705,18 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        const long group_size=1;
+        const int m_local = int(m);
+        const int n_local = int(n);
+        const int k_local = int(k);
+        const int lda_local = int(lda);
+        const int ldb_local = int(ldb);
+        const int ldc_local = int(ldc);
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
           gemm_batch)(d_streamId,
-                      transa,
-                      transb,
-                      dftfe::Int(m),
-                      dftfe::Int(n),
-                      dftfe::Int(k),
-                      alpha,
-                      A,
-                      dftfe::Int(lda),
-                      B,
-                      dftfe::Int(ldb),
-                      beta,
-                      C,
-                      dftfe::Int(ldc),
-                      dftfe::Int(batchCount));
+                      &transa, &transb, &m_local, &n_local, &k_local, alpha,
+                                                                        A, &lda_local, B, &ldb_local, beta,
+                                                                        C, &ldc_local, 1, &batchCount);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1786,22 +1781,18 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        const long group_size=1;
+        const int m_local = int(m);
+        const int n_local = int(n);
+        const int k_local = int(k);
+        const int lda_local = int(lda);
+        const int ldb_local = int(ldb);
+        const int ldc_local = int(ldc);
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
           gemm_batch)(d_streamId,
-                      transa,
-                      transb,
-                      dftfe::Int(m),
-                      dftfe::Int(n),
-                      dftfe::Int(k),
-                      dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-                      (const dftfe::utils::deviceDoubleComplex **)A,
-                      dftfe::Int(lda),
-                      (const dftfe::utils::deviceDoubleComplex **)B,
-                      dftfe::Int(ldb),
-                      dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-                      (dftfe::utils::deviceDoubleComplex **)C,
-                      dftfe::Int(ldc),
-                      dftfe::Int(batchCount));
+                      &transa, &transb, &m_local, &n_local, &k_local, alpha,
+                                                                        A, &lda_local, B, &ldb_local, beta,
+                                                                        C, &ldc_local, 1, &batchCount);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1878,22 +1869,18 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        const long group_size=1;
+        const int m_local = int(m);
+        const int n_local = int(n);
+        const int k_local = int(k);
+        const int lda_local = int(lda);
+        const int ldb_local = int(ldb);
+        const int ldc_local = int(ldc);
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
           gemm_batch)(d_streamId,
-                      transa,
-                      transb,
-                      dftfe::Int(m),
-                      dftfe::Int(n),
-                      dftfe::Int(k),
-                      (const void *)alpha,
-                      (const void **)A,
-                      dftfe::Int(lda),
-                      (const void **)B,
-                      dftfe::Int(ldb),
-                      (const void *)beta,
-                      (void **)C,
-                      dftfe::Int(ldc),
-                      dftfe::Int(batchCount));
+                     &transa, &transb, &m_local, &n_local, &k_local, alpha,
+                                                                        A, &lda_local, B, &ldb_local, beta,
+                                                                        C, &ldc_local, 1, &batchCount);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -1970,22 +1957,19 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        const long group_size=1;
+        const int m_local = int(m);
+        const int n_local = int(n);
+        const int k_local = int(k);
+        const int lda_local = int(lda);
+        const int ldb_local = int(ldb);
+        const int ldc_local = int(ldc);
+
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
           gemm_batch)(d_streamId,
-                      transa,
-                      transb,
-                      dftfe::Int(m),
-                      dftfe::Int(n),
-                      dftfe::Int(k),
-                      (const void *)alpha,
-                      (const void **)A,
-                      dftfe::Int(lda),
-                      (const void **)B,
-                      dftfe::Int(ldb),
-                      (const void *)beta,
-                      (void **)C,
-                      dftfe::Int(ldc),
-                      dftfe::Int(batchCount));
+                      &transa, &transb, &m_local, &n_local, &k_local, alpha,
+                                                                        A, &lda_local, B, &ldb_local, beta,
+                                                                        C, &ldc_local, 1, &batchCount);
       DEVICE_API_CHECK(event);
 #endif
     }
@@ -2347,7 +2331,7 @@ namespace dftfe
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
                           0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(a),

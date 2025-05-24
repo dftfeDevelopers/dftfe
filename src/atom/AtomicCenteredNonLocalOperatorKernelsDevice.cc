@@ -604,6 +604,9 @@ namespace dftfe
     {
       const dftfe::uInt totalEntries =
         totalNonLocalElements * numberWfc * numberNodesPerElement;
+      const auto * nonLocalContribution_data= dftfe::utils::makeDataTypeDeviceCompatible(
+                            nonLocalContribution.data());
+      const auto * iElemNonLocalToElemIndexMap_data= iElemNonLocalToElemIndexMap.data();
       DFTFE_LAUNCH_KERNEL(addNonLocalContributionDeviceKernel,
                           (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
@@ -613,9 +616,8 @@ namespace dftfe
                           totalNonLocalElements,
                           numberWfc,
                           numberNodesPerElement,
-                          iElemNonLocalToElemIndexMap.begin(),
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            nonLocalContribution.begin()),
+                          iElemNonLocalToElemIndexMap_data,
+                          nonLocalContribution_data,
                           dftfe::utils::makeDataTypeDeviceCompatible(
                             TotalContribution));
     }
@@ -637,6 +639,11 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
         &cellNodeIdMapNonLocalToLocal)
     {
+      const auto * nonLocalContribution_data= dftfe::utils::makeDataTypeDeviceCompatible(
+                            nonLocalContribution.begin() +
+          numberCellsTraversed * numberNodesPerElement * numberWfc);
+      const auto * cellNodeIdMapNonLocalToLocal_data= cellNodeIdMapNonLocalToLocal.begin() +
+          numberCellsTraversed * numberNodesPerElement;
       DFTFE_LAUNCH_KERNEL(
         addNonLocalContributionDeviceKernel,
         (numberWfc + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
@@ -647,12 +654,9 @@ namespace dftfe
         dftfe::utils::defaultStream,
         numberWfc,
         numberCellsForAtom * numberNodesPerElement,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          nonLocalContribution.begin() +
-          numberCellsTraversed * numberNodesPerElement * numberWfc),
+        nonLocalContribution_data,
         dftfe::utils::makeDataTypeDeviceCompatible(TotalContribution),
-        cellNodeIdMapNonLocalToLocal.begin() +
-          numberCellsTraversed * numberNodesPerElement);
+        cellNodeIdMapNonLocalToLocal_data);
     }
 
     template <typename ValueType>
@@ -673,38 +677,25 @@ namespace dftfe
     {
       const dftfe::uInt totalEntries =
         totalNonlocalElems * numberWaveFunctions * maxSingleAtomContribution;
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      assembleAtomLevelContributionsFromCellLevelKernel<<<
-        (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
-          dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::DEVICE_BLOCK_SIZE>>>(
-        numberWaveFunctions,
-        totalNonlocalElems,
-        maxSingleAtomContribution,
-        totalNonlocalEntries,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesVectorAllCellsDevice.begin()),
-        mapSphericalFnTimesVectorAllCellsReductionDevice.begin(),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWavefunctionMatrix.begin()));
-#elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(
+      const auto *sphericalFnTimesVectorAllCellsDevice_data=dftfe::utils::makeDataTypeDeviceCompatible(
+          sphericalFnTimesVectorAllCellsDevice.begin());
+      const auto *mapSphericalFnTimesVectorAllCellsReductionDevice_data= mapSphericalFnTimesVectorAllCellsReductionDevice.begin();
+      auto *sphericalFnTimesWavefunctionMatrix_data= dftfe::utils::makeDataTypeDeviceCompatible(
+          sphericalFnTimesWavefunctionMatrix.begin());
+      DFTFE_LAUNCH_KERNEL(
         assembleAtomLevelContributionsFromCellLevelKernel,
         (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
           dftfe::utils::DEVICE_BLOCK_SIZE,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
-        0,
+        dftfe::utils::defaultStream,
         numberWaveFunctions,
         totalNonlocalElems,
         maxSingleAtomContribution,
         totalNonlocalEntries,
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesVectorAllCellsDevice.begin()),
-        mapSphericalFnTimesVectorAllCellsReductionDevice.begin(),
-        dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWavefunctionMatrix.begin()));
-#endif
+        sphericalFnTimesVectorAllCellsDevice_data,
+        mapSphericalFnTimesVectorAllCellsReductionDevice_data,
+        sphericalFnTimesWavefunctionMatrix_data);
     }
 
     template void

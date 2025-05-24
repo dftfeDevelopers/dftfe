@@ -333,19 +333,19 @@ namespace dftfe
         MemoryStorage<ValueTypeComm, utils::MemorySpace::DEVICE> &sendBuffer,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-      auto dataArray_data = dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
-      auto ownedLocalIndicesForTargetProcs_data = dftfe::utils::makeDataTypeDeviceCompatible(
-                                                    ownedLocalIndicesForTargetProcs.data());
-      auto sendBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
+      const auto * dataArray_data= dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
+      const auto * ownedLocalIndicesForTargetProcs_data= dftfe::utils::makeDataTypeDeviceCompatible(ownedLocalIndicesForTargetProcs.data());
+      auto * sendBuffer_data= dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
+      const dftfe::uInt numIndices = ownedLocalIndicesForTargetProcs.size() * blockSize;
       DFTFE_LAUNCH_KERNEL(
         gatherSendBufferDeviceKernel,
-        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
+        (numIndices) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
         deviceCommStream,
-        ownedLocalIndicesForTargetProcs.size() * blockSize,
+        numIndices,
         blockSize,
         dataArray_data,
         ownedLocalIndicesForTargetProcs_data,
@@ -367,23 +367,23 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-      auto recvBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
-      auto ownedLocalIndicesForTargetProcs_data = dftfe::utils::makeDataTypeDeviceCompatible(
-                                                    ownedLocalIndicesForTargetProcs.data());
-      auto sendBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
+      const auto * recvBuffer_data= dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
+      const auto * ownedLocalIndicesForTargetProcs_data= dftfe::utils::makeDataTypeDeviceCompatible(ownedLocalIndicesForTargetProcs.data());
+      auto * dataArray_data= dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
+      const dftfe::uInt numIndices = ownedLocalIndicesForTargetProcs.size() * blockSize;
       DFTFE_LAUNCH_KERNEL(
         accumAddFromRecvBufferDeviceKernel,
-        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
+        (numIndices) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
         deviceCommStream,
-        ownedLocalIndicesForTargetProcs.size() * blockSize,
+        numIndices,
         blockSize,
         recvBuffer_data,
         ownedLocalIndicesForTargetProcs_data,
-        sendBuffer_data);
+        dataArray_data);
     }
 
     template <typename ValueType>
@@ -401,19 +401,19 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream)
     {
-      auto recvBuffer_data = dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
-      auto ownedLocalIndicesForTargetProcs_data = dftfe::utils::makeDataTypeDeviceCompatible(
-                                                    ownedLocalIndicesForTargetProcs.data());
-      auto dataArray_data = dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
+      const auto * recvBuffer_data= dftfe::utils::makeDataTypeDeviceCompatible(recvBuffer.data());
+      const auto * ownedLocalIndicesForTargetProcs_data= dftfe::utils::makeDataTypeDeviceCompatible(ownedLocalIndicesForTargetProcs.data());
+      auto * dataArray_data= dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
+      const dftfe::uInt numIndices = ownedLocalIndicesForTargetProcs.size() * blockSize;
       DFTFE_LAUNCH_KERNEL(
         accumInsertFromRecvBufferDeviceKernel,
-        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
+        (numIndices) /
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         0,
         deviceCommStream,
-        ownedLocalIndicesForTargetProcs.size() * blockSize,
+        numIndices,
         blockSize,
         recvBuffer_data,
         ownedLocalIndicesForTargetProcs_data,

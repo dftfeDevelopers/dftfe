@@ -725,7 +725,7 @@ namespace dftfe
         const dftfe::uInt                  size,
         const ValueType1                  *valueType1Arr,
         ValueType2                        *valueType2Arr,
-        const dftfe::utils::deviceStream_t streamId = dftfe::utils::defaultStream);
+        dftfe::utils::deviceStream_t streamId = dftfe::utils::defaultStream);
 
       template <typename ValueType>
       void
