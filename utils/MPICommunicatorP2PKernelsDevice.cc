@@ -299,13 +299,13 @@ namespace dftfe
                 dftfe::utils::imagPartDevice(recvBuffer[i]);
 
               dftfe::utils::copyValue(
-                reinterpret_cast<double*>(dataArray->data()+ownedLocalIndicesForTargetProcs[blockId] *
+                reinterpret_cast<double*>(dataArray+ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
                            intraBlockId),
                 recvValReal);
 
               dftfe::utils::copyValue(
-                reinterpret_cast<double*>(dataArray->data()+ownedLocalIndicesForTargetProcs[blockId] *
+                reinterpret_cast<double*>(dataArray+ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
                            intraBlockId) + 1,
                 recvValImag);
