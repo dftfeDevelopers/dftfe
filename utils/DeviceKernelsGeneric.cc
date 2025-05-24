@@ -294,12 +294,6 @@ namespace dftfe
                                      double                    *imagArr);
 
       template void
-      copyRealArrsToComplexArrDevice(const dftfe::uInt    size,
-                                     const double        *realArr,
-                                     const double        *imagArr,
-                                     std::complex<float> *complexArr);
-
-      template void
       sadd(double *y, double *x, const double beta, const dftfe::uInt size);
     } // namespace deviceKernelsGeneric
   }   // namespace utils

@@ -442,7 +442,7 @@ namespace dftfe
                     add_imag, dftfe::utils::imagPartDevice(tempComplval));
                 }
               xVec[xVecStartingIdRow + intraBlockIndex] =
-                dftfe::utils::makeComplex(0.0, 0.0);
+                dftfe::utils::makeComplex((float)0.0, (float)0.0);
             }
         },
         const dftfe::uInt                 contiguousBlockSize,

@@ -39,8 +39,6 @@
       {                                                                \
         std::cerr << "SYCL error on or before line number" << __LINE__ \
                   << " in file: " << __FILE__ << ".\n";                \
-        \
-                                                                 \
       }                                                                \
   }
 

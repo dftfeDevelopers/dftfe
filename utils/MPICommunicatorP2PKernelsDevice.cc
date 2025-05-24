@@ -78,11 +78,11 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
               sendBuffer[i]                  = dftfe::utils::makeComplex(
-                dftfe::utils::realPartDevice(
+                (float)dftfe::utils::realPartDevice(
                   dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                               blockSize +
                             intraBlockId]),
-                dftfe::utils::imagPartDevice(
+                (float)dftfe::utils::imagPartDevice(
                   dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                               blockSize +
                             intraBlockId]));

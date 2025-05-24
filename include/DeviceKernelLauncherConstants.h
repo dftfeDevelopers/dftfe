@@ -81,7 +81,7 @@ namespace dftfe
 #      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
         do                                                                  \
           {                                                                 \
-            stream.parallel_for(sycl::nd_range<1>(grid, block),             \
+            stream.parallel_for(sycl::nd_range<1>((grid) * (block), block), \
                                 [=](sycl::nd_item<1> ind) {                 \
                                   kernel(ind, __VA_ARGS__);                 \
                                 });                                         \
