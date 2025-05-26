@@ -1152,6 +1152,9 @@ namespace dftfe
                                     result);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      double *dev_res = sycl::malloc_device<double>(1, d_streamId);
+      if (!dev_res)
+        throw std::bad_alloc{};
       dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(dot)(d_streamId,
                                    dftfe::Int(N),
@@ -1159,8 +1162,11 @@ namespace dftfe
                                    dftfe::Int(INCX),
                                    Y,
                                    dftfe::Int(INCY),
-                                   result);
+                                   dev_res);
       DEVICE_API_CHECK(event);
+      d_streamId.memcpy(result, dev_res, sizeof(double)).wait();
+      sycl::free(dev_res, d_streamId);
+      d_streamId.wait();
 #endif
     }
 
@@ -1187,6 +1193,9 @@ namespace dftfe
                                     &localResult);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      double *dev_res = sycl::malloc_device<double>(1, d_streamId);
+      if (!dev_res)
+        throw std::bad_alloc{};
       dftfe::utils::deviceEvent_t event =
         DFTFE_DEVICE_BLAS_INT(dot)(d_streamId,
                                    dftfe::Int(N),
@@ -1194,8 +1203,11 @@ namespace dftfe
                                    dftfe::Int(INCX),
                                    Y,
                                    dftfe::Int(INCY),
-                                   result);
+                                   dev_res);
       DEVICE_API_CHECK(event);
+      d_streamId.memcpy(&localResult, dev_res, sizeof(double)).wait();
+      sycl::free(dev_res, d_streamId);
+      d_streamId.wait();
 #endif
       MPI_Allreduce(
         &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -1221,6 +1233,10 @@ namespace dftfe
                dftfe::utils::makeDataTypeDeviceBlasCompatible(result));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      std::complex<double> *dev_res =
+        sycl::malloc_device<std::complex<double>>(1, d_streamId);
+      if (!dev_res)
+        throw std::bad_alloc{};
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
         dotu)(d_streamId,
               dftfe::Int(N),
@@ -1228,8 +1244,11 @@ namespace dftfe
               dftfe::Int(INCX),
               dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
               dftfe::Int(INCY),
-              dftfe::utils::makeDataTypeDeviceBlasCompatible(result));
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(dev_res));
       DEVICE_API_CHECK(event);
+      d_streamId.memcpy(result, dev_res, sizeof(std::complex<double>)).wait();
+      sycl::free(dev_res, d_streamId);
+      d_streamId.wait();
 #endif
     }
 
@@ -1256,6 +1275,10 @@ namespace dftfe
                dftfe::utils::makeDataTypeDeviceBlasCompatible(&localResult));
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      std::complex<double> *dev_res =
+        sycl::malloc_device<std::complex<double>>(1, d_streamId);
+      if (!dev_res)
+        throw std::bad_alloc{};
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
         dotu)(d_streamId,
               dftfe::Int(N),
@@ -1263,8 +1286,12 @@ namespace dftfe
               dftfe::Int(INCX),
               dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
               dftfe::Int(INCY),
-              dftfe::utils::makeDataTypeDeviceBlasCompatible(&localResult));
+              dftfe::utils::makeDataTypeDeviceBlasCompatible(dev_res));
       DEVICE_API_CHECK(event);
+      d_streamId.memcpy(&localResult, dev_res, sizeof(std::complex<double>))
+        .wait();
+      sycl::free(dev_res, d_streamId);
+      d_streamId.wait();
 #endif
       MPI_Allreduce(&localResult,
                     result,
@@ -2039,13 +2066,19 @@ namespace dftfe
                 dftfe::Int(incx),
                 &localresult);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      double *dev_res = sycl::malloc_device<double>(1, d_streamId);
+      if (!dev_res)
+        throw std::bad_alloc{};
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
         nrm2)(d_streamId,
               dftfe::Int(n),
               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
               dftfe::Int(incx),
-              &localresult);
+              dev_res);
       DEVICE_API_CHECK(event);
+      d_streamId.memcpy(&localResult, dev_res, sizeof(double)).wait();
+      sycl::free(dev_res, d_streamId);
+      d_streamId.wait();
 #endif
       localresult *= localresult;
       MPI_Allreduce(
@@ -2067,9 +2100,15 @@ namespace dftfe
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(Dnrm2)(
         d_deviceBlasHandle, dftfe::Int(n), x, dftfe::Int(incx), &localresult);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      double *dev_res = sycl::malloc_device<double>(1, d_streamId);
+      if (!dev_res)
+        throw std::bad_alloc{};
       dftfe::utils::deviceEvent_t event = DFTFE_DEVICE_BLAS_INT(
-        nrm2)(d_streamId, dftfe::Int(n), x, dftfe::Int(incx), &localresult);
+        nrm2)(d_streamId, dftfe::Int(n), x, dftfe::Int(incx), dev_res);
       DEVICE_API_CHECK(event);
+      d_streamId.memcpy(&localResult, dev_res, sizeof(double)).wait();
+      sycl::free(dev_res, d_streamId);
+      d_streamId.wait();
 #endif
       localresult *= localresult;
       MPI_Allreduce(

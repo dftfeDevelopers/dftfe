@@ -61,10 +61,10 @@ namespace dftfe
     {
       try
         {
-          *free =
-            dftfe::utils::defaultStream.get_device().get_info<sycl::info::device::local_mem_size>();
-          *total =
-            dftfe::utils::defaultStream.get_device().get_info<sycl::info::device::global_mem_size>();
+          *free = dftfe::utils::defaultStream.get_device()
+                    .get_info<sycl::info::device::local_mem_size>();
+          *total = dftfe::utils::defaultStream.get_device()
+                     .get_info<sycl::info::device::global_mem_size>();
         }
       catch (const deviceError_t &e)
         {
@@ -126,15 +126,14 @@ namespace dftfe
     void
     deviceSetValue(ValueType *devPtr, ValueType value, std::size_t size)
     {
-      std::size_t                  total_workitems =
+      std::size_t total_workitems =
         (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
-      deviceEvent_t event =
-        dftfe::utils::defaultStream.parallel_for(sycl::nd_range<1>(total_workitems,
-                                             dftfe::utils::DEVICE_BLOCK_SIZE),
-                           [=](sycl::nd_item<1> ind) {
-                             setValueKernel(ind, devPtr, value, size);
-                           });
+      deviceEvent_t event = dftfe::utils::defaultStream.parallel_for(
+        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
+        [=](sycl::nd_item<1> ind) {
+          setValueKernel(ind, devPtr, value, size);
+        });
       DEVICE_API_CHECK(event);
     }
 
