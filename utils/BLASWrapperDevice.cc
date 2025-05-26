@@ -2055,7 +2055,7 @@ namespace dftfe
       const MPI_Comm             &mpi_communicator,
       double                     *result) const
     {
-      double localresult = 0.0;
+      double localResult = 0.0;
       *result            = 0.0;
 
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
@@ -2064,7 +2064,7 @@ namespace dftfe
                 dftfe::Int(n),
                 dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
                 dftfe::Int(incx),
-                &localresult);
+                &localResult);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
       double *dev_res = sycl::malloc_device<double>(1, d_streamId);
       if (!dev_res)
@@ -2080,9 +2080,9 @@ namespace dftfe
       sycl::free(dev_res, d_streamId);
       d_streamId.wait();
 #endif
-      localresult *= localresult;
+      localResult *= localResult;
       MPI_Allreduce(
-        &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+        &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
       *result = std::sqrt(*result);
     }
 
@@ -2094,11 +2094,11 @@ namespace dftfe
       const MPI_Comm   &mpi_communicator,
       double           *result) const
     {
-      double localresult = 0.0;
+      double localResult = 0.0;
       *result            = 0.0;
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(Dnrm2)(
-        d_deviceBlasHandle, dftfe::Int(n), x, dftfe::Int(incx), &localresult);
+        d_deviceBlasHandle, dftfe::Int(n), x, dftfe::Int(incx), &localResult);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
       double *dev_res = sycl::malloc_device<double>(1, d_streamId);
       if (!dev_res)
@@ -2110,9 +2110,9 @@ namespace dftfe
       sycl::free(dev_res, d_streamId);
       d_streamId.wait();
 #endif
-      localresult *= localresult;
+      localResult *= localResult;
       MPI_Allreduce(
-        &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+        &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
       *result = std::sqrt(*result);
     }
 
