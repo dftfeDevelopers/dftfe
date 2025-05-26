@@ -59,13 +59,12 @@ namespace dftfe
     deviceError_t
     deviceMemGetInfo(std::size_t *free, std::size_t *total)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
           *free =
-            queue.get_device().get_info<sycl::info::device::local_mem_size>();
+            dftfe::utils::defaultStream.get_device().get_info<sycl::info::device::local_mem_size>();
           *total =
-            queue.get_device().get_info<sycl::info::device::global_mem_size>();
+            dftfe::utils::defaultStream.get_device().get_info<sycl::info::device::global_mem_size>();
         }
       catch (const deviceError_t &e)
         {
@@ -96,11 +95,10 @@ namespace dftfe
     deviceError_t
     deviceMalloc(void **devPtr, std::size_t size)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          *devPtr = sycl::malloc_device(size, queue);
-          queue.wait();
+          *devPtr = sycl::malloc_device(size, dftfe::utils::defaultStream);
+          dftfe::utils::defaultStream.wait();
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -112,11 +110,10 @@ namespace dftfe
     deviceError_t
     deviceMemset(void *devPtr, int value, std::size_t count)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          queue.memset(devPtr, value, count);
-          queue.wait();
+          dftfe::utils::defaultStream.memset(devPtr, value, count);
+          dftfe::utils::defaultStream.wait();
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -129,12 +126,11 @@ namespace dftfe
     void
     deviceSetValue(ValueType *devPtr, ValueType value, std::size_t size)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       std::size_t                  total_workitems =
         (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
       deviceEvent_t event =
-        queue.parallel_for(sycl::nd_range<1>(total_workitems,
+        dftfe::utils::defaultStream.parallel_for(sycl::nd_range<1>(total_workitems,
                                              dftfe::utils::DEVICE_BLOCK_SIZE),
                            [=](sycl::nd_item<1> ind) {
                              setValueKernel(ind, devPtr, value, size);
@@ -178,10 +174,9 @@ namespace dftfe
     deviceError_t
     deviceFree(void *devPtr)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          sycl::free(devPtr, queue);
+          sycl::free(devPtr, dftfe::utils::defaultStream);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -193,11 +188,10 @@ namespace dftfe
     deviceError_t
     deviceHostMalloc(void **hostPtr, std::size_t size)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          *hostPtr = sycl::malloc_host(size, queue);
-          queue.wait();
+          *hostPtr = sycl::malloc_host(size, dftfe::utils::defaultStream);
+          dftfe::utils::defaultStream.wait();
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -209,10 +203,9 @@ namespace dftfe
     deviceError_t
     deviceHostFree(void *hostPtr)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          sycl::free(hostPtr, queue);
+          sycl::free(hostPtr, dftfe::utils::defaultStream);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -224,10 +217,9 @@ namespace dftfe
     deviceError_t
     deviceMemcpyD2H(void *dst, const void *src, std::size_t count)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          queue.memcpy(dst, src, count);
+          dftfe::utils::defaultStream.memcpy(dst, src, count);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -239,10 +231,9 @@ namespace dftfe
     deviceError_t
     deviceMemcpyD2D(void *dst, const void *src, std::size_t count)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          queue.memcpy(dst, src, count);
+          dftfe::utils::defaultStream.memcpy(dst, src, count);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -253,10 +244,9 @@ namespace dftfe
     deviceError_t
     deviceMemcpyH2D(void *dst, const void *src, std::size_t count)
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          queue.memcpy(dst, src, count);
+          dftfe::utils::defaultStream.memcpy(dst, src, count);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -311,10 +301,9 @@ namespace dftfe
     deviceError_t
     deviceSynchronize()
     {
-      dftfe::utils::deviceStream_t queue{sycl::gpu_selector_v};
       try
         {
-          queue.wait();
+          dftfe::utils::defaultStream.wait();
         }
       catch (const dftfe::utils::deviceError_t &e)
         {

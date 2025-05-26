@@ -849,8 +849,8 @@ namespace dftfe
         DFTFE_DEVICE_BLAS(Create)(&d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      d_streamId         = sycl::queue{sycl::gpu_selector_v};
-      d_deviceBlasHandle = sycl::queue{sycl::gpu_selector_v};
+      d_streamId                              = dftfe::utils::defaultStream;
+      d_deviceBlasHandle                      = dftfe::utils::defaultStream;
       dftfe::utils::deviceBlasStatus_t status = dftfe::utils::deviceBlasSuccess;
 #endif
       return status;
