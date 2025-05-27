@@ -288,7 +288,7 @@ SET(DEVICE_SRC
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
   ./utils/DeviceAPICalls.sycl.cc
-  ./utils/BLASWrapperDevice.sycl.cc
+  ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
   ./utils/matrixFreeDeviceKernels.cc
