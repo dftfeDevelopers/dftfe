@@ -21,17 +21,17 @@ namespace dftfe
   {
     template <typename ValueType>
     void
-    saddKernel(sycl::nd_item<1>       ind,
-               ValueType             *y,
-               ValueType             *x,
-               const ValueType        beta,
-               const dftfe::size_type size)
+    saddKernel(sycl::nd_item<1>   ind,
+               ValueType         *y,
+               ValueType         *x,
+               const ValueType    beta,
+               const unsigned int size)
     {
-      const dftfe::size_type globalId     = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups = ind.get_group_range(0);
-      dftfe::size_type       n_workitems  = ind.get_local_range(0);
+      const unsigned int globalId     = ind.get_global_id(0);
+      unsigned int       n_workgroups = ind.get_group_range(0);
+      unsigned int       n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type idx = globalId; idx < size;
+      for (unsigned int idx = globalId; idx < size;
            idx += n_workgroups * n_workitems)
         {
           y[idx] = beta * y[idx] - x[idx];
@@ -41,12 +41,12 @@ namespace dftfe
 
     template <typename ValueType1, typename ValueType2>
     void
-    ascalDeviceKernel(sycl::nd_item<1>       ind,
-                      const dftfe::size_type n,
-                      ValueType1            *x,
-                      const ValueType2       a)
+    ascalDeviceKernel(sycl::nd_item<1>   ind,
+                      const unsigned int n,
+                      ValueType1        *x,
+                      const ValueType2   a)
     {
-      for (dftfe::size_type i = ind.get_global_id(0); i < n;
+      for (unsigned int i = ind.get_global_id(0); i < n;
            i += ind.get_group_range(0) * ind.get_local_range(0))
         dftfe::utils::copyValue(x + i, dftfe::utils::mult(a, x[i]));
     }
@@ -55,16 +55,16 @@ namespace dftfe
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
     copyComplexArrToRealArrsDeviceKernel(sycl::nd_item<1>        ind,
-                                         const dftfe::size_type  size,
+                                         const unsigned int      size,
                                          const ValueTypeComplex *complexArr,
                                          ValueTypeReal          *realArr,
                                          ValueTypeReal          *imagArr)
     {
-      const dftfe::size_type globalId     = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups = ind.get_group_range(0);
-      dftfe::size_type       n_workitems  = ind.get_local_range(0);
+      const unsigned int globalId     = ind.get_global_id(0);
+      unsigned int       n_workgroups = ind.get_group_range(0);
+      unsigned int       n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type idx = globalId; idx < size;
+      for (unsigned int idx = globalId; idx < size;
            idx += n_workgroups * n_workitems)
         {
           realArr[idx] = complexArr[idx].real();
@@ -74,17 +74,17 @@ namespace dftfe
 
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
-    copyRealArrsToComplexArrDeviceKernel(sycl::nd_item<1>       ind,
-                                         const dftfe::size_type size,
-                                         const ValueTypeReal   *realArr,
-                                         const ValueTypeReal   *imagArr,
-                                         ValueTypeComplex      *complexArr)
+    copyRealArrsToComplexArrDeviceKernel(sycl::nd_item<1>     ind,
+                                         const unsigned int   size,
+                                         const ValueTypeReal *realArr,
+                                         const ValueTypeReal *imagArr,
+                                         ValueTypeComplex    *complexArr)
     {
-      const dftfe::size_type globalId     = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups = ind.get_group_range(0);
-      dftfe::size_type       n_workitems  = ind.get_local_range(0);
+      const unsigned int globalId     = ind.get_global_id(0);
+      unsigned int       n_workgroups = ind.get_group_range(0);
+      unsigned int       n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type idx = globalId; idx < size;
+      for (unsigned int idx = globalId; idx < size;
            idx += n_workgroups * n_workitems)
         {
           complexArr[idx].real(realArr[idx]);
@@ -95,16 +95,16 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     copyValueType1ArrToValueType2ArrDeviceKernel(
-      sycl::nd_item<1>       ind,
-      const dftfe::size_type size,
-      const ValueType1      *valueType1Arr,
-      ValueType2            *valueType2Arr)
+      sycl::nd_item<1>   ind,
+      const unsigned int size,
+      const ValueType1  *valueType1Arr,
+      ValueType2        *valueType2Arr)
     {
-      const dftfe::size_type globalId     = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups = ind.get_group_range(0);
-      dftfe::size_type       n_workitems  = ind.get_local_range(0);
+      const unsigned int globalId     = ind.get_global_id(0);
+      unsigned int       n_workgroups = ind.get_group_range(0);
+      unsigned int       n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalId; index < size;
+      for (unsigned int index = globalId; index < size;
            index += n_workgroups * n_workitems)
         dftfe::utils::copyValue(valueType2Arr + index, valueType1Arr[index]);
     }
@@ -115,24 +115,24 @@ namespace dftfe
               typename ValueType3,
               typename ValueType4>
     void
-    ApaBDDeviceKernel(sycl::nd_item<1>       ind,
-                      const dftfe::size_type nRows,
-                      const dftfe::size_type nCols,
-                      const ValueType0       alpha,
-                      const ValueType1      *A,
-                      const ValueType2      *B,
-                      const ValueType3      *D,
-                      ValueType4            *C)
+    ApaBDDeviceKernel(sycl::nd_item<1>   ind,
+                      const unsigned int nRows,
+                      const unsigned int nCols,
+                      const ValueType0   alpha,
+                      const ValueType1  *A,
+                      const ValueType2  *B,
+                      const ValueType3  *D,
+                      ValueType4        *C)
     {
-      dftfe::size_type globalThreadId = ind.get_global_id(0);
-      dftfe::size_type numberEntries  = nCols * nRows;
-      dftfe::size_type n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type n_workitems    = ind.get_local_range(0);
+      unsigned int globalThreadId = ind.get_global_id(0);
+      unsigned int numberEntries  = nCols * nRows;
+      unsigned int n_workgroups   = ind.get_group_range(0);
+      unsigned int n_workitems    = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type iRow   = index % nCols;
+          unsigned int     iRow   = index % nCols;
           const ValueType0 alphaD = alpha * D[iRow];
           dftfe::utils::copyValue(
             C + index,
@@ -144,23 +144,22 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     stridedCopyToBlockDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1              *copyFromVec,
-      ValueType2                    *copyToVec,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType1   *copyFromVec,
+      ValueType2         *copyToVec,
+      const unsigned int *copyFromVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex =
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intraBlockIndex =
             index - blockIndex * contiguousBlockSize;
           dftfe::utils::copyValue(
             copyToVec + index,
@@ -172,25 +171,25 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     stridedCopyToBlockDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const dftfe::size_type         stratingVecId,
-      const ValueType1              *copyFromVec,
-      ValueType2                    *copyToVec,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const unsigned int  stratingVecId,
+      const ValueType1   *copyFromVec,
+      ValueType2         *copyToVec,
+      const unsigned int *copyFromVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex =
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intraBlockIndex =
             index - blockIndex * contiguousBlockSize;
           dftfe::utils::copyValue(
             copyToVec + index,
@@ -202,25 +201,24 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     stridedCopyToBlockScaleDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1               a,
-      const ValueType1              *s,
-      const ValueType2              *copyFromVec,
-      ValueType2                    *copyToVec,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType1    a,
+      const ValueType1   *s,
+      const ValueType2   *copyFromVec,
+      ValueType2         *copyToVec,
+      const unsigned int *copyFromVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex =
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intraBlockIndex =
             index - blockIndex * contiguousBlockSize;
           const ValueType1 coeff = dftfe::utils::mult(a, s[blockIndex]);
           dftfe::utils::copyValue(
@@ -236,23 +234,22 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     stridedCopyFromBlockDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1              *copyFromVec,
-      ValueType2                    *copyToVec,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType1   *copyFromVec,
+      ValueType2         *copyToVec,
+      const unsigned int *copyFromVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex =
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intraBlockIndex =
             index - blockIndex * contiguousBlockSize;
           dftfe::utils::copyValue(
             copyToVec + copyFromVecStartingContiguousBlockIds[blockIndex] +
@@ -265,23 +262,23 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     stridedCopyToBlockConstantStrideDeviceKernel(
-      sycl::nd_item<1>       ind,
-      const dftfe::size_type blockSizeTo,
-      const dftfe::size_type blockSizeFrom,
-      const dftfe::size_type numBlocks,
-      const dftfe::size_type startingId,
-      const ValueType1      *copyFromVec,
-      ValueType2            *copyToVec)
+      sycl::nd_item<1>   ind,
+      const unsigned int blockSizeTo,
+      const unsigned int blockSizeFrom,
+      const unsigned int numBlocks,
+      const unsigned int startingId,
+      const ValueType1  *copyFromVec,
+      ValueType2        *copyToVec)
     {
-      dftfe::size_type global_id     = ind.get_global_id(0);
-      dftfe::size_type numberEntries = numBlocks * blockSizeTo;
-      dftfe::size_type n_workgroups  = ind.get_group_range(0);
-      dftfe::size_type n_workitems   = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numBlocks * blockSizeTo;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / blockSizeTo;
-          dftfe::size_type intraBlockIndex = index - blockIndex * blockSizeTo;
+          unsigned int blockIndex      = index / blockSizeTo;
+          unsigned int intraBlockIndex = index - blockIndex * blockSizeTo;
           dftfe::utils::copyValue(copyToVec + index,
                                   copyFromVec[blockIndex * blockSizeFrom +
                                               startingId + intraBlockIndex]);
@@ -291,23 +288,23 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     stridedCopyFromBlockConstantStrideDeviceKernel(
-      sycl::nd_item<1>       ind,
-      const dftfe::size_type blockSizeTo,
-      const dftfe::size_type blockSizeFrom,
-      const dftfe::size_type numBlocks,
-      const dftfe::size_type startingId,
-      const ValueType1      *copyFromVec,
-      ValueType2            *copyToVec)
+      sycl::nd_item<1>   ind,
+      const unsigned int blockSizeTo,
+      const unsigned int blockSizeFrom,
+      const unsigned int numBlocks,
+      const unsigned int startingId,
+      const ValueType1  *copyFromVec,
+      ValueType2        *copyToVec)
     {
-      dftfe::size_type global_id     = ind.get_global_id(0);
-      dftfe::size_type numberEntries = numBlocks * blockSizeFrom;
-      dftfe::size_type n_workgroups  = ind.get_group_range(0);
-      dftfe::size_type n_workitems   = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numBlocks * blockSizeFrom;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / blockSizeFrom;
-          dftfe::size_type intraBlockIndex = index - blockIndex * blockSizeFrom;
+          unsigned int blockIndex      = index / blockSizeFrom;
+          unsigned int intraBlockIndex = index - blockIndex * blockSizeFrom;
           dftfe::utils::copyValue(copyToVec + blockIndex * blockSizeTo +
                                     startingId + intraBlockIndex,
                                   copyFromVec[index]);
@@ -316,25 +313,25 @@ namespace dftfe
 
     template <typename ValueType1, typename ValueType2>
     void
-    stridedCopyConstantStrideDeviceKernel(sycl::nd_item<1>       ind,
-                                          const dftfe::size_type blockSize,
-                                          const dftfe::size_type strideTo,
-                                          const dftfe::size_type strideFrom,
-                                          const dftfe::size_type numBlocks,
-                                          const dftfe::size_type startingToId,
-                                          const dftfe::size_type startingFromId,
-                                          const ValueType1      *copyFromVec,
-                                          ValueType2            *copyToVec)
+    stridedCopyConstantStrideDeviceKernel(sycl::nd_item<1>   ind,
+                                          const unsigned int blockSize,
+                                          const unsigned int strideTo,
+                                          const unsigned int strideFrom,
+                                          const unsigned int numBlocks,
+                                          const unsigned int startingToId,
+                                          const unsigned int startingFromId,
+                                          const ValueType1  *copyFromVec,
+                                          ValueType2        *copyToVec)
     {
-      dftfe::size_type global_id     = ind.get_global_id(0);
-      dftfe::size_type numberEntries = numBlocks * blockSize;
-      dftfe::size_type n_workgroups  = ind.get_group_range(0);
-      dftfe::size_type n_workitems   = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numBlocks * blockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / blockSize;
-          dftfe::size_type intraBlockIndex = index - blockIndex * blockSize;
+          unsigned int blockIndex      = index / blockSize;
+          unsigned int intraBlockIndex = index - blockIndex * blockSize;
           dftfe::utils::copyValue(
             copyToVec + blockIndex * strideTo + startingToId + intraBlockIndex,
             copyFromVec[blockIndex * strideFrom + startingFromId +
@@ -346,16 +343,15 @@ namespace dftfe
     // x=a*x, with inc=1
     template <typename ValueType1, typename ValueType2>
     void
-    xscalDeviceKernel(sycl::nd_item<1>       ind,
-                      const dftfe::size_type n,
-                      ValueType1            *x,
-                      const ValueType2       a)
+    xscalDeviceKernel(sycl::nd_item<1>   ind,
+                      const unsigned int n,
+                      ValueType1        *x,
+                      const ValueType2   a)
     {
-      dftfe::size_type global_id    = ind.get_global_id(0);
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type i = global_id; i < n;
-           i += n_workgroups * n_workitems)
+      unsigned int global_id    = ind.get_global_id(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
+      for (unsigned int i = global_id; i < n; i += n_workgroups * n_workitems)
         dftfe::utils::copyValue(x + i, dftfe::utils::mult(a, x[i]));
     }
 
@@ -364,22 +360,21 @@ namespace dftfe
     // strided block wise
     template <typename ValueType1, typename ValueType2>
     void
-    stridedBlockScaleDeviceKernel(sycl::nd_item<1>       ind,
-                                  const dftfe::size_type contiguousBlockSize,
-                                  const dftfe::size_type numContiguousBlocks,
-                                  const ValueType1       a,
-                                  const ValueType1      *s,
-                                  ValueType2            *x)
+    stridedBlockScaleDeviceKernel(sycl::nd_item<1>   ind,
+                                  const unsigned int contiguousBlockSize,
+                                  const unsigned int numContiguousBlocks,
+                                  const ValueType1   a,
+                                  const ValueType1  *s,
+                                  ValueType2        *x)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
+          unsigned int blockIndex = index / contiguousBlockSize;
           dftfe::utils::copyValue(
             x + index,
             dftfe::utils::mult(dftfe::utils::mult(a, s[blockIndex]), x[index]));
@@ -389,18 +384,17 @@ namespace dftfe
     // y=a*x+b*y, with inc=1
     template <typename ValueType1, typename ValueType2>
     void
-    axpbyDeviceKernel(sycl::nd_item<1>       ind,
-                      const dftfe::size_type n,
-                      const ValueType1      *x,
-                      ValueType1            *y,
-                      const ValueType2       a,
-                      const ValueType2       b)
+    axpbyDeviceKernel(sycl::nd_item<1>   ind,
+                      const unsigned int n,
+                      const ValueType1  *x,
+                      ValueType1        *y,
+                      const ValueType2   a,
+                      const ValueType2   b)
     {
-      dftfe::size_type global_id    = ind.get_global_id(0);
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type i = global_id; i < n;
-           i += n_workgroups * n_workitems)
+      unsigned int global_id    = ind.get_global_id(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
+      for (unsigned int i = global_id; i < n; i += n_workgroups * n_workitems)
         dftfe::utils::copyValue(y + i,
                                 dftfe::utils::add(dftfe::utils::mult(a, x[i]),
                                                   dftfe::utils::mult(b, y[i])));
@@ -408,23 +402,22 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                  *addFromVec,
-      double                        *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const double       *addFromVec,
+      double             *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex =
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intraBlockIndex =
             index - blockIndex * contiguousBlockSize;
 
           auto atomic_add =
@@ -440,26 +433,25 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                   a,
-      const double                  *s,
-      const double                  *addFromVec,
-      double                        *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const double        a,
+      const double       *s,
+      const double       *addFromVec,
+      double             *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
           auto atomic_add =
             sycl::atomic_ref<double,
@@ -474,26 +466,25 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                   a,
-      const double                  *s,
-      const std::complex<double>    *addFromVec,
-      std::complex<double>          *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>            ind,
+      const unsigned int          contiguousBlockSize,
+      const unsigned int          numContiguousBlocks,
+      const double                a,
+      const double               *s,
+      const std::complex<double> *addFromVec,
+      std::complex<double>       *addToVec,
+      const unsigned int         *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
           auto atomic_add_real =
             sycl::atomic_ref<double,
@@ -521,26 +512,25 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                   a,
-      const double                  *s,
-      const float                   *addFromVec,
-      double                        *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const double        a,
+      const double       *s,
+      const float        *addFromVec,
+      double             *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
           auto atomic_add =
             sycl::atomic_ref<double,
@@ -556,25 +546,24 @@ namespace dftfe
     void
     axpyStridedBlockAtomicAddDeviceKernel(
       sycl::nd_item<1>                        ind,
-      const dftfe::size_type                  contiguousBlockSize,
-      const dftfe::size_type                  numContiguousBlocks,
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
       const double                            a,
       const double                           *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
       dftfe::utils::deviceDoubleComplex      *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
           auto atomic_add_real =
             sycl::atomic_ref<double,
@@ -602,26 +591,25 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                   a,
-      const double                  *s,
-      const float                   *addFromVec,
-      float                         *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const double        a,
+      const double       *s,
+      const float        *addFromVec,
+      float              *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
           auto atomic_add =
             sycl::atomic_ref<float,
@@ -637,25 +625,24 @@ namespace dftfe
     void
     axpyStridedBlockAtomicAddDeviceKernel(
       sycl::nd_item<1>                        ind,
-      const dftfe::size_type                  contiguousBlockSize,
-      const dftfe::size_type                  numContiguousBlocks,
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
       const double                            a,
       const double                           *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
       dftfe::utils::deviceFloatComplex       *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
           auto atomic_add_real =
             sycl::atomic_ref<float,
@@ -683,26 +670,25 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const float                    a,
-      const float                   *s,
-      const float                   *addFromVec,
-      float                         *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const float         a,
+      const float        *s,
+      const float        *addFromVec,
+      float              *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
           auto atomic_add =
             sycl::atomic_ref<float,
@@ -718,25 +704,24 @@ namespace dftfe
     void
     axpyStridedBlockAtomicAddDeviceKernel(
       sycl::nd_item<1>                        ind,
-      const dftfe::size_type                  contiguousBlockSize,
-      const dftfe::size_type                  numContiguousBlocks,
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
       const float                             a,
       const float                            *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
       dftfe::utils::deviceFloatComplex       *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = dftfe::utils::mult(a, s[blockIndex]);
 
           auto atomic_add_real =
             sycl::atomic_ref<float,
@@ -764,23 +749,22 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const std::complex<double>    *addFromVec,
-      std::complex<double>          *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>            ind,
+      const unsigned int          contiguousBlockSize,
+      const unsigned int          numContiguousBlocks,
+      const std::complex<double> *addFromVec,
+      std::complex<double>       *addToVec,
+      const unsigned int         *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
 
           auto atomic_add_real =
             sycl::atomic_ref<double,
@@ -807,24 +791,23 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                  *addFromVec,
-      double                        *addToVecReal,
-      double                        *addToVecImag,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const double       *addFromVec,
+      double             *addToVecReal,
+      double             *addToVecImag,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
 
           auto atomic_add_real =
             sycl::atomic_ref<double,
@@ -848,24 +831,23 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const std::complex<double>    *addFromVec,
-      double                        *addToVecReal,
-      double                        *addToVecImag,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>            ind,
+      const unsigned int          contiguousBlockSize,
+      const unsigned int          numContiguousBlocks,
+      const std::complex<double> *addFromVec,
+      double                     *addToVecReal,
+      double                     *addToVecImag,
+      const unsigned int         *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type global_id = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = global_id; index < numberEntries;
+      unsigned int global_id     = ind.get_global_id(0);
+      unsigned int numberEntries = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups  = ind.get_group_range(0);
+      unsigned int n_workitems   = ind.get_local_range(0);
+      for (unsigned int index = global_id; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
 
           auto atomic_add_real =
             sycl::atomic_ref<double,
@@ -889,25 +871,24 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                   a,
-      const double                  *addFromVec,
-      double                        *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const double        a,
+      const double       *addFromVec,
+      double             *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      dftfe::size_type globalThreadId = ind.get_global_id(0);
-      dftfe::size_type numberEntries =
-        numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      unsigned int globalThreadId = ind.get_global_id(0);
+      unsigned int numberEntries  = numContiguousBlocks * contiguousBlockSize;
+      unsigned int n_workgroups   = ind.get_group_range(0);
+      unsigned int n_workitems    = ind.get_local_range(0);
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff           = a;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = a;
 
           auto atomic_add =
             sycl::atomic_ref<double,
@@ -923,25 +904,25 @@ namespace dftfe
     void
     axpyStridedBlockAtomicAddDeviceKernel(
       sycl::nd_item<1>                         ind,
-      const dftfe::size_type                   contiguousBlockSize,
-      const dftfe::size_type                   numContiguousBlocks,
+      const unsigned int                       contiguousBlockSize,
+      const unsigned int                       numContiguousBlocks,
       const double                             a,
       const dftfe::utils::deviceDoubleComplex *addFromVec,
       dftfe::utils::deviceDoubleComplex       *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff           = a;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = a;
 
           auto atomic_add_real =
             sycl::atomic_ref<double,
@@ -969,26 +950,26 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                   a,
-      const float                   *addFromVec,
-      double                        *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const double        a,
+      const float        *addFromVec,
+      double             *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff           = a;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = a;
 
           auto atomic_add =
             sycl::atomic_ref<double,
@@ -1004,25 +985,25 @@ namespace dftfe
     void
     axpyStridedBlockAtomicAddDeviceKernel(
       sycl::nd_item<1>                        ind,
-      const dftfe::size_type                  contiguousBlockSize,
-      const dftfe::size_type                  numContiguousBlocks,
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
       const double                            a,
       const dftfe::utils::deviceFloatComplex *addFromVec,
       dftfe::utils::deviceDoubleComplex      *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff           = a;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = a;
 
           auto atomic_add_real =
             sycl::atomic_ref<double,
@@ -1050,26 +1031,26 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const double                   a,
-      const float                   *addFromVec,
-      float                         *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const double        a,
+      const float        *addFromVec,
+      float              *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff           = a;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = a;
 
           auto atomic_add =
             sycl::atomic_ref<float,
@@ -1085,25 +1066,25 @@ namespace dftfe
     void
     axpyStridedBlockAtomicAddDeviceKernel(
       sycl::nd_item<1>                        ind,
-      const dftfe::size_type                  contiguousBlockSize,
-      const dftfe::size_type                  numContiguousBlocks,
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
       const double                            a,
       const dftfe::utils::deviceFloatComplex *addFromVec,
       dftfe::utils::deviceFloatComplex       *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const double     coeff           = a;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const double coeff           = a;
 
           auto atomic_add_real =
             sycl::atomic_ref<float,
@@ -1131,26 +1112,26 @@ namespace dftfe
 
     void
     axpyStridedBlockAtomicAddDeviceKernel(
-      sycl::nd_item<1>               ind,
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const float                    a,
-      const float                   *addFromVec,
-      float                         *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      sycl::nd_item<1>    ind,
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const float         a,
+      const float        *addFromVec,
+      float              *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const float      coeff           = a;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const float  coeff           = a;
 
           auto atomic_add =
             sycl::atomic_ref<float,
@@ -1166,25 +1147,25 @@ namespace dftfe
     void
     axpyStridedBlockAtomicAddDeviceKernel(
       sycl::nd_item<1>                        ind,
-      const dftfe::size_type                  contiguousBlockSize,
-      const dftfe::size_type                  numContiguousBlocks,
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
       const float                             a,
       const dftfe::utils::deviceFloatComplex *addFromVec,
       dftfe::utils::deviceFloatComplex       *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds)
+      const unsigned int *addToVecStartingContiguousBlockIds)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex      = index / contiguousBlockSize;
-          dftfe::size_type intraBlockIndex = index % contiguousBlockSize;
-          const float      coeff           = a;
+          unsigned int blockIndex      = index / contiguousBlockSize;
+          unsigned int intraBlockIndex = index % contiguousBlockSize;
+          const float  coeff           = a;
 
           auto atomic_add_real =
             sycl::atomic_ref<float,
@@ -1212,23 +1193,22 @@ namespace dftfe
 
     template <typename ValueType>
     void
-    addVecOverContinuousIndexKernel(sycl::nd_item<1>       ind,
-                                    const dftfe::size_type numContiguousBlocks,
-                                    const dftfe::size_type contiguousBlockSize,
-                                    const ValueType       *input1,
-                                    const ValueType       *input2,
-                                    ValueType             *output)
+    addVecOverContinuousIndexKernel(sycl::nd_item<1>   ind,
+                                    const unsigned int numContiguousBlocks,
+                                    const unsigned int contiguousBlockSize,
+                                    const ValueType   *input1,
+                                    const ValueType   *input2,
+                                    ValueType         *output)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries  = numContiguousBlocks;
-      dftfe::size_type       n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type       n_workitems    = ind.get_local_range(0);
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries  = numContiguousBlocks;
+      unsigned int       n_workgroups   = ind.get_group_range(0);
+      unsigned int       n_workitems    = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          for (dftfe::size_type iBlock = 0; iBlock < contiguousBlockSize;
-               iBlock++)
+          for (unsigned int iBlock = 0; iBlock < contiguousBlockSize; iBlock++)
             {
               //                    output[index] +=
               //                    input1[index*contiguousBlockSize + iBlock]*
@@ -1248,24 +1228,23 @@ namespace dftfe
 
     template <typename ValueType>
     void
-    stridedBlockScaleColumnWiseKernel(
-      sycl::nd_item<1>       ind,
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType       *beta,
-      ValueType             *x)
+    stridedBlockScaleColumnWiseKernel(sycl::nd_item<1>   ind,
+                                      const unsigned int contiguousBlockSize,
+                                      const unsigned int numContiguousBlocks,
+                                      const ValueType   *beta,
+                                      ValueType         *x)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          dftfe::size_type intrablockindex =
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intrablockindex =
             index - blockIndex * contiguousBlockSize;
           dftfe::utils::copyValue(x + index,
                                   dftfe::utils::mult(beta[intrablockindex],
@@ -1276,24 +1255,24 @@ namespace dftfe
     template <typename ValueType>
     void
     stridedBlockScaleAndAddColumnWiseKernel(
-      sycl::nd_item<1>       ind,
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType       *x,
-      const ValueType       *beta,
-      ValueType             *y)
+      sycl::nd_item<1>   ind,
+      const unsigned int contiguousBlockSize,
+      const unsigned int numContiguousBlocks,
+      const ValueType   *x,
+      const ValueType   *beta,
+      ValueType         *y)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          dftfe::size_type intrablockindex =
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intrablockindex =
             index - blockIndex * contiguousBlockSize;
           dftfe::utils::copyValue(
             y + index,
@@ -1305,26 +1284,26 @@ namespace dftfe
     template <typename ValueType>
     void
     stridedBlockScaleAndAddTwoVecColumnWiseKernel(
-      sycl::nd_item<1>       ind,
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType       *x,
-      const ValueType       *alpha,
-      const ValueType       *y,
-      const ValueType       *beta,
-      ValueType             *z)
+      sycl::nd_item<1>   ind,
+      const unsigned int contiguousBlockSize,
+      const unsigned int numContiguousBlocks,
+      const ValueType   *x,
+      const ValueType   *alpha,
+      const ValueType   *y,
+      const ValueType   *beta,
+      ValueType         *z)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          dftfe::size_type intrablockindex =
+          unsigned int blockIndex = index / contiguousBlockSize;
+          unsigned int intrablockindex =
             index - blockIndex * contiguousBlockSize;
           dftfe::utils::copyValue(
             z + index,
@@ -1335,15 +1314,15 @@ namespace dftfe
     }
 
     void
-    hadamardProductKernel(sycl::nd_item<1>       ind,
-                          const dftfe::size_type vecSize,
-                          const float           *xVec,
-                          const float           *yVec,
-                          float                 *outputVec)
+    hadamardProductKernel(sycl::nd_item<1>   ind,
+                          const unsigned int vecSize,
+                          const float       *xVec,
+                          const float       *yVec,
+                          float             *outputVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type       n_workitems    = ind.get_local_range(0);
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      unsigned int       n_workgroups   = ind.get_group_range(0);
+      unsigned int       n_workitems    = ind.get_local_range(0);
       for (int i = globalThreadId; i < vecSize; i += n_workgroups * n_workitems)
         {
           outputVec[i] = yVec[i] * xVec[i];
@@ -1351,15 +1330,15 @@ namespace dftfe
     }
 
     void
-    hadamardProductKernel(sycl::nd_item<1>       ind,
-                          const dftfe::size_type vecSize,
-                          const double          *xVec,
-                          const double          *yVec,
-                          double                *outputVec)
+    hadamardProductKernel(sycl::nd_item<1>   ind,
+                          const unsigned int vecSize,
+                          const double      *xVec,
+                          const double      *yVec,
+                          double            *outputVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type       n_workitems    = ind.get_local_range(0);
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      unsigned int       n_workgroups   = ind.get_group_range(0);
+      unsigned int       n_workitems    = ind.get_local_range(0);
       for (int i = globalThreadId; i < vecSize; i += n_workgroups * n_workitems)
         {
           outputVec[i] = yVec[i] * xVec[i];
@@ -1368,14 +1347,14 @@ namespace dftfe
 
     void
     hadamardProductKernel(sycl::nd_item<1>                         ind,
-                          const dftfe::size_type                   vecSize,
+                          const unsigned int                       vecSize,
                           const dftfe::utils::deviceDoubleComplex *xVec,
                           const dftfe::utils::deviceDoubleComplex *yVec,
                           dftfe::utils::deviceDoubleComplex       *outputVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type       n_workitems    = ind.get_local_range(0);
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      unsigned int       n_workgroups   = ind.get_group_range(0);
+      unsigned int       n_workitems    = ind.get_local_range(0);
       for (int i = globalThreadId; i < vecSize; i += n_workgroups * n_workitems)
         {
           outputVec[i].real(yVec[i].real() * xVec[i].real() -
@@ -1386,15 +1365,15 @@ namespace dftfe
     }
 
     void
-    hadamardProductWithConjKernel(sycl::nd_item<1>       ind,
-                                  const dftfe::size_type vecSize,
-                                  const float           *xVec,
-                                  const float           *yVec,
-                                  float                 *outputVec)
+    hadamardProductWithConjKernel(sycl::nd_item<1>   ind,
+                                  const unsigned int vecSize,
+                                  const float       *xVec,
+                                  const float       *yVec,
+                                  float             *outputVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type       n_workitems    = ind.get_local_range(0);
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      unsigned int       n_workgroups   = ind.get_group_range(0);
+      unsigned int       n_workitems    = ind.get_local_range(0);
       for (int i = globalThreadId; i < vecSize; i += n_workgroups * n_workitems)
         {
           outputVec[i] = yVec[i] * xVec[i];
@@ -1402,15 +1381,15 @@ namespace dftfe
     }
 
     void
-    hadamardProductWithConjKernel(sycl::nd_item<1>       ind,
-                                  const dftfe::size_type vecSize,
-                                  const double          *xVec,
-                                  const double          *yVec,
-                                  double                *outputVec)
+    hadamardProductWithConjKernel(sycl::nd_item<1>   ind,
+                                  const unsigned int vecSize,
+                                  const double      *xVec,
+                                  const double      *yVec,
+                                  double            *outputVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type       n_workitems    = ind.get_local_range(0);
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      unsigned int       n_workgroups   = ind.get_group_range(0);
+      unsigned int       n_workitems    = ind.get_local_range(0);
       for (int i = globalThreadId; i < vecSize; i += n_workgroups * n_workitems)
         {
           outputVec[i] = yVec[i] * xVec[i];
@@ -1418,15 +1397,15 @@ namespace dftfe
     }
 
     void
-    hadamardProductWithConjKernel(sycl::nd_item<1>       ind,
-                                  const dftfe::size_type vecSize,
+    hadamardProductWithConjKernel(sycl::nd_item<1>   ind,
+                                  const unsigned int vecSize,
                                   const dftfe::utils::deviceDoubleComplex *xVec,
                                   const dftfe::utils::deviceDoubleComplex *yVec,
                                   dftfe::utils::deviceDoubleComplex *outputVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      dftfe::size_type       n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type       n_workitems    = ind.get_local_range(0);
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      unsigned int       n_workgroups   = ind.get_group_range(0);
+      unsigned int       n_workitems    = ind.get_local_range(0);
       for (int i = globalThreadId; i < vecSize; i += n_workgroups * n_workitems)
         {
           outputVec[i].real(yVec[i].real() * xVec[i].real() +
@@ -1438,24 +1417,24 @@ namespace dftfe
 
     template <typename ValueType1, typename ValueType2>
     void
-    stridedBlockAxpyDeviceKernel(sycl::nd_item<1>       ind,
-                                 const dftfe::size_type contiguousBlockSize,
-                                 const dftfe::size_type numContiguousBlocks,
-                                 const ValueType2       a,
-                                 const ValueType2      *s,
-                                 const ValueType1      *addFromVec,
-                                 ValueType1            *addToVec)
+    stridedBlockAxpyDeviceKernel(sycl::nd_item<1>   ind,
+                                 const unsigned int contiguousBlockSize,
+                                 const unsigned int numContiguousBlocks,
+                                 const ValueType2   a,
+                                 const ValueType2  *s,
+                                 const ValueType1  *addFromVec,
+                                 ValueType1        *addToVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
+          unsigned int     blockIndex = index / contiguousBlockSize;
           const ValueType2 coeff      = dftfe::utils::mult(a, s[blockIndex]);
           addToVec[index] =
             dftfe::utils::add(addToVec[index],
@@ -1467,24 +1446,24 @@ namespace dftfe
     void
     stridedBlockAxpyDeviceKernel(
       sycl::nd_item<1>                        ind,
-      const dftfe::size_type                  contiguousBlockSize,
-      const dftfe::size_type                  numContiguousBlocks,
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
       const double                            a,
       const double                           *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
       dftfe::utils::deviceFloatComplex       *addToVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          const double     coeff      = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex = index / contiguousBlockSize;
+          const double coeff      = dftfe::utils::mult(a, s[blockIndex]);
           addToVec[index].real(dftfe::utils::add(
             addToVec[index].real(),
             dftfe::utils::mult(addFromVec[index].real(), coeff)));
@@ -1502,8 +1481,8 @@ namespace dftfe
                                     const unsigned int M)
     {
       const unsigned int numEntries   = N * M;
-      dftfe::size_type   n_workgroups = ind.get_group_range(0);
-      dftfe::size_type   n_workitems  = ind.get_local_range(0);
+      unsigned int       n_workgroups = ind.get_group_range(0);
+      unsigned int       n_workitems  = ind.get_local_range(0);
       for (int i = ind.get_global_id(0); i < numEntries;
            i += n_workgroups * n_workitems)
         {
@@ -1522,8 +1501,8 @@ namespace dftfe
                                     const unsigned int                 M)
     {
       const unsigned int numEntries   = N * M;
-      dftfe::size_type   n_workgroups = ind.get_group_range(0);
-      dftfe::size_type   n_workitems  = ind.get_local_range(0);
+      unsigned int       n_workgroups = ind.get_group_range(0);
+      unsigned int       n_workitems  = ind.get_local_range(0);
       for (int i = ind.get_global_id(0); i < numEntries;
            i += n_workgroups * n_workitems)
         {
@@ -1544,8 +1523,8 @@ namespace dftfe
       const unsigned int                       M)
     {
       const unsigned int numEntries   = N * M;
-      dftfe::size_type   n_workgroups = ind.get_group_range(0);
-      dftfe::size_type   n_workitems  = ind.get_local_range(0);
+      unsigned int       n_workgroups = ind.get_group_range(0);
+      unsigned int       n_workitems  = ind.get_local_range(0);
       for (int i = ind.get_global_id(0); i < numEntries;
            i += n_workgroups * n_workitems)
         {
@@ -1559,25 +1538,25 @@ namespace dftfe
 
     template <typename ValueType1, typename ValueType2>
     void
-    stridedBlockAxpByDeviceKernel(sycl::nd_item<1>       ind,
-                                  const dftfe::size_type contiguousBlockSize,
-                                  const dftfe::size_type numContiguousBlocks,
-                                  const ValueType2       a,
-                                  const ValueType2       b,
-                                  const ValueType2      *s,
-                                  const ValueType1      *addFromVec,
-                                  ValueType1            *addToVec)
+    stridedBlockAxpByDeviceKernel(sycl::nd_item<1>   ind,
+                                  const unsigned int contiguousBlockSize,
+                                  const unsigned int numContiguousBlocks,
+                                  const ValueType2   a,
+                                  const ValueType2   b,
+                                  const ValueType2  *s,
+                                  const ValueType1  *addFromVec,
+                                  ValueType1        *addToVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
+          unsigned int     blockIndex = index / contiguousBlockSize;
           const ValueType2 coeff      = dftfe::utils::mult(a, s[blockIndex]);
           addToVec[index] =
             dftfe::utils::add(dftfe::utils::mult(addToVec[index], b),
@@ -1589,25 +1568,25 @@ namespace dftfe
     void
     stridedBlockAxpByDeviceKernel(
       sycl::nd_item<1>                        ind,
-      const dftfe::size_type                  contiguousBlockSize,
-      const dftfe::size_type                  numContiguousBlocks,
+      const unsigned int                      contiguousBlockSize,
+      const unsigned int                      numContiguousBlocks,
       const double                            a,
       const double                            b,
       const double                           *s,
       const dftfe::utils::deviceFloatComplex *addFromVec,
       dftfe::utils::deviceFloatComplex       *addToVec)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type numberEntries =
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int numberEntries =
         numContiguousBlocks * contiguousBlockSize;
-      dftfe::size_type n_workgroups = ind.get_group_range(0);
-      dftfe::size_type n_workitems  = ind.get_local_range(0);
+      unsigned int n_workgroups = ind.get_group_range(0);
+      unsigned int n_workitems  = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < numberEntries;
+      for (unsigned int index = globalThreadId; index < numberEntries;
            index += n_workgroups * n_workitems)
         {
-          dftfe::size_type blockIndex = index / contiguousBlockSize;
-          const double     coeff      = dftfe::utils::mult(a, s[blockIndex]);
+          unsigned int blockIndex = index / contiguousBlockSize;
+          const double coeff      = dftfe::utils::mult(a, s[blockIndex]);
           addToVec[index].real(dftfe::utils::add(
             dftfe::utils::mult(addToVec[index].real(), b),
             dftfe::utils::mult(addFromVec[index].real(), coeff)));
@@ -1620,20 +1599,20 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel(
-      sycl::nd_item<1>       ind,
-      const dftfe::size_type B,
-      const dftfe::size_type DRem,
-      const dftfe::size_type D,
-      const ValueType1      *valueType1SrcArray,
-      ValueType1            *valueType1DstArray,
-      ValueType2            *valueType2DstArray)
+      sycl::nd_item<1>   ind,
+      const unsigned int B,
+      const unsigned int DRem,
+      const unsigned int D,
+      const ValueType1  *valueType1SrcArray,
+      ValueType1        *valueType1DstArray,
+      ValueType2        *valueType2DstArray)
     {
-      const dftfe::size_type globalThreadId = ind.get_global_id(0);
-      const dftfe::size_type size           = B * D;
-      dftfe::size_type       n_workgroups   = ind.get_group_range(0);
-      dftfe::size_type       n_workitems    = ind.get_local_range(0);
+      const unsigned int globalThreadId = ind.get_global_id(0);
+      const unsigned int size           = B * D;
+      unsigned int       n_workgroups   = ind.get_group_range(0);
+      unsigned int       n_workitems    = ind.get_local_range(0);
 
-      for (dftfe::size_type index = globalThreadId; index < size;
+      for (unsigned int index = globalThreadId; index < size;
            index += n_workgroups * n_workitems)
         {
           const unsigned int ibdof = index / D;
