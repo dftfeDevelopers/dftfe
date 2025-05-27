@@ -23,7 +23,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <oneapi/mkl.hpp>
 #include <oneapi/mkl/blas.hpp>
-#include "BLASWrapperDeviceKernel.cc"
+#include "BLASWrapperDeviceKernels.cc"
 #define DFTFE_WITH_DEVICE_MKL 1
 namespace dftfe
 {
@@ -33,12 +33,6 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::BLASWrapper()
     {
       create();
-    }
-
-    dftfe::utils::deviceStream_t &
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::getDeviceStream()
-    {
-      return d_streamId;
     }
 
     dftfe::utils::deviceStream_t &
@@ -922,15 +916,6 @@ namespace dftfe
         });
 #endif
       DEVICE_API_CHECK(event);
-    }
-
-    void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::add(double       *y,
-                                                        const double *x,
-                                                        const double  alpha,
-                                                        const unsigned int size)
-    {
-      xaxpy(size, &alpha, x, 1, y, 1);
     }
 
     void
