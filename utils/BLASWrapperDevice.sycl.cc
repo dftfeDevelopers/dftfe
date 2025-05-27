@@ -23,7 +23,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <oneapi/mkl.hpp>
 #include <oneapi/mkl/blas.hpp>
-#include "BLASWrapperDeviceKernels.sycl.cc"
+#include "BLASWrapperDeviceKernel.cc"
 #define DFTFE_WITH_DEVICE_MKL 1
 namespace dftfe
 {
@@ -110,7 +110,7 @@ namespace dftfe
 
     template <typename ValueType>
     ValueType *
-    device_allocation(dftfe::utils::deviceStream_t d_streamId, size_type n)
+    device_allocation(dftfe::utils::deviceStream_t d_streamId, unsigned int n)
     {
       ValueType *A_device = sycl::malloc_device<ValueType>(n, d_streamId);
       d_streamId.wait();
@@ -925,11 +925,10 @@ namespace dftfe
     }
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::add(
-      double                *y,
-      const double          *x,
-      const double           alpha,
-      const dftfe::size_type size)
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::add(double       *y,
+                                                        const double *x,
+                                                        const double  alpha,
+                                                        const unsigned int size)
     {
       xaxpy(size, &alpha, x, 1, y, 1);
     }
@@ -996,10 +995,10 @@ namespace dftfe
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
-          dftfe::size_type global_id    = ind.get_global_id(0);
-          dftfe::size_type n_workgroups = ind.get_group_range(0);
-          dftfe::size_type n_workitems  = ind.get_local_range(0);
-          for (dftfe::size_type index = global_id; index < n;
+          unsigned int global_id    = ind.get_global_id(0);
+          unsigned int n_workgroups = ind.get_group_range(0);
+          unsigned int n_workitems  = ind.get_local_range(0);
+          for (unsigned int index = global_id; index < n;
                index += n_workgroups * n_workitems)
             {
               if (incx * global_id >= n)
@@ -1229,10 +1228,10 @@ namespace dftfe
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
-          dftfe::size_type global_id    = ind.get_global_id(0);
-          dftfe::size_type n_workgroups = ind.get_group_range(0);
-          dftfe::size_type n_workitems  = ind.get_local_range(0);
-          for (dftfe::size_type index = global_id; index < n;
+          unsigned int global_id    = ind.get_global_id(0);
+          unsigned int n_workgroups = ind.get_group_range(0);
+          unsigned int n_workitems  = ind.get_local_range(0);
+          for (unsigned int index = global_id; index < n;
                index += n_workgroups * n_workitems)
             {
               if (incx * global_id >= n)
@@ -1266,9 +1265,9 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-      ValueType1            *x,
-      const ValueType2       alpha,
-      const dftfe::size_type n) const
+      ValueType1        *x,
+      const ValueType2   alpha,
+      const unsigned int n) const
     {
       const unsigned int incx = 1;
 #ifdef DFTFE_WITH_DEVICE_MKL
@@ -2026,8 +2025,8 @@ namespace dftfe
       const ValueType2   beta,
       ValueType1        *y) const
     {
-      size_type total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+                                     dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2052,7 +2051,7 @@ namespace dftfe
       const ValueType3  *D,
       ValueType4        *C) const
     {
-      size_type total_workitems =
+      unsigned int total_workitems =
         ((n * m / dftfe::utils::DEVICE_BLOCK_SIZE) + 1) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
@@ -2067,13 +2066,14 @@ namespace dftfe
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyComplexArrToRealArrs(
-      const dftfe::size_type  size,
+      const unsigned int      size,
       const ValueTypeComplex *complexArr,
       ValueTypeReal          *realArr,
       ValueTypeReal          *imagArr)
     {
-      size_type total_workitems = (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2087,13 +2087,14 @@ namespace dftfe
     template <typename ValueTypeComplex, typename ValueTypeReal>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyRealArrsToComplexArr(
-      const dftfe::size_type size,
-      const ValueTypeReal   *realArr,
-      const ValueTypeReal   *imagArr,
-      ValueTypeComplex      *complexArr)
+      const unsigned int   size,
+      const ValueTypeReal *realArr,
+      const ValueTypeReal *imagArr,
+      ValueTypeComplex    *complexArr)
     {
-      size_type total_workitems = (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2107,12 +2108,13 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
-      copyValueType1ArrToValueType2Arr(const size_type   size,
-                                       const ValueType1 *valueType1Arr,
-                                       ValueType2       *valueType2Arr)
+      copyValueType1ArrToValueType2Arr(const unsigned int size,
+                                       const ValueType1  *valueType1Arr,
+                                       ValueType2        *valueType2Arr)
     {
-      size_type total_workitems = (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2127,16 +2129,17 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
-      const size_type                contiguousBlockSize,
-      const size_type                numContiguousBlocks,
-      const ValueType1              *copyFromVec,
-      ValueType2                    *copyToVecBlock,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType1   *copyFromVec,
+      ValueType2         *copyToVecBlock,
+      const unsigned int *copyFromVecStartingContiguousBlockIds)
     {
-      size_type total_workitems = ((numContiguousBlocks * contiguousBlockSize) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((numContiguousBlocks * contiguousBlockSize) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
 
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
@@ -2156,17 +2159,18 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const dftfe::size_type         startingVecId,
-      const ValueType1              *copyFromVec,
-      ValueType2                    *copyToVecBlock,
-      const dftfe::global_size_type *copyFromVecStartingContiguousBlockIds)
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const unsigned int  startingVecId,
+      const ValueType1   *copyFromVec,
+      ValueType2         *copyToVecBlock,
+      const unsigned int *copyFromVecStartingContiguousBlockIds)
     {
-      size_type total_workitems = ((contiguousBlockSize * numContiguousBlocks) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((contiguousBlockSize * numContiguousBlocks) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
 
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
@@ -2187,16 +2191,17 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
-      const size_type         contiguousBlockSize,
-      const size_type         numContiguousBlocks,
-      const ValueType        *addFromVec,
-      ValueType              *addToVec,
-      const global_size_type *addToVecStartingContiguousBlockIds) const
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType    *addFromVec,
+      ValueType          *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds) const
     {
-      size_type total_workitems = ((numContiguousBlocks * contiguousBlockSize) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((numContiguousBlocks * contiguousBlockSize) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2215,18 +2220,19 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2, typename ValueType3>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
-      const size_type         contiguousBlockSize,
-      const size_type         numContiguousBlocks,
-      const ValueType1        a,
-      const ValueType1       *s,
-      const ValueType2       *addFromVec,
-      ValueType3             *addToVec,
-      const global_size_type *addToVecStartingContiguousBlockIds) const
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType1    a,
+      const ValueType1   *s,
+      const ValueType2   *addFromVec,
+      ValueType3         *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds) const
     {
-      size_type total_workitems = ((numContiguousBlocks * contiguousBlockSize) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((numContiguousBlocks * contiguousBlockSize) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2247,17 +2253,18 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2, typename ValueType3>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
-      const dftfe::size_type         contiguousBlockSize,
-      const dftfe::size_type         numContiguousBlocks,
-      const ValueType1               a,
-      const ValueType2              *addFromVec,
-      ValueType3                    *addToVec,
-      const dftfe::global_size_type *addToVecStartingContiguousBlockIds) const
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType1    a,
+      const ValueType2   *addFromVec,
+      ValueType3         *addToVec,
+      const unsigned int *addToVecStartingContiguousBlockIds) const
     {
-      size_type total_workitems = ((contiguousBlockSize * numContiguousBlocks) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((contiguousBlockSize * numContiguousBlocks) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2277,16 +2284,17 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyFromBlock(
-      const size_type         contiguousBlockSize,
-      const size_type         numContiguousBlocks,
-      const ValueType1       *copyFromVecBlock,
-      ValueType2             *copyToVec,
-      const global_size_type *copyFromVecStartingContiguousBlockIds)
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType1   *copyFromVecBlock,
+      ValueType2         *copyToVec,
+      const unsigned int *copyFromVecStartingContiguousBlockIds)
     {
-      size_type total_workitems = ((numContiguousBlocks * contiguousBlockSize) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((numContiguousBlocks * contiguousBlockSize) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2305,14 +2313,14 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
-      stridedCopyToBlockConstantStride(const dftfe::size_type blockSizeTo,
-                                       const dftfe::size_type blockSizeFrom,
-                                       const dftfe::size_type numBlocks,
-                                       const dftfe::size_type startingId,
-                                       const ValueType1      *copyFromVec,
-                                       ValueType2            *copyToVec) const
+      stridedCopyToBlockConstantStride(const unsigned int blockSizeTo,
+                                       const unsigned int blockSizeFrom,
+                                       const unsigned int numBlocks,
+                                       const unsigned int startingId,
+                                       const ValueType1  *copyFromVec,
+                                       ValueType2        *copyToVec) const
     {
-      size_type total_workitems =
+      unsigned int total_workitems =
         ((numBlocks * blockSizeTo) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
@@ -2333,14 +2341,14 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
-      stridedCopyFromBlockConstantStride(const size_type   blockSizeTo,
-                                         const size_type   blockSizeFrom,
-                                         const size_type   numBlocks,
-                                         const size_type   startingId,
-                                         const ValueType1 *copyFromVec,
-                                         ValueType2       *copyToVec)
+      stridedCopyFromBlockConstantStride(const unsigned int blockSizeTo,
+                                         const unsigned int blockSizeFrom,
+                                         const unsigned int numBlocks,
+                                         const unsigned int startingId,
+                                         const ValueType1  *copyFromVec,
+                                         ValueType2        *copyToVec)
     {
-      size_type total_workitems =
+      unsigned int total_workitems =
         ((numBlocks * blockSizeFrom) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
@@ -2361,16 +2369,16 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyConstantStride(
-      const size_type   blockSize,
-      const size_type   strideTo,
-      const size_type   strideFrom,
-      const size_type   numBlocks,
-      const size_type   startingToId,
-      const size_type   startingFromId,
-      const ValueType1 *copyFromVec,
-      ValueType2       *copyToVec)
+      const unsigned int blockSize,
+      const unsigned int strideTo,
+      const unsigned int strideFrom,
+      const unsigned int numBlocks,
+      const unsigned int startingToId,
+      const unsigned int startingFromId,
+      const ValueType1  *copyFromVec,
+      ValueType2        *copyToVec)
     {
-      size_type total_workitems =
+      unsigned int total_workitems =
         ((numBlocks * blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
@@ -2393,18 +2401,19 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleCopy(
-      const size_type         contiguousBlockSize,
-      const size_type         numContiguousBlocks,
-      const ValueType1        a,
-      const ValueType1       *s,
-      const ValueType2       *copyFromVec,
-      ValueType2             *copyToVecBlock,
-      const global_size_type *copyFromVecStartingContiguousBlockIds)
+      const unsigned int  contiguousBlockSize,
+      const unsigned int  numContiguousBlocks,
+      const ValueType1    a,
+      const ValueType1   *s,
+      const ValueType2   *copyFromVec,
+      ValueType2         *copyToVecBlock,
+      const unsigned int *copyFromVecStartingContiguousBlockIds)
     {
-      size_type total_workitems = ((numContiguousBlocks * contiguousBlockSize) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((numContiguousBlocks * contiguousBlockSize) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2425,16 +2434,17 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
-      const size_type   contiguousBlockSize,
-      const size_type   numContiguousBlocks,
-      const ValueType1  a,
-      const ValueType1 *s,
-      ValueType2       *x)
+      const unsigned int contiguousBlockSize,
+      const unsigned int numContiguousBlocks,
+      const ValueType1   a,
+      const ValueType1  *s,
+      ValueType2        *x)
     {
-      size_type total_workitems = ((numContiguousBlocks * contiguousBlockSize) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((numContiguousBlocks * contiguousBlockSize) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2449,13 +2459,14 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       copyValueType1ArrToValueType2ArrDeviceCall(
-        const dftfe::size_type             size,
+        const unsigned int                 size,
         const ValueType1                  *valueType1Arr,
         ValueType2                        *valueType2Arr,
         const dftfe::utils::deviceStream_t streamId)
     {
-      size_type total_workitems = (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       sycl::queue                 stream{sycl::gpu_selector_v};
       dftfe::utils::deviceEvent_t event =
         stream.parallel_for(sycl::nd_range<1>(total_workitems,
@@ -2476,8 +2487,9 @@ namespace dftfe
       const ValueType   *Y,
       ValueType         *output) const
     {
-      size_type total_workitems = ((m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2495,8 +2507,9 @@ namespace dftfe
       const ValueType   *Y,
       ValueType         *output) const
     {
-      size_type total_workitems = ((m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2580,13 +2593,13 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::addVecOverContinuousIndex(
-      const dftfe::size_type numContiguousBlocks,
-      const dftfe::size_type contiguousBlockSize,
-      const ValueType       *input1,
-      const ValueType       *input2,
-      ValueType             *output)
+      const unsigned int numContiguousBlocks,
+      const unsigned int contiguousBlockSize,
+      const ValueType   *input1,
+      const ValueType   *input2,
+      ValueType         *output)
     {
-      size_type total_workitems =
+      unsigned int total_workitems =
         ((numContiguousBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
@@ -2606,15 +2619,16 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScaleColumnWise(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType       *beta,
-      ValueType             *x)
+      const unsigned int contiguousBlockSize,
+      const unsigned int numContiguousBlocks,
+      const ValueType   *beta,
+      ValueType         *x)
     {
-      size_type total_workitems = ((contiguousBlockSize * numContiguousBlocks) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((contiguousBlockSize * numContiguousBlocks) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2628,17 +2642,17 @@ namespace dftfe
     template <typename ValueType>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
-      stridedBlockScaleAndAddColumnWise(
-        const dftfe::size_type contiguousBlockSize,
-        const dftfe::size_type numContiguousBlocks,
-        const ValueType       *x,
-        const ValueType       *beta,
-        ValueType             *y)
+      stridedBlockScaleAndAddColumnWise(const unsigned int contiguousBlockSize,
+                                        const unsigned int numContiguousBlocks,
+                                        const ValueType   *x,
+                                        const ValueType   *beta,
+                                        ValueType         *y)
     {
-      size_type total_workitems = ((contiguousBlockSize * numContiguousBlocks) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((contiguousBlockSize * numContiguousBlocks) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2653,18 +2667,19 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       stridedBlockScaleAndAddTwoVecColumnWise(
-        const dftfe::size_type contiguousBlockSize,
-        const dftfe::size_type numContiguousBlocks,
-        const ValueType       *x,
-        const ValueType       *alpha,
-        const ValueType       *y,
-        const ValueType       *beta,
-        ValueType             *z)
+        const unsigned int contiguousBlockSize,
+        const unsigned int numContiguousBlocks,
+        const ValueType   *x,
+        const ValueType   *alpha,
+        const ValueType   *y,
+        const ValueType   *beta,
+        ValueType         *z)
     {
-      size_type total_workitems = ((contiguousBlockSize * numContiguousBlocks) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((contiguousBlockSize * numContiguousBlocks) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2684,17 +2699,18 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType1      *addFromVec,
-      const ValueType2      *scalingVector,
-      const ValueType2       a,
-      ValueType1            *addToVec) const
+      const unsigned int contiguousBlockSize,
+      const unsigned int numContiguousBlocks,
+      const ValueType1  *addFromVec,
+      const ValueType2  *scalingVector,
+      const ValueType2   a,
+      ValueType1        *addToVec) const
     {
-      size_type total_workitems = ((contiguousBlockSize * numContiguousBlocks) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((contiguousBlockSize * numContiguousBlocks) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2714,18 +2730,19 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
-      const dftfe::size_type contiguousBlockSize,
-      const dftfe::size_type numContiguousBlocks,
-      const ValueType1      *addFromVec,
-      const ValueType2      *scalingVector,
-      const ValueType2       a,
-      const ValueType2       b,
-      ValueType1            *addToVec) const
+      const unsigned int contiguousBlockSize,
+      const unsigned int numContiguousBlocks,
+      const ValueType1  *addFromVec,
+      const ValueType2  *scalingVector,
+      const ValueType2   a,
+      const ValueType2   b,
+      ValueType1        *addToVec) const
     {
-      size_type total_workitems = ((contiguousBlockSize * numContiguousBlocks) /
-                                     dftfe::utils::DEVICE_BLOCK_SIZE +
-                                   1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      unsigned int total_workitems =
+        ((contiguousBlockSize * numContiguousBlocks) /
+           dftfe::utils::DEVICE_BLOCK_SIZE +
+         1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
@@ -2746,12 +2763,12 @@ namespace dftfe
     template <typename ValueType1, typename ValueType2>
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
-      const dftfe::size_type numberofVectors,
-      const dftfe::size_type sizeOfVector,
-      ValueType1            *X,
-      ValueType2            *D)
+      const unsigned int numberofVectors,
+      const unsigned int sizeOfVector,
+      ValueType1        *X,
+      ValueType2        *D)
     {
-      size_type total_workitems =
+      unsigned int total_workitems =
         ((numberofVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
          dftfe::utils::DEVICE_BLOCK_SIZE * sizeOfVector) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
@@ -2773,16 +2790,17 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1Arr(
-        const dftfe::size_type B,
-        const dftfe::size_type DRem,
-        const dftfe::size_type D,
-        const ValueType1      *valueType1SrcArray,
-        ValueType1            *valueType1DstArray,
-        ValueType2            *valueType2DstArray)
+        const unsigned int B,
+        const unsigned int DRem,
+        const unsigned int D,
+        const ValueType1  *valueType1SrcArray,
+        ValueType1        *valueType1DstArray,
+        ValueType2        *valueType2DstArray)
     {
-      const dftfe::size_type size = D * B;
-      size_type total_workitems = (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                                  dftfe::utils::DEVICE_BLOCK_SIZE;
+      const unsigned int size = D * B;
+      unsigned int       total_workitems =
+        (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
+        dftfe::utils::DEVICE_BLOCK_SIZE;
       dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
         sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
         [=](sycl::nd_item<1> ind) {
