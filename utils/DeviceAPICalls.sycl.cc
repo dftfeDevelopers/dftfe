@@ -218,6 +218,7 @@ namespace dftfe
     {
       try
         {
+          dftfe::utils::defaultStream.wait();
           dftfe::utils::defaultStream.memcpy(dst, src, count).wait();
         }
       catch (const dftfe::utils::deviceError_t &e)
@@ -245,6 +246,7 @@ namespace dftfe
     {
       try
         {
+          dftfe::utils::defaultStream.wait();
           dftfe::utils::defaultStream.memcpy(dst, src, count).wait();
         }
       catch (const dftfe::utils::deviceError_t &e)
