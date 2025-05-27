@@ -24,7 +24,6 @@
 #include <oneapi/mkl.hpp>
 #include <oneapi/mkl/blas.hpp>
 #include "BLASWrapperDeviceKernels.cc"
-#define DFTFE_WITH_DEVICE_MKL 1
 namespace dftfe
 {
   namespace linearAlgebra
@@ -85,7 +84,6 @@ namespace dftfe
     dftfe::utils::deviceBlasStatus_t
     setMathMode(dftfe::utils::deviceBlasMath_t mathMode)
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       if (mathMode == dftfe::utils::DEVICEBLAS_TF32_TENSOR_OP_MATH)
         setenv("MKL_BLAS_COMPUTE_MODE", "FLOAT_TO_TF32", 1);
       else if (mathMode == dftfe::utils::DEVICEBLAS_DEFAULT_MATH)
@@ -98,7 +96,6 @@ namespace dftfe
         setenv("MKL_BLAS_COMPUTE_MODE", "FLOAT_TO_BF16X3", 1);
       else if (mathMode == oneapi::mkl::blas::compute_mode::complex_3m)
         setenv("MKL_BLAS_COMPUTE_MODE", "COMPLEX_3M", 1);
-#endif
       return dftfe::utils::deviceBlasSuccess;
     }
 
@@ -144,21 +141,8 @@ namespace dftfe
       double            *y,
       const unsigned int incy) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::copy(d_streamId, n, x, incx, y, incy);
-#else
-      size_t total_workitems =
-        ((n / incx + 1) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-        dftfe::utils::DEVICE_BLOCK_SIZE;
-      dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          size_t index = ind.get_global_id(0);
-          if (incx * index < n)
-            y[incy * index] = x[incx * index];
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -170,24 +154,8 @@ namespace dftfe
       std::complex<double>       *y,
       const unsigned int          incy) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::copy(d_streamId, n, x, incx, y, incy);
-#else
-      size_t total_workitems =
-        ((n / incx + 1) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-        dftfe::utils::DEVICE_BLOCK_SIZE;
-      dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          size_t index = ind.get_global_id(0);
-          if (incx * index < n)
-            {
-              y[incy * index].real(x[incx * index].real());
-              y[incy * index].imag(x[incx * index].imag());
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -199,21 +167,8 @@ namespace dftfe
       float             *y,
       const unsigned int incy) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::copy(d_streamId, n, x, incx, y, incy);
-#else
-      size_t total_workitems =
-        ((n / incx + 1) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-        dftfe::utils::DEVICE_BLOCK_SIZE;
-      dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          size_t index = ind.get_global_id(0);
-          if (incx * index < n)
-            y[incy * index] = x[incx * index];
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -225,24 +180,8 @@ namespace dftfe
       std::complex<float>       *y,
       const unsigned int         incy) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::copy(d_streamId, n, x, incx, y, incy);
-#else
-      size_t total_workitems =
-        ((n / incx + 1) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-        dftfe::utils::DEVICE_BLOCK_SIZE;
-      dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          size_t index = ind.get_global_id(0);
-          if (incx * index < n)
-            {
-              y[incy * index].real(x[incx * index].real());
-              y[incy * index].imag(x[incx * index].imag());
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -283,7 +222,6 @@ namespace dftfe
         {
           // Assert Statement
         }
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::gemm(d_streamId,
                                               transa,
@@ -299,39 +237,6 @@ namespace dftfe
                                               beta,
                                               C,
                                               ldc);
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          size_t col = item.get_global_id(0);
-
-          if (col >= n)
-            {
-              return;
-            }
-
-          for (size_t row = 0; row < m; ++row)
-            {
-              C[col * ldc + row] = beta_local * C[col * ldc + row];
-
-              for (size_t i = 0; i < k; ++i)
-                {
-                  C[col * ldc + row] +=
-                    alpha_local *
-                    ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                             A[i * lda + row] :
-                             A[row * lda + i]) *
-                    ((transb == dftfe::utils::DEVICEBLAS_OP_N) ?
-                             B[col * ldb + i] :
-                             B[i * ldb + col]);
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -373,7 +278,6 @@ namespace dftfe
         {
           // Assert Statement
         }
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::gemm(d_streamId,
                                               transa,
@@ -389,39 +293,6 @@ namespace dftfe
                                               beta,
                                               C,
                                               ldc);
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          size_t col = item.get_global_id(0);
-
-          if (col >= n)
-            {
-              return;
-            }
-
-          for (size_t row = 0; row < m; ++row)
-            {
-              C[col * ldc + row] = beta_local * C[col * ldc + row];
-
-              for (size_t i = 0; i < k; ++i)
-                {
-                  C[col * ldc + row] +=
-                    alpha_local *
-                    ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                             A[i * lda + row] :
-                             A[row * lda + i]) *
-                    ((transb == dftfe::utils::DEVICEBLAS_OP_N) ?
-                             B[col * ldb + i] :
-                             B[i * ldb + col]);
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -462,7 +333,6 @@ namespace dftfe
         {
           // Assert Statement
         }
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::gemm(d_streamId,
                                               transa,
@@ -478,39 +348,6 @@ namespace dftfe
                                               beta,
                                               C,
                                               ldc);
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          size_t col = item.get_global_id(0);
-
-          if (col >= n)
-            {
-              return;
-            }
-
-          for (size_t row = 0; row < m; ++row)
-            {
-              C[col * ldc + row] = beta_local * C[col * ldc + row];
-
-              for (size_t i = 0; i < k; ++i)
-                {
-                  C[col * ldc + row] +=
-                    alpha_local *
-                    ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                             A[i * lda + row] :
-                             A[row * lda + i]) *
-                    ((transb == dftfe::utils::DEVICEBLAS_OP_N) ?
-                             B[col * ldb + i] :
-                             B[i * ldb + col]);
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -551,7 +388,6 @@ namespace dftfe
         {
           // Assert Statement
         }
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::gemm(d_streamId,
                                               transa,
@@ -567,39 +403,6 @@ namespace dftfe
                                               beta,
                                               C,
                                               ldc);
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          size_t col = item.get_global_id(0);
-
-          if (col >= n)
-            {
-              return;
-            }
-
-          for (size_t row = 0; row < m; ++row)
-            {
-              C[col * ldc + row] = beta_local * C[col * ldc + row];
-
-              for (size_t i = 0; i < k; ++i)
-                {
-                  C[col * ldc + row] +=
-                    alpha_local *
-                    ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                             A[i * lda + row] :
-                             A[row * lda + i]) *
-                    ((transb == dftfe::utils::DEVICEBLAS_OP_N) ?
-                             B[col * ldb + i] :
-                             B[i * ldb + col]);
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -628,42 +431,8 @@ namespace dftfe
         {
           // Assert Statement
         }
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::gemv(
         d_streamId, transa, m, n, alpha, A, lda, x, incx, beta, y, incy);
-#else
-      unsigned int m_local = m, n_local = n;
-      if (transa == dftfe::utils::DEVICEBLAS_OP_T)
-        {
-          m_local = n;
-          n_local = m;
-        }
-      size_t total_workitems = (m_local / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          size_t row = item.get_global_id(0);
-
-          if (row * incy < m_local)
-            {
-              y[row * incy] = beta_local * y[row * incy];
-              for (size_t col = 0; col < n_local; ++col)
-                {
-                  if (col * incx >= n_local)
-                    {
-                      break;
-                    }
-                  y[row * incy] += alpha_local * x[col * incx] *
-                                   ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                            A[col * lda + row] :
-                                            A[row * lda + col]);
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -692,42 +461,8 @@ namespace dftfe
         {
           // Assert Statement
         }
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::gemv(
         d_streamId, transa, m, n, alpha, A, lda, x, incx, beta, y, incy);
-#else
-      unsigned int m_local = m, n_local = n;
-      if (transa == dftfe::utils::DEVICEBLAS_OP_T)
-        {
-          m_local = n;
-          n_local = m;
-        }
-      size_t total_workitems = (m_local / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          size_t row = item.get_global_id(0);
-
-          if (row * incy < m_local)
-            {
-              y[row * incy] = beta_local * y[row * incy];
-              for (size_t col = 0; col < n_local; ++col)
-                {
-                  if (col * incx >= n_local)
-                    {
-                      break;
-                    }
-                  y[row * incy] += alpha_local * x[col * incx] *
-                                   ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                            A[col * lda + row] :
-                                            A[row * lda + col]);
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -756,42 +491,8 @@ namespace dftfe
         {
           // Assert Statement
         }
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::gemv(
         d_streamId, transa, m, n, alpha, A, lda, x, incx, beta, y, incy);
-#else
-      unsigned int m_local = m, n_local = n;
-      if (transa == dftfe::utils::DEVICEBLAS_OP_T)
-        {
-          m_local = n;
-          n_local = m;
-        }
-      size_t total_workitems = (m_local / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          size_t row = item.get_global_id(0);
-
-          if (row * incy < m_local)
-            {
-              y[row * incy] = beta_local * y[row * incy];
-              for (size_t col = 0; col < n_local; ++col)
-                {
-                  if (col * incx >= n_local)
-                    {
-                      break;
-                    }
-                  y[row * incy] += alpha_local * x[col * incx] *
-                                   ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                            A[col * lda + row] :
-                                            A[row * lda + col]);
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -820,42 +521,8 @@ namespace dftfe
         {
           // Assert Statement
         }
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::gemv(
         d_streamId, transa, m, n, alpha, A, lda, x, incx, beta, y, incy);
-#else
-      unsigned int m_local = m, n_local = n;
-      if (transa == dftfe::utils::DEVICEBLAS_OP_T)
-        {
-          m_local = n;
-          n_local = m;
-        }
-      size_t total_workitems = (m_local / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          size_t row = item.get_global_id(0);
-
-          if (row * incy < m_local)
-            {
-              y[row * incy] = beta_local * y[row * incy];
-              for (size_t col = 0; col < n_local; ++col)
-                {
-                  if (col * incx >= n_local)
-                    {
-                      break;
-                    }
-                  y[row * incy] += alpha_local * x[col * incx] *
-                                   ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                            A[col * lda + row] :
-                                            A[row * lda + col]);
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -868,23 +535,8 @@ namespace dftfe
       double            *y,
       const unsigned int incy) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::axpy(
         d_streamId, n, alpha, x, incx, y, incy);
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          size_t index = ind.get_global_id(0);
-          if (incx * index < n && incy * index < n)
-            {
-              y[incy * index] = y[incy * index] + alpha_local * x[incx * index];
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -897,24 +549,8 @@ namespace dftfe
       std::complex<double>       *y,
       const unsigned int          incy) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::axpy(
         d_streamId, n, alpha, x, incx, y, incy);
-#else
-      size_t total_workitems =
-        ((n / incx + 1) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-        dftfe::utils::DEVICE_BLOCK_SIZE;
-      auto                        alpha_local = alpha[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          size_t index = ind.get_global_id(0);
-          if (incx * index < n && incy * index < n)
-            {
-              y[incy * index] = y[incy * index] + alpha_local * x[incx * index];
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -927,37 +563,8 @@ namespace dftfe
       const unsigned int incy,
       double            *result) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::dot(
         d_streamId, n, x, incx, y, incy, result);
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-
-      sycl::buffer<double> x_buf(x, sycl::range<1>(n));
-      sycl::buffer<double> y_buf(y, sycl::range<1>(n));
-      sycl::buffer<double> sum_buf(result, sycl::range<1>(1));
-
-      dftfe::utils::deviceEvent_t event =
-        d_streamId.submit([&](sycl::handler &cgh) {
-          auto x_acc = x_buf.get_access<sycl::access::mode::read>(cgh);
-          auto y_acc = y_buf.get_access<sycl::access::mode::read>(cgh);
-          auto sum_acc =
-            sum_buf.get_access<sycl::access::mode::read_write>(cgh);
-
-          cgh.parallel_for(sycl::range<1>(n), [=](sycl::id<1> i) {
-            double val_x = x_acc[i * incx], val_y = y_acc[i * incy];
-            sycl::atomic_ref<double,
-                             sycl::memory_order::relaxed,
-                             sycl::memory_scope::device,
-                             sycl::access::address_space::global_space>
-              atomic_sum(sum_acc[0]);
-            atomic_sum.fetch_add(val_x * val_y);
-          });
-        });
-      sycl::host_accessor sum_host_acc(sum_buf, sycl::read_only);
-      *result = sum_host_acc[0];
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -970,44 +577,8 @@ namespace dftfe
       const unsigned int          incy,
       std::complex<double>       *result) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::dotu(
         d_streamId, n, x, incx, y, incy, result);
-#else
-      size_t total_workitems =
-        ((n / incx + 1) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-        dftfe::utils::DEVICE_BLOCK_SIZE;
-      dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          unsigned int global_id    = ind.get_global_id(0);
-          unsigned int n_workgroups = ind.get_group_range(0);
-          unsigned int n_workitems  = ind.get_local_range(0);
-          for (unsigned int index = global_id; index < n;
-               index += n_workgroups * n_workitems)
-            {
-              if (incx * global_id >= n)
-                {
-                  break;
-                }
-              // auto atomic_add_real = sycl::atomic_ref<double,
-              // sycl::memory_order::relaxed,
-              //                                     sycl::memory_scope::device,
-              //                                     sycl::access::address_space::global_space>
-              //                                     (reinterpret_cast<double*>(&result[0])[0]);
-              // atomic_add_real +=
-              // x[incx*global_id].real()*y[incy*global_id].real();
-
-              // auto atomic_add_imag = sycl::atomic_ref<double,
-              // sycl::memory_order::relaxed,
-              //                                     sycl::memory_scope::device,
-              //                                     sycl::access::address_space::global_space>
-              //                                     (reinterpret_cast<double*>(&result[0])[1]);
-              // atomic_add_imag +=
-              // x[incx*global_id].imag()*y[incy*global_id].imag();
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -1023,7 +594,6 @@ namespace dftfe
     {
       std::complex<double> localResult(0.0, 0.0);
       *result = std::complex<double>(0.0, 0.0);
-#ifdef DFTFE_WITH_DEVICE_MKL
       std::complex<double> *localResult_device =
         sycl::malloc_device<std::complex<double>>(1, d_streamId);
       d_streamId.memcpy(localResult_device,
@@ -1035,50 +605,6 @@ namespace dftfe
       d_streamId.memcpy(&localResult,
                         localResult_device,
                         sizeof(std::complex<double>));
-#else
-      size_t total_workitems =
-        ((n / incx + 1) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-        dftfe::utils::DEVICE_BLOCK_SIZE;
-
-      sycl::buffer<std::complex<double>, 1> partial_sums(total_workitems);
-      dftfe::utils::deviceEvent_t           event = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-          // size_t global_id = item.get_global_id(0);
-          // size_t n_workgroups = item.get_group_range(0);
-          // size_t n_workitems = item.get_local_range(0);
-
-          // std::complex<double> partial_sum(0.0, 0.0);
-
-          // for (size_t index = global_id; index < n; index += n_workgroups *
-          // n_workitems) {
-          //     if (index >= n) break;
-          //     partial_sum += x[incx * index] * y[incy * index];
-          // }
-
-          // // Write partial sum to buffer
-          // sycl::atomic_ref<std::complex<double>, sycl::memory_order::relaxed,
-          //                 sycl::memory_scope::device,
-          //                 sycl::access::address_space::global_space>
-          //     (partial_sums[item.get_local_id()]) += partial_sum;
-          // auto atomic_add = sycl::atomic_ref<std::complex<double>,
-          // sycl::memory_order::relaxed,
-          //                                   sycl::memory_scope::device,
-          //                                   sycl::access::address_space::global_space>(
-          //     reinterpret_cast<double&>(result[0]));
-          // atomic_add.fetch_add(partial_sum);
-        });
-
-      d_streamId.wait();
-
-      {
-        auto host_sums = partial_sums.get_host_access();
-        for (size_t i = 0; i < total_workitems; ++i)
-          {
-            localResult += host_sums[i];
-          }
-      }
-#endif
       DEVICE_API_CHECK(event);
       MPI_Allreduce(&localResult,
                     result,
@@ -1098,44 +624,14 @@ namespace dftfe
       const MPI_Comm    &mpi_communicator,
       double            *result) const
     {
-      double localResult = 0.0;
-      *result            = 0.0;
-#ifdef DFTFE_WITH_DEVICE_MKL
+      double localResult         = 0.0;
+      *result                    = 0.0;
       double *localResult_device = sycl::malloc_device<double>(1, d_streamId);
       d_streamId.memcpy(localResult_device, &localResult, sizeof(double));
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::dot(
         d_streamId, n, x, incx, y, incy, localResult_device);
       d_streamId.wait();
       d_streamId.memcpy(&localResult, localResult_device, sizeof(double));
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-
-      sycl::buffer<double> x_buf(x, sycl::range<1>(n));
-      sycl::buffer<double> y_buf(y, sycl::range<1>(n));
-      sycl::buffer<double> sum_buf(&localResult, sycl::range<1>(1));
-
-      dftfe::utils::deviceEvent_t event =
-        d_streamId.submit([&](sycl::handler &cgh) {
-          auto x_acc = x_buf.get_access<sycl::access::mode::read>(cgh);
-          auto y_acc = y_buf.get_access<sycl::access::mode::read>(cgh);
-          auto sum_acc =
-            sum_buf.get_access<sycl::access::mode::read_write>(cgh);
-
-          cgh.parallel_for(sycl::range<1>(n), [=](sycl::id<1> i) {
-            double val_x = x_acc[i * incx], val_y = y_acc[i * incy];
-            sycl::atomic_ref<double,
-                             sycl::memory_order::relaxed,
-                             sycl::memory_scope::device,
-                             sycl::access::address_space::global_space>
-              atomic_sum(sum_acc[0]);
-            atomic_sum.fetch_add(val_x * val_y);
-          });
-        });
-      d_streamId.wait();
-      sycl::host_accessor sum_host_acc(sum_buf, sycl::read_only);
-      localResult            = sum_host_acc[0];
-#endif
       MPI_Allreduce(
         &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
     }
@@ -1148,42 +644,14 @@ namespace dftfe
       const MPI_Comm    &mpi_communicator,
       double            *result) const
     {
-      double localResult = 0.0;
-      *result            = 0.0;
-#ifdef DFTFE_WITH_DEVICE_MKL
+      double localResult         = 0.0;
+      *result                    = 0.0;
       double *localResult_device = sycl::malloc_device<double>(1, d_streamId);
       d_streamId.memcpy(localResult_device, &localResult, sizeof(double));
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::nrm2(
         d_streamId, n, x, incx, localResult_device);
       d_streamId.wait();
       d_streamId.memcpy(&localResult, localResult_device, sizeof(double));
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-
-      sycl::buffer<double> x_buf(x, sycl::range<1>(n));
-      sycl::buffer<double> sum_buf(&localResult, sycl::range<1>(1));
-
-      dftfe::utils::deviceEvent_t event =
-        d_streamId.submit([&](sycl::handler &cgh) {
-          auto x_acc = x_buf.get_access<sycl::access::mode::read>(cgh);
-          auto sum_acc =
-            sum_buf.get_access<sycl::access::mode::read_write>(cgh);
-
-          cgh.parallel_for(sycl::range<1>(n), [=](sycl::id<1> i) {
-            double val = x_acc[i * incx];
-            sycl::atomic_ref<double,
-                             sycl::memory_order::relaxed,
-                             sycl::memory_scope::device,
-                             sycl::access::address_space::global_space>
-              atomic_sum(sum_acc[0]);
-            atomic_sum.fetch_add(val * val);
-          });
-        });
-      d_streamId.wait();
-      sycl::host_accessor sum_host_acc(sum_buf, sycl::read_only);
-      localResult = sum_host_acc[0];
-#endif
       MPI_Allreduce(
         &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
       *result = std::sqrt(*result);
@@ -1197,50 +665,14 @@ namespace dftfe
       const MPI_Comm             &mpi_communicator,
       double                     *result) const
     {
-      double localresult = 0.0;
-      *result            = 0.0;
-#ifdef DFTFE_WITH_DEVICE_MKL
+      double localresult         = 0.0;
+      *result                    = 0.0;
       double *localResult_device = sycl::malloc_device<double>(1, d_streamId);
       d_streamId.memcpy(localResult_device, &localresult, sizeof(double));
       dftfe::utils::deviceEvent_t event = oneapi::mkl::blas::column_major::nrm2(
         d_streamId, n, x, incx, localResult_device);
       d_streamId.wait();
       d_streamId.memcpy(&localresult, localResult_device, sizeof(double));
-#else
-      size_t total_workitems =
-        ((n / incx + 1) / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-        dftfe::utils::DEVICE_BLOCK_SIZE;
-      dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          unsigned int global_id    = ind.get_global_id(0);
-          unsigned int n_workgroups = ind.get_group_range(0);
-          unsigned int n_workitems  = ind.get_local_range(0);
-          for (unsigned int index = global_id; index < n;
-               index += n_workgroups * n_workitems)
-            {
-              if (incx * global_id >= n)
-                {
-                  break;
-                }
-              // auto atomic_add_real = sycl::atomic_ref<double,
-              // sycl::memory_order::relaxed,
-              //                                     sycl::memory_scope::device,
-              //                                     sycl::access::address_space::global_space>
-              //                                     (reinterpret_cast<double*>(&result)[0]);
-              // atomic_add_real +=
-              // x[incx*global_id].real()*x[incx*global_id].real();
-
-              // auto atomic_add_imag = sycl::atomic_ref<double,
-              // sycl::memory_order::relaxed,
-              //                                     sycl::memory_scope::device,
-              //                                     sycl::access::address_space::global_space>
-              //                                     (reinterpret_cast<double*>(&result)[1]);
-              // atomic_add_imag +=
-              // x[incx*global_id].imag()*x[incx*global_id].imag();
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
       MPI_Allreduce(
         &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -1254,22 +686,9 @@ namespace dftfe
       const ValueType2   alpha,
       const unsigned int n) const
     {
-      const unsigned int incx = 1;
-#ifdef DFTFE_WITH_DEVICE_MKL
+      const unsigned int          incx = 1;
       dftfe::utils::deviceEvent_t event =
         oneapi::mkl::blas::column_major::scal(d_streamId, n, alpha, x, incx);
-#else
-      size_t total_workitems = (n / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
-                               dftfe::utils::DEVICE_BLOCK_SIZE;
-      // auto alpha_local = alpha;
-      dftfe::utils::deviceEvent_t event = d_streamId.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          size_t index = ind.get_global_id(0);
-          if (index < n)
-            x[index] = x[index] * alpha;
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -1293,7 +712,6 @@ namespace dftfe
       long long int      strideC,
       const int          batchCount) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
@@ -1336,24 +754,6 @@ namespace dftfe
                                                     strideC,
                                                     batchCount);
       DEVICE_API_CHECK(event);
-#else
-      for (int iBatch = 0; iBatch < batchCount; iBatch++)
-        {
-          xgemm(transA,
-                transB,
-                m,
-                n,
-                k,
-                alpha,
-                A + iBatch * strideA,
-                lda,
-                B + iBatch * strideB,
-                ldb,
-                beta,
-                C + iBatch * strideC,
-                ldc);
-        }
-#endif
     }
 
     void
@@ -1376,7 +776,6 @@ namespace dftfe
       long long int               strideC,
       const int                   batchCount) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
@@ -1418,24 +817,6 @@ namespace dftfe
                                                     strideC,
                                                     batchCount);
       DEVICE_API_CHECK(event);
-#else
-      for (int iBatch = 0; iBatch < batchCount; iBatch++)
-        {
-          xgemm(transA,
-                transB,
-                m,
-                n,
-                k,
-                alpha,
-                A + iBatch * strideA,
-                lda,
-                B + iBatch * strideB,
-                ldb,
-                beta,
-                C + iBatch * strideC,
-                ldc);
-        }
-#endif
     }
 
     void
@@ -1458,7 +839,6 @@ namespace dftfe
       long long int              strideC,
       const int                  batchCount) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
@@ -1501,24 +881,6 @@ namespace dftfe
                                                     strideC,
                                                     batchCount);
       DEVICE_API_CHECK(event);
-#else
-      for (int iBatch = 0; iBatch < batchCount; iBatch++)
-        {
-          xgemm(transA,
-                transB,
-                m,
-                n,
-                k,
-                alpha,
-                A + iBatch * strideA,
-                lda,
-                B + iBatch * strideB,
-                ldb,
-                beta,
-                C + iBatch * strideC,
-                ldc);
-        }
-#endif
     }
 
     void
@@ -1541,7 +903,6 @@ namespace dftfe
       long long int      strideC,
       const int          batchCount) const
     {
-#ifdef DFTFE_WITH_DEVICE_MKL
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
         transa = dftfe::utils::DEVICEBLAS_OP_N;
@@ -1584,24 +945,6 @@ namespace dftfe
                                                     strideC,
                                                     batchCount);
       DEVICE_API_CHECK(event);
-#else
-      for (int iBatch = 0; iBatch < batchCount; iBatch++)
-        {
-          xgemm(transA,
-                transB,
-                m,
-                n,
-                k,
-                alpha,
-                A + iBatch * strideA,
-                lda,
-                B + iBatch * strideB,
-                ldb,
-                beta,
-                C + iBatch * strideC,
-                ldc);
-        }
-#endif
     }
 
     void
@@ -1643,7 +986,6 @@ namespace dftfe
           // Assert Statement
         }
 
-#ifdef DFTFE_WITH_DEVICE_MKL
       const long                  group_size = 1;
       const int                   m_local    = int(m);
       const int                   n_local    = int(n);
@@ -1668,38 +1010,6 @@ namespace dftfe
                                                     &ldc_local,
                                                     1,
                                                     &batchCount);
-#else
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(batchCount, 1), [=](sycl::nd_item<1> item) {
-          size_t batch = item.get_global_id(0);
-
-          if (batch < batchCount)
-            {
-              for (size_t col = 0; col < n; ++col)
-                {
-                  for (size_t row = 0; row < m; ++row)
-                    {
-                      C[batch][col * ldc + row] =
-                        beta_local * C[batch][col * ldc + row];
-
-                      for (size_t i = 0; i < k; ++i)
-                        {
-                          C[batch][col * ldc + row] +=
-                            alpha_local *
-                            ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                     A[batch][i * lda + row] :
-                                     A[batch][row * lda + i]) *
-                            ((transb == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                     B[batch][col * ldb + i] :
-                                     B[batch][i * ldb + col]);
-                        }
-                    }
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -1742,7 +1052,6 @@ namespace dftfe
           // Assert Statement
         }
 
-#ifdef DFTFE_WITH_DEVICE_MKL
       const long                  group_size = 1;
       const int                   m_local    = int(m);
       const int                   n_local    = int(n);
@@ -1767,38 +1076,6 @@ namespace dftfe
                                                     &ldc_local,
                                                     1,
                                                     &batchCount);
-#else
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(batchCount, 1), [=](sycl::nd_item<1> item) {
-          size_t batch = item.get_global_id(0);
-
-          if (batch < batchCount)
-            {
-              for (size_t col = 0; col < n; ++col)
-                {
-                  for (size_t row = 0; row < m; ++row)
-                    {
-                      C[batch][col * ldc + row] =
-                        beta_local * C[batch][col * ldc + row];
-
-                      for (size_t i = 0; i < k; ++i)
-                        {
-                          C[batch][col * ldc + row] +=
-                            alpha_local *
-                            ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                     A[batch][i * lda + row] :
-                                     A[batch][row * lda + i]) *
-                            ((transb == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                     B[batch][col * ldb + i] :
-                                     B[batch][i * ldb + col]);
-                        }
-                    }
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -1841,7 +1118,6 @@ namespace dftfe
           // Assert Statement
         }
 
-#ifdef DFTFE_WITH_DEVICE_MKL
       const long                  group_size = 1;
       const int                   m_local    = int(m);
       const int                   n_local    = int(n);
@@ -1866,38 +1142,6 @@ namespace dftfe
                                                     &ldc_local,
                                                     1,
                                                     &batchCount);
-#else
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(batchCount, 1), [=](sycl::nd_item<1> item) {
-          size_t batch = item.get_global_id(0);
-
-          if (batch < batchCount)
-            {
-              for (size_t col = 0; col < n; ++col)
-                {
-                  for (size_t row = 0; row < m; ++row)
-                    {
-                      C[batch][col * ldc + row] =
-                        beta_local * C[batch][col * ldc + row];
-
-                      for (size_t i = 0; i < k; ++i)
-                        {
-                          C[batch][col * ldc + row] +=
-                            alpha_local *
-                            ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                     A[batch][i * lda + row] :
-                                     A[batch][row * lda + i]) *
-                            ((transb == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                     B[batch][col * ldb + i] :
-                                     B[batch][i * ldb + col]);
-                        }
-                    }
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
@@ -1940,7 +1184,6 @@ namespace dftfe
           // Assert Statement
         }
 
-#ifdef DFTFE_WITH_DEVICE_MKL
       const long                  group_size = 1;
       const int                   m_local    = int(m);
       const int                   n_local    = int(n);
@@ -1965,38 +1208,6 @@ namespace dftfe
                                                     &ldc_local,
                                                     1,
                                                     &batchCount);
-#else
-      auto                        alpha_local = alpha[0];
-      auto                        beta_local  = beta[0];
-      dftfe::utils::deviceEvent_t event       = d_streamId.parallel_for(
-        sycl::nd_range<1>(batchCount, 1), [=](sycl::nd_item<1> item) {
-          size_t batch = item.get_global_id(0);
-
-          if (batch < batchCount)
-            {
-              for (size_t col = 0; col < n; ++col)
-                {
-                  for (size_t row = 0; row < m; ++row)
-                    {
-                      C[batch][col * ldc + row] =
-                        beta_local * C[batch][col * ldc + row];
-
-                      for (size_t i = 0; i < k; ++i)
-                        {
-                          C[batch][col * ldc + row] +=
-                            alpha_local *
-                            ((transa == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                     A[batch][i * lda + row] :
-                                     A[batch][row * lda + i]) *
-                            ((transb == dftfe::utils::DEVICEBLAS_OP_N) ?
-                                     B[batch][col * ldb + i] :
-                                     B[batch][i * ldb + col]);
-                        }
-                    }
-                }
-            }
-        });
-#endif
       DEVICE_API_CHECK(event);
     }
 
