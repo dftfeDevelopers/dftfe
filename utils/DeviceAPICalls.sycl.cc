@@ -97,7 +97,6 @@ namespace dftfe
     {
       try
         {
-          dftfe::utils::defaultStream.wait();
           *devPtr = sycl::malloc_device(size, dftfe::utils::defaultStream);
         }
       catch (const dftfe::utils::deviceError_t &e)
@@ -110,15 +109,8 @@ namespace dftfe
     deviceError_t
     deviceMemset(void *devPtr, int value, std::size_t count)
     {
-      try
-        {
-          dftfe::utils::defaultStream.memset(devPtr, value, count);
-          dftfe::utils::defaultStream.wait();
-        }
-      catch (const dftfe::utils::deviceError_t &e)
-        {
-          return e;
-        }
+      dftfe::utils::defaultStream.memset(devPtr, value, count);
+      dftfe::utils::defaultStream.wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -189,7 +181,6 @@ namespace dftfe
     {
       try
         {
-          dftfe::utils::defaultStream.wait();
           *hostPtr = sycl::malloc_host(size, dftfe::utils::defaultStream);
         }
       catch (const dftfe::utils::deviceError_t &e)
@@ -216,15 +207,7 @@ namespace dftfe
     deviceError_t
     deviceMemcpyD2H(void *dst, const void *src, std::size_t count)
     {
-      try
-        {
-          dftfe::utils::defaultStream.wait();
-          dftfe::utils::defaultStream.memcpy(dst, src, count).wait();
-        }
-      catch (const dftfe::utils::deviceError_t &e)
-        {
-          return e;
-        }
+      dftfe::utils::defaultStream.memcpy(dst, src, count).wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -233,8 +216,7 @@ namespace dftfe
     {
       try
         {
-          dftfe::utils::defaultStream.wait();
-          dftfe::utils::defaultStream.memcpy(dst, src, count).wait();
+          dftfe::utils::defaultStream.memcpy(dst, src, count);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -245,15 +227,7 @@ namespace dftfe
     deviceError_t
     deviceMemcpyH2D(void *dst, const void *src, std::size_t count)
     {
-      try
-        {
-          dftfe::utils::defaultStream.wait();
-          dftfe::utils::defaultStream.memcpy(dst, src, count).wait();
-        }
-      catch (const dftfe::utils::deviceError_t &e)
-        {
-          return e;
-        }
+      dftfe::utils::defaultStream.memcpy(dst, src, count).wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -303,14 +277,7 @@ namespace dftfe
     deviceError_t
     deviceSynchronize()
     {
-      try
-        {
-          dftfe::utils::defaultStream.wait();
-        }
-      catch (const dftfe::utils::deviceError_t &e)
-        {
-          return e;
-        }
+      dftfe::utils::defaultStream.wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
