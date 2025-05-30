@@ -97,8 +97,8 @@ namespace dftfe
     {
       try
         {
-          *devPtr = sycl::malloc_device(size, dftfe::utils::defaultStream);
           dftfe::utils::defaultStream.wait();
+          *devPtr = sycl::malloc_device(size, dftfe::utils::defaultStream);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -189,8 +189,8 @@ namespace dftfe
     {
       try
         {
-          *hostPtr = sycl::malloc_host(size, dftfe::utils::defaultStream);
           dftfe::utils::defaultStream.wait();
+          *hostPtr = sycl::malloc_host(size, dftfe::utils::defaultStream);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
