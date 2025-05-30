@@ -233,7 +233,8 @@ namespace dftfe
     {
       try
         {
-          dftfe::utils::defaultStream.memcpy(dst, src, count);
+          dftfe::utils::defaultStream.wait();
+          dftfe::utils::defaultStream.memcpy(dst, src, count).wait();
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -367,7 +368,9 @@ namespace dftfe
     deviceError_t
     deviceStreamCreate(deviceStream_t *pStream, const bool nonBlocking)
     {
-      *pStream = dftfe::utils::deviceStream_t{sycl::gpu_selector_v};
+      *pStream =
+        dftfe::utils::deviceStream_t{sycl::gpu_selector_v,
+                                     sycl::property::queue::in_order{}};
 
       return dftfe::utils::deviceSuccess;
     }
