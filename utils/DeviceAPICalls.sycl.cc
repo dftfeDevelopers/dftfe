@@ -351,12 +351,11 @@ namespace dftfe
       for (auto it = queueRegistry.begin(); it != queueRegistry.end(); ++it)
         if (*(*it) == stream)
           {
-            (*it)->wait();
+            (*it)->wait_and_throw();
             dftfe::utils::queueRegistry.erase(it);
-            return dftfe::utils::deviceSuccess;
           }
 
-      return dftfe::utils::deviceErrorInvalidValue;
+      return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
