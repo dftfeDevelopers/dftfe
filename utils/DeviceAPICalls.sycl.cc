@@ -278,6 +278,8 @@ namespace dftfe
     deviceSynchronize()
     {
       dftfe::utils::defaultStream.wait_and_throw();
+      for (auto it = queueRegistry.begin(); it != queueRegistry.end(); ++it)
+        (*it)->wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -335,17 +337,26 @@ namespace dftfe
     deviceError_t
     deviceStreamCreate(deviceStream_t *pStream, const bool nonBlocking)
     {
-      *pStream =
-        dftfe::utils::deviceStream_t{sycl::gpu_selector_v,
-                                     sycl::property::queue::in_order{}};
-
+      auto newq =
+        std::make_shared<deviceStream_t>(sycl::gpu_selector_v,
+                                         sycl::property::queue::in_order{});
+      dftfe::utils::queueRegistry.push_back(newq);
+      *pStream = *newq;
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
     deviceStreamDestroy(deviceStream_t stream)
     {
-      return dftfe::utils::deviceSuccess;
+      for (auto it = queueRegistry.begin(); it != queueRegistry.end(); ++it)
+        if (*(*it) == stream)
+          {
+            (*it)->wait();
+            dftfe::utils::queueRegistry.erase(it);
+            return dftfe::utils::deviceSuccess;
+          }
+
+      return dftfe::utils::deviceErrorInvalidValue;
     }
 
     deviceError_t
