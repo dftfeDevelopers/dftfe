@@ -57,7 +57,6 @@ namespace dftfe
 
     inline sycl::queue defaultStream{sycl::gpu_selector_v,
                                      sycl::property::queue::in_order{}};
-    inline std::vector<std::shared_ptr<sycl::queue>> queueRegistry{};
 
   } // namespace utils
 } // namespace dftfe
