@@ -822,6 +822,7 @@ namespace dftfe
                                             rotatedVectorsMatBlock.begin() +
                                               jvec,
                                             N);
+                      dftfe::utils::deviceStreamSynchronize(streamCompute);
                     }
                 } // band parallelization
               blockCount++;
