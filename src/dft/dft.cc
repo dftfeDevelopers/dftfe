@@ -3192,7 +3192,7 @@ namespace dftfe
         std::vector<std::vector<double>> maxResidualsAllkPoints(
           d_dftParamsPtr->spinPolarized + 1);
         std::vector<double> maxResSpins(d_dftParamsPtr->spinPolarized + 1, 0.0);
-        double              maxRes = 1.0;
+        double              maxRes = std::numeric_limits<double>::max();
 
         // if the residual norm is greater than
         // adaptiveChebysevFilterPassesTol (a heuristic value)
