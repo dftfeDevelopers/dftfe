@@ -157,7 +157,10 @@ namespace dftfe
       dataTypes::number,
       double,
       dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
-    const dftfe::uInt                   quadratureIndex)
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                      BLASWrapperHostPtr,
+    const dftfe::uInt quadratureIndex)
   {
     d_locallyOwnedCells = basisOperationsPtr->nCells();
     basisOperationsPtr->reinit(0, 0, quadratureIndex);
@@ -167,11 +170,11 @@ namespace dftfe
       basisOperationsPtr->nQuadsPerCell();
     d_numberNodesPerElement    = basisOperationsPtr->nDofsPerCell();
     const dftfe::uInt numCells = d_locallyOwnedCells;
-    const dftfe::utils::MemoryStorage<double, // ValueType for complex
-                                      dftfe::utils::MemorySpace::HOST>
-      &shapeValQuads =
-        basisOperationsPtr
-          ->shapeFunctionBasisData(); // shapeFunctionData() for complex
+    const dftfe::utils::MemoryStorage<
+      dataTypes::number, // ValueType for complex
+      dftfe::utils::MemorySpace::HOST> &shapeValQuads =
+      basisOperationsPtr
+        ->shapeFunctionData(); // shapeFunctionData() for complex
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       quadraturePointsVector = basisOperationsPtr->quadPoints();
     const dftfe::utils::MemoryStorage<dataTypes::number,
@@ -361,21 +364,11 @@ namespace dftfe
             d_CMatrixEntriesTranspose[ChargeId].resize(
               numberElementsInAtomCompactSupport);
           }
-#ifdef USE_COMPLEX
-        std::vector<double> sphericalFunctionBasisRealTimesJxW(
-          numberElementsInAtomCompactSupport * maxkPoints *
-            NumTotalSphericalFunctions * numberQuadraturePoints,
-          0.0);
-        std::vector<double> sphericalFunctionBasisImagTimesJxW(
-          numberElementsInAtomCompactSupport * maxkPoints *
-            NumTotalSphericalFunctions * numberQuadraturePoints,
-          0.0);
-#else
-        std::vector<double> sphericalFunctionBasisTimesJxW(
+        std::vector<dataTypes::number> sphericalFunctionBasisTimesJxW(
           numberElementsInAtomCompactSupport * NumTotalSphericalFunctions *
-            numberQuadraturePoints,
+            numberQuadraturePoints * maxkPoints,
           0.0);
-#endif
+
         for (dftfe::Int iElemComp = 0;
              iElemComp < numberElementsInAtomCompactSupport;
              ++iElemComp)
@@ -617,36 +610,39 @@ namespace dftfe
                            iQuadPoint < numberQuadraturePoints;
                            ++iQuadPoint)
                         {
-                          sphericalFunctionBasisRealTimesJxW
+                          sphericalFunctionBasisTimesJxW
                             [iElemComp * maxkPoints *
                                NumTotalSphericalFunctions *
                                numberQuadraturePoints +
                              kPoint * NumTotalSphericalFunctions *
                                numberQuadraturePoints +
-                             beta * numberQuadraturePoints + iQuadPoint] =
-                              sphericalFunctionBasisReal
-                                [kPoint * numberQuadraturePoints *
-                                   (2 * lQuantumNumber + 1) +
-                                 (beta - startIndex) * numberQuadraturePoints +
-                                 iQuadPoint] *
-                              real(JxwVector[elementIndex *
-                                               numberQuadraturePoints +
-                                             iQuadPoint]);
-                          sphericalFunctionBasisImagTimesJxW
+                             beta * numberQuadraturePoints + iQuadPoint]
+                              .real(sphericalFunctionBasisReal
+                                      [kPoint * numberQuadraturePoints *
+                                         (2 * lQuantumNumber + 1) +
+                                       (beta - startIndex) *
+                                         numberQuadraturePoints +
+                                       iQuadPoint] *
+                                    real(JxwVector[elementIndex *
+                                                     numberQuadraturePoints +
+                                                   iQuadPoint]));
+                          sphericalFunctionBasisTimesJxW
                             [iElemComp * maxkPoints *
                                NumTotalSphericalFunctions *
                                numberQuadraturePoints +
                              kPoint * NumTotalSphericalFunctions *
                                numberQuadraturePoints +
-                             beta * numberQuadraturePoints + iQuadPoint] =
-                              sphericalFunctionBasisImag
-                                [kPoint * numberQuadraturePoints *
-                                   (2 * lQuantumNumber + 1) +
-                                 (beta - startIndex) * numberQuadraturePoints +
-                                 iQuadPoint] *
-                              real(JxwVector[elementIndex *
-                                               numberQuadraturePoints +
-                                             iQuadPoint]);
+                             beta * numberQuadraturePoints + iQuadPoint]
+                              .imag(sphericalFunctionBasisImag
+                                      [kPoint * numberQuadraturePoints *
+                                         (2 * lQuantumNumber + 1) +
+                                       (beta - startIndex) *
+                                         numberQuadraturePoints +
+                                       iQuadPoint] *
+                                    real(JxwVector[elementIndex *
+                                                     numberQuadraturePoints +
+                                                   iQuadPoint]));
+
                         } // quadPoint
 
                     } // beta
@@ -675,74 +671,29 @@ namespace dftfe
 
           } // element loop
 
-        const char         transA = 'N', transB = 'N';
-        const double       scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
-        const unsigned int inc = 1;
-        const unsigned int n = numberElementsInAtomCompactSupport * maxkPoints *
-                               NumTotalSphericalFunctions;
-        const unsigned int  m = d_numberNodesPerElement;
-        const unsigned int  k = numberQuadraturePoints;
-        std::vector<double> projectorMatricesReal(m * n, 0.0);
-        std::vector<double> projectorMatricesImag(m * n, 0.0);
-        // std::vector<ValueType> projectorMatricesReal(m * n, 0.0);
+        const char              transA = 'N', transB = 'N';
+        const dataTypes::number scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+        const dftfe::uInt       inc = 1;
+        const dftfe::uInt n = numberElementsInAtomCompactSupport * maxkPoints *
+                              NumTotalSphericalFunctions;
+        const dftfe::uInt              m = d_numberNodesPerElement;
+        const dftfe::uInt              k = numberQuadraturePoints;
+        std::vector<dataTypes::number> projectorMatrices(m * n, 0.0);
         if (numberElementsInAtomCompactSupport > 0)
           {
-#ifdef USE_COMPLEX
-            dgemm_(&transA,
-                   &transB,
-                   &m,
-                   &n,
-                   &k,
-                   &scalarCoeffAlpha,
-                   &shapeValQuads[0],
-                   &m,
-                   &sphericalFunctionBasisRealTimesJxW[0],
-                   &k,
-                   &scalarCoeffBeta,
-                   &projectorMatricesReal[0],
-                   &m);
-
-            dgemm_(&transA,
-                   &transB,
-                   &m,
-                   &n,
-                   &k,
-                   &scalarCoeffAlpha,
-                   &shapeValQuads[0],
-                   &m,
-                   &sphericalFunctionBasisImagTimesJxW[0],
-                   &k,
-                   &scalarCoeffBeta,
-                   &projectorMatricesImag[0],
-                   &m);
-#else
-            dgemm_(&transA,
-                   &transB,
-                   &m,
-                   &n,
-                   &k,
-                   &scalarCoeffAlpha,
-                   &shapeValQuads[0],
-                   &m,
-                   &sphericalFunctionBasisTimesJxW[0],
-                   &k,
-                   &scalarCoeffBeta,
-                   &projectorMatricesReal[0],
-                   &m);
-#endif
-            // d_BLASWrapperPtrHost->xgemm(&transA,
-            //        &transB,
-            //        &m,
-            //        &n,
-            //        &k,
-            //        &scalarCoeffAlpha,
-            //        &shapeValQuads[0],
-            //        &m,
-            //        &sphericalFunctionBasisTimesJxW[0],
-            //        &k,
-            //        &scalarCoeffBeta,
-            //        &projectorMatrices[0],
-            //        &m);
+            BLASWrapperHostPtr->xgemm(transA,
+                                      transB,
+                                      m,
+                                      n,
+                                      k,
+                                      &scalarCoeffAlpha,
+                                      &shapeValQuads[0],
+                                      m,
+                                      &sphericalFunctionBasisTimesJxW[0],
+                                      k,
+                                      &scalarCoeffBeta,
+                                      &projectorMatrices[0],
+                                      m);
           }
 
         for (dftfe::Int iElemComp = 0;
@@ -778,56 +729,26 @@ namespace dftfe
                         kPoint * NumTotalSphericalFunctions *
                           d_numberNodesPerElement +
                         beta * d_numberNodesPerElement + iNode;
-                      const double tempReal =
-                        projectorMatricesReal[flattenedIndex];
-                      const double tempImag =
-                        projectorMatricesImag[flattenedIndex];
-                      if (isnan(tempReal))
-                        std::cout
-                          << "Real->Processor number and indices has nan: "
-                          << d_this_mpi_process << " " << iElemComp << " "
-                          << kPoint << " "
-                          << " " << beta << " " << iNode << std::endl;
-                      if (isnan(tempImag))
-                        std::cout
-                          << "Imag->Processor number and indices has nan: "
-                          << d_this_mpi_process << " " << iElemComp << " "
-                          << kPoint << " "
-                          << " " << beta << " " << iNode << std::endl;
-                        // const ValueType temp =
-                        // projectorMatrices[flattenedIndex];
+                      const dataTypes::number temp =
+                        projectorMatrices[flattenedIndex];
 #ifdef USE_COMPLEX
                       CMatrixEntriesConjugateAtomElem
                         [kPoint * d_numberNodesPerElement *
                            NumTotalSphericalFunctions +
-                         d_numberNodesPerElement * beta + iNode]
-                          .real(tempReal);
-                      CMatrixEntriesConjugateAtomElem
-                        [kPoint * d_numberNodesPerElement *
-                           NumTotalSphericalFunctions +
-                         d_numberNodesPerElement * beta + iNode]
-                          .imag(-tempImag);
-
+                         d_numberNodesPerElement * beta + iNode] =
+                          std::conj(temp);
                       CMatrixEntriesTransposeAtomElem
                         [kPoint * d_numberNodesPerElement *
                            NumTotalSphericalFunctions +
-                         NumTotalSphericalFunctions * iNode + beta]
-                          .real(tempReal);
-                      CMatrixEntriesTransposeAtomElem
-                        [kPoint * d_numberNodesPerElement *
-                           NumTotalSphericalFunctions +
-                         NumTotalSphericalFunctions * iNode + beta]
-                          .imag(tempImag);
-
-
+                         NumTotalSphericalFunctions * iNode + beta] = temp;
 
 #else
                       CMatrixEntriesConjugateAtomElem[d_numberNodesPerElement *
                                                         beta +
-                                                      iNode] = tempReal;
+                                                      iNode] = temp;
 
                       CMatrixEntriesTransposeAtomElem
-                        [NumTotalSphericalFunctions * iNode + beta] = tempReal;
+                        [NumTotalSphericalFunctions * iNode + beta] = temp;
 #endif
                     } // node loop
               }       // k point loop
@@ -3010,7 +2931,9 @@ namespace dftfe
     if (updateSparsity)
       initialisePartitioner();
     initKpoints(kPointWeights, kPointCoordinates);
-    computeCMatrixEntries(basisOperationsPtr, quadratureIndex);
+    computeCMatrixEntries(basisOperationsPtr,
+                          BLASWrapperHostPtr,
+                          quadratureIndex);
     if (d_useGlobalCMatrix)
       computeGlobalCMatrixVector(basisOperationsPtr, BLASWrapperHostPtr);
   }

@@ -618,7 +618,10 @@ namespace dftfe
         dataTypes::number,
         double,
         dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
-      const dftfe::uInt                   quadratureIndex);
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                        BLASWrapperHostPtr,
+      const dftfe::uInt quadratureIndex);
 
     template <typename ValueTypeSrc>
     void
