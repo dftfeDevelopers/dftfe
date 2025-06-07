@@ -21,11 +21,9 @@
 namespace dftfe
 {
   // source file for locating core atom nodes
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::locateAtomCoreNodes(
+  dftClass<memorySpace>::locateAtomCoreNodes(
     const dealii::DoFHandler<3> &_dofHandler,
     std::map<dealii::types::global_dof_index, double>
       &atomNodeIdToChargeValueMap)
@@ -138,11 +136,9 @@ namespace dftfe
                   "Atleast one atom doesn't lie on a triangulation vertex"));
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::locatePeriodicPinnedNodes(
+  dftClass<memorySpace>::locatePeriodicPinnedNodes(
     const dealii::DoFHandler<3>             &_dofHandler,
     const dealii::AffineConstraints<double> &constraintsBase,
     dealii::AffineConstraints<double>       &constraints)

@@ -479,12 +479,11 @@ namespace dftfe
   } // namespace internal
 
   // constructor
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
-  vselfBinsManager<FEOrder, FEOrderElectro>::vselfBinsManager(
-    const MPI_Comm      &mpi_comm_parent,
-    const MPI_Comm      &mpi_comm_domain,
-    const MPI_Comm      &mpi_intercomm_kpts,
-    const dftParameters &dftParams)
+
+  vselfBinsManager::vselfBinsManager(const MPI_Comm      &mpi_comm_parent,
+                                     const MPI_Comm      &mpi_comm_domain,
+                                     const MPI_Comm      &mpi_intercomm_kpts,
+                                     const dftParameters &dftParams)
     : mpi_communicator(mpi_comm_domain)
     , d_mpiCommParent(mpi_comm_parent)
     , d_mpiInterCommKpts(mpi_intercomm_kpts)
@@ -497,9 +496,9 @@ namespace dftfe
     , d_storedAdaptiveBallRadius(0)
   {}
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   void
-  vselfBinsManager<FEOrder, FEOrderElectro>::createAtomBins(
+  vselfBinsManager::createAtomBins(
     std::vector<const dealii::AffineConstraints<double> *> &constraintsVector,
     const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
     const dealii::DoFHandler<3>             &dofHandler,
@@ -1377,9 +1376,9 @@ namespace dftfe
 
   } //
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   void
-  vselfBinsManager<FEOrder, FEOrderElectro>::updateBinsBc(
+  vselfBinsManager::updateBinsBc(
     std::vector<const dealii::AffineConstraints<double> *> &constraintsVector,
     const dealii::AffineConstraints<double> &onlyHangingNodeConstraints,
     const dealii::DoFHandler<3>             &dofHandler,
@@ -1669,10 +1668,9 @@ namespace dftfe
       } // bin loop
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   void
-  vselfBinsManager<FEOrder, FEOrderElectro>::locateAtomsInBins(
-    const dealii::DoFHandler<3> &dofHandler)
+  vselfBinsManager::locateAtomsInBins(const dealii::DoFHandler<3> &dofHandler)
   {
     d_atomsInBin.clear();
 
@@ -1780,86 +1778,81 @@ namespace dftfe
       } // iBin loop
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::map<dftfe::Int, std::set<dftfe::Int>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getAtomIdsBins() const
+  vselfBinsManager::getAtomIdsBins() const
   {
     return d_bins;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::map<dftfe::Int, std::set<dftfe::Int>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getAtomImageIdsBins() const
+  vselfBinsManager::getAtomImageIdsBins() const
   {
     return d_binsImages;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getBoundaryFlagsBins() const
+  vselfBinsManager::getBoundaryFlagsBins() const
   {
     return d_boundaryFlag;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getBoundaryFlagsBinsOnlyChargeId()
-    const
+  vselfBinsManager::getBoundaryFlagsBinsOnlyChargeId() const
   {
     return d_boundaryFlagOnlyChargeId;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::vector<std::map<dealii::types::global_dof_index, dftfe::Int>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getClosestAtomIdsBins() const
+  vselfBinsManager::getClosestAtomIdsBins() const
   {
     return d_closestAtomBin;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::vector<
     std::map<dealii::types::global_dof_index, dealii::Point<3>>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getClosestAtomLocationsBins() const
+  vselfBinsManager::getClosestAtomLocationsBins() const
   {
     return d_dofClosestChargeLocationMap;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::vector<distributedCPUVec<double>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getVselfFieldBins() const
+  vselfBinsManager::getVselfFieldBins() const
   {
     return d_vselfFieldBins;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::vector<distributedCPUVec<double>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getVselfFieldDerRBins() const
+  vselfBinsManager::getVselfFieldDerRBins() const
   {
     return d_vselfFieldDerRBins;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::vector<distributedCPUVec<double>> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getPerturbedVselfFieldBins() const
+  vselfBinsManager::getPerturbedVselfFieldBins() const
   {
     return d_vselfFieldPerturbedBins;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   const std::map<dftfe::uInt, dftfe::uInt> &
-  vselfBinsManager<FEOrder, FEOrderElectro>::getAtomIdBinIdMapLocalAllImages()
-    const
+  vselfBinsManager::getAtomIdBinIdMapLocalAllImages() const
   {
     return d_atomIdBinIdMapLocalAllImages;
   }
 
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+
   double
-  vselfBinsManager<FEOrder, FEOrderElectro>::getStoredAdaptiveBallRadius() const
+  vselfBinsManager::getStoredAdaptiveBallRadius() const
   {
     return d_storedAdaptiveBallRadius;
   }
-
-#include "vselfBinsManager.inst.cc"
-
 } // namespace dftfe

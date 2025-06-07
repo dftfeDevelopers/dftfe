@@ -67,7 +67,7 @@ namespace dftfe
     }
 
 
-    template <dftfe::Int n1, dftfe::Int n2, dftfe::utils::MemorySpace memory>
+    template <dftfe::utils::MemorySpace memory>
     void
     create_dftfe(const MPI_Comm       &mpi_comm_parent,
                  const MPI_Comm       &mpi_comm_domain,
@@ -77,156 +77,13 @@ namespace dftfe
                  dftfe::dftParameters &dftParams,
                  dftBase             **dftfeBaseDoublePtr)
     {
-      *dftfeBaseDoublePtr =
-        new dftfe::dftClass<n1, n2, memory>(mpi_comm_parent,
-                                            mpi_comm_domain,
-                                            interpoolcomm,
-                                            interBandGroupComm,
-                                            scratchFolderName,
-                                            dftParams);
+      *dftfeBaseDoublePtr = new dftfe::dftClass<memory>(mpi_comm_parent,
+                                                        mpi_comm_domain,
+                                                        interpoolcomm,
+                                                        interBandGroupComm,
+                                                        scratchFolderName,
+                                                        dftParams);
     }
-
-    // Dynamically create dftClass<n> objects by order.
-    //  Note that we can't store a list of classes because the types differ,
-    //  but we can store a list of functions that use them in an n-independent
-    //  way.
-    //
-    //  Also note element 0 is order 1.
-    //
-    typedef void (*create_fnHost)(const MPI_Comm       &mpi_comm_parent,
-                                  const MPI_Comm       &mpi_comm_domain,
-                                  const MPI_Comm       &interpoolcomm,
-                                  const MPI_Comm       &interBandGroupComm,
-                                  const std::string    &scratchFolderName,
-                                  dftfe::dftParameters &dftParams,
-                                  dftBase             **dftBaseDoublePtr);
-
-    static create_fnHost order_listHost[] = {
-#ifdef DFTFE_MINIMAL_COMPILE
-      create_dftfe<2, 2, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<3, 3, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<4, 4, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<5, 5, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 6, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 7, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 8, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 9, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 7, dftfe::utils::MemorySpace::HOST>
-#else
-      create_dftfe<1, 1, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<1, 2, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<2, 2, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<2, 3, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<2, 4, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<3, 3, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<3, 4, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<3, 5, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<3, 6, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<4, 4, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<4, 5, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<4, 6, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<4, 7, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<4, 8, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<5, 5, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<5, 6, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<5, 7, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<5, 8, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<5, 9, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<5, 10, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 6, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 7, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 8, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 9, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 10, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 11, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<6, 12, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 7, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 8, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 9, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 10, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 11, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 12, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 13, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<7, 14, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 8, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 9, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 10, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 11, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 12, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 13, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 14, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 15, dftfe::utils::MemorySpace::HOST>,
-      create_dftfe<8, 16, dftfe::utils::MemorySpace::HOST>
-#endif
-    };
-#ifdef DFTFE_WITH_DEVICE
-    typedef void (*create_fnDevice)(const MPI_Comm       &mpi_comm_parent,
-                                    const MPI_Comm       &mpi_comm_domain,
-                                    const MPI_Comm       &interpoolcomm,
-                                    const MPI_Comm       &interBandGroupComm,
-                                    const std::string    &scratchFolderName,
-                                    dftfe::dftParameters &dftParams,
-                                    dftBase             **dftBaseDoublePtr);
-
-    static create_fnDevice order_listDevice[] = {
-#  ifdef DFTFE_MINIMAL_COMPILE
-      create_dftfe<2, 2, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<3, 3, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<4, 4, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<5, 5, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 6, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 7, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 8, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 9, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 7, dftfe::utils::MemorySpace::DEVICE>
-#  else
-      create_dftfe<1, 1, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<1, 2, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<2, 2, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<2, 3, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<2, 4, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<3, 3, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<3, 4, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<3, 5, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<3, 6, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<4, 4, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<4, 5, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<4, 6, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<4, 7, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<4, 8, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<5, 5, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<5, 6, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<5, 7, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<5, 8, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<5, 9, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<5, 10, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 6, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 7, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 8, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 9, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 10, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 11, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<6, 12, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 7, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 8, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 9, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 10, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 11, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 12, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 13, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<7, 14, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 8, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 9, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 10, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 11, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 12, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 13, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 14, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 15, dftfe::utils::MemorySpace::DEVICE>,
-      create_dftfe<8, 16, dftfe::utils::MemorySpace::DEVICE>
-#  endif
-    };
-#endif
   } // namespace internalWrapper
 
   void
@@ -897,88 +754,30 @@ namespace dftfe
         dftfe::Int orderElectro =
           d_dftfeParamsPtr->finiteElementPolynomialOrderElectrostatics;
 
-#ifdef DFTFE_MINIMAL_COMPILE
-        if (order < 2 || order > 7)
-          {
-            std::cout << "Invalid DFT-FE order " << order << std::endl;
-            exit(1);
-          }
-
-        if (order > 5 && order < 7)
-          {
-            if (orderElectro < order || orderElectro > (order + 3))
-              {
-                std::cout << "Invalid DFT-FE order electrostatics "
-                          << orderElectro << std::endl;
-                exit(1);
-              }
-          }
-        else
-          {
-            if (orderElectro != order)
-              {
-                std::cout << "Invalid DFT-FE order electrostatics "
-                          << orderElectro << std::endl;
-                exit(1);
-              }
-          }
-
-        dftfe::Int listIndex = 0;
-        for (dftfe::Int i = 2; i <= order; i++)
-          {
-            dftfe::Int maxElectroOrder = (i < order) ? (i + 3) : orderElectro;
-            if (i != 6)
-              maxElectroOrder = i;
-            for (dftfe::Int j = i; j <= maxElectroOrder; j++)
-              listIndex++;
-          }
-#else
-        if (order < 1 || order > 8)
-          {
-            std::cout << "Invalid DFT-FE order " << order << std::endl;
-            exit(1);
-          }
-
-        if (orderElectro < order || orderElectro > order * 2)
-          {
-            std::cout << "Invalid DFT-FE order electrostatics " << orderElectro
-                      << std::endl;
-            exit(1);
-          }
-
-
-        dftfe::Int listIndex = 0;
-        for (dftfe::Int i = 1; i <= order; i++)
-          {
-            dftfe::Int maxElectroOrder = (i < order) ? 2 * i : orderElectro;
-            for (dftfe::Int j = i; j <= maxElectroOrder; j++)
-              listIndex++;
-          }
-#endif
         if (!useDevice)
           {
-            internalWrapper::create_fnHost create =
-              internalWrapper::order_listHost[listIndex - 1];
-            create(d_mpi_comm_parent,
-                   bandGroupsPool.get_intrapool_comm(),
-                   kPointPool.get_interpool_comm(),
-                   bandGroupsPool.get_interpool_comm(),
-                   d_scratchFolderName,
-                   *d_dftfeParamsPtr,
-                   &d_dftfeBasePtr);
+            dftfe::internalWrapper::create_dftfe<
+              dftfe::utils::MemorySpace::HOST>(
+              d_mpi_comm_parent,
+              bandGroupsPool.get_intrapool_comm(),
+              kPointPool.get_interpool_comm(),
+              bandGroupsPool.get_interpool_comm(),
+              d_scratchFolderName,
+              *d_dftfeParamsPtr,
+              &d_dftfeBasePtr);
           }
 #ifdef DFTFE_WITH_DEVICE
         else if (useDevice)
           {
-            internalWrapper::create_fnDevice create =
-              internalWrapper::order_listDevice[listIndex - 1];
-            create(d_mpi_comm_parent,
-                   bandGroupsPool.get_intrapool_comm(),
-                   kPointPool.get_interpool_comm(),
-                   bandGroupsPool.get_interpool_comm(),
-                   d_scratchFolderName,
-                   *d_dftfeParamsPtr,
-                   &d_dftfeBasePtr);
+            dftfe::internalWrapper::create_dftfe<
+              dftfe::utils::MemorySpace::DEVICE>(
+              d_mpi_comm_parent,
+              bandGroupsPool.get_intrapool_comm(),
+              kPointPool.get_interpool_comm(),
+              bandGroupsPool.get_interpool_comm(),
+              d_scratchFolderName,
+              *d_dftfeParamsPtr,
+              &d_dftfeBasePtr);
           }
 #endif
         d_dftfeBasePtr->set();

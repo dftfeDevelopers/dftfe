@@ -22,31 +22,28 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    stressEnlElementalContribution(
-      dealii::Tensor<2, 3, double>        &stressContribution,
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dftfe::uInt                    numQuadPoints,
-      const std::vector<double>           &jxwQuadsSubCells,
-      const dftfe::uInt                    cell,
-      const dftfe::uInt                    numNonLocalAtomsCurrentProcess,
-      const std::shared_ptr<
-        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-                                      nonLocalOp,
-      const std::vector<dftfe::uInt> &numberPseudoWaveFunctionsPerAtom,
-      const std::map<dealii::CellId, dftfe::uInt> &cellIdToCellNumberMap,
-      const std::vector<dataTypes::number> &zetalmDeltaVlProductDistImageAtoms,
+  forceClass<memorySpace>::stressEnlElementalContribution(
+    dealii::Tensor<2, 3, double>        &stressContribution,
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const dftfe::uInt                    numQuadPoints,
+    const std::vector<double>           &jxwQuadsSubCells,
+    const dftfe::uInt                    cell,
+    const dftfe::uInt                    numNonLocalAtomsCurrentProcess,
+    const std::shared_ptr<
+      AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                                    nonLocalOp,
+    const std::vector<dftfe::uInt> &numberPseudoWaveFunctionsPerAtom,
+    const std::map<dealii::CellId, dftfe::uInt> &cellIdToCellNumberMap,
+    const std::vector<dataTypes::number> &zetalmDeltaVlProductDistImageAtoms,
 #ifdef USE_COMPLEX
-      const std::vector<dataTypes::number>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
+    const std::vector<dataTypes::number>
+      &projectorKetTimesPsiTimesVTimesPartOccContractionPsiQuadsFlattened,
 #endif
-      const std::vector<dataTypes::number>
-        &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
-      const bool isSpinPolarized)
+    const std::vector<dataTypes::number>
+      &projectorKetTimesPsiTimesVTimesPartOccContractionGradPsiQuadsFlattened,
+    const bool isSpinPolarized)
   {
     const dftfe::uInt numberGlobalAtoms = dftPtr->atomLocations.size();
     const dftfe::uInt numSubCells =

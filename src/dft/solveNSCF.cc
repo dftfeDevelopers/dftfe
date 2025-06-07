@@ -28,11 +28,9 @@
 #include <energyCalculator.h>
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::solveNoSCF()
+  dftClass<memorySpace>::solveNoSCF()
   {
     KohnShamDFTBaseOperator<memorySpace> &kohnShamDFTEigenOperator =
       *d_kohnShamDFTOperatorPtr;
@@ -76,7 +74,8 @@ namespace dftfe
         d_baseDofHandlerIndexElectro,
         d_phiTotAXQuadratureIdElectro,
         d_binsStartDofHandlerIndexElectro,
-        FEOrder == FEOrderElectro ?
+        d_dftParamsPtr->finiteElementPolynomialOrder ==
+            d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics ?
           d_basisOperationsPtrDevice->cellStiffnessMatrixBasisData() :
           d_basisOperationsPtrElectroDevice->cellStiffnessMatrixBasisData(),
         d_BLASWrapperPtr,
@@ -288,13 +287,12 @@ namespace dftfe
       }
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> dummy;
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotRhoIn,
-      d_phiInQuadValues,
-      dummy);
+    d_basisOperationsPtrElectroHost->interpolate(d_phiTotRhoIn,
+                                                 d_phiTotDofHandlerIndexElectro,
+                                                 d_densityQuadratureIdElectro,
+                                                 d_phiInQuadValues,
+                                                 dummy,
+                                                 dummy);
 
     //
     // impose integral phi equals 0
@@ -606,13 +604,12 @@ namespace dftfe
                        d_dftParamsPtr->verbosity);
       }
 
-    interpolateElectroNodalDataToQuadratureDataGeneral(
-      d_basisOperationsPtrElectroHost,
-      d_phiTotDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro,
-      d_phiTotRhoOut,
-      d_phiOutQuadValues,
-      dummy);
+    d_basisOperationsPtrElectroHost->interpolate(d_phiTotRhoOut,
+                                                 d_phiTotDofHandlerIndexElectro,
+                                                 d_densityQuadratureIdElectro,
+                                                 d_phiOutQuadValues,
+                                                 dummy,
+                                                 dummy);
 
     computing_timer.leave_subsection("phiTot solve");
 

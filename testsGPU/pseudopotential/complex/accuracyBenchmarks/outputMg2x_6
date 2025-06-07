@@ -51,6 +51,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
 FE interpolating polynomial order for electrostatics solve: 3
 FE interpolating polynomial order for nodal electron density computation: 5
+quadrature rule for electron density and kinetic energy density computation: 6
 number of elements: 1496
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 54921
 -------------------------------------------------
@@ -99,7 +100,7 @@ AtomId   25:  0.001983,0.000105,0.002266
 AtomId   26:  0.004807,0.007379,0.086294
 AtomId   27:  0.000746,0.000744,0.001013
 AtomId   28:  0.092107,0.551936,0.007438
-AtomId   29:  0.001339,0.001468,0.001510
+AtomId   29:  0.001339,0.001469,0.001510
 AtomId   30:  0.002043,0.005410,0.087036
 --------------------------------------------------------------------------------------------
 

@@ -21,11 +21,9 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::computeStress(
+  forceClass<memorySpace>::computeStress(
     const dealii::MatrixFree<3, double> &matrixFreeData,
     const dispersionCorrection          &dispersionCorr,
     const dftfe::uInt                    eigenDofHandlerIndex,
@@ -55,7 +53,7 @@ namespace dftfe
     const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
                                             &hessianRhoCoreAtoms,
     const dealii::AffineConstraints<double> &hangingPlusPBCConstraintsElectro,
-    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
+    const vselfBinsManager                  &vselfBinsManagerElectro)
   {
     createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(
                             phiTotDofHandlerIndexElectro),
@@ -144,11 +142,9 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::printStress()
+  forceClass<memorySpace>::printStress()
   {
     if (!d_dftParams.reproducible_output)
       {

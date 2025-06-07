@@ -22,11 +22,9 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::computeFloatingAtomsForces()
+  forceClass<memorySpace>::computeFloatingAtomsForces()
   {
     dftfe::uInt vertices_per_cell = dealii::GeometryInfo<3>::vertices_per_cell;
     const std::vector<std::vector<double>> &atomLocations =

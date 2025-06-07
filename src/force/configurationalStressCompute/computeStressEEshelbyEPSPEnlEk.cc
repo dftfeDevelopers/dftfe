@@ -27,40 +27,37 @@ namespace dftfe
 {
   // compute configurational stress contribution from all terms except the
   // nuclear self energy
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeStressEEshelbyEPSPEnlEk(
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dftfe::uInt                    eigenDofHandlerIndex,
-      const dftfe::uInt                    smearedChargeQuadratureId,
-      const dftfe::uInt                    lpspQuadratureIdElectro,
-      const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double>     &phiTotRhoOutElectro,
-      const std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &rhoOutValues,
-      const std::vector<
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-        &gradRhoOutValues,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &rhoTotalOutValuesLpsp,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &gradRhoTotalOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-        &pseudoVLocAtomsElectro,
-      const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
-      const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
-      const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
-      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-        &gradRhoCoreAtoms,
-      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                                      &hessianRhoCoreAtoms,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
+  forceClass<memorySpace>::computeStressEEshelbyEPSPEnlEk(
+    const dealii::MatrixFree<3, double> &matrixFreeData,
+    const dftfe::uInt                    eigenDofHandlerIndex,
+    const dftfe::uInt                    smearedChargeQuadratureId,
+    const dftfe::uInt                    lpspQuadratureIdElectro,
+    const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
+    const dftfe::uInt                    phiTotDofHandlerIndexElectro,
+    const distributedCPUVec<double>     &phiTotRhoOutElectro,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &rhoOutValues,
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &gradRhoOutValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &rhoTotalOutValuesLpsp,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &gradRhoTotalOutValuesLpsp,
+    const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+                                                        &pseudoVLocAtomsElectro,
+    const std::map<dealii::CellId, std::vector<double>> &rhoCoreValues,
+    const std::map<dealii::CellId, std::vector<double>> &gradRhoCoreValues,
+    const std::map<dealii::CellId, std::vector<double>> &hessianRhoCoreValues,
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+      &gradRhoCoreAtoms,
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+                           &hessianRhoCoreAtoms,
+    const vselfBinsManager &vselfBinsManagerElectro)
   {
     int this_process;
     MPI_Comm_rank(d_mpiCommParent, &this_process);
@@ -76,21 +73,18 @@ namespace dftfe
 
     const bool useHubbard = dftPtr->isHubbardCorrectionsUsed();
 
-    dealii::FEEvaluation<
-      3,
+    FEEvaluationWrapperClass<3> forceEval(1,
+                                          d_dftParams.densityQuadratureRule,
+                                          matrixFreeData,
+                                          d_forceDofHandlerIndex,
+                                          dftPtr->d_densityQuadratureId);
+    FEEvaluationWrapperClass<3> forceEvalNLP(
       1,
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      3>
-      forceEval(matrixFreeData,
-                d_forceDofHandlerIndex,
-                dftPtr->d_densityQuadratureId);
-    dealii::FEEvaluation<3,
-                         1,
-                         C_num1DQuadNLPSP<FEOrder>() * C_numCopies1DQuadNLPSP(),
-                         3>
-      forceEvalNLP(matrixFreeData,
-                   d_forceDofHandlerIndex,
-                   dftPtr->d_nlpspQuadratureId);
+      C_num1DQuadNLPSP(d_dftParams.finiteElementPolynomialOrder) *
+        C_numCopies1DQuadNLPSP(),
+      matrixFreeData,
+      d_forceDofHandlerIndex,
+      dftPtr->d_nlpspQuadratureId);
 
 
     const double spinPolarizedFactor =
@@ -913,66 +907,62 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeStressEEshelbyEElectroPhiTot(
-      const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
-      const dftfe::uInt                    smearedChargeQuadratureId,
-      const dftfe::uInt                    lpspQuadratureIdElectro,
-      const distributedCPUVec<double>     &phiTotRhoOutElectro,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &rhoTotalOutValues,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &rhoTotalOutValuesLpsp,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &gradRhoTotalOutValues,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        &gradRhoTotalOutValuesLpsp,
-      const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
-      const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
-                                                      &pseudoVLocAtomsElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro)
+  forceClass<memorySpace>::computeStressEEshelbyEElectroPhiTot(
+    const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
+    const dftfe::uInt                    phiTotDofHandlerIndexElectro,
+    const dftfe::uInt                    smearedChargeQuadratureId,
+    const dftfe::uInt                    lpspQuadratureIdElectro,
+    const distributedCPUVec<double>     &phiTotRhoOutElectro,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &rhoTotalOutValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &rhoTotalOutValuesLpsp,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &gradRhoTotalOutValues,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &gradRhoTotalOutValuesLpsp,
+    const std::map<dealii::CellId, std::vector<double>> &pseudoVLocElectro,
+    const std::map<dftfe::uInt, std::map<dealii::CellId, std::vector<double>>>
+                           &pseudoVLocAtomsElectro,
+    const vselfBinsManager &vselfBinsManagerElectro)
   {
-    dealii::FEEvaluation<
-      3,
+    FEEvaluationWrapperClass<3> forceEvalElectro(
       1,
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      3>
-      forceEvalElectro(matrixFreeDataElectro,
-                       d_forceDofHandlerIndexElectro,
-                       dftPtr->d_densityQuadratureId);
+      d_dftParams.densityQuadratureRule,
+      matrixFreeDataElectro,
+      d_forceDofHandlerIndexElectro,
+      dftPtr->d_densityQuadratureId);
 
-    dealii::FEEvaluation<
-      3,
-      FEOrderElectro,
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1>
-      phiTotEvalElectro(matrixFreeDataElectro,
-                        phiTotDofHandlerIndexElectro,
-                        dftPtr->d_densityQuadratureId);
+    FEEvaluationWrapperClass<1> phiTotEvalElectro(
+      d_dftParams.finiteElementPolynomialOrderElectrostatics,
+      d_dftParams.densityQuadratureRule,
+      matrixFreeDataElectro,
+      phiTotDofHandlerIndexElectro,
+      dftPtr->d_densityQuadratureId);
 
-    dealii::FEEvaluation<3, -1> phiTotEvalSmearedCharge(
+    FEEvaluationWrapperClass<1> phiTotEvalSmearedCharge(
+      -1,
+      1,
       matrixFreeDataElectro,
       phiTotDofHandlerIndexElectro,
       smearedChargeQuadratureId);
 
-    dealii::FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
+    FEEvaluationWrapperClass<3> forceEvalSmearedCharge(
+      -1,
+      1,
       matrixFreeDataElectro,
       d_forceDofHandlerIndexElectro,
       smearedChargeQuadratureId);
 
-    dealii::FEEvaluation<3,
-                         1,
-                         C_num1DQuadLPSP<FEOrderElectro>() *
-                           C_numCopies1DQuadLPSP(),
-                         3>
-      forceEvalElectroLpsp(matrixFreeDataElectro,
-                           d_forceDofHandlerIndexElectro,
-                           lpspQuadratureIdElectro);
+    FEEvaluationWrapperClass<3> forceEvalElectroLpsp(
+      1,
+      C_num1DQuadLPSP(d_dftParams.finiteElementPolynomialOrderElectrostatics) *
+        C_numCopies1DQuadLPSP(),
+      matrixFreeDataElectro,
+      d_forceDofHandlerIndexElectro,
+      lpspQuadratureIdElectro);
 
     dealii::FEValues<3> feVselfValuesElectro(
       matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro)
@@ -981,7 +971,8 @@ namespace dftfe
       dealii::update_values | dealii::update_quadrature_points);
 
     dealii::QIterated<3 - 1> faceQuadrature(
-      dealii::QGauss<1>(C_num1DQuadLPSP<FEOrderElectro>()),
+      dealii::QGauss<1>(C_num1DQuadLPSP(
+        d_dftParams.finiteElementPolynomialOrderElectrostatics)),
       C_numCopies1DQuadLPSP());
     dealii::FEFaceValues<3> feFaceValuesElectro(
       dftPtr->d_dofHandlerRhoNodal.get_fe(),

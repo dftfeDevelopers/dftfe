@@ -20,50 +20,38 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   const std::vector<dealii::types::global_dof_index> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getLocalDofIndicesReal() const
+  dftClass<memorySpace>::getLocalDofIndicesReal() const
   {
     return local_dof_indicesReal;
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   const std::vector<dealii::types::global_dof_index> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getLocalDofIndicesImag() const
+  dftClass<memorySpace>::getLocalDofIndicesImag() const
   {
     return local_dof_indicesImag;
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   const std::vector<dealii::types::global_dof_index> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getLocalProcDofIndicesReal()
-    const
+  dftClass<memorySpace>::getLocalProcDofIndicesReal() const
   {
     return localProc_dof_indicesReal;
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   const std::vector<dealii::types::global_dof_index> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getLocalProcDofIndicesImag()
-    const
+  dftClass<memorySpace>::getLocalProcDofIndicesImag() const
   {
     return localProc_dof_indicesImag;
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   const dealii::MatrixFree<3, double> &
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::getMatrixFreeData() const
+  dftClass<memorySpace>::getMatrixFreeData() const
   {
     return matrix_free_data;
   }

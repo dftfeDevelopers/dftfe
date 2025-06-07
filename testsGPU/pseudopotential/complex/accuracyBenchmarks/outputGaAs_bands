@@ -39,6 +39,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 5
 FE interpolating polynomial order for electrostatics solve: 5
 FE interpolating polynomial order for nodal electron density computation: 7
+quadrature rule for electron density and kinetic energy density computation: 8
 number of elements: 1000
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 132651
 -------------------------------------------------
@@ -60,7 +61,7 @@ Reading data for core electron-density to be used in nonlinear core-correction..
 Starting NSCF iteration for bands....
 Writing Bands File...
 K-Point   WaveNo.  EigenValue
-Fermi Energy: 2.790664885824200026e-01
+Fermi Energy: 2.790664886049499804e-01
 0  0  -1.00987283 1.00000000
 0  1  -1.00980723 1.00000000
 0  2  -1.00963418 1.00000000
@@ -296,7 +297,7 @@ Fermi Energy: 2.790664885824200026e-01
 12  16  0.42062126 0.00000000
 12  17  0.42181973 0.00000000
 13  0  -1.00987933 1.00000000
-13  1  -1.00987933 1.00000000
+13  1  -1.00987932 1.00000000
 13  2  -1.00971279 1.00000000
 13  3  -1.00951023 1.00000000
 13  4  -1.00951023 1.00000000

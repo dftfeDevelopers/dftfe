@@ -31,14 +31,12 @@ namespace dftfe
 {
   /**
    * @brief poisson solver problem device class template. template parameter FEOrderElectro
-   * is the finite element polynomial order. FEOrder template parameter is used
-   * in conjunction with FEOrderElectro to determine the order of the Gauss
-   * quadrature rule. The class should not be used with FLOATING NUCLEAR
-   * CHARGES = false or POINT WISE DIRICHLET CONSTRAINT = true
+   * is the finite element polynomial order. The class should not be used with
+   * FLOATING NUCLEAR CHARGES = false or POINT WISE DIRICHLET CONSTRAINT = true
    *
    * @author Gourab Panigrahi
    */
-  template <dftfe::uInt FEOrder, dftfe::uInt FEOrderElectro>
+  template <dftfe::uInt FEOrderElectro>
   class poissonSolverProblemDevice : public linearSolverProblemDevice
   {
   public:
@@ -135,24 +133,6 @@ namespace dftfe
     void
     distributeX();
 
-    /// function needed by dealii to mimic SparseMatrix for Jacobi
-    /// preconditioning
-    void
-    subscribe(std::atomic<bool> *const validity,
-              const std::string       &identifier = "") const {};
-
-    /// function needed by dealii to mimic SparseMatrix for Jacobi
-    /// preconditioning
-    void
-    unsubscribe(std::atomic<bool> *const validity,
-                const std::string       &identifier = "") const {};
-
-    /// function needed by dealii to mimic SparseMatrix
-    bool
-    operator!=(double val) const
-    {
-      return true;
-    };
 
     void
     setX();

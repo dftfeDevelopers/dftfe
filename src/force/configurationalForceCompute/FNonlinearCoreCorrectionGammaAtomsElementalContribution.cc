@@ -25,19 +25,13 @@ namespace dftfe
 {
   //(locally used function) compute FNonlinearCoreCorrection contibution due to
   // Gamma(Rj) for given set of cells
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  forceClass<memorySpace>::
     FNonlinearCoreCorrectionGammaAtomsElementalContribution(
       std::map<dftfe::uInt, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3>                                &forceEval,
+      FEEvaluationWrapperClass<3>         &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const dftfe::uInt                    cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>> &vxcQuads,
@@ -131,19 +125,13 @@ namespace dftfe
 
   //(locally used function) compute FNonlinearCoreCorrection contibution due to
   // Gamma(Rj) for given set of cells
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  forceClass<memorySpace>::
     FNonlinearCoreCorrectionGammaAtomsElementalContribution(
       std::map<dftfe::uInt, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3>                                &forceEval,
+      FEEvaluationWrapperClass<3>         &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const dftfe::uInt                    cell,
       const dealii::AlignedVector<
@@ -248,19 +236,13 @@ namespace dftfe
 
   //(locally used function) compute FNonlinearCoreCorrection contibution due to
   // Gamma(Rj) for given set of cells
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
+  forceClass<memorySpace>::
     FNonlinearCoreCorrectionGammaAtomsElementalContributionSpinPolarized(
       std::map<dftfe::uInt, std::vector<double>>
         &forceContributionFNonlinearCoreCorrectionGammaAtoms,
-      dealii::FEEvaluation<
-        3,
-        1,
-        C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-        3>                                &forceEval,
+      FEEvaluationWrapperClass<3>         &forceEval,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const dftfe::uInt                    cell,
       const dealii::AlignedVector<dealii::VectorizedArray<double>>

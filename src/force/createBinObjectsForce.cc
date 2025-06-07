@@ -22,15 +22,13 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::createBinObjectsForce(
-    const dealii::DoFHandler<3>                     &dofHandler,
-    const dealii::DoFHandler<3>                     &dofHandlerForce,
-    const dealii::AffineConstraints<double>         &hangingPlusPBCConstraints,
-    const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManager,
+  forceClass<memorySpace>::createBinObjectsForce(
+    const dealii::DoFHandler<3>             &dofHandler,
+    const dealii::DoFHandler<3>             &dofHandlerForce,
+    const dealii::AffineConstraints<double> &hangingPlusPBCConstraints,
+    const vselfBinsManager                  &vselfBinsManager,
     std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
       &cellsVselfBallsDofHandler,
     std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>

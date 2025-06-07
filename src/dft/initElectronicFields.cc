@@ -22,11 +22,9 @@
 namespace dftfe
 {
   // init
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::initElectronicFields()
+  dftClass<memorySpace>::initElectronicFields()
   {
     dealii::TimerOutput::Scope scope(computing_timer, "init electronic fields");
 

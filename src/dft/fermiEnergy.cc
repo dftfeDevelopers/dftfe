@@ -100,11 +100,9 @@ namespace dftfe
   } // namespace internal
 
   // compute fermi energy
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_fermienergy(
+  dftClass<memorySpace>::compute_fermienergy(
     const std::vector<std::vector<double>> &eigenValuesInput,
     const double                            numElectronsInput)
   {
@@ -268,11 +266,9 @@ namespace dftfe
 
 
   // compute fermi energy pure state
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::compute_fermienergy_purestate(
+  dftClass<memorySpace>::compute_fermienergy_purestate(
     const std::vector<std::vector<double>> &eigenValuesInput,
     const double                            numElectronsInput)
   {
@@ -323,13 +319,10 @@ namespace dftfe
 
 
   // compute fermi energy constrained magnetization pure state
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    compute_fermienergy_constraintMagnetization_purestate(
-      const std::vector<std::vector<double>> &eigenValuesInput)
+  dftClass<memorySpace>::compute_fermienergy_constraintMagnetization_purestate(
+    const std::vector<std::vector<double>> &eigenValuesInput)
   {
     dftfe::Int countUp   = numElectronsUp;
     dftfe::Int countDown = numElectronsDown;
@@ -396,13 +389,10 @@ namespace dftfe
   }
 
   // compute fermi energy constrained magnetization
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    compute_fermienergy_constraintMagnetization(
-      const std::vector<std::vector<double>> &eigenValuesInput)
+  dftClass<memorySpace>::compute_fermienergy_constraintMagnetization(
+    const std::vector<std::vector<double>> &eigenValuesInput)
   {
     dftfe::Int countUp   = std::ceil(numElectronsUp);
     dftfe::Int countDown = std::ceil(numElectronsDown);

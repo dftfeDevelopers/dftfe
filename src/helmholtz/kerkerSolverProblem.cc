@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2019-2020 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -19,7 +19,7 @@
 
 #include <constants.h>
 #include <kerkerSolverProblem.h>
-
+#include <feevaluationWrapper.h>
 namespace dftfe
 {
   //
@@ -99,10 +99,11 @@ namespace dftfe
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    dealii::FEEvaluation<3, FEOrderElectro, C_num1DQuad<FEOrderElectro>()>
-      fe_eval(*d_matrixFreeDataPRefinedPtr,
-              d_matrixFreeVectorComponent,
-              d_matrixFreeQuadratureComponent);
+    FEEvaluationWrapperClass<1> fe_eval(FEOrderElectro,
+                                        C_num1DQuad(FEOrderElectro),
+                                        *d_matrixFreeDataPRefinedPtr,
+                                        d_matrixFreeVectorComponent,
+                                        d_matrixFreeQuadratureComponent);
 
     dealii::VectorizedArray<double> zeroVec = 0.0;
 
@@ -169,7 +170,7 @@ namespace dftfe
       d_diagonalA, d_matrixFreeVectorComponent);
     d_diagonalA = 0.0;
 
-    dealii::QGauss<3>      quadrature(C_num1DQuad<FEOrderElectro>());
+    dealii::QGauss<3>      quadrature(C_num1DQuad(FEOrderElectro));
     dealii::FEValues<3>    fe_values(dofHandler.get_fe(),
                                   quadrature,
                                   dealii::update_values |
@@ -227,10 +228,11 @@ namespace dftfe
     const distributedCPUVec<double>           &src,
     const std::pair<dftfe::uInt, dftfe::uInt> &cell_range) const
   {
-    dealii::FEEvaluation<3, FEOrderElectro, C_num1DQuad<FEOrderElectro>()>
-      fe_eval(matrixFreeData,
-              d_matrixFreeVectorComponent,
-              d_matrixFreeQuadratureComponent);
+    FEEvaluationWrapperClass<1> fe_eval(FEOrderElectro,
+                                        C_num1DQuad(FEOrderElectro),
+                                        matrixFreeData,
+                                        d_matrixFreeVectorComponent,
+                                        d_matrixFreeQuadratureComponent);
 
     dealii::VectorizedArray<double> kerkerConst =
       dealii::make_vectorized_array(4 * M_PI * d_gamma);

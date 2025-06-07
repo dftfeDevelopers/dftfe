@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2019-2020 The Regents of the University of Michigan and DFT-FE
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
 // authors.
 //
 // This file is part of the DFT-FE code.
@@ -26,11 +26,9 @@ namespace dftfe
   //
   // compute total charge using quad point values
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::createpRefinedDofHandler(
+  dftClass<memorySpace>::createpRefinedDofHandler(
     dealii::parallel::distributed::Triangulation<3> &triaObject)
   {
     //
@@ -39,7 +37,8 @@ namespace dftfe
 
     d_dofHandlerPRefined.reinit(triaObject);
     d_dofHandlerPRefined.distribute_dofs(
-      dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrderElectro + 1)));
+      dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
+        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics + 1)));
 
     d_locallyRelevantDofsPRefined.clear();
     dealii::DoFTools::extract_locally_relevant_dofs(
@@ -113,7 +112,7 @@ namespace dftfe
     d_dofHandlerRhoNodal.reinit(triaObject);
     d_dofHandlerRhoNodal.distribute_dofs(
       dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
-        C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>() + 1)));
+        d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1)));
 
     d_locallyRelevantDofsRhoNodal.clear();
     dealii::DoFTools::extract_locally_relevant_dofs(
@@ -180,11 +179,9 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::initpRefinedObjects(
+  dftClass<memorySpace>::initpRefinedObjects(
     const bool recomputeBasisData,
     const bool meshOnlyDeformed,
     const bool vselfPerturbationUpdateForStress)
@@ -371,10 +368,11 @@ namespace dftfe
     d_forceDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
 
     std::vector<dealii::Quadrature<1>> quadratureVector;
-    quadratureVector.push_back(dealii::QGauss<1>(
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>()));
     quadratureVector.push_back(
-      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP<FEOrder>()),
+      dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));
+    quadratureVector.push_back(
+      dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadLPSP(
+                             d_dftParamsPtr->finiteElementPolynomialOrder)),
                            C_numCopies1DQuadLPSP()));
     if (d_dftParamsPtr->isCellStress)
       quadratureVector.push_back(dealii::QIterated<1>(
@@ -388,7 +386,8 @@ namespace dftfe
       quadratureVector.push_back(
         dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadSmearedCharge()),
                              C_numCopies1DQuadSmearedCharge()));
-    quadratureVector.push_back(dealii::QGauss<1>(FEOrderElectro + 1));
+    quadratureVector.push_back(dealii::QGauss<1>(
+      d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics + 1));
 
 
     d_densityQuadratureIdElectro       = 0;
@@ -420,7 +419,9 @@ namespace dftfe
               dftfe::basis::update_quadpoints;
 
             dftfe::basis::UpdateFlags updateFlagsphiTotAX =
-              d_dftParamsPtr->useDevice && FEOrder != FEOrderElectro ?
+              d_dftParamsPtr->useDevice &&
+                  d_dftParamsPtr->finiteElementPolynomialOrder !=
+                    d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics ?
                 dftfe::basis::update_gradients :
                 dftfe::basis::update_default;
 
@@ -452,7 +453,8 @@ namespace dftfe
             d_basisOperationsPtrElectroDevice->clear();
             d_basisOperationsPtrElectroDevice->init(
               *d_basisOperationsPtrElectroHost);
-            if (FEOrder != FEOrderElectro)
+            if (d_dftParamsPtr->finiteElementPolynomialOrder !=
+                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)
               d_basisOperationsPtrElectroDevice->computeCellStiffnessMatrix(
                 d_phiTotAXQuadratureIdElectro, 50, true, false);
           }
@@ -473,7 +475,8 @@ namespace dftfe
               d_baseDofHandlerIndexElectro,
               quadratureIndices,
               updateFlags);
-            if (FEOrder != FEOrderElectro)
+            if (d_dftParamsPtr->finiteElementPolynomialOrder !=
+                d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)
               d_basisOperationsPtrElectroDevice->computeCellStiffnessMatrix(
                 d_phiTotAXQuadratureIdElectro, 50, true, false);
           }
@@ -495,11 +498,9 @@ namespace dftfe
   }
 
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::updatePRefinedConstraints()
+  dftClass<memorySpace>::updatePRefinedConstraints()
   {
     d_constraintsForTotalPotentialElectro.clear();
     d_constraintsForTotalPotentialElectro.reinit(d_locallyRelevantDofsPRefined);

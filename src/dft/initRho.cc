@@ -29,11 +29,9 @@
 
 namespace dftfe
 {
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::clearRhoData()
+  dftClass<memorySpace>::clearRhoData()
   {
     d_mixingScheme.clearHistory();
 
@@ -46,11 +44,9 @@ namespace dftfe
     d_fvSpin1containerVals.clear();
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::initRho()
+  dftClass<memorySpace>::initRho()
   {
     computingTimerStandard.enter_subsection("initialize density");
 
@@ -135,6 +131,7 @@ namespace dftfe
       d_densityInQuadValues[iComp].resize(n_q_points * nCells);
 
 
+
     bool isGradDensityDataDependent =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
@@ -150,6 +147,12 @@ namespace dftfe
         for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size();
              ++iComp)
           d_gradDensityInQuadValues[iComp].resize(3 * n_q_points * nCells);
+      }
+    if (isTauMGGA)
+      {
+        d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+        for (dftfe::uInt iComp = 0; iComp < d_tauInQuadValues.size(); ++iComp)
+          d_tauInQuadValues[iComp].resize(n_q_points * nCells);
       }
 
     // Initialize electron density table storage for rhoOut only for Anderson
@@ -167,6 +170,12 @@ namespace dftfe
           {
             d_gradDensityOutQuadValues.resize(
               d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+          }
+
+        if (isTauMGGA)
+          {
+            d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                           1);
           }
       }
 
@@ -398,17 +407,14 @@ namespace dftfe
           }
         for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
-          interpolateDensityNodalDataToQuadratureDataGeneral(
-            d_basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost->interpolate(
+            d_densityInNodalValues[iComp],
             d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
-            d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            d_tauInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            isGradDensityDataDependent,
-            isTauMGGA);
+            isGradDensityDataDependent);
 
         if (d_dftParamsPtr->spinPolarized == 1 &&
             d_dftParamsPtr->constraintMagnetization &&
@@ -429,17 +435,14 @@ namespace dftfe
                   }
               }
 
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost->interpolate(
+              d_densityInNodalValues[1],
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_densityInNodalValues[1],
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              d_tauInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent,
-              isTauMGGA);
+              isGradDensityDataDependent);
           }
         else if (d_dftParamsPtr->spinPolarized == 1 &&
                  d_dftParamsPtr->constraintMagnetization &&
@@ -464,17 +467,14 @@ namespace dftfe
                                      d_densityInNodalValues[1])
                       << std::endl;
               }
-            interpolateDensityNodalDataToQuadratureDataGeneral(
-              d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost->interpolate(
+              d_densityInNodalValues[1],
               d_densityDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
-              d_densityInNodalValues[1],
               d_densityInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              d_tauInQuadValues[1],
               d_gradDensityInQuadValues[1],
-              isGradDensityDataDependent,
-              isTauMGGA);
+              isGradDensityDataDependent);
           }
 
         normalizeRhoInQuadValues();
@@ -919,13 +919,6 @@ namespace dftfe
           {
             double const prefact =
               (3.0 / 10.0) * std::pow(3 * C_pi * C_pi, 2.0 / 3.0);
-            d_tauInQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
-                                                                          1);
-            for (dftfe::uInt iComp = 0; iComp < d_tauInQuadValues.size();
-                 iComp++)
-              {
-                d_tauInQuadValues[iComp].resize(n_q_points * nCells);
-              }
             for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
               {
                 for (dftfe::uInt iQuad = 0; iQuad < n_q_points; ++iQuad)
@@ -977,11 +970,9 @@ namespace dftfe
   //
   //
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::computeRhoInitialGuessFromPSI(
+  dftClass<memorySpace>::computeRhoInitialGuessFromPSI(
     std::vector<std::vector<distributedCPUVec<double>>> eigenVectors)
 
   {
@@ -1469,11 +1460,9 @@ namespace dftfe
   //
   // Normalize rho
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::normalizeRhoInQuadValues()
+  dftClass<memorySpace>::normalizeRhoInQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
@@ -1521,12 +1510,9 @@ namespace dftfe
   //
   // Normalize rho mag
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    normalizeRhoMagInInitialGuessQuadValues()
+  dftClass<memorySpace>::normalizeRhoMagInInitialGuessQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
@@ -1572,11 +1558,9 @@ namespace dftfe
   //
   // Normalize rho
   //
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::normalizeRhoOutQuadValues()
+  dftClass<memorySpace>::normalizeRhoOutQuadValues()
   {
     const dealii::Quadrature<3> &quadrature_formula =
       matrix_free_data.get_quadrature(d_densityQuadratureId);
@@ -1619,12 +1603,9 @@ namespace dftfe
       pcout << "Total charge out after scaling: " << chargeAfterScaling
             << std::endl;
   }
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  dftClass<FEOrder, FEOrderElectro, memorySpace>::
-    loadDensityFromQuadratureValues()
+  dftClass<memorySpace>::loadDensityFromQuadratureValues()
   {
     clearRhoData();
     computingTimerStandard.enter_subsection("load Quad density");
@@ -1785,17 +1766,15 @@ namespace dftfe
         // interpolate nodal rhoOut data to quadrature data
         for (dftfe::uInt iComp = 0; iComp < d_densityInNodalValues.size();
              ++iComp)
-          interpolateDensityNodalDataToQuadratureDataGeneral(
-            d_basisOperationsPtrElectroHost,
+          d_basisOperationsPtrElectroHost->interpolate(
+            d_densityInNodalValues[iComp],
             d_densityDofHandlerIndexElectro,
             d_densityQuadratureIdElectro,
-            d_densityInNodalValues[iComp],
             d_densityInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            d_tauInQuadValues[iComp],
             d_gradDensityInQuadValues[iComp],
-            isGradDensityDataDependent,
-            isTauMGGA);
+            isGradDensityDataDependent);
+
         if (d_dftParamsPtr->verbosity >= 3)
           {
             pcout << "Total Charge before scaling: " << charge << std::endl;

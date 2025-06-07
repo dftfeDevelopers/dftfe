@@ -5,11 +5,11 @@ Z:12
 number of electrons: 3.100000000000000000e+02
 number of eigen values: 180
 =============================================================================================================================
-Found -617432128 GPUs
+MPI rank 1 uses GPU #1
+MPI rank 2 uses GPU #2
+MPI rank 3 uses GPU #3
+Found 0 GPUs
 MPI rank 0 uses GPU #0
-MPI rank 1 uses GPU #0
-MPI rank 2 uses GPU #0
-MPI rank 3 uses GPU #0
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 1.176399999999999935e+01 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 1.917200000000000060e+01 0.000000000000000000e+00
@@ -55,6 +55,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
 FE interpolating polynomial order for electrostatics solve: 3
 FE interpolating polynomial order for nodal electron density computation: 5
+quadrature rule for electron density and kinetic energy density computation: 6
 number of elements: 1440
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 52791
 -------------------------------------------------

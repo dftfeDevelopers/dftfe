@@ -25,16 +25,13 @@ namespace dftfe
 {
   // compute configurational force contribution from nuclear self energy on the
   // mesh nodes using linear shape function generators
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeConfigurationalForceEselfLinFE(
-      const dealii::DoFHandler<3>                     &dofHandlerElectro,
-      const vselfBinsManager<FEOrder, FEOrderElectro> &vselfBinsManagerElectro,
-      const dealii::MatrixFree<3, double>             &matrixFreeDataElectro,
-      const dftfe::uInt smearedChargeQuadratureId)
+  forceClass<memorySpace>::computeConfigurationalForceEselfLinFE(
+    const dealii::DoFHandler<3>         &dofHandlerElectro,
+    const vselfBinsManager              &vselfBinsManagerElectro,
+    const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
+    const dftfe::uInt                    smearedChargeQuadratureId)
   {
     const std::vector<std::vector<double>> &atomLocations =
       dftPtr->atomLocations;
@@ -44,8 +41,7 @@ namespace dftfe
     //
     // First add configurational force contribution from the volume integral
     //
-    dealii::QGauss<3> quadrature(
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
+    dealii::QGauss<3>   quadrature(d_dftParams.densityQuadratureRule);
     dealii::FEValues<3> feForceValues(FEForce,
                                       quadrature,
                                       dealii::update_gradients |
@@ -155,7 +151,9 @@ namespace dftfe
         const std::map<dftfe::Int, std::set<dftfe::Int>> &atomIdsBins =
           vselfBinsManagerElectro.getAtomIdsBins();
 
-        dealii::FEEvaluation<3, -1, 1, 3> forceEvalSmearedCharge(
+        FEEvaluationWrapperClass<3> forceEvalSmearedCharge(
+          -1,
+          1,
           matrixFreeDataElectro,
           d_forceDofHandlerIndexElectro,
           smearedChargeQuadratureId);
@@ -191,7 +189,9 @@ namespace dftfe
             if (iBin < kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId + 1] &&
                 iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
               {
-                dealii::FEEvaluation<3, -1> vselfEvalSmearedCharge(
+                FEEvaluationWrapperClass<1> vselfEvalSmearedCharge(
+                  -1,
+                  1,
                   matrixFreeDataElectro,
                   dftPtr->d_binsStartDofHandlerIndexElectro + 4 * iBin,
                   smearedChargeQuadratureId);
@@ -332,8 +332,7 @@ namespace dftfe
 
     if (!d_dftParams.floatingNuclearCharges)
       {
-        dealii::QGauss<3 - 1> faceQuadrature(
-          C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>());
+        dealii::QGauss<3 - 1> faceQuadrature(d_dftParams.densityQuadratureRule);
         dealii::FEFaceValues<3> feForceFaceValues(
           FEForce,
           faceQuadrature,
@@ -489,28 +488,22 @@ namespace dftfe
 
   // compute configurational force on the mesh nodes using linear shape function
   // generators
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeConfigurationalForcePhiExtLinFE()
+  forceClass<memorySpace>::computeConfigurationalForcePhiExtLinFE()
   {
-    dealii::FEEvaluation<
-      3,
-      1,
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      3>
-      forceEval(dftPtr->matrix_free_data, d_forceDofHandlerIndex, 0);
+    FEEvaluationWrapperClass<3> forceEval(1,
+                                          d_dftParams.densityQuadratureRule,
+                                          dftPtr->matrix_free_data,
+                                          d_forceDofHandlerIndex,
+                                          0);
 
-    dealii::FEEvaluation<
-      3,
-      FEOrderElectro,
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1>
-      eshelbyEval(dftPtr->d_matrixFreeDataPRefined,
-                  dftPtr->d_phiExtDofHandlerIndexElectro,
-                  0); // no constraints
+    FEEvaluationWrapperClass<1> eshelbyEval(
+      d_dftParams.finiteElementPolynomialOrderElectrostatics,
+      d_dftParams.densityQuadratureRule,
+      dftPtr->d_matrixFreeDataPRefined,
+      dftPtr->d_phiExtDofHandlerIndexElectro,
+      0); // no constraints
 
 
     for (dftfe::uInt cell = 0; cell < dftPtr->matrix_free_data.n_cell_batches();
@@ -535,28 +528,22 @@ namespace dftfe
       }
   }
 
-  template <dftfe::uInt               FEOrder,
-            dftfe::uInt               FEOrderElectro,
-            dftfe::utils::MemorySpace memorySpace>
+  template <dftfe::utils::MemorySpace memorySpace>
   void
-  forceClass<FEOrder, FEOrderElectro, memorySpace>::
-    computeConfigurationalForceEselfNoSurfaceLinFE()
+  forceClass<memorySpace>::computeConfigurationalForceEselfNoSurfaceLinFE()
   {
-    dealii::FEEvaluation<
-      3,
-      1,
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      3>
-      forceEval(dftPtr->matrix_free_data, d_forceDofHandlerIndex, 0);
+    FEEvaluationWrapperClass<3> forceEval(1,
+                                          d_dftParams.densityQuadratureRule,
+                                          dftPtr->matrix_free_data,
+                                          d_forceDofHandlerIndex,
+                                          0);
 
-    dealii::FEEvaluation<
-      3,
-      FEOrderElectro,
-      C_num1DQuad<C_rhoNodalPolyOrder<FEOrder, FEOrderElectro>()>(),
-      1>
-      eshelbyEval(dftPtr->d_matrixFreeDataPRefined,
-                  dftPtr->d_phiExtDofHandlerIndexElectro,
-                  0); // no constraints
+    FEEvaluationWrapperClass<1> eshelbyEval(
+      d_dftParams.finiteElementPolynomialOrderElectrostatics,
+      d_dftParams.densityQuadratureRule,
+      dftPtr->d_matrixFreeDataPRefined,
+      dftPtr->d_phiExtDofHandlerIndexElectro,
+      0); // no constraints
 
     for (dftfe::uInt iBin = 0;
          iBin < dftPtr->d_vselfBinsManager.getVselfFieldBins().size();

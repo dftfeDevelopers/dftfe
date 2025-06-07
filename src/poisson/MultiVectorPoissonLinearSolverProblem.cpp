@@ -204,7 +204,7 @@ namespace dftfe
 
     d_blockSize = 1;
 
-    dftfe::poissonSolverProblem<2, 2> phiTotalSolverProblem(mpi_communicator);
+    dftfe::poissonSolverProblem<2> phiTotalSolverProblem(mpi_communicator);
 
 
     dftfe::distributedCPUVec<double> expectedOutput;

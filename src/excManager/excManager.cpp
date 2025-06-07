@@ -42,9 +42,15 @@ namespace dftfe
     initializeSSDPtr(std::string                   XCType,
                      std::shared_ptr<xc_func_type> funcXPtr,
                      std::shared_ptr<xc_func_type> funcCPtr,
-                     std::string                   modelXCInputFile)
+                     std::string                   modelXCInputFile,
+                     bool                          printXCInfo)
     {
       dftfe::Int exceptParamX = -1, exceptParamC = -1;
+
+      int vmajor, vminor, vmicro;
+      xc_version(&vmajor, &vminor, &vmicro);
+      if (printXCInfo)
+        printf("Libxc version: %d.%d.%d\n", vmajor, vminor, vmicro);
 
       std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> excObj;
       if (XCType == "LDA-PZ")
@@ -77,6 +83,7 @@ namespace dftfe
             xc_func_init(funcXPtr.get(), XC_GGA_X_PBE, XC_POLARIZED);
           exceptParamC =
             xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
+
           excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
                                                                      funcCPtr);
         }
@@ -159,6 +166,22 @@ namespace dftfe
               exit(-1);
             }
         }
+
+      if (printXCInfo)
+        {
+          for (int i = 0; i < 1; i++)
+            if (funcXPtr->info->refs[i] != NULL)
+              printf("X Functional: %s (DOI %s)\n",
+                     funcXPtr->info->refs[i]->ref,
+                     funcXPtr->info->refs[i]->doi);
+
+          for (int i = 0; i < 1; i++)
+            if (funcCPtr->info->refs[i] != NULL)
+              printf("C Functional: %s (DOI %s)\n",
+                     funcCPtr->info->refs[i]->ref,
+                     funcCPtr->info->refs[i]->doi);
+        }
+
       return excObj;
     }
   } // namespace
@@ -196,7 +219,8 @@ namespace dftfe
   void
   excManager<memorySpace>::init(std::string XCType,
                                 bool        isSpinPolarized,
-                                std::string modelXCInputFile)
+                                std::string modelXCInputFile,
+                                const bool  printXCInfo)
   {
     clear();
 
@@ -223,15 +247,13 @@ namespace dftfe
         d_excObj =
           std::make_shared<ExcDFTPlusU<dataTypes::number, memorySpace>>(
             initializeSSDPtr<memorySpace>(
-              XCInput, d_funcXPtr, d_funcCPtr, modelXCInputFile),
+              XCInput, d_funcXPtr, d_funcCPtr, modelXCInputFile, printXCInfo),
             numSpin);
       }
     else
       {
-        d_excObj = initializeSSDPtr<memorySpace>(XCType,
-                                                 d_funcXPtr,
-                                                 d_funcCPtr,
-                                                 modelXCInputFile);
+        d_excObj = initializeSSDPtr<memorySpace>(
+          XCType, d_funcXPtr, d_funcCPtr, modelXCInputFile, printXCInfo);
       }
   }
 
