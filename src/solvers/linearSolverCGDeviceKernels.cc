@@ -45,7 +45,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
         __syncthreads();
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-        sycl::group_barrier(item.get_group());
+        sycl::group_barrier(ind.get_group());
 #endif
       }
 
@@ -67,7 +67,7 @@ namespace dftfe
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
             localSum +=
-              sycl::shift_group_left(item.get_sub_group(), localSum, offset);
+              sycl::shift_group_left(ind.get_sub_group(), localSum, offset);
 #endif
           }
         }
@@ -125,7 +125,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
         __syncthreads();
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-        sycl::group_barrier(item.get_group());
+        sycl::group_barrier(ind.get_group());
 #endif
       }
 
@@ -147,7 +147,7 @@ namespace dftfe
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
             localSum +=
-              sycl::shift_group_left(item.get_sub_group(), localSum, offset);
+              sycl::shift_group_left(ind.get_sub_group(), localSum, offset);
 #endif
           }
         }
@@ -209,7 +209,7 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
         __syncthreads();
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-        sycl::group_barrier(item.get_group());
+        sycl::group_barrier(ind.get_group());
 #endif
       }
 
@@ -231,7 +231,7 @@ namespace dftfe
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
 #elif DFTFE_WITH_DEVICE_LANG_SYCL
             localSum +=
-              sycl::shift_group_left(item.get_sub_group(), localSum, offset);
+              sycl::shift_group_left(ind.get_sub_group(), localSum, offset);
 #endif
           }
         }
