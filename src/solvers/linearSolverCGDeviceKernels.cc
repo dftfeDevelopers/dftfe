@@ -409,11 +409,9 @@ namespace dftfe
                               const double     alpha,
                               const dftfe::Int N)
   {
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
-
-
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     DFTFE_LAUNCH_KERNEL(
       DFTFE_KERNEL_NAME(
         scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>),
