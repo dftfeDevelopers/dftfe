@@ -12,14 +12,18 @@ namespace dftfe
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
   void
 #endif
-  computeAXKernelPoisson(Type             *V,
-                         const Type       *U,
-                         const Type       *P,
-                         const Type       *J,
-                         const dftfe::Int *map
+  computeAXKernelPoisson(
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-                         ,
-                         Type *SMem
+    sycl::nd_item<1> item,
+#endif
+    Type             *V,
+    const Type       *U,
+    const Type       *P,
+    const Type       *J,
+    const dftfe::Int *map
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    ,
+    Type *SMem
 #endif
   )
   {
@@ -470,15 +474,19 @@ namespace dftfe
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
   void
 #endif
-  computeAXKernelHelmholtz(Type             *V,
-                           const Type       *U,
-                           const Type       *P,
-                           const Type       *J,
-                           const dftfe::Int *map,
-                           const Type        coeffHelmholtz
+  computeAXKernelHelmholtz(
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-                           ,
-                           Type *SMem
+    sycl::nd_item<1> item,
+#endif
+    Type             *V,
+    const Type       *U,
+    const Type       *P,
+    const Type       *J,
+    const dftfe::Int *map,
+    const Type        coeffHelmholtz
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    ,
+    Type *SMem
 #endif
   )
   {

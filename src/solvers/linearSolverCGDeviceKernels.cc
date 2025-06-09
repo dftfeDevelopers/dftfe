@@ -8,14 +8,18 @@ namespace dftfe
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
   void
 #endif
-  applyPreconditionAndComputeDotProductKernel(Type            *d_dvec,
-                                              Type            *d_devSum,
-                                              const Type      *d_rvec,
-                                              const Type      *d_jacobi,
-                                              const dftfe::Int N
+  applyPreconditionAndComputeDotProductKernel(
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-                                              ,
-                                              Type *smem
+    sycl::nd_item<1> item,
+#endif
+    Type            *d_dvec,
+    Type            *d_devSum,
+    const Type      *d_rvec,
+    const Type      *d_jacobi,
+    const dftfe::Int N
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    ,
+    Type *smem
 #endif
   )
   {
@@ -105,14 +109,18 @@ namespace dftfe
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
   void
 #endif
-  applyPreconditionComputeDotProductAndSaddKernel(Type            *d_qvec,
-                                                  Type            *d_devSum,
-                                                  const Type      *d_rvec,
-                                                  const Type      *d_jacobi,
-                                                  const dftfe::Int N
+  applyPreconditionComputeDotProductAndSaddKernel(
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-                                                  ,
-                                                  Type *smem
+    sycl::nd_item<1> item,
+#endif
+    Type            *d_qvec,
+    Type            *d_devSum,
+    const Type      *d_rvec,
+    const Type      *d_jacobi,
+    const dftfe::Int N
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    ,
+    Type *smem
 #endif
   )
   {
@@ -201,16 +209,20 @@ namespace dftfe
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
   void
 #endif
-  scaleXRandComputeNormKernel(Type            *x,
-                              Type            *d_rvec,
-                              Type            *d_devSum,
-                              const Type      *d_qvec,
-                              const Type      *d_dvec,
-                              const Type       alpha,
-                              const dftfe::Int N
+  scaleXRandComputeNormKernel(
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-                              ,
-                              Type *smem
+    sycl::nd_item<1> item,
+#endif
+    Type            *x,
+    Type            *d_rvec,
+    Type            *d_devSum,
+    const Type      *d_qvec,
+    const Type      *d_dvec,
+    const Type       alpha,
+    const dftfe::Int N
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    ,
+    Type *smem
 #endif
   )
   {
