@@ -171,6 +171,7 @@ namespace dftfe
     deviceError_t
     deviceFree(void *devPtr)
     {
+      deviceSynchronize();
       try
         {
           sycl::free(devPtr,
@@ -216,6 +217,7 @@ namespace dftfe
     deviceError_t
     deviceMemcpyD2H(void *dst, const void *src, std::size_t count)
     {
+      deviceSynchronize();
       dftfe::utils::queueRegistry[dftfe::utils::defaultStream]
         .memcpy(dst, src, count)
         .wait_and_throw();
@@ -225,10 +227,12 @@ namespace dftfe
     deviceError_t
     deviceMemcpyD2D(void *dst, const void *src, std::size_t count)
     {
+      deviceSynchronize();
       try
         {
-          dftfe::utils::queueRegistry[dftfe::utils::defaultStream].memcpy(
-            dst, src, count);
+          dftfe::utils::queueRegistry[dftfe::utils::defaultStream]
+            .memcpy(dst, src, count)
+            .wait_and_throw();
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -239,6 +243,7 @@ namespace dftfe
     deviceError_t
     deviceMemcpyH2D(void *dst, const void *src, std::size_t count)
     {
+      deviceSynchronize();
       dftfe::utils::queueRegistry[dftfe::utils::defaultStream]
         .memcpy(dst, src, count)
         .wait_and_throw();
