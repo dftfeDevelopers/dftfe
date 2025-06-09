@@ -694,8 +694,9 @@ namespace dftfe
         DFTFE_DEVICE_BLAS(, Create)(&d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      d_streamId                              = dftfe::utils::defaultStream;
-      d_deviceBlasHandle                      = dftfe::utils::defaultStream;
+      d_streamId = dftfe::utils::defaultStream;
+      d_deviceBlasHandle =
+        dftfe::utils::queueRegistry[dftfe::utils::defaultStream];
       dftfe::utils::deviceBlasStatus_t status = dftfe::utils::deviceBlasSuccess;
 #endif
       return status;
@@ -724,7 +725,7 @@ namespace dftfe
         DFTFE_DEVICE_BLAS(, SetStream)(d_deviceBlasHandle, d_streamId);
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      d_deviceBlasHandle                      = streamId;
+      d_deviceBlasHandle = dftfe::utils::queueRegistry[streamId];
       dftfe::utils::deviceBlasStatus_t status = dftfe::utils::deviceBlasSuccess;
 #endif
       return status;

@@ -35,7 +35,7 @@ namespace dftfe
     // static deviceError_t deviceSuccess(success_code);
 
     // vendor blas related typedef and static consts
-    typedef dftfe::uInt                      deviceBlasHandle_t;
+    typedef sycl::queue                      deviceBlasHandle_t;
     typedef oneapi::mkl::transpose           deviceBlasOperation_t;
     typedef oneapi::mkl::blas::compute_mode  deviceBlasMath_t;
     typedef sycl::info::event_command_status deviceBlasStatus_t;

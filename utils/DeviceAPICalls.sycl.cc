@@ -406,8 +406,7 @@ namespace dftfe
                           deviceEvent_t  &event,
                           unsigned int    flags)
     {
-      event.wait_and_throw();
-      dftfe::utils::queueRegistry[stream].wait_and_throw();
+      dftfe::utils::queueRegistry[stream].ext_oneapi_submit_barrier({event});
       return dftfe::utils::deviceSuccess;
     }
 
