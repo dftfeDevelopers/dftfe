@@ -188,7 +188,6 @@ namespace dftfe
         copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         streamId,
         size,
         dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
@@ -783,7 +782,6 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(axpbyDeviceKernel,
                           n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           n,
                           dftfe::utils::makeDataTypeDeviceCompatible(x),
@@ -810,7 +808,6 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(ApaBDDeviceKernel,
                           (n * m / dftfe::utils::DEVICE_BLOCK_SIZE) + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           m,
                           n,
@@ -837,7 +834,6 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
@@ -864,7 +860,6 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
@@ -889,7 +884,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
@@ -915,7 +909,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
@@ -942,7 +935,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
@@ -1929,7 +1921,6 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(ascalDeviceKernel,
                           n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           n,
                           dftfe::utils::makeDataTypeDeviceCompatible(x),
@@ -1947,7 +1938,6 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(copyComplexArrToRealArrsDeviceKernel,
                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           size,
                           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -1969,7 +1959,6 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(copyRealArrsToComplexArrDeviceKernel,
                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           size,
                           realArr,
@@ -1989,7 +1978,6 @@ namespace dftfe
         copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         size,
         dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
@@ -2012,7 +2000,6 @@ namespace dftfe
         copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         B,
         DRem,
@@ -2038,7 +2025,6 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
@@ -2063,7 +2049,6 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
@@ -2091,7 +2076,6 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
@@ -2117,7 +2101,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
@@ -2142,7 +2125,6 @@ namespace dftfe
         stridedCopyToBlockConstantStrideDeviceKernel,
         (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         blockSizeTo,
         blockSizeFrom,
@@ -2168,7 +2150,6 @@ namespace dftfe
         stridedCopyConstantStrideDeviceKernel,
         (blockSize * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         blockSize,
         strideTo,
@@ -2195,7 +2176,6 @@ namespace dftfe
         stridedCopyFromBlockConstantStrideDeviceKernel,
         (blockSizeFrom * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         blockSizeTo,
         blockSizeFrom,
@@ -2218,7 +2198,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
@@ -2238,7 +2217,6 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(hadamardProductKernel,
                           m / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           m,
                           dftfe::utils::makeDataTypeDeviceCompatible(X),
@@ -2257,7 +2235,6 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(hadamardProductWithConjKernel,
                           (m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           m,
                           dftfe::utils::makeDataTypeDeviceCompatible(X),
@@ -2279,7 +2256,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           numContiguousBlocks,
                           contiguousBlockSize,
@@ -2301,7 +2277,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
@@ -2322,7 +2297,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
@@ -2348,7 +2322,6 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
@@ -2442,7 +2415,6 @@ namespace dftfe
                            (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * sizeOfVector,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           d_streamId,
                           dftfe::utils::makeDataTypeDeviceCompatible(D),
                           dftfe::utils::makeDataTypeDeviceCompatible(X),

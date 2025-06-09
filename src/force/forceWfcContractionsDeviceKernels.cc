@@ -534,7 +534,6 @@ namespace dftfe
         (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * blockSizeNlp,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         dftfe::utils::defaultStream,
         wfcBlockSize,
         numQuadsNLP,
@@ -575,7 +574,6 @@ namespace dftfe
         (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * cellsBlockSize * numQuads * 9,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         dftfe::utils::defaultStream,
         wfcBlockSize,
         cellsBlockSize * numQuads * 9,

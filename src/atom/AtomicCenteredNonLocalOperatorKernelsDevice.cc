@@ -498,7 +498,6 @@ namespace dftfe
           dftfe::utils::DEVICE_BLOCK_SIZE * totalAtomsInCurrentProcessor *
           maxSingleAtomContribution,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         dftfe::utils::defaultStream,
         numWfcs,
         totalAtomsInCurrentProcessor,
@@ -524,7 +523,6 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE * numNonLocalCells *
                             maxSingleAtomContribution,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numWfcs,
                           numNonLocalCells,
@@ -548,7 +546,6 @@ namespace dftfe
                           (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * totalEntries,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numWfcs,
                           totalEntries,
@@ -573,7 +570,6 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             totalEntriesPadded,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numWfcs,
                           totalEntriesPadded,
@@ -597,7 +593,6 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             totalEntriesPadded,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numWfcs,
                           totalEntriesPadded,
@@ -632,7 +627,6 @@ namespace dftfe
                           (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           totalNonLocalElements,
                           numberWfc,
@@ -672,7 +666,6 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             numberCellsForAtom * numberNodesPerElement,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numberWfc,
                           numberCellsForAtom * numberNodesPerElement,
@@ -712,7 +705,6 @@ namespace dftfe
                           (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numberWaveFunctions,
                           totalNonlocalElems,

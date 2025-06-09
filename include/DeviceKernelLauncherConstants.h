@@ -61,30 +61,101 @@ namespace dftfe
 
 #    endif
 #    ifdef DFTFE_WITH_DEVICE_NVIDIA
-#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
-        do                                                                  \
-          {                                                                 \
-            kernel<<<grid, block, shared, stream>>>(__VA_ARGS__);           \
+#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...) \
+        do                                                          \
+          {                                                         \
+            kernel<<<grid, block, 0, stream>>>(__VA_ARGS__);        \
         } while (0)
 #    elif defined(DFTFE_WITH_DEVICE_AMD)
-#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
-        do                                                                  \
-          {                                                                 \
-            hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel),                     \
-                               grid,                                        \
-                               block,                                       \
-                               shared,                                      \
-                               stream,                                      \
-                               __VA_ARGS__);                                \
+#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)          \
+        do                                                                   \
+          {                                                                  \
+            hipLaunchKernelGGL(                                              \
+              HIP_KERNEL_NAME(kernel), grid, block, 0, stream, __VA_ARGS__); \
         } while (0)
 #    elif defined(DFTFE_WITH_DEVICE_INTEL)
-#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, shared, stream, ...) \
+#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)         \
         do                                                                  \
           {                                                                 \
             stream.parallel_for(sycl::nd_range<1>((grid) * (block), block), \
                                 [=](sycl::nd_item<1> ind) {                 \
                                   kernel(ind, __VA_ARGS__);                 \
                                 });                                         \
+        } while (0)
+#    else
+#      error \
+        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+#    endif
+
+#    ifdef DFTFE_WITH_DEVICE_NVIDIA
+#      define DFTFE_LAUNCH_KERNEL_SMEM_D(                                  \
+        kernel, grid, block, smemtype, smemcount, stream, ...)             \
+        do                                                                 \
+          {                                                                \
+            kernel<<<grid, block, smemcount * sizeof(smemtype), stream>>>( \
+              __VA_ARGS__);                                                \
+        } while (0)
+#    elif defined(DFTFE_WITH_DEVICE_AMD)
+#      define DFTFE_LAUNCH_KERNEL_SMEM_D(                      \
+        kernel, grid, block, smemtype, smemcount, stream, ...) \
+        do                                                     \
+          {                                                    \
+            hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel),        \
+                               grid,                           \
+                               block,                          \
+                               smemcount * sizeof(smemtype),   \
+                               stream,                         \
+                               __VA_ARGS__);                   \
+        } while (0)
+#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#      define DFTFE_LAUNCH_KERNEL_SMEM_D(                                  \
+        kernel, grid, block, smemtype, smemcount, stream, ...)             \
+        do                                                                 \
+          {                                                                \
+            stream.submit([=](sycl::handler &cgh) {                        \
+              sycl::local_accessor<smemtype, 1> SMem_acc(smemcount, cgh);  \
+              cgh.parallel_for(sycl::nd_range<1>((grid) * (block), block), \
+                               [=](sycl::nd_item<1> ind) {                 \
+                                 kernel(ind,                               \
+                                        SMem_acc.get_pointer(),            \
+                                        __VA_ARGS__);                      \
+                               });                                         \
+            });                                                            \
+        } while (0)
+#    else
+#      error \
+        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+#    endif
+
+#    ifdef DFTFE_WITH_DEVICE_NVIDIA
+#      define DFTFE_LAUNCH_KERNEL_SMEM_S(                      \
+        kernel, grid, block, smemtype, smemcount, stream, ...) \
+        do                                                     \
+          {                                                    \
+            kernel<<<grid, block, 0, stream>>>(__VA_ARGS__);   \
+        } while (0)
+#    elif defined(DFTFE_WITH_DEVICE_AMD)
+#      define DFTFE_LAUNCH_KERNEL_SMEM_S(                                    \
+        kernel, grid, block, smemtype, smemcount, stream, ...)               \
+        do                                                                   \
+          {                                                                  \
+            hipLaunchKernelGGL(                                              \
+              HIP_KERNEL_NAME(kernel), grid, block, 0, stream, __VA_ARGS__); \
+        } while (0)
+#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#      define DFTFE_LAUNCH_KERNEL_SMEM_S(                                  \
+        kernel, grid, block, smemtype, smemcount, stream, ...)             \
+        do                                                                 \
+          {                                                                \
+            stream.submit([=](sycl::handler &cgh) {                        \
+              sycl::local_accessor<smemtype, 1> SMem_acc(smemcount, cgh);  \
+              cgh.parallel_for(sycl::nd_range<1>((grid) * (block), block), \
+                               [=](sycl::nd_item<1> ind) {                 \
+                                 kernel(ind,                               \
+                                        SMem_acc.get_pointer(),            \
+                                        __VA_ARGS__);                      \
+                               });                                         \
+            });                                                            \
         } while (0)
 #    else
 #      error \
@@ -114,6 +185,76 @@ namespace dftfe
           const dftfe::uInt nThreadBlock     = ind.get_group_range(0); \
           BODY                                                         \
         }
+#    else
+#      error \
+        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+#    endif
+
+#    if defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_AMD)
+#      define DFTFE_CREATE_KERNEL_SMEM_D(SMEMTYPE, RET, NAME, BODY, ...) \
+        __global__ RET NAME(__VA_ARGS__)                                 \
+        {                                                                \
+          extern __shared__ SMEMTYPE smem[];                             \
+          const dftfe::uInt          globalThreadId =                    \
+            blockIdx.x * blockDim.x + threadIdx.x;                       \
+          const dftfe::uInt threadId         = threadIdx.x;              \
+          const dftfe::uInt blockId          = blockIdx.x;               \
+          const dftfe::uInt nThreadsPerBlock = blockDim.x;               \
+          const dftfe::uInt nThreadBlock     = gridDim.x;                \
+          BODY                                                           \
+        }
+#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#      define DFTFE_CREATE_KERNEL_SMEM_D(SMEMTYPE, RET, NAME, BODY, ...) \
+        RET NAME(sycl::nd_item<1> ind, SMEMTYPE *smem, __VA_ARGS__)      \
+        {                                                                \
+          const dftfe::uInt globalThreadId   = ind.get_global_id(0);     \
+          const dftfe::uInt threadId         = ind.get_local_id(0);      \
+          const dftfe::uInt blockId          = ind.get_group(0);         \
+          const dftfe::uInt nThreadsPerBlock = ind.get_local_range(0);   \
+          const dftfe::uInt nThreadBlock     = ind.get_group_range(0);   \
+          BODY                                                           \
+        }
+#    else
+#      error \
+        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+#    endif
+
+#    if defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_AMD)
+#      define DFTFE_CREATE_KERNEL_SMEM_S(                   \
+        SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)          \
+        __global__ RET NAME(__VA_ARGS__)                    \
+        {                                                   \
+          __shared__ SMEMTYPE smem[SMEMCOUNT];              \
+          const dftfe::uInt   globalThreadId =              \
+            blockIdx.x * blockDim.x + threadIdx.x;          \
+          const dftfe::uInt threadId         = threadIdx.x; \
+          const dftfe::uInt blockId          = blockIdx.x;  \
+          const dftfe::uInt nThreadsPerBlock = blockDim.x;  \
+          const dftfe::uInt nThreadBlock     = gridDim.x;   \
+          BODY                                              \
+        }
+#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#      define DFTFE_CREATE_KERNEL_SMEM_S(                              \
+        SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)                     \
+        RET NAME(sycl::nd_item<1> ind, SMEMTYPE *smem, __VA_ARGS__)    \
+        {                                                              \
+          const dftfe::uInt globalThreadId   = ind.get_global_id(0);   \
+          const dftfe::uInt threadId         = ind.get_local_id(0);    \
+          const dftfe::uInt blockId          = ind.get_group(0);       \
+          const dftfe::uInt nThreadsPerBlock = ind.get_local_range(0); \
+          const dftfe::uInt nThreadBlock     = ind.get_group_range(0); \
+          BODY                                                         \
+        }
+#    else
+#      error \
+        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+#    endif
+
+
+#    if defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_AMD)
+#      define SYNCTHREADS __syncthreads()
+#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#      define SYNCTHREADS sycl::group_barrier(ind.get_group());
 #    else
 #      error \
         "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"

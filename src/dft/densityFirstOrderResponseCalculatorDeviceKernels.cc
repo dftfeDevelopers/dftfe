@@ -111,7 +111,6 @@ namespace dftfe
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
       dftfe::utils::DEVICE_BLOCK_SIZE,
-      0,
       dftfe::utils::defaultStream,
       vectorsBlockSize,
       cellsBlockSize,

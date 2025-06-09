@@ -360,7 +360,6 @@ namespace dftfe
         (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         streamCompute,
         BDof,
         BVec,
@@ -385,7 +384,6 @@ namespace dftfe
         (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         streamDataMove,
         B,
         D,
@@ -404,7 +402,6 @@ namespace dftfe
                           (M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           dftfe::utils::makeDataTypeDeviceCompatible(
                             diagValues),
@@ -428,7 +425,6 @@ namespace dftfe
                           (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numVectors,
                           numDofs,
@@ -453,7 +449,6 @@ namespace dftfe
                           (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numVectors,
                           numDofs,
@@ -477,7 +472,6 @@ namespace dftfe
                           (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * M,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           BVec,
                           M,

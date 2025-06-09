@@ -100,7 +100,6 @@ namespace dftfe
               dftfe::utils::DEVICE_BLOCK_SIZE +
             1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
-          0,
           dftfe::utils::defaultStream,
           numVecs,
           numQuads,
@@ -122,7 +121,6 @@ namespace dftfe
               dftfe::utils::DEVICE_BLOCK_SIZE +
             1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
-          0,
           dftfe::utils::defaultStream,
           numVecs,
           numQuads,

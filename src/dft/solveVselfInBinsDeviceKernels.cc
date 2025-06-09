@@ -138,7 +138,6 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             numContiguousBlocks,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           blockSize,
                           numContiguousBlocks,
@@ -156,7 +155,6 @@ namespace dftfe
                           (numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numEntries,
                           vec1,
@@ -175,7 +173,6 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             numContiguousBlocks,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           blockSize,
                           numContiguousBlocks,
@@ -192,7 +189,6 @@ namespace dftfe
                           (numEntries + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           numEntries,
                           xArray,
@@ -212,7 +208,6 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             numContiguousBlocks,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           blockSize,
                           numContiguousBlocks,
@@ -235,7 +230,6 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             numContiguousBlocks,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
                           dftfe::utils::defaultStream,
                           blockSize,
                           numContiguousBlocks,
