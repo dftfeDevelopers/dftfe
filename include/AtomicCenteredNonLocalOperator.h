@@ -580,6 +580,7 @@ namespace dftfe
     dftfe::uInt d_numberWaveFunctions;
     dftfe::uInt d_kPointIndex;
     bool        d_memoryOptMode;
+    dftfe::Int  d_nOMPThreads;
     bool        d_isMallocCalled = false;
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,

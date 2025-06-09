@@ -49,6 +49,19 @@ namespace dftfe
                         std::shared_ptr<AtomCenteredSphericalFunctionBase>>
            &listOfSphericalFunctions);
     /**
+     * @brief Initialises the class with the atomicNumbers of various atoms and the AtomCenteredSphericalFn of various spherical functions. This function is only called once per run.
+     * @param[in] atomicNumbers vector of size Natoms storing the Znumbers of
+     * various atoms present
+     * @param[in] listOfSphericalFunctions map of std::pain (Znum, l) to the
+     * sphericalFUnction class shared pointer.
+     */
+    void
+    init(const std::vector<dftfe::uInt> &atomicNumbers,
+         const std::vector<
+           std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+                    std::shared_ptr<AtomCenteredSphericalFunctionBase>>>
+           &listOfSphericalFunctions);
+    /**
      * @brief Initialises the position of atoms, the image posisiton and image ids after every update of atom positions.
      * @param[in] atomCoords vector of size 3*Natoms storing the X,Y,Z
      * coordiantes of atom in cell.
@@ -139,6 +152,14 @@ namespace dftfe
     const std::map<std::pair<dftfe::uInt, dftfe::uInt>,
                    std::shared_ptr<AtomCenteredSphericalFunctionBase>> &
     getSphericalFunctions() const;
+
+    /**
+     * @brief Returns the shared_ptr of AtomCenteredSphericalFunctionBase associated with std::pair(atomic Number and lQuantumNo)
+     */
+    const std::vector<
+      std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+               std::shared_ptr<AtomCenteredSphericalFunctionBase>>> &
+    getSphericalFunctionsVector() const;
     /**
      * @brief Returns the vector of size Natoms of all atoms in system
      */
@@ -220,8 +241,8 @@ namespace dftfe
 
     // This maps, from std::pair<atomic number, \alpha> to S_{z,\alpha},
     // where \alpha is the index for unique radial function
-    std::map<std::pair<dftfe::uInt, dftfe::uInt>,
-             std::shared_ptr<AtomCenteredSphericalFunctionBase>>
+    std::vector<std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+                         std::shared_ptr<AtomCenteredSphericalFunctionBase>>>
       d_sphericalFunctionsContainer;
     // Stores the number of  distinct Radial Functions for a particular AtomType
     std::map<dftfe::uInt, dftfe::uInt> d_numRadialSphericalFunctions;

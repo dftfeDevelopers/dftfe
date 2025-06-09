@@ -24,6 +24,11 @@
 #  include <DeviceAPICalls.h>
 #  include <DeviceDataTypeOverloads.h>
 #endif
+#ifdef _OPENMP
+#  include <omp.h>
+#else
+#  define omp_get_thread_num() 0
+#endif
 namespace dftfe
 {
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -58,6 +63,33 @@ namespace dftfe
     d_memoryOptMode            = memOptMode;
     d_computeSphericalFnTimesX = computeSphericalFnTimesX;
     d_useGlobalCMatrix         = useGlobalCMatrix;
+    d_nOMPThreads              = 1;
+#ifdef _OPENMP
+    if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
+      {
+        try
+          {
+            d_nOMPThreads = std::stoi(std::string(penv));
+          }
+        catch (...)
+          {
+            AssertThrow(
+              false,
+              dealii::ExcMessage(
+                std::string(
+                  "When specifying the <DFTFE_NUM_THREADS> environment "
+                  "variable, it needs to be something that can be interpreted "
+                  "as an integer. The text you have in the environment "
+                  "variable is <") +
+                penv + ">"));
+          }
+
+        AssertThrow(d_nOMPThreads > 0,
+                    dealii::ExcMessage(
+                      "When specifying the <DFTFE_NUM_THREADS> environment "
+                      "variable, it needs to be a positive number."));
+      }
+#endif
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -188,10 +220,11 @@ namespace dftfe
       d_atomCenteredSphericalFunctionContainer
         ->getPeriodicImageCoordinatesList();
     const dftfe::uInt maxkPoints = d_kPointWeights.size();
-    const std::map<std::pair<dftfe::uInt, dftfe::uInt>,
-                   std::shared_ptr<AtomCenteredSphericalFunctionBase>>
+    const std::vector<
+      std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+               std::shared_ptr<AtomCenteredSphericalFunctionBase>>>
       sphericalFunction =
-        d_atomCenteredSphericalFunctionContainer->getSphericalFunctions();
+        d_atomCenteredSphericalFunctionContainer->getSphericalFunctionsVector();
     d_CMatrixEntriesConjugate.clear();
     d_CMatrixEntriesConjugate.resize(numberAtomsOfInterest);
     d_CMatrixEntriesTranspose.clear();
@@ -229,12 +262,21 @@ namespace dftfe
           std::vector<dftfe::uInt>(numCells, 0);
         globalAtomIdToNonTrivialSphericalFnsCellStartIndex[atomId] =
           std::vector<dftfe::uInt>(numCells, 0);
+        if (numberElementsInAtomCompactSupport > 0)
+          {
+            d_CMatrixEntriesConjugate[atomId].resize(
+              numberElementsInAtomCompactSupport);
+            d_CMatrixEntriesTranspose[atomId].resize(
+              numberElementsInAtomCompactSupport);
+          }
         for (dftfe::Int iElemComp = 0;
              iElemComp < numberElementsInAtomCompactSupport;
              ++iElemComp)
           {
             const dftfe::uInt elementId =
               elementIndexesInAtomCompactSupport[iElemComp];
+
+
 
             d_cellIdToAtomIdsLocalCompactSupportMap[elementId].push_back(iAtom);
 
@@ -331,8 +373,11 @@ namespace dftfe
               }
           }
       }
-
-
+    MPI_Barrier(d_mpi_communicator);
+    std::cout << "ProcID number of Atoms: " << d_this_mpi_process << " "
+              << d_totalAtomsInCurrentProc << " " << d_nOMPThreads << std::endl;
+    ;
+#pragma omp parallel for num_threads(d_nOMPThreads)
     for (dftfe::uInt iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
       {
         dftfe::uInt       ChargeId = atomIdsInProc[iAtom];
@@ -357,13 +402,7 @@ namespace dftfe
 
         dftfe::uInt imageIdsSize = imageCoordinates.size() / 3;
 
-        if (numberElementsInAtomCompactSupport > 0)
-          {
-            d_CMatrixEntriesConjugate[ChargeId].resize(
-              numberElementsInAtomCompactSupport);
-            d_CMatrixEntriesTranspose[ChargeId].resize(
-              numberElementsInAtomCompactSupport);
-          }
+
         std::vector<dataTypes::number> sphericalFunctionBasisTimesJxW(
           numberElementsInAtomCompactSupport * NumTotalSphericalFunctions *
             numberQuadraturePoints * maxkPoints,
@@ -375,24 +414,23 @@ namespace dftfe
           {
             const dftfe::uInt elementIndex =
               elementIndexesInAtomCompactSupport[iElemComp];
+            const double *quadPointsInElement =
+              quadraturePointsVector.data() +
+              elementIndex * numberQuadraturePoints * 3;
+            const dataTypes::number *JxwInElement =
+              JxwVector.data() + elementIndex * numberQuadraturePoints;
             for (dftfe::uInt alpha = 0; alpha < NumRadialSphericalFunctions;
                  ++alpha)
               {
                 std::shared_ptr<AtomCenteredSphericalFunctionBase> sphFn =
-                  sphericalFunction.find(std::make_pair(Znum, alpha))->second;
+                  sphericalFunction[omp_get_thread_num()]
+                    .find(std::make_pair(Znum, alpha))
+                    ->second;
                 dftfe::uInt       lQuantumNumber = sphFn->getQuantumNumberl();
                 const dftfe::uInt startIndex =
                   d_atomCenteredSphericalFunctionContainer
                     ->getTotalSphericalFunctionIndexStart(Znum, alpha);
                 dftfe::uInt endIndex = startIndex + 2 * lQuantumNumber + 1;
-                std::vector<double> sphericalFunctionBasisReal(
-                  maxkPoints * numberQuadraturePoints *
-                    (2 * lQuantumNumber + 1),
-                  0.0);
-                std::vector<double> sphericalFunctionBasisImag(
-                  maxkPoints * numberQuadraturePoints *
-                    (2 * lQuantumNumber + 1),
-                  0.0);
                 std::vector<dataTypes::number> sphericalFunctionBasis(
                   maxkPoints * numberQuadraturePoints *
                     (2 * lQuantumNumber + 1),
@@ -429,21 +467,12 @@ namespace dftfe
                          iQuadPoint < numberQuadraturePoints;
                          ++iQuadPoint)
                       {
-                        x[0] =
-                          quadraturePointsVector[elementIndex *
-                                                   numberQuadraturePoints * 3 +
-                                                 3 * iQuadPoint] -
-                          chargePoint[0];
-                        x[1] =
-                          quadraturePointsVector[elementIndex *
-                                                   numberQuadraturePoints * 3 +
-                                                 3 * iQuadPoint + 1] -
-                          chargePoint[1];
-                        x[2] =
-                          quadraturePointsVector[elementIndex *
-                                                   numberQuadraturePoints * 3 +
-                                                 3 * iQuadPoint + 2] -
-                          chargePoint[2];
+                        x[0] = quadPointsInElement[3 * iQuadPoint + 0] -
+                               chargePoint[0];
+                        x[1] = quadPointsInElement[3 * iQuadPoint + 1] -
+                               chargePoint[1];
+                        x[2] = quadPointsInElement[3 * iQuadPoint + 2] -
+                               chargePoint[2];
                         sphericalHarmonicUtils::convertCartesianToSpherical(
                           x, r, theta, phi);
                         if (r <= sphFn->getRadialCutOff())
@@ -488,29 +517,27 @@ namespace dftfe
                                         pointMinusLatticeVector[1] +
                                       d_kPointCoordinates[3 * kPoint + 2] *
                                         pointMinusLatticeVector[2];
-
-                                    sphericalFunctionBasisReal
-                                      [kPoint * numberQuadraturePoints *
-                                         (2 * lQuantumNumber + 1) +
-                                       tempIndex * numberQuadraturePoints +
-                                       iQuadPoint] +=
-                                      cos(angle) * sphericalFunctionValue;
-                                    sphericalFunctionBasisImag
-                                      [kPoint * numberQuadraturePoints *
-                                         (2 * lQuantumNumber + 1) +
-                                       tempIndex * numberQuadraturePoints +
-                                       iQuadPoint] +=
-                                      -sin(angle) * sphericalFunctionValue;
+                                    dataTypes::number tempValue =
+                                      dataTypes::number(
+                                        cos(angle) * sphericalFunctionValue,
+                                        -sin(angle) * sphericalFunctionValue);
 
                                     sphericalFunctionBasis
                                       [kPoint * numberQuadraturePoints *
                                          (2 * lQuantumNumber + 1) +
                                        tempIndex * numberQuadraturePoints +
+                                       iQuadPoint] += tempValue;
+                                    sphericalFunctionBasisTimesJxW
+                                      [iElemComp * maxkPoints *
+                                         NumTotalSphericalFunctions *
+                                         numberQuadraturePoints +
+                                       kPoint * NumTotalSphericalFunctions *
+                                         numberQuadraturePoints +
+                                       (startIndex + tempIndex) *
+                                         numberQuadraturePoints +
                                        iQuadPoint] +=
-                                      ValueType(cos(angle) *
-                                                  sphericalFunctionValue,
-                                                -sin(angle) *
-                                                  sphericalFunctionValue);
+                                      tempValue *
+                                      real(JxwInElement[iQuadPoint]);
 
                                     for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                                       sphericalFunctionBasisTimesImageDist
@@ -519,23 +546,26 @@ namespace dftfe
                                          tempIndex * numberQuadraturePoints *
                                            3 +
                                          iQuadPoint * 3 + iDim] +=
-                                        dataTypes::number(
-                                          cos(angle) * sphericalFunctionValue *
-                                            x[iDim],
-                                          -sin(angle) * sphericalFunctionValue *
-                                            x[iDim]);
+                                        tempValue * x[iDim];
                                   } // k-Point Loop
 #else
                                 sphericalFunctionBasis
                                   [tempIndex * numberQuadraturePoints +
                                    iQuadPoint] += sphericalFunctionValue;
+                                sphericalFunctionBasisTimesJxW
+                                  [iElemComp * maxkPoints *
+                                     NumTotalSphericalFunctions *
+                                     numberQuadraturePoints +
+                                   (startIndex + tempIndex) *
+                                     numberQuadraturePoints +
+                                   iQuadPoint] += sphericalFunctionValue *
+                                                  JxwInElement[iQuadPoint];
                                 for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                                   sphericalFunctionBasisTimesImageDist
                                     [tempIndex * numberQuadraturePoints * 3 +
                                      iQuadPoint * 3 + iDim] +=
                                     sphericalFunctionValue * x[iDim];
-                                  // sphericalFunctionBasis[iQuadPoint] +=
-                                  // sphericalFunctionValue;
+
 #endif
                                 tempIndex++;
                               } // Angular momentum m loop
@@ -553,119 +583,60 @@ namespace dftfe
                     [ChargeId]
                     [elementIndex]; // extract the location of the ChargeId's
                                     // first projector in the cell
-                if (d_computeSphericalFnTimesX)
+                if constexpr (std::is_same<dataTypes::number, ValueType>::value)
                   {
-                    for (dftfe::Int kPoint = 0; kPoint < maxkPoints; ++kPoint)
+                    if (d_computeSphericalFnTimesX)
                       {
-                        for (dftfe::uInt tempIndex = startIndex;
-                             tempIndex < endIndex;
-                             tempIndex++)
+                        for (dftfe::Int kPoint = 0; kPoint < maxkPoints;
+                             ++kPoint)
                           {
-                            for (dftfe::Int iQuadPoint = 0;
-                                 iQuadPoint < numberQuadraturePoints;
-                                 ++iQuadPoint)
-                              d_atomCenteredKpointIndexedSphericalFnQuadValues
-                                [kPoint *
-                                   d_sumNonTrivialSphericalFnOverAllCells *
-                                   numberQuadraturePoints +
-                                 startIndex1 * numberQuadraturePoints +
-                                 (startIndex2 + tempIndex) *
-                                   numberQuadraturePoints +
-                                 iQuadPoint] = sphericalFunctionBasis
-                                  [kPoint * numberQuadraturePoints *
-                                     (2 * lQuantumNumber + 1) +
-                                   (tempIndex - startIndex) *
-                                     numberQuadraturePoints +
-                                   iQuadPoint];
+                            for (dftfe::uInt tempIndex = startIndex;
+                                 tempIndex < endIndex;
+                                 tempIndex++)
+                              {
+#pragma omp critical
+                                BLASWrapperHostPtr->xcopy(
+                                  numberQuadraturePoints,
+                                  &sphericalFunctionBasis
+                                    [kPoint * numberQuadraturePoints *
+                                       (2 * lQuantumNumber + 1) +
+                                     (tempIndex - startIndex) *
+                                       numberQuadraturePoints],
+                                  1,
+                                  &d_atomCenteredKpointIndexedSphericalFnQuadValues
+                                    [kPoint *
+                                       d_sumNonTrivialSphericalFnOverAllCells *
+                                       numberQuadraturePoints +
+                                     startIndex1 * numberQuadraturePoints +
+                                     (startIndex2 + tempIndex) *
+                                       numberQuadraturePoints],
+                                  1);
+#pragma omp critical
+                                BLASWrapperHostPtr->xcopy(
+                                  numberQuadraturePoints * 3,
+                                  &sphericalFunctionBasisTimesImageDist
+                                    [kPoint * numberQuadraturePoints *
+                                       (2 * lQuantumNumber + 1) * 3 +
+                                     (tempIndex - startIndex) *
+                                       numberQuadraturePoints * 3],
+                                  1,
+                                  &d_atomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues
+                                    [kPoint *
+                                       d_sumNonTrivialSphericalFnOverAllCells *
+                                       numberQuadraturePoints * 3 +
+                                     startIndex1 * numberQuadraturePoints * 3 +
+                                     (startIndex2 + tempIndex) *
+                                       numberQuadraturePoints * 3],
+                                  1);
 
-                            for (dftfe::Int iQuadPoint = 0;
-                                 iQuadPoint < numberQuadraturePoints;
-                                 ++iQuadPoint)
-                              for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                                d_atomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues
-                                  [kPoint *
-                                     d_sumNonTrivialSphericalFnOverAllCells *
-                                     numberQuadraturePoints * 3 +
-                                   startIndex1 * numberQuadraturePoints * 3 +
-                                   (startIndex2 + tempIndex) *
-                                     numberQuadraturePoints * 3 +
-                                   iQuadPoint * 3 + iDim] =
-                                    sphericalFunctionBasisTimesImageDist
-                                      [kPoint * numberQuadraturePoints *
-                                         (2 * lQuantumNumber + 1) * 3 +
-                                       (tempIndex - startIndex) *
-                                         numberQuadraturePoints * 3 +
-                                       iQuadPoint * 3 + iDim];
-                          } // tempIndex
+
+                              } // tempIndex
+                          }
                       }
                   }
 
 
 
-#ifdef USE_COMPLEX
-                for (dftfe::Int kPoint = 0; kPoint < maxkPoints; ++kPoint)
-                  for (dftfe::uInt beta = startIndex; beta < endIndex; beta++)
-                    {
-                      for (dftfe::Int iQuadPoint = 0;
-                           iQuadPoint < numberQuadraturePoints;
-                           ++iQuadPoint)
-                        {
-                          sphericalFunctionBasisTimesJxW
-                            [iElemComp * maxkPoints *
-                               NumTotalSphericalFunctions *
-                               numberQuadraturePoints +
-                             kPoint * NumTotalSphericalFunctions *
-                               numberQuadraturePoints +
-                             beta * numberQuadraturePoints + iQuadPoint]
-                              .real(sphericalFunctionBasisReal
-                                      [kPoint * numberQuadraturePoints *
-                                         (2 * lQuantumNumber + 1) +
-                                       (beta - startIndex) *
-                                         numberQuadraturePoints +
-                                       iQuadPoint] *
-                                    real(JxwVector[elementIndex *
-                                                     numberQuadraturePoints +
-                                                   iQuadPoint]));
-                          sphericalFunctionBasisTimesJxW
-                            [iElemComp * maxkPoints *
-                               NumTotalSphericalFunctions *
-                               numberQuadraturePoints +
-                             kPoint * NumTotalSphericalFunctions *
-                               numberQuadraturePoints +
-                             beta * numberQuadraturePoints + iQuadPoint]
-                              .imag(sphericalFunctionBasisImag
-                                      [kPoint * numberQuadraturePoints *
-                                         (2 * lQuantumNumber + 1) +
-                                       (beta - startIndex) *
-                                         numberQuadraturePoints +
-                                       iQuadPoint] *
-                                    real(JxwVector[elementIndex *
-                                                     numberQuadraturePoints +
-                                                   iQuadPoint]));
-
-                        } // quadPoint
-
-                    } // beta
-#else
-                for (dftfe::uInt beta = startIndex; beta < endIndex; beta++)
-                  {
-                    for (dftfe::Int iQuadPoint = 0;
-                         iQuadPoint < numberQuadraturePoints;
-                         ++iQuadPoint)
-                      {
-                        sphericalFunctionBasisTimesJxW
-                          [iElemComp * NumTotalSphericalFunctions *
-                             numberQuadraturePoints +
-                           beta * numberQuadraturePoints + iQuadPoint] =
-                            sphericalFunctionBasis[(beta - startIndex) *
-                                                     numberQuadraturePoints +
-                                                   iQuadPoint] *
-                            JxwVector[elementIndex * numberQuadraturePoints +
-                                      iQuadPoint];
-
-                      } // quadPoint
-                  }     // beta
-#endif
               } // alpha loop
 
 
@@ -681,6 +652,7 @@ namespace dftfe
         std::vector<dataTypes::number> projectorMatrices(m * n, 0.0);
         if (numberElementsInAtomCompactSupport > 0)
           {
+#pragma omp critical
             BLASWrapperHostPtr->xgemm(transA,
                                       transB,
                                       m,
