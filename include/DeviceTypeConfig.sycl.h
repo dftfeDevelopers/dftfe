@@ -55,9 +55,9 @@ namespace dftfe
       DEVICEBLAS_TF32_TENSOR_OP_MATH =
         oneapi::mkl::blas::compute_mode::float_to_tf32;
     static const deviceStream_t     defaultStream = 0;
-    inline std::vector<sycl::queue> queueRegistry{
-      sycl::gpu_selector_v,
-      sycl::property::queue::in_order{}};
+    inline std::vector<sycl::queue> queueRegistry(
+      1,
+      sycl::queue(sycl::gpu_selector_v, sycl::property::queue::in_order{}));
 
   } // namespace utils
 } // namespace dftfe
