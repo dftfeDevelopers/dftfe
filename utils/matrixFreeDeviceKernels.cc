@@ -2,27 +2,42 @@
 
 namespace dftfe
 {
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   template <typename Type,
             dftfe::Int M,
             dftfe::Int N,
             dftfe::Int K,
             dftfe::Int dim>
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   __global__ void
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+  void
+#endif
   computeAXKernelPoisson(Type             *V,
                          const Type       *U,
                          const Type       *P,
                          const Type       *J,
-                         const dftfe::Int *map)
+                         const dftfe::Int *map
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+                         ,
+                         Type *SMem
+#endif
+  )
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+    extern __shared__ Type SMem[];
+    const dftfe::Int       blockDimX  = blockDim.x;
+    const dftfe::Int       blockIdxX  = blockIdx.x;
+    const dftfe::Int       threadIdxX = threadIdx.x;
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    const dftfe::Int blockDimX  = item.get_local_range(0);
+    const dftfe::Int blockIdxX  = item.get_group(0);
+    const dftfe::Int threadIdxX = item.get_local_id(0);
+#endif
     // V = AU
     // gridDim.x = cells;
     // First index is fastest convention used
     // sharedT is used to temporarily store UP^T/UP
     // P(q*p), D(q*q), PT(p*q), DT(q*q)
-
-    extern __shared__ Type SMem[];
-
     Type *sharedX  = SMem;
     Type *sharedY  = &sharedX[N * N * N];
     Type *sharedZ  = &sharedY[N * N * N];
@@ -33,15 +48,18 @@ namespace dftfe
     Type *sharedDT = &sharedPT[K * N];
     Type *sharedJ  = &sharedDT[N * N];
 
-    const dftfe::Int mapShift = blockIdx.x * M * K;
+    const dftfe::Int mapShift = blockIdxX * M * K;
 
     // Copy Shape Function Values and Gradients to shared memory
-#  pragma unroll
-    for (dftfe::Int i = threadIdx.x; i < 2 * N * (K + N); i += blockDim.x)
+#pragma unroll
+    for (dftfe::Int i = threadIdxX; i < 2 * N * (K + N); i += blockDimX)
       sharedP[i] = P[i];
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
-
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
     //////////////////////////////////////////////////////////////
     // Interpolation combined with Extraction
     // V -> UPPP
@@ -51,11 +69,11 @@ namespace dftfe
 
     // 1st GEMM of P
     // Z Direction
-    for (dftfe::Int i = threadIdx.x; i < M; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < M; i += blockDimX)
       {
         Type x[N], u[K];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -63,28 +81,32 @@ namespace dftfe
           {
             u[k] = U[map[i + k * M + mapShift]];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               x[j] += sharedP[j + k * N] * u[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[i + j * M] = x[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 2nd GEMM of P
     // Y Direction
-    for (dftfe::Int i = threadIdx.x; i < K * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < K * N; i += blockDimX)
       {
         Type y[N], x[K];
 
         dftfe::Int a = i % K;
         dftfe::Int b = i / K;
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -92,25 +114,29 @@ namespace dftfe
           {
             x[k] = sharedX[a + k * K + b * M];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               y[j] += sharedP[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedY[a + (j + b * N) * K] = y[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 3rd GEMM of P
     // X Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type x[N], y[K];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -118,25 +144,29 @@ namespace dftfe
           {
             y[k] = sharedY[k + i * K];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               x[j] += sharedP[j + k * N] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[j + i * N] = x[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 1st GEMM of D
     // Z Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type y[N], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -144,26 +174,26 @@ namespace dftfe
           {
             x[k] = sharedX[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               y[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedY[i + j * N * N] = y[j];
       }
 
     // 2nd GEMM of D
     // Y Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type z[N], x[N];
 
         dftfe::Int a = i % N;
         dftfe::Int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           z[j] = 0.0;
 
@@ -171,23 +201,23 @@ namespace dftfe
           {
             x[k] = sharedX[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               z[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedZ[a + (j + b * N) * N] = z[j];
       }
 
     // 3rd GEMM of D
     // X Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type t[N], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           t[j] = 0.0;
 
@@ -195,12 +225,12 @@ namespace dftfe
           {
             x[k] = sharedX[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               t[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedT[j + i * N] = t[j];
       }
@@ -209,18 +239,22 @@ namespace dftfe
     // sharedT, sharedZ, sharedY have the respective gemms of X, Y, Z
     // directions
 
-    const dftfe::Int JShift = blockIdx.x * dim * dim;
+    const dftfe::Int JShift = blockIdxX * dim * dim;
 
     // Copy Jacobian Factor to shared memory
-#  pragma unroll
-    for (dftfe::Int i = threadIdx.x; i < dim * dim; i += blockDim.x)
+#pragma unroll
+    for (dftfe::Int i = threadIdxX; i < dim * dim; i += blockDimX)
       sharedJ[i] = J[i + JShift];
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // Gemm with Jacobian Factor
-#  pragma unroll
-    for (dftfe::Int i = threadIdx.x; i < N * N * N; i += blockDim.x)
+#pragma unroll
+    for (dftfe::Int i = threadIdxX; i < N * N * N; i += blockDimX)
       {
         Type v[3];
 
@@ -233,7 +267,11 @@ namespace dftfe
         sharedT[i] = sharedJ[0] * v[0] + sharedJ[1] * v[1] + sharedJ[2] * v[2];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // Integration
     // Z -> Z(DT)z
@@ -243,11 +281,11 @@ namespace dftfe
 
     // 1st GEMM of DT
     // Z Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type x[N], y[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -255,28 +293,32 @@ namespace dftfe
           {
             y[k] = sharedY[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               x[j] += sharedDT[j + k * N] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[i + j * N * N] = x[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 2nd GEMM of DT
     // Y Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type y[N], z[N];
 
         dftfe::Int a = i % N;
         dftfe::Int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -284,25 +326,29 @@ namespace dftfe
           {
             z[k] = sharedZ[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               y[j] += sharedDT[j + k * N] * z[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[a + (j + b * N) * N] += y[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 3rd GEMM of DT
     // X Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type z[N], t[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           z[j] = 0.0;
 
@@ -310,25 +356,29 @@ namespace dftfe
           {
             t[k] = sharedT[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               z[j] += sharedDT[j + k * N] * t[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[j + i * N] += z[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 1st GEMM of PT
     // Z Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type y[K], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           y[j] = 0.0;
 
@@ -336,28 +386,32 @@ namespace dftfe
           {
             x[k] = sharedX[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < K; j++)
               y[j] += sharedPT[j + k * K] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           sharedY[i + j * N * N] = y[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 2nd GEMM of PT
     // Y Direction
-    for (dftfe::Int i = threadIdx.x; i < N * K; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * K; i += blockDimX)
       {
         Type x[K], y[N];
 
         dftfe::Int a = i % N;
         dftfe::Int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           x[j] = 0.0;
 
@@ -365,25 +419,29 @@ namespace dftfe
           {
             y[k] = sharedY[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < K; j++)
               x[j] += sharedPT[j + k * K] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           sharedX[a + (j + b * K) * N] = x[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 3rd GEMM of PT
     // X Direction
-    for (dftfe::Int i = threadIdx.x; i < M; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < M; i += blockDimX)
       {
         Type y[K], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           y[j] = 0.0;
 
@@ -391,39 +449,54 @@ namespace dftfe
           {
             x[k] = sharedX[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < K; j++)
               y[j] += sharedPT[j + k * K] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
-          atomicAdd(&V[map[j + i * K + mapShift]], y[j]);
+          dftfe::utils::atomicAddWrapper(&V[map[j + i * K + mapShift]], y[j]);
       }
   }
-#endif
 
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   template <typename Type,
             dftfe::Int M,
             dftfe::Int N,
             dftfe::Int K,
             dftfe::Int dim>
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   __global__ void
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+  void
+#endif
   computeAXKernelHelmholtz(Type             *V,
                            const Type       *U,
                            const Type       *P,
                            const Type       *J,
                            const dftfe::Int *map,
-                           const Type        coeffHelmholtz)
+                           const Type        coeffHelmholtz
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+                           ,
+                           Type *SMem
+#endif
+  )
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+    extern __shared__ Type SMem[];
+    const dftfe::Int       blockDimX  = blockDim.x;
+    const dftfe::Int       blockIdxX  = blockIdx.x;
+    const dftfe::Int       threadIdxX = threadIdx.x;
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    const dftfe::Int blockDimX  = item.get_local_range(0);
+    const dftfe::Int blockIdxX  = item.get_group(0);
+    const dftfe::Int threadIdxX = item.get_local_id(0);
+#endif
     // V = AU
     // gridDim.x = cells;
     // First index is fastest convention used
     // sharedT is used to temporarily store UP^T/UP
     // P(q*p), D(q*q), PT(p*q), DT(q*q)
-
-    extern __shared__ Type SMem[];
 
     Type *sharedX  = SMem;
     Type *sharedY  = &sharedX[N * N * N];
@@ -435,14 +508,18 @@ namespace dftfe
     Type *sharedDT = &sharedPT[K * N];
     Type *sharedJ  = &sharedDT[N * N];
 
-    const dftfe::Int mapShift = blockIdx.x * M * K;
+    const dftfe::Int mapShift = blockIdxX * M * K;
 
     // Copy Shape Function Values and Gradients to shared memory
-#  pragma unroll
-    for (dftfe::Int i = threadIdx.x; i < 2 * N * (K + N); i += blockDim.x)
+#pragma unroll
+    for (dftfe::Int i = threadIdxX; i < 2 * N * (K + N); i += blockDimX)
       sharedP[i] = P[i];
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     //////////////////////////////////////////////////////////////
     // Interpolation combined with Extraction
@@ -453,11 +530,11 @@ namespace dftfe
 
     // 1st GEMM of P
     // Z Direction
-    for (dftfe::Int i = threadIdx.x; i < M; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < M; i += blockDimX)
       {
         Type x[N], u[K];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -465,28 +542,32 @@ namespace dftfe
           {
             u[k] = U[map[i + k * M + mapShift]];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               x[j] += sharedP[j + k * N] * u[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[i + j * M] = x[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 2nd GEMM of P
     // Y Direction
-    for (dftfe::Int i = threadIdx.x; i < K * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < K * N; i += blockDimX)
       {
         Type y[N], x[K];
 
         dftfe::Int a = i % K;
         dftfe::Int b = i / K;
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -494,25 +575,29 @@ namespace dftfe
           {
             x[k] = sharedX[a + k * K + b * M];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               y[j] += sharedP[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedY[a + (j + b * N) * K] = y[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 3rd GEMM of P
     // X Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type x[N], y[K];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -520,25 +605,29 @@ namespace dftfe
           {
             y[k] = sharedY[k + i * K];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               x[j] += sharedP[j + k * N] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[j + i * N] = x[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 1st GEMM of D
     // Z Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type y[N], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -546,26 +635,26 @@ namespace dftfe
           {
             x[k] = sharedX[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               y[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedY[i + j * N * N] = y[j];
       }
 
     // 2nd GEMM of D
     // Y Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type z[N], x[N];
 
         dftfe::Int a = i % N;
         dftfe::Int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           z[j] = 0.0;
 
@@ -573,23 +662,23 @@ namespace dftfe
           {
             x[k] = sharedX[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               z[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedZ[a + (j + b * N) * N] = z[j];
       }
 
     // 3rd GEMM of D
     // X Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type t[N], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           t[j] = 0.0;
 
@@ -597,12 +686,12 @@ namespace dftfe
           {
             x[k] = sharedX[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               t[j] += sharedD[j + k * N] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedT[j + i * N] = t[j];
       }
@@ -611,20 +700,24 @@ namespace dftfe
     // sharedT, sharedZ, sharedY have the respective gemms of X, Y, Z
     // directions
 
-    const dftfe::Int JShift = blockIdx.x * dim * dim;
+    const dftfe::Int JShift = blockIdxX * dim * dim;
 
     // Copy Jacobian Factor to shared memory
-#  pragma unroll
-    for (dftfe::Int i = threadIdx.x; i < dim * dim; i += blockDim.x)
+#pragma unroll
+    for (dftfe::Int i = threadIdxX; i < dim * dim; i += blockDimX)
       sharedJ[i] = J[i + JShift];
 
     Type detJ;
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // Gemm with Jacobian Factor
-#  pragma unroll
-    for (dftfe::Int i = threadIdx.x; i < N * N * N; i += blockDim.x)
+#pragma unroll
+    for (dftfe::Int i = threadIdxX; i < N * N * N; i += blockDimX)
       {
         Type v[3];
 
@@ -642,7 +735,11 @@ namespace dftfe
           sharedJ[2] * (sharedJ[3] * sharedJ[7] - sharedJ[4] * sharedJ[6]);
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // Integration
     // Z -> Z(DT)z
@@ -652,11 +749,11 @@ namespace dftfe
 
     // 1st GEMM of DT
     // Z Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type x[N], y[N], h[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           x[j] = 0.0;
 
@@ -664,12 +761,12 @@ namespace dftfe
           {
             y[k] = sharedY[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               x[j] += sharedDT[j + k * N] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           {
             h[j]                   = sharedX[i + j * N * N];
@@ -677,18 +774,22 @@ namespace dftfe
           }
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 2nd GEMM of DT
     // Y Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type y[N], z[N];
 
         dftfe::Int a = i % N;
         dftfe::Int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           y[j] = 0.0;
 
@@ -696,25 +797,29 @@ namespace dftfe
           {
             z[k] = sharedZ[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               y[j] += sharedDT[j + k * N] * z[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[a + (j + b * N) * N] += y[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 3rd GEMM of DT
     // X Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type z[N], t[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           z[j] = 0.0;
 
@@ -722,25 +827,29 @@ namespace dftfe
           {
             t[k] = sharedT[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < N; j++)
               z[j] += sharedDT[j + k * N] * t[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < N; j++)
           sharedX[j + i * N] += z[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 1st GEMM of PT
     // Z Direction
-    for (dftfe::Int i = threadIdx.x; i < N * N; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * N; i += blockDimX)
       {
         Type y[K], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           y[j] = 0.0;
 
@@ -748,28 +857,32 @@ namespace dftfe
           {
             x[k] = sharedX[i + k * N * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < K; j++)
               y[j] += sharedPT[j + k * K] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           sharedY[i + j * N * N] = y[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 2nd GEMM of PT
     // Y Direction
-    for (dftfe::Int i = threadIdx.x; i < N * K; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < N * K; i += blockDimX)
       {
         Type x[K], y[N];
 
         dftfe::Int a = i % N;
         dftfe::Int b = i / N;
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           x[j] = 0.0;
 
@@ -777,25 +890,29 @@ namespace dftfe
           {
             y[k] = sharedY[a + (k + b * N) * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < K; j++)
               x[j] += sharedPT[j + k * K] * y[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           sharedX[a + (j + b * K) * N] = x[j];
       }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
     // 3rd GEMM of PT
     // X Direction
-    for (dftfe::Int i = threadIdx.x; i < M; i += blockDim.x)
+    for (dftfe::Int i = threadIdxX; i < M; i += blockDimX)
       {
         Type y[K], x[N];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
           y[j] = 0.0;
 
@@ -803,17 +920,16 @@ namespace dftfe
           {
             x[k] = sharedX[k + i * N];
 
-#  pragma unroll
+#pragma unroll
             for (dftfe::Int j = 0; j < K; j++)
               y[j] += sharedPT[j + k * K] * x[k];
           }
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int j = 0; j < K; j++)
-          atomicAdd(&V[map[j + i * K + mapShift]], y[j]);
+          dftfe::utils::atomicAddWrapper(&V[map[j + i * K + mapShift]], y[j]);
       }
   }
-#endif
 
 
   template <typename Type,
@@ -834,7 +950,7 @@ namespace dftfe
   {
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
-                          computeAXKernelPoisson<double, M, N, K, dim>),
+                          computeAXKernelPoisson<Type, M, N, K, dim>),
                         blocks,
                         threads,
                         smem,
@@ -844,6 +960,15 @@ namespace dftfe
                         P,
                         J,
                         map);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    dftfe::utils::defaultStream.submit([=](sycl::handler &cgh) {
+      sycl::local_accessor<Type, 1> SMem_acc(smem / sizeof(Type), cgh);
+      cgh.parallel_for(sycl::nd_range<1>(blocks * threads, threads),
+                       [=](sycl::nd_item<1> item) {
+                         computeAXKernelPoisson<Type, M, N, K, dim>(
+                           item, V, U, P, J, map, SMem_acc.get_pointer());
+                       });
+    });
 #endif
   }
 
@@ -866,7 +991,7 @@ namespace dftfe
   {
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
-                          computeAXKernelHelmholtz<double, M, N, K, dim>),
+                          computeAXKernelHelmholtz<Type, M, N, K, dim>),
                         blocks,
                         threads,
                         smem,
@@ -877,6 +1002,16 @@ namespace dftfe
                         J,
                         map,
                         coeffHelmholtz);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    dftfe::utils::defaultStream.submit([=](sycl::handler &cgh) {
+      sycl::local_accessor<Type, 1> SMem_acc(smem / sizeof(Type), cgh);
+      cgh.parallel_for(
+        sycl::nd_range<1>(blocks * threads, threads),
+        [=](sycl::nd_item<1> item) {
+          computeAXKernelHelmholtz<Type, M, N, K, dim>(
+            item, V, U, P, J, map, coeffHelmholtz, SMem_acc.get_pointer());
+        });
+    });
 #endif
   }
   template <typename Type,

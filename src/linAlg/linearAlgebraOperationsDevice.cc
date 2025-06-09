@@ -529,18 +529,6 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         rotatedVectorsMatBlock(N * dofsBlockSize, dataTypes::number(0));
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-        }
-
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
         {
@@ -691,23 +679,12 @@ namespace dftfe
 
                           if (idof == 0)
                             {
-                              if (std::is_same<dataTypes::number,
-                                               std::complex<double>>::value)
-                                devicecclMpiCommDomain
-                                  .deviceDirectAllReduceWrapper(
-                                    rotationMatBlockTemp.begin(),
-                                    rotationMatBlockTemp.begin(),
-                                    BVec * D,
-                                    tempReal.begin(),
-                                    tempImag.begin(),
-                                    streamDeviceCCL);
-                              else
-                                devicecclMpiCommDomain
-                                  .deviceDirectAllReduceWrapper(
-                                    rotationMatBlockTemp.begin(),
-                                    rotationMatBlockTemp.begin(),
-                                    BVec * D,
-                                    streamDeviceCCL);
+                              devicecclMpiCommDomain
+                                .deviceDirectAllReduceWrapper(
+                                  rotationMatBlockTemp.begin(),
+                                  rotationMatBlockTemp.begin(),
+                                  BVec * D,
+                                  streamDeviceCCL);
 
                               dftfe::utils::deviceMemcpyAsyncD2H(
                                 dftfe::utils::makeDataTypeDeviceCompatible(
@@ -750,21 +727,11 @@ namespace dftfe
                             BVec * D * sizeof(dataTypes::number),
                             streamDeviceCCL);
 
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              rotationMatBlockTemp.begin(),
-                              rotationMatBlockTemp.begin(),
-                              BVec * D,
-                              tempReal.begin(),
-                              tempImag.begin(),
-                              streamDeviceCCL);
-                          else
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              rotationMatBlockTemp.begin(),
-                              rotationMatBlockTemp.begin(),
-                              BVec * D,
-                              streamDeviceCCL);
+                          devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                            rotationMatBlockTemp.begin(),
+                            rotationMatBlockTemp.begin(),
+                            BVec * D,
+                            streamDeviceCCL);
                         }
                       else
                         {
@@ -1004,18 +971,6 @@ namespace dftfe
         N * sizeof(dataTypes::number));
       computeDiagQTimesX(diagValues.begin(), X, N, M);
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempRealFP32;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImagFP32;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempRealFP32.resize(vectorsBlockSize * N, 0);
-          tempImagFP32.resize(vectorsBlockSize * N, 0);
-        }
-
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
@@ -1116,21 +1071,11 @@ namespace dftfe
                     BVec * D * sizeof(dataTypes::numberFP32),
                     streamDeviceCCL);
 
-                  if (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      rotationMatBlockSPTemp.begin(),
-                      rotationMatBlockSPTemp.begin(),
-                      BVec * D,
-                      tempRealFP32.begin(),
-                      tempImagFP32.begin(),
-                      streamDeviceCCL);
-                  else
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      rotationMatBlockSPTemp.begin(),
-                      rotationMatBlockSPTemp.begin(),
-                      BVec * D,
-                      streamDeviceCCL);
+                  devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                    rotationMatBlockSPTemp.begin(),
+                    rotationMatBlockSPTemp.begin(),
+                    BVec * D,
+                    streamDeviceCCL);
                 }
               else
                 {
@@ -1373,18 +1318,6 @@ namespace dftfe
         N * sizeof(dataTypes::number));
       computeDiagQTimesX(diagValues.begin(), X, N, M);
 
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempRealFP32;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImagFP32;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempRealFP32.resize(vectorsBlockSize * N, 0);
-          tempImagFP32.resize(vectorsBlockSize * N, 0);
-        }
-
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
@@ -1467,21 +1400,11 @@ namespace dftfe
                     BVec * D * sizeof(dataTypes::numberFP32),
                     streamDeviceCCL);
 
-                  if (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      rotationMatBlockSPTemp.begin(),
-                      rotationMatBlockSPTemp.begin(),
-                      BVec * D,
-                      tempRealFP32.begin(),
-                      tempImagFP32.begin(),
-                      streamDeviceCCL);
-                  else
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      rotationMatBlockSPTemp.begin(),
-                      rotationMatBlockSPTemp.begin(),
-                      BVec * D,
-                      streamDeviceCCL);
+                  devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                    rotationMatBlockSPTemp.begin(),
+                    rotationMatBlockSPTemp.begin(),
+                    BVec * D,
+                    streamDeviceCCL);
                 }
               else
                 {
@@ -1633,18 +1556,6 @@ namespace dftfe
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-        }
-
       for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
@@ -1705,21 +1616,11 @@ namespace dftfe
 
               if (dftParams.useDeviceDirectAllReduce)
                 {
-                  if (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      overlapMatrixBlock.begin(),
-                      overlapMatrixBlock.begin(),
-                      D * B,
-                      tempReal.begin(),
-                      tempImag.begin(),
-                      streamDeviceCCL);
-                  else
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      overlapMatrixBlock.begin(),
-                      overlapMatrixBlock.begin(),
-                      D * B,
-                      streamDeviceCCL);
+                  devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                    overlapMatrixBlock.begin(),
+                    overlapMatrixBlock.begin(),
+                    D * B,
+                    streamDeviceCCL);
                 }
 
               dftfe::utils::deviceMemcpyD2H(
@@ -1880,18 +1781,6 @@ namespace dftfe
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-        }
-
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
@@ -2031,21 +1920,11 @@ namespace dftfe
                 {
                   // Sum local XTrunc^{T}*XcBlock across domain decomposition
                   // processors
-                  if (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      overlapMatrixBlock.begin(),
-                      overlapMatrixBlock.begin(),
-                      D * B,
-                      tempReal.begin(),
-                      tempImag.begin(),
-                      streamDataMove);
-                  else
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      overlapMatrixBlock.begin(),
-                      overlapMatrixBlock.begin(),
-                      D * B,
-                      streamDataMove);
+                  devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                    overlapMatrixBlock.begin(),
+                    overlapMatrixBlock.begin(),
+                    D * B,
+                    streamDataMove);
                 }
 
               dftfe::utils::deviceMemcpyAsyncD2H(
@@ -2212,27 +2091,6 @@ namespace dftfe
         dataTypes::numberFP32(1.0);
       const dataTypes::numberFP32 scalarCoeffBetaSP = dataTypes::numberFP32(0);
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempRealFP32;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImagFP32;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-          tempRealFP32.resize(vectorsBlockSize * N, 0);
-          tempImagFP32.resize(vectorsBlockSize * N, 0);
-        }
-
       for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
           // Correct block dimensions if block "goes off edge of" the matrix
@@ -2346,69 +2204,33 @@ namespace dftfe
                 {
                   if (ivec + B > Noc)
                     {
-                      if (std::is_same<dataTypes::number,
-                                       std::complex<double>>::value)
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockDP.begin(),
-                          D * B,
-                          tempReal.begin(),
-                          tempImag.begin(),
-                          streamDeviceCCL);
-                      else
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockDP.begin(),
-                          D * B,
-                          streamDeviceCCL);
+                      devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        D * B,
+                        streamDeviceCCL);
                     }
                   else
                     {
                       if (DRem == 0)
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              overlapMatrixBlockDP.begin(),
-                              overlapMatrixBlockDP.begin(),
-                              B * B,
-                              tempReal.begin(),
-                              tempImag.begin(),
-                              streamDeviceCCL);
-                          else
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              overlapMatrixBlockDP.begin(),
-                              overlapMatrixBlockDP.begin(),
-                              B * B,
-                              streamDeviceCCL);
+                          devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                            overlapMatrixBlockDP.begin(),
+                            overlapMatrixBlockDP.begin(),
+                            B * B,
+                            streamDeviceCCL);
                         }
                       if (DRem != 0)
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                overlapMatrixBlockDP.begin(),
-                                overlapMatrixBlockSP.begin(),
-                                overlapMatrixBlockDP.begin(),
-                                overlapMatrixBlockSP.begin(),
-                                B * B,
-                                DRem * B,
-                                tempReal.begin(),
-                                tempRealFP32.begin(),
-                                tempImag.begin(),
-                                tempImagFP32.begin(),
-                                streamDeviceCCL);
-                          else
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                overlapMatrixBlockDP.begin(),
-                                overlapMatrixBlockSP.begin(),
-                                overlapMatrixBlockDP.begin(),
-                                overlapMatrixBlockSP.begin(),
-                                B * B,
-                                DRem * B,
-                                streamDeviceCCL);
+                          devicecclMpiCommDomain
+                            .deviceDirectAllReduceMixedPrecGroupWrapper(
+                              overlapMatrixBlockDP.begin(),
+                              overlapMatrixBlockSP.begin(),
+                              overlapMatrixBlockDP.begin(),
+                              overlapMatrixBlockSP.begin(),
+                              B * B,
+                              DRem * B,
+                              streamDeviceCCL);
                         }
                     }
                 }
@@ -2667,27 +2489,6 @@ namespace dftfe
         dataTypes::numberFP32(1.0);
       const dataTypes::numberFP32 scalarCoeffBetaSP = dataTypes::numberFP32(0);
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempRealFP32;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImagFP32;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-          tempRealFP32.resize(vectorsBlockSize * N, 0);
-          tempImagFP32.resize(vectorsBlockSize * N, 0);
-        }
-
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
         OXBlockFull(vectorsBlockSize * M, dataTypes::number(0.0));
@@ -2935,69 +2736,33 @@ namespace dftfe
                 {
                   if (ivec + B > Noc)
                     {
-                      if (std::is_same<dataTypes::number,
-                                       std::complex<double>>::value)
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockDP.begin(),
-                          D * B,
-                          tempReal.begin(),
-                          tempImag.begin(),
-                          streamDataMove);
-                      else
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          overlapMatrixBlockDP.begin(),
-                          overlapMatrixBlockDP.begin(),
-                          D * B,
-                          streamDataMove);
+                      devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                        overlapMatrixBlockDP.begin(),
+                        overlapMatrixBlockDP.begin(),
+                        D * B,
+                        streamDataMove);
                     }
                   else
                     {
                       if (DRem == 0)
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              overlapMatrixBlockDP.begin(),
-                              overlapMatrixBlockDP.begin(),
-                              B * B,
-                              tempReal.begin(),
-                              tempImag.begin(),
-                              streamDataMove);
-                          else
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              overlapMatrixBlockDP.begin(),
-                              overlapMatrixBlockDP.begin(),
-                              B * B,
-                              streamDataMove);
+                          devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                            overlapMatrixBlockDP.begin(),
+                            overlapMatrixBlockDP.begin(),
+                            B * B,
+                            streamDataMove);
                         }
                       if (DRem != 0)
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                overlapMatrixBlockDP.begin(),
-                                overlapMatrixBlockSP.begin(),
-                                overlapMatrixBlockDP.begin(),
-                                overlapMatrixBlockSP.begin(),
-                                B * B,
-                                DRem * B,
-                                tempReal.begin(),
-                                tempRealFP32.begin(),
-                                tempImag.begin(),
-                                tempImagFP32.begin(),
-                                streamDataMove);
-                          else
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                overlapMatrixBlockDP.begin(),
-                                overlapMatrixBlockSP.begin(),
-                                overlapMatrixBlockDP.begin(),
-                                overlapMatrixBlockSP.begin(),
-                                B * B,
-                                DRem * B,
-                                streamDataMove);
+                          devicecclMpiCommDomain
+                            .deviceDirectAllReduceMixedPrecGroupWrapper(
+                              overlapMatrixBlockDP.begin(),
+                              overlapMatrixBlockSP.begin(),
+                              overlapMatrixBlockDP.begin(),
+                              overlapMatrixBlockSP.begin(),
+                              B * B,
+                              DRem * B,
+                              streamDataMove);
                         }
                     }
                 }
@@ -3265,27 +3030,6 @@ namespace dftfe
       const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0);
       const dataTypes::number scalarCoeffBeta  = dataTypes::number(0);
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempRealFP32;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImagFP32;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-          tempRealFP32.resize(vectorsBlockSize * N, 0);
-          tempImagFP32.resize(vectorsBlockSize * N, 0);
-        }
-
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt ivec = 0; ivec < N; ivec += vectorsBlockSize)
         {
@@ -3438,69 +3182,33 @@ namespace dftfe
                 {
                   if (ivec + B > Noc)
                     {
-                      if (std::is_same<dataTypes::number,
-                                       std::complex<double>>::value)
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projOverlapMatrixBlock.begin(),
-                          projOverlapMatrixBlock.begin(),
-                          D * B,
-                          tempReal.begin(),
-                          tempImag.begin(),
-                          streamDataMove);
-                      else
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projOverlapMatrixBlock.begin(),
-                          projOverlapMatrixBlock.begin(),
-                          D * B,
-                          streamDataMove);
+                      devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                        projOverlapMatrixBlock.begin(),
+                        projOverlapMatrixBlock.begin(),
+                        D * B,
+                        streamDataMove);
                     }
                   else
                     {
                       if (DRem == 0)
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              projOverlapMatrixBlock.begin(),
-                              projOverlapMatrixBlock.begin(),
-                              B * B,
-                              tempReal.begin(),
-                              tempImag.begin(),
-                              streamDataMove);
-                          else
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              projOverlapMatrixBlock.begin(),
-                              projOverlapMatrixBlock.begin(),
-                              B * B,
-                              streamDataMove);
+                          devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                            projOverlapMatrixBlock.begin(),
+                            projOverlapMatrixBlock.begin(),
+                            B * B,
+                            streamDataMove);
                         }
                       else
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                projOverlapMatrixBlockMove.begin(),
-                                projOverlapMatrixBlockSP.begin(),
-                                projOverlapMatrixBlockMove.begin(),
-                                projOverlapMatrixBlockSP.begin(),
-                                B * B,
-                                DRem * B,
-                                tempReal.begin(),
-                                tempRealFP32.begin(),
-                                tempImag.begin(),
-                                tempImagFP32.begin(),
-                                streamDataMove);
-                          else
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                projOverlapMatrixBlockMove.begin(),
-                                projOverlapMatrixBlockSP.begin(),
-                                projOverlapMatrixBlockMove.begin(),
-                                projOverlapMatrixBlockSP.begin(),
-                                B * B,
-                                DRem * B,
-                                streamDataMove);
+                          devicecclMpiCommDomain
+                            .deviceDirectAllReduceMixedPrecGroupWrapper(
+                              projOverlapMatrixBlockMove.begin(),
+                              projOverlapMatrixBlockSP.begin(),
+                              projOverlapMatrixBlockMove.begin(),
+                              projOverlapMatrixBlockSP.begin(),
+                              B * B,
+                              DRem * B,
+                              streamDataMove);
                         }
                     }
                 }
@@ -4084,18 +3792,6 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlockNext(vectorsBlockSize * N, dataTypes::number(0.0));
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-        }
-
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
@@ -4238,23 +3934,11 @@ namespace dftfe
                 {
                   // Sum local projHamBlock across domain decomposition
                   // processors
-                  if (std::is_same<dataTypes::number,
-                                   std::complex<double>>::value)
-                    {
-                      devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                        projHamBlock.begin(),
-                        projHamBlock.begin(),
-                        D * B,
-                        tempReal.begin(),
-                        tempImag.begin(),
-                        streamDataMove);
-                    }
-                  else
-                    devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                      projHamBlock.begin(),
-                      projHamBlock.begin(),
-                      D * B,
-                      streamDataMove);
+                  devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                    projHamBlock.begin(),
+                    projHamBlock.begin(),
+                    D * B,
+                    streamDataMove);
                 }
 
               dftfe::utils::deviceMemcpyAsyncD2H(
@@ -4462,28 +4146,6 @@ namespace dftfe
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlockFP32Next(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
-
-
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempRealFP32;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImagFP32;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-          tempRealFP32.resize(vectorsBlockSize * N, 0);
-          tempImagFP32.resize(vectorsBlockSize * N, 0);
-        }
 
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
@@ -4744,69 +4406,33 @@ namespace dftfe
                 {
                   if (jvec + B > Noc)
                     {
-                      if (std::is_same<dataTypes::number,
-                                       std::complex<double>>::value)
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projHamBlock.begin(),
-                          projHamBlock.begin(),
-                          D * B,
-                          tempReal.begin(),
-                          tempImag.begin(),
-                          streamDataMove);
-                      else
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projHamBlock.begin(),
-                          projHamBlock.begin(),
-                          D * B,
-                          streamDataMove);
+                      devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                        projHamBlock.begin(),
+                        projHamBlock.begin(),
+                        D * B,
+                        streamDataMove);
                     }
                   else
                     {
                       if (DRem == 0)
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              projHamBlock.begin(),
-                              projHamBlock.begin(),
-                              B * B,
-                              tempReal.begin(),
-                              tempImag.begin(),
-                              streamDataMove);
-                          else
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              projHamBlock.begin(),
-                              projHamBlock.begin(),
-                              B * B,
-                              streamDataMove);
+                          devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                            projHamBlock.begin(),
+                            projHamBlock.begin(),
+                            B * B,
+                            streamDataMove);
                         }
                       if (DRem != 0)
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                projHamBlock.begin(),
-                                projHamBlockFP32.begin(),
-                                projHamBlock.begin(),
-                                projHamBlockFP32.begin(),
-                                B * B,
-                                DRem * B,
-                                tempReal.begin(),
-                                tempRealFP32.begin(),
-                                tempImag.begin(),
-                                tempImagFP32.begin(),
-                                streamDataMove);
-                          else
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                projHamBlock.begin(),
-                                projHamBlockFP32.begin(),
-                                projHamBlock.begin(),
-                                projHamBlockFP32.begin(),
-                                B * B,
-                                DRem * B,
-                                streamDataMove);
+                          devicecclMpiCommDomain
+                            .deviceDirectAllReduceMixedPrecGroupWrapper(
+                              projHamBlock.begin(),
+                              projHamBlockFP32.begin(),
+                              projHamBlock.begin(),
+                              projHamBlockFP32.begin(),
+                              B * B,
+                              DRem * B,
+                              streamDataMove);
                         }
                     }
                 }
@@ -5088,27 +4714,6 @@ namespace dftfe
                                   dftfe::utils::MemorySpace::DEVICE>
         projHamBlockFP32(vectorsBlockSize * N, dataTypes::numberFP32(0.0));
 
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempReal;
-      dftfe::utils::MemoryStorage<dataTypes::numberValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImag;
-
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempRealFP32;
-      dftfe::utils::MemoryStorage<dataTypes::numberFP32ValueType,
-                                  dftfe::utils::MemorySpace::DEVICE>
-        tempImagFP32;
-      if (std::is_same<dataTypes::number, std::complex<double>>::value)
-        {
-          tempReal.resize(vectorsBlockSize * N, 0);
-          tempImag.resize(vectorsBlockSize * N, 0);
-          tempRealFP32.resize(vectorsBlockSize * N, 0);
-          tempImagFP32.resize(vectorsBlockSize * N, 0);
-        }
-
       dftfe::uInt blockCount = 0;
       for (dftfe::uInt jvec = 0; jvec < N; jvec += vectorsBlockSize)
         {
@@ -5273,69 +4878,33 @@ namespace dftfe
                 {
                   if (jvec + B > Noc)
                     {
-                      if (std::is_same<dataTypes::number,
-                                       std::complex<double>>::value)
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projHamBlock.begin(),
-                          projHamBlock.begin(),
-                          D * B,
-                          tempReal.begin(),
-                          tempImag.begin(),
-                          streamDataMove);
-                      else
-                        devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                          projHamBlock.begin(),
-                          projHamBlock.begin(),
-                          D * B,
-                          streamDataMove);
+                      devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                        projHamBlock.begin(),
+                        projHamBlock.begin(),
+                        D * B,
+                        streamDataMove);
                     }
                   else
                     {
                       if (DRem == 0)
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              projHamBlockMove.begin(),
-                              projHamBlockMove.begin(),
-                              B * B,
-                              tempReal.begin(),
-                              tempImag.begin(),
-                              streamDataMove);
-                          else
-                            devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
-                              projHamBlockMove.begin(),
-                              projHamBlockMove.begin(),
-                              B * B,
-                              streamDataMove);
+                          devicecclMpiCommDomain.deviceDirectAllReduceWrapper(
+                            projHamBlockMove.begin(),
+                            projHamBlockMove.begin(),
+                            B * B,
+                            streamDataMove);
                         }
                       else
                         {
-                          if (std::is_same<dataTypes::number,
-                                           std::complex<double>>::value)
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                projHamBlockMove.begin(),
-                                projHamBlockFP32.begin(),
-                                projHamBlockMove.begin(),
-                                projHamBlockFP32.begin(),
-                                B * B,
-                                DRem * B,
-                                tempReal.begin(),
-                                tempRealFP32.begin(),
-                                tempImag.begin(),
-                                tempImagFP32.begin(),
-                                streamDataMove);
-                          else
-                            devicecclMpiCommDomain
-                              .deviceDirectAllReduceMixedPrecGroupWrapper(
-                                projHamBlockMove.begin(),
-                                projHamBlockFP32.begin(),
-                                projHamBlockMove.begin(),
-                                projHamBlockFP32.begin(),
-                                B * B,
-                                DRem * B,
-                                streamDataMove);
+                          devicecclMpiCommDomain
+                            .deviceDirectAllReduceMixedPrecGroupWrapper(
+                              projHamBlockMove.begin(),
+                              projHamBlockFP32.begin(),
+                              projHamBlockMove.begin(),
+                              projHamBlockFP32.begin(),
+                              B * B,
+                              DRem * B,
+                              streamDataMove);
                         }
                     }
                 }

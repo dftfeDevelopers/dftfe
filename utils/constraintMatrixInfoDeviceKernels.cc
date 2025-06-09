@@ -432,7 +432,7 @@ namespace dftfe
                         [startingColumnNumber + i],
                       xVec[xVecStartingIdRow + intraBlockIndex]);
 
-                  auto *add_real = reinterpret_cast<double *>(
+                  auto *add_real = reinterpret_cast<float *>(
                     &xVec[xVecStartingIdColumn + intraBlockIndex]);
                   auto *add_imag = add_real + 1;
 

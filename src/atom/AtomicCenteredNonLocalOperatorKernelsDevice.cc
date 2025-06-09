@@ -290,7 +290,7 @@ namespace dftfe
             const dftfe::uInt iDof     = index2 / numberWfc;
             const dftfe::uInt wfcIndex = index2 % numberWfc;
 
-            auto *add_real = reinterpret_cast<double *>(
+            auto *add_real = reinterpret_cast<float *>(
               &yVec[elemIndex * numberNodesPerElement * numberWfc +
                     iDof * numberWfc + wfcIndex]);
             auto *add_imag = add_real + 1;
@@ -454,7 +454,7 @@ namespace dftfe
             const dftfe::uInt toIndex = mappingCellLevelToAtomLevel[blockIndex];
             if (toIndex < totalNonLocalEntries)
               {
-                auto *add_real = reinterpret_cast<double *>(
+                auto *add_real = reinterpret_cast<float *>(
                   &sphericalFnTimesX[toIndex * numWfc + intraBlockIndex]);
                 auto *add_imag = add_real + 1;
 

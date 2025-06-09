@@ -2,19 +2,31 @@
 
 namespace dftfe
 {
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   template <typename Type, dftfe::Int blockSize>
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   __global__ void
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+  void
+#endif
   applyPreconditionAndComputeDotProductKernel(Type            *d_dvec,
                                               Type            *d_devSum,
                                               const Type      *d_rvec,
                                               const Type      *d_jacobi,
-                                              const dftfe::Int N)
+                                              const dftfe::Int N
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+                                              ,
+                                              Type *smem
+#endif
+  )
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __shared__ Type smem[blockSize];
-
-    dftfe::Int tid = threadIdx.x;
-    dftfe::Int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+    dftfe::Int      tid = threadIdx.x;
+    dftfe::Int      idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    dftfe::Int tid = item.get_local_id(0);
+    dftfe::Int idx = item.get_local_id(0) + item.get_group(0) * (blockSize * 2);
+#endif
 
     Type localSum;
 
@@ -38,9 +50,14 @@ namespace dftfe
       }
 
     smem[tid] = localSum;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
-#  pragma unroll
+
+#pragma unroll
     for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
@@ -48,7 +65,11 @@ namespace dftfe
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
         __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        sycl::group_barrier(item.get_group());
+#endif
       }
 
     if (tid < dftfe::utils::DEVICE_WARP_SIZE)
@@ -56,39 +77,53 @@ namespace dftfe
         if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             unsigned mask = 0xffffffff;
             localSum += __shfl_down_sync(mask, localSum, offset);
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
+#elif DFTFE_WITH_DEVICE_LANG_HIP
             localSum +=
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
-#  endif
+#elif DFTFE_WITH_DEVICE_LANG_SYCL
+            localSum +=
+              sycl::shift_group_left(item.get_sub_group(), localSum, offset);
+#endif
           }
       }
 
     if (tid == 0)
-      atomicAdd(&d_devSum[0], localSum);
+      dftfe::utils::atomicAddWrapper(&d_devSum[0], localSum);
   }
-#endif
 
 
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   template <typename Type, dftfe::Int blockSize>
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   __global__ void
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+  void
+#endif
   applyPreconditionComputeDotProductAndSaddKernel(Type            *d_qvec,
                                                   Type            *d_devSum,
                                                   const Type      *d_rvec,
                                                   const Type      *d_jacobi,
-                                                  const dftfe::Int N)
+                                                  const dftfe::Int N
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+                                                  ,
+                                                  Type *smem
+#endif
+  )
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __shared__ Type smem[blockSize];
-
-    dftfe::Int tid = threadIdx.x;
-    dftfe::Int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+    dftfe::Int      tid = threadIdx.x;
+    dftfe::Int      idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    dftfe::Int tid = item.get_local_id(0);
+    dftfe::Int idx = item.get_local_id(0) + item.get_group(0) * (blockSize * 2);
+#endif
 
     Type localSum;
 
@@ -112,16 +147,25 @@ namespace dftfe
       }
 
     smem[tid] = localSum;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
-#  pragma unroll
+
+#pragma unroll
     for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
       {
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
         __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        sycl::group_barrier(item.get_group());
+#endif
       }
 
     if (tid < dftfe::utils::DEVICE_WARP_SIZE)
@@ -129,41 +173,55 @@ namespace dftfe
         if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             unsigned mask = 0xffffffff;
             localSum += __shfl_down_sync(mask, localSum, offset);
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
+#elif DFTFE_WITH_DEVICE_LANG_HIP
             localSum +=
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
-#  endif
+#elif DFTFE_WITH_DEVICE_LANG_SYCL
+            localSum +=
+              sycl::shift_group_left(item.get_sub_group(), localSum, offset);
+#endif
           }
       }
 
     if (tid == 0)
-      atomicAdd(&d_devSum[0], localSum);
+      dftfe::utils::atomicAddWrapper(&d_devSum[0], localSum);
   }
-#endif
 
 
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   template <typename Type, dftfe::Int blockSize>
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
   __global__ void
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+  void
+#endif
   scaleXRandComputeNormKernel(Type            *x,
                               Type            *d_rvec,
                               Type            *d_devSum,
                               const Type      *d_qvec,
                               const Type      *d_dvec,
                               const Type       alpha,
-                              const dftfe::Int N)
+                              const dftfe::Int N
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+                              ,
+                              Type *smem
+#endif
+  )
   {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __shared__ Type smem[blockSize];
-
-    dftfe::Int tid = threadIdx.x;
-    dftfe::Int idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+    dftfe::Int      tid = threadIdx.x;
+    dftfe::Int      idx = threadIdx.x + blockIdx.x * (blockSize * 2);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    dftfe::Int tid = item.get_local_id(0);
+    dftfe::Int idx = item.get_local_id(0) + item.get_group(0) * (blockSize * 2);
+#endif
 
     Type localSum;
 
@@ -190,9 +248,14 @@ namespace dftfe
       }
 
     smem[tid] = localSum;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    sycl::group_barrier(item.get_group());
+#endif
 
-#  pragma unroll
+
+#pragma unroll
     for (dftfe::Int size = dftfe::utils::DEVICE_MAX_BLOCK_SIZE / 2;
          size >= 4 * dftfe::utils::DEVICE_WARP_SIZE;
          size /= 2)
@@ -200,7 +263,11 @@ namespace dftfe
         if ((blockSize >= size) && (tid < size / 2))
           smem[tid] = localSum = localSum + smem[tid + size / 2];
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
         __syncthreads();
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+        sycl::group_barrier(item.get_group());
+#endif
       }
 
     if (tid < dftfe::utils::DEVICE_WARP_SIZE)
@@ -208,24 +275,26 @@ namespace dftfe
         if (blockSize >= 2 * dftfe::utils::DEVICE_WARP_SIZE)
           localSum += smem[tid + dftfe::utils::DEVICE_WARP_SIZE];
 
-#  pragma unroll
+#pragma unroll
         for (dftfe::Int offset = dftfe::utils::DEVICE_WARP_SIZE / 2; offset > 0;
              offset /= 2)
           {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
             unsigned mask = 0xffffffff;
             localSum += __shfl_down_sync(mask, localSum, offset);
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
+#elif DFTFE_WITH_DEVICE_LANG_HIP
             localSum +=
               __shfl_down(localSum, offset, dftfe::utils::DEVICE_WARP_SIZE);
-#  endif
+#elif DFTFE_WITH_DEVICE_LANG_SYCL
+            localSum +=
+              sycl::shift_group_left(item.get_sub_group(), localSum, offset);
+#endif
           }
       }
 
     if (tid == 0)
-      atomicAdd(&d_devSum[0], localSum);
+      dftfe::utils::atomicAddWrapper(&d_devSum[0], localSum);
   }
-#endif
 
   void
   applyPreconditionAndComputeDotProductDevice(double          *d_dvec,
@@ -234,22 +303,41 @@ namespace dftfe
                                               const double    *d_jacobi,
                                               const dftfe::Int N)
   {
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
                           applyPreconditionAndComputeDotProductKernel<
                             double,
                             dftfe::utils::DEVICE_BLOCK_SIZE>),
                         blocks,
                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                        0,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
                         dftfe::utils::defaultStream,
                         d_dvec,
                         d_devSum,
                         d_rvec,
                         d_jacobi,
                         N);
+#elif DFTFE_WITH_DEVICE_LANG_SYCL
+    dftfe::utils::defaultStream.submit([=](sycl::handler &cgh) {
+      sycl::local_accessor<double, 1> SMem_acc(dftfe::utils::DEVICE_BLOCK_SIZE,
+                                               cgh);
+      cgh.parallel_for(
+        sycl::nd_range<1>(blocks * dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE),
+        [=](sycl::nd_item<1> item) {
+          applyPreconditionAndComputeDotProductKernel<
+            double,
+            dftfe::utils::DEVICE_BLOCK_SIZE>(item,
+                                             d_dvec,
+                                             d_devSum,
+                                             d_rvec,
+                                             d_jacobi,
+                                             N,
+                                             SMem_acc.get_pointer());
+        });
+    });
 #endif
   }
 
@@ -261,24 +349,41 @@ namespace dftfe
                                                   const double    *d_jacobi,
                                                   const dftfe::Int N)
   {
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
-
-
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
     DFTFE_LAUNCH_KERNEL(DFTFE_KERNEL_NAME(
                           applyPreconditionComputeDotProductAndSaddKernel<
                             double,
                             dftfe::utils::DEVICE_BLOCK_SIZE>),
                         blocks,
                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                        0,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
                         dftfe::utils::defaultStream,
                         d_qvec,
                         d_devSum,
                         d_rvec,
                         d_jacobi,
                         N);
+#elif DFTFE_WITH_DEVICE_LANG_SYCL
+    dftfe::utils::defaultStream.submit([=](sycl::handler &cgh) {
+      sycl::local_accessor<double, 1> SMem_acc(dftfe::utils::DEVICE_BLOCK_SIZE,
+                                               cgh);
+      cgh.parallel_for(
+        sycl::nd_range<1>(blocks * dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE),
+        [=](sycl::nd_item<1> item) {
+          applyPreconditionComputeDotProductAndSaddKernel<
+            double,
+            dftfe::utils::DEVICE_BLOCK_SIZE>(item,
+                                             d_qvec,
+                                             d_devSum,
+                                             d_rvec,
+                                             d_jacobi,
+                                             N,
+                                             SMem_acc.get_pointer());
+        });
+    });
 #endif
   }
 
@@ -302,7 +407,7 @@ namespace dftfe
         scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>),
       blocks,
       dftfe::utils::DEVICE_BLOCK_SIZE,
-      0,
+      dftfe::utils::DEVICE_BLOCK_SIZE,
       dftfe::utils::defaultStream,
       x,
       d_rvec,
@@ -311,6 +416,26 @@ namespace dftfe
       d_dvec,
       alpha,
       N);
+#elif DFTFE_WITH_DEVICE_LANG_SYCL
+    dftfe::utils::defaultStream.submit([=](sycl::handler &cgh) {
+      sycl::local_accessor<double, 1> SMem_acc(dftfe::utils::DEVICE_BLOCK_SIZE,
+                                               cgh);
+      cgh.parallel_for(
+        sycl::nd_range<1>(blocks * dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE),
+        [=](sycl::nd_item<1> item) {
+          scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>(
+            item,
+            x,
+            d_rvec,
+            d_devSum,
+            d_qvec,
+            d_dvec,
+            alpha,
+            N,
+            SMem_acc.get_pointer());
+        });
+    });
 #endif
   }
 

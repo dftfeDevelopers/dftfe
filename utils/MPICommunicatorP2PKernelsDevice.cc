@@ -133,7 +133,7 @@ namespace dftfe
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
 
-              auto *add_real = reinterpret_cast<double *>(
+              auto *add_real = reinterpret_cast<float *>(
                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
                            intraBlockId]);
