@@ -25,7 +25,7 @@ namespace dftfe
   namespace utils
   {
     typedef std::error_code      deviceError_t;
-    typedef sycl::queue          deviceStream_t;
+    typedef dftfe::uInt          deviceStream_t;
     typedef sycl::event          deviceEvent_t;
     typedef std::complex<double> deviceDoubleComplex;
     typedef std::complex<float>  deviceFloatComplex;
@@ -35,7 +35,7 @@ namespace dftfe
     // static deviceError_t deviceSuccess(success_code);
 
     // vendor blas related typedef and static consts
-    typedef sycl::queue                      deviceBlasHandle_t;
+    typedef dftfe::uInt                      deviceBlasHandle_t;
     typedef oneapi::mkl::transpose           deviceBlasOperation_t;
     typedef oneapi::mkl::blas::compute_mode  deviceBlasMath_t;
     typedef sycl::info::event_command_status deviceBlasStatus_t;
@@ -54,9 +54,10 @@ namespace dftfe
     static const oneapi::mkl::blas::compute_mode
       DEVICEBLAS_TF32_TENSOR_OP_MATH =
         oneapi::mkl::blas::compute_mode::float_to_tf32;
-
-    inline sycl::queue defaultStream{sycl::gpu_selector_v,
-                                     sycl::property::queue::in_order{}};
+    static const deviceStream_t     defaultStream = 0;
+    inline std::vector<sycl::queue> queueRegistry{
+      sycl::gpu_selector_v,
+      sycl::property::queue::in_order{}};
 
   } // namespace utils
 } // namespace dftfe

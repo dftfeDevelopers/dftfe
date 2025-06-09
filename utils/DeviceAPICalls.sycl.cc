@@ -61,9 +61,11 @@ namespace dftfe
     {
       try
         {
-          *free = dftfe::utils::defaultStream.get_device()
+          *free = dftfe::utils::queueRegistry[dftfe::utils::defaultStream]
+                    .get_device()
                     .get_info<sycl::info::device::local_mem_size>();
-          *total = dftfe::utils::defaultStream.get_device()
+          *total = dftfe::utils::queueRegistry[dftfe::utils::defaultStream]
+                     .get_device()
                      .get_info<sycl::info::device::global_mem_size>();
         }
       catch (const deviceError_t &e)
@@ -97,7 +99,8 @@ namespace dftfe
     {
       try
         {
-          *devPtr = sycl::malloc_device(size, dftfe::utils::defaultStream);
+          *devPtr = sycl::malloc_device(
+            size, dftfe::utils::queueRegistry[dftfe::utils::defaultStream]);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -109,8 +112,10 @@ namespace dftfe
     deviceError_t
     deviceMemset(void *devPtr, int value, std::size_t count)
     {
-      dftfe::utils::defaultStream.memset(devPtr, value, count);
-      dftfe::utils::defaultStream.wait_and_throw();
+      dftfe::utils::queueRegistry[dftfe::utils::defaultStream].memset(devPtr,
+                                                                      value,
+                                                                      count);
+      dftfe::utils::queueRegistry[dftfe::utils::defaultStream].wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -121,11 +126,12 @@ namespace dftfe
       std::size_t total_workitems =
         (size / dftfe::utils::DEVICE_BLOCK_SIZE + 1) *
         dftfe::utils::DEVICE_BLOCK_SIZE;
-      deviceEvent_t event = dftfe::utils::defaultStream.parallel_for(
-        sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
-        [=](sycl::nd_item<1> ind) {
-          setValueKernel(ind, devPtr, value, size);
-        });
+      deviceEvent_t event =
+        dftfe::utils::queueRegistry[dftfe::utils::defaultStream].parallel_for(
+          sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
+          [=](sycl::nd_item<1> ind) {
+            setValueKernel(ind, devPtr, value, size);
+          });
       DEVICE_API_CHECK(event);
     }
 
@@ -167,7 +173,8 @@ namespace dftfe
     {
       try
         {
-          sycl::free(devPtr, dftfe::utils::defaultStream);
+          sycl::free(devPtr,
+                     dftfe::utils::queueRegistry[dftfe::utils::defaultStream]);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -181,7 +188,8 @@ namespace dftfe
     {
       try
         {
-          *hostPtr = sycl::malloc_host(size, dftfe::utils::defaultStream);
+          *hostPtr = sycl::malloc_host(
+            size, dftfe::utils::queueRegistry[dftfe::utils::defaultStream]);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -195,7 +203,8 @@ namespace dftfe
     {
       try
         {
-          sycl::free(hostPtr, dftfe::utils::defaultStream);
+          sycl::free(hostPtr,
+                     dftfe::utils::queueRegistry[dftfe::utils::defaultStream]);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -207,7 +216,9 @@ namespace dftfe
     deviceError_t
     deviceMemcpyD2H(void *dst, const void *src, std::size_t count)
     {
-      dftfe::utils::defaultStream.memcpy(dst, src, count).wait_and_throw();
+      dftfe::utils::queueRegistry[dftfe::utils::defaultStream]
+        .memcpy(dst, src, count)
+        .wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -216,7 +227,8 @@ namespace dftfe
     {
       try
         {
-          dftfe::utils::defaultStream.memcpy(dst, src, count);
+          dftfe::utils::queueRegistry[dftfe::utils::defaultStream].memcpy(
+            dst, src, count);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -227,7 +239,9 @@ namespace dftfe
     deviceError_t
     deviceMemcpyH2D(void *dst, const void *src, std::size_t count)
     {
-      dftfe::utils::defaultStream.memcpy(dst, src, count).wait_and_throw();
+      dftfe::utils::queueRegistry[dftfe::utils::defaultStream]
+        .memcpy(dst, src, count)
+        .wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -277,7 +291,10 @@ namespace dftfe
     deviceError_t
     deviceSynchronize()
     {
-      dftfe::utils::defaultStream.wait_and_throw();
+      for (dftfe::uInt iStream = 0;
+           iStream < dftfe::utils::queueRegistry.size();
+           ++iStream)
+        dftfe::utils::queueRegistry[iStream].wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -289,7 +306,7 @@ namespace dftfe
     {
       try
         {
-          stream.memcpy(dst, src, count);
+          dftfe::utils::queueRegistry[stream].memcpy(dst, src, count);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -306,7 +323,7 @@ namespace dftfe
     {
       try
         {
-          stream.memcpy(dst, src, count);
+          dftfe::utils::queueRegistry[stream].memcpy(dst, src, count);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -323,7 +340,7 @@ namespace dftfe
     {
       try
         {
-          stream.memcpy(dst, src, count);
+          dftfe::utils::queueRegistry[stream].memcpy(dst, src, count);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -333,60 +350,64 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceStreamCreate(deviceStream_t *pStream, const bool nonBlocking)
+    deviceStreamCreate(deviceStream_t &pStream, const bool nonBlocking)
     {
-      *pStream =
-        dftfe::utils::deviceStream_t{sycl::gpu_selector_v,
-                                     sycl::property::queue::in_order{}};
+      pStream = dftfe::utils::queueRegistry.size();
+      dftfe::utils::queueRegistry.emplace_back(
+        sycl::gpu_selector_v, sycl::property::queue::in_order{});
 
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceStreamDestroy(deviceStream_t stream)
+    deviceStreamDestroy(deviceStream_t &stream)
+    {
+      dftfe::utils::queueRegistry.erase(dftfe::utils::queueRegistry.begin() +
+                                        stream);
+      stream = 0;
+      return dftfe::utils::deviceSuccess;
+    }
+
+    deviceError_t
+    deviceStreamSynchronize(deviceStream_t &stream)
+    {
+      dftfe::utils::queueRegistry[stream].wait_and_throw();
+      return dftfe::utils::deviceSuccess;
+    }
+
+    deviceError_t
+    deviceEventCreate(deviceEvent_t &pEvent)
     {
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceStreamSynchronize(deviceStream_t stream)
-    {
-      stream.wait_and_throw();
-      return dftfe::utils::deviceSuccess;
-    }
-
-    deviceError_t
-    deviceEventCreate(deviceEvent_t *pEvent)
+    deviceEventDestroy(deviceEvent_t &event)
     {
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceEventDestroy(deviceEvent_t event)
+    deviceEventRecord(deviceEvent_t &event, deviceStream_t stream)
     {
+      event = dftfe::utils::queueRegistry[stream].ext_oneapi_submit_barrier();
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceEventRecord(deviceEvent_t event, deviceStream_t stream)
-    {
-      return dftfe::utils::deviceSuccess;
-    }
-
-    deviceError_t
-    deviceEventSynchronize(deviceEvent_t event)
+    deviceEventSynchronize(deviceEvent_t &event)
     {
       event.wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
-    deviceStreamWaitEvent(deviceStream_t stream,
-                          deviceEvent_t  event,
-                          unsigned int   flags)
+    deviceStreamWaitEvent(deviceStream_t &stream,
+                          deviceEvent_t  &event,
+                          unsigned int    flags)
     {
       event.wait_and_throw();
-      stream.wait_and_throw();
+      dftfe::utils::queueRegistry[stream].wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
 

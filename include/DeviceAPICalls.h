@@ -144,31 +144,31 @@ namespace dftfe
 
 
     deviceError_t
-    deviceStreamCreate(deviceStream_t *pStream, const bool nonBlocking = false);
+    deviceStreamCreate(deviceStream_t &pStream, const bool nonBlocking = false);
 
     deviceError_t
-    deviceStreamDestroy(deviceStream_t stream);
+    deviceStreamDestroy(deviceStream_t &stream);
 
     deviceError_t
-    deviceStreamSynchronize(deviceStream_t stream);
+    deviceStreamSynchronize(deviceStream_t &stream);
 
     deviceError_t
-    deviceEventCreate(deviceEvent_t *pEvent);
+    deviceEventCreate(deviceEvent_t &pEvent);
 
     deviceError_t
-    deviceEventDestroy(deviceEvent_t event);
+    deviceEventDestroy(deviceEvent_t &event);
 
     deviceError_t
-    deviceEventRecord(deviceEvent_t  event,
+    deviceEventRecord(deviceEvent_t &event,
                       deviceStream_t stream = dftfe::utils::defaultStream);
 
     deviceError_t
-    deviceEventSynchronize(deviceEvent_t event);
+    deviceEventSynchronize(deviceEvent_t &event);
 
     deviceError_t
-    deviceStreamWaitEvent(deviceStream_t stream,
-                          deviceEvent_t  event,
-                          unsigned int   flags = 0);
+    deviceStreamWaitEvent(deviceStream_t &stream,
+                          deviceEvent_t  &event,
+                          unsigned int    flags = 0);
 
   } // namespace utils
 } // namespace dftfe

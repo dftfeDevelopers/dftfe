@@ -501,8 +501,8 @@ namespace dftfe
 
 
       dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDeviceCCL);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -515,8 +515,8 @@ namespace dftfe
       dftfe::utils::deviceEvent_t communEvents[numberBlocks];
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&communEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(communEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::number,
@@ -789,7 +789,6 @@ namespace dftfe
                                             rotatedVectorsMatBlock.begin() +
                                               jvec,
                                             N);
-                      dftfe::utils::deviceStreamSynchronize(streamCompute);
                     }
                 } // band parallelization
               blockCount++;
@@ -886,8 +885,8 @@ namespace dftfe
       std::memset(diagValuesHost.begin(), 0, N * sizeof(dataTypes::number));
 
       dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDeviceCCL);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -899,8 +898,8 @@ namespace dftfe
       dftfe::utils::deviceEvent_t communEvents[numberBlocks];
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&communEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(communEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -1233,8 +1232,8 @@ namespace dftfe
       std::memset(diagValuesHost.begin(), 0, N * sizeof(dataTypes::number));
 
       dftfe::utils::deviceStream_t streamCompute, streamDeviceCCL;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDeviceCCL);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDeviceCCL);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -1246,8 +1245,8 @@ namespace dftfe
       dftfe::utils::deviceEvent_t communEvents[numberBlocks];
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&communEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(communEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -1739,8 +1738,8 @@ namespace dftfe
 
       // create separate Device streams for data movement and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDataMove);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDataMove);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -1754,8 +1753,8 @@ namespace dftfe
 
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&copyEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(copyEvents[i]);
         }
 
       // create pinned memory used later to copy from Device->CPU
@@ -2426,8 +2425,8 @@ namespace dftfe
 
       // create separate Device streams for Device->CPU copy and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDataMove);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDataMove);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -2441,8 +2440,8 @@ namespace dftfe
 
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&copyEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(copyEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -2966,8 +2965,8 @@ namespace dftfe
 
       // create separate Device streams for data movement and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDataMove);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDataMove);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -2981,8 +2980,8 @@ namespace dftfe
 
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&copyEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(copyEvents[i]);
         }
 
       // create pinned memory used later to copy from Device->CPU
@@ -3755,8 +3754,8 @@ namespace dftfe
 
       // create separate Device streams for Device->CPU copy and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDataMove);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDataMove);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -3770,8 +3769,8 @@ namespace dftfe
 
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&copyEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(copyEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::number,
@@ -4087,8 +4086,8 @@ namespace dftfe
 
       // create device compute and copy streams
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDataMove);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDataMove);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -4102,8 +4101,8 @@ namespace dftfe
 
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&copyEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(copyEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
@@ -4660,8 +4659,8 @@ namespace dftfe
 
       // create separate Device streams for Device->CPU copy and computation
       dftfe::utils::deviceStream_t streamCompute, streamDataMove;
-      dftfe::utils::deviceStreamCreate(&streamCompute);
-      dftfe::utils::deviceStreamCreate(&streamDataMove);
+      dftfe::utils::deviceStreamCreate(streamCompute);
+      dftfe::utils::deviceStreamCreate(streamDataMove);
 
       // attach deviceblas handle to compute stream
       BLASWrapperPtr->setStream(streamCompute);
@@ -4675,8 +4674,8 @@ namespace dftfe
 
       for (dftfe::Int i = 0; i < numberBlocks; ++i)
         {
-          dftfe::utils::deviceEventCreate(&computeEvents[i]);
-          dftfe::utils::deviceEventCreate(&copyEvents[i]);
+          dftfe::utils::deviceEventCreate(computeEvents[i]);
+          dftfe::utils::deviceEventCreate(copyEvents[i]);
         }
 
       dftfe::utils::MemoryStorage<dataTypes::number,

@@ -62,7 +62,7 @@ namespace dftfe
 #  endif
       if (!commStreamCreated)
         {
-          dftfe::utils::deviceStreamCreate(&d_deviceCommStream, true);
+          dftfe::utils::deviceStreamCreate(d_deviceCommStream, true);
           commStreamCreated = true;
         }
     }
