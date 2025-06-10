@@ -1733,24 +1733,24 @@ namespace dftfe
       const std::int64_t ldb_local        = std::int64_t(ldb);
       const std::int64_t ldc_local        = std::int64_t(ldc);
       const std::int64_t batchCount_local = std::int64_t(batchCount);
-      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(S,
-                                                 gemm_batch)(d_deviceBlasHandle,
-                                                             &transa,
-                                                             &transb,
-                                                             &m_local,
-                                                             &n_local,
-                                                             &k_local,
-                                                             alpha,
-                                                             A,
-                                                             &lda_local,
-                                                             B,
-                                                             &ldb_local,
-                                                             beta,
-                                                             C,
-                                                             &ldc_local,
-                                                             1,
-                                                             &batchCount_local),
-                           computeType);
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(S, gemm_batch)(d_deviceBlasHandle,
+                                             &transa,
+                                             &transb,
+                                             &m_local,
+                                             &n_local,
+                                             &k_local,
+                                             alpha,
+                                             A,
+                                             &lda_local,
+                                             B,
+                                             &ldb_local,
+                                             beta,
+                                             C,
+                                             &ldc_local,
+                                             1,
+                                             &batchCount_local,
+                                             computeType));
 #endif
     }
 
