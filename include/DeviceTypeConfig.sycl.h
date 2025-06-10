@@ -49,11 +49,17 @@ namespace dftfe
       oneapi::mkl::transpose::trans;
     static const oneapi::mkl::transpose DEVICEBLAS_OP_C =
       oneapi::mkl::transpose::conjtrans;
-    static const oneapi::mkl::blas::compute_mode DEVICEBLAS_DEFAULT_MATH =
+    static const oneapi::mkl::blas::compute_mode DEVICEBLAS_COMPUTE_32F =
       oneapi::mkl::blas::compute_mode::standard;
     static const oneapi::mkl::blas::compute_mode
-      DEVICEBLAS_TF32_TENSOR_OP_MATH =
+      DEVICEBLAS_COMPUTE_32F_FAST_TF32 =
         oneapi::mkl::blas::compute_mode::float_to_tf32;
+    static const oneapi::mkl::blas::compute_mode
+      DEVICEBLAS_COMPUTE_32F_FAST_16BF =
+        oneapi::mkl::blas::compute_mode::float_to_bf16;
+    static const oneapi::mkl::blas::compute_mode
+      DEVICEBLAS_COMPUTE_32F_FAST_16F =
+        oneapi::mkl::blas::compute_mode::float_to_bf16x2;
     static const deviceStream_t     defaultStream = 0;
     inline std::vector<sycl::queue> queueRegistry(
       1,

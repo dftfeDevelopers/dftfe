@@ -288,7 +288,6 @@ namespace dftfe
         {
           throw std::invalid_argument("Incorrect transB in gemm ");
         }
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasComputeType_t computeType =
         dftfe::utils::DEVICEBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
@@ -297,6 +296,7 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
         DFTFE_DEVICE_BLAS_INT(, GemmEx)(d_deviceBlasHandle,
                                         transa,
@@ -332,7 +332,8 @@ namespace dftfe
                                                          dftfe::Int(ldb),
                                                          beta,
                                                          C,
-                                                         dftfe::Int(ldc)));
+                                                         dftfe::Int(ldc),
+                                                         computeType));
 #endif
     }
 
@@ -373,7 +374,6 @@ namespace dftfe
         {
           throw std::invalid_argument("Incorrect transB in gemm ");
         }
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasComputeType_t computeType =
         dftfe::utils::DEVICEBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
@@ -382,6 +382,7 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
         DFTFE_DEVICE_BLAS_INT(, GemmEx)(d_deviceBlasHandle,
                                         transa,
@@ -418,7 +419,8 @@ namespace dftfe
                                                          dftfe::Int(ldb),
                                                          beta,
                                                          C,
-                                                         dftfe::Int(ldc)));
+                                                         dftfe::Int(ldc),
+                                                         computeType));
 #endif
     }
 
@@ -1323,7 +1325,6 @@ namespace dftfe
         {
           // Assert Statement
         }
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasComputeType_t computeType =
         dftfe::utils::DEVICEBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
@@ -1332,6 +1333,7 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
         , GemmStridedBatchedEx)(d_deviceBlasHandle,
                                 transa,
@@ -1376,7 +1378,8 @@ namespace dftfe
                                              C,
                                              dftfe::Int(ldc),
                                              strideC,
-                                             dftfe::Int(batchCount)));
+                                             dftfe::Int(batchCount),
+                                             computeType));
 #endif
     }
 
@@ -1423,7 +1426,6 @@ namespace dftfe
           // Assert Statement
         }
 
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasComputeType_t computeType =
         dftfe::utils::DEVICEBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
@@ -1432,6 +1434,7 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
         , GemmStridedBatchedEx)(d_deviceBlasHandle,
                                 transa,
@@ -1476,7 +1479,8 @@ namespace dftfe
                                              C,
                                              dftfe::Int(ldc),
                                              strideC,
-                                             dftfe::Int(batchCount)));
+                                             dftfe::Int(batchCount),
+                                             computeType));
 #endif
     }
     void
@@ -1688,7 +1692,6 @@ namespace dftfe
           // Assert Statement
         }
 
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasComputeType_t computeType =
         dftfe::utils::DEVICEBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
@@ -1697,6 +1700,7 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
         , GemmBatchedEx)(d_deviceBlasHandle,
                          transa,
@@ -1729,23 +1733,24 @@ namespace dftfe
       const std::int64_t ldb_local        = std::int64_t(ldb);
       const std::int64_t ldc_local        = std::int64_t(ldc);
       const std::int64_t batchCount_local = std::int64_t(batchCount);
-      DEVICEBLAS_API_CHECK(
-        DFTFE_DEVICE_BLAS_INT(S, gemm_batch)(d_deviceBlasHandle,
-                                             &transa,
-                                             &transb,
-                                             &m_local,
-                                             &n_local,
-                                             &k_local,
-                                             alpha,
-                                             A,
-                                             &lda_local,
-                                             B,
-                                             &ldb_local,
-                                             beta,
-                                             C,
-                                             &ldc_local,
-                                             1,
-                                             &batchCount_local));
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(S,
+                                                 gemm_batch)(d_deviceBlasHandle,
+                                                             &transa,
+                                                             &transb,
+                                                             &m_local,
+                                                             &n_local,
+                                                             &k_local,
+                                                             alpha,
+                                                             A,
+                                                             &lda_local,
+                                                             B,
+                                                             &ldb_local,
+                                                             beta,
+                                                             C,
+                                                             &ldc_local,
+                                                             1,
+                                                             &batchCount_local),
+                           computeType);
 #endif
     }
 
@@ -1788,7 +1793,6 @@ namespace dftfe
           // Assert Statement
         }
 
-#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasComputeType_t computeType =
         dftfe::utils::DEVICEBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
@@ -1797,6 +1801,7 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
         , GemmBatchedEx)(d_deviceBlasHandle,
                          transa,
@@ -1845,7 +1850,8 @@ namespace dftfe
                                              C,
                                              &ldc_local,
                                              1,
-                                             &batchCount_local));
+                                             &batchCount_local,
+                                             computeType));
 #endif
     }
 
