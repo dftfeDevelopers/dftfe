@@ -93,7 +93,7 @@ namespace dftfe
       mutable dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         zeroIndexVec;
       mutable dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-        tempCellValuesBlockCoeff;
+        tempCellValuesBlockCoeff, tempCellGradientsBlockCoeff;
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         d_BLASWrapperPtr;
 
@@ -238,6 +238,36 @@ namespace dftfe
         dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &weights,
         dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
           &weightedCellMassMatrix) const;
+
+      void
+      computeScalarFieldTimesShapeFunctionIntegral(
+        const std::vector<dftfe::uInt> &cellIndices,
+        const dftfe::uInt              &noKpoints,
+        const dftfe::uInt              &noOfVectors,
+        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &scalarField,
+        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &scalarFieldTimesShapeFunctionIntegral) const;
+
+      void
+      computeScalarFieldTimesGradientShapeFunctionIntegral(
+        const std::vector<dftfe::uInt> &cellIndices,
+        const dftfe::uInt              &noKpoints,
+        const dftfe::uInt              &noOfVectors,
+        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &scalarField,
+        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &scalarFieldTimesGradientShapeFunctionIntegral) const;
+
+      void
+      computeVectorFieldDyadicGradientShapeFunctionIntegral(
+        const std::vector<dftfe::uInt> &cellIndices,
+        const dftfe::uInt              &noKpoints,
+        const dftfe::uInt              &noOfVectors,
+        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &vectorField,
+        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &vectorFieldDyadicGradientShapeFunctionIntegral) const;
 
       void
       computeWeightedCellNjGradNiMatrix(

@@ -1052,10 +1052,58 @@ namespace dftfe
       const dftfe::uInt ldc,
       const dftfe::Int  batchCount) const
     {
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
+      for (dftfe::Int iBatch = 0; iBatch < batchCount; iBatch++)
+        {
+          xgemm(transA,
+                transB,
+                m,
+                n,
+                k,
+                alpha,
+                A[iBatch],
+                lda,
+                B[iBatch],
+                ldb,
+                beta,
+                C[iBatch],
+                ldc);
+        }
     }
 
-
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
+      const char        transA,
+      const char        transB,
+      const dftfe::uInt m,
+      const dftfe::uInt n,
+      const dftfe::uInt k,
+      const float      *alpha,
+      const float      *A[],
+      const dftfe::uInt lda,
+      const float      *B[],
+      const dftfe::uInt ldb,
+      const float      *beta,
+      float            *C[],
+      const dftfe::uInt ldc,
+      const dftfe::Int  batchCount) const
+    {
+      for (dftfe::Int iBatch = 0; iBatch < batchCount; iBatch++)
+        {
+          xgemm(transA,
+                transB,
+                m,
+                n,
+                k,
+                alpha,
+                A[iBatch],
+                lda,
+                B[iBatch],
+                ldb,
+                beta,
+                C[iBatch],
+                ldc);
+        }
+    }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
@@ -1074,9 +1122,57 @@ namespace dftfe
       const dftfe::uInt           ldc,
       const dftfe::Int            batchCount) const
     {
-      AssertThrow(false, dftUtils::ExcNotImplementedYet());
+      for (dftfe::Int iBatch = 0; iBatch < batchCount; iBatch++)
+        {
+          xgemm(transA,
+                transB,
+                m,
+                n,
+                k,
+                alpha,
+                A[iBatch],
+                lda,
+                B[iBatch],
+                ldb,
+                beta,
+                C[iBatch],
+                ldc);
+        }
     }
-
+    void
+    BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmBatched(
+      const char                 transA,
+      const char                 transB,
+      const dftfe::uInt          m,
+      const dftfe::uInt          n,
+      const dftfe::uInt          k,
+      const std::complex<float> *alpha,
+      const std::complex<float> *A[],
+      const dftfe::uInt          lda,
+      const std::complex<float> *B[],
+      const dftfe::uInt          ldb,
+      const std::complex<float> *beta,
+      std::complex<float>       *C[],
+      const dftfe::uInt          ldc,
+      const dftfe::Int           batchCount) const
+    {
+      for (dftfe::Int iBatch = 0; iBatch < batchCount; iBatch++)
+        {
+          xgemm(transA,
+                transB,
+                m,
+                n,
+                k,
+                alpha,
+                A[iBatch],
+                lda,
+                B[iBatch],
+                ldb,
+                beta,
+                C[iBatch],
+                ldc);
+        }
+    }
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::HOST>::xgemmStridedBatched(

@@ -335,26 +335,17 @@ namespace dftfe
               }
           }
       }
-    dftfe::uInt numberOfInverseJacobianEntriesPerCell = 0;
-    if (basisOperationsPtr->cellsTypeFlag() == 2)
-      numberOfInverseJacobianEntriesPerCell = 3;
-    else if (basisOperationsPtr->cellsTypeFlag() == 1)
-      numberOfInverseJacobianEntriesPerCell = 9;
-    else if (basisOperationsPtr->cellsTypeFlag() == 0)
-      numberOfInverseJacobianEntriesPerCell = 9 * numberQuadraturePoints;
-    else
-      {
-        AssertThrow(false, dealii::ExcMessage("Unknown cell type"));
-      }
+
 
     for (dftfe::uInt iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
       {
-        dftfe::uInt       ChargeId = atomIdsInProc[iAtom];
-        dealii::Point<3>  nuclearCoordinates(atomCoordinates[3 * ChargeId + 0],
+        dftfe::uInt      ChargeId = atomIdsInProc[iAtom];
+        dealii::Point<3> nuclearCoordinates(atomCoordinates[3 * ChargeId + 0],
                                             atomCoordinates[3 * ChargeId + 1],
                                             atomCoordinates[3 * ChargeId + 2]);
-        const dftfe::uInt atomId = ChargeId;
-        std::vector<double> imageCoordinates =
+        std::vector<dftfe::uInt> cellIndexes;
+        const dftfe::uInt        atomId = ChargeId;
+        std::vector<double>      imageCoordinates =
           periodicImageCoord.find(atomId)->second;
         const dftfe::uInt Znum = atomicNumber[ChargeId];
         const dftfe::uInt NumRadialSphericalFunctions =
@@ -383,11 +374,18 @@ namespace dftfe
                   numberElementsInAtomCompactSupport);
               }
           }
-        std::vector<dataTypes::number> sphericalFunctionBasisTimesJxW(
-          numberElementsInAtomCompactSupport * NumTotalSphericalFunctions *
-            numberQuadraturePoints * maxkPoints,
-          0.0);
-
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::HOST>
+          sphericalFunctionBasisTimesJxW(numberElementsInAtomCompactSupport *
+                                           NumTotalSphericalFunctions *
+                                           numberQuadraturePoints * maxkPoints,
+                                         0.0);
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::HOST>
+          sphericalFunctionBasisWithDistanceTimesJxW(
+            numberElementsInAtomCompactSupport * NumTotalSphericalFunctions *
+              3 * numberQuadraturePoints * maxkPoints,
+            0.0);
         std::vector<dataTypes::number>
           inverseJacobianTimesGradientShapeFnForChargeId;
         if (d_computeConfigurationalForce && false)
@@ -404,48 +402,12 @@ namespace dftfe
           {
             const dftfe::uInt elementIndex =
               elementIndexesInAtomCompactSupport[iElemComp];
+            cellIndexes.push_back(elementIndex);
             const double *quadPointsInElement =
               quadraturePointsVector.data() +
               elementIndex * numberQuadraturePoints * 3;
             const dataTypes::number *JxwInElement =
               JxwVector.data() + elementIndex * numberQuadraturePoints;
-            if (d_computeConfigurationalForce && false)
-              {
-                const double *inverseJacobianEntries =
-                  basisOperationsPtr->inverseJacobiansBasisData().data() +
-                  elementIndex * numberOfInverseJacobianEntriesPerCell;
-                if (basisOperationsPtr->cellsTypeFlag() == 2)
-                  {
-                    for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-                      for (dftfe::Int iQuadPoint = 0;
-                           iQuadPoint < numberQuadraturePoints;
-                           iQuadPoint++)
-                        {
-                          for (dftfe::Int iNode = 0;
-                               iNode < d_numberNodesPerElement;
-                               ++iNode)
-                            inverseJacobianTimesGradientShapeFnForChargeId
-                              [iDim * numberElementsInAtomCompactSupport *
-                                 numberQuadraturePoints *
-                                 d_numberNodesPerElement +
-                               iElemComp * numberQuadraturePoints *
-                                 d_numberNodesPerElement +
-                               iQuadPoint * d_numberNodesPerElement + iNode] =
-                                inverseJacobianEntries[iDim] *
-                                shapeGradQuads[iDim * numberQuadraturePoints *
-                                                 d_numberNodesPerElement +
-                                               iQuadPoint *
-                                                 d_numberNodesPerElement +
-                                               iNode];
-                        }
-                  }
-                else
-                  {
-                    // Something similar
-                    // to the above for 3x3 inverse Jacobian matrix
-                  }
-              }
-
 
             for (dftfe::uInt alpha = 0; alpha < NumRadialSphericalFunctions;
                  ++alpha)
@@ -554,17 +516,16 @@ namespace dftfe
                                        tempIndex * numberQuadraturePoints +
                                        iQuadPoint] += tempValue;
                                     sphericalFunctionBasisTimesJxW
-                                      [iElemComp * maxkPoints *
-                                         NumTotalSphericalFunctions *
+                                      [iElemComp * NumTotalSphericalFunctions *
                                          numberQuadraturePoints +
                                        kPoint * NumTotalSphericalFunctions *
+                                         numberElementsInAtomCompactSupport *
                                          numberQuadraturePoints +
                                        (startIndex + tempIndex) *
                                          numberQuadraturePoints +
                                        iQuadPoint] +=
                                       tempValue *
                                       real(JxwInElement[iQuadPoint]);
-
                                     for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                                       sphericalFunctionBasisTimesImageDist
                                         [kPoint * numberQuadraturePoints *
@@ -573,14 +534,28 @@ namespace dftfe
                                            3 +
                                          iQuadPoint * 3 + iDim] +=
                                         tempValue * x[iDim];
+                                    for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                                      sphericalFunctionBasisWithDistanceTimesJxW
+                                        [iElemComp *
+                                           NumTotalSphericalFunctions *
+                                           numberQuadraturePoints * 3 +
+                                         kPoint * NumTotalSphericalFunctions *
+                                           numberElementsInAtomCompactSupport *
+                                           numberQuadraturePoints * 3 +
+                                         iDim * numberQuadraturePoints *
+                                           NumTotalSphericalFunctions +
+                                         (startIndex + tempIndex) *
+                                           numberQuadraturePoints +
+                                         iQuadPoint] +=
+                                        tempValue * x[iDim] *
+                                        real(JxwInElement[iQuadPoint]);
                                   } // k-Point Loop
 #else
                                 sphericalFunctionBasis
                                   [tempIndex * numberQuadraturePoints +
                                    iQuadPoint] += sphericalFunctionValue;
                                 sphericalFunctionBasisTimesJxW
-                                  [iElemComp * maxkPoints *
-                                     NumTotalSphericalFunctions *
+                                  [iElemComp * NumTotalSphericalFunctions *
                                      numberQuadraturePoints +
                                    (startIndex + tempIndex) *
                                      numberQuadraturePoints +
@@ -591,6 +566,17 @@ namespace dftfe
                                     [tempIndex * numberQuadraturePoints * 3 +
                                      iQuadPoint * 3 + iDim] +=
                                     sphericalFunctionValue * x[iDim];
+                                for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                                  sphericalFunctionBasisWithDistanceTimesJxW
+                                    [iElemComp * NumTotalSphericalFunctions *
+                                       numberQuadraturePoints * 3 +
+                                     iDim * numberQuadraturePoints *
+                                       NumTotalSphericalFunctions +
+                                     (startIndex + tempIndex) *
+                                       numberQuadraturePoints +
+                                     iQuadPoint] +=
+                                    sphericalFunctionValue * x[iDim] *
+                                    (JxwInElement[iQuadPoint]);
 
 #endif
                                 tempIndex++;
@@ -668,49 +654,49 @@ namespace dftfe
         const dftfe::uInt m = d_numberNodesPerElement;
         const dftfe::uInt m1 =
           d_numberNodesPerElement * numberElementsInAtomCompactSupport;
-        const dftfe::uInt              k = numberQuadraturePoints;
-        std::vector<dataTypes::number> projectorMatrices(m * n, 0.0);
-        std::vector<dataTypes::number> gradientProjectorMatrices(3 * m * n,
-                                                                 0.0);
-        // std::vector<ValueType> projectorMatricesReal(m * n, 0.0);
-        if (numberElementsInAtomCompactSupport > 0)
+        const dftfe::uInt k = numberQuadraturePoints;
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::HOST>
+          gradientProjectorMatrices;
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::HOST>
+          gradientProjectorDyadicXMatrices;
+        if (d_computeConfigurationalForce && false)
           {
-            BLASWrapperHostPtr->xgemm(transA,
-                                      transB,
-                                      m,
-                                      n,
-                                      k,
-                                      &scalarCoeffAlpha,
-                                      &shapeValQuads[0],
-                                      m,
-                                      &sphericalFunctionBasisTimesJxW[0],
-                                      k,
-                                      &scalarCoeffBeta,
-                                      &projectorMatrices[0],
-                                      m);
-            if (d_computeConfigurationalForce && false)
-              {
-                for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
-                  {
-                    BLASWrapperHostPtr->xgemm(
-                      transA,
-                      transB,
-                      m1,
-                      n,
-                      k,
-                      &scalarCoeffAlpha,
-                      &inverseJacobianTimesGradientShapeFnForChargeId
-                        [iDim * numberElementsInAtomCompactSupport *
-                         numberQuadraturePoints * d_numberNodesPerElement],
-                      m1,
-                      &sphericalFunctionBasisTimesJxW[0],
-                      k,
-                      &scalarCoeffBeta,
-                      &gradientProjectorMatrices[iDim * m * n],
-                      m1);
-                  }
-              }
+            gradientProjectorMatrices.resize(3 * m * n, 0.0);
+            gradientProjectorDyadicXMatrices.resize(3 * 3 * m * n, 0.0);
           }
+
+
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::HOST>
+          projectorMatrices(m * n, 0.0);
+        basisOperationsPtr->computeScalarFieldTimesShapeFunctionIntegral(
+          cellIndexes,
+          maxkPoints,
+          NumTotalSphericalFunctions,
+          sphericalFunctionBasisTimesJxW,
+          projectorMatrices);
+
+        if (d_computeConfigurationalForce && false)
+          {
+            basisOperationsPtr
+              ->computeScalarFieldTimesGradientShapeFunctionIntegral(
+                cellIndexes,
+                maxkPoints,
+                NumTotalSphericalFunctions,
+                sphericalFunctionBasisTimesJxW,
+                gradientProjectorMatrices);
+            basisOperationsPtr
+              ->computeVectorFieldDyadicGradientShapeFunctionIntegral(
+                cellIndexes,
+                maxkPoints,
+                NumTotalSphericalFunctions,
+                sphericalFunctionBasisWithDistanceTimesJxW,
+                gradientProjectorDyadicXMatrices);
+          }
+
+
 
         for (dftfe::Int iElemComp = 0;
              iElemComp < numberElementsInAtomCompactSupport;
@@ -751,12 +737,20 @@ namespace dftfe
                   for (dftfe::Int iNode = 0; iNode < d_numberNodesPerElement;
                        ++iNode)
                     {
+                      // const dftfe::uInt flattenedIndex =
+                      //   iElemComp * maxkPoints * NumTotalSphericalFunctions *
+                      //     d_numberNodesPerElement +
+                      //   kPoint * NumTotalSphericalFunctions *
+                      //     d_numberNodesPerElement +
+                      //   beta * d_numberNodesPerElement + iNode;
                       const dftfe::uInt flattenedIndex =
-                        iElemComp * maxkPoints * NumTotalSphericalFunctions *
-                          d_numberNodesPerElement +
                         kPoint * NumTotalSphericalFunctions *
+                          d_numberNodesPerElement *
+                          numberElementsInAtomCompactSupport +
+                        iElemComp * NumTotalSphericalFunctions *
                           d_numberNodesPerElement +
                         beta * d_numberNodesPerElement + iNode;
+
                       const dataTypes::number temp =
                         projectorMatrices[flattenedIndex];
 #ifdef USE_COMPLEX
@@ -769,11 +763,91 @@ namespace dftfe
                         [kPoint * d_numberNodesPerElement *
                            NumTotalSphericalFunctions +
                          NumTotalSphericalFunctions * iNode + beta] = temp;
+                      if (d_computeConfigurationalForce && false)
+                        {
+                          for (dftfe::Int iDim = 0; iDim < 3; ++iDim)
+                            {
+                              const dftfe::uInt flattenedIndexForD =
+                                kPoint * NumTotalSphericalFunctions *
+                                  d_numberNodesPerElement * 3 *
+                                  numberElementsInAtomCompactSupport +
+                                iDim * numberElementsInAtomCompactSupport *
+                                  NumTotalSphericalFunctions *
+                                  d_numberNodesPerElement +
+                                iElemComp * NumTotalSphericalFunctions *
+                                  d_numberNodesPerElement +
+                                beta * d_numberNodesPerElement + iNode;
+                              (*DMatrixEntriesConjugateAtomElem)
+                                [kPoint * d_numberNodesPerElement *
+                                   NumTotalSphericalFunctions * 3 +
+                                 iDim * d_numberNodesPerElement *
+                                   NumTotalSphericalFunctions +
+                                 beta * d_numberNodesPerElement + iNode] =
+                                  std::conj(gradientProjectorMatrices
+                                              [flattenedIndexForD]);
+                            }
+                          //  for (dftfe::Int iDim = 0; iDim < 9; ++iDim)
+                          //   {
+                          //     const dftfe::uInt flattenedIndexForD =
+                          //       kPoint * NumTotalSphericalFunctions *
+                          //         d_numberNodesPerElement * 9 *
+                          //         numberElementsInAtomCompactSupport +
+                          //       iDim * numberElementsInAtomCompactSupport *
+                          //         NumTotalSphericalFunctions *
+                          //         d_numberNodesPerElement +
+                          //       iElemComp * NumTotalSphericalFunctions *
+                          //         d_numberNodesPerElement +
+                          //       beta * d_numberNodesPerElement + iNode;
+                          //     (*DMatrixEntriesConjugateAtomElem)
+                          //       [kPoint * d_numberNodesPerElement *
+                          //          NumTotalSphericalFunctions * 9 +
+                          //        iDim * d_numberNodesPerElement *
+                          //          NumTotalSphericalFunctions +
+                          //        beta * d_numberNodesPerElement + iNode] =
+                          //         std::conj(gradientProjectorDyadicXMatrices
+                          //                     [flattenedIndexForD])
+                          //   }
+                        }
 
 #else
                       CMatrixEntriesConjugateAtomElem[d_numberNodesPerElement *
                                                         beta +
                                                       iNode] = temp;
+                      if (d_computeConfigurationalForce && false)
+                        {
+                          for (dftfe::Int iDim = 0; iDim < 3; ++iDim)
+                            {
+                              const dftfe::uInt flattenedIndexForD =
+                                iDim * numberElementsInAtomCompactSupport *
+                                  NumTotalSphericalFunctions *
+                                  d_numberNodesPerElement +
+                                iElemComp * NumTotalSphericalFunctions *
+                                  d_numberNodesPerElement +
+                                beta * d_numberNodesPerElement + iNode;
+                              (*DMatrixEntriesConjugateAtomElem)
+                                [iDim * d_numberNodesPerElement *
+                                   NumTotalSphericalFunctions +
+                                 beta * d_numberNodesPerElement + iNode] =
+                                  (gradientProjectorMatrices
+                                     [flattenedIndexForD]);
+                            }
+                          // for (dftfe::Int iDim = 0; iDim < 9; ++iDim)
+                          //   {
+                          //     const dftfe::uInt flattenedIndexForD =
+                          //       iDim * numberElementsInAtomCompactSupport *
+                          //         NumTotalSphericalFunctions *
+                          //         d_numberNodesPerElement +
+                          //       iElemComp * NumTotalSphericalFunctions *
+                          //         d_numberNodesPerElement +
+                          //       beta * d_numberNodesPerElement + iNode;
+                          //     (*DMatrixEntriesConjugateAtomElem)
+                          //       [iDim * d_numberNodesPerElement *
+                          //          NumTotalSphericalFunctions +
+                          //        beta * d_numberNodesPerElement + iNode] =
+                          //         std::conj(gradientProjectorDyadicXMatrices
+                          //                     [flattenedIndexForD])
+                          //   }
+                        }
 
                       CMatrixEntriesTransposeAtomElem
                         [NumTotalSphericalFunctions * iNode + beta] = temp;
