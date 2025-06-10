@@ -73,9 +73,9 @@ namespace dftfe
       std::shared_ptr<AtomCenteredSphericalFunctionContainer>
                       atomCenteredSphericalFunctionContainer,
       const MPI_Comm &mpi_comm_parent,
-      const bool      memOptMode               = false,
-      const bool      computeSphericalFnTimesX = true,
-      const bool      useGlobalCMatrix         = false);
+      const bool      memOptMode                  = false,
+      const bool      computeConfigurationalForce = true,
+      const bool      useGlobalCMatrix            = false);
 
     /**
      * @brief Resizes various internal data members and selects the kpoint of interest.
@@ -677,7 +677,10 @@ namespace dftfe
         dataTypes::number,
         double,
         dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
-      const dftfe::uInt                   quadratureIndex);
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                        BLASWrapperHostPtr,
+      const dftfe::uInt quadratureIndex);
 
     template <typename ValueTypeSrc>
     void
@@ -725,7 +728,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
       d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
     std::vector<dftfe::uInt> d_nonlocalElemIdToCellIdVector;
-    bool                     d_computeSphericalFnTimesX;
+    bool                     d_computeConfigurationalForce;
     bool                     d_useGlobalCMatrix;
     std::vector<dftfe::uInt> d_atomStartIndexGlobal;
     dftfe::uInt              d_totalNumSphericalFunctionsGlobal;
