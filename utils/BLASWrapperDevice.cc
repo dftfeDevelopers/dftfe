@@ -1536,12 +1536,13 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      const dftfe::Int m_local   = dftfe::Int(m);
-      const dftfe::Int n_local   = dftfe::Int(n);
-      const dftfe::Int k_local   = dftfe::Int(k);
-      const dftfe::Int lda_local = dftfe::Int(lda);
-      const dftfe::Int ldb_local = dftfe::Int(ldb);
-      const dftfe::Int ldc_local = dftfe::Int(ldc);
+      const std::int64_t m_local          = std::int64_t(m);
+      const std::int64_t n_local          = std::int64_t(n);
+      const std::int64_t k_local          = std::int64_t(k);
+      const std::int64_t lda_local        = std::int64_t(lda);
+      const std::int64_t ldb_local        = std::int64_t(ldb);
+      const std::int64_t ldc_local        = std::int64_t(ldc);
+      const std::int64_t batchCount_local = std::int64_t(batchCount);
       DEVICEBLAS_API_CHECK(
         DFTFE_DEVICE_BLAS_INT(D, gemm_batch)(d_deviceBlasHandle,
                                              &transa,
@@ -1558,7 +1559,7 @@ namespace dftfe
                                              C,
                                              &ldc_local,
                                              1,
-                                             &batchCount));
+                                             &batchCount_local));
 #endif
     }
 
@@ -1622,12 +1623,13 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      const dftfe::Int m_local   = dftfe::Int(m);
-      const dftfe::Int n_local   = dftfe::Int(n);
-      const dftfe::Int k_local   = dftfe::Int(k);
-      const dftfe::Int lda_local = dftfe::Int(lda);
-      const dftfe::Int ldb_local = dftfe::Int(ldb);
-      const dftfe::Int ldc_local = dftfe::Int(ldc);
+      const std::int64_t m_local          = std::int64_t(m);
+      const std::int64_t n_local          = std::int64_t(n);
+      const std::int64_t k_local          = std::int64_t(k);
+      const std::int64_t lda_local        = std::int64_t(lda);
+      const std::int64_t ldb_local        = std::int64_t(ldb);
+      const std::int64_t ldc_local        = std::int64_t(ldc);
+      const std::int64_t batchCount_local = std::int64_t(batchCount);
       DEVICEBLAS_API_CHECK(
         DFTFE_DEVICE_BLAS_INT(Z, gemm_batch)(d_deviceBlasHandle,
                                              &transa,
@@ -1644,7 +1646,7 @@ namespace dftfe
                                              C,
                                              &ldc_local,
                                              1,
-                                             &batchCount));
+                                             &batchCount_local));
 #endif
     }
 
@@ -1720,12 +1722,13 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      const dftfe::Int m_local   = dftfe::Int(m);
-      const dftfe::Int n_local   = dftfe::Int(n);
-      const dftfe::Int k_local   = dftfe::Int(k);
-      const dftfe::Int lda_local = dftfe::Int(lda);
-      const dftfe::Int ldb_local = dftfe::Int(ldb);
-      const dftfe::Int ldc_local = dftfe::Int(ldc);
+      const std::int64_t m_local          = std::int64_t(m);
+      const std::int64_t n_local          = std::int64_t(n);
+      const std::int64_t k_local          = std::int64_t(k);
+      const std::int64_t lda_local        = std::int64_t(lda);
+      const std::int64_t ldb_local        = std::int64_t(ldb);
+      const std::int64_t ldc_local        = std::int64_t(ldc);
+      const std::int64_t batchCount_local = std::int64_t(batchCount);
       DEVICEBLAS_API_CHECK(
         DFTFE_DEVICE_BLAS_INT(S, gemm_batch)(d_deviceBlasHandle,
                                              &transa,
@@ -1742,7 +1745,7 @@ namespace dftfe
                                              C,
                                              &ldc_local,
                                              1,
-                                             &batchCount));
+                                             &batchCount_local));
 #endif
     }
 
@@ -1818,12 +1821,13 @@ namespace dftfe
 
       DEVICEBLAS_API_CHECK(status);
 #elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-      const dftfe::Int m_local   = dftfe::Int(m);
-      const dftfe::Int n_local   = dftfe::Int(n);
-      const dftfe::Int k_local   = dftfe::Int(k);
-      const dftfe::Int lda_local = dftfe::Int(lda);
-      const dftfe::Int ldb_local = dftfe::Int(ldb);
-      const dftfe::Int ldc_local = dftfe::Int(ldc);
+      const std::int64_t m_local          = std::int64_t(m);
+      const std::int64_t n_local          = std::int64_t(n);
+      const std::int64_t k_local          = std::int64_t(k);
+      const std::int64_t lda_local        = std::int64_t(lda);
+      const std::int64_t ldb_local        = std::int64_t(ldb);
+      const std::int64_t ldc_local        = std::int64_t(ldc);
+      const std::int64_t batchCount_local = std::int64_t(batchCount);
 
       DEVICEBLAS_API_CHECK(
         DFTFE_DEVICE_BLAS_INT(C, gemm_batch)(d_deviceBlasHandle,
@@ -1841,7 +1845,7 @@ namespace dftfe
                                              C,
                                              &ldc_local,
                                              1,
-                                             &batchCount));
+                                             &batchCount_local));
 #endif
     }
 
