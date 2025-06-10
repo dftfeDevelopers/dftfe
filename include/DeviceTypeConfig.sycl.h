@@ -37,7 +37,7 @@ namespace dftfe
     // vendor blas related typedef and static consts
     typedef sycl::queue                      deviceBlasHandle_t;
     typedef oneapi::mkl::transpose           deviceBlasOperation_t;
-    typedef oneapi::mkl::blas::compute_mode  deviceBlasMath_t;
+    typedef oneapi::mkl::blas::compute_mode  deviceBlasComputeType_t;
     typedef sycl::info::event_command_status deviceBlasStatus_t;
 
     static const sycl::info::event_command_status deviceBlasSuccess =
