@@ -74,12 +74,12 @@ namespace dftfe
               HIP_KERNEL_NAME(kernel), grid, block, 0, stream, __VA_ARGS__); \
         } while (0)
 #    elif defined(DFTFE_WITH_DEVICE_INTEL)
-#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)     \
-        do                                                              \
-          {                                                             \
-            dftfe::utils::queueRegistry[stream].parallel_for(           \
-              sycl::nd_range<1>((grid) * (block), block),               \
-              [=](sycl::nd_item<1> ind) { kernel(ind, __VA_ARGS__); }); \
+#      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)        \
+        do                                                                 \
+          {                                                                \
+            dftfe::utils::queueRegistry.find(stream)->second.parallel_for( \
+              sycl::nd_range<1>((grid) * (block), block),                  \
+              [=](sycl::nd_item<1> ind) { kernel(ind, __VA_ARGS__); });    \
         } while (0)
 #    else
 #      error \
@@ -111,7 +111,7 @@ namespace dftfe
         kernel, grid, block, smemtype, smemcount, stream, ...)               \
         do                                                                   \
           {                                                                  \
-            dftfe::utils::queueRegistry[stream].submit(                      \
+            dftfe::utils::queueRegistry.find(stream)->second.submit(         \
               [=](sycl::handler &cgh) {                                      \
                 sycl::local_accessor<smemtype, 1> SMem_acc(smemcount, cgh);  \
                 cgh.parallel_for(sycl::nd_range<1>((grid) * (block), block), \
@@ -147,7 +147,7 @@ namespace dftfe
         kernel, grid, block, smemtype, smemcount, stream, ...)               \
         do                                                                   \
           {                                                                  \
-            dftfe::utils::queueRegistry[stream].submit(                      \
+            dftfe::utils::queueRegistry.find(stream)->second.submit(         \
               [=](sycl::handler &cgh) {                                      \
                 sycl::local_accessor<smemtype, 1> SMem_acc(smemcount, cgh);  \
                 cgh.parallel_for(sycl::nd_range<1>((grid) * (block), block), \
