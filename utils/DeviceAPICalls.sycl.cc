@@ -52,8 +52,13 @@ namespace dftfe
     deviceError_t
     deviceReset()
     {
-      deviceSynchronize();
       dftfe::utils::queueRegistry.clear();
+      dftfe::utils::usedStreamIds.clear();
+      dftfe::utils::usedStreamIds.insert(dftfe::utils::defaultStream);
+      dftfe::utils::queueRegistry[dftfe::utils::defaultStream] =
+        sycl::queue(dftfe::utils::syclContext,
+                    dftfe::utils::syclDevice,
+                    sycl::property::queue::in_order{});
       return dftfe::utils::deviceSuccess;
     }
 
@@ -99,11 +104,6 @@ namespace dftfe
       dftfe::utils::syclDevice =
         dftfe::utils::allSyclGPUDevices[dftfe::utils::syclDeviceId];
       dftfe::utils::syclContext = sycl::context(dftfe::utils::syclDevice);
-      dftfe::utils::queueRegistry.clear();
-      dftfe::utils::queueRegistry[dftfe::utils::defaultStream] =
-        sycl::queue(dftfe::utils::syclContext,
-                    dftfe::utils::syclDevice,
-                    sycl::property::queue::in_order{});
       return dftfe::utils::deviceSuccess;
     }
 

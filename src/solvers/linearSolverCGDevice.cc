@@ -19,7 +19,6 @@
 
 #include <linearSolverCGDevice.h>
 #include <MemoryTransfer.h>
-#include <deviceKernelsGeneric.h>
 #include "linearSolverCGDeviceKernels.h"
 
 namespace dftfe
@@ -148,7 +147,7 @@ namespace dftfe
                     beta = delta / beta;
 
                     // q = beta * q - d
-                    dftfe::utils::deviceKernelsGeneric::sadd<double>(
+                    sadd(
                       d_qvec.begin(), d_dvec.begin(), beta, d_xLocalDof);
                   }
                 else

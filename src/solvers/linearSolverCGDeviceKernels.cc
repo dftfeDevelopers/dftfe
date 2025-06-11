@@ -247,6 +247,24 @@ namespace dftfe
     const Type       alpha,
     const dftfe::Int N);
 
+  template <typename Type>
+  DFTFE_CREATE_KERNEL(
+    void,
+    saddKernel,
+    {
+      for (dftfe::uInt idx = globalThreadId; idx < size;
+           idx += nThreadsPerBlock * nThreadBlock)
+        {
+          y[idx] = beta * y[idx] - x[idx];
+          x[idx] = 0;
+        }
+    },
+    Type             *y,
+    Type             *x,
+    const Type        beta,
+    const dftfe::uInt size);
+
+
   void
   applyPreconditionAndComputeDotProductDevice(double          *d_dvec,
                                               double          *d_devSum,
@@ -326,5 +344,22 @@ namespace dftfe
       alpha,
       N);
   }
+
+  void
+  sadd(double *y, double *x, const double beta, const dftfe::uInt size)
+  {
+    const dftfe::uInt gridSize =
+      (size / dftfe::utils::DEVICE_BLOCK_SIZE) +
+      (size % dftfe::utils::DEVICE_BLOCK_SIZE == 0 ? 0 : 1);
+    DFTFE_LAUNCH_KERNEL(saddKernel,
+                        gridSize,
+                        dftfe::utils::DEVICE_BLOCK_SIZE,
+                        dftfe::utils::defaultStream,
+                        y,
+                        x,
+                        beta,
+                        size);
+  }
+
 
 } // namespace dftfe

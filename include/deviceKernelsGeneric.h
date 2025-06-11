@@ -31,49 +31,6 @@ namespace dftfe
     {
       void
       setupDevice(const int &mpi_rank);
-
-      template <typename ValueTypeComplex, typename ValueTypeReal>
-      void
-      copyComplexArrToRealArrsDevice(const dftfe::uInt       size,
-                                     const ValueTypeComplex *complexArr,
-                                     ValueTypeReal          *realArr,
-                                     ValueTypeReal          *imagArr);
-
-
-      template <typename ValueTypeComplex, typename ValueTypeReal>
-      void
-      copyRealArrsToComplexArrDevice(const dftfe::uInt    size,
-                                     const ValueTypeReal *realArr,
-                                     const ValueTypeReal *imagArr,
-                                     ValueTypeComplex    *complexArr);
-
-
-
-      template <typename ValueType>
-      void
-      sadd(ValueType        *y,
-           ValueType        *x,
-           const ValueType   beta,
-           const dftfe::uInt size);
-
-
-      // This kernel interpolates the nodal data to quad data
-      // The function takes the cell level nodal data
-      // and interpolates it to the quad data in each cell
-      // by multiplying with the shape function
-      template <typename ValueType1, typename ValueType2>
-      void
-      interpolateNodalDataToQuadDevice(
-        const dftfe::uInt numDofsPerElem,
-        const dftfe::uInt numQuadPoints,
-        const dftfe::uInt numVecs,
-        const ValueType2 *parentShapeFunc,
-        const ValueType1 *mapPointToCellIndex,
-        const ValueType1 *mapPointToProcLocal,
-        const ValueType1 *mapPointToShapeFuncIndex,
-        const ValueType2 *parentNodalValues,
-        ValueType2       *quadValues);
-
     } // namespace deviceKernelsGeneric
   }   // namespace utils
 } // namespace dftfe
