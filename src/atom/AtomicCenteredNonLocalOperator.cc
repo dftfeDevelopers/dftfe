@@ -5713,3 +5713,119 @@ namespace dftfe
 #endif
 
 } // namespace dftfe
+
+
+/*
+///// Comments on How to use the class for Configurational Forces:
+
+
+
+  const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
+    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
+    const dftfe::uInt numberWavefunctions = src.numVectors();
+    src.updateGhostValues();
+    d_basisOperationsPtr->distribute(src);
+    const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
+                            scalarCoeffBeta  = dataTypes::number(0.0);
+         if (d_dftParamsPtr->isPseudopotential)
+          {
+            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
+              d_kPointIndex, allReduceVectorType::CconjtransX);
+                        d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
+              numWaveFunctions,
+              d_pseudopotentialNonLocalProjectorTimesVectorBlock);
+            if(computeIonForces)
+            {
+            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
+              d_kPointIndex, allReduceVectorType::DconjtransX);
+            d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
+              numWaveFunctions,
+              d_pseudopotentialNonLocalProjectorTimesGradientVectorBlock,
+allReduceVectorType::DconjtransX);
+            }
+            if(computeCellStress)
+              {
+            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
+              d_kPointIndex, allReduceVectorType::DDyadicRconjtransX);
+              d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
+              numWaveFunctions,
+              d_pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,
+allReduceVectorType::DDyadicRconjtransX);
+              }
+          }
+          std::vector<AllReduceVectorType> allReduceVectorTypesVector =
+{allReduceVectorType::CconjtransX, allReduceVectorType::DconjtransX,
+allReduceVectorType::DDyadicRconjtransX}; if(Device)
+           d_pseudopotentialNonLocalOperator->initialiseCellWaveFunctionPointers(d_cellWaveFunctionMatrixSrc,d_cellsBlockSizeHX,
+allReduceVectorTypesVector); for (dftfe::uInt iCell = 0; iCell < numCells; iCell
++= d_cellsBlockSizeHX)
+      {
+        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
+          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
+        d_BLASWrapperPtr->stridedCopyToBlock(
+          numberWavefunctions,
+          numDoFsPerCell * (cellRange.second - cellRange.first),
+          src.data(),
+          d_cellWaveFunctionMatrixSrc.data() +
+            (d_dftParamsPtr->memOptMode ?
+               0 :
+               cellRange.first * numDoFsPerCell * numberWavefunctions),
+          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
+              .data() +
+            cellRange.first * numDoFsPerCell);
+#pragma omp critical(hx_Cconj)
+        if (hasNonlocalComponents)
+          {
+            d_pseudopotentialNonLocalOperator->applyCconjtransOnX(
+              d_cellWaveFunctionMatrixSrc.data() +
+                (d_dftParamsPtr->memOptMode ?
+                   0 :
+                   cellRange.first * numDoFsPerCell * numberWavefunctions),
+              cellRange);
+              d_pseudopotentialNonLocalOperator->applyDconjtransOnX(
+              d_cellWaveFunctionMatrixSrc.data() +
+                (d_dftParamsPtr->memOptMode ?
+                   0 :
+                   cellRange.first * numDoFsPerCell * numberWavefunctions),
+              cellRange);
+            d_pseudopotentialNonLocalOperator->applyDDyadicRconjtransOnX(
+              d_cellWaveFunctionMatrixSrc.data() +
+                (d_dftParamsPtr->memOptMode ?
+                   0 :
+                   cellRange.first * numDoFsPerCell * numberWavefunctions),
+              cellRange);
+          }
+      }
+      if (hasNonlocalComponents)
+      {
+        d_pseudopotentialNonLocalProjectorTimesVectorBlock.setValue(0);
+        d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
+          d_pseudopotentialNonLocalProjectorTimesVectorBlock);
+        d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
+          CouplingStructure::diagonal,
+          d_pseudopotentialClassPtr->getCouplingMatrix(),
+          d_pseudopotentialNonLocalProjectorTimesVectorBlock,
+          false);
+        if(computeForces)
+        {
+          d_pseudopotentialNonLocalProjectorTimesGradientVectorBlock.setValue(0);
+          d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
+            d_pseudopotentialNonLocalProjectorTimesGradientVectorBlock,allReduceVectorType::DconjtransX);
+            d_pseudopotentialNonLocalOperator->computeInnerProductOverSphericalFnsWaveFns(3,d_pseudopotentialNonLocalProjectorTimesVectorBlock,d_pseudopotentialNonLocalProjectorTimesGradientVectorBlock,iBlock==0?true:false,ForceVctor);
+        }
+
+
+            if(computeCellStress)
+            {
+              d_pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock.setValue(0);
+              d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
+                d_pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,allReduceVectorType::DDyadicRconjtransX);
+              d_pseudopotentialNonLocalOperator->computeInnerProductOverSphericalFnsWaveFns(9,d_pseudopotentialNonLocalProjectorTimesVectorBlock,d_pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,iBlock==0?true:false,StressTensorVctor);
+            }
+        }
+
+
+
+
+
+*/
