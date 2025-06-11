@@ -61,6 +61,7 @@ namespace dftfe
     static const hipDataType DEVICE_C_32F  = HIP_C_32F;
     static const hipDataType DEVICE_C_16F  = HIP_C_16F;
     static const hipDataType DEVICE_C_16BF = HIP_C_16BF;
+    static hipStream_t       defaultStream = 0;
   } // namespace utils
 } // namespace dftfe
 

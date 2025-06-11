@@ -1,4 +1,5 @@
 #include "constraintMatrixInfoDeviceKernels.h"
+#include <BLASWrapper.h>
 
 namespace dftfe
 {
@@ -576,7 +577,8 @@ namespace dftfe
                                      dftfe::utils::DEVICE_BLOCK_SIZE,
                                    dftfe::uInt(30000)),
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           contiguousBlockSize,
                           dftfe::utils::makeDataTypeDeviceCompatible(xVec),
                           constraintLocalRowIdsUnflattened,
@@ -606,7 +608,8 @@ namespace dftfe
                                      dftfe::utils::DEVICE_BLOCK_SIZE,
                                    dftfe::uInt(30000)),
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           contiguousBlockSize,
                           dftfe::utils::makeDataTypeDeviceCompatible(xVec),
                           constraintLocalRowIdsUnflattened,
@@ -629,7 +632,8 @@ namespace dftfe
                                      dftfe::utils::DEVICE_BLOCK_SIZE,
                                    dftfe::uInt(30000)),
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           contiguousBlockSize,
                           dftfe::utils::makeDataTypeDeviceCompatible(xVec),
                           constraintLocalRowIdsUnflattened,
@@ -652,7 +656,8 @@ namespace dftfe
                                      dftfe::utils::DEVICE_BLOCK_SIZE,
                                    dftfe::uInt(30000)),
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           dftfe::utils::makeDataTypeDeviceCompatible(xVec),
                           constraintLocalRowIdsUnflattened,
                           numConstraints,

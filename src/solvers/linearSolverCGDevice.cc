@@ -147,8 +147,7 @@ namespace dftfe
                     beta = delta / beta;
 
                     // q = beta * q - d
-                    sadd(
-                      d_qvec.begin(), d_dvec.begin(), beta, d_xLocalDof);
+                    sadd(d_qvec.begin(), d_dvec.begin(), beta, d_xLocalDof);
                   }
                 else
                   {

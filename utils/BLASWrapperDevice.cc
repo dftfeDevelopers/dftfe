@@ -201,7 +201,7 @@ namespace dftfe
       const std::complex<double> *x,
       const dftfe::uInt           incx,
       std::complex<double>       *y,
-      const dftfe::uInt           incy) const
+      const dftfe::uInt           incy)
     {
       DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, copy)(
         d_deviceBlasHandle,
@@ -218,7 +218,7 @@ namespace dftfe
       const std::complex<float> *x,
       const dftfe::uInt          incx,
       std::complex<float>       *y,
-      const dftfe::uInt          incy) const
+      const dftfe::uInt          incy)
     {
       DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(C, copy)(
         d_deviceBlasHandle,
@@ -235,7 +235,7 @@ namespace dftfe
       const double     *x,
       const dftfe::uInt incx,
       double           *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
       DEVICEBLAS_API_CHECK(
         DFTFE_DEVICE_BLAS_INT(D,
@@ -248,7 +248,7 @@ namespace dftfe
       const float      *x,
       const dftfe::uInt incx,
       float            *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
       DEVICEBLAS_API_CHECK(
         DFTFE_DEVICE_BLAS_INT(S,
@@ -256,20 +256,19 @@ namespace dftfe
     }
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char        transA,
-      const char        transB,
-      const dftfe::uInt m,
-      const dftfe::uInt n,
-      const dftfe::uInt k,
-      const float      *alpha,
-      const float      *A,
-      const dftfe::uInt lda,
-      const float      *B,
-      const dftfe::uInt ldb,
-      const float      *beta,
-      float            *C,
-      const dftfe::uInt ldc) const
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(const char transA,
+                                                          const char transB,
+                                                          const dftfe::uInt m,
+                                                          const dftfe::uInt n,
+                                                          const dftfe::uInt k,
+                                                          const float *alpha,
+                                                          const float *A,
+                                                          const dftfe::uInt lda,
+                                                          const float      *B,
+                                                          const dftfe::uInt ldb,
+                                                          const float *beta,
+                                                          float       *C,
+                                                          const dftfe::uInt ldc)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -351,7 +350,7 @@ namespace dftfe
       const dftfe::uInt          ldb,
       const std::complex<float> *beta,
       std::complex<float>       *C,
-      const dftfe::uInt          ldc) const
+      const dftfe::uInt          ldc)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -425,20 +424,19 @@ namespace dftfe
     }
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char        transA,
-      const char        transB,
-      const dftfe::uInt m,
-      const dftfe::uInt n,
-      const dftfe::uInt k,
-      const double     *alpha,
-      const double     *A,
-      const dftfe::uInt lda,
-      const double     *B,
-      const dftfe::uInt ldb,
-      const double     *beta,
-      double           *C,
-      const dftfe::uInt ldc) const
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(const char transA,
+                                                          const char transB,
+                                                          const dftfe::uInt m,
+                                                          const dftfe::uInt n,
+                                                          const dftfe::uInt k,
+                                                          const double *alpha,
+                                                          const double *A,
+                                                          const dftfe::uInt lda,
+                                                          const double     *B,
+                                                          const dftfe::uInt ldb,
+                                                          const double *beta,
+                                                          double       *C,
+                                                          const dftfe::uInt ldc)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -489,7 +487,7 @@ namespace dftfe
       const dftfe::uInt           ldb,
       const std::complex<double> *beta,
       std::complex<double>       *C,
-      const dftfe::uInt           ldc) const
+      const dftfe::uInt           ldc)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -541,7 +539,7 @@ namespace dftfe
       const dftfe::uInt incx,
       const double     *beta,
       double           *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
       dftfe::utils::deviceBlasOperation_t transa;
       if (transA == 'N')
@@ -579,7 +577,7 @@ namespace dftfe
       const dftfe::uInt incx,
       const float      *beta,
       float            *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -617,7 +615,7 @@ namespace dftfe
       const dftfe::uInt           incx,
       const std::complex<double> *beta,
       std::complex<double>       *y,
-      const dftfe::uInt           incy) const
+      const dftfe::uInt           incy)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -658,7 +656,7 @@ namespace dftfe
       const dftfe::uInt          incx,
       const std::complex<float> *beta,
       std::complex<float>       *y,
-      const dftfe::uInt          incy) const
+      const dftfe::uInt          incy)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -742,7 +740,7 @@ namespace dftfe
       const double     *x,
       const dftfe::uInt incx,
       double           *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
       DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(D, axpy)(d_deviceBlasHandle,
                                                           dftfe::Int(n),
@@ -760,7 +758,7 @@ namespace dftfe
       const std::complex<double> *x,
       const dftfe::uInt           incx,
       std::complex<double>       *y,
-      const dftfe::uInt           incy) const
+      const dftfe::uInt           incy)
     {
       DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, axpy)(
         d_deviceBlasHandle,
@@ -780,7 +778,7 @@ namespace dftfe
       const ValueType2  alpha,
       const ValueType1 *x,
       const ValueType2  beta,
-      ValueType1       *y) const
+      ValueType1       *y)
     {
       DFTFE_LAUNCH_KERNEL(axpbyDeviceKernel,
                           n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -806,7 +804,7 @@ namespace dftfe
       const ValueType1 *A,
       const ValueType2 *B,
       const ValueType3 *D,
-      ValueType4       *C) const
+      ValueType4       *C)
     {
       DFTFE_LAUNCH_KERNEL(ApaBDDeviceKernel,
                           (n * m / dftfe::utils::DEVICE_BLOCK_SIZE) + 1,
@@ -829,7 +827,7 @@ namespace dftfe
       const ValueType1 *addFromVec,
       const ValueType2 *scalingVector,
       const ValueType2  a,
-      ValueType1       *addToVec) const
+      ValueType1       *addToVec)
     {
       DFTFE_LAUNCH_KERNEL(
         stridedBlockAxpyDeviceKernel,
@@ -855,7 +853,7 @@ namespace dftfe
       const ValueType2 *scalingVector,
       const ValueType2  a,
       const ValueType2  b,
-      ValueType1       *addToVec) const
+      ValueType1       *addToVec)
     {
       DFTFE_LAUNCH_KERNEL(
         stridedBlockAxpByDeviceKernel,
@@ -880,7 +878,7 @@ namespace dftfe
       const dftfe::uInt  numContiguousBlocks,
       const ValueType   *addFromVec,
       ValueType         *addToVec,
-      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt *addToVecStartingContiguousBlockIds)
     {
       DFTFE_LAUNCH_KERNEL(axpyStridedBlockAtomicAddDeviceKernel,
                           (contiguousBlockSize * numContiguousBlocks) /
@@ -905,7 +903,7 @@ namespace dftfe
       const ValueType1  *s,
       const ValueType2  *addFromVec,
       ValueType3        *addToVec,
-      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt *addToVecStartingContiguousBlockIds)
     {
       DFTFE_LAUNCH_KERNEL(axpyStridedBlockAtomicAddDeviceKernel,
                           (contiguousBlockSize * numContiguousBlocks) /
@@ -931,7 +929,7 @@ namespace dftfe
       const ValueType1   a,
       const ValueType2  *addFromVec,
       ValueType3        *addToVec,
-      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt *addToVecStartingContiguousBlockIds)
     {
       DFTFE_LAUNCH_KERNEL(axpyStridedBlockAtomicAddDeviceKernel,
                           (contiguousBlockSize * numContiguousBlocks) /
@@ -954,7 +952,7 @@ namespace dftfe
                                                          const dftfe::uInt INCX,
                                                          const double     *Y,
                                                          const dftfe::uInt INCY,
-                                                         double *result) const
+                                                         double *result)
     {
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
@@ -992,7 +990,7 @@ namespace dftfe
       const double     *Y,
       const dftfe::uInt INCY,
       const MPI_Comm   &mpi_communicator,
-      double           *result) const
+      double           *result)
     {
       double localResult = 0.0;
       *result            = 0.0;
@@ -1032,7 +1030,7 @@ namespace dftfe
       const dftfe::uInt           INCX,
       const std::complex<double> *Y,
       const dftfe::uInt           INCY,
-      std::complex<double>       *result) const
+      std::complex<double>       *result)
     {
 #if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(Z, dotc)(
@@ -1072,7 +1070,7 @@ namespace dftfe
       const std::complex<double> *Y,
       const dftfe::uInt           INCY,
       const MPI_Comm             &mpi_communicator,
-      std::complex<double>       *result) const
+      std::complex<double>       *result)
     {
       std::complex<double> localResult = 0.0;
       *result                          = 0.0;
@@ -1131,7 +1129,7 @@ namespace dftfe
       double           *C,
       const dftfe::uInt ldc,
       long long int     strideC,
-      const dftfe::Int  batchCount) const
+      const dftfe::Int  batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1216,7 +1214,7 @@ namespace dftfe
       std::complex<double>       *C,
       const dftfe::uInt           ldc,
       long long int               strideC,
-      const dftfe::Int            batchCount) const
+      const dftfe::Int            batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1304,7 +1302,7 @@ namespace dftfe
       float            *C,
       const dftfe::uInt ldc,
       long long int     strideC,
-      const dftfe::Int  batchCount) const
+      const dftfe::Int  batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1402,7 +1400,7 @@ namespace dftfe
       std::complex<float>       *C,
       const dftfe::uInt          ldc,
       long long int              strideC,
-      const dftfe::Int           batchCount) const
+      const dftfe::Int           batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1498,7 +1496,7 @@ namespace dftfe
       const double     *beta,
       double           *C[],
       const dftfe::uInt ldc,
-      const dftfe::Int  batchCount) const
+      const dftfe::Int  batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1583,7 +1581,7 @@ namespace dftfe
       const std::complex<double> *beta,
       std::complex<double>       *C[],
       const dftfe::uInt           ldc,
-      const dftfe::Int            batchCount) const
+      const dftfe::Int            batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1670,7 +1668,7 @@ namespace dftfe
       const float      *beta,
       float            *C[],
       const dftfe::uInt ldc,
-      const dftfe::Int  batchCount) const
+      const dftfe::Int  batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1769,7 +1767,7 @@ namespace dftfe
       const std::complex<float> *beta,
       std::complex<float>       *C[],
       const dftfe::uInt          ldc,
-      const dftfe::Int           batchCount) const
+      const dftfe::Int           batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1861,7 +1859,7 @@ namespace dftfe
       const std::complex<double> *x,
       const dftfe::uInt           incx,
       const MPI_Comm             &mpi_communicator,
-      double                     *result) const
+      double                     *result)
     {
       double localResult = 0.0;
       *result            = 0.0;
@@ -1899,7 +1897,7 @@ namespace dftfe
       const double     *x,
       const dftfe::uInt incx,
       const MPI_Comm   &mpi_communicator,
-      double           *result) const
+      double           *result)
     {
       double localResult = 0.0;
       *result            = 0.0;
@@ -1927,7 +1925,7 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
       ValueType1       *x,
       const ValueType2  alpha,
-      const dftfe::uInt n) const
+      const dftfe::uInt n)
     {
       DFTFE_LAUNCH_KERNEL(ascalDeviceKernel,
                           n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -2130,7 +2128,7 @@ namespace dftfe
                                        const dftfe::uInt numBlocks,
                                        const dftfe::uInt startingId,
                                        const ValueType1 *copyFromVec,
-                                       ValueType2       *copyToVec) const
+                                       ValueType2       *copyToVec)
     {
       DFTFE_LAUNCH_KERNEL(
         stridedCopyToBlockConstantStrideDeviceKernel,
@@ -2223,7 +2221,7 @@ namespace dftfe
       const dftfe::uInt m,
       const ValueType  *X,
       const ValueType  *Y,
-      ValueType        *output) const
+      ValueType        *output)
     {
       DFTFE_LAUNCH_KERNEL(hadamardProductKernel,
                           m / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -2241,7 +2239,7 @@ namespace dftfe
       const dftfe::uInt m,
       const ValueType  *X,
       const ValueType  *Y,
-      ValueType        *output) const
+      ValueType        *output)
     {
       DFTFE_LAUNCH_KERNEL(hadamardProductWithConjKernel,
                           (m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
@@ -2353,7 +2351,7 @@ namespace dftfe
       const ValueType  *onesVec,
       ValueType        *tempVector,
       ValueType        *tempResults,
-      ValueType        *result) const
+      ValueType        *result)
     {
       hadamardProductWithConj(contiguousBlockSize * numContiguousBlocks,
                               X,
@@ -2393,7 +2391,7 @@ namespace dftfe
       ValueType        *tempVector,
       ValueType        *tempResults,
       const MPI_Comm   &mpi_communicator,
-      ValueType        *result) const
+      ValueType        *result)
 
     {
       MultiVectorXDot(contiguousBlockSize,

@@ -59,7 +59,7 @@ namespace dftfe
     static const cudaDataType     DEVICE_C_32F            = CUDA_C_32F;
     static const cudaDataType     DEVICE_C_16F            = CUDA_C_16F;
     static const cudaDataType     DEVICE_C_16BF           = CUDA_C_16BF;
-    static const cudaStream_t     defaultStream           = 0;
+    static cudaStream_t           defaultStream           = 0;
 
   } // namespace utils
 } // namespace dftfe

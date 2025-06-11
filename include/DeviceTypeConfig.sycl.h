@@ -62,7 +62,7 @@ namespace dftfe
     static const oneapi::mkl::blas::compute_mode
       DEVICEBLAS_COMPUTE_32F_FAST_16F =
         oneapi::mkl::blas::compute_mode::float_to_bf16x2;
-    static const deviceStream_t      defaultStream = 0;
+    static deviceStream_t            defaultStream = 0;
     inline std::vector<sycl::device> allSyclGPUDevices =
       sycl::device::get_devices(sycl::info::device_type::gpu);
     inline dftfe::uInt   syclDeviceId = 0;

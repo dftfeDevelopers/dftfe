@@ -23,6 +23,7 @@
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherConstants.h>
+#include <BLASWrapper.h>
 namespace dftfe
 {
   namespace
@@ -498,7 +499,8 @@ namespace dftfe
           dftfe::utils::DEVICE_BLOCK_SIZE * totalAtomsInCurrentProcessor *
           maxSingleAtomContribution,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::defaultStream,
+        dftfe::linearAlgebra::BLASWrapper<
+          dftfe::utils::MemorySpace::DEVICE>::d_streamId,
         numWfcs,
         totalAtomsInCurrentProcessor,
         maxSingleAtomContribution,
@@ -523,7 +525,8 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE * numNonLocalCells *
                             maxSingleAtomContribution,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           numWfcs,
                           numNonLocalCells,
                           maxSingleAtomContribution,
@@ -546,7 +549,8 @@ namespace dftfe
                           (numWfcs + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * totalEntries,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           numWfcs,
                           totalEntries,
                           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -570,7 +574,8 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             totalEntriesPadded,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           numWfcs,
                           totalEntriesPadded,
                           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -593,7 +598,8 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             totalEntriesPadded,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           numWfcs,
                           totalEntriesPadded,
                           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -627,7 +633,8 @@ namespace dftfe
                           (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           totalNonLocalElements,
                           numberWfc,
                           numberNodesPerElement,
@@ -666,7 +673,8 @@ namespace dftfe
                             dftfe::utils::DEVICE_BLOCK_SIZE *
                             numberCellsForAtom * numberNodesPerElement,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           numberWfc,
                           numberCellsForAtom * numberNodesPerElement,
                           nonLocalContribution_data,
@@ -705,7 +713,8 @@ namespace dftfe
                           (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::defaultStream,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           numberWaveFunctions,
                           totalNonlocalElems,
                           maxSingleAtomContribution,
