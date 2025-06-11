@@ -67,8 +67,10 @@ namespace dftfe
     inline sycl::device  syclDevice   = allSyclGPUDevices[syclDeviceId];
     inline sycl::context syclContext{syclDevice};
     inline std::map<dftfe::uInt, sycl::queue> queueRegistry{
-      defaultStream,
-      sycl::queue(syclContext, syclDevice, sycl::property::queue::in_order{})};
+      {defaultStream,
+       sycl::queue(syclContext,
+                   syclDevice,
+                   sycl::property::queue::in_order{})}};
     inline std::set<dftfe::uInt> usedStreamIds{defaultStream};
   } // namespace utils
 } // namespace dftfe
