@@ -379,6 +379,11 @@ namespace dftfe
     deviceError_t
     deviceStreamDestroy(deviceStream_t &stream)
     {
+      if(stream==dftfe::utils::defaultStream)
+        throw std::invalid_argument("Trying to destroy the default stream");
+      if (stream >= dftfe::utils::queueRegistry.size())
+        throw std::invalid_argument("Invalid stream ID for destruction");
+      dftfe::utils::queueRegistry[stream].wait_and_throw();
       dftfe::utils::queueRegistry.erase(dftfe::utils::queueRegistry.begin() +
                                         stream);
       stream = 0;
