@@ -45,6 +45,7 @@ namespace dftfe
       void
       reshapeFromNonAffineLayoutDevice(const dftfe::uInt numVecs,
                                        const dftfe::uInt numQuads,
+                                       const dftfe::uInt nDims,
                                        const dftfe::uInt numCells,
                                        const ValueType  *copyFromVec,
                                        ValueType        *copyToVec);
@@ -53,6 +54,7 @@ namespace dftfe
       void
       reshapeFromNonAffineLayoutHost(const dftfe::uInt numVecs,
                                      const dftfe::uInt numQuads,
+                                     const dftfe::uInt nDims,
                                      const dftfe::uInt numCells,
                                      const ValueType  *copyFromVec,
                                      ValueType        *copyToVec);
@@ -70,6 +72,7 @@ namespace dftfe
       void
       reshapeToNonAffineLayoutDevice(const dftfe::uInt numVecs,
                                      const dftfe::uInt numQuads,
+                                     const dftfe::uInt nDims,
                                      const dftfe::uInt numCells,
                                      const ValueType  *copyFromVec,
                                      ValueType        *copyToVec);
@@ -78,6 +81,7 @@ namespace dftfe
       void
       reshapeToNonAffineLayoutHost(const dftfe::uInt numVecs,
                                    const dftfe::uInt numQuads,
+                                   const dftfe::uInt nDims,
                                    const dftfe::uInt numCells,
                                    const ValueType  *copyFromVec,
                                    ValueType        *copyToVec);

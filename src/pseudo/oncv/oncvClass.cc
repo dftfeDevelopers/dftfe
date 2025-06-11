@@ -167,7 +167,9 @@ namespace dftfe
             d_atomicProjectorFnsContainer,
             d_mpiCommParent,
             d_memoryOptMode,
-            computeSphericalFnTimesXNonLocalOperator);
+            computeSphericalFnTimesXNonLocalOperator); //@Kartick modify to
+                                                       // compute Ion forces and
+                                                       // stresses
         if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =
@@ -191,7 +193,9 @@ namespace dftfe
             d_atomicProjectorFnsContainer,
             d_mpiCommParent,
             d_memoryOptMode,
-            computeSphericalFnTimesXNonLocalOperator);
+            computeSphericalFnTimesXNonLocalOperator); //@Kartick Modify to
+                                                       // compute Ion forces and
+                                                       // stresses
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =

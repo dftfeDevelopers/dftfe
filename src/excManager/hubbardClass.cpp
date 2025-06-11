@@ -167,6 +167,7 @@ namespace dftfe
                                         d_atomicProjectorFnsMap);
 
     // set up the non local operator.
+    //@Kartick modify this to compute Ion forces and stresses.
     d_nonLocalOperator =
       std::make_shared<AtomicCenteredNonLocalOperator<ValueType, memorySpace>>(
         d_BLASWrapperMemPtr,
@@ -176,6 +177,8 @@ namespace dftfe
         true,
         true,
         true);
+    // d_dftParamsPtr->isIonForce,
+    // d_dftParamsPtr->isCellStress);
 
     if (d_useSinglePrec)
       {

@@ -121,7 +121,9 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
         &mapSphericalFnTimesVectorAllCellsReductionDevice,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-        &sphericalFnTimesWavefunctionMatrix);
+                 &sphericalFnTimesWavefunctionMatrix,
+      dftfe::uInt offsetSrc  = 0,
+      dftfe::uInt offsetDest = 0);
 
 
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice

@@ -73,9 +73,11 @@ namespace dftfe
       std::shared_ptr<AtomCenteredSphericalFunctionContainer>
                       atomCenteredSphericalFunctionContainer,
       const MPI_Comm &mpi_comm_parent,
-      const bool      memOptMode                  = false,
-      const bool      computeConfigurationalForce = true,
-      const bool      useGlobalCMatrix            = false);
+      const bool      memOptMode             = false,
+      const bool computeConfigurationalForce = true, //@Kartick to be removed
+      const bool useGlobalCMatrix            = false,
+      const bool computeIonForces            = false,
+      const bool computeCellStress           = false);
 
     /**
      * @brief Resizes various internal data members and selects the kpoint of interest.
@@ -349,6 +351,17 @@ namespace dftfe
     void
     applyDconjtransOnX(const ValueType                          *X,
                        const std::pair<dftfe::uInt, dftfe::uInt> cellRange);
+
+    /**
+     * @brief computes the results of CconjtransX on the cells of interst specied by cellRange
+     * @param[in] X input cell level vector
+     * @param[in] cellRange start and end element id in list of nonlocal
+     * elements
+     */
+    void
+    applyDDyadicRconjtransOnX(
+      const ValueType                          *X,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange);
 
     /**
      * @brief computes the results of CconjtransX on nodal X vector
@@ -643,6 +656,8 @@ namespace dftfe
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
       d_CMatrixEntriesTranspose;
     std::vector<std::vector<std::vector<ValueType>>> d_DMatrixEntriesConjugate;
+    std::vector<std::vector<std::vector<ValueType>>>
+      d_DDyadicRMatrixEntriesConjugate;
 
 
 
@@ -729,6 +744,8 @@ namespace dftfe
       d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
     std::vector<dftfe::uInt> d_nonlocalElemIdToCellIdVector;
     bool                     d_computeConfigurationalForce;
+    bool                     d_computeIonForces;
+    bool                     d_computeCellStress;
     bool                     d_useGlobalCMatrix;
     std::vector<dftfe::uInt> d_atomStartIndexGlobal;
     dftfe::uInt              d_totalNumSphericalFunctionsGlobal;
@@ -799,13 +816,15 @@ namespace dftfe
     ValueType *d_distributedVectorCconjTransX;
 
     std::vector<ValueType **> deviceWfcPointersInCellRange,
-      devicePointerCDaggerInCellRange, devicePointerCDaggerOutTempInCellRange,
-      devicePointerDDaggerInCellRange, devicePointerDDaggerOutTempInCellRange,
+      devicePointerCDaggerInCellRange, devicePointerCDaggerOutTempInCellRange;
+    std::vector<std::vector<ValueType **>> devicePointerDDaggerInCellRange,
+      devicePointerDDaggerOutTempInCellRange,
       devicePointerDdyadicRDaggerInCellRange,
       devicePointerDdyadicRDaggerOutTempInCellRange;
     std::vector<ValueType **> hostWfcPointersInCellRange,
-      hostPointerCDaggerInCellRange, hostPointerCDaggerOutTempInCellRange,
-      hostPointerDDaggerInCellRange, hostPointerDDaggerOutTempInCellRange,
+      hostPointerCDaggerInCellRange, hostPointerCDaggerOutTempInCellRange;
+    std::vector<std::vector<ValueType **>> hostPointerDDaggerInCellRange,
+      hostPointerDDaggerOutTempInCellRange,
       hostPointerDdyadicRDaggerInCellRange,
       hostPointerDdyadicRDaggerOutTempInCellRange;
     std::vector<ValueType *> d_wfcStartPointerInCellRange;
@@ -839,12 +858,28 @@ namespace dftfe
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionTransposeDevice;
 
+    // DconjTranspose  entries flattened with iElem as outermost
+    // index
+    std::vector<ValueType>
+      d_IntegralGradientFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugate;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_IntegralGradientFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice;
+    // DDyadicRconjTranspose  entries flattened with iElem as outermost
+    // index
+    std::vector<ValueType>
+      d_IntegralGradientFEMShapeFunctionValueDyadicAtomicSphericalFunctionTimesRConjugate;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_IntegralGradientFEMShapeFunctionValueDyadicAtomicSphericalFunctionTimesRConjugateDevice;
     // Output of CVCconjTransX flattened with iElem as outermost index: size is
     // totalNonLocalElements times p^3 times N
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_cellHamMatrixTimesWaveMatrixNonLocalDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesVectorAllCellsDevice;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnTimesGradientVectorAllCellsDevice;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnTimesRDyadicGradientVectorAllCellsDevice;
 
     // Map from cell level atom wise contribution to sphericalFn vector
     std::vector<dftfe::uInt> d_mapSphericalFnTimesVectorAllCellsReduction;

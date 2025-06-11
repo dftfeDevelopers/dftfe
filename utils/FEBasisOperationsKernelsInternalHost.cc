@@ -32,45 +32,49 @@ namespace dftfe
       void
       reshapeFromNonAffineLayoutHost(const dftfe::uInt numVecs,
                                      const dftfe::uInt numQuads,
+                                     const dftfe::uInt numDims,
                                      const dftfe::uInt numCells,
                                      const ValueType  *copyFromVec,
                                      ValueType        *copyToVec)
       {
         for (dftfe::uInt iCell = 0; iCell < numCells; ++iCell)
           for (dftfe::uInt iQuad = 0; iQuad < numQuads; ++iQuad)
-            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-              std::memcpy(copyToVec + numVecs * 3 * numQuads * iCell +
+            for (dftfe::uInt iDim = 0; iDim < numDims; ++iDim)
+              std::memcpy(copyToVec + numVecs * numDims * numQuads * iCell +
                             numVecs * numQuads * iDim + numVecs * iQuad,
-                          copyFromVec + numVecs * 3 * numQuads * iCell +
-                            numVecs * 3 * iQuad + numVecs * iDim,
+                          copyFromVec + numVecs * numDims * numQuads * iCell +
+                            numVecs * numDims * iQuad + numVecs * iDim,
                           numVecs * sizeof(ValueType));
       }
       template <typename ValueType>
       void
       reshapeToNonAffineLayoutHost(const dftfe::uInt numVecs,
                                    const dftfe::uInt numQuads,
+                                   const dftfe::uInt numDims,
                                    const dftfe::uInt numCells,
                                    const ValueType  *copyFromVec,
                                    ValueType        *copyToVec)
       {
         for (dftfe::uInt iCell = 0; iCell < numCells; ++iCell)
           for (dftfe::uInt iQuad = 0; iQuad < numQuads; ++iQuad)
-            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-              std::memcpy(copyToVec + numVecs * 3 * numQuads * iCell +
-                            numVecs * 3 * iQuad + numVecs * iDim,
-                          copyFromVec + numVecs * 3 * numQuads * iCell +
+            for (dftfe::uInt iDim = 0; iDim < numDims; ++iDim)
+              std::memcpy(copyToVec + numVecs * numDims * numQuads * iCell +
+                            numVecs * numDims * iQuad + numVecs * iDim,
+                          copyFromVec + numVecs * numDims * numQuads * iCell +
                             numVecs * numQuads * iDim + numVecs * iQuad,
                           numVecs * sizeof(ValueType));
       }
       template void
       reshapeFromNonAffineLayoutHost(const dftfe::uInt numVecs,
                                      const dftfe::uInt numQuads,
+                                     const dftfe::uInt numDims,
                                      const dftfe::uInt numCells,
                                      const double     *copyFromVec,
                                      double           *copyToVec);
       template void
       reshapeFromNonAffineLayoutHost(const dftfe::uInt           numVecs,
                                      const dftfe::uInt           numQuads,
+                                     const dftfe::uInt           numDims,
                                      const dftfe::uInt           numCells,
                                      const std::complex<double> *copyFromVec,
                                      std::complex<double>       *copyToVec);
@@ -78,12 +82,14 @@ namespace dftfe
       template void
       reshapeToNonAffineLayoutHost(const dftfe::uInt numVecs,
                                    const dftfe::uInt numQuads,
+                                   const dftfe::uInt numDims,
                                    const dftfe::uInt numCells,
                                    const double     *copyFromVec,
                                    double           *copyToVec);
       template void
       reshapeToNonAffineLayoutHost(const dftfe::uInt           numVecs,
                                    const dftfe::uInt           numQuads,
+                                   const dftfe::uInt           numDims,
                                    const dftfe::uInt           numCells,
                                    const std::complex<double> *copyFromVec,
                                    std::complex<double>       *copyToVec);

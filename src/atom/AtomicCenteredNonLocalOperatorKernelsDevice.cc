@@ -604,22 +604,21 @@ namespace dftfe
     {
       const dftfe::uInt totalEntries =
         totalNonLocalElements * numberWfc * numberNodesPerElement;
-      DFTFE_LAUNCH_KERNEL(addNonLocalContributionDeviceKernel,
-                          (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
-                            dftfe::utils::DEVICE_BLOCK_SIZE,
-                          dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
-                          totalNonLocalElements,
-                          offset,
-                          offset2,
-                          numberWfc,
-                          numberNodesPerElement,
-                          iElemNonLocalToElemIndexMap.begin(),
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            nonLocalContribution.begin()),
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            TotalContribution));
+      DFTFE_LAUNCH_KERNEL(
+        addNonLocalContributionDeviceKernel,
+        (dftfe::utils::DEVICE_BLOCK_SIZE + totalEntries) /
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        0,
+        totalNonLocalElements,
+        offset,
+        offset2,
+        numberWfc,
+        numberNodesPerElement,
+        iElemNonLocalToElemIndexMap.data(),
+        dftfe::utils::makeDataTypeDeviceCompatible(nonLocalContribution.data()),
+        dftfe::utils::makeDataTypeDeviceCompatible(TotalContribution));
     }
 
 
@@ -650,10 +649,10 @@ namespace dftfe
         numberWfc,
         numberCellsForAtom * numberNodesPerElement,
         dftfe::utils::makeDataTypeDeviceCompatible(
-          nonLocalContribution.begin() +
+          nonLocalContribution.data() +
           numberCellsTraversed * numberNodesPerElement * numberWfc),
         dftfe::utils::makeDataTypeDeviceCompatible(TotalContribution),
-        cellNodeIdMapNonLocalToLocal.begin() +
+        cellNodeIdMapNonLocalToLocal.data() +
           numberCellsTraversed * numberNodesPerElement);
     }
 
@@ -671,7 +670,9 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::DEVICE>
         &mapSphericalFnTimesVectorAllCellsReductionDevice,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-        &sphericalFnTimesWavefunctionMatrix)
+                 &sphericalFnTimesWavefunctionMatrix,
+      dftfe::uInt offsetSrc,
+      dftfe::uInt offsetDst)
     {
       const dftfe::uInt totalEntries =
         totalNonlocalElems * numberWaveFunctions * maxSingleAtomContribution;
@@ -685,10 +686,10 @@ namespace dftfe
         maxSingleAtomContribution,
         totalNonlocalEntries,
         dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesVectorAllCellsDevice.begin()),
-        mapSphericalFnTimesVectorAllCellsReductionDevice.begin(),
+          sphericalFnTimesVectorAllCellsDevice.data() + offsetSrc),
+        mapSphericalFnTimesVectorAllCellsReductionDevice.data(),
         dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWavefunctionMatrix.begin()));
+          sphericalFnTimesWavefunctionMatrix.data() + offsetDst));
 #elif DFTFE_WITH_DEVICE_LANG_HIP
       hipLaunchKernelGGL(
         assembleAtomLevelContributionsFromCellLevelKernel,
@@ -702,10 +703,10 @@ namespace dftfe
         maxSingleAtomContribution,
         totalNonlocalEntries,
         dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesVectorAllCellsDevice.begin()),
-        mapSphericalFnTimesVectorAllCellsReductionDevice.begin(),
+          sphericalFnTimesVectorAllCellsDevice.data() + offsetSrc),
+        mapSphericalFnTimesVectorAllCellsReductionDevice.data(),
         dftfe::utils::makeDataTypeDeviceCompatible(
-          sphericalFnTimesWavefunctionMatrix.begin()));
+          sphericalFnTimesWavefunctionMatrix.data() + offsetDst));
 #endif
     }
 
@@ -866,7 +867,9 @@ namespace dftfe
         &mapSphericalFnTimesVectorAllCellsReductionDevice,
       dftfe::utils::MemoryStorage<dataTypes::number,
                                   dftfe::utils::MemorySpace::DEVICE>
-        &sphericalFnTimesWavefunctionMatrix);
+                 &sphericalFnTimesWavefunctionMatrix,
+      dftfe::uInt offsetSrc,
+      dftfe::uInt offsetDst);
 
     template void
     assembleAtomLevelContributionsFromCellLevel(
@@ -882,7 +885,9 @@ namespace dftfe
         &mapSphericalFnTimesVectorAllCellsReductionDevice,
       dftfe::utils::MemoryStorage<dataTypes::numberFP32,
                                   dftfe::utils::MemorySpace::DEVICE>
-        &sphericalFnTimesWavefunctionMatrix);
+                 &sphericalFnTimesWavefunctionMatrix,
+      dftfe::uInt offsetSrc,
+      dftfe::uInt offsetDst);
   } // namespace AtomicCenteredNonLocalOperatorKernelsDevice
 
 } // namespace dftfe
