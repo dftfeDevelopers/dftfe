@@ -60,11 +60,15 @@ namespace dftfe
     static const oneapi::mkl::blas::compute_mode
       DEVICEBLAS_COMPUTE_32F_FAST_16F =
         oneapi::mkl::blas::compute_mode::float_to_bf16x2;
-    static const deviceStream_t     defaultStream = 0;
+    static const deviceStream_t      defaultStream = 0;
+    inline std::vector<sycl::device> allSyclGPUDevices =
+      sycl::device::get_devices(sycl::info::device_type::gpu);
+    inline dftfe::uInt   syclDeviceId = 0;
+    inline sycl::device  syclDevice   = allSyclGPUDevices[currentSyclDeviceId];
+    inline sycl::context syclContext{syclDevice};
     inline std::vector<sycl::queue> queueRegistry(
       1,
-      sycl::queue(sycl::gpu_selector_v, sycl::property::queue::in_order{}));
-
+      sycl::queue(syclContext, syclDevice, sycl::property::queue::in_order{}));
   } // namespace utils
 } // namespace dftfe
 

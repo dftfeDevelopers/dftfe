@@ -52,6 +52,8 @@ namespace dftfe
     deviceError_t
     deviceReset()
     {
+      deviceSynchronize();
+      dftfe::utils::queueRegistry.clear();
       return dftfe::utils::deviceSuccess;
     }
 
@@ -66,7 +68,7 @@ namespace dftfe
                     .get_info<sycl::info::device::local_mem_size>();
           *total = dftfe::utils::queueRegistry[dftfe::utils::defaultStream]
                      .get_device()
-                     .get_info<sycl::info::device::global_mem_size>();
+                     .get_info<sycl::ext::intel::info::device::free_memory>();
         }
       catch (const deviceError_t &e)
         {
@@ -85,12 +87,22 @@ namespace dftfe
     deviceError_t
     getDevice(int *deviceId)
     {
+      *deviceId = dftfe::utils::syclDeviceId;
       return dftfe::utils::deviceSuccess;
     }
 
     deviceError_t
     setDevice(int deviceId)
     {
+      dftfe::utils::syclDeviceId = deviceId;
+      dftfe::utils::syclDevice =
+        dftfe::utils::allSyclGPUDevices[dftfe::utils::syclDeviceId];
+      dftfe::utils::syclContext = sycl::context(dftfe::utils::syclDevice);
+      dftfe::utils::queueRegistry.clear();
+      dftfe::utils::queueRegistry.push_back(
+        sycl::queue(dftfe::utils::syclContext,
+                    dftfe::utils::syclDevice,
+                    sycl::property::queue::in_order{}));
       return dftfe::utils::deviceSuccess;
     }
 
@@ -359,7 +371,7 @@ namespace dftfe
     {
       pStream = dftfe::utils::queueRegistry.size();
       dftfe::utils::queueRegistry.emplace_back(
-        sycl::gpu_selector_v, sycl::property::queue::in_order{});
+        syclContext, syclDevice, sycl::property::queue::in_order{});
 
       return dftfe::utils::deviceSuccess;
     }
