@@ -318,7 +318,7 @@ namespace dftfe
     deviceError_t
     deviceSynchronize()
     {
-      for (dftfe::uInt iStream iStream : dftfe::utils::usedStreamIds)
+      for (dftfe::uInt iStream : dftfe::utils::usedStreamIds)
         dftfe::utils::queueRegistry.find(iStream)->second.wait_and_throw();
       return dftfe::utils::deviceSuccess;
     }
