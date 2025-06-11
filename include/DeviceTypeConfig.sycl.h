@@ -20,6 +20,7 @@
 #include <oneapi/mkl/types.hpp>
 #include <oneapi/mkl/blas/types.hpp>
 #include <complex>
+#include <set>
 namespace dftfe
 {
   namespace utils
