@@ -64,7 +64,7 @@ namespace dftfe
     inline std::vector<sycl::device> allSyclGPUDevices =
       sycl::device::get_devices(sycl::info::device_type::gpu);
     inline dftfe::uInt   syclDeviceId = 0;
-    inline sycl::device  syclDevice   = allSyclGPUDevices[currentSyclDeviceId];
+    inline sycl::device  syclDevice   = allSyclGPUDevices[syclDeviceId];
     inline sycl::context syclContext{syclDevice};
     inline std::vector<sycl::queue> queueRegistry(
       1,
