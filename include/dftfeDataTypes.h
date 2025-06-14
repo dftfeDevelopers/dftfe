@@ -24,7 +24,8 @@
 #include <fstream>
 #include <iostream>
 #include <fenv.h>
-
+#include <complex>
+#include <mpi.h>
 // commonly used  typedefs used in dftfe go here
 namespace dftfe
 {
