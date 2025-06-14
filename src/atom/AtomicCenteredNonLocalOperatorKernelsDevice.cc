@@ -179,7 +179,7 @@ namespace dftfe
       void,
       addNonLocalContributionDeviceKernel,
       {
-        const dealii::types::global_dof_index totalEntries =
+        const dftfe::uInt totalEntries =
           totalNonLocalElements * numberWfc * numberNodesPerElement;
         for (dftfe::uInt index = globalThreadId; index < totalEntries;
              index += nThreadsPerBlock * nThreadBlock)
@@ -210,7 +210,7 @@ namespace dftfe
       void,
       addNonLocalContributionDeviceKernel,
       {
-        const dealii::types::global_dof_index totalEntries =
+        const dftfe::uInt totalEntries =
           totalNonLocalElements * numberWfc * numberNodesPerElement;
         for (dftfe::uInt index = globalThreadId; index < totalEntries;
              index += nThreadsPerBlock * nThreadBlock)
@@ -241,7 +241,7 @@ namespace dftfe
       void,
       addNonLocalContributionDeviceKernel,
       {
-        const dealii::types::global_dof_index totalEntries =
+        const dftfe::uInt totalEntries =
           totalNonLocalElements * numberWfc * numberNodesPerElement;
         for (dftfe::uInt index = globalThreadId; index < totalEntries;
              index += nThreadsPerBlock * nThreadBlock)
@@ -278,7 +278,7 @@ namespace dftfe
       void,
       addNonLocalContributionDeviceKernel,
       {
-        const dealii::types::global_dof_index totalEntries =
+        const dftfe::uInt totalEntries =
           totalNonLocalElements * numberWfc * numberNodesPerElement;
         for (dftfe::uInt index = globalThreadId; index < totalEntries;
              index += nThreadsPerBlock * nThreadBlock)
@@ -316,16 +316,14 @@ namespace dftfe
       void,
       addNonLocalContributionDeviceKernel,
       {
-        const dealii::types::global_dof_index numberEntries =
+        const dftfe::uInt numberEntries =
           numContiguousBlocks * contiguousBlockSize;
 
         for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += nThreadsPerBlock * nThreadBlock)
           {
-            dealii::types::global_dof_index blockIndex =
-              index / contiguousBlockSize;
-            dealii::types::global_dof_index intraBlockIndex =
-              index % contiguousBlockSize;
+            dftfe::uInt blockIndex      = index / contiguousBlockSize;
+            dftfe::uInt intraBlockIndex = index % contiguousBlockSize;
             yVec[xVecToyVecBlockIdMap[blockIndex] * contiguousBlockSize +
                  intraBlockIndex] =
               dftfe::utils::add(
