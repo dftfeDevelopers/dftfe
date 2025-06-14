@@ -138,7 +138,7 @@ namespace dftfe
               Image == 0 ? true : false,
               Image == 0 ? true : false,
               "NEB",
-              d_restartFilesPath,
+              d_restartFilesPath+ "/QuadDataForImage"+std::to_string(Image),
               d_verbosity < 4 ? -1 : d_verbosity,
               useDevice,
               Image == 0 ? false : true));
@@ -166,13 +166,9 @@ namespace dftfe
                              std::to_string(d_totalUpdateCalls) +
                              "/maxForce.chk");
         d_maximumAtomForceToBeRelaxed = tmp[0][0];
-        if (!d_dftPtr->getParametersObject().reproducible_output)
-          {
             pcout << "Solver update: NEB is in Restart mode" << std::endl;
             pcout << "Checking for files in Step: " << d_totalUpdateCalls
                   << std::endl;
-          }
-
         for (dftfe::Int Image = 0; Image < d_numberOfImages; Image++)
           {
             std::string coordinatesFile, domainVectorsFile;
@@ -195,7 +191,7 @@ namespace dftfe
               Image == 0 ? true : false,
               Image == 0 ? true : false,
               "NEB",
-              d_restartFilesPath,
+              d_restartFilesPath+ "/QuadDataForImage"+std::to_string(Image),
               d_verbosity < 4 ? -1 : d_verbosity,
               useDevice,
               Image == 0 ? false : true));
