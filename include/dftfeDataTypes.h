@@ -20,9 +20,6 @@
 #ifndef dftfeDataTypes_H_
 #define dftfeDataTypes_H_
 
-#include <deal.II/base/config.h>
-#include <deal.II/base/types.h>
-
 // Include generic C++ headers
 #include <fstream>
 #include <iostream>

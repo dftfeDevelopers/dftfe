@@ -347,7 +347,7 @@ namespace dftfe
     deviceError_t
     deviceEventRecord(deviceEvent_t &event, deviceStream_t stream)
     {
-      deviceError_t err = hipEventRecord(&event, stream);
+      deviceError_t err = hipEventRecord(event, stream);
       DEVICE_API_CHECK(err);
       return err;
     }
