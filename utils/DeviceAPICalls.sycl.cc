@@ -207,10 +207,7 @@ namespace dftfe
     {
       try
         {
-          *hostPtr = sycl::malloc_host(size,
-                                       dftfe::utils::queueRegistry
-                                         .find(dftfe::utils::defaultStream)
-                                         ->second);
+          *hostPtr = std::malloc(size);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
@@ -224,10 +221,7 @@ namespace dftfe
     {
       try
         {
-          sycl::free(hostPtr,
-                     dftfe::utils::queueRegistry
-                       .find(dftfe::utils::defaultStream)
-                       ->second);
+          std::free(hostPtr);
         }
       catch (const dftfe::utils::deviceError_t &e)
         {
