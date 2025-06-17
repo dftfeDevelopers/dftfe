@@ -5718,8 +5718,7 @@ namespace dftfe
 /*
 ///// Comments on How to use the class for Configurational Forces:
 
-
-
+ For a given Kpoint and given block....
   const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
     const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
     const dftfe::uInt numberWavefunctions = src.numVectors();
