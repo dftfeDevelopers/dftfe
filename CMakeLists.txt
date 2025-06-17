@@ -376,6 +376,9 @@ ENDIF()
 
 IF (USE_64BIT_INT)
   ADD_DEFINITIONS(-DDFTFE_WITH_64BIT_INT)
+  IF ("${GPU_VENDOR}" STREQUAL "intel")
+    add_compile_options("-fno-sycl-id-queries-fit-in-int")
+  ENDIF()
 ENDIF()
 
 #

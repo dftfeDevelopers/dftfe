@@ -28,7 +28,7 @@
  */
 
 #ifdef DFTFE_WITH_DEVICE
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <DeviceDataTypeOverloads.h>
 #  include <MPICommunicatorP2PKernels.h>
 #  include <Exceptions.h>

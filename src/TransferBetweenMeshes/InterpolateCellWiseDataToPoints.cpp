@@ -32,12 +32,12 @@
 #  include <dftUtils.h>
 #  include <DeviceAPICalls.h>
 #  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <linearAlgebraOperationsDevice.h>
 #  include <vectorUtilities.h>
 #  include <DeviceAPICalls.h>
 #  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <vectorUtilities.h>
 #endif
 

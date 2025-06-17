@@ -18,7 +18,7 @@
 #include <BLASWrapper.h>
 #include <deviceKernelsGeneric.h>
 #include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
+#include <DeviceKernelLauncherHelpers.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #ifdef DFTFE_WITH_DEVICE_INTEL

@@ -18,8 +18,8 @@
  * @author Ian C. Lin., Sambit Das
  */
 #ifdef DFTFE_WITH_DEVICE
-#  ifndef dftfeDeviceKernelLauncherConstants_h
-#    define dftfeDeviceKernelLauncherConstants_h
+#  ifndef dftfeDeviceKernelLauncherHelpers_h
+#    define dftfeDeviceKernelLauncherHelpers_h
 
 #    ifdef DFTFE_WITH_DEVICE_NVIDIA
 namespace dftfe
@@ -60,20 +60,20 @@ namespace dftfe
 } // namespace dftfe
 
 #    endif
-#    ifdef DFTFE_WITH_DEVICE_NVIDIA
+#    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...) \
         do                                                          \
           {                                                         \
             kernel<<<grid, block, 0, stream>>>(__VA_ARGS__);        \
         } while (0)
-#    elif defined(DFTFE_WITH_DEVICE_AMD)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
 #      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)          \
         do                                                                   \
           {                                                                  \
             hipLaunchKernelGGL(                                              \
               HIP_KERNEL_NAME(kernel), grid, block, 0, stream, __VA_ARGS__); \
         } while (0)
-#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
 #      define DFTFE_LAUNCH_KERNEL(kernel, grid, block, stream, ...)        \
         do                                                                 \
           {                                                                \
@@ -83,10 +83,10 @@ namespace dftfe
         } while (0)
 #    else
 #      error \
-        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+        "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
-#    ifdef DFTFE_WITH_DEVICE_NVIDIA
+#    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #      define DFTFE_LAUNCH_KERNEL_SMEM_D(                                  \
         kernel, grid, block, smemtype, smemcount, stream, ...)             \
         do                                                                 \
@@ -94,7 +94,7 @@ namespace dftfe
             kernel<<<grid, block, smemcount * sizeof(smemtype), stream>>>( \
               __VA_ARGS__);                                                \
         } while (0)
-#    elif defined(DFTFE_WITH_DEVICE_AMD)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
 #      define DFTFE_LAUNCH_KERNEL_SMEM_D(                      \
         kernel, grid, block, smemtype, smemcount, stream, ...) \
         do                                                     \
@@ -106,7 +106,7 @@ namespace dftfe
                                stream,                         \
                                __VA_ARGS__);                   \
         } while (0)
-#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
 #      define DFTFE_LAUNCH_KERNEL_SMEM_D(                                    \
         kernel, grid, block, smemtype, smemcount, stream, ...)               \
         do                                                                   \
@@ -124,17 +124,17 @@ namespace dftfe
         } while (0)
 #    else
 #      error \
-        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+        "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
-#    ifdef DFTFE_WITH_DEVICE_NVIDIA
+#    ifdef DFTFE_WITH_DEVICE_LANG_CUDA
 #      define DFTFE_LAUNCH_KERNEL_SMEM_S(                      \
         kernel, grid, block, smemtype, smemcount, stream, ...) \
         do                                                     \
           {                                                    \
             kernel<<<grid, block, 0, stream>>>(__VA_ARGS__);   \
         } while (0)
-#    elif defined(DFTFE_WITH_DEVICE_AMD)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_HIP)
 #      define DFTFE_LAUNCH_KERNEL_SMEM_S(                                    \
         kernel, grid, block, smemtype, smemcount, stream, ...)               \
         do                                                                   \
@@ -142,7 +142,7 @@ namespace dftfe
             hipLaunchKernelGGL(                                              \
               HIP_KERNEL_NAME(kernel), grid, block, 0, stream, __VA_ARGS__); \
         } while (0)
-#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
 #      define DFTFE_LAUNCH_KERNEL_SMEM_S(                                    \
         kernel, grid, block, smemtype, smemcount, stream, ...)               \
         do                                                                   \
@@ -160,14 +160,15 @@ namespace dftfe
         } while (0)
 #    else
 #      error \
-        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+        "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
 
 #    define DFTFE_KERNEL_NAME(...) __VA_ARGS__
 
 
-#    if defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_AMD)
+#    if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || \
+      defined(DFTFE_WITH_DEVICE_LANG_HIP)
 #      define DFTFE_CREATE_KERNEL(RET, NAME, BODY, ...)    \
         __global__ RET NAME(__VA_ARGS__)                   \
         {                                                  \
@@ -177,7 +178,7 @@ namespace dftfe
           const dftfe::uInt nThreadBlock     = gridDim.x;  \
           BODY                                             \
         }
-#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
 #      define DFTFE_CREATE_KERNEL(RET, NAME, BODY, ...)                \
         RET NAME(sycl::nd_item<1> ind, __VA_ARGS__)                    \
         {                                                              \
@@ -188,10 +189,11 @@ namespace dftfe
         }
 #    else
 #      error \
-        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+        "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
-#    if defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_AMD)
+#    if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || \
+      defined(DFTFE_WITH_DEVICE_LANG_HIP)
 #      define DFTFE_CREATE_KERNEL_SMEM_D(SMEMTYPE, RET, NAME, BODY, ...) \
         __global__ RET NAME(__VA_ARGS__)                                 \
         {                                                                \
@@ -204,7 +206,7 @@ namespace dftfe
           const dftfe::uInt nThreadBlock     = gridDim.x;                \
           BODY                                                           \
         }
-#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
 #      define DFTFE_CREATE_KERNEL_SMEM_D(SMEMTYPE, RET, NAME, BODY, ...) \
         RET NAME(sycl::nd_item<1> ind, SMEMTYPE *smem, __VA_ARGS__)      \
         {                                                                \
@@ -217,10 +219,11 @@ namespace dftfe
         }
 #    else
 #      error \
-        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+        "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
-#    if defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_AMD)
+#    if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || \
+      defined(DFTFE_WITH_DEVICE_LANG_HIP)
 #      define DFTFE_CREATE_KERNEL_SMEM_S(                   \
         SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)          \
         __global__ RET NAME(__VA_ARGS__)                    \
@@ -234,7 +237,7 @@ namespace dftfe
           const dftfe::uInt nThreadBlock     = gridDim.x;   \
           BODY                                              \
         }
-#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
 #      define DFTFE_CREATE_KERNEL_SMEM_S(                              \
         SMEMTYPE, SMEMCOUNT, RET, NAME, BODY, ...)                     \
         RET NAME(sycl::nd_item<1> ind, SMEMTYPE *smem, __VA_ARGS__)    \
@@ -248,18 +251,19 @@ namespace dftfe
         }
 #    else
 #      error \
-        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+        "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
 
-#    if defined(DFTFE_WITH_DEVICE_NVIDIA) || defined(DFTFE_WITH_DEVICE_AMD)
+#    if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || \
+      defined(DFTFE_WITH_DEVICE_LANG_HIP)
 #      define SYNCTHREADS __syncthreads()
-#    elif defined(DFTFE_WITH_DEVICE_INTEL)
+#    elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
 #      define SYNCTHREADS sycl::group_barrier(ind.get_group());
 #    else
 #      error \
-        "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD or DFTFE_WITH_DEVICE_INTEL)"
+        "No device backend defined (DFTFE_WITH_DEVICE_LANG_CUDA or DFTFE_WITH_DEVICE_LANG_HIP or DFTFE_WITH_DEVICE_LANG_SYCL)"
 #    endif
 
-#  endif // dftfeDeviceKernelLauncherConstants_h
+#  endif // dftfeDeviceKernelLauncherHelpers_h
 #endif   // DFTFE_WITH_DEVICE
