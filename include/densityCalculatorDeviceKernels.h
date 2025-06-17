@@ -83,7 +83,7 @@ namespace dftfe
   template <typename NumberType>
   void
   computeKineticEnergyDensityFromInterpolatedValues(
-    const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
+    dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
                                              &BLASWrapperPtr,
     const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
     const std::pair<dftfe::uInt, dftfe::uInt> vecRange,

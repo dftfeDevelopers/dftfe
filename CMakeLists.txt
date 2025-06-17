@@ -30,6 +30,7 @@ IF (WITH_GPU)
       enable_language(CUDA)
     ELSEIF ("${GPU_LANG}" STREQUAL "hip")
       enable_language(HIP)
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
     ELSE ()
       MESSAGE(FATAL_ERROR "\n"
     "*** Could not find valid GPU_LANG=cuda/hip ***\n\n"
@@ -274,6 +275,26 @@ SET(DEVICE_SRC
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   )
+ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+SET(DEVICE_SRC
+  ./utils/MemoryTransferKernelsDevice.cc
+  ./utils/DeviceKernelsGeneric.cc
+  ./utils/DeviceDirectCCLWrapper.cc
+  ./src/dft/densityCalculatorDeviceKernels.cc
+  ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
+  ./src/dft/solveVselfInBinsDeviceKernels.cc
+  ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.cc
+  ./src/linAlg/linearAlgebraOperationsDeviceKernels.cc
+  ./src/force/forceWfcContractionsDeviceKernels.cc
+  ./utils/constraintMatrixInfoDeviceKernels.cc
+  ./utils/DeviceAPICalls.sycl.cc
+  ./utils/BLASWrapperDevice.cc
+  ./utils/MPICommunicatorP2PKernelsDevice.cc
+  ./src/solvers/linearSolverCGDeviceKernels.cc
+  ./utils/matrixFreeDeviceKernels.cc
+  ./utils/FEBasisOperationsKernelsInternalDevice.cc
+  ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  )
 
 ENDIF()
 
@@ -288,6 +309,8 @@ IF (WITH_GPU)
        ELSEIF ("${GPU_VENDOR}" STREQUAL "nvidia")
           ADD_DEFINITIONS(-D__HIP_PLATFORM_NVIDIA__)
        ENDIF()
+    ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+      set_source_files_properties(${DEVICE_SRC} PROPERTIES COMPILE_FLAGS ${CMAKE_SYCL_FLAGS})
     ENDIF()
 ENDIF()
 IF (WITH_GPU)
@@ -379,6 +402,9 @@ IF (WITH_GPU)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_NVIDIA)
   ELSEIF ("${GPU_VENDOR}" STREQUAL "amd")
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AMD)
+  ELSEIF ("${GPU_VENDOR}" STREQUAL "intel")
+    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_INTEL)
+    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_MKL)
   ENDIF()
 
   IF ("${GPU_LANG}" STREQUAL "cuda")
@@ -393,6 +419,18 @@ IF (WITH_GPU)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_HIP)
     find_package(hipblas)
     target_link_libraries(${TARGETLIB} PUBLIC roc::hipblas)
+  ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
+    MESSAGE(STATUS "DFTFE with GPU LANG SYCL")
+    ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_LANG_SYCL)
+    find_package(IntelSYCL REQUIRED)
+    target_link_libraries(${TARGETLIB} PUBLIC sycl)
+    set(MKL_INTERFACE lp64)
+    set(ENABLE_SCALAPACK ON)
+    set(MKL_MPI mpich)
+    find_package(MKL REQUIRED)
+    target_link_libraries(${TARGETLIB} PUBLIC MKL::MKL)
+    target_link_libraries(${TARGETLIB} PUBLIC MKL::MKL_SYCL)
+    set_target_properties(${TARGETLIB} PROPERTIES LINK_FLAGS ${CMAKE_SYCL_FLAGS})
   ENDIF()
   IF (WITH_GPU_AWARE_MPI)
     ADD_DEFINITIONS(-DDFTFE_WITH_DEVICE_AWARE_MPI)

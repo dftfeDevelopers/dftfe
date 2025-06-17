@@ -7,300 +7,338 @@ namespace dftfe
   {
     namespace
     {
-      __global__ void
-      addSubspaceRotatedBlockToXKernel(const dftfe::uInt BDof,
-                                       const dftfe::uInt BVec,
-                                       const float      *rotatedXBlockSP,
-                                       double           *X,
-                                       const dftfe::uInt startingDofId,
-                                       const dftfe::uInt startingVecId,
-                                       const dftfe::uInt N)
-      {
-        const dftfe::uInt numEntries = BVec * BDof;
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt ibdof = i / BVec;
-            const dftfe::uInt ivec  = i % BVec;
 
-            *(X + N * (startingDofId + ibdof) + startingVecId + ivec) +=
-              rotatedXBlockSP[ibdof * BVec + ivec];
-          }
-      }
+      DFTFE_CREATE_KERNEL(
+        void,
+        addSubspaceRotatedBlockToXKernel,
+        {
+          const dftfe::uInt numEntries = BVec * BDof;
+          for (dftfe::Int i = globalThreadId; i < numEntries;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt ibdof = i / BVec;
+              const dftfe::uInt ivec  = i % BVec;
 
-      __global__ void
-      addSubspaceRotatedBlockToXKernel(
+              *(X + N * (startingDofId + ibdof) + startingVecId + ivec) +=
+                rotatedXBlockSP[ibdof * BVec + ivec];
+            }
+        },
+        const dftfe::uInt BDof,
+        const dftfe::uInt BVec,
+        const float      *rotatedXBlockSP,
+        double           *X,
+        const dftfe::uInt startingDofId,
+        const dftfe::uInt startingVecId,
+        const dftfe::uInt N);
+
+
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        addSubspaceRotatedBlockToXKernel,
+        {
+          const dftfe::uInt numEntries = BVec * BDof;
+          for (dftfe::Int i = globalThreadId; i < numEntries;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt ibdof = i / BVec;
+              const dftfe::uInt ivec  = i % BVec;
+
+              *(X + N * (startingDofId + ibdof) + startingVecId + ivec) =
+                dftfe::utils::add(*(X + N * (startingDofId + ibdof) +
+                                    startingVecId + ivec),
+                                  rotatedXBlockSP[ibdof * BVec + ivec]);
+            }
+        },
         const dftfe::uInt                       BDof,
         const dftfe::uInt                       BVec,
         const dftfe::utils::deviceFloatComplex *rotatedXBlockSP,
         dftfe::utils::deviceDoubleComplex      *X,
         const dftfe::uInt                       startingDofId,
         const dftfe::uInt                       startingVecId,
-        const dftfe::uInt                       N)
-      {
-        const dftfe::uInt numEntries = BVec * BDof;
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt ibdof = i / BVec;
-            const dftfe::uInt ivec  = i % BVec;
-
-            *(X + N * (startingDofId + ibdof) + startingVecId + ivec) =
-              dftfe::utils::add(*(X + N * (startingDofId + ibdof) +
-                                  startingVecId + ivec),
-                                rotatedXBlockSP[ibdof * BVec + ivec]);
-          }
-      }
+        const dftfe::uInt                       N);
 
 
-      __global__ void
-      copyFromOverlapMatBlockToDPSPBlocksKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        copyFromOverlapMatBlockToDPSPBlocksKernel,
+        {
+          const dftfe::uInt numEntries = B * D;
+          for (dftfe::Int i = globalThreadId; i < numEntries;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt ibdof = i / D;
+              const dftfe::uInt ivec  = i % D;
+
+              if (ivec < B)
+                overlapMatrixBlockDP[ibdof * B + ivec] = overlapMatrixBlock[i];
+              else
+                overlapMatrixBlockSP[ibdof * (D - B) + (ivec - B)] =
+                  overlapMatrixBlock[i];
+            }
+        },
         const dftfe::uInt B,
         const dftfe::uInt D,
         const double     *overlapMatrixBlock,
         double           *overlapMatrixBlockDP,
-        float            *overlapMatrixBlockSP)
-      {
-        const dftfe::uInt numEntries = B * D;
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt ibdof = i / D;
-            const dftfe::uInt ivec  = i % D;
-
-            if (ivec < B)
-              overlapMatrixBlockDP[ibdof * B + ivec] = overlapMatrixBlock[i];
-            else
-              overlapMatrixBlockSP[ibdof * (D - B) + (ivec - B)] =
-                overlapMatrixBlock[i];
-          }
-      }
+        float            *overlapMatrixBlockSP);
 
 
-      __global__ void
-      copyFromOverlapMatBlockToDPSPBlocksKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        copyFromOverlapMatBlockToDPSPBlocksKernel,
+        {
+          const dftfe::uInt numEntries = B * D;
+          for (dftfe::Int i = globalThreadId; i < numEntries;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt ibdof = i / D;
+              const dftfe::uInt ivec  = i % D;
+
+              if (ivec < B)
+                dftfe::utils::copyValue(overlapMatrixBlockDP + ibdof * B + ivec,
+                                        overlapMatrixBlock[i]);
+              else
+                dftfe::utils::copyValue(overlapMatrixBlockSP + ibdof * (D - B) +
+                                          (ivec - B),
+                                        overlapMatrixBlock[i]);
+            }
+        },
         const dftfe::uInt                        B,
         const dftfe::uInt                        D,
         const dftfe::utils::deviceDoubleComplex *overlapMatrixBlock,
         dftfe::utils::deviceDoubleComplex       *overlapMatrixBlockDP,
-        dftfe::utils::deviceFloatComplex        *overlapMatrixBlockSP)
-      {
-        const dftfe::uInt numEntries = B * D;
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt ibdof = i / D;
-            const dftfe::uInt ivec  = i % D;
-
-            if (ivec < B)
-              dftfe::utils::copyValue(overlapMatrixBlockDP + ibdof * B + ivec,
-                                      overlapMatrixBlock[i]);
-            else
-              dftfe::utils::copyValue(overlapMatrixBlockSP + ibdof * (D - B) +
-                                        (ivec - B),
-                                      overlapMatrixBlock[i]);
-          }
-      }
-
-      __global__ void
-      computeDiagQTimesXKernel(const double     *diagValues,
-                               double           *X,
-                               const dftfe::uInt N,
-                               const dftfe::uInt M)
-      {
-        const dftfe::uInt numEntries = N * M;
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt idof = i / N;
-            const dftfe::uInt ivec = i % N;
-
-            *(X + N * idof + ivec) = *(X + N * idof + ivec) * diagValues[ivec];
-          }
-      }
+        dftfe::utils::deviceFloatComplex        *overlapMatrixBlockSP);
 
 
-      __global__ void
-      computeDiagQTimesXKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeDiagQTimesXKernel,
+        {
+          const dftfe::uInt numEntries = N * M;
+          for (dftfe::Int i = globalThreadId; i < numEntries;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt idof = i / N;
+              const dftfe::uInt ivec = i % N;
+
+              *(X + N * idof + ivec) =
+                *(X + N * idof + ivec) * diagValues[ivec];
+            }
+        },
+        const double     *diagValues,
+        double           *X,
+        const dftfe::uInt N,
+        const dftfe::uInt M);
+
+
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeDiagQTimesXKernel,
+        {
+          const dftfe::uInt numEntries = N * M;
+          for (dftfe::Int i = globalThreadId; i < numEntries;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt idof = i / N;
+              const dftfe::uInt ivec = i % N;
+
+              *(X + N * idof + ivec) =
+                dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
+            }
+        },
         const dftfe::utils::deviceDoubleComplex *diagValues,
         dftfe::utils::deviceDoubleComplex       *X,
         const dftfe::uInt                        N,
-        const dftfe::uInt                        M)
-      {
-        const dftfe::uInt numEntries = N * M;
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt idof = i / N;
-            const dftfe::uInt ivec = i % N;
-
-            *(X + N * idof + ivec) =
-              dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
-          }
-      }
+        const dftfe::uInt                        M);
 
 
-      __global__ void
-      computeDiagQTimesXKernel(const double                      *diagValues,
-                               dftfe::utils::deviceDoubleComplex *X,
-                               const dftfe::uInt                  N,
-                               const dftfe::uInt                  M)
-      {
-        const dftfe::uInt numEntries = N * M;
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numEntries;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt idof = i / N;
-            const dftfe::uInt ivec = i % N;
 
-            *(X + N * idof + ivec) =
-              dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
-          }
-      }
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeDiagQTimesXKernel,
+        {
+          const dftfe::uInt numEntries = N * M;
+          for (dftfe::Int i = globalThreadId; i < numEntries;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt idof = i / N;
+              const dftfe::uInt ivec = i % N;
 
-      // R^2=||Y-X*Gamma||^2
-      __global__ void
-      computeResidualDeviceKernel(const dftfe::uInt numVectors,
-                                  const dftfe::uInt numDofs,
-                                  const dftfe::uInt N,
-                                  const dftfe::uInt startingVecId,
-                                  const double     *eigenValues,
-                                  const double     *x,
-                                  const double     *y,
-                                  double           *r)
-      {
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numVectors * numDofs;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt dofIndex  = i / numVectors;
-            const dftfe::uInt waveIndex = i % numVectors;
-            r[i] = y[i] - x[dofIndex * N + startingVecId + waveIndex] *
-                            eigenValues[startingVecId + waveIndex];
-            r[i] = r[i] * r[i];
-          }
-      }
-
-      // R^2=||Y-X*Gamma||^2
-      __global__ void
-      computeResidualDeviceKernel(const dftfe::uInt numVectors,
-                                  const dftfe::uInt numDofs,
-                                  const dftfe::uInt N,
-                                  const dftfe::uInt startingVecId,
-                                  const double     *eigenValues,
-                                  const dftfe::utils::deviceDoubleComplex *X,
-                                  const dftfe::utils::deviceDoubleComplex *Y,
-                                  double                                  *r)
-      {
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numVectors * numDofs;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt                       dofIndex  = i / numVectors;
-            const dftfe::uInt                       waveIndex = i % numVectors;
-            const dftfe::utils::deviceDoubleComplex diff =
-              dftfe::utils::makeComplex(
-                Y[i].x - X[dofIndex * N + startingVecId + waveIndex].x *
-                           eigenValues[startingVecId + waveIndex],
-                Y[i].y - X[dofIndex * N + startingVecId + waveIndex].y *
-                           eigenValues[startingVecId + waveIndex]);
-            r[i] = diff.x * diff.x + diff.y * diff.y;
-          }
-      }
-
-      __global__ void
-      setZeroKernel(const dftfe::uInt BVec,
-                    const dftfe::uInt M,
-                    const dftfe::uInt N,
-                    double           *yVec,
-                    const dftfe::uInt startingXVecId)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const dftfe::uInt numGangsPerBVec =
-          (BVec + blockDim.x - 1) / blockDim.x;
-        const dftfe::uInt gangBlockId = blockIdx.x / numGangsPerBVec;
-        const dftfe::uInt localThreadId =
-          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-            localThreadId < BVec)
-          {
-            *(yVec + gangBlockId * N + startingXVecId + localThreadId) = 0.0;
-          }
-      }
-
-
-      __global__ void
-      setZeroKernel(const dftfe::uInt                  BVec,
-                    const dftfe::uInt                  M,
-                    const dftfe::uInt                  N,
-                    dftfe::utils::deviceDoubleComplex *yVec,
-                    const dftfe::uInt                  startingXVecId)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const dftfe::uInt numGangsPerBVec =
-          (BVec + blockDim.x - 1) / blockDim.x;
-        const dftfe::uInt gangBlockId = blockIdx.x / numGangsPerBVec;
-        const dftfe::uInt localThreadId =
-          globalThreadId - gangBlockId * numGangsPerBVec * blockDim.x;
-
-        if (globalThreadId < M * numGangsPerBVec * blockDim.x &&
-            localThreadId < BVec)
-          {
-            *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
-              dftfe::utils::makeComplex(0.0, 0.0);
-          }
-      }
-
+              *(X + N * idof + ivec) =
+                dftfe::utils::mult(*(X + N * idof + ivec), diagValues[ivec]);
+            }
+        },
+        const double                      *diagValues,
+        dftfe::utils::deviceDoubleComplex *X,
+        const dftfe::uInt                  N,
+        const dftfe::uInt                  M);
 
 
       // R^2=||Y-X*Gamma||^2
-      __global__ void
-      computeResidualDeviceKernelGeneralised(const dftfe::uInt numVectors,
-                                             const dftfe::uInt numDofs,
-                                             const dftfe::uInt N,
-                                             const dftfe::uInt startingVecId,
-                                             const double     *y,
-                                             double           *r)
-      {
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numVectors * numDofs;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt dofIndex  = i / numVectors;
-            const dftfe::uInt waveIndex = i % numVectors;
-            r[i]                        = y[i] * y[i];
-          }
-      }
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeResidualDeviceKernel,
+        {
+          for (dftfe::Int i = globalThreadId; i < numVectors * numDofs;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt dofIndex  = i / numVectors;
+              const dftfe::uInt waveIndex = i % numVectors;
+              r[i] = y[i] - x[dofIndex * N + startingVecId + waveIndex] *
+                              eigenValues[startingVecId + waveIndex];
+              r[i] = r[i] * r[i];
+            }
+        },
+        const dftfe::uInt numVectors,
+        const dftfe::uInt numDofs,
+        const dftfe::uInt N,
+        const dftfe::uInt startingVecId,
+        const double     *eigenValues,
+        const double     *x,
+        const double     *y,
+        double           *r);
+
 
       // R^2=||Y-X*Gamma||^2
-      __global__ void
-      computeResidualDeviceKernelGeneralised(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeResidualDeviceKernel,
+        {
+          for (dftfe::Int i = globalThreadId; i < numVectors * numDofs;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt dofIndex  = i / numVectors;
+              const dftfe::uInt waveIndex = i % numVectors;
+              const dftfe::utils::deviceDoubleComplex diff =
+                dftfe::utils::makeComplex(
+                  dftfe::utils::realPartDevice(Y[i]) -
+                    dftfe::utils::realPartDevice(
+                      X[dofIndex * N + startingVecId + waveIndex]) *
+                      eigenValues[startingVecId + waveIndex],
+                  dftfe::utils::imagPartDevice(Y[i]) -
+                    dftfe::utils::imagPartDevice(
+                      X[dofIndex * N + startingVecId + waveIndex]) *
+                      eigenValues[startingVecId + waveIndex]);
+              r[i] = dftfe::utils::realPartDevice(diff) *
+                       dftfe::utils::realPartDevice(diff) +
+                     dftfe::utils::imagPartDevice(diff) *
+                       dftfe::utils::imagPartDevice(diff);
+            }
+        },
+        const dftfe::uInt                        numVectors,
+        const dftfe::uInt                        numDofs,
+        const dftfe::uInt                        N,
+        const dftfe::uInt                        startingVecId,
+        const double                            *eigenValues,
+        const dftfe::utils::deviceDoubleComplex *X,
+        const dftfe::utils::deviceDoubleComplex *Y,
+        double                                  *r);
+
+
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        setZeroKernel,
+        {
+          const dftfe::uInt numGangsPerBVec =
+            (BVec + nThreadsPerBlock - 1) / nThreadsPerBlock;
+          const dftfe::uInt gangBlockId =
+            (globalThreadId / nThreadsPerBlock) / numGangsPerBVec;
+          const dftfe::uInt localThreadId =
+            globalThreadId - gangBlockId * numGangsPerBVec * nThreadsPerBlock;
+
+          if (globalThreadId < M * numGangsPerBVec * nThreadsPerBlock &&
+              localThreadId < BVec)
+            {
+              *(yVec + gangBlockId * N + startingXVecId + localThreadId) = 0.0;
+            }
+        },
+        const dftfe::uInt BVec,
+        const dftfe::uInt M,
+        const dftfe::uInt N,
+        double           *yVec,
+        const dftfe::uInt startingXVecId);
+
+
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        setZeroKernel,
+        {
+          const dftfe::uInt numGangsPerBVec =
+            (BVec + nThreadsPerBlock - 1) / nThreadsPerBlock;
+          const dftfe::uInt gangBlockId =
+            (globalThreadId / nThreadsPerBlock) / numGangsPerBVec;
+          const dftfe::uInt localThreadId =
+            globalThreadId - gangBlockId * numGangsPerBVec * nThreadsPerBlock;
+
+          if (globalThreadId < M * numGangsPerBVec * nThreadsPerBlock &&
+              localThreadId < BVec)
+            {
+              *(yVec + gangBlockId * N + startingXVecId + localThreadId) =
+                dftfe::utils::makeComplex(0.0, 0.0);
+            }
+        },
+        const dftfe::uInt                  BVec,
+        const dftfe::uInt                  M,
+        const dftfe::uInt                  N,
+        dftfe::utils::deviceDoubleComplex *yVec,
+        const dftfe::uInt                  startingXVecId);
+
+
+
+      // R^2=||Y-X*Gamma||^2
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeResidualDeviceKernelGeneralised,
+        {
+          for (dftfe::Int i = globalThreadId; i < numVectors * numDofs;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt dofIndex  = i / numVectors;
+              const dftfe::uInt waveIndex = i % numVectors;
+              r[i]                        = y[i] * y[i];
+            }
+        },
+        const dftfe::uInt numVectors,
+        const dftfe::uInt numDofs,
+        const dftfe::uInt N,
+        const dftfe::uInt startingVecId,
+        const double     *y,
+        double           *r);
+
+
+      // R^2=||Y-X*Gamma||^2
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeResidualDeviceKernelGeneralised,
+        {
+          for (dftfe::Int i = globalThreadId; i < numVectors * numDofs;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt dofIndex  = i / numVectors;
+              const dftfe::uInt waveIndex = i % numVectors;
+              r[i]                        = dftfe::utils::realPartDevice(Y[i]) *
+                       dftfe::utils::realPartDevice(Y[i]) +
+                     dftfe::utils::imagPartDevice(Y[i]) *
+                       dftfe::utils::imagPartDevice(Y[i]);
+            }
+        },
         const dftfe::uInt                        numVectors,
         const dftfe::uInt                        numDofs,
         const dftfe::uInt                        N,
         const dftfe::uInt                        startingVecId,
         const dftfe::utils::deviceDoubleComplex *Y,
-        double                                  *r)
-      {
-        for (dftfe::Int i = blockIdx.x * blockDim.x + threadIdx.x;
-             i < numVectors * numDofs;
-             i += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt dofIndex  = i / numVectors;
-            const dftfe::uInt waveIndex = i % numVectors;
-            r[i]                        = Y[i].x * Y[i].x + Y[i].y * Y[i].y;
-          }
-      }
+        double                                  *r);
 
 
 
@@ -322,7 +360,6 @@ namespace dftfe
         (BVec * BDof + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         streamCompute,
         BDof,
         BVec,
@@ -347,7 +384,6 @@ namespace dftfe
         (D * B + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         streamDataMove,
         B,
         D,
@@ -366,8 +402,7 @@ namespace dftfe
                           (M * N + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          dftfe::utils::defaultStream,
                           dftfe::utils::makeDataTypeDeviceCompatible(
                             diagValues),
                           dftfe::utils::makeDataTypeDeviceCompatible(X),
@@ -390,8 +425,7 @@ namespace dftfe
                           (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          dftfe::utils::defaultStream,
                           numVectors,
                           numDofs,
                           N,
@@ -415,8 +449,7 @@ namespace dftfe
                           (numVectors + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * numDofs,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          dftfe::utils::defaultStream,
                           numVectors,
                           numDofs,
                           N,
@@ -439,8 +472,7 @@ namespace dftfe
                           (BVec + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * M,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          dftfe::utils::defaultStream,
                           BVec,
                           M,
                           N,

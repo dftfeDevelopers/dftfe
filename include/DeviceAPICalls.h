@@ -122,7 +122,7 @@ namespace dftfe
     deviceMemcpyAsyncD2H(void          *dst,
                          const void    *src,
                          std::size_t    count,
-                         deviceStream_t stream = 0);
+                         deviceStream_t stream = dftfe::utils::defaultStream);
 
     /**
      * @brief Copy array from device to device
@@ -132,7 +132,7 @@ namespace dftfe
     deviceMemcpyAsyncD2D(void          *dst,
                          const void    *src,
                          std::size_t    count,
-                         deviceStream_t stream = 0);
+                         deviceStream_t stream = dftfe::utils::defaultStream);
 
     /**
      * @brief Copy array from host to device
@@ -142,34 +142,35 @@ namespace dftfe
     deviceMemcpyAsyncH2D(void          *dst,
                          const void    *src,
                          std::size_t    count,
-                         deviceStream_t stream = 0);
+                         deviceStream_t stream = dftfe::utils::defaultStream);
 
 
     deviceError_t
-    deviceStreamCreate(deviceStream_t *pStream, const bool nonBlocking = false);
+    deviceStreamCreate(deviceStream_t &pStream, const bool nonBlocking = false);
 
     deviceError_t
-    deviceStreamDestroy(deviceStream_t stream);
+    deviceStreamDestroy(deviceStream_t &stream);
 
     deviceError_t
-    deviceStreamSynchronize(deviceStream_t stream);
+    deviceStreamSynchronize(deviceStream_t &stream);
 
     deviceError_t
-    deviceEventCreate(deviceEvent_t *pEvent);
+    deviceEventCreate(deviceEvent_t &pEvent);
 
     deviceError_t
-    deviceEventDestroy(deviceEvent_t event);
+    deviceEventDestroy(deviceEvent_t &event);
 
     deviceError_t
-    deviceEventRecord(deviceEvent_t event, deviceStream_t stream = 0);
+    deviceEventRecord(deviceEvent_t &event,
+                      deviceStream_t stream = dftfe::utils::defaultStream);
 
     deviceError_t
-    deviceEventSynchronize(deviceEvent_t event);
+    deviceEventSynchronize(deviceEvent_t &event);
 
     deviceError_t
-    deviceStreamWaitEvent(deviceStream_t stream,
-                          deviceEvent_t  event,
-                          unsigned int   flags = 0);
+    deviceStreamWaitEvent(deviceStream_t &stream,
+                          deviceEvent_t  &event,
+                          unsigned int    flags = 0);
 
   } // namespace utils
 } // namespace dftfe

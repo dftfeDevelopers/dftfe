@@ -40,5 +40,9 @@ namespace dftfe
                               const double    *d_dvec,
                               const double     alpha,
                               const dftfe::Int N);
+
+  void
+  sadd(double *y, double *x, const double beta, const dftfe::uInt size);
+
 } // namespace dftfe
 #endif

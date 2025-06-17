@@ -21,6 +21,10 @@
 #include <DeviceKernelLauncherConstants.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
+#ifdef DFTFE_WITH_DEVICE_INTEL
+#  include <oneapi/mkl.hpp>
+#  include <oneapi/mkl/blas.hpp>
+#endif
 #ifdef DFTFE_WITH_DEVICE_AMD
 #  define HIPBLAS_V2
 #  include <rocblas.h>
@@ -35,18 +39,21 @@
 
 #ifdef DFTFE_WITH_DEVICE_NVIDIA
 #  ifdef DFTFE_WITH_64BIT_INT
-#    define DFTFE_DEVICE_BLAS_INT(name) cublas##name##_64
+#    define DFTFE_DEVICE_BLAS_INT(type, name) cublas##type##name##_64
 #  else
-#    define DFTFE_DEVICE_BLAS_INT(name) cublas##name
+#    define DFTFE_DEVICE_BLAS_INT(type, name) cublas##type##name
 #  endif
-#  define DFTFE_DEVICE_BLAS(name) cublas##name
+#  define DFTFE_DEVICE_BLAS(type, name) cublas##type##name
 #elif defined(DFTFE_WITH_DEVICE_AMD)
 #  ifdef DFTFE_WITH_64BIT_INT
-#    define DFTFE_DEVICE_BLAS_INT(name) hipblas##name##_64
+#    define DFTFE_DEVICE_BLAS_INT(type, name) hipblas##type##name##_64
 #  else
-#    define DFTFE_DEVICE_BLAS_INT(name) hipblas##name
+#    define DFTFE_DEVICE_BLAS_INT(type, name) hipblas##type##name
 #  endif
-#  define DFTFE_DEVICE_BLAS(name) hipblas##name
+#  define DFTFE_DEVICE_BLAS(type, name) hipblas##type##name
+#elif defined(DFTFE_WITH_DEVICE_INTEL)
+#  define DFTFE_DEVICE_BLAS_INT(type, name) \
+    oneapi::mkl::blas::column_major::name
 #else
 #  error \
     "No device backend defined (DFTFE_WITH_DEVICE_NVIDIA or DFTFE_WITH_DEVICE_AMD)"
@@ -56,7 +63,8 @@ namespace dftfe
 {
   namespace utils
   {
-#if hipblasVersionMajor >= 2 || defined(DFTFE_WITH_DEVICE_NVIDIA)
+#if hipblasVersionMajor >= 2 || defined(DFTFE_WITH_DEVICE_NVIDIA) || \
+  defined(DFTFE_WITH_DEVICE_INTEL)
     template <typename T>
     inline auto
     makeDataTypeDeviceBlasCompatible(T &&x)
@@ -153,10 +161,12 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE_AMD
       initialize();
 #endif
+
       dftfe::utils::deviceBlasStatus_t status;
-      status   = create();
-      status   = setStream(NULL);
-      d_opType = tensorOpDataType::fp32;
+      status     = create();
+      d_opType   = tensorOpDataType::fp32;
+      d_streamId = dftfe::utils::defaultStream;
+      status     = setStream(d_streamId);
     }
 
     dftfe::utils::deviceBlasHandle_t &
@@ -169,16 +179,15 @@ namespace dftfe
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
       copyValueType1ArrToValueType2ArrDeviceCall(
-        const dftfe::uInt                  size,
-        const ValueType1                  *valueType1Arr,
-        ValueType2                        *valueType2Arr,
-        const dftfe::utils::deviceStream_t streamId)
+        const dftfe::uInt            size,
+        const ValueType1            *valueType1Arr,
+        ValueType2                  *valueType2Arr,
+        dftfe::utils::deviceStream_t streamId)
     {
       DFTFE_LAUNCH_KERNEL(
         copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         streamId,
         size,
         dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
@@ -192,16 +201,15 @@ namespace dftfe
       const std::complex<double> *x,
       const dftfe::uInt           incx,
       std::complex<double>       *y,
-      const dftfe::uInt           incy) const
+      const dftfe::uInt           incy)
     {
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Zcopy)(d_deviceBlasHandle,
-               n,
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-               incx,
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-               incy);
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, copy)(
+        d_deviceBlasHandle,
+        n,
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+        incx,
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+        incy));
     }
 
     void
@@ -210,16 +218,15 @@ namespace dftfe
       const std::complex<float> *x,
       const dftfe::uInt          incx,
       std::complex<float>       *y,
-      const dftfe::uInt          incy) const
+      const dftfe::uInt          incy)
     {
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Ccopy)(d_deviceBlasHandle,
-               n,
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-               incx,
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-               incy);
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(C, copy)(
+        d_deviceBlasHandle,
+        n,
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+        incx,
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+        incy));
     }
 
     void
@@ -228,11 +235,11 @@ namespace dftfe
       const double     *x,
       const dftfe::uInt incx,
       double           *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
-      dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Dcopy)(d_deviceBlasHandle, n, x, incx, y, incy);
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(D,
+                              copy)(d_deviceBlasHandle, n, x, incx, y, incy));
     }
 
     void
@@ -241,28 +248,27 @@ namespace dftfe
       const float      *x,
       const dftfe::uInt incx,
       float            *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
-      dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Scopy)(d_deviceBlasHandle, n, x, incx, y, incy);
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(S,
+                              copy)(d_deviceBlasHandle, n, x, incx, y, incy));
     }
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char        transA,
-      const char        transB,
-      const dftfe::uInt m,
-      const dftfe::uInt n,
-      const dftfe::uInt k,
-      const float      *alpha,
-      const float      *A,
-      const dftfe::uInt lda,
-      const float      *B,
-      const dftfe::uInt ldb,
-      const float      *beta,
-      float            *C,
-      const dftfe::uInt ldc) const
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(const char transA,
+                                                          const char transB,
+                                                          const dftfe::uInt m,
+                                                          const dftfe::uInt n,
+                                                          const dftfe::uInt k,
+                                                          const float *alpha,
+                                                          const float *A,
+                                                          const dftfe::uInt lda,
+                                                          const float      *B,
+                                                          const dftfe::uInt ldb,
+                                                          const float *beta,
+                                                          float       *C,
+                                                          const dftfe::uInt ldc)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -289,27 +295,45 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(GemmEx)(d_deviceBlasHandle,
-                                      transa,
-                                      transb,
-                                      dftfe::Int(m),
-                                      dftfe::Int(n),
-                                      dftfe::Int(k),
-                                      (const void *)alpha,
-                                      (const void *)A,
-                                      dftfe::utils::DEVICE_R_32F,
-                                      dftfe::Int(lda),
-                                      (const void *)B,
-                                      dftfe::utils::DEVICE_R_32F,
-                                      dftfe::Int(ldb),
-                                      (const void *)beta,
-                                      (void *)C,
-                                      dftfe::utils::DEVICE_R_32F,
-                                      dftfe::Int(ldc),
-                                      computeType,
-                                      dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
+        DFTFE_DEVICE_BLAS_INT(, GemmEx)(d_deviceBlasHandle,
+                                        transa,
+                                        transb,
+                                        dftfe::Int(m),
+                                        dftfe::Int(n),
+                                        dftfe::Int(k),
+                                        (const void *)alpha,
+                                        (const void *)A,
+                                        dftfe::utils::DEVICE_R_32F,
+                                        dftfe::Int(lda),
+                                        (const void *)B,
+                                        dftfe::utils::DEVICE_R_32F,
+                                        dftfe::Int(ldb),
+                                        (const void *)beta,
+                                        (void *)C,
+                                        dftfe::utils::DEVICE_R_32F,
+                                        dftfe::Int(ldc),
+                                        computeType,
+                                        dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(, gemm)(d_deviceBlasHandle,
+                                                         transa,
+                                                         transb,
+                                                         dftfe::Int(m),
+                                                         dftfe::Int(n),
+                                                         dftfe::Int(k),
+                                                         alpha,
+                                                         A,
+                                                         dftfe::Int(lda),
+                                                         B,
+                                                         dftfe::Int(ldb),
+                                                         beta,
+                                                         C,
+                                                         dftfe::Int(ldc),
+                                                         computeType));
+#endif
     }
 
     void
@@ -326,7 +350,7 @@ namespace dftfe
       const dftfe::uInt          ldb,
       const std::complex<float> *beta,
       std::complex<float>       *C,
-      const dftfe::uInt          ldc) const
+      const dftfe::uInt          ldc)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -349,7 +373,6 @@ namespace dftfe
         {
           throw std::invalid_argument("Incorrect transB in gemm ");
         }
-
       dftfe::utils::deviceBlasComputeType_t computeType =
         dftfe::utils::DEVICEBLAS_COMPUTE_32F;
       if (d_opType == tensorOpDataType::tf32)
@@ -358,45 +381,62 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(GemmEx)(d_deviceBlasHandle,
-                                      transa,
-                                      transb,
-                                      dftfe::Int(m),
-                                      dftfe::Int(n),
-                                      dftfe::Int(k),
-                                      (const void *)alpha,
-                                      (const void *)A,
-                                      dftfe::utils::DEVICE_C_32F,
-                                      dftfe::Int(lda),
-                                      (const void *)B,
-                                      dftfe::utils::DEVICE_C_32F,
-                                      dftfe::Int(ldb),
-                                      (const void *)beta,
-                                      (void *)C,
-                                      dftfe::utils::DEVICE_C_32F,
-                                      dftfe::Int(ldc),
-                                      computeType,
-                                      dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
+        DFTFE_DEVICE_BLAS_INT(, GemmEx)(d_deviceBlasHandle,
+                                        transa,
+                                        transb,
+                                        dftfe::Int(m),
+                                        dftfe::Int(n),
+                                        dftfe::Int(k),
+                                        (const void *)alpha,
+                                        (const void *)A,
+                                        dftfe::utils::DEVICE_C_32F,
+                                        dftfe::Int(lda),
+                                        (const void *)B,
+                                        dftfe::utils::DEVICE_C_32F,
+                                        dftfe::Int(ldb),
+                                        (const void *)beta,
+                                        (void *)C,
+                                        dftfe::utils::DEVICE_C_32F,
+                                        dftfe::Int(ldc),
+                                        computeType,
+                                        dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
 
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(, gemm)(d_deviceBlasHandle,
+                                                         transa,
+                                                         transb,
+                                                         dftfe::Int(m),
+                                                         dftfe::Int(n),
+                                                         dftfe::Int(k),
+                                                         alpha,
+                                                         A,
+                                                         dftfe::Int(lda),
+                                                         B,
+                                                         dftfe::Int(ldb),
+                                                         beta,
+                                                         C,
+                                                         dftfe::Int(ldc),
+                                                         computeType));
+#endif
     }
 
     void
-    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(
-      const char        transA,
-      const char        transB,
-      const dftfe::uInt m,
-      const dftfe::uInt n,
-      const dftfe::uInt k,
-      const double     *alpha,
-      const double     *A,
-      const dftfe::uInt lda,
-      const double     *B,
-      const dftfe::uInt ldb,
-      const double     *beta,
-      double           *C,
-      const dftfe::uInt ldc) const
+    BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemm(const char transA,
+                                                          const char transB,
+                                                          const dftfe::uInt m,
+                                                          const dftfe::uInt n,
+                                                          const dftfe::uInt k,
+                                                          const double *alpha,
+                                                          const double *A,
+                                                          const dftfe::uInt lda,
+                                                          const double     *B,
+                                                          const dftfe::uInt ldb,
+                                                          const double *beta,
+                                                          double       *C,
+                                                          const dftfe::uInt ldc)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -417,22 +457,20 @@ namespace dftfe
         {
           throw std::invalid_argument("Incorrect transB in gemm ");
         }
-      dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Dgemm)(d_deviceBlasHandle,
-                                     transa,
-                                     transb,
-                                     dftfe::Int(m),
-                                     dftfe::Int(n),
-                                     dftfe::Int(k),
-                                     alpha,
-                                     A,
-                                     dftfe::Int(lda),
-                                     B,
-                                     dftfe::Int(ldb),
-                                     beta,
-                                     C,
-                                     dftfe::Int(ldc));
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(D, gemm)(d_deviceBlasHandle,
+                                                          transa,
+                                                          transb,
+                                                          dftfe::Int(m),
+                                                          dftfe::Int(n),
+                                                          dftfe::Int(k),
+                                                          alpha,
+                                                          A,
+                                                          dftfe::Int(lda),
+                                                          B,
+                                                          dftfe::Int(ldb),
+                                                          beta,
+                                                          C,
+                                                          dftfe::Int(ldc)));
     }
 
     void
@@ -449,7 +487,7 @@ namespace dftfe
       const dftfe::uInt           ldb,
       const std::complex<double> *beta,
       std::complex<double>       *C,
-      const dftfe::uInt           ldc) const
+      const dftfe::uInt           ldc)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -472,24 +510,21 @@ namespace dftfe
         {
           throw std::invalid_argument("Incorrect transB in gemm ");
         }
-
-
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Zgemm)(d_deviceBlasHandle,
-               transa,
-               transb,
-               dftfe::Int(m),
-               dftfe::Int(n),
-               dftfe::Int(k),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
-               dftfe::Int(lda),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(B),
-               dftfe::Int(ldb),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(C),
-               dftfe::Int(ldc));
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, gemm)(
+        d_deviceBlasHandle,
+        transa,
+        transb,
+        dftfe::Int(m),
+        dftfe::Int(n),
+        dftfe::Int(k),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
+        dftfe::Int(lda),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(B),
+        dftfe::Int(ldb),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(C),
+        dftfe::Int(ldc)));
     }
 
     void
@@ -504,7 +539,7 @@ namespace dftfe
       const dftfe::uInt incx,
       const double     *beta,
       double           *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
       dftfe::utils::deviceBlasOperation_t transa;
       if (transA == 'N')
@@ -515,20 +550,18 @@ namespace dftfe
         {
           throw std::invalid_argument("Incorrect transA in gemv ");
         }
-      dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Dgemv)(d_deviceBlasHandle,
-                                     transa,
-                                     dftfe::Int(m),
-                                     dftfe::Int(n),
-                                     alpha,
-                                     A,
-                                     dftfe::Int(lda),
-                                     x,
-                                     dftfe::Int(incx),
-                                     beta,
-                                     y,
-                                     dftfe::Int(incy));
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(D, gemv)(d_deviceBlasHandle,
+                                                          transa,
+                                                          dftfe::Int(m),
+                                                          dftfe::Int(n),
+                                                          alpha,
+                                                          A,
+                                                          dftfe::Int(lda),
+                                                          x,
+                                                          dftfe::Int(incx),
+                                                          beta,
+                                                          y,
+                                                          dftfe::Int(incy)));
     }
 
 
@@ -544,7 +577,7 @@ namespace dftfe
       const dftfe::uInt incx,
       const float      *beta,
       float            *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -556,20 +589,18 @@ namespace dftfe
           throw std::invalid_argument("Incorrect transA in gemv ");
         }
 
-      dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Sgemv)(d_deviceBlasHandle,
-                                     transa,
-                                     dftfe::Int(m),
-                                     dftfe::Int(n),
-                                     alpha,
-                                     A,
-                                     dftfe::Int(lda),
-                                     x,
-                                     dftfe::Int(incx),
-                                     beta,
-                                     y,
-                                     dftfe::Int(incy));
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(S, gemv)(d_deviceBlasHandle,
+                                                          transa,
+                                                          dftfe::Int(m),
+                                                          dftfe::Int(n),
+                                                          alpha,
+                                                          A,
+                                                          dftfe::Int(lda),
+                                                          x,
+                                                          dftfe::Int(incx),
+                                                          beta,
+                                                          y,
+                                                          dftfe::Int(incy)));
     }
 
     void
@@ -584,7 +615,7 @@ namespace dftfe
       const dftfe::uInt           incx,
       const std::complex<double> *beta,
       std::complex<double>       *y,
-      const dftfe::uInt           incy) const
+      const dftfe::uInt           incy)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -598,20 +629,19 @@ namespace dftfe
           throw std::invalid_argument("Incorrect transA in gemv ");
         }
 
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Zgemv)(d_deviceBlasHandle,
-               transa,
-               dftfe::Int(m),
-               dftfe::Int(n),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
-               dftfe::Int(lda),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-               dftfe::Int(incx),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-               dftfe::Int(incy));
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, gemv)(
+        d_deviceBlasHandle,
+        transa,
+        dftfe::Int(m),
+        dftfe::Int(n),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
+        dftfe::Int(lda),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+        dftfe::Int(incx),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+        dftfe::Int(incy)));
     }
 
     void
@@ -626,7 +656,7 @@ namespace dftfe
       const dftfe::uInt          incx,
       const std::complex<float> *beta,
       std::complex<float>       *y,
-      const dftfe::uInt          incy) const
+      const dftfe::uInt          incy)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -640,38 +670,48 @@ namespace dftfe
           throw std::invalid_argument("Incorrect transA in gemv ");
         }
 
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Cgemv)(d_deviceBlasHandle,
-               transa,
-               dftfe::Int(m),
-               dftfe::Int(n),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
-               dftfe::Int(lda),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-               dftfe::Int(incx),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-               dftfe::Int(incy));
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(C, gemv)(
+        d_deviceBlasHandle,
+        transa,
+        dftfe::Int(m),
+        dftfe::Int(n),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
+        dftfe::Int(lda),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+        dftfe::Int(incx),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+        dftfe::Int(incy)));
     }
 
 
     dftfe::utils::deviceBlasStatus_t
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::create()
     {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS(Create)(&d_deviceBlasHandle);
+        DFTFE_DEVICE_BLAS(, Create)(&d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      d_streamId = dftfe::utils::defaultStream;
+      d_deviceBlasHandle =
+        dftfe::utils::queueRegistry.find(dftfe::utils::defaultStream)->second;
+      dftfe::utils::deviceBlasStatus_t status = dftfe::utils::deviceBlasSuccess;
+#endif
       return status;
     }
 
     dftfe::utils::deviceBlasStatus_t
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::destroy()
     {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS(Destroy)(d_deviceBlasHandle);
+        DFTFE_DEVICE_BLAS(, Destroy)(d_deviceBlasHandle);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      dftfe::utils::deviceBlasStatus_t status = dftfe::utils::deviceBlasSuccess;
+#endif
       return status;
     }
 
@@ -680,9 +720,14 @@ namespace dftfe
       dftfe::utils::deviceStream_t streamId)
     {
       d_streamId = streamId;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS(SetStream)(d_deviceBlasHandle, d_streamId);
+        DFTFE_DEVICE_BLAS(, SetStream)(d_deviceBlasHandle, d_streamId);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      d_deviceBlasHandle = dftfe::utils::queueRegistry.find(streamId)->second;
+      dftfe::utils::deviceBlasStatus_t status = dftfe::utils::deviceBlasSuccess;
+#endif
       return status;
     }
 
@@ -695,17 +740,15 @@ namespace dftfe
       const double     *x,
       const dftfe::uInt incx,
       double           *y,
-      const dftfe::uInt incy) const
+      const dftfe::uInt incy)
     {
-      dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Daxpy)(d_deviceBlasHandle,
-                                     dftfe::Int(n),
-                                     alpha,
-                                     x,
-                                     dftfe::Int(incx),
-                                     y,
-                                     dftfe::Int(incy));
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(D, axpy)(d_deviceBlasHandle,
+                                                          dftfe::Int(n),
+                                                          alpha,
+                                                          x,
+                                                          dftfe::Int(incx),
+                                                          y,
+                                                          dftfe::Int(incy)));
     }
 
     void
@@ -715,17 +758,16 @@ namespace dftfe
       const std::complex<double> *x,
       const dftfe::uInt           incx,
       std::complex<double>       *y,
-      const dftfe::uInt           incy) const
+      const dftfe::uInt           incy)
     {
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Zaxpy)(d_deviceBlasHandle,
-               dftfe::Int(n),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-               dftfe::Int(incx),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
-               dftfe::Int(incy));
-      DEVICEBLAS_API_CHECK(status);
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, axpy)(
+        d_deviceBlasHandle,
+        dftfe::Int(n),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+        dftfe::Int(incx),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(y),
+        dftfe::Int(incy)));
     }
 
 
@@ -736,13 +778,12 @@ namespace dftfe
       const ValueType2  alpha,
       const ValueType1 *x,
       const ValueType2  beta,
-      ValueType1       *y) const
+      ValueType1       *y)
     {
       DFTFE_LAUNCH_KERNEL(axpbyDeviceKernel,
                           n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           n,
                           dftfe::utils::makeDataTypeDeviceCompatible(x),
                           dftfe::utils::makeDataTypeDeviceCompatible(y),
@@ -763,13 +804,12 @@ namespace dftfe
       const ValueType1 *A,
       const ValueType2 *B,
       const ValueType3 *D,
-      ValueType4       *C) const
+      ValueType4       *C)
     {
       DFTFE_LAUNCH_KERNEL(ApaBDDeviceKernel,
                           (n * m / dftfe::utils::DEVICE_BLOCK_SIZE) + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           m,
                           n,
                           alpha,
@@ -787,7 +827,7 @@ namespace dftfe
       const ValueType1 *addFromVec,
       const ValueType2 *scalingVector,
       const ValueType2  a,
-      ValueType1       *addToVec) const
+      ValueType1       *addToVec)
     {
       DFTFE_LAUNCH_KERNEL(
         stridedBlockAxpyDeviceKernel,
@@ -795,8 +835,7 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
         dftfe::utils::makeDataTypeDeviceCompatible(a),
@@ -814,7 +853,7 @@ namespace dftfe
       const ValueType2 *scalingVector,
       const ValueType2  a,
       const ValueType2  b,
-      ValueType1       *addToVec) const
+      ValueType1       *addToVec)
     {
       DFTFE_LAUNCH_KERNEL(
         stridedBlockAxpByDeviceKernel,
@@ -822,8 +861,7 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
         dftfe::utils::makeDataTypeDeviceCompatible(a),
@@ -840,15 +878,14 @@ namespace dftfe
       const dftfe::uInt  numContiguousBlocks,
       const ValueType   *addFromVec,
       ValueType         *addToVec,
-      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt *addToVecStartingContiguousBlockIds)
     {
       DFTFE_LAUNCH_KERNEL(axpyStridedBlockAtomicAddDeviceKernel,
                           (contiguousBlockSize * numContiguousBlocks) /
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -866,15 +903,14 @@ namespace dftfe
       const ValueType1  *s,
       const ValueType2  *addFromVec,
       ValueType3        *addToVec,
-      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt *addToVecStartingContiguousBlockIds)
     {
       DFTFE_LAUNCH_KERNEL(axpyStridedBlockAtomicAddDeviceKernel,
                           (contiguousBlockSize * numContiguousBlocks) /
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(a),
@@ -893,15 +929,14 @@ namespace dftfe
       const ValueType1   a,
       const ValueType2  *addFromVec,
       ValueType3        *addToVec,
-      const dftfe::uInt *addToVecStartingContiguousBlockIds) const
+      const dftfe::uInt *addToVecStartingContiguousBlockIds)
     {
       DFTFE_LAUNCH_KERNEL(axpyStridedBlockAtomicAddDeviceKernel,
                           (contiguousBlockSize * numContiguousBlocks) /
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(a),
@@ -917,17 +952,34 @@ namespace dftfe
                                                          const dftfe::uInt INCX,
                                                          const double     *Y,
                                                          const dftfe::uInt INCY,
-                                                         double *result) const
+                                                         double *result)
     {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Ddot)(d_deviceBlasHandle,
-                                    dftfe::Int(N),
-                                    X,
-                                    dftfe::Int(INCX),
-                                    Y,
-                                    dftfe::Int(INCY),
-                                    result);
+        DFTFE_DEVICE_BLAS_INT(D, dot)(d_deviceBlasHandle,
+                                      dftfe::Int(N),
+                                      X,
+                                      dftfe::Int(INCX),
+                                      Y,
+                                      dftfe::Int(INCY),
+                                      result);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      double *dev_res = sycl::malloc_device<double>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(D, dot)(d_deviceBlasHandle,
+                                      dftfe::Int(N),
+                                      X,
+                                      dftfe::Int(INCX),
+                                      Y,
+                                      dftfe::Int(INCY),
+                                      dev_res);
+      d_deviceBlasHandle.memcpy(result, dev_res, sizeof(double)).wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
     }
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xdot(const dftfe::uInt N,
@@ -935,17 +987,34 @@ namespace dftfe
                                                          const dftfe::uInt INCX,
                                                          const float      *Y,
                                                          const dftfe::uInt INCY,
-                                                         float *result) const
+                                                         float *result)
     {
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Sdot)(d_deviceBlasHandle,
-                                    dftfe::Int(N),
-                                    X,
-                                    dftfe::Int(INCX),
-                                    Y,
-                                    dftfe::Int(INCY),
-                                    result);
+        DFTFE_DEVICE_BLAS_INT(S, dot)(d_deviceBlasHandle,
+                                      dftfe::Int(N),
+                                      X,
+                                      dftfe::Int(INCX),
+                                      Y,
+                                      dftfe::Int(INCY),
+                                      result);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      float *dev_res = sycl::malloc_device<float>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      dftfe::utils::deviceEvent_t event =
+        DFTFE_DEVICE_BLAS_INT(S, dot)(d_deviceBlasHandle,
+                                      dftfe::Int(N),
+                                      X,
+                                      dftfe::Int(INCX),
+                                      Y,
+                                      dftfe::Int(INCY),
+                                      dev_res);
+      d_deviceBlasHandle.memcpy(result, dev_res, sizeof(float)).wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
     }
 
     void
@@ -956,19 +1025,35 @@ namespace dftfe
       const double     *Y,
       const dftfe::uInt INCY,
       const MPI_Comm   &mpi_communicator,
-      double           *result) const
+      double           *result)
     {
       double localResult = 0.0;
       *result            = 0.0;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(Ddot)(d_deviceBlasHandle,
-                                    dftfe::Int(N),
-                                    X,
-                                    dftfe::Int(INCX),
-                                    Y,
-                                    dftfe::Int(INCY),
-                                    &localResult);
+        DFTFE_DEVICE_BLAS_INT(D, dot)(d_deviceBlasHandle,
+                                      dftfe::Int(N),
+                                      X,
+                                      dftfe::Int(INCX),
+                                      Y,
+                                      dftfe::Int(INCY),
+                                      &localResult);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      double *dev_res = sycl::malloc_device<double>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(D, dot)(d_deviceBlasHandle,
+                                                         dftfe::Int(N),
+                                                         X,
+                                                         dftfe::Int(INCX),
+                                                         Y,
+                                                         dftfe::Int(INCY),
+                                                         dev_res));
+      d_deviceBlasHandle.memcpy(&localResult, dev_res, sizeof(double)).wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
       MPI_Allreduce(
         &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
     }
@@ -980,17 +1065,36 @@ namespace dftfe
       const dftfe::uInt           INCX,
       const std::complex<double> *Y,
       const dftfe::uInt           INCY,
-      std::complex<double>       *result) const
+      std::complex<double>       *result)
     {
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Zdotc)(d_deviceBlasHandle,
-               dftfe::Int(N),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
-               dftfe::Int(INCX),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
-               dftfe::Int(INCY),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(result));
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(Z, dotc)(
+        d_deviceBlasHandle,
+        dftfe::Int(N),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+        dftfe::Int(INCX),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+        dftfe::Int(INCY),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(result));
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      std::complex<double> *dev_res =
+        sycl::malloc_device<std::complex<double>>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, dotu)(
+        d_deviceBlasHandle,
+        dftfe::Int(N),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+        dftfe::Int(INCX),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+        dftfe::Int(INCY),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(dev_res)));
+      d_deviceBlasHandle.memcpy(result, dev_res, sizeof(std::complex<double>))
+        .wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
     }
 
     void
@@ -1000,17 +1104,36 @@ namespace dftfe
       const dftfe::uInt          INCX,
       const std::complex<float> *Y,
       const dftfe::uInt          INCY,
-      std::complex<float>       *result) const
+      std::complex<float>       *result)
     {
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Cdotc)(d_deviceBlasHandle,
-               dftfe::Int(N),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
-               dftfe::Int(INCX),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
-               dftfe::Int(INCY),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(result));
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(C, dotc)(
+        d_deviceBlasHandle,
+        dftfe::Int(N),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+        dftfe::Int(INCX),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+        dftfe::Int(INCY),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(result));
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      std::complex<float> *dev_res =
+        sycl::malloc_device<std::complex<float>>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(C, dotu)(
+        d_deviceBlasHandle,
+        dftfe::Int(N),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+        dftfe::Int(INCX),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+        dftfe::Int(INCY),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(dev_res)));
+      d_deviceBlasHandle.memcpy(result, dev_res, sizeof(std::complex<float>))
+        .wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
     }
 
     void
@@ -1021,19 +1144,39 @@ namespace dftfe
       const std::complex<double> *Y,
       const dftfe::uInt           INCY,
       const MPI_Comm             &mpi_communicator,
-      std::complex<double>       *result) const
+      std::complex<double>       *result)
     {
-      std::complex<double> localResult        = 0.0;
-      *result                                 = 0.0;
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Zdotc)(d_deviceBlasHandle,
-               dftfe::Int(N),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
-               dftfe::Int(INCX),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
-               dftfe::Int(INCY),
-               dftfe::utils::makeDataTypeDeviceBlasCompatible(&localResult));
+      std::complex<double> localResult = 0.0;
+      *result                          = 0.0;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(Z, dotc)(
+        d_deviceBlasHandle,
+        dftfe::Int(N),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+        dftfe::Int(INCX),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+        dftfe::Int(INCY),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(&localResult));
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      std::complex<double> *dev_res =
+        sycl::malloc_device<std::complex<double>>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, dotu)(
+        d_deviceBlasHandle,
+        dftfe::Int(N),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
+        dftfe::Int(INCX),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(Y),
+        dftfe::Int(INCY),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(dev_res)));
+      d_deviceBlasHandle
+        .memcpy(&localResult, dev_res, sizeof(std::complex<double>))
+        .wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
       MPI_Allreduce(&localResult,
                     result,
                     1,
@@ -1060,7 +1203,7 @@ namespace dftfe
       double           *C,
       const dftfe::uInt ldc,
       long long int     strideC,
-      const dftfe::Int  batchCount) const
+      const dftfe::Int  batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1082,26 +1225,48 @@ namespace dftfe
           // Assert Statement
         }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(DgemmStridedBatched)(d_deviceBlasHandle,
-                                                   transa,
-                                                   transb,
-                                                   dftfe::Int(m),
-                                                   dftfe::Int(n),
-                                                   dftfe::Int(k),
-                                                   alpha,
-                                                   A,
-                                                   dftfe::Int(lda),
-                                                   strideA,
-                                                   B,
-                                                   dftfe::Int(ldb),
-                                                   strideB,
-                                                   beta,
-                                                   C,
-                                                   dftfe::Int(ldc),
-                                                   strideC,
-                                                   dftfe::Int(batchCount));
+        DFTFE_DEVICE_BLAS_INT(D, gemmStridedBatched)(d_deviceBlasHandle,
+                                                     transa,
+                                                     transb,
+                                                     dftfe::Int(m),
+                                                     dftfe::Int(n),
+                                                     dftfe::Int(k),
+                                                     alpha,
+                                                     A,
+                                                     dftfe::Int(lda),
+                                                     strideA,
+                                                     B,
+                                                     dftfe::Int(ldb),
+                                                     strideB,
+                                                     beta,
+                                                     C,
+                                                     dftfe::Int(ldc),
+                                                     strideC,
+                                                     dftfe::Int(batchCount));
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(D, gemm_batch)(d_deviceBlasHandle,
+                                             transa,
+                                             transb,
+                                             dftfe::Int(m),
+                                             dftfe::Int(n),
+                                             dftfe::Int(k),
+                                             alpha,
+                                             A,
+                                             dftfe::Int(lda),
+                                             strideA,
+                                             B,
+                                             dftfe::Int(ldb),
+                                             strideB,
+                                             beta,
+                                             C,
+                                             dftfe::Int(ldc),
+                                             strideC,
+                                             dftfe::Int(batchCount)));
+#endif
     }
 
 
@@ -1123,7 +1288,7 @@ namespace dftfe
       std::complex<double>       *C,
       const dftfe::uInt           ldc,
       long long int               strideC,
-      const dftfe::Int            batchCount) const
+      const dftfe::Int            batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1147,8 +1312,9 @@ namespace dftfe
           // Assert Statement
         }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(ZgemmStridedBatched)(
+        DFTFE_DEVICE_BLAS_INT(Z, gemmStridedBatched)(
           d_deviceBlasHandle,
           transa,
           transb,
@@ -1168,6 +1334,27 @@ namespace dftfe
           strideC,
           dftfe::Int(batchCount));
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, gemm_batch)(
+        d_deviceBlasHandle,
+        transa,
+        transb,
+        dftfe::Int(m),
+        dftfe::Int(n),
+        dftfe::Int(k),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(A),
+        dftfe::Int(lda),
+        strideA,
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(B),
+        dftfe::Int(ldb),
+        strideB,
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(C),
+        dftfe::Int(ldc),
+        strideC,
+        dftfe::Int(batchCount)));
+#endif
     }
 
 
@@ -1189,7 +1376,7 @@ namespace dftfe
       float            *C,
       const dftfe::uInt ldc,
       long long int     strideC,
-      const dftfe::Int  batchCount) const
+      const dftfe::Int  batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1218,31 +1405,54 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        GemmStridedBatchedEx)(d_deviceBlasHandle,
-                              transa,
-                              transb,
-                              dftfe::Int(m),
-                              dftfe::Int(n),
-                              dftfe::Int(k),
-                              (const void *)alpha,
-                              (const void *)A,
-                              dftfe::utils::DEVICE_R_32F,
-                              dftfe::Int(lda),
-                              strideA,
-                              (const void *)B,
-                              dftfe::utils::DEVICE_R_32F,
-                              dftfe::Int(ldb),
-                              strideB,
-                              (const void *)beta,
-                              (void *)C,
-                              dftfe::utils::DEVICE_R_32F,
-                              dftfe::Int(ldc),
-                              strideC,
-                              dftfe::Int(batchCount),
-                              computeType,
-                              dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
+        , GemmStridedBatchedEx)(d_deviceBlasHandle,
+                                transa,
+                                transb,
+                                dftfe::Int(m),
+                                dftfe::Int(n),
+                                dftfe::Int(k),
+                                (const void *)alpha,
+                                (const void *)A,
+                                dftfe::utils::DEVICE_R_32F,
+                                dftfe::Int(lda),
+                                strideA,
+                                (const void *)B,
+                                dftfe::utils::DEVICE_R_32F,
+                                dftfe::Int(ldb),
+                                strideB,
+                                (const void *)beta,
+                                (void *)C,
+                                dftfe::utils::DEVICE_R_32F,
+                                dftfe::Int(ldc),
+                                strideC,
+                                dftfe::Int(batchCount),
+                                computeType,
+                                dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(S, gemm_batch)(d_deviceBlasHandle,
+                                             transa,
+                                             transb,
+                                             dftfe::Int(m),
+                                             dftfe::Int(n),
+                                             dftfe::Int(k),
+                                             alpha,
+                                             A,
+                                             dftfe::Int(lda),
+                                             strideA,
+                                             B,
+                                             dftfe::Int(ldb),
+                                             strideB,
+                                             beta,
+                                             C,
+                                             dftfe::Int(ldc),
+                                             strideC,
+                                             dftfe::Int(batchCount),
+                                             computeType));
+#endif
     }
 
 
@@ -1264,7 +1474,7 @@ namespace dftfe
       std::complex<float>       *C,
       const dftfe::uInt          ldc,
       long long int              strideC,
-      const dftfe::Int           batchCount) const
+      const dftfe::Int           batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1296,31 +1506,54 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        GemmStridedBatchedEx)(d_deviceBlasHandle,
-                              transa,
-                              transb,
-                              dftfe::Int(m),
-                              dftfe::Int(n),
-                              dftfe::Int(k),
-                              (const void *)alpha,
-                              (const void *)A,
-                              dftfe::utils::DEVICE_C_32F,
-                              dftfe::Int(lda),
-                              strideA,
-                              (const void *)B,
-                              dftfe::utils::DEVICE_C_32F,
-                              dftfe::Int(ldb),
-                              strideB,
-                              (const void *)beta,
-                              (void *)C,
-                              dftfe::utils::DEVICE_C_32F,
-                              dftfe::Int(ldc),
-                              strideC,
-                              dftfe::Int(batchCount),
-                              computeType,
-                              dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
+        , GemmStridedBatchedEx)(d_deviceBlasHandle,
+                                transa,
+                                transb,
+                                dftfe::Int(m),
+                                dftfe::Int(n),
+                                dftfe::Int(k),
+                                (const void *)alpha,
+                                (const void *)A,
+                                dftfe::utils::DEVICE_C_32F,
+                                dftfe::Int(lda),
+                                strideA,
+                                (const void *)B,
+                                dftfe::utils::DEVICE_C_32F,
+                                dftfe::Int(ldb),
+                                strideB,
+                                (const void *)beta,
+                                (void *)C,
+                                dftfe::utils::DEVICE_C_32F,
+                                dftfe::Int(ldc),
+                                strideC,
+                                dftfe::Int(batchCount),
+                                computeType,
+                                dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(C, gemm_batch)(d_deviceBlasHandle,
+                                             transa,
+                                             transb,
+                                             dftfe::Int(m),
+                                             dftfe::Int(n),
+                                             dftfe::Int(k),
+                                             alpha,
+                                             A,
+                                             dftfe::Int(lda),
+                                             strideA,
+                                             B,
+                                             dftfe::Int(ldb),
+                                             strideB,
+                                             beta,
+                                             C,
+                                             dftfe::Int(ldc),
+                                             strideC,
+                                             dftfe::Int(batchCount),
+                                             computeType));
+#endif
     }
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xgemmBatched(
@@ -1337,7 +1570,7 @@ namespace dftfe
       const double     *beta,
       double           *C[],
       const dftfe::uInt ldc,
-      const dftfe::Int  batchCount) const
+      const dftfe::Int  batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1359,24 +1592,51 @@ namespace dftfe
           // Assert Statement
         }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status =
-        DFTFE_DEVICE_BLAS_INT(DgemmBatched)(d_deviceBlasHandle,
-                                            transa,
-                                            transb,
-                                            dftfe::Int(m),
-                                            dftfe::Int(n),
-                                            dftfe::Int(k),
-                                            alpha,
-                                            A,
-                                            dftfe::Int(lda),
-                                            B,
-                                            dftfe::Int(ldb),
-                                            beta,
-                                            C,
-                                            dftfe::Int(ldc),
-                                            dftfe::Int(batchCount));
+        DFTFE_DEVICE_BLAS_INT(D, gemmBatched)(d_deviceBlasHandle,
+                                              transa,
+                                              transb,
+                                              dftfe::Int(m),
+                                              dftfe::Int(n),
+                                              dftfe::Int(k),
+                                              alpha,
+                                              A,
+                                              dftfe::Int(lda),
+                                              B,
+                                              dftfe::Int(ldb),
+                                              beta,
+                                              C,
+                                              dftfe::Int(ldc),
+                                              dftfe::Int(batchCount));
 
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      const std::int64_t m_local          = std::int64_t(m);
+      const std::int64_t n_local          = std::int64_t(n);
+      const std::int64_t k_local          = std::int64_t(k);
+      const std::int64_t lda_local        = std::int64_t(lda);
+      const std::int64_t ldb_local        = std::int64_t(ldb);
+      const std::int64_t ldc_local        = std::int64_t(ldc);
+      const std::int64_t batchCount_local = std::int64_t(batchCount);
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(D, gemm_batch)(d_deviceBlasHandle,
+                                             &transa,
+                                             &transb,
+                                             &m_local,
+                                             &n_local,
+                                             &k_local,
+                                             alpha,
+                                             A,
+                                             &lda_local,
+                                             B,
+                                             &ldb_local,
+                                             beta,
+                                             C,
+                                             &ldc_local,
+                                             1,
+                                             &batchCount_local));
+#endif
     }
 
 
@@ -1395,7 +1655,7 @@ namespace dftfe
       const std::complex<double> *beta,
       std::complex<double>       *C[],
       const dftfe::uInt           ldc,
-      const dftfe::Int            batchCount) const
+      const dftfe::Int            batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1419,24 +1679,51 @@ namespace dftfe
           // Assert Statement
         }
 
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        ZgemmBatched)(d_deviceBlasHandle,
-                      transa,
-                      transb,
-                      dftfe::Int(m),
-                      dftfe::Int(n),
-                      dftfe::Int(k),
-                      dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
-                      (const dftfe::utils::deviceDoubleComplex **)A,
-                      dftfe::Int(lda),
-                      (const dftfe::utils::deviceDoubleComplex **)B,
-                      dftfe::Int(ldb),
-                      dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
-                      (dftfe::utils::deviceDoubleComplex **)C,
-                      dftfe::Int(ldc),
-                      dftfe::Int(batchCount));
+        Z, gemmBatched)(d_deviceBlasHandle,
+                        transa,
+                        transb,
+                        dftfe::Int(m),
+                        dftfe::Int(n),
+                        dftfe::Int(k),
+                        dftfe::utils::makeDataTypeDeviceBlasCompatible(alpha),
+                        (const dftfe::utils::deviceDoubleComplex **)A,
+                        dftfe::Int(lda),
+                        (const dftfe::utils::deviceDoubleComplex **)B,
+                        dftfe::Int(ldb),
+                        dftfe::utils::makeDataTypeDeviceBlasCompatible(beta),
+                        (dftfe::utils::deviceDoubleComplex **)C,
+                        dftfe::Int(ldc),
+                        dftfe::Int(batchCount));
 
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      const std::int64_t m_local          = std::int64_t(m);
+      const std::int64_t n_local          = std::int64_t(n);
+      const std::int64_t k_local          = std::int64_t(k);
+      const std::int64_t lda_local        = std::int64_t(lda);
+      const std::int64_t ldb_local        = std::int64_t(ldb);
+      const std::int64_t ldc_local        = std::int64_t(ldc);
+      const std::int64_t batchCount_local = std::int64_t(batchCount);
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(Z, gemm_batch)(d_deviceBlasHandle,
+                                             &transa,
+                                             &transb,
+                                             &m_local,
+                                             &n_local,
+                                             &k_local,
+                                             alpha,
+                                             A,
+                                             &lda_local,
+                                             B,
+                                             &ldb_local,
+                                             beta,
+                                             C,
+                                             &ldc_local,
+                                             1,
+                                             &batchCount_local));
+#endif
     }
 
 
@@ -1455,7 +1742,7 @@ namespace dftfe
       const float      *beta,
       float            *C[],
       const dftfe::uInt ldc,
-      const dftfe::Int  batchCount) const
+      const dftfe::Int  batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1485,30 +1772,58 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        GemmBatchedEx)(d_deviceBlasHandle,
-                       transa,
-                       transb,
-                       dftfe::Int(m),
-                       dftfe::Int(n),
-                       dftfe::Int(k),
-                       (const void *)alpha,
-                       (const void **)A,
-                       dftfe::utils::DEVICE_R_32F,
-                       dftfe::Int(lda),
-                       (const void **)B,
-                       dftfe::utils::DEVICE_R_32F,
-                       dftfe::Int(ldb),
-                       (const void *)beta,
-                       (void **)C,
-                       dftfe::utils::DEVICE_R_32F,
-                       dftfe::Int(ldc),
-                       dftfe::Int(batchCount),
-                       computeType,
-                       dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
+        , GemmBatchedEx)(d_deviceBlasHandle,
+                         transa,
+                         transb,
+                         dftfe::Int(m),
+                         dftfe::Int(n),
+                         dftfe::Int(k),
+                         (const void *)alpha,
+                         (const void **)A,
+                         dftfe::utils::DEVICE_R_32F,
+                         dftfe::Int(lda),
+                         (const void **)B,
+                         dftfe::utils::DEVICE_R_32F,
+                         dftfe::Int(ldb),
+                         (const void *)beta,
+                         (void **)C,
+                         dftfe::utils::DEVICE_R_32F,
+                         dftfe::Int(ldc),
+                         dftfe::Int(batchCount),
+                         computeType,
+                         dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
 
 
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      const std::int64_t m_local          = std::int64_t(m);
+      const std::int64_t n_local          = std::int64_t(n);
+      const std::int64_t k_local          = std::int64_t(k);
+      const std::int64_t lda_local        = std::int64_t(lda);
+      const std::int64_t ldb_local        = std::int64_t(ldb);
+      const std::int64_t ldc_local        = std::int64_t(ldc);
+      const std::int64_t batchCount_local = std::int64_t(batchCount);
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(S, gemm_batch)(d_deviceBlasHandle,
+                                             &transa,
+                                             &transb,
+                                             &m_local,
+                                             &n_local,
+                                             &k_local,
+                                             alpha,
+                                             A,
+                                             &lda_local,
+                                             B,
+                                             &ldb_local,
+                                             beta,
+                                             C,
+                                             &ldc_local,
+                                             1,
+                                             &batchCount_local,
+                                             computeType));
+#endif
     }
 
     void
@@ -1526,7 +1841,7 @@ namespace dftfe
       const std::complex<float> *beta,
       std::complex<float>       *C[],
       const dftfe::uInt          ldc,
-      const dftfe::Int           batchCount) const
+      const dftfe::Int           batchCount)
     {
       dftfe::utils::deviceBlasOperation_t transa, transb;
       if (transA == 'N')
@@ -1558,29 +1873,58 @@ namespace dftfe
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16BF;
       else if (d_opType == tensorOpDataType::fp16)
         computeType = dftfe::utils::DEVICEBLAS_COMPUTE_32F_FAST_16F;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
       dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        GemmBatchedEx)(d_deviceBlasHandle,
-                       transa,
-                       transb,
-                       dftfe::Int(m),
-                       dftfe::Int(n),
-                       dftfe::Int(k),
-                       (const void *)alpha,
-                       (const void **)A,
-                       dftfe::utils::DEVICE_C_32F,
-                       dftfe::Int(lda),
-                       (const void **)B,
-                       dftfe::utils::DEVICE_C_32F,
-                       dftfe::Int(ldb),
-                       (const void *)beta,
-                       (void **)C,
-                       dftfe::utils::DEVICE_C_32F,
-                       dftfe::Int(ldc),
-                       dftfe::Int(batchCount),
-                       computeType,
-                       dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
+        , GemmBatchedEx)(d_deviceBlasHandle,
+                         transa,
+                         transb,
+                         dftfe::Int(m),
+                         dftfe::Int(n),
+                         dftfe::Int(k),
+                         (const void *)alpha,
+                         (const void **)A,
+                         dftfe::utils::DEVICE_C_32F,
+                         dftfe::Int(lda),
+                         (const void **)B,
+                         dftfe::utils::DEVICE_C_32F,
+                         dftfe::Int(ldb),
+                         (const void *)beta,
+                         (void **)C,
+                         dftfe::utils::DEVICE_C_32F,
+                         dftfe::Int(ldc),
+                         dftfe::Int(batchCount),
+                         computeType,
+                         dftfe::utils::DEVICEBLAS_GEMM_DEFAULT);
 
       DEVICEBLAS_API_CHECK(status);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      const std::int64_t m_local          = std::int64_t(m);
+      const std::int64_t n_local          = std::int64_t(n);
+      const std::int64_t k_local          = std::int64_t(k);
+      const std::int64_t lda_local        = std::int64_t(lda);
+      const std::int64_t ldb_local        = std::int64_t(ldb);
+      const std::int64_t ldc_local        = std::int64_t(ldc);
+      const std::int64_t batchCount_local = std::int64_t(batchCount);
+
+      DEVICEBLAS_API_CHECK(
+        DFTFE_DEVICE_BLAS_INT(C, gemm_batch)(d_deviceBlasHandle,
+                                             &transa,
+                                             &transb,
+                                             &m_local,
+                                             &n_local,
+                                             &k_local,
+                                             alpha,
+                                             A,
+                                             &lda_local,
+                                             B,
+                                             &ldb_local,
+                                             beta,
+                                             C,
+                                             &ldc_local,
+                                             1,
+                                             &batchCount_local,
+                                             computeType));
+#endif
     }
 
     void
@@ -1589,19 +1933,35 @@ namespace dftfe
       const std::complex<double> *x,
       const dftfe::uInt           incx,
       const MPI_Comm             &mpi_communicator,
-      double                     *result) const
+      double                     *result)
     {
-      double localresult                      = 0.0;
-      *result                                 = 0.0;
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(
-        Dznrm2)(d_deviceBlasHandle,
-                dftfe::Int(n),
-                dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
-                dftfe::Int(incx),
-                &localresult);
-      localresult *= localresult;
+      double localResult = 0.0;
+      *result            = 0.0;
+
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(D, znrm2)(
+        d_deviceBlasHandle,
+        dftfe::Int(n),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+        dftfe::Int(incx),
+        &localResult);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      double *dev_res = sycl::malloc_device<double>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(D, nrm2)(
+        d_deviceBlasHandle,
+        dftfe::Int(n),
+        dftfe::utils::makeDataTypeDeviceBlasCompatible(x),
+        dftfe::Int(incx),
+        dev_res));
+      d_deviceBlasHandle.memcpy(&localResult, dev_res, sizeof(double)).wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
+      localResult *= localResult;
       MPI_Allreduce(
-        &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+        &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
       *result = std::sqrt(*result);
     }
 
@@ -1611,15 +1971,26 @@ namespace dftfe
       const double     *x,
       const dftfe::uInt incx,
       const MPI_Comm   &mpi_communicator,
-      double           *result) const
+      double           *result)
     {
-      double localresult                      = 0.0;
-      *result                                 = 0.0;
-      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(Dnrm2)(
-        d_deviceBlasHandle, dftfe::Int(n), x, dftfe::Int(incx), &localresult);
-      localresult *= localresult;
+      double localResult = 0.0;
+      *result            = 0.0;
+#if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || defined(DFTFE_WITH_DEVICE_LANG_HIP)
+      dftfe::utils::deviceBlasStatus_t status = DFTFE_DEVICE_BLAS_INT(D, nrm2)(
+        d_deviceBlasHandle, dftfe::Int(n), x, dftfe::Int(incx), &localResult);
+#elif defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+      double *dev_res = sycl::malloc_device<double>(1, d_deviceBlasHandle);
+      if (!dev_res)
+        throw std::bad_alloc{};
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(D, nrm2)(
+        d_deviceBlasHandle, dftfe::Int(n), x, dftfe::Int(incx), dev_res));
+      d_deviceBlasHandle.memcpy(&localResult, dev_res, sizeof(double)).wait();
+      sycl::free(dev_res, d_deviceBlasHandle);
+      d_deviceBlasHandle.wait();
+#endif
+      localResult *= localResult;
       MPI_Allreduce(
-        &localresult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+        &localResult, result, 1, MPI_DOUBLE, MPI_SUM, mpi_communicator);
       *result = std::sqrt(*result);
     }
 
@@ -1628,13 +1999,12 @@ namespace dftfe
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
       ValueType1       *x,
       const ValueType2  alpha,
-      const dftfe::uInt n) const
+      const dftfe::uInt n)
     {
       DFTFE_LAUNCH_KERNEL(ascalDeviceKernel,
                           n / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           n,
                           dftfe::utils::makeDataTypeDeviceCompatible(x),
                           dftfe::utils::makeDataTypeDeviceCompatible(alpha));
@@ -1651,8 +2021,7 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(copyComplexArrToRealArrsDeviceKernel,
                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           size,
                           dftfe::utils::makeDataTypeDeviceCompatible(
                             complexArr),
@@ -1673,8 +2042,7 @@ namespace dftfe
       DFTFE_LAUNCH_KERNEL(copyRealArrsToComplexArrDeviceKernel,
                           size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           size,
                           realArr,
                           imagArr,
@@ -1693,7 +2061,6 @@ namespace dftfe
         copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         size,
         dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
@@ -1716,7 +2083,6 @@ namespace dftfe
         copyBlockDiagonalValueType1OffDiagonalValueType2FromValueType1ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
         d_streamId,
         B,
         DRem,
@@ -1742,8 +2108,7 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
         dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
@@ -1767,8 +2132,7 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
         startingVecId,
@@ -1795,8 +2159,7 @@ namespace dftfe
             dftfe::utils::DEVICE_BLOCK_SIZE +
           1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        d_streamId,
         contiguousBlockSize,
         numContiguousBlocks,
         dftfe::utils::makeDataTypeDeviceCompatible(a),
@@ -1821,8 +2184,7 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(
@@ -1840,14 +2202,13 @@ namespace dftfe
                                        const dftfe::uInt numBlocks,
                                        const dftfe::uInt startingId,
                                        const ValueType1 *copyFromVec,
-                                       ValueType2       *copyToVec) const
+                                       ValueType2       *copyToVec)
     {
       DFTFE_LAUNCH_KERNEL(
         stridedCopyToBlockConstantStrideDeviceKernel,
         (blockSizeTo * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        d_streamId,
         blockSizeTo,
         blockSizeFrom,
         numBlocks,
@@ -1872,8 +2233,7 @@ namespace dftfe
         stridedCopyConstantStrideDeviceKernel,
         (blockSize * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        d_streamId,
         blockSize,
         strideTo,
         strideFrom,
@@ -1899,8 +2259,7 @@ namespace dftfe
         stridedCopyFromBlockConstantStrideDeviceKernel,
         (blockSizeFrom * numBlocks) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        d_streamId,
         blockSizeTo,
         blockSizeFrom,
         numBlocks,
@@ -1922,8 +2281,7 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(a),
@@ -1937,13 +2295,12 @@ namespace dftfe
       const dftfe::uInt m,
       const ValueType  *X,
       const ValueType  *Y,
-      ValueType        *output) const
+      ValueType        *output)
     {
       DFTFE_LAUNCH_KERNEL(hadamardProductKernel,
                           m / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           m,
                           dftfe::utils::makeDataTypeDeviceCompatible(X),
                           dftfe::utils::makeDataTypeDeviceCompatible(Y),
@@ -1956,13 +2313,12 @@ namespace dftfe
       const dftfe::uInt m,
       const ValueType  *X,
       const ValueType  *Y,
-      ValueType        *output) const
+      ValueType        *output)
     {
       DFTFE_LAUNCH_KERNEL(hadamardProductWithConjKernel,
                           (m) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           m,
                           dftfe::utils::makeDataTypeDeviceCompatible(X),
                           dftfe::utils::makeDataTypeDeviceCompatible(Y),
@@ -1983,8 +2339,7 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           numContiguousBlocks,
                           contiguousBlockSize,
                           dftfe::utils::makeDataTypeDeviceCompatible(input1),
@@ -2005,8 +2360,7 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(beta),
@@ -2026,8 +2380,7 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(x),
@@ -2052,8 +2405,7 @@ namespace dftfe
                               dftfe::utils::DEVICE_BLOCK_SIZE +
                             1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           contiguousBlockSize,
                           numContiguousBlocks,
                           dftfe::utils::makeDataTypeDeviceCompatible(x),
@@ -2073,7 +2425,7 @@ namespace dftfe
       const ValueType  *onesVec,
       ValueType        *tempVector,
       ValueType        *tempResults,
-      ValueType        *result) const
+      ValueType        *result)
     {
       hadamardProductWithConj(contiguousBlockSize * numContiguousBlocks,
                               X,
@@ -2113,7 +2465,7 @@ namespace dftfe
       ValueType        *tempVector,
       ValueType        *tempResults,
       const MPI_Comm   &mpi_communicator,
-      ValueType        *result) const
+      ValueType        *result)
 
     {
       MultiVectorXDot(contiguousBlockSize,
@@ -2146,8 +2498,7 @@ namespace dftfe
                            (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
                             dftfe::utils::DEVICE_BLOCK_SIZE * sizeOfVector,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          0,
+                          d_streamId,
                           dftfe::utils::makeDataTypeDeviceCompatible(D),
                           dftfe::utils::makeDataTypeDeviceCompatible(X),
                           numberofVectors,

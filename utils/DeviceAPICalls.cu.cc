@@ -278,11 +278,11 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceStreamCreate(deviceStream_t *pStream, const bool nonBlocking)
+    deviceStreamCreate(deviceStream_t &pStream, const bool nonBlocking)
     {
       if (!nonBlocking)
         {
-          deviceError_t err = cudaStreamCreate(pStream);
+          deviceError_t err = cudaStreamCreate(&pStream);
           DEVICE_API_CHECK(err);
           return err;
         }
@@ -291,7 +291,7 @@ namespace dftfe
           int priority;
           cudaDeviceGetStreamPriorityRange(NULL, &priority);
           deviceError_t err =
-            cudaStreamCreateWithPriority(pStream,
+            cudaStreamCreateWithPriority(&pStream,
                                          cudaStreamNonBlocking,
                                          priority);
           DEVICE_API_CHECK(err);
@@ -300,7 +300,7 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceStreamDestroy(deviceStream_t stream)
+    deviceStreamDestroy(deviceStream_t &stream)
     {
       deviceError_t err = cudaStreamDestroy(stream);
       DEVICE_API_CHECK(err);
@@ -308,7 +308,7 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceStreamSynchronize(deviceStream_t stream)
+    deviceStreamSynchronize(deviceStream_t &stream)
     {
       deviceError_t err = cudaStreamSynchronize(stream);
       DEVICE_API_CHECK(err);
@@ -316,15 +316,15 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceEventCreate(deviceEvent_t *pEvent)
+    deviceEventCreate(deviceEvent_t &pEvent)
     {
-      deviceError_t err = cudaEventCreate(pEvent);
+      deviceError_t err = cudaEventCreate(&pEvent);
       DEVICE_API_CHECK(err);
       return err;
     }
 
     deviceError_t
-    deviceEventDestroy(deviceEvent_t event)
+    deviceEventDestroy(deviceEvent_t &event)
     {
       deviceError_t err = cudaEventDestroy(event);
       DEVICE_API_CHECK(err);
@@ -332,7 +332,7 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceEventRecord(deviceEvent_t event, deviceStream_t stream)
+    deviceEventRecord(deviceEvent_t &event, deviceStream_t stream)
     {
       deviceError_t err = cudaEventRecord(event, stream);
       DEVICE_API_CHECK(err);
@@ -340,7 +340,7 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceEventSynchronize(deviceEvent_t event)
+    deviceEventSynchronize(deviceEvent_t &event)
     {
       deviceError_t err = cudaEventSynchronize(event);
       DEVICE_API_CHECK(err);
@@ -348,9 +348,9 @@ namespace dftfe
     }
 
     deviceError_t
-    deviceStreamWaitEvent(deviceStream_t stream,
-                          deviceEvent_t  event,
-                          unsigned int   flags)
+    deviceStreamWaitEvent(deviceStream_t &stream,
+                          deviceEvent_t  &event,
+                          unsigned int    flags)
     {
       deviceError_t err = cudaStreamWaitEvent(stream, event, flags);
       DEVICE_API_CHECK(err);

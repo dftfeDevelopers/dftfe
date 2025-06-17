@@ -1277,6 +1277,9 @@ namespace dftfe
         if (d_dftParamsPtr->tensorOpType == "TF32")
           d_BLASWrapperPtr->setTensorOpDataType(
             dftfe::linearAlgebra::tensorOpDataType::tf32);
+        if (d_dftParamsPtr->tensorOpType == "BF16")
+          d_BLASWrapperPtr->setTensorOpDataType(
+            dftfe::linearAlgebra::tensorOpDataType::bf16);
       }
 #endif
     if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
@@ -1456,6 +1459,11 @@ namespace dftfe
     inverseSqrtMassVectorScaledConstraintsNoneDataInfoPtr->set_zero(src);
     dst.accumulateAddLocallyOwned();
     dst.zeroOutGhosts();
+#if defined(DFTFE_WITH_DEVICE)
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      d_BLASWrapperPtr->setTensorOpDataType(
+        dftfe::linearAlgebra::tensorOpDataType::fp32);
+#endif
   }
   template <dftfe::utils::MemorySpace memorySpace>
   void

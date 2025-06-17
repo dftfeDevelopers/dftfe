@@ -58,6 +58,9 @@ namespace dftfe
       bool
       getPosition(const OptimizedIndexSet<T> &rhs) const;
 
+      bool
+      operator==(const OptimizedIndexSet<T> &rhs) const;
+
 
     private:
       /// Store the number of contiguous ranges in the input set of indices
@@ -75,9 +78,6 @@ namespace dftfe
       /// Vector of size d_numContiguousRanges which stores the accumulated
       /// number of elements in d_set prior to the i-th contiguous range
       std::vector<dftfe::uInt> d_numEntriesBefore;
-
-      bool
-      operator==(const OptimizedIndexSet<T> &rhs) const;
     };
 
   } // end of namespace utils

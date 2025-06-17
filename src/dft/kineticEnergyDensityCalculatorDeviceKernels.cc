@@ -24,49 +24,119 @@ namespace dftfe
 {
   namespace
   {
-    __global__ void
-    computeKedGradKedFromInterpolatedValues(const dftfe::uInt numVectors,
-                                            const dftfe::uInt numCells,
-                                            const dftfe::uInt nQuadsPerCell,
-                                            const double      kCoordSq,
-                                            double           *kCoord,
-                                            double           *wfcContributions,
-                                            double *gradwfcContributions,
-                                            double *kedCellsWfcContributions)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
-      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const double psi = wfcContributions[index];
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeKedGradKedFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-          dftfe::uInt  iCell          = index / numEntriesPerCell;
-          dftfe::uInt  intraCellIndex = index - iCell * numEntriesPerCell;
-          dftfe::uInt  iQuad          = intraCellIndex / numVectors;
-          dftfe::uInt  iVec           = intraCellIndex - iQuad * numVectors;
-          const double gradPsiX       = //[iVec * numCells * numVectors + + 0]
-            gradwfcContributions[intraCellIndex +
-                                 numEntriesPerCell * 3 * iCell];
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const double psi = wfcContributions[index];
 
-          kedCellsWfcContributions[index] = 0.5 * gradPsiX * gradPsiX;
+            dftfe::uInt  iCell          = index / numEntriesPerCell;
+            dftfe::uInt  intraCellIndex = index - iCell * numEntriesPerCell;
+            dftfe::uInt  iQuad          = intraCellIndex / numVectors;
+            dftfe::uInt  iVec           = intraCellIndex - iQuad * numVectors;
+            const double gradPsiX       = //[iVec * numCells * numVectors + + 0]
+              gradwfcContributions[intraCellIndex +
+                                   numEntriesPerCell * 3 * iCell];
 
-          const double gradPsiY =
-            gradwfcContributions[intraCellIndex + numEntriesPerCell +
-                                 numEntriesPerCell * 3 * iCell];
-          kedCellsWfcContributions[index] += 0.5 * gradPsiY * gradPsiY;
+            kedCellsWfcContributions[index] = 0.5 * gradPsiX * gradPsiX;
 
-          const double gradPsiZ =
-            gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
-                                 numEntriesPerCell * 3 * iCell];
-          kedCellsWfcContributions[index] += 0.5 * gradPsiZ * gradPsiZ;
-        }
-    }
+            const double gradPsiY =
+              gradwfcContributions[intraCellIndex + numEntriesPerCell +
+                                   numEntriesPerCell * 3 * iCell];
+            kedCellsWfcContributions[index] += 0.5 * gradPsiY * gradPsiY;
 
-    __global__ void
-    computeKedGradKedFromInterpolatedValues(
+            const double gradPsiZ =
+              gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
+                                   numEntriesPerCell * 3 * iCell];
+            kedCellsWfcContributions[index] += 0.5 * gradPsiZ * gradPsiZ;
+          }
+      },
+      const dftfe::uInt numVectors,
+      const dftfe::uInt numCells,
+      const dftfe::uInt nQuadsPerCell,
+      const double      kCoordSq,
+      double           *kCoord,
+      double           *wfcContributions,
+      double           *gradwfcContributions,
+      double           *kedCellsWfcContributions);
+
+
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeKedGradKedFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const dftfe::utils::deviceDoubleComplex psi =
+              wfcContributions[index];
+            kedCellsWfcContributions[index] =
+              kCoordSq * (dftfe::utils::realPartDevice(psi) *
+                            dftfe::utils::realPartDevice(psi) +
+                          dftfe::utils::imagPartDevice(psi) *
+                            dftfe::utils::imagPartDevice(psi));
+
+            dftfe::uInt iCell          = index / numEntriesPerCell;
+            dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
+            dftfe::uInt iQuad          = intraCellIndex / numVectors;
+            dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
+            const dftfe::utils::deviceDoubleComplex gradPsiX =
+              gradwfcContributions[intraCellIndex +
+                                   numEntriesPerCell * 3 * iCell];
+            kedCellsWfcContributions[index] +=
+              0.5 * (dftfe::utils::realPartDevice(gradPsiX) *
+                       dftfe::utils::realPartDevice(gradPsiX) +
+                     dftfe::utils::imagPartDevice(gradPsiX) *
+                       dftfe::utils::imagPartDevice(gradPsiX));
+
+            const dftfe::utils::deviceDoubleComplex gradPsiY =
+              gradwfcContributions[intraCellIndex + numEntriesPerCell +
+                                   numEntriesPerCell * 3 * iCell];
+            kedCellsWfcContributions[index] +=
+              0.5 * (dftfe::utils::realPartDevice(gradPsiY) *
+                       dftfe::utils::realPartDevice(gradPsiY) +
+                     dftfe::utils::imagPartDevice(gradPsiY) *
+                       dftfe::utils::imagPartDevice(gradPsiY));
+
+            const dftfe::utils::deviceDoubleComplex gradPsiZ =
+              gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
+                                   numEntriesPerCell * 3 * iCell];
+            kedCellsWfcContributions[index] +=
+              0.5 * (dftfe::utils::realPartDevice(gradPsiZ) *
+                       dftfe::utils::realPartDevice(gradPsiZ) +
+                     dftfe::utils::imagPartDevice(gradPsiZ) *
+                       dftfe::utils::imagPartDevice(gradPsiZ));
+
+            kedCellsWfcContributions[index] +=
+              kCoord[0] * (dftfe::utils::realPartDevice(psi) *
+                             dftfe::utils::imagPartDevice(gradPsiX) -
+                           dftfe::utils::imagPartDevice(psi) *
+                             dftfe::utils::realPartDevice(gradPsiX));
+
+            kedCellsWfcContributions[index] +=
+              kCoord[1] * (dftfe::utils::realPartDevice(psi) *
+                             dftfe::utils::imagPartDevice(gradPsiY) -
+                           dftfe::utils::imagPartDevice(psi) *
+                             dftfe::utils::realPartDevice(gradPsiY));
+
+            kedCellsWfcContributions[index] +=
+              kCoord[2] * (dftfe::utils::realPartDevice(psi) *
+                             dftfe::utils::imagPartDevice(gradPsiZ) -
+                           dftfe::utils::imagPartDevice(psi) *
+                             dftfe::utils::realPartDevice(gradPsiZ));
+          }
+      },
       const dftfe::uInt                  numVectors,
       const dftfe::uInt                  numCells,
       const dftfe::uInt                  nQuadsPerCell,
@@ -74,56 +144,13 @@ namespace dftfe
       double                            *kCoord,
       dftfe::utils::deviceDoubleComplex *wfcContributions,
       dftfe::utils::deviceDoubleComplex *gradwfcContributions,
-      double                            *kedCellsWfcContributions)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
-      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+      double                            *kedCellsWfcContributions);
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const dftfe::utils::deviceDoubleComplex psi = wfcContributions[index];
-          kedCellsWfcContributions[index] =
-            kCoordSq * (psi.x * psi.x + psi.y * psi.y);
-
-          dftfe::uInt iCell          = index / numEntriesPerCell;
-          dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
-          dftfe::uInt iQuad          = intraCellIndex / numVectors;
-          dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
-          const dftfe::utils::deviceDoubleComplex gradPsiX =
-            gradwfcContributions[intraCellIndex +
-                                 numEntriesPerCell * 3 * iCell];
-          kedCellsWfcContributions[index] +=
-            0.5 * (gradPsiX.x * gradPsiX.x + gradPsiX.y * gradPsiX.y);
-
-          const dftfe::utils::deviceDoubleComplex gradPsiY =
-            gradwfcContributions[intraCellIndex + numEntriesPerCell +
-                                 numEntriesPerCell * 3 * iCell];
-          kedCellsWfcContributions[index] +=
-            0.5 * (gradPsiY.x * gradPsiY.x + gradPsiY.y * gradPsiY.y);
-
-          const dftfe::utils::deviceDoubleComplex gradPsiZ =
-            gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
-                                 numEntriesPerCell * 3 * iCell];
-          kedCellsWfcContributions[index] +=
-            0.5 * (gradPsiZ.x * gradPsiZ.x + gradPsiZ.y * gradPsiZ.y);
-
-          kedCellsWfcContributions[index] +=
-            kCoord[0] * (psi.x * gradPsiX.y - psi.y * gradPsiX.x);
-
-          kedCellsWfcContributions[index] +=
-            kCoord[1] * (psi.x * gradPsiY.y - psi.y * gradPsiY.x);
-
-          kedCellsWfcContributions[index] +=
-            kCoord[2] * (psi.x * gradPsiZ.y - psi.y * gradPsiZ.x);
-        }
-    }
   } // namespace
   template <typename NumberType>
   void
   computeKineticEnergyDensityFromInterpolatedValues(
-    const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
+    dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
                                              &BLASWrapperPtr,
     const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
     const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
@@ -150,18 +177,19 @@ namespace dftfe
     kCoordStdVec[1] = kcoord[1];
     kCoordStdVec[2] = kcoord[2];
     kCoordDevice.copyFrom(kCoordStdVec);
+    auto kCoordDevice_data =
+      dftfe::utils::makeDataTypeDeviceCompatible(kCoordDevice.data());
     DFTFE_LAUNCH_KERNEL(
       computeKedGradKedFromInterpolatedValues,
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
       dftfe::utils::DEVICE_BLOCK_SIZE,
-      0,
-      0,
+      dftfe::utils::defaultStream,
       vectorsBlockSize,
       cellsBlockSize,
       nQuadsPerCell,
       kcoordSq,
-      dftfe::utils::makeDataTypeDeviceCompatible(kCoordDevice.data()),
+      kCoordDevice_data,
       dftfe::utils::makeDataTypeDeviceCompatible(wfcQuadPointData),
       dftfe::utils::makeDataTypeDeviceCompatible(gradWfcQuadPointData),
       dftfe::utils::makeDataTypeDeviceCompatible(
@@ -182,7 +210,7 @@ namespace dftfe
   }
   template void
   computeKineticEnergyDensityFromInterpolatedValues(
-    const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
+    dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
                                              &BLASWrapperPtr,
     const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
     const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
