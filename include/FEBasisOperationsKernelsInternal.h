@@ -22,7 +22,7 @@
 #ifdef DFTFE_WITH_DEVICE
 #  include <DeviceAPICalls.h>
 #  include <DeviceTypeConfig.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <DeviceDataTypeOverloads.h>
 #endif // DFTFE_WITH_DEVICE
 

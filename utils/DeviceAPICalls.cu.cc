@@ -20,7 +20,7 @@
 #  include <stdio.h>
 #  include <vector>
 #  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <Exceptions.h>
 namespace dftfe
 {

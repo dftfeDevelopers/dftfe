@@ -23,7 +23,7 @@
 #  include <deviceDirectCCLWrapper.h>
 #  include <deviceKernelsGeneric.h>
 #  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <DeviceAPICalls.h>
 #  include <Exceptions.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)

@@ -22,7 +22,7 @@
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
 #include <DeviceTypeConfig.h>
-#include <DeviceKernelLauncherConstants.h>
+#include <DeviceKernelLauncherHelpers.h>
 #include <BLASWrapper.h>
 namespace dftfe
 {

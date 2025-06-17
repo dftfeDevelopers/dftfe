@@ -20,7 +20,7 @@
 
 #include <deviceKernelsGeneric.h>
 #include <DeviceDataTypeOverloads.h>
-#include <DeviceKernelLauncherConstants.h>
+#include <DeviceKernelLauncherHelpers.h>
 #include <DeviceAPICalls.h>
 
 namespace dftfe
