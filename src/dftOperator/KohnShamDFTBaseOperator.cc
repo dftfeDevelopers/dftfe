@@ -788,20 +788,27 @@ namespace dftfe
       }         // cell loop
 
 #if defined(DFTFE_WITH_DEVICE)
-    for (dftfe::uInt kPointIndex = 0; kPointIndex < d_kPointWeights.size();
-         kPointIndex++)
+    if (isTauMGGA)
       {
-        dftfe::uInt size =
-          totalLocallyOwnedCells * numberQuadraturePointsPerCell;
-        d_halfKSquareTimesDerExcwithTauJxW[kPointIndex].resize(size);
-        d_halfKSquareTimesDerExcwithTauJxW[kPointIndex].copyFrom(
-          d_halfKSquareTimesDerExcwithTauJxWHost, size, size * kPointIndex, 0);
-        d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex].resize(size * 3);
-        d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex].copyFrom(
-          d_derExcwithTauTimesinvJacKpointTimesJxWHost,
-          size * 3,
-          size * 3 * kPointIndex,
-          0);
+        for (dftfe::uInt kPointIndex = 0; kPointIndex < d_kPointWeights.size();
+             kPointIndex++)
+          {
+            dftfe::uInt size =
+              totalLocallyOwnedCells * numberQuadraturePointsPerCell;
+            d_halfKSquareTimesDerExcwithTauJxW[kPointIndex].resize(size);
+            d_halfKSquareTimesDerExcwithTauJxW[kPointIndex].copyFrom(
+              d_halfKSquareTimesDerExcwithTauJxWHost,
+              size,
+              size * kPointIndex,
+              0);
+            d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex].resize(size *
+                                                                         3);
+            d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex].copyFrom(
+              d_derExcwithTauTimesinvJacKpointTimesJxWHost,
+              size * 3,
+              size * 3 * kPointIndex,
+              0);
+          }
       }
 #endif
 
