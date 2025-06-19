@@ -31,13 +31,14 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
 FE interpolating polynomial order for electrostatics solve: 2
 FE interpolating polynomial order for nodal electron density computation: 4
+quadrature rule for electron density and kinetic energy density computation: 5
 number of elements: 2080
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 21017
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
 =============================================================================================================================
-number of electrons: 64
+number of electrons: 6.400000000000000000e+01
 number of eigen values: 52
 =============================================================================================================================
 
@@ -56,22 +57,22 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.009705,0.016324,0.000010
-AtomId    1:  0.008758,0.020905,0.000010
+AtomId    0:  0.009704,0.016324,0.000010
+AtomId    1:  0.008757,0.020904,0.000010
 AtomId    2:  0.013213,0.018131,0.000010
-AtomId    3:  0.010489,0.025132,0.000010
-AtomId    4:  0.011513,0.027415,0.000009
+AtomId    3:  0.010489,0.025133,0.000010
+AtomId    4:  0.011512,0.027416,0.000009
 AtomId    5:  0.012518,0.028061,0.000002
-AtomId    6:  0.010637,0.027505,0.000002
+AtomId    6:  0.010636,0.027505,0.000002
 AtomId    7:  0.010366,0.020772,0.000009
-AtomId    8:  0.009724,0.016802,0.000010
-AtomId    9:  0.009807,0.024296,0.000010
-AtomId   10:  0.007378,0.017609,0.000009
-AtomId   11:  0.008958,0.024658,0.000010
-AtomId   12:  0.011600,0.027674,0.000009
+AtomId    8:  0.009725,0.016802,0.000010
+AtomId    9:  0.009808,0.024296,0.000010
+AtomId   10:  0.007378,0.017609,0.000010
+AtomId   11:  0.008958,0.024659,0.000010
+AtomId   12:  0.011601,0.027674,0.000009
 AtomId   13:  0.012431,0.028369,0.000002
 AtomId   14:  0.009711,0.027473,0.000002
-AtomId   15:  0.009637,0.020190,0.000009
+AtomId   15:  0.009637,0.020189,0.000009
 --------------------------------------------------------------------------------------------
 
 Absolute value of cell stress (Hartree/Bohr^3)
