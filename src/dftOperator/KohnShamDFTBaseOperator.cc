@@ -26,10 +26,103 @@
 #endif
 #if defined(DFTFE_WITH_DEVICE)
 #  include <DeviceAPICalls.h>
+#  include <KohnShamDFTOperatorDeviceKernels.h>
 #endif
 
 namespace dftfe
 {
+  namespace internal
+  {
+    template <>
+    void
+    computeVeffJxWEntries(
+      const std::pair<unsigned int, unsigned int> cellRange,
+      const unsigned int                          numQuadsPerCell,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperPtr,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &phiVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdecVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdexVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &jxwVector,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &VeffJxW)
+    {}
+    template <>
+    void
+    computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
+      const std::pair<unsigned int, unsigned int> cellRange,
+      const unsigned int                          numQuadsPerCell,
+      const dftfe::Int                            spinIndex,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperPtr,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdecVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdexVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &jxwVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacobianEntries,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradientRhoSpinIndex,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradientRhoOtherSpinIndex,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacderExcWithSigmaTimesGradRhoJxW)
+    {}
+
+    template <>
+    void
+    computeHalfInvJacinvJacderExcWithTauJxWEntries(
+      const std::pair<unsigned int, unsigned int> cellRange,
+      const unsigned int                          numQuadsPerCell,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperPtr,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdecVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdexVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &jxwVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacobianEntries,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacinvJacderExcWithTauJxW)
+    {}
+
+    template <>
+    void
+    computeKPointDependenderExcWithTauJxWEntries(
+      const std::pair<unsigned int, unsigned int> cellRange,
+      const unsigned int                          numQuadsPerCell,
+      std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperPtr,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &kPointCoordinate,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdecVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &pdexVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &jxwVector,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacobianEntries,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &halfKSquareTimesDerExcwithTauJxW,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &invJacKpointTimesderExcwithTauJxW)
+    {}
+  }; // namespace internal
+
+
   //
   // constructor
   //
@@ -446,8 +539,8 @@ namespace dftfe
     auto quadPointsAll = d_basisOperationsPtrHost->quadPoints();
 
     auto quadWeightsAll = d_basisOperationsPtrHost->JxW();
-
-
+    MPI_Barrier(d_mpiCommParent);
+    double startTime = MPI_Wtime();
     d_excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
       *auxDensityXCRepresentation,
       std::make_pair<dftfe::uInt, dftfe::uInt>(0,
@@ -455,7 +548,9 @@ namespace dftfe
                                                  numberQuadraturePointsPerCell),
       xDataOut,
       cDataOut);
-
+    MPI_Barrier(d_mpiCommParent);
+    pcout << "Time taken for Vxc from LIBXC: " << MPI_Wtime() - startTime
+          << std::endl;
     const std::vector<double> &pdexDensitySpinIndex =
       spinIndex == 0 ? pdexDensitySpinUp : pdexDensitySpinDown;
     const std::vector<double> &pdecDensitySpinIndex =
@@ -501,12 +596,17 @@ namespace dftfe
       spinIndex == 0 ? gradDensitySpinUp : gradDensitySpinDown;
     const std::vector<double> &gradDensityXCOtherSpinIndex =
       spinIndex == 0 ? gradDensitySpinDown : gradDensitySpinUp;
+    MPI_Barrier(d_mpiCommParent);
+    startTime = MPI_Wtime();
     if (isGGA)
       auxDensityXCRepresentation->applyLocalOperations(
         std::make_pair<dftfe::uInt, dftfe::uInt>(
           0 * numberQuadraturePointsPerCell,
           totalLocallyOwnedCells * numberQuadraturePointsPerCell),
         densityData);
+    MPI_Barrier(d_mpiCommParent);
+    pcout << "Time taken for Vxc from LocalOperations: "
+          << MPI_Wtime() - startTime << std::endl;
     for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
       {
         auto cellJxWPtr = d_basisOperationsPtrHost->JxWBasisData().data() +

@@ -253,6 +253,7 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 SET(DEVICE_SRC
@@ -273,6 +274,7 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   )
 
 ENDIF()
