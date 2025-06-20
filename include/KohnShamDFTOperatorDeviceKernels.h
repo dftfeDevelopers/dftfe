@@ -18,7 +18,7 @@
 #ifndef kohnShamHamiltonianOperatorDeviceKernels_H_
 #define kohnShamHamiltonianOperatorDeviceKernels_H_
 
-#include <BLASWrapper.h>
+
 #include <DataTypeOverloads.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
@@ -33,10 +33,8 @@ namespace dftfe
     template <dftfe::utils::MemorySpace memorySpace>
     void
     computeVeffJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
-      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                                              BLASWrapperPtr,
+      const std::pair<unsigned int, unsigned int>             cellRange,
+      const unsigned int                                      numQuadsPerCell,
       const dftfe::utils::MemoryStorage<double, memorySpace> &phiVector,
       const dftfe::utils::MemoryStorage<double, memorySpace> &pdecVector,
       const dftfe::utils::MemoryStorage<double, memorySpace> &pdexVector,
@@ -46,11 +44,10 @@ namespace dftfe
     template <dftfe::utils::MemorySpace memorySpace>
     void
     computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
-      const dftfe::Int                            spinIndex,
-      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                                              BLASWrapperPtr,
+      const std::pair<unsigned int, unsigned int>             cellRange,
+      const unsigned int                                      numQuadsPerCell,
+      const dftfe::Int                                        spinIndex,
+      const dftfe::Int                                        cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double, memorySpace> &pdecVector,
       const dftfe::utils::MemoryStorage<double, memorySpace> &pdexVector,
       const dftfe::utils::MemoryStorage<double, memorySpace> &jxwVector,
@@ -66,10 +63,9 @@ namespace dftfe
     template <dftfe::utils::MemorySpace memorySpace>
     void
     computeHalfInvJacinvJacderExcWithTauJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
-      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                                              BLASWrapperPtr,
+      const std::pair<unsigned int, unsigned int>             cellRange,
+      const unsigned int                                      numQuadsPerCell,
+      const dftfe::Int                                        cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double, memorySpace> &pdecVector,
       const dftfe::utils::MemoryStorage<double, memorySpace> &pdexVector,
       const dftfe::utils::MemoryStorage<double, memorySpace> &jxwVector,
@@ -80,10 +76,10 @@ namespace dftfe
     template <dftfe::utils::MemorySpace memorySpace>
     void
     computeKPointDependenderExcWithTauJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
-      std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                                              BLASWrapperPtr,
+      const std::pair<unsigned int, unsigned int>             cellRange,
+      const unsigned int                                      numQuadsPerCell,
+      const dftfe::Int                                        cellsTypeFlag,
+      const dftfe::uInt                                       offset,
       const dftfe::utils::MemoryStorage<double, memorySpace> &kPointCoordinate,
       const dftfe::utils::MemoryStorage<double, memorySpace> &pdecVector,
       const dftfe::utils::MemoryStorage<double, memorySpace> &pdexVector,

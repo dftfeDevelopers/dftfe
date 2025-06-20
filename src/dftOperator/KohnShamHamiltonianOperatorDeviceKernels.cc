@@ -28,9 +28,6 @@ namespace dftfe
     computeVeffJxWEntries(
       const std::pair<unsigned int, unsigned int> cellRange,
       const unsigned int                          numQuadsPerCell,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        BLASWrapperPtr,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &phiVector,
@@ -52,9 +49,7 @@ namespace dftfe
       const std::pair<unsigned int, unsigned int> cellRange,
       const unsigned int                          numQuadsPerCell,
       const dftfe::Int                            spinIndex,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        BLASWrapperPtr,
+      const dftfe::Int                            cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &pdecVector,
@@ -82,9 +77,7 @@ namespace dftfe
     computeHalfInvJacinvJacderExcWithTauJxWEntries(
       const std::pair<unsigned int, unsigned int> cellRange,
       const unsigned int                          numQuadsPerCell,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        BLASWrapperPtr,
+      const dftfe::Int                            cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &pdecVector,
@@ -106,9 +99,8 @@ namespace dftfe
     computeKPointDependenderExcWithTauJxWEntries(
       const std::pair<unsigned int, unsigned int> cellRange,
       const unsigned int                          numQuadsPerCell,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-        BLASWrapperPtr,
+      const dftfe::Int                            cellsTypeFlag,
+      const dftfe::uInt                           offset,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &kPointCoordinate,

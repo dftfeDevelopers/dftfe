@@ -99,9 +99,13 @@ namespace dftfe
   excDensityLDAClass<memorySpace>::computeRhoTauDependentXCData(
     AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
     const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &xDataOut,
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &cDataOut) const
   {
     const dftfe::uInt nquad = quadIndexRange.second - quadIndexRange.first;
@@ -112,14 +116,17 @@ namespace dftfe
     checkInputOutputDataAttributesConsistency(outputDataAttributes);
 
 
-    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+    std::unordered_map<
+      DensityDescriptorDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       densityDescriptorData;
 
     for (dftfe::uInt i = 0; i < this->d_densityDescriptorAttributesList.size();
          i++)
       {
         densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
-          std::vector<double>(nquad, 0);
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+            nquad, 0);
       }
 
     auxDensityMatrix.applyLocalOperations(quadIndexRange,
@@ -136,16 +143,25 @@ namespace dftfe
 
 
 
-    std::vector<double> densityValues(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      densityValues(2 * nquad, 0);
 
-    std::vector<double> exValues(nquad, 0);
-    std::vector<double> ecValues(nquad, 0);
-    std::vector<double> pdexDensityValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdecDensityValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdexDensitySpinUpValues(nquad, 0);
-    std::vector<double> pdexDensitySpinDownValues(nquad, 0);
-    std::vector<double> pdecDensitySpinUpValues(nquad, 0);
-    std::vector<double> pdecDensitySpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      exValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      ecValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensityValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensityValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensitySpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensitySpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensitySpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensitySpinDownValues(nquad, 0);
 
     for (dftfe::uInt i = 0; i < nquad; i++)
       {
@@ -179,10 +195,11 @@ namespace dftfe
 #ifdef DFTFE_WITH_TORCH
     if (d_NNLDAPtr != nullptr)
       {
-        std::vector<double> excValuesFromNN(nquad, 0);
-        const dftfe::uInt   numDescriptors = 2;
-        std::vector<double> pdexcDescriptorValuesFromNN(numDescriptors * nquad,
-                                                        0);
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                          excValuesFromNN(nquad, 0);
+        const dftfe::uInt numDescriptors = 2;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          pdexcDescriptorValuesFromNN(numDescriptors * nquad, 0);
         d_NNLDAPtr->evaluatevxc(&(densityValues[0]),
                                 nquad,
                                 &excValuesFromNN[0],

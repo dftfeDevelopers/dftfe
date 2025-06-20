@@ -61,36 +61,48 @@ namespace dftfe
       isGGA ? totalLocallyOwnedCells * numberQuadraturePointsPerCell * 3 : 0,
       0.0);
 
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       xDataOut;
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       cDataOut;
 
 
-    std::vector<double> &pdexDensitySpinUp =
-      xDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
-    std::vector<double> &pdexDensitySpinDown =
-      xDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
-    std::vector<double> &pdecDensitySpinUp =
-      cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
-    std::vector<double> &pdecDensitySpinDown =
-      cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &pdexDensitySpinUp =
+        xDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &pdexDensitySpinDown =
+        xDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &pdecDensitySpinUp =
+        cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &pdecDensitySpinDown =
+        cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
     if (isGGA)
       {
         xDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
-          std::vector<double>();
+          dftfe::utils::MemoryStorage<double,
+                                      dftfe::utils::MemorySpace::HOST>();
         cDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
-          std::vector<double>();
+          dftfe::utils::MemoryStorage<double,
+                                      dftfe::utils::MemorySpace::HOST>();
       }
 
     auto quadPointsAll = d_basisOperationsPtrHost->quadPoints();
 
     auto quadWeightsAll = d_basisOperationsPtrHost->JxW();
 
-    std::vector<double> quadPointsStdVecAll;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      quadPointsStdVecAll;
     quadPointsStdVecAll.resize(quadPointsAll.size());
-    std::vector<double> quadWeightsStdVecAll;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      quadWeightsStdVecAll;
     quadWeightsStdVecAll.resize(quadWeightsAll.size());
     for (dftfe::uInt iQuad = 0; iQuad < quadWeightsStdVecAll.size(); ++iQuad)
       {
@@ -115,26 +127,34 @@ namespace dftfe
 
     auto computeXCPerturbedDensity = [&](double densityPerturbCoeff,
                                          double veffCoeff) {
-      std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
-                           densityDataAll;
-      std::vector<double> &densitySpinUpAll =
-        densityDataAll[DensityDescriptorDataAttributes::valuesSpinUp];
-      std::vector<double> &densitySpinDownAll =
-        densityDataAll[DensityDescriptorDataAttributes::valuesSpinDown];
+      std::unordered_map<
+        DensityDescriptorDataAttributes,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        densityDataAll;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densitySpinUpAll =
+          densityDataAll[DensityDescriptorDataAttributes::valuesSpinUp];
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densitySpinDownAll =
+          densityDataAll[DensityDescriptorDataAttributes::valuesSpinDown];
       if (isGGA)
         {
           densityDataAll[DensityDescriptorDataAttributes::gradValuesSpinUp] =
-            std::vector<double>();
+            dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::HOST>();
           densityDataAll[DensityDescriptorDataAttributes::gradValuesSpinDown] =
-            std::vector<double>();
+            dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::HOST>();
         }
 
       auxDensityXCRepresentationPtr->applyLocalOperations(
         std::make_pair<dftfe::uInt, dftfe::uInt>(0, quadWeightsAll.size()),
         densityDataAll);
 
-      std::vector<double> gradDensitySpinUpAll;
-      std::vector<double> gradDensitySpinDownAll;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        gradDensitySpinUpAll;
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        gradDensitySpinDownAll;
 
       if (isGGA)
         {
@@ -144,11 +164,14 @@ namespace dftfe
             densityDataAll[DensityDescriptorDataAttributes::gradValuesSpinDown];
         }
 
-      std::unordered_map<std::string, std::vector<double>>
+      std::unordered_map<
+        std::string,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         perturbedDensityProjectionInputs;
 
-      std::vector<double> &perturbedDensityValsForXC =
-        perturbedDensityProjectionInputs["densityFunc"];
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &perturbedDensityValsForXC =
+          perturbedDensityProjectionInputs["densityFunc"];
       perturbedDensityProjectionInputs["quadpts"] = quadPointsStdVecAll;
       perturbedDensityProjectionInputs["quadWt"]  = quadWeightsStdVecAll;
 
@@ -178,8 +201,9 @@ namespace dftfe
 
       if (isGGA)
         {
-          std::vector<double> &perturbedGradDensityValsForXC =
-            perturbedDensityProjectionInputs["gradDensityFunc"];
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+            &perturbedGradDensityValsForXC =
+              perturbedDensityProjectionInputs["gradDensityFunc"];
 
           perturbedGradDensityValsForXC.resize(
             2 * totalLocallyOwnedCells * numberQuadraturePointsPerCell * 3, 0);
@@ -235,26 +259,36 @@ namespace dftfe
               cDataOut);
 
 
-          const std::vector<double> &pdexDensitySpinIndex =
-            spinIndex == 0 ? pdexDensitySpinUp : pdexDensitySpinDown;
-          const std::vector<double> &pdecDensitySpinIndex =
-            spinIndex == 0 ? pdecDensitySpinUp : pdecDensitySpinDown;
+          const dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+            &pdexDensitySpinIndex =
+              spinIndex == 0 ? pdexDensitySpinUp : pdexDensitySpinDown;
+          const dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+            &pdecDensitySpinIndex =
+              spinIndex == 0 ? pdecDensitySpinUp : pdecDensitySpinDown;
 
-          std::vector<double> pdexSigma;
-          std::vector<double> pdecSigma;
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+            pdexSigma;
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+            pdecSigma;
           if (isGGA)
             {
               pdexSigma = xDataOut[xcRemainderOutputDataAttributes::pdeSigma];
               pdecSigma = cDataOut[xcRemainderOutputDataAttributes::pdeSigma];
             }
 
-          std::unordered_map<DensityDescriptorDataAttributes,
-                             std::vector<double>>
-                               densityData;
-          std::vector<double> &gradDensitySpinUp =
-            densityData[DensityDescriptorDataAttributes::gradValuesSpinUp];
-          std::vector<double> &gradDensitySpinDown =
-            densityData[DensityDescriptorDataAttributes::gradValuesSpinDown];
+          std::unordered_map<
+            DensityDescriptorDataAttributes,
+            dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::HOST>>
+            densityData;
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+            &gradDensitySpinUp =
+              densityData[DensityDescriptorDataAttributes::gradValuesSpinUp];
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+            &gradDensitySpinDown =
+              densityData[DensityDescriptorDataAttributes::gradValuesSpinDown];
 
           if (isGGA)
             auxDensityXCPerturbedRepresentationPtr->applyLocalOperations(
@@ -263,10 +297,14 @@ namespace dftfe
                 (iCell + 1) * numberQuadraturePointsPerCell),
               densityData);
 
-          const std::vector<double> &gradDensityXCSpinIndex =
-            spinIndex == 0 ? gradDensitySpinUp : gradDensitySpinDown;
-          const std::vector<double> &gradDensityXCOtherSpinIndex =
-            spinIndex == 0 ? gradDensitySpinDown : gradDensitySpinUp;
+          const dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+            &gradDensityXCSpinIndex =
+              spinIndex == 0 ? gradDensitySpinUp : gradDensitySpinDown;
+          const dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+            &gradDensityXCOtherSpinIndex =
+              spinIndex == 0 ? gradDensitySpinDown : gradDensitySpinUp;
 
 
 

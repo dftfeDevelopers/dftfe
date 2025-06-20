@@ -102,9 +102,13 @@ namespace dftfe
   excTauMGGAClass<memorySpace>::computeRhoTauDependentXCData(
     AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
     const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &xDataOut,
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &cDataOut) const
   {
     double tauThresholdMgga = 1e-9;
@@ -121,9 +125,13 @@ namespace dftfe
 
     checkInputOutputDataAttributesConsistency(outputDataAttributes);
 
-    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+    std::unordered_map<
+      DensityDescriptorDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       densityDescriptorData;
-    std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+    std::unordered_map<
+      WfcDescriptorDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       wfcDescriptorData;
 
     for (size_t i = 0; i < this->d_densityDescriptorAttributesList.size(); i++)
@@ -133,13 +141,17 @@ namespace dftfe
             this->d_densityDescriptorAttributesList[i] ==
               DensityDescriptorDataAttributes::valuesSpinDown)
           densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
-            std::vector<double>(nquad, 0);
+            dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::HOST>(nquad,
+                                                                         0);
         else if (this->d_densityDescriptorAttributesList[i] ==
                    DensityDescriptorDataAttributes::gradValuesSpinUp ||
                  this->d_densityDescriptorAttributesList[i] ==
                    DensityDescriptorDataAttributes::gradValuesSpinDown)
           densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
-            std::vector<double>(3 * nquad, 0);
+            dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::HOST>(
+              3 * nquad, 0);
       }
 
     for (size_t i = 0; i < this->d_wfcDescriptorAttributesList.size(); i++)
@@ -149,7 +161,9 @@ namespace dftfe
             this->d_wfcDescriptorAttributesList[i] ==
               WfcDescriptorDataAttributes::tauSpinDown)
           wfcDescriptorData[this->d_wfcDescriptorAttributesList[i]] =
-            std::vector<double>(nquad, 0.0);
+            dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::HOST>(nquad,
+                                                                         0.0);
       }
 
     auxDensityMatrix.applyLocalOperations(quadIndexRange,
@@ -177,28 +191,49 @@ namespace dftfe
     auto &tauValuesSpinDown =
       wfcDescriptorData.find(WfcDescriptorDataAttributes::tauSpinDown)->second;
 
-    std::vector<double> densityValues(2 * nquad, 0);
-    std::vector<double> sigmaValues(3 * nquad, 0);
-    std::vector<double> tauValues(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      densityValues(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      sigmaValues(3 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      tauValues(2 * nquad, 0);
 
-    std::vector<double> exValues(nquad, 0);
-    std::vector<double> ecValues(nquad, 0);
-    std::vector<double> pdexDensityValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdecDensityValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdexDensitySpinUpValues(nquad, 0);
-    std::vector<double> pdexDensitySpinDownValues(nquad, 0);
-    std::vector<double> pdecDensitySpinUpValues(nquad, 0);
-    std::vector<double> pdecDensitySpinDownValues(nquad, 0);
-    std::vector<double> pdexSigmaValues(3 * nquad, 0);
-    std::vector<double> pdecSigmaValues(3 * nquad, 0);
-    std::vector<double> pdexTauValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdecTauValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdexTauSpinUpValues(nquad, 0);
-    std::vector<double> pdexTauSpinDownValues(nquad, 0);
-    std::vector<double> pdecTauSpinUpValues(nquad, 0);
-    std::vector<double> pdecTauSpinDownValues(nquad, 0);
-    std::vector<double> pdexLaplacianValues(2 * nquad, 0);
-    std::vector<double> pdecLaplacianValues(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      exValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      ecValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensityValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensityValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensitySpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensitySpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensitySpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensitySpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexSigmaValues(3 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecSigmaValues(3 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexTauValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecTauValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexTauSpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexTauSpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecTauSpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecTauSpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexLaplacianValues(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecLaplacianValues(2 * nquad, 0);
 
     for (size_t i = 0; i < nquad; i++)
       {
@@ -222,7 +257,8 @@ namespace dftfe
         tauValues[2 * i + 1] = std::max(tauValuesSpinDown[i], tauThresholdMgga);
       }
 
-    std::vector<double> laplacianValues(2 * nquad, 0.0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      laplacianValues(2 * nquad, 0.0);
 
     xc_mgga_exc_vxc(d_funcXPtr.get(),
                     nquad,

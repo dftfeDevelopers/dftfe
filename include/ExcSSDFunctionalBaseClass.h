@@ -191,9 +191,13 @@ namespace dftfe
     computeRhoTauDependentXCData(
       AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
       const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      std::unordered_map<
+        xcRemainderOutputDataAttributes,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &xDataOut,
-      std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+      std::unordered_map<
+        xcRemainderOutputDataAttributes,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &cDataout) const = 0;
 
 

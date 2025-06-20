@@ -136,10 +136,10 @@ namespace dftfe
           {
             const dftfe::uInt startingCellId = iblock * cellsBlockSize;
 
-            std::vector<double> quadPointsBatch(currentCellsBlockSize *
-                                                numQuadPoints * 3);
-            std::vector<double> quadWeightsBatch(currentCellsBlockSize *
-                                                 numQuadPoints);
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              quadPointsBatch(currentCellsBlockSize * numQuadPoints * 3);
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              quadWeightsBatch(currentCellsBlockSize * numQuadPoints);
             for (dftfe::uInt iQuad = 0;
                  iQuad < currentCellsBlockSize * numQuadPoints;
                  ++iQuad)
@@ -161,16 +161,18 @@ namespace dftfe
 
     std::unordered_map<std::string, std::vector<NumberType>>
       densityMatrixProjectionInputsDataType;
-    std::unordered_map<std::string, std::vector<double>>
+    std::unordered_map<
+      std::string,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
                              densityMatrixProjectionInputsRealType;
     std::vector<NumberType> &wfcQuadPointDataBatchHost =
       densityMatrixProjectionInputsDataType["psiFunc"];
-    std::vector<double> &quadPointsBatch =
-      densityMatrixProjectionInputsRealType["quadpts"];
-    std::vector<double> &quadWeightsBatch =
-      densityMatrixProjectionInputsRealType["quadWt"];
-    std::vector<double> &fValuesBatch =
-      densityMatrixProjectionInputsRealType["fValues"];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadPointsBatch = densityMatrixProjectionInputsRealType["quadpts"];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadWeightsBatch = densityMatrixProjectionInputsRealType["quadWt"];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &fValuesBatch = densityMatrixProjectionInputsRealType["fValues"];
 
     for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents;
