@@ -190,7 +190,7 @@ namespace dftfe
       inline static bool                         ncclCommInit;
       inline static dftfe::utils::deviceStream_t d_deviceCommStream;
       inline static bool                         commStreamCreated;
-      inline static int d_deviceDirectDCCLInstanceCounter;
+      inline static dftfe::Int d_deviceDirectDCCLInstanceCounter;
 
     private:
       int      myRank;
