@@ -588,8 +588,6 @@ namespace dftfe
           pcout
             << "Step length exceeded the maximum allowed limit, scaling the step by: "
             << d_alpha << std::endl;
-
-
       }
 
     if (d_debugLevel >= 1)

@@ -64,8 +64,8 @@ namespace dftfe
       d_solver = 2;
     // initialize d_deformationGradientCurrent to identity
     // deformation gradient is a second order tensor.
-    // We constrain it be symmetric (no rigid rotation modes) 
-    // with six independent components    
+    // We constrain it be symmetric (no rigid rotation modes)
+    // with six independent components
     d_deformationGradientCurrent = 0;
     for (dftfe::uInt i = 0; i < 3; ++i)
       d_deformationGradientCurrent[i][i] = 1.0;
@@ -588,7 +588,8 @@ namespace dftfe
               0,
               mpi_communicator);
 
-    dealii::Tensor<2, 3, double> deformationGradientNext = d_deformationGradientCurrent;
+    dealii::Tensor<2, 3, double> deformationGradientNext =
+      d_deformationGradientCurrent;
 
     dftfe::uInt count = 0;
     if (d_relaxationFlags[0] == 1)
@@ -639,20 +640,22 @@ namespace dftfe
       deformationGradientNext * invert(d_deformationGradientCurrent);
     d_deformationGradientCurrent = deformationGradientNext;
 
-    const double a11=deformationGradientNext[0][0];
-    const double a12=deformationGradientNext[0][1];  
-    const double a13=deformationGradientNext[0][2];  
-    const double a21=deformationGradientNext[1][0];
-    const double a22=deformationGradientNext[1][1];  
-    const double a23=deformationGradientNext[1][2];
-    const double a31=deformationGradientNext[2][0];
-    const double a32=deformationGradientNext[2][1];  
-    const double a33=deformationGradientNext[2][2];    
-    const double determinant=a11*(a22*a33-a23*a32)-a12*(a21*a33-a23*a31)+a13*(a21*a32-a22*a31);
+    const double a11         = deformationGradientNext[0][0];
+    const double a12         = deformationGradientNext[0][1];
+    const double a13         = deformationGradientNext[0][2];
+    const double a21         = deformationGradientNext[1][0];
+    const double a22         = deformationGradientNext[1][1];
+    const double a23         = deformationGradientNext[1][2];
+    const double a31         = deformationGradientNext[2][0];
+    const double a32         = deformationGradientNext[2][1];
+    const double a33         = deformationGradientNext[2][2];
+    const double determinant = a11 * (a22 * a33 - a23 * a32) -
+                               a12 * (a21 * a33 - a23 * a31) +
+                               a13 * (a21 * a32 - a22 * a31);
     AssertThrow(
-          determinant>1e-3,
-          dealii::ExcMessage(
-            "Deformation gradient must have determinant greater than zero."));
+      determinant > 1e-3,
+      dealii::ExcMessage(
+        "Deformation gradient must have determinant greater than zero."));
 
     // deform fem mesh and reinit
     d_dftPtr->deformDomain(deformationGradient,
