@@ -21,7 +21,10 @@
 #include "NNGGA.h"
 #include "Exceptions.h"
 #include <dftfeDataTypes.h>
-
+#if defined(DFTFE_WITH_DEVICE)
+#  include <DeviceAPICalls.h>
+#  include <excManagerDeviceKernels.h>
+#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -196,35 +199,55 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       pdecSigmaValues(3 * nquad, 0);
 
-    for (size_t i = 0; i < nquad; i++)
-      {
-        densityValues[2 * i + 0] = densityValuesSpinUp[i];
-        densityValues[2 * i + 1] = densityValuesSpinDown[i];
-        for (size_t j = 0; j < 3; j++)
-          {
-            sigmaValues[3 * i + 0] +=
-              gradValuesSpinUp[3 * i + j] * gradValuesSpinUp[3 * i + j];
-            sigmaValues[3 * i + 1] +=
-              gradValuesSpinUp[3 * i + j] * gradValuesSpinDown[3 * i + j];
-            sigmaValues[3 * i + 2] +=
-              gradValuesSpinDown[3 * i + j] * gradValuesSpinDown[3 * i + j];
-          }
-      }
+
+    dftfe::internal::fillRhoSigmaVector(nquad,
+                                        densityValuesSpinUp,
+                                        densityValuesSpinDown,
+                                        gradValuesSpinUp,
+                                        gradValuesSpinDown,
+                                        densityValues,
+                                        sigmaValues);
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      densityValuesDevice(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      sigmaValuesDevice(3 * nquad, 0);
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      exValuesDevice(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      ecValuesDevice(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      pdexDensityValuesNonNNDevice(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      pdecDensityValuesNonNNDevice(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      pdexDensitySpinUpValuesDevice(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      pdexDensitySpinDownValuesDevice(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      pdecDensitySpinUpValuesDevice(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      pdecDensitySpinDownValuesDevice(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      pdexSigmaValuesDevice(3 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
+      pdecSigmaValuesDevice(3 * nquad, 0);
 
     xc_gga_exc_vxc(d_funcXPtr.get(),
                    nquad,
-                   &densityValues[0],
-                   &sigmaValues[0],
-                   &exValues[0],
-                   &pdexDensityValuesNonNN[0],
-                   &pdexSigmaValues[0]);
+                   densityValuesDevice.data(),
+                   sigmaValuesDevice.data(),
+                   exValuesDevice.data(),
+                   pdexDensityValuesNonNNDevice.data(),
+                   pdexSigmaValuesDevice.data());
     xc_gga_exc_vxc(d_funcCPtr.get(),
                    nquad,
-                   &densityValues[0],
-                   &sigmaValues[0],
-                   &ecValues[0],
-                   &pdecDensityValuesNonNN[0],
-                   &pdecSigmaValues[0]);
+                   densityValuesDevice.data(),
+                   sigmaValuesDevice.data(),
+                   ecValuesDevice.data(),
+                   pdecDensityValuesNonNNDevice.data(),
+                   pdecSigmaValuesDevice.data());
 
     for (size_t i = 0; i < nquad; i++)
       {

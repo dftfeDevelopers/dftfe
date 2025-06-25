@@ -20,7 +20,10 @@
 #include "excTauMGGAClass.h"
 #include "Exceptions.h"
 #include <dftfeDataTypes.h>
-
+#if defined(DFTFE_WITH_DEVICE)
+#  include <DeviceAPICalls.h>
+#  include <excManagerDeviceKernels.h>
+#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -235,28 +238,17 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       pdecLaplacianValues(2 * nquad, 0);
 
-    for (size_t i = 0; i < nquad; i++)
-      {
-        densityValues[2 * i + 0] = std::abs(densityValuesSpinUp[i]);
-        densityValues[2 * i + 1] = std::abs(densityValuesSpinDown[i]);
-        for (size_t j = 0; j < 3; j++)
-          {
-            sigmaValues[3 * i + 0] +=
-              gradValuesSpinUp[3 * i + j] * gradValuesSpinUp[3 * i + j];
-            sigmaValues[3 * i + 1] +=
-              gradValuesSpinUp[3 * i + j] * gradValuesSpinDown[3 * i + j];
-            sigmaValues[3 * i + 2] +=
-              gradValuesSpinDown[3 * i + j] * gradValuesSpinDown[3 * i + j];
-          }
-        // sigmaValues[3 * i + 0] =
-        //   std::max(sigmaValues[3 * i + 0], sigmaThresholdMgga);
-        // sigmaValues[3 * i + 2] =
-        //   std::max(sigmaValues[3 * i + 2], sigmaThresholdMgga);
-
-        tauValues[2 * i + 0] = std::max(tauValuesSpinUp[i], tauThresholdMgga);
-        tauValues[2 * i + 1] = std::max(tauValuesSpinDown[i], tauThresholdMgga);
-      }
-
+    dftfe::internal::fillRhoSigmaTauVector(nquad,
+                                           densityValuesSpinUp,
+                                           densityValuesSpinDown,
+                                           gradValuesSpinUp,
+                                           gradValuesSpinDown,
+                                           tauValuesSpinUp,
+                                           tauValuesSpinDown,
+                                           densityValues,
+                                           sigmaValues,
+                                           tauValues,
+                                           tauThresholdMgga);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       laplacianValues(2 * nquad, 0.0);
 

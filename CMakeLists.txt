@@ -256,6 +256,7 @@ SET(DEVICE_SRC
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
+  ./src/excManager/excManagerDeviceKernels.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 SET(DEVICE_SRC
@@ -277,6 +278,7 @@ SET(DEVICE_SRC
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
+  ./src/excManager/excManagerDeviceKernels.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
 SET(DEVICE_SRC
@@ -297,6 +299,8 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
+  ./src/excManager/excManagerDeviceKernels.cc
   )
 
 ENDIF()

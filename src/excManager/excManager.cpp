@@ -23,6 +23,10 @@
 #include <excDensityLLMGGAClass.h>
 #include <excTauMGGAClass.h>
 #include "ExcDFTPlusU.h"
+#if defined(DFTFE_WITH_DEVICE)
+#  include <DeviceAPICalls.h>
+#  include <excManagerDeviceKernels.h>
+#endif
 
 namespace dftfe
 {
@@ -185,6 +189,103 @@ namespace dftfe
       return excObj;
     }
   } // namespace
+
+  namespace internal
+  {
+    template <>
+    void
+    fillRhoVector(
+      const dftfe::uInt numQuadPoints,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densitySpinUp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densitySpinDown,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoVector)
+    {
+      for (dftfe::uInt iQuad = 0; iQuad < numQuadPoints; iQuad++)
+        {
+          rhoVector[2 * iQuad + 0] = densitySpinUp[iQuad];
+          rhoVector[2 * iQuad + 1] = densitySpinDown[iQuad];
+        }
+    }
+
+    template <>
+    void
+    fillRhoSigmaVector(
+      const dftfe::uInt numQuadPoints,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densitySpinUp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densitySpinDown,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradDensitySpinUp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradDensitySpinDown,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoVector,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &sigmaVector)
+    {
+      for (dftfe::uInt iQuad = 0; iQuad < numQuadPoints; iQuad++)
+        {
+          rhoVector[2 * iQuad + 0] = densitySpinUp[iQuad];
+          rhoVector[2 * iQuad + 1] = densitySpinDown[iQuad];
+          for (dftfe::uInt j = 0; j < 3; j++)
+            {
+              sigmaVector[3 * iQuad + 0] += gradDensitySpinUp[3 * iQuad + j] *
+                                            gradDensitySpinUp[3 * iQuad + j];
+              sigmaVector[3 * iQuad + 1] += gradDensitySpinUp[3 * iQuad + j] *
+                                            gradDensitySpinDown[3 * iQuad + j];
+              sigmaVector[3 * iQuad + 2] += gradDensitySpinDown[3 * iQuad + j] *
+                                            gradDensitySpinDown[3 * iQuad + j];
+            }
+        }
+    }
+
+    template <>
+    void
+    fillRhoSigmaTauVector(
+      const dftfe::uInt numQuadPoints,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densitySpinUp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &densitySpinDown,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradDensitySpinUp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &gradDensitySpinDown,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &tauSpinUp,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &tauSpinDown,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &rhoVector,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &sigmaVector,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                  &tauVector,
+      const double tauThreshold)
+    {
+      for (dftfe::uInt iQuad = 0; iQuad < numQuadPoints; iQuad++)
+        {
+          rhoVector[2 * iQuad + 0] = densitySpinUp[iQuad];
+          rhoVector[2 * iQuad + 1] = densitySpinDown[iQuad];
+          for (dftfe::uInt j = 0; j < 3; j++)
+            {
+              sigmaVector[3 * iQuad + 0] += gradDensitySpinUp[3 * iQuad + j] *
+                                            gradDensitySpinUp[3 * iQuad + j];
+              sigmaVector[3 * iQuad + 1] += gradDensitySpinUp[3 * iQuad + j] *
+                                            gradDensitySpinDown[3 * iQuad + j];
+              sigmaVector[3 * iQuad + 2] += gradDensitySpinDown[3 * iQuad + j] *
+                                            gradDensitySpinDown[3 * iQuad + j];
+            }
+          tauVector[2 * iQuad + 0] = std::max(tauSpinUp[iQuad], tauThreshold);
+          tauVector[2 * iQuad + 1] = std::max(tauSpinDown[iQuad], tauThreshold);
+        }
+    }
+
+  }; // namespace internal
   template <dftfe::utils::MemorySpace memorySpace>
   excManager<memorySpace>::excManager()
   {}

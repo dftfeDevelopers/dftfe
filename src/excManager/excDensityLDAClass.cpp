@@ -21,7 +21,10 @@
 #include <NNLDA.h>
 #include <Exceptions.h>
 #include <dftfeDataTypes.h>
-
+#if defined(DFTFE_WITH_DEVICE)
+#  include <DeviceAPICalls.h>
+#  include <excManagerDeviceKernels.h>
+#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -163,11 +166,10 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       pdecDensitySpinDownValues(nquad, 0);
 
-    for (dftfe::uInt i = 0; i < nquad; i++)
-      {
-        densityValues[2 * i + 0] = densityValuesSpinUp[i];
-        densityValues[2 * i + 1] = densityValuesSpinDown[i];
-      }
+    dftfe::internal::fillRhoVector(nquad,
+                                   densityValuesSpinUp,
+                                   densityValuesSpinDown,
+                                   densityValues);
 
     xc_lda_exc_vxc(d_funcXPtr.get(),
                    nquad,
