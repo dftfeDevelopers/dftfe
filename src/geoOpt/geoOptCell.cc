@@ -637,6 +637,21 @@ namespace dftfe
       strainEpsilonNew * invert(d_strainEpsilon);
     d_strainEpsilon = strainEpsilonNew;
 
+    a11=strainEpsilonNew[0][0];
+    a12=strainEpsilonNew[0][1];  
+    a12=strainEpsilonNew[0][2];  
+    a21=strainEpsilonNew[1][0];
+    a22=strainEpsilonNew[1][1];  
+    a22=strainEpsilonNew[1][2];
+    a31=strainEpsilonNew[2][0];
+    a32=strainEpsilonNew[2][1];  
+    a32=strainEpsilonNew[2][2];    
+    const double determinant=a11*(a22*a33-a23*a32)-a12*(a21*a33-a23*a31)+a13*(a21*a32-a22*a31);
+    AssertThrow(
+          determinant>1e-3,
+          dealii::ExcMessage(
+            "Strain tensor must have determinant greater than zero."));
+
     // deform fem mesh and reinit
     d_dftPtr->deformDomain(deformationGradient,
                            false,
