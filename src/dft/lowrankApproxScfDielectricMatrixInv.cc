@@ -424,8 +424,9 @@ namespace dftfe
           residualRho,
           k0,
           d_tikhonovRegularizationConstantLRD);
-        pcout << "Starting relative approx error accumulated: "
-              << relativeApproxError << std::endl;
+        if (d_dftParamsPtr->verbosity >= 4)
+          pcout << "Starting relative approx error accumulated: "
+                << relativeApproxError << std::endl;
       }
 
     const double linearityRegimeFac      = d_dftParamsPtr->betaTol;
