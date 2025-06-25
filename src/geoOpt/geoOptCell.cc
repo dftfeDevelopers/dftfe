@@ -650,7 +650,7 @@ namespace dftfe
     AssertThrow(
           determinant>1e-3,
           dealii::ExcMessage(
-            "Strain tensor must have determinant greater than zero."));
+            "Deformation gradient must have determinant greater than zero."));
 
     // deform fem mesh and reinit
     d_dftPtr->deformDomain(deformationGradient,
