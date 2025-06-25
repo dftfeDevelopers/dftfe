@@ -708,7 +708,12 @@ namespace dftfe
             << std::endl;
 
     internalLowrankJacInv::predictNextStepResidual(
-      d_fvcontainerVals, residualRho, d_residualPredicted, k0, -const2, d_tikhonovRegularizationConstantLRD);
+      d_fvcontainerVals,
+      residualRho,
+      d_residualPredicted,
+      k0,
+      -const2,
+      d_tikhonovRegularizationConstantLRD);
 
     // compute l2 norm of the field residual
     d_residualNormPredicted = rhofieldl2Norm(d_matrixFreeDataPRefined,
