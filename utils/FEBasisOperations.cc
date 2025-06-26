@@ -48,6 +48,7 @@ namespace dftfe
       d_constraintInfo.clear();
       d_cellDofIndexToProcessDofIndexMap.clear();
       d_quadPoints.clear();
+      d_cellCentroids.clear();
       d_flattenedCellDofIndexToProcessDofIndexMap.clear();
       d_cellIndexToCellIdMap.clear();
       d_cellIdToCellIndexMap.clear();
@@ -193,7 +194,8 @@ namespace dftfe
       d_nQuadsPerCell        = basisOperationsSrc.d_nQuadsPerCell;
       initializeMPIPattern();
       d_nQuadsPerCell.resize(d_quadratureIDsVector.size());
-      d_quadPoints = basisOperationsSrc.d_quadPoints;
+      d_quadPoints    = basisOperationsSrc.d_quadPoints;
+      d_cellCentroids = basisOperationsSrc.d_cellCentroids;
       initializeConstraints();
       for (dftfe::uInt iQuadIndex = 0;
            iQuadIndex < d_quadratureIDsVector.size();
@@ -475,6 +477,18 @@ namespace dftfe
       quadPoints() const
     {
       return d_quadPoints.find(d_quadratureID)->second;
+    }
+
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    const dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                      dftfe::utils::MemorySpace::HOST> &
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      cellCentroids() const
+    {
+      return d_cellCentroids;
     }
 
 
@@ -860,6 +874,9 @@ namespace dftfe
       d_cellIndexToCellIteratorMap.clear();
       d_cellIndexToCellIteratorMap.resize(d_nCells);
 
+      d_cellCentroids.clear();
+      d_cellCentroids.resize(d_nCells * 3);
+
       d_cellIdToCellIndexMap.clear();
       auto cellPtr =
         d_matrixFreeDataPtr->get_dof_handler(d_dofHandlerID).begin_active();
@@ -877,8 +894,8 @@ namespace dftfe
                                                  iDof] =
                 d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
                   ->global_to_local(cellDofIndicesGlobal[iDof]);
-
-
+            for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+              d_cellCentroids[iCell * 3 + iDim] = cellPtr->center()[iDim];
             d_cellIndexToCellIdMap[iCell]         = cellPtr->id();
             d_cellIdToCellIndexMap[cellPtr->id()] = iCell;
             d_cellIndexToCellIteratorMap[iCell]   = cellPtr;

@@ -117,7 +117,7 @@ SET(TARGET_SRC
   ./src/triangulation/meshMovement/meshMovementGaussian.cc
   ./src/triangulation/meshMovement/meshMovementAffineTransform.cc
   ./src/triangulation/triangulationManager/triangulationManager.cc
-  ./src/symmetry/initGroupSymmetry.cc
+  ./src/symmetry/groupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/geoOpt/geoOptCell.cc
   ./src/solvers/nonlinearSolverProblem.cc

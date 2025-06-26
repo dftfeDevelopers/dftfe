@@ -364,6 +364,13 @@ namespace dftfe
       quadPoints() const;
 
       /**
+       * @brief quad point coordinates for each cell.
+       */
+      const dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                        dftfe::utils::MemorySpace::HOST> &
+      cellCentroids() const;
+
+      /**
        * @brief Shape function values at quadrature points in ValueTypeBasisData.
        * @param[in] transpose if false the the data is indexed as [iQuad *
        * d_nDofsPerCell + iNode] and if true it is indexed as [iNode *
@@ -876,6 +883,9 @@ namespace dftfe
                dftfe::utils::MemoryStorage<ValueTypeBasisData,
                                            dftfe::utils::MemorySpace::HOST>>
         d_quadPoints;
+      dftfe::utils::MemoryStorage<ValueTypeBasisData,
+                                  dftfe::utils::MemorySpace::HOST>
+        d_cellCentroids;
       dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
                                   d_flattenedCellDofIndexToProcessDofIndexMap;
       std::vector<dealii::CellId> d_cellIndexToCellIdMap;

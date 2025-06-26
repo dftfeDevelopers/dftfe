@@ -148,6 +148,21 @@ namespace dftfe
                             *d_dftParamsPtr);
         // normalizeRhoOutQuadValues();
 
+        if (d_dftParamsPtr->useSymm)
+          for (dftfe::uInt iComp = 0; iComp < d_densityOutQuadValues.size();
+               ++iComp)
+            groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+              d_densityOutQuadValues[iComp], dftfe::pointSet::densityQuad);
+        if (d_dftParamsPtr->useSymm && isGradDensityDataDependent)
+          for (dftfe::uInt iComp = 0; iComp < d_gradDensityOutQuadValues.size();
+               ++iComp)
+            groupSymmetryPtr->symmetrizeVectorFieldFromLocalValues(
+              d_gradDensityOutQuadValues[iComp], dftfe::pointSet::densityQuad);
+        if (d_dftParamsPtr->useSymm && isTauMGGA)
+          for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
+               ++iComp)
+            groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+              d_tauOutQuadValues[iComp], dftfe::pointSet::densityQuad);
         if (d_dftParamsPtr->computeEnergyEverySCF || isGroundState)
           {
             computeRhoNodalFromPSI();
@@ -383,6 +398,11 @@ namespace dftfe
                         interBandGroupComm,
                         *d_dftParamsPtr);
 
+    if (d_dftParamsPtr->useSymm)
+      for (dftfe::uInt iComp = 0; iComp < densityPRefinedNodalData.size();
+           ++iComp)
+        groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+          densityPRefinedNodalData[iComp], dftfe::pointSet::densityNodal);
     // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
     dealii::DoFHandler<3>::active_cell_iterator cellP = d_dofHandlerRhoNodal
                                                           .begin_active(),
