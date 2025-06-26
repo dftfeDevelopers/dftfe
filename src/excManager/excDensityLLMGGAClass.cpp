@@ -9,8 +9,8 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLLMGGAClass<memorySpace>::excDensityLLMGGAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LLMGGA,
         densityFamilyType::LLMGGA,
@@ -29,8 +29,8 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLLMGGAClass<memorySpace>::excDensityLLMGGAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
     std::string                   modelXCInputFile)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LLMGGA,
@@ -225,14 +225,14 @@ namespace dftfe
         laplacianValues[2 * i + 1] = laplacianValuesSpinDown[i];
       }
 
-    xc_gga_exc_vxc(d_funcXPtr.get(),
+    xc_gga_exc_vxc(d_funcXPtr[0].get(),
                    nquad,
                    &densityValues[0],
                    &sigmaValues[0],
                    &exValues[0],
                    &pdexDensityValuesNonNN[0],
                    &pdexSigmaValues[0]);
-    xc_gga_exc_vxc(d_funcCPtr.get(),
+    xc_gga_exc_vxc(d_funcCPtr[0].get(),
                    nquad,
                    &densityValues[0],
                    &sigmaValues[0],

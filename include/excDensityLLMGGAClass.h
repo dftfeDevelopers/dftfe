@@ -14,11 +14,11 @@ namespace dftfe
   class excDensityLLMGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityLLMGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
-                          std::shared_ptr<xc_func_type> funcCPtr);
+    excDensityLLMGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr);
 
-    excDensityLLMGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
-                          std::shared_ptr<xc_func_type> funcCPtr,
+    excDensityLLMGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
                           std::string                   modelXCInputFile);
 
     ~excDensityLLMGGAClass();
@@ -91,8 +91,8 @@ namespace dftfe
 
   private:
     NNLLMGGA                     *d_NNLLMGGAPtr;
-    std::shared_ptr<xc_func_type> d_funcXPtr;
-    std::shared_ptr<xc_func_type> d_funcCPtr;
+    std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
+    std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
     std::vector<double>           d_spacingFDStencil;
     dftfe::uInt                   d_vxcDivergenceTermFDStencilSize;
   };

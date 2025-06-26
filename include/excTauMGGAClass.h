@@ -10,11 +10,11 @@ namespace dftfe
   class excTauMGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excTauMGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
-                    std::shared_ptr<xc_func_type> funcCPtr);
+    excTauMGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr);
 
-    excTauMGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
-                    std::shared_ptr<xc_func_type> funcCPtr,
+    excTauMGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
                     std::string                   modelXCInputFile);
 
     ~excTauMGGAClass();
@@ -87,8 +87,8 @@ namespace dftfe
     reinitKPointDependentVariables(dftfe::uInt kPointIndex) override;
 
   private:
-    std::shared_ptr<xc_func_type> d_funcXPtr;
-    std::shared_ptr<xc_func_type> d_funcCPtr;
+    std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
+    std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
   };
 
 } // namespace dftfe

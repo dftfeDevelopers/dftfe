@@ -29,8 +29,8 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -45,8 +45,8 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr,
+std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
     std::string                   modelXCInputFile)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
@@ -171,12 +171,12 @@ namespace dftfe
                                    densityValuesSpinDown,
                                    densityValues);
 
-    xc_lda_exc_vxc(d_funcXPtr.get(),
+    xc_lda_exc_vxc(d_funcXPtr[0].get(),
                    nquad,
                    &densityValues[0],
                    &exValues[0],
                    &pdexDensityValuesNonNN[0]);
-    xc_lda_exc_vxc(d_funcCPtr.get(),
+    xc_lda_exc_vxc(d_funcCPtr[0].get(),
                    nquad,
                    &densityValues[0],
                    &ecValues[0],

@@ -26,12 +26,12 @@ namespace dftfe
   class excDensityGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
-                       std::shared_ptr<xc_func_type> funcCPtr);
+    excDensityGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr);
 
 
-    excDensityGGAClass(std::shared_ptr<xc_func_type> funcXPtr,
-                       std::shared_ptr<xc_func_type> funcCPtr,
+    excDensityGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
                        std::string                   modelXCInputFile);
 
 
@@ -105,8 +105,8 @@ namespace dftfe
 
   private:
     NNGGA                        *d_NNGGAPtr;
-    std::shared_ptr<xc_func_type> d_funcXPtr;
-    std::shared_ptr<xc_func_type> d_funcCPtr;
+    std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
+    std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
     std::vector<double>           d_spacingFDStencil;
     dftfe::uInt                   d_vxcDivergenceTermFDStencilSize;
   };

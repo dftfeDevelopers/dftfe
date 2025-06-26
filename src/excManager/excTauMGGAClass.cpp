@@ -28,8 +28,8 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::excTauMGGAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::TauMGGA,
         densityFamilyType::GGA,
@@ -48,8 +48,8 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::excTauMGGAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr,
+std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
     std::string                   modelXCInputFile)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::TauMGGA,
@@ -252,7 +252,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       laplacianValues(2 * nquad, 0.0);
 
-    xc_mgga_exc_vxc(d_funcXPtr.get(),
+    xc_mgga_exc_vxc(d_funcXPtr[0].get(),
                     nquad,
                     &densityValues[0],
                     &sigmaValues[0],
@@ -263,7 +263,7 @@ namespace dftfe
                     &pdexSigmaValues[0],
                     &pdexLaplacianValues[0],
                     &pdexTauValuesNonNN[0]);
-    xc_mgga_exc_vxc(d_funcCPtr.get(),
+    xc_mgga_exc_vxc(d_funcCPtr[0].get(),
                     nquad,
                     &densityValues[0],
                     &sigmaValues[0],

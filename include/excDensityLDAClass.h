@@ -27,11 +27,11 @@ namespace dftfe
   class excDensityLDAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityLDAClass(std::shared_ptr<xc_func_type> funcXPtr,
-                       std::shared_ptr<xc_func_type> funcCPtr);
+    excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr);
 
-    excDensityLDAClass(std::shared_ptr<xc_func_type> funcXPtr,
-                       std::shared_ptr<xc_func_type> funcCPtr,
+    excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
                        std::string                   modelXCInputFile);
 
     ~excDensityLDAClass();
@@ -105,8 +105,8 @@ namespace dftfe
 
   private:
     NNLDA                        *d_NNLDAPtr;
-    std::shared_ptr<xc_func_type> d_funcXPtr;
-    std::shared_ptr<xc_func_type> d_funcCPtr;
+    std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
+    std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
   };
 } // namespace dftfe
 
