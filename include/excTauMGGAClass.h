@@ -10,12 +10,12 @@ namespace dftfe
   class excTauMGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excTauMGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr);
+    excTauMGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+                    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr);
 
-    excTauMGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
-                    std::string                   modelXCInputFile);
+    excTauMGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+                    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+                    std::string modelXCInputFile);
 
     ~excTauMGGAClass();
 

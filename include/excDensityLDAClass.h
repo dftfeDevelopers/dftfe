@@ -27,12 +27,12 @@ namespace dftfe
   class excDensityLDAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr);
+    excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr);
 
-    excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
-                       std::string                   modelXCInputFile);
+    excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+                       std::string modelXCInputFile);
 
     ~excDensityLDAClass();
 
@@ -104,7 +104,7 @@ namespace dftfe
     reinitKPointDependentVariables(dftfe::uInt kPointIndex) override;
 
   private:
-    NNLDA                        *d_NNLDAPtr;
+    NNLDA                                     *d_NNLDAPtr;
     std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
     std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
   };

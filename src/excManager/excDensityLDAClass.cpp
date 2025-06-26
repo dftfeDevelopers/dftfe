@@ -29,8 +29,8 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
-    std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -45,9 +45,9 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
-std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
-    std::string                   modelXCInputFile)
+    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+    std::string                                 modelXCInputFile)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,

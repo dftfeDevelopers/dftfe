@@ -29,8 +29,8 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityGGAClass<memorySpace>::excDensityGGAClass(
-    std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::GGA,
         densityFamilyType::GGA,
@@ -47,9 +47,9 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityGGAClass<memorySpace>::excDensityGGAClass(
-std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
-    std::string                   modelXCInputFile)
+    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+    std::string                                 modelXCInputFile)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::GGA,
         densityFamilyType::GGA,
@@ -208,7 +208,7 @@ std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
                                         densityValues,
                                         sigmaValues);
 
-   
+
 
     xc_gga_exc_vxc(d_funcXPtr[0].get(),
                    nquad,

@@ -14,12 +14,12 @@ namespace dftfe
   class excDensityLLMGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityLLMGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr);
+    excDensityLLMGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+                          std::vector<std::shared_ptr<xc_func_type>> &funcCPtr);
 
-    excDensityLLMGGAClass(std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
-                          std::string                   modelXCInputFile);
+    excDensityLLMGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+                          std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+                          std::string modelXCInputFile);
 
     ~excDensityLLMGGAClass();
 
@@ -90,11 +90,11 @@ namespace dftfe
     reinitKPointDependentVariables(dftfe::uInt kPointIndex) override;
 
   private:
-    NNLLMGGA                     *d_NNLLMGGAPtr;
+    NNLLMGGA                                  *d_NNLLMGGAPtr;
     std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
     std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
-    std::vector<double>           d_spacingFDStencil;
-    dftfe::uInt                   d_vxcDivergenceTermFDStencilSize;
+    std::vector<double>                        d_spacingFDStencil;
+    dftfe::uInt                                d_vxcDivergenceTermFDStencilSize;
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYLLMGGACLASS_H

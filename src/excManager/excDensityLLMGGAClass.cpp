@@ -9,8 +9,8 @@ namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLLMGGAClass<memorySpace>::excDensityLLMGGAClass(
-    std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LLMGGA,
         densityFamilyType::LLMGGA,
@@ -29,9 +29,9 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLLMGGAClass<memorySpace>::excDensityLLMGGAClass(
-    std::vector<std::shared_ptr<xc_func_type>> & funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> & funcCPtr,
-    std::string                   modelXCInputFile)
+    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+    std::string                                 modelXCInputFile)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LLMGGA,
         densityFamilyType::LLMGGA,

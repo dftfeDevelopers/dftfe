@@ -642,7 +642,7 @@ namespace dftfe
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID);
     const dftfe::uInt totalLocallyOwnedCells =
       d_basisOperationsPtrHost->nCells();
-    const dftfe::uInt nCellsPerBatch = 1;
+    const dftfe::uInt nCellsPerBatch = totalLocallyOwnedCells;
     const dftfe::uInt numberQuadraturePointsPerCell =
       d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
@@ -777,7 +777,7 @@ namespace dftfe
           *auxDensityXCRepresentation,
           std::make_pair<dftfe::uInt, dftfe::uInt>(
             iCell * numberQuadraturePointsPerCell,
-            (iCell + 1) * numberQuadraturePointsPerCell),
+            (iCell + nCellsPerBatch) * numberQuadraturePointsPerCell),
           xDataOut,
           cDataOut);
 
@@ -847,7 +847,7 @@ namespace dftfe
           auxDensityXCRepresentation->applyLocalOperations(
             std::make_pair<dftfe::uInt, dftfe::uInt>(
               iCell * numberQuadraturePointsPerCell,
-              (iCell + 1) * numberQuadraturePointsPerCell),
+              (iCell + nCellsPerBatch) * numberQuadraturePointsPerCell),
             densityData);
 
         dftfe::internal::computeVeffJxWEntries(

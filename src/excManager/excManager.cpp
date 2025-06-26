@@ -43,11 +43,11 @@ namespace dftfe
 
     template <dftfe::utils::MemorySpace memorySpace>
     std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>>
-    initializeSSDPtr(std::string                   XCType,
+    initializeSSDPtr(std::string                                 XCType,
                      std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
                      std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                     std::string                   modelXCInputFile,
-                     bool                          printXCInfo)
+                     std::string modelXCInputFile,
+                     bool        printXCInfo)
     {
       dftfe::Int exceptParamX = -1, exceptParamC = -1;
 
@@ -59,7 +59,8 @@ namespace dftfe
       std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> excObj;
       if (XCType == "LDA-PZ")
         {
-          exceptParamX = xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
+          exceptParamX =
+            xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
           exceptParamC =
             xc_func_init(funcCPtr[0].get(), XC_LDA_C_PZ, XC_POLARIZED);
           excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
@@ -67,7 +68,8 @@ namespace dftfe
         }
       else if (XCType == "LDA-PW")
         {
-          exceptParamX = xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
+          exceptParamX =
+            xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
           exceptParamC =
             xc_func_init(funcCPtr[0].get(), XC_LDA_C_PW, XC_POLARIZED);
           excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
@@ -75,7 +77,8 @@ namespace dftfe
         }
       else if (XCType == "LDA-VWN")
         {
-          exceptParamX = xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
+          exceptParamX =
+            xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
           exceptParamC =
             xc_func_init(funcCPtr[0].get(), XC_LDA_C_VWN, XC_POLARIZED);
           excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
@@ -112,7 +115,8 @@ namespace dftfe
         }
       else if (XCType == "MLXC-NNLDA")
         {
-          exceptParamX = xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
+          exceptParamX =
+            xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
           exceptParamC =
             xc_func_init(funcCPtr[0].get(), XC_LDA_C_PW, XC_POLARIZED);
           excObj =
