@@ -4621,7 +4621,7 @@ namespace dftfe
       }
 
     dftfe::uInt numberEigenValues =
-      d_dftParamsPtr->highestStateOfInterestForChebFiltering;
+      d_dftParamsPtr->highestStateOfInterestForChebFiltering + 1;
     if (dealii::Utilities::MPI::this_mpi_process(d_mpiCommParent) == 0)
       {
         FILE *pFile;
