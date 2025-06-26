@@ -38,13 +38,52 @@ namespace dftfe
   void
   AtomCenteredSphericalFunctionContainer::init(
     const std::vector<dftfe::uInt> &atomicNumbers,
-    const std::map<std::pair<dftfe::uInt, dftfe::uInt>,
-                   std::shared_ptr<AtomCenteredSphericalFunctionBase>>
+    const std::vector<
+      std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+               std::shared_ptr<AtomCenteredSphericalFunctionBase>>>
       &listOfSphericalFunctions)
   {
     // std::cout << "Initialising Container Class: " << std::endl;
     d_atomicNumbers               = atomicNumbers;
     d_sphericalFunctionsContainer = listOfSphericalFunctions;
+
+    std::map<dftfe::uInt, dftfe::uInt> startIndexLocation;
+    for (const auto &[key, value] : listOfSphericalFunctions[0])
+      {
+        dftfe::uInt atomicNumber = key.first;
+        dftfe::uInt alpha        = key.second;
+        dftfe::uInt lIndex       = value->getQuantumNumberl();
+        if (auto atomNumSize = d_numRadialSphericalFunctions.find(atomicNumber);
+            atomNumSize != d_numRadialSphericalFunctions.end())
+          {
+            d_numRadialSphericalFunctions[atomicNumber] =
+              d_numRadialSphericalFunctions[atomicNumber] + 1;
+            d_numSphericalFunctions[atomicNumber] =
+              d_numSphericalFunctions[atomicNumber] + (2 * lIndex + 1);
+            d_totalSphericalFunctionIndexStart[atomicNumber].push_back(
+              startIndexLocation[atomicNumber]);
+            startIndexLocation[atomicNumber] += 2 * lIndex + 1;
+          }
+        else
+          {
+            d_numRadialSphericalFunctions[atomicNumber] = 1;
+            d_numSphericalFunctions[atomicNumber]       = (2 * lIndex + 1);
+            startIndexLocation[atomicNumber]            = 0;
+            d_totalSphericalFunctionIndexStart[atomicNumber].push_back(
+              startIndexLocation[atomicNumber]);
+            startIndexLocation[atomicNumber] += 2 * lIndex + 1;
+          }
+      }
+  }
+  void
+  AtomCenteredSphericalFunctionContainer::init(
+    const std::vector<dftfe::uInt> &atomicNumbers,
+    const std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+                   std::shared_ptr<AtomCenteredSphericalFunctionBase>>
+      &listOfSphericalFunctions)
+  {
+    d_atomicNumbers                  = atomicNumbers;
+    d_sphericalFunctionsContainer[0] = listOfSphericalFunctions;
     std::map<dftfe::uInt, dftfe::uInt> startIndexLocation;
     for (const auto &[key, value] : listOfSphericalFunctions)
       {
@@ -96,9 +135,6 @@ namespace dftfe
     const std::vector<std::vector<double>> &periodicCoords)
   {
     d_periodicImageCoord.clear();
-    // std::cout << "PeriodicCoords original Size: " << periodicCoords.size()
-    //           << std::endl;
-    // std::cout << "ImageIds original Size: " << imageIds.size() << std::endl;
     for (dftfe::uInt iAtom = 0; iAtom < d_atomicNumbers.size(); iAtom++)
       {
         d_periodicImageCoord[iAtom].push_back(d_atomCoords[3 * iAtom + 0]);
@@ -113,21 +149,6 @@ namespace dftfe
         d_periodicImageCoord[chargeId].push_back(periodicCoords[iImageId][1]);
         d_periodicImageCoord[chargeId].push_back(periodicCoords[iImageId][2]);
       }
-
-    // for (dftfe::Int iCharge = 0; iCharge < d_periodicImageCoord.size();
-    // iCharge++)
-    //   {
-    //     dftfe::Int size = d_periodicImageCoord[iCharge].size() / 3;
-    //     for (dftfe::Int i = 0; i < size; i++)
-    //       {
-    //         std::cout << "Processor charges and locations: " << iCharge << "
-    //         "
-    //                   << d_periodicImageCoord[iCharge][3 * i + 0] << " "
-    //                   << d_periodicImageCoord[iCharge][3 * i + 1] << " "
-    //                   << d_periodicImageCoord[iCharge][3 * i + 2] <<
-    //                   std::endl;
-    //       }
-    //   }
   }
 
   dftfe::uInt
@@ -294,6 +315,14 @@ namespace dftfe
                  std::shared_ptr<AtomCenteredSphericalFunctionBase>> &
   AtomCenteredSphericalFunctionContainer::getSphericalFunctions() const
   {
+    return d_sphericalFunctionsContainer[0];
+  }
+
+  const std::vector<
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+             std::shared_ptr<AtomCenteredSphericalFunctionBase>>> &
+  AtomCenteredSphericalFunctionContainer::getSphericalFunctionsVector() const
+  {
     return d_sphericalFunctionsContainer;
   }
 
@@ -349,7 +378,6 @@ namespace dftfe
     //
     dftfe::Int numberAtomsOfInterest = d_atomicNumbers.size(); //
 
-    // std::cout<<" numberAtomsOfInterest = "<<numberAtomsOfInterest<<"\n";
 
     //     //
     //     // pre-allocate data structures that stores the sparsity of deltaVl
@@ -398,14 +426,6 @@ namespace dftfe
         dftfe::Int numberSphericalFunctions =
           d_numRadialSphericalFunctions[Znum];
 
-        // std::cout<<" iAtom = "<<iAtom <<" numberSphericalFunctions =
-        // "<<numberSphericalFunctions<<"\n";
-        //
-        // get the global charge Id of the current nonlocal atom
-        //
-
-        // std::cout<<" totalLocallyOwnedCells = "<<totalLocallyOwnedCells<<"
-        // numberQuadraturePoints = "<<numberQuadraturePoints<<"\n";
 
         dftfe::uInt imageIdsSize = d_periodicImageCoord[iAtom].size() / 3;
 
@@ -456,18 +476,14 @@ namespace dftfe
                       d_periodicImageCoord[iAtom][3 * iImageAtomCount + 2];
                   }
 
-                // if(iCell == 0)
-                //   std::cout<<"DEBUG coordinates: "<<iAtom<<"
-                //   "<<chargePoint[0]<<" "<<chargePoint[1]<<"
-                //   "<<chargePoint[2]<<std::endl;
 
                 for (dftfe::uInt iPsp = 0; iPsp < numberSphericalFunctions;
                      ++iPsp)
                   {
                     std::shared_ptr<AtomCenteredSphericalFunctionBase>
                       SphericalFunction =
-                        d_sphericalFunctionsContainer[std::make_pair(Znum,
-                                                                     iPsp)];
+                        d_sphericalFunctionsContainer[0][std::make_pair(Znum,
+                                                                        iPsp)];
                     double radialProjVal;
                     for (dftfe::Int iQuadPoint = 0;
                          iQuadPoint < numberQuadraturePoints;
@@ -484,17 +500,6 @@ namespace dftfe
                             double RadVal =
                               SphericalFunction->getRadialValue(r);
 
-                            //                            std::cout
-                            //                              << "DEBUG: iAtom
-                            //                              RadVal projIndex
-                            //                              Cell: "
-                            //                              << iAtom << " " << r
-                            //                              << " "
-                            //                              << std::fabs(RadVal)
-                            //                              << " " << iPsp << "
-                            //                              "
-                            //                              << iCell <<
-                            //                              std::endl;
 
                             if (std::fabs(RadVal) >= cutOffVal)
                               {
@@ -526,8 +531,6 @@ namespace dftfe
               {
                 dealii::CellId cell    = basisOperationsPtr->cellID(iCell);
                 sparsityPattern[iCell] = matCount;
-                // std::cout<<"Debug: iAtom iCell cellid maxR: "<<iAtom<<"
-                // "<<iCell<<" "<<cell<<" "<<maxR<<std::endl;
                 d_elementIdsInAtomCompactSupport[iAtom].push_back(cell);
                 d_elementIndexesInAtomCompactSupport[iAtom].push_back(iCell);
                 matCount += 1;
