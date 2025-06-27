@@ -27,7 +27,11 @@
 #  include <DeviceAPICalls.h>
 #  include <excManagerDeviceKernels.h>
 #endif
-
+#ifdef _OPENMP
+#  include <omp.h>
+#else
+#  define omp_get_thread_num() 0
+#endif
 namespace dftfe
 {
   namespace
@@ -46,8 +50,9 @@ namespace dftfe
     initializeSSDPtr(std::string                                 XCType,
                      std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
                      std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                     std::string modelXCInputFile,
-                     bool        printXCInfo)
+                     std::string        modelXCInputFile,
+                     bool               printXCInfo,
+                     const unsigned int numThreads)
     {
       dftfe::Int exceptParamX = -1, exceptParamC = -1;
 
@@ -59,108 +64,169 @@ namespace dftfe
       std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> excObj;
       if (XCType == "LDA-PZ")
         {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_LDA_C_PZ, XC_POLARIZED);
-          excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
-                                                                     funcCPtr);
-        }
-      else if (XCType == "LDA-PW")
-        {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_LDA_C_PW, XC_POLARIZED);
-          excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
-                                                                     funcCPtr);
-        }
-      else if (XCType == "LDA-VWN")
-        {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_LDA_C_VWN, XC_POLARIZED);
-          excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
-                                                                     funcCPtr);
-        }
-      else if (XCType == "GGA-PBE")
-        {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_GGA_X_PBE, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_GGA_C_PBE, XC_POLARIZED);
-
-          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
-                                                                     funcCPtr);
-        }
-      else if (XCType == "GGA-RPBE")
-        {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_GGA_X_RPBE, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_GGA_C_PBE, XC_POLARIZED);
-          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
-                                                                     funcCPtr);
-        }
-      else if (XCType == "GGA-LBxPBEc")
-        {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_GGA_X_LB, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_GGA_C_PBE, XC_POLARIZED);
-
-          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
-                                                                     funcCPtr);
-        }
-      else if (XCType == "MLXC-NNLDA")
-        {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_LDA_X, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_LDA_C_PW, XC_POLARIZED);
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX =
+                xc_func_init(funcXPtr[iThread].get(), XC_LDA_X, XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_LDA_C_PZ,
+                                          XC_POLARIZED);
+            }
           excObj =
             std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
                                                               funcCPtr,
-                                                              modelXCInputFile);
+                                                              numThreads);
         }
-      else if (XCType == "MLXC-NNGGA")
+      else if (XCType == "LDA-PW")
         {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_GGA_X_PBE, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_GGA_C_PBE, XC_POLARIZED);
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX =
+                xc_func_init(funcXPtr[iThread].get(), XC_LDA_X, XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_LDA_C_PW,
+                                          XC_POLARIZED);
+            }
+          excObj =
+            std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
+                                                              funcCPtr,
+                                                              numThreads);
+        }
+      else if (XCType == "LDA-VWN")
+        {
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX =
+                xc_func_init(funcXPtr[iThread].get(), XC_LDA_X, XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_LDA_C_VWN,
+                                          XC_POLARIZED);
+            }
+          excObj =
+            std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
+                                                              funcCPtr,
+                                                              numThreads);
+        }
+      else if (XCType == "GGA-PBE")
+        {
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX = xc_func_init(funcXPtr[iThread].get(),
+                                          XC_GGA_X_PBE,
+                                          XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_GGA_C_PBE,
+                                          XC_POLARIZED);
+            }
+
           excObj =
             std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
                                                               funcCPtr,
-                                                              modelXCInputFile);
+                                                              numThreads);
+        }
+      else if (XCType == "GGA-RPBE")
+        {
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX = xc_func_init(funcXPtr[iThread].get(),
+                                          XC_GGA_X_RPBE,
+                                          XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_GGA_C_PBE,
+                                          XC_POLARIZED);
+            }
+          excObj =
+            std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
+                                                              funcCPtr,
+                                                              numThreads);
+        }
+      else if (XCType == "GGA-LBxPBEc")
+        {
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX = xc_func_init(funcXPtr[iThread].get(),
+                                          XC_GGA_X_LB,
+                                          XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_GGA_C_PBE,
+                                          XC_POLARIZED);
+            }
+
+          excObj =
+            std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
+                                                              funcCPtr,
+                                                              numThreads);
+        }
+      else if (XCType == "MLXC-NNLDA")
+        {
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX =
+                xc_func_init(funcXPtr[iThread].get(), XC_LDA_X, XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_LDA_C_PW,
+                                          XC_POLARIZED);
+            }
+          excObj = std::make_shared<excDensityLDAClass<memorySpace>>(
+            funcXPtr, funcCPtr, modelXCInputFile, numThreads);
+        }
+      else if (XCType == "MLXC-NNGGA")
+        {
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX = xc_func_init(funcXPtr[iThread].get(),
+                                          XC_GGA_X_PBE,
+                                          XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_GGA_C_PBE,
+                                          XC_POLARIZED);
+            }
+          excObj = std::make_shared<excDensityGGAClass<memorySpace>>(
+            funcXPtr, funcCPtr, modelXCInputFile, numThreads);
         }
       else if (XCType == "MLXC-NNLLMGGA")
         {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_GGA_X_PBE, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_GGA_C_PBE, XC_POLARIZED);
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX = xc_func_init(funcXPtr[iThread].get(),
+                                          XC_GGA_X_PBE,
+                                          XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_GGA_C_PBE,
+                                          XC_POLARIZED);
+            }
           excObj = std::make_shared<excDensityLLMGGAClass<memorySpace>>(
-            funcXPtr, funcCPtr, modelXCInputFile);
+            funcXPtr, funcCPtr, modelXCInputFile, numThreads);
         }
       else if (XCType == "MGGA-SCAN")
         {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_MGGA_X_SCAN, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_MGGA_C_SCAN, XC_POLARIZED);
-          excObj =
-            std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr, funcCPtr);
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX = xc_func_init(funcXPtr[iThread].get(),
+                                          XC_MGGA_X_SCAN,
+                                          XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_MGGA_C_SCAN,
+                                          XC_POLARIZED);
+            }
+          excObj = std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr,
+                                                                  funcCPtr,
+                                                                  numThreads);
         }
       else if (XCType == "MGGA-R2SCAN")
         {
-          exceptParamX =
-            xc_func_init(funcXPtr[0].get(), XC_MGGA_X_R2SCAN, XC_POLARIZED);
-          exceptParamC =
-            xc_func_init(funcCPtr[0].get(), XC_MGGA_C_R2SCAN, XC_POLARIZED);
-          excObj =
-            std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr, funcCPtr);
+          for (dftfe::Int iThread = 0; iThread < numThreads; iThread++)
+            {
+              exceptParamX = xc_func_init(funcXPtr[iThread].get(),
+                                          XC_MGGA_X_R2SCAN,
+                                          XC_POLARIZED);
+              exceptParamC = xc_func_init(funcCPtr[iThread].get(),
+                                          XC_MGGA_C_R2SCAN,
+                                          XC_POLARIZED);
+            }
+          excObj = std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr,
+                                                                  funcCPtr,
+                                                                  numThreads);
         }
       else
         {
@@ -328,9 +394,38 @@ namespace dftfe
                                 const bool  printXCInfo)
   {
     clear();
+    d_numThreads = 1;
+#ifdef _OPENMP
+    if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
+      {
+        try
+          {
+            d_numThreads = std::stoi(std::string(penv));
+          }
+        catch (...)
+          {
+            AssertThrow(
+              false,
+              dealii::ExcMessage(
+                std::string(
+                  "When specifying the <DFTFE_NUM_THREADS> environment "
+                  "variable, it needs to be something that can be interpreted "
+                  "as an integer. The text you have in the environment "
+                  "variable is <") +
+                penv + ">"));
+          }
 
-    d_funcXPtr.push_back(std::make_shared<xc_func_type>());
-    d_funcCPtr.push_back(std::make_shared<xc_func_type>());
+        AssertThrow(d_numThreads > 0,
+                    dealii::ExcMessage(
+                      "When specifying the <DFTFE_NUM_THREADS> environment "
+                      "variable, it needs to be a positive number."));
+      }
+#endif
+    for (dftfe::Int iThread = 0; iThread < d_numThreads; iThread++)
+      {
+        d_funcXPtr.push_back(std::make_shared<xc_func_type>());
+        d_funcCPtr.push_back(std::make_shared<xc_func_type>());
+      }
 
     bool enableHubbard = false;
 
@@ -348,17 +443,20 @@ namespace dftfe
         std::string XCInput = "";
         if (XCType.size() > 2)
           XCInput = XCType.substr(0, XCType.size() - 2);
-
         d_excObj =
           std::make_shared<ExcDFTPlusU<dataTypes::number, memorySpace>>(
             initializeSSDPtr<memorySpace>(
-              XCInput, d_funcXPtr, d_funcCPtr, modelXCInputFile, printXCInfo),
+              XCInput, d_funcXPtr, d_funcCPtr, modelXCInputFile, printXCInfo,d_numThreads),
             numSpin);
       }
     else
       {
-        d_excObj = initializeSSDPtr<memorySpace>(
-          XCType, d_funcXPtr, d_funcCPtr, modelXCInputFile, printXCInfo);
+        d_excObj = initializeSSDPtr<memorySpace>(XCType,
+                                                 d_funcXPtr,
+                                                 d_funcCPtr,
+                                                 modelXCInputFile,
+                                                 printXCInfo,
+                                                 d_numThreads);
       }
   }
 

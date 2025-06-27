@@ -25,12 +25,18 @@
 #  include <DeviceAPICalls.h>
 #  include <excManagerDeviceKernels.h>
 #endif
+#ifdef _OPENMP
+#  include <omp.h>
+#else
+#  define omp_get_thread_num() 0
+#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
     std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+    const dftfe::Int                            numThreads)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -38,16 +44,18 @@ namespace dftfe
           DensityDescriptorDataAttributes::valuesSpinUp,
           DensityDescriptorDataAttributes::valuesSpinDown})
   {
-    d_funcXPtr = funcXPtr;
-    d_funcCPtr = funcCPtr;
-    d_NNLDAPtr = nullptr;
+    d_funcXPtr   = funcXPtr;
+    d_funcCPtr   = funcCPtr;
+    d_NNLDAPtr   = nullptr;
+    d_numThreads = numThreads;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
     std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
     std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    std::string                                 modelXCInputFile)
+    std::string                                 modelXCInputFile,
+    const dftfe::Int                            numThreads)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -60,6 +68,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_TORCH
     d_NNLDAPtr = new NNLDA(modelXCInputFile, true);
 #endif
+    d_numThreads = numThreads;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -171,12 +180,12 @@ namespace dftfe
                                    densityValuesSpinDown,
                                    densityValues);
 
-    xc_lda_exc_vxc(d_funcXPtr[0].get(),
+    xc_lda_exc_vxc(d_funcXPtr[omp_get_thread_num()].get(),
                    nquad,
                    &densityValues[0],
                    &exValues[0],
                    &pdexDensityValuesNonNN[0]);
-    xc_lda_exc_vxc(d_funcCPtr[0].get(),
+    xc_lda_exc_vxc(d_funcCPtr[omp_get_thread_num()].get(),
                    nquad,
                    &densityValues[0],
                    &ecValues[0],

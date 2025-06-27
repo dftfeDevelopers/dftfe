@@ -11,11 +11,13 @@ namespace dftfe
   {
   public:
     excTauMGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr);
+                    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+                    const dftfe::Int                            numThreads);
 
     excTauMGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
                     std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                    std::string modelXCInputFile);
+                    std::string      modelXCInputFile,
+                    const dftfe::Int numThreads);
 
     ~excTauMGGAClass();
 
@@ -89,6 +91,7 @@ namespace dftfe
   private:
     std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
     std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
+    dftfe::Int                                 d_numThreads;
   };
 
 } // namespace dftfe

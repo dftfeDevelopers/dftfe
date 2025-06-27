@@ -4,13 +4,18 @@
 #include <cmath>
 #include "Exceptions.h"
 #include "FiniteDifference.h"
-
+#ifdef _OPENMP
+#  include <omp.h>
+#else
+#  define omp_get_thread_num() 0
+#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLLMGGAClass<memorySpace>::excDensityLLMGGAClass(
     std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+    const dftfe::Int                            numThreads)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LLMGGA,
         densityFamilyType::LLMGGA,
@@ -25,13 +30,15 @@ namespace dftfe
     d_funcXPtr    = funcXPtr;
     d_funcCPtr    = funcCPtr;
     d_NNLLMGGAPtr = nullptr;
+    d_numThreads  = numThreads;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLLMGGAClass<memorySpace>::excDensityLLMGGAClass(
     std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
     std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    std::string                                 modelXCInputFile)
+    std::string                                 modelXCInputFile,
+    const dftfe::Int                            numThreads)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LLMGGA,
         densityFamilyType::LLMGGA,
@@ -48,6 +55,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_TORCH
     d_NNLLMGGAPtr = new NNLLMGGA(modelXCInputFile, true);
 #endif
+    d_numThreads = numThreads;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -225,14 +233,14 @@ namespace dftfe
         laplacianValues[2 * i + 1] = laplacianValuesSpinDown[i];
       }
 
-    xc_gga_exc_vxc(d_funcXPtr[0].get(),
+    xc_gga_exc_vxc(d_funcXPtr[omp_get_thread_num()].get(),
                    nquad,
                    &densityValues[0],
                    &sigmaValues[0],
                    &exValues[0],
                    &pdexDensityValuesNonNN[0],
                    &pdexSigmaValues[0]);
-    xc_gga_exc_vxc(d_funcCPtr[0].get(),
+    xc_gga_exc_vxc(d_funcCPtr[omp_get_thread_num()].get(),
                    nquad,
                    &densityValues[0],
                    &sigmaValues[0],

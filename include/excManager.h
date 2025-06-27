@@ -68,6 +68,7 @@ namespace dftfe
     std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
 
     std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> d_excObj;
+    dftfe::Int                                              d_numThreads;
   };
 } // namespace dftfe
 

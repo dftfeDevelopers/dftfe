@@ -24,12 +24,18 @@
 #  include <DeviceAPICalls.h>
 #  include <excManagerDeviceKernels.h>
 #endif
+#ifdef _OPENMP
+#  include <omp.h>
+#else
+#  define omp_get_thread_num() 0
+#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::excTauMGGAClass(
     std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr)
+    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+    const dftfe::Int                            numThreads)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::TauMGGA,
         densityFamilyType::GGA,
@@ -42,15 +48,17 @@ namespace dftfe
           WfcDescriptorDataAttributes::tauSpinUp,
           WfcDescriptorDataAttributes::tauSpinDown})
   {
-    d_funcXPtr = funcXPtr;
-    d_funcCPtr = funcCPtr;
+    d_funcXPtr   = funcXPtr;
+    d_funcCPtr   = funcCPtr;
+    d_numThreads = numThreads;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::excTauMGGAClass(
     std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
     std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    std::string                                 modelXCInputFile)
+    std::string                                 modelXCInputFile,
+    const dftfe::Int                            numThreads)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::TauMGGA,
         densityFamilyType::GGA,
@@ -63,8 +71,9 @@ namespace dftfe
           WfcDescriptorDataAttributes::tauSpinUp,
           WfcDescriptorDataAttributes::tauSpinDown})
   {
-    d_funcXPtr = funcXPtr;
-    d_funcCPtr = funcCPtr;
+    d_funcXPtr   = funcXPtr;
+    d_funcCPtr   = funcCPtr;
+    d_numThreads = numThreads;
   }
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::~excTauMGGAClass()
@@ -252,7 +261,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       laplacianValues(2 * nquad, 0.0);
 
-    xc_mgga_exc_vxc(d_funcXPtr[0].get(),
+    xc_mgga_exc_vxc(d_funcXPtr[omp_get_thread_num()].get(),
                     nquad,
                     &densityValues[0],
                     &sigmaValues[0],
@@ -263,7 +272,7 @@ namespace dftfe
                     &pdexSigmaValues[0],
                     &pdexLaplacianValues[0],
                     &pdexTauValuesNonNN[0]);
-    xc_mgga_exc_vxc(d_funcCPtr[0].get(),
+    xc_mgga_exc_vxc(d_funcCPtr[omp_get_thread_num()].get(),
                     nquad,
                     &densityValues[0],
                     &sigmaValues[0],

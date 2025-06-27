@@ -28,11 +28,13 @@ namespace dftfe
   {
   public:
     excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr);
+                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+                       const dftfe::Int                            numThreads);
 
     excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
                        std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                       std::string modelXCInputFile);
+                       std::string      modelXCInputFile,
+                       const dftfe::Int numThreads);
 
     ~excDensityLDAClass();
 
@@ -107,6 +109,7 @@ namespace dftfe
     NNLDA                                     *d_NNLDAPtr;
     std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
     std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
+    dftfe::Int                                 d_numThreads;
   };
 } // namespace dftfe
 

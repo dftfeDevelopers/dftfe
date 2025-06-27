@@ -27,12 +27,14 @@ namespace dftfe
   {
   public:
     excDensityGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr);
+                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
+                       const dftfe::Int                            numThreads);
 
 
     excDensityGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
                        std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                       std::string modelXCInputFile);
+                       std::string      modelXCInputFile,
+                       const dftfe::Int numThreads);
 
 
     ~excDensityGGAClass();
@@ -109,6 +111,7 @@ namespace dftfe
     std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
     std::vector<double>                        d_spacingFDStencil;
     dftfe::uInt                                d_vxcDivergenceTermFDStencilSize;
+    dftfe::Int                                 d_numThreads;
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYGGACLASS_H
