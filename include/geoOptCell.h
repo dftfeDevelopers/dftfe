@@ -145,8 +145,8 @@ namespace dftfe
     /// total number of calls to update()
     dftfe::Int d_totalUpdateCalls;
     double     d_domainVolumeInitial;
-    /// current strain tensor applied on the domain
-    dealii::Tensor<2, 3, double> d_strainEpsilon;
+    /// current deformation gradient applied on the undeformed starting domain
+    dealii::Tensor<2, 3, double> d_deformationGradientCurrent;
 
     /// pointer to dft class
     dftBase                         *d_dftPtr;
