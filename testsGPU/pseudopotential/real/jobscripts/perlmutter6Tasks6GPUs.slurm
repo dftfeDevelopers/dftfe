@@ -12,6 +12,7 @@
 
 module load gcc-native/12.3
 module load PrgEnv-gnu
+module load cray-mpich/8.1.28
 module load cudatoolkit
 module load cray-libsci
 module load cmake
