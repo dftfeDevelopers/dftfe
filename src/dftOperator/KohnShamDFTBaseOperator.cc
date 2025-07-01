@@ -746,7 +746,7 @@ namespace dftfe
         d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex].copyFrom(
           d_derExcwithTauTimesinvJacKpointTimesJxWHost);
 #endif
-        if (d_dftParamsPtr->XCType.substr(0, 3) == "GGA")
+        if (d_dftParamsPtr->XCType.substr(0, 4) != "MGGA")
           {
             break;
           }

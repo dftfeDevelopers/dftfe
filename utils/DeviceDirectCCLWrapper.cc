@@ -38,7 +38,9 @@ namespace dftfe
   {
     DeviceCCLWrapper::DeviceCCLWrapper()
       : d_mpiComm(MPI_COMM_NULL)
-    {}
+    {
+      d_deviceDirectDCCLInstanceCounter++;
+    }
 
     void
     DeviceCCLWrapper::init(const MPI_Comm &mpiComm, const bool useDCCL)
@@ -79,7 +81,8 @@ namespace dftfe
           delete ncclIdPtr;
         }
 #  endif
-      if (commStreamCreated)
+      d_deviceDirectDCCLInstanceCounter--;
+      if (commStreamCreated && d_deviceDirectDCCLInstanceCounter == 0)
         dftfe::utils::deviceStreamDestroy(d_deviceCommStream);
     }
 

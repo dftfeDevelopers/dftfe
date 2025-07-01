@@ -1761,6 +1761,7 @@ namespace dftfe
     double                                d_relativeErrorJacInvApproxPrevScfLRD;
     double                                d_residualNormPredicted;
     bool                                  d_tolReached;
+    static constexpr double d_tikhonovRegularizationConstantLRD = 1.0e-6;
 
     /// for xl-bomd
     std::map<dealii::CellId, std::vector<double>> d_rhoAtomsValues,
