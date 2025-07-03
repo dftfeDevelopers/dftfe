@@ -2309,7 +2309,8 @@ namespace dftfe
                 (d_dftParamsPtr->restaFermiWavevector / 4.0 / M_PI / 4.0 /
                  M_PI),
               d_densityDofHandlerIndexElectro,
-              d_densityQuadratureIdElectro);
+              d_densityQuadratureIdElectro,
+              d_kerkerAXQuadratureIdElectro);
 #endif
           }
         else
@@ -2321,7 +2322,8 @@ namespace dftfe
               d_dftParamsPtr->kerkerParameter :
               (d_dftParamsPtr->restaFermiWavevector / 4.0 / M_PI / 4.0 / M_PI),
             d_densityDofHandlerIndexElectro,
-            d_densityQuadratureIdElectro);
+            d_densityQuadratureIdElectro,
+            d_kerkerAXQuadratureIdElectro);
       }
 
     // FIXME: Check if this call can be removed
