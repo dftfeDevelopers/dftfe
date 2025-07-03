@@ -2721,6 +2721,7 @@ namespace dftfe
                   mixingVariable::rho,
                   d_densityResidualNodalValues[0].begin(),
                   d_densityResidualNodalValues[0].locally_owned_size());
+
                 applyKerkerPreconditionerToTotalDensityResidual(
 #ifdef DFTFE_WITH_DEVICE
                   kerkerPreconditionedResidualSolverProblemDevice,
@@ -2730,11 +2731,13 @@ namespace dftfe
                   CGSolver,
                   d_densityResidualNodalValues[0],
                   d_preCondTotalDensityResidualVector);
+
                 d_mixingScheme.mixPreconditionedResidual(
                   mixingVariable::rho,
                   d_preCondTotalDensityResidualVector.begin(),
                   d_densityInNodalValues[0].begin(),
                   d_densityInNodalValues[0].locally_owned_size());
+
                 for (dftfe::uInt iComp = 1; iComp < norms.size(); ++iComp)
                   {
                     d_mixingScheme.mixVariable(

@@ -30,13 +30,8 @@ namespace dftfe
     const distributedCPUVec<double>     &nodalField)
 
   {
-    FEEvaluationWrapperClass<1> fe_evalField(
-      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
-      d_dftParamsPtr->densityQuadratureRule,
-      matrixFreeDataObject,
-      0,
-      0);
-    const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
+    FEEvaluationWrapperClass<1> fe_evalField(matrixFreeDataObject, 0, 0);
+    const dftfe::uInt           numQuadPoints = fe_evalField.n_q_points;
     nodalField.update_ghost_values();
 
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(0)),

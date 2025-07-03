@@ -144,12 +144,9 @@ namespace dftfe
     const dealii::MatrixFree<3, double> &matrixFreeDataObject,
     const distributedCPUVec<double>     &nodalField)
   {
-    FEEvaluationWrapperClass<1> fe_evalField(
-      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
-      d_dftParamsPtr->densityQuadratureRule,
-      matrixFreeDataObject,
-      d_densityDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro);
+    FEEvaluationWrapperClass<1>     fe_evalField(matrixFreeDataObject,
+                                             d_densityDofHandlerIndexElectro,
+                                             d_densityQuadratureIdElectro);
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
     const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
@@ -254,12 +251,9 @@ namespace dftfe
     const dftfe::uInt                    quadratureId)
 
   {
-    FEEvaluationWrapperClass<1> fe_evalField(
-      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
-      d_dftParamsPtr->densityQuadratureRule,
-      matrixFreeDataObject,
-      dofHandlerId,
-      quadratureId);
+    FEEvaluationWrapperClass<1>     fe_evalField(matrixFreeDataObject,
+                                             dofHandlerId,
+                                             quadratureId);
     dealii::VectorizedArray<double> normValueVectorized =
       dealii::make_vectorized_array(0.0);
     const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
@@ -308,12 +302,9 @@ namespace dftfe
     const dftfe::uInt                    quadratureId)
 
   {
-    FEEvaluationWrapperClass<1> fe_evalField(
-      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
-      d_dftParamsPtr->densityQuadratureRule,
-      matrixFreeDataObject,
-      dofHandlerId,
-      quadratureId);
+    FEEvaluationWrapperClass<1>     fe_evalField(matrixFreeDataObject,
+                                             dofHandlerId,
+                                             quadratureId);
     dealii::VectorizedArray<double> valueVectorized =
       dealii::make_vectorized_array(0.0);
     const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
@@ -470,8 +461,6 @@ namespace dftfe
         if (!d_smearedChargeMomentsComputed)
           {
             FEEvaluationWrapperClass<1> FEEvalb(
-              d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
-              C_num1DQuadSmearedCharge() * C_numCopies1DQuadSmearedCharge(),
               matrixFreeDataObject,
               d_densityDofHandlerIndexElectro,
               d_smearedChargeQuadratureIdElectro);
@@ -535,12 +524,9 @@ namespace dftfe
           }
       }
     std::vector<double>         moments(13, 0.0);
-    FEEvaluationWrapperClass<1> FEEvalRho(
-      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
-      d_dftParamsPtr->densityQuadratureRule,
-      matrixFreeDataObject,
-      d_densityDofHandlerIndexElectro,
-      d_densityQuadratureIdElectro);
+    FEEvaluationWrapperClass<1> FEEvalRho(matrixFreeDataObject,
+                                          d_densityDofHandlerIndexElectro,
+                                          d_densityQuadratureIdElectro);
     for (dftfe::uInt iMacroCell = 0;
          iMacroCell < matrixFreeDataObject.n_cell_batches();
          ++iMacroCell)

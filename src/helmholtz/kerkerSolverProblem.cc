@@ -99,9 +99,10 @@ namespace dftfe
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    FEEvaluationWrapperClass<1> fe_eval(FEOrderElectro,
-                                        C_num1DQuad(FEOrderElectro),
-                                        *d_matrixFreeDataPRefinedPtr,
+    dftfe::Int                  quadrature = static_cast<dftfe::Int>(std::round(
+      std::cbrt(static_cast<double>(d_matrixFreeDataPRefinedPtr->get_n_q_points(
+        d_matrixFreeQuadratureComponent)))));
+    FEEvaluationWrapperClass<1> fe_eval(*d_matrixFreeDataPRefinedPtr,
                                         d_matrixFreeVectorComponent,
                                         d_matrixFreeQuadratureComponent);
 
@@ -228,9 +229,10 @@ namespace dftfe
     const distributedCPUVec<double>           &src,
     const std::pair<dftfe::uInt, dftfe::uInt> &cell_range) const
   {
-    FEEvaluationWrapperClass<1> fe_eval(FEOrderElectro,
-                                        C_num1DQuad(FEOrderElectro),
-                                        matrixFreeData,
+    dftfe::Int quadrature =
+      static_cast<dftfe::Int>(std::round(std::cbrt(static_cast<double>(
+        matrixFreeData.get_n_q_points(d_matrixFreeQuadratureComponent)))));
+    FEEvaluationWrapperClass<1> fe_eval(matrixFreeData,
                                         d_matrixFreeVectorComponent,
                                         d_matrixFreeQuadratureComponent);
 

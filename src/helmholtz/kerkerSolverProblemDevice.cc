@@ -155,10 +155,15 @@ namespace dftfe
     rhs.reinit(*d_xPtr);
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
+    dftfe::Int quadrature1 = static_cast<dftfe::Int>(std::round(
+      std::cbrt(static_cast<double>(d_matrixFreeDataPRefinedPtr->get_n_q_points(
+        d_matrixFreeQuadratureComponent)))));
 
-    FEEvaluationWrapperClass<1> fe_eval(FEOrderElectro,
-                                        C_num1DQuad(FEOrderElectro),
-                                        *d_matrixFreeDataPRefinedPtr,
+    dftfe::Int feOrder1 =
+      d_matrixFreeDataPRefinedPtr->get_dof_handler(d_matrixFreeVectorComponent)
+        .get_fe()
+        .tensor_degree();
+    FEEvaluationWrapperClass<1> fe_eval(*d_matrixFreeDataPRefinedPtr,
                                         d_matrixFreeVectorComponent,
                                         d_matrixFreeQuadratureComponent);
 
