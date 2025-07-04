@@ -11,7 +11,9 @@ echo "Number of Nodes Allocated      = $SLURM_JOB_NUM_NODES"
 echo "Number of Tasks Allocated      = $SLURM_NTASKS"
 echo "Number of Cores/Task Allocated = $SLURM_CPUS_PER_TASK"
 
-module load cuda/12.6 openmpi/gcc13cuda126 modulefiles/compiler-rt/2025.0.4 modulefiles/tbb/2022.0 modulefiles/mkl/2025.0
+module load spack
+module load openmpi/5.0.6-gcc-13.3.0-ytficip nccl/2.23.4-1-gcc-13.3.0-xyspmp2 gdrcopy/2.4.1-gcc-13.3.0-dvwa323
+export LIBRARY_PATH="/storage/dftfeDependenciesNoMKL/linAlgLibs/install/lib:$LIBRARY_PATH"
 
 
 ###needs to change this DFTFE_PATH
