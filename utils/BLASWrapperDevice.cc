@@ -1082,7 +1082,7 @@ namespace dftfe
         sycl::malloc_device<std::complex<double>>(1, d_deviceBlasHandle);
       if (!dev_res)
         throw std::bad_alloc{};
-      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, dotu)(
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, dotc)(
         d_deviceBlasHandle,
         dftfe::Int(N),
         dftfe::utils::makeDataTypeDeviceBlasCompatible(X),
@@ -1163,7 +1163,7 @@ namespace dftfe
         sycl::malloc_device<std::complex<double>>(1, d_deviceBlasHandle);
       if (!dev_res)
         throw std::bad_alloc{};
-      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, dotu)(
+      DEVICEBLAS_API_CHECK(DFTFE_DEVICE_BLAS_INT(Z, dotc)(
         d_deviceBlasHandle,
         dftfe::Int(N),
         dftfe::utils::makeDataTypeDeviceBlasCompatible(X),

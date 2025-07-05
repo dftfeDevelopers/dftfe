@@ -18,6 +18,7 @@
 //
 #include <dft.h>
 #include <linearAlgebraOperations.h>
+#include <random>
 
 namespace dftfe
 {
@@ -293,18 +294,19 @@ namespace dftfe
 
       vVectorSpin0 = 0.0, fVectorSpin0 = 0.0;
       vVectorSpin1 = 0.0, fVectorSpin1 = 0.0;
-      // std::srand(this_mpi_process);
       const dftfe::uInt local_size = vVectorSpin0.locally_owned_size();
 
       // for (dftfe::uInt i = 0; i < local_size; i++)
       //  vVector.local_element(i) = x.local_element(i);
+      unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(xSpin0.get_mpi_communicator());
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
 
       for (dftfe::uInt i = 0; i < local_size; i++)
         {
-          vVectorSpin0.local_element(i) =
-            ((double)std::rand()) / ((double)RAND_MAX);
-          vVectorSpin1.local_element(i) =
-            ((double)std::rand()) / ((double)RAND_MAX);
+          vVectorSpin0.local_element(i) = uni(randomIntGenerator);
+          vVectorSpin1.local_element(i) = uni(randomIntGenerator);
         }
 
       constraintsRhoNodal.set_zero(vVectorSpin0);
@@ -380,18 +382,20 @@ namespace dftfe
 
       vVectorSpin0 = 0.0, fVectorSpin0 = 0.0;
       vVectorSpin1 = 0.0, fVectorSpin1 = 0.0;
-      // std::srand(this_mpi_process);
+
       const dftfe::uInt local_size = vVectorSpin0.locally_owned_size();
 
       // for (dftfe::uInt i = 0; i < local_size; i++)
       //  vVector.local_element(i) = x.local_element(i);
 
+      unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(xSpin0.get_mpi_communicator());
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
       for (dftfe::uInt i = 0; i < local_size; i++)
         {
-          vVectorSpin0.local_element(i) =
-            ((double)std::rand()) / ((double)RAND_MAX);
-          vVectorSpin1.local_element(i) =
-            ((double)std::rand()) / ((double)RAND_MAX);
+          vVectorSpin0.local_element(i) = uni(randomIntGenerator);
+          vVectorSpin1.local_element(i) = uni(randomIntGenerator);
         }
 
       constraintsRhoNodal.set_zero(vVectorSpin0);

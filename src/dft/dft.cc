@@ -46,10 +46,6 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
-// #include <stdafx.h>
-#include <boost/math/distributions/normal.hpp>
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-#include <boost/random/normal_distribution.hpp>
 
 #include <spglib.h>
 #include <stdafx.h>
