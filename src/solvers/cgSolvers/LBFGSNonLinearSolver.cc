@@ -581,7 +581,7 @@ namespace dftfe
               }
           }
 
-        d_alpha = d_normDeltaXnew > d_maxStepLength ?
+        d_alpha = d_normDeltaXnew * d_alpha > d_maxStepLength ?
                     d_maxStepLength / d_normDeltaXnew :
                     d_alpha;
         if (d_debugLevel >= 1 && d_normDeltaXnew > d_maxStepLength)
