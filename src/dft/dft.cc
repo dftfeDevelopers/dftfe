@@ -2050,9 +2050,7 @@ namespace dftfe
 
     if (d_dftParamsPtr->printKE)
       {
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-          kineticEnergyDensityValues;
-        computeAndPrintKE(kineticEnergyDensityValues);
+        computeAndPrintKE(d_tauOutQuadValues[0]);
       }
 
 

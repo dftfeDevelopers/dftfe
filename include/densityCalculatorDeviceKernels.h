@@ -79,23 +79,6 @@ namespace dftfe
     double *rhoResponseFermiEnergyCellsWfcContributions,
     double *rhoResponseHam,
     double *rhoResponseFermiEnergy);
-
-  template <typename NumberType>
-  void
-  computeKineticEnergyDensityFromInterpolatedValues(
-    const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>
-                                             &BLASWrapperPtr,
-    const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-    const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
-    const dftfe::uInt                         nQuadsPerCell,
-    double                                   *partialOccupVec,
-    double                                   *kcoord,
-    NumberType                               *wfcQuadPointData,
-    NumberType                               *gradWfcQuadPointData,
-    double         *kineticEnergyCellsWfcContributions,
-    double         *kineticEnergyDensity,
-    const MPI_Comm &mpiCommDomain);
-
 } // namespace dftfe
 #endif
 #endif

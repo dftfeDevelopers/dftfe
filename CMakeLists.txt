@@ -180,7 +180,6 @@ SET(TARGET_SRC
   ./src/dft/moveAtoms.cc
   ./src/dft/moveMeshToAtoms.cc
   ./src/dft/kerker.cc
-  ./src/dft/kineticEnergyDensityCalculator.cc
   ./src/dft/pRefinedDoFHandler.cc
   ./src/dft/psiInitialGuess.cc
   ./src/dft/publicMethods.cc
@@ -242,7 +241,6 @@ SET(DEVICE_SRC
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
   ./src/dft/solveVselfInBinsDeviceKernels.cc
-  ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.cc
   ./src/linAlg/linearAlgebraOperationsDeviceKernels.cc
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
@@ -262,7 +260,6 @@ SET(DEVICE_SRC
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
   ./src/dft/solveVselfInBinsDeviceKernels.cc
-  ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.cc
   ./src/linAlg/linearAlgebraOperationsDeviceKernels.cc
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
