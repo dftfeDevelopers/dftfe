@@ -360,7 +360,7 @@ namespace dftfe
 
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      tauPRefinedNodalData;
+      dummy;
     // initialize variables to be used later
     const dftfe::uInt dofs_per_cell =
       d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
@@ -400,7 +400,7 @@ namespace dftfe
 
     // allocate the storage to compute 2p nodal values from wavefunctions
     densityPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    tauPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    dummy.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
 
     // compute rho from wavefunctions at nodal locations of 2p DoFHandler
     // nodes in each cell
@@ -417,7 +417,7 @@ namespace dftfe
                         d_kPointWeights,
                         densityPRefinedNodalData,
                         gradDensityPRefinedNodalData,
-                        tauPRefinedNodalData,
+                        dummy,
                         false,
                         false,
                         d_mpiCommParent,
@@ -437,7 +437,7 @@ namespace dftfe
                         d_kPointWeights,
                         densityPRefinedNodalData,
                         gradDensityPRefinedNodalData,
-                        tauPRefinedNodalData,
+                        dummy,
                         false,
                         false,
                         d_mpiCommParent,
