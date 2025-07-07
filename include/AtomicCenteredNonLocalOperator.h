@@ -580,7 +580,6 @@ namespace dftfe
     dftfe::uInt d_numberWaveFunctions;
     dftfe::uInt d_kPointIndex;
     bool        d_memoryOptMode;
-    dftfe::Int  d_nOMPThreads;
     bool        d_isMallocCalled = false;
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
@@ -619,10 +618,7 @@ namespace dftfe
         dataTypes::number,
         double,
         dftfe::utils::MemorySpace::HOST>> basisOperationsPtr,
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                        BLASWrapperHostPtr,
-      const dftfe::uInt quadratureIndex);
+      const dftfe::uInt                   quadratureIndex);
 
     template <typename ValueTypeSrc>
     void
