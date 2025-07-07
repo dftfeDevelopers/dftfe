@@ -94,9 +94,6 @@ namespace dftfe
   };
 
   /* code that must be skipped by Doxygen */
-  // forward declarations
-  template <dftfe::utils::MemorySpace memory>
-  class symmetryClass;
   template <dftfe::utils::MemorySpace memory>
   class forceClass;
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
@@ -112,8 +109,6 @@ namespace dftfe
   class dftClass : public dftBase
   {
     friend class forceClass<memorySpace>;
-
-    friend class symmetryClass<memorySpace>;
 
   public:
     /**
