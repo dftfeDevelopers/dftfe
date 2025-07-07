@@ -247,8 +247,8 @@ namespace dftfe
       d_atomicWaveFnsVector;
     std::shared_ptr<AtomCenteredSphericalFunctionContainer>
       d_atomicProjectorFnsContainer;
-    std::vector<std::map<std::pair<dftfe::uInt, dftfe::uInt>,
-                         std::shared_ptr<AtomCenteredSphericalFunctionBase>>>
+    std::map<std::pair<dftfe::uInt, dftfe::uInt>,
+             std::shared_ptr<AtomCenteredSphericalFunctionBase>>
       d_atomicProjectorFnsMap;
 
     // parallel communication objects

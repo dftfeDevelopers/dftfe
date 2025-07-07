@@ -46,7 +46,6 @@ namespace dftfe
     d_atomTypeAtributes      = atomAttributes;
     d_useDevice              = useDevice;
     d_memoryOptMode          = memOptMode;
-    d_atomicProjectorFnsMap.resize(d_nOMPThreads);
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -498,18 +497,15 @@ namespace dftfe
 
             for (dftfe::Int j = 1; j < numProj + 1; j++)
               {
-                for (dftfe::Int threadId = 0; threadId < d_nOMPThreads;
-                     threadId++)
-                  d_atomicProjectorFnsMap[threadId][std::make_pair(Znum,
-                                                                   alpha)] =
-                    std::make_shared<
-                      AtomCenteredSphericalFunctionProjectorSpline>(
-                      projRadialFunctionFileName,
-                      lQuantumNo,
-                      0,
-                      j,
-                      numProj + 1,
-                      1E-12);
+                d_atomicProjectorFnsMap[std::make_pair(Znum, alpha)] =
+                  std::make_shared<
+                    AtomCenteredSphericalFunctionProjectorSpline>(
+                    projRadialFunctionFileName,
+                    lQuantumNo,
+                    0,
+                    j,
+                    numProj + 1,
+                    1E-12);
                 alpha++;
               }
           } // i loop
