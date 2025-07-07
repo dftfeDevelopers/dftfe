@@ -35,7 +35,6 @@
 #include <poissonSolverProblem.h>
 #include <pseudoConverter.h>
 #include <pseudoUtils.h>
-#include <symmetry.h>
 #include <vectorUtilities.h>
 #include <MemoryTransfer.h>
 #include <QuadDataCompositeWrite.h>
@@ -46,10 +45,6 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
-// #include <stdafx.h>
-#include <boost/math/distributions/normal.hpp>
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-#include <boost/random/normal_distribution.hpp>
 
 #include <spglib.h>
 #include <stdafx.h>
@@ -208,14 +203,15 @@ namespace dftfe
 
     d_elpaScala = new dftfe::elpaScalaManager(mpi_comm_domain);
 
-    forcePtr    = new forceClass<memorySpace>(this,
+    forcePtr = new forceClass<memorySpace>(this,
                                            mpi_comm_parent,
                                            mpi_comm_domain,
                                            dftParams);
-    symmetryPtr = new symmetryClass<memorySpace>(this,
-                                                 mpi_comm_parent,
-                                                 mpi_comm_domain,
-                                                 _interpoolcomm);
+    groupSymmetryPtr =
+      std::make_shared<groupSymmetryClass>(mpi_comm_parent,
+                                           mpi_comm_domain,
+                                           d_dftParamsPtr->useSymm,
+                                           d_dftParamsPtr->timeReversal);
 
     d_excManagerPtr = std::make_shared<excManager<memorySpace>>();
     d_isRestartGroundStateCalcFromChk = false;
@@ -281,7 +277,6 @@ namespace dftfe
   dftClass<memorySpace>::~dftClass()
   {
     finalizeKohnShamDFTOperator();
-    delete symmetryPtr;
     matrix_free_data.clear();
     delete forcePtr;
 #if defined(DFTFE_WITH_DEVICE)
@@ -374,6 +369,34 @@ namespace dftfe
   void
   dftClass<memorySpace>::set()
   {
+    d_BLASWrapperPtrHost = std::make_shared<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
+    d_basisOperationsPtrHost = std::make_shared<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>(
+      d_BLASWrapperPtrHost);
+    d_basisOperationsPtrElectroHost = std::make_shared<
+      dftfe::basis::
+        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
+      d_BLASWrapperPtrHost);
+#if defined(DFTFE_WITH_DEVICE)
+    if (d_dftParamsPtr->useDevice)
+      {
+        d_BLASWrapperPtr = std::make_shared<dftfe::linearAlgebra::BLASWrapper<
+          dftfe::utils::MemorySpace::DEVICE>>();
+        d_basisOperationsPtrDevice = std::make_shared<
+          dftfe::basis::FEBasisOperations<dataTypes::number,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>(
+          d_BLASWrapperPtr);
+        d_basisOperationsPtrElectroDevice = std::make_shared<
+          dftfe::basis::FEBasisOperations<double,
+                                          double,
+                                          dftfe::utils::MemorySpace::DEVICE>>(
+          d_BLASWrapperPtr);
+      }
+#endif
     computingTimerStandard.enter_subsection("Atomic system initialization");
 
     d_numEigenValues = d_dftParamsPtr->numberEigenValues;
@@ -828,6 +851,13 @@ namespace dftfe
         "DFT-FE Error: Incorrect input value used- CORE EIGENSTATES should be less than the total number of wavefunctions."));
 
 #ifdef USE_COMPLEX
+    std::vector<bool> periodicBc = {d_dftParamsPtr->periodicX,
+                                    d_dftParamsPtr->periodicY,
+                                    d_dftParamsPtr->periodicZ};
+    groupSymmetryPtr->initGroupSymmetry(d_BLASWrapperPtrHost,
+                                        atomLocationsFractional,
+                                        d_domainBoundingVectors,
+                                        periodicBc);
     if (d_dftParamsPtr->solverMode == "BANDS")
       readkPointData();
     else
@@ -1119,34 +1149,6 @@ namespace dftfe
   {
     computingTimerStandard.enter_subsection("KSDFT problem initialization");
 
-    d_BLASWrapperPtrHost = std::make_shared<
-      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
-    d_basisOperationsPtrHost = std::make_shared<
-      dftfe::basis::FEBasisOperations<dataTypes::number,
-                                      double,
-                                      dftfe::utils::MemorySpace::HOST>>(
-      d_BLASWrapperPtrHost);
-    d_basisOperationsPtrElectroHost = std::make_shared<
-      dftfe::basis::
-        FEBasisOperations<double, double, dftfe::utils::MemorySpace::HOST>>(
-      d_BLASWrapperPtrHost);
-#if defined(DFTFE_WITH_DEVICE)
-    if (d_dftParamsPtr->useDevice)
-      {
-        d_BLASWrapperPtr = std::make_shared<dftfe::linearAlgebra::BLASWrapper<
-          dftfe::utils::MemorySpace::DEVICE>>();
-        d_basisOperationsPtrDevice = std::make_shared<
-          dftfe::basis::FEBasisOperations<dataTypes::number,
-                                          double,
-                                          dftfe::utils::MemorySpace::DEVICE>>(
-          d_BLASWrapperPtr);
-        d_basisOperationsPtrElectroDevice = std::make_shared<
-          dftfe::basis::FEBasisOperations<double,
-                                          double,
-                                          dftfe::utils::MemorySpace::DEVICE>>(
-          d_BLASWrapperPtr);
-      }
-#endif
     initImageChargesUpdateKPoints();
 
     calculateNearestAtomDistances();
@@ -1203,10 +1205,6 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                         "initUnmovedTriangulation completed");
-#ifdef USE_COMPLEX
-    if (d_dftParamsPtr->useSymm)
-      symmetryPtr->initSymmetry();
-#endif
 
 
 
@@ -1232,6 +1230,30 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
                                         "initBoundaryConditions completed");
+
+#ifdef USE_COMPLEX
+    if (d_dftParamsPtr->useSymm)
+      {
+        groupSymmetryPtr->computePointMapFromLocalCartesianCoordinates(
+          d_BLASWrapperPtrHost,
+          d_basisOperationsPtrHost->cellCentroids(),
+          dftfe::pointSet::cellCentroids);
+
+        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
+        groupSymmetryPtr->computePointMapFromLocalCartesianCoordinates(
+          d_BLASWrapperPtrHost,
+          d_basisOperationsPtrHost->quadPoints(),
+          dftfe::pointSet::densityQuad,
+          true);
+
+        d_basisOperationsPtrHost->reinit(0, 0, d_gllQuadratureId);
+        groupSymmetryPtr->computePointMapFromLocalCartesianCoordinates(
+          d_BLASWrapperPtrHost,
+          d_basisOperationsPtrHost->quadPoints(),
+          dftfe::pointSet::densityNodal,
+          true);
+      }
+#endif
 
     //
     // initialize pseudopotential data for both local and nonlocal part
@@ -3295,34 +3317,9 @@ namespace dftfe
 
         numberChebyshevSolvePasses = count;
         computing_timer.enter_subsection("compute rho");
-        if (d_dftParamsPtr->useSymm)
-          {
-#ifdef USE_COMPLEX
-            symmetryPtr->computeLocalrhoOut();
-            symmetryPtr->computeAndSymmetrize_rhoOut();
 
-            l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
-                                    d_constraintsRhoNodal,
-                                    d_densityDofHandlerIndexElectro,
-                                    d_densityQuadratureIdElectro,
-                                    d_densityOutQuadValues[0],
-                                    d_densityOutNodalValues[0]);
-
-            d_basisOperationsPtrElectroHost->interpolate(
-              d_densityOutNodalValues[0],
-              d_densityDofHandlerIndexElectro,
-              d_lpspQuadratureIdElectro,
-              d_densityTotalOutValuesLpspQuad,
-              d_gradDensityTotalOutValuesLpspQuad,
-              d_gradDensityTotalOutValuesLpspQuad,
-              true);
-#endif
-          }
-        else
-          {
-            compute_rhoOut(scfConverged ||
-                           (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
-          }
+        compute_rhoOut(scfConverged ||
+                       (scfIter == (d_dftParamsPtr->numSCFIterations - 1)));
         computing_timer.leave_subsection("compute rho");
 
         //
@@ -4013,6 +4010,7 @@ namespace dftfe
             computing_timer.enter_subsection("Ion force computation");
             computingTimerStandard.enter_subsection("Ion force computation");
             forcePtr->computeAtomsForces(matrix_free_data,
+                                         groupSymmetryPtr,
                                          d_dispersionCorr,
                                          d_eigenDofHandlerIndex,
                                          d_smearedChargeQuadratureIdElectro,
@@ -4076,6 +4074,7 @@ namespace dftfe
       }
 
     forcePtr->computeStress(matrix_free_data,
+                            groupSymmetryPtr,
                             d_dispersionCorr,
                             d_eigenDofHandlerIndex,
                             d_smearedChargeQuadratureIdElectro,

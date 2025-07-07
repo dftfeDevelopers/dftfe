@@ -72,6 +72,8 @@
 #include <atomCenteredPostProcessing.h>
 #include <poissonSolverProblemWrapper.h>
 #include <kerkerSolverProblemWrapper.h>
+#include <groupSymmetry.h>
+
 namespace dftfe
 {
   //
@@ -1578,8 +1580,8 @@ namespace dftfe
       localProc_dof_indicesImag;
     std::vector<bool> selectedDofsHanging;
 
-    forceClass<memorySpace>    *forcePtr;
-    symmetryClass<memorySpace> *symmetryPtr;
+    forceClass<memorySpace>                   *forcePtr;
+    std::shared_ptr<dftfe::groupSymmetryClass> groupSymmetryPtr;
 
     elpaScalaManager *d_elpaScala;
 
@@ -1843,7 +1845,7 @@ namespace dftfe
     std::vector<double> d_kPointCoordinates;
 
     /// k point crystal coordinates
-    std::vector<double> kPointReducedCoordinates;
+    std::vector<double> d_kPointCoordinatesFrac;
 
     /// k point weights
     std::vector<double> d_kPointWeights;

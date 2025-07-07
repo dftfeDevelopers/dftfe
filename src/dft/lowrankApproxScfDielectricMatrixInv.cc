@@ -18,6 +18,7 @@
 //
 #include <dft.h>
 #include <linearAlgebraOperations.h>
+#include <random>
 
 namespace dftfe
 {
@@ -258,14 +259,16 @@ namespace dftfe
       fVector.reinit(x);
 
       vVector = 0.0, fVector = 0.0;
-      // std::srand(this_mpi_process);
       const dftfe::uInt local_size = vVector.locally_owned_size();
 
       // for (dftfe::uInt i = 0; i < local_size; i++)
       //  vVector.local_element(i) = x.local_element(i);
-
+      unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(x.get_mpi_communicator());
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
       for (dftfe::uInt i = 0; i < local_size; i++)
-        vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
+        vVector.local_element(i) = uni(randomIntGenerator);
 
       constraintsRhoNodal.set_zero(vVector);
 
@@ -317,14 +320,17 @@ namespace dftfe
       fVector.reinit(x);
 
       vVector = 0.0, fVector = 0.0;
-      // std::srand(this_mpi_process);
       const dftfe::uInt local_size = vVector.locally_owned_size();
 
       // for (dftfe::uInt i = 0; i < local_size; i++)
       //   vVector.local_element(i) = x.local_element(i);
 
+      unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(x.get_mpi_communicator());
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
       for (dftfe::uInt i = 0; i < local_size; i++)
-        vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
+        vVector.local_element(i) = uni(randomIntGenerator);
 
       constraintsRhoNodal.set_zero(vVector);
 

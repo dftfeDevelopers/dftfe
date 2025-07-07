@@ -1895,11 +1895,13 @@ namespace dftfe
         dealii::ExcMessage(
           "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
 #ifdef USE_COMPLEX
-    if (isIonForce || isCellStress)
-      AssertThrow(
-        !useSymm,
-        dealii::ExcMessage(
-          "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+    // if (isIonForce || isCellStress)
+    //   AssertThrow(
+    //     !useSymm,
+    //     dealii::ExcMessage(
+    //       "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either
+    //       ION FORCE or CELL STRESS is set to true. This functionality will be
+    //       added in a future release"));
     if (solverMode == "BANDS")
       AssertThrow(
         kPointDataFile != "",
@@ -2211,6 +2213,10 @@ namespace dftfe
 
 #ifndef DFTFE_WITH_DEVICE
     useDevice           = false;
+    useELPADeviceKernel = false;
+#endif
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    useDCCL             = false;
     useELPADeviceKernel = false;
 #endif
 

@@ -27,6 +27,7 @@
 #include "linearAlgebraOperationsInternal.h"
 #include "constants.h"
 #include <DeviceAPICalls.h>
+#include <random>
 
 namespace dftfe
 {
@@ -260,10 +261,10 @@ namespace dftfe
       T                  *XHostDataPtr = X.data();
 #endif
 
-
-      std::srand(this_mpi_process);
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
       for (dftfe::uInt i = 0; i < local_size; i++)
-        XHostDataPtr[i] = ((double)std::rand()) / ((double)RAND_MAX);
+        XHostDataPtr[i] = uni(randomIntGenerator);
 
 #if defined(DFTFE_WITH_DEVICE)
       XHost.template copyTo<memorySpace>(X.data());
