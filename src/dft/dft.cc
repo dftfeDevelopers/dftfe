@@ -2762,9 +2762,9 @@ namespace dftfe
                     double temp =
                       isTauMGGA ? normsTau[iComp] * normsTau[iComp] : 0;
                     norm += norms[iComp] * norms[iComp] + temp;
-                    norm = std::sqrt(
-                      norm / ((isTauMGGA ? 2 : 1) * (double)norms.size()));
                   }
+                norm = std::sqrt(norm /
+                                 ((isTauMGGA ? 2 : 1) * (double)norms.size()));
                 // interpolate nodal data to quadrature data
                 if (d_dftParamsPtr->verbosity >= 1)
                   for (dftfe::uInt iComp = 0; iComp < norms.size(); ++iComp)
@@ -2955,9 +2955,9 @@ namespace dftfe
                     double temp =
                       isTauMGGA ? normsTau[iComp] * normsTau[iComp] : 0;
                     norm += norms[iComp] * norms[iComp] + temp;
-                    norm = std::sqrt(
-                      norm / ((isTauMGGA ? 2 : 1) * (double)norms.size()));
                   }
+                norm = std::sqrt(norm /
+                                 ((isTauMGGA ? 2 : 1) * (double)norms.size()));
                 if (isGradDensityDataDependent)
                   {
                     for (dftfe::uInt iComp = 0; iComp < norms.size(); ++iComp)
