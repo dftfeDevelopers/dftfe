@@ -74,7 +74,7 @@ namespace dftfe
             d_gradDensityOutQuadValues[iComp],
             isGradDensityDataDependent);
 
-        if (isTauMGGA)
+        if (isTauMGGA || (d_dftParamsPtr->printKE && isGroundState))
           {
             d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
@@ -99,7 +99,8 @@ namespace dftfe
                                 dummy,
                                 d_tauOutQuadValues,
                                 isGradDensityDataDependent,
-                                isTauMGGA,
+                                isTauMGGA ||
+                                  (d_dftParamsPtr->printKE && isGroundState),
                                 d_mpiCommParent,
                                 interpoolcomm,
                                 interBandGroupComm,
@@ -119,7 +120,8 @@ namespace dftfe
                                 dummy,
                                 d_tauOutQuadValues,
                                 isGradDensityDataDependent,
-                                isTauMGGA,
+                                isTauMGGA ||
+                                  (d_dftParamsPtr->printKE && isGroundState),
                                 d_mpiCommParent,
                                 interpoolcomm,
                                 interBandGroupComm,
@@ -157,7 +159,7 @@ namespace dftfe
              ++iComp)
           d_gradDensityOutQuadValues[iComp].resize(3 * nQuadsPerCell * nCells);
 
-        if (isTauMGGA)
+        if (isTauMGGA || (d_dftParamsPtr->printKE && isGroundState))
           {
             d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
@@ -183,7 +185,8 @@ namespace dftfe
                             d_gradDensityOutQuadValues,
                             d_tauOutQuadValues,
                             isGradDensityDataDependent,
-                            isTauMGGA,
+                            isTauMGGA ||
+                              (d_dftParamsPtr->printKE && isGroundState),
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
@@ -203,7 +206,8 @@ namespace dftfe
                             d_gradDensityOutQuadValues,
                             d_tauOutQuadValues,
                             isGradDensityDataDependent,
-                            isTauMGGA,
+                            isTauMGGA ||
+                              (d_dftParamsPtr->printKE && isGroundState),
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
