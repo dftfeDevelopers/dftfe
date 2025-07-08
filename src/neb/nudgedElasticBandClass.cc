@@ -820,7 +820,7 @@ namespace dftfe
         if (!d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << std::endl
-                  << "--Path Length: " << Length << " Bohr" << std::endl;
+                  << "--Max Path Length: " << Length << " Bohr" << std::endl;
             pcout << "----------------------------------------------"
                   << std::endl;
           }
@@ -927,7 +927,7 @@ namespace dftfe
         if (!d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << std::endl
-                  << "--Path Length: " << Length << " Bohr" << std::endl;
+                  << "--Max Path Length: " << Length << " Bohr" << std::endl;
             pcout << "----------------------------------------------"
                   << std::endl;
           }
@@ -1057,7 +1057,7 @@ namespace dftfe
     if (!d_dftPtr->getParametersObject().reproducible_output)
       {
         pcout << std::endl
-              << "--Path Length: " << Length << " Bohr" << std::endl;
+              << "--Max Path Length: " << Length << " Bohr" << std::endl;
         pcout << "----------------------------------------------" << std::endl;
       }
     dftfe::Int FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
@@ -1608,7 +1608,7 @@ namespace dftfe
         double Length = 0.0;
         Length        = CalculatePathLength(false);
         pcout << std::endl
-              << "--Path Length: " << Length << " Bohr" << std::endl;
+              << "--Max Path Length: " << Length << " Bohr" << std::endl;
         step_time = MPI_Wtime() - step_time;
         pcout << "Time taken for initial dft solve of all images: " << step_time
               << std::endl;
