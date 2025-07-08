@@ -179,7 +179,8 @@ namespace dftfe
        const double scalarY,
        const double scalarX,
        dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst,
-       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse =
+         false) override;
 
     /**
      * @brief Computing Y = scalarHX*HX + scalarX*X + scalarY*Y for a given X and Y in full precision
@@ -199,7 +200,8 @@ namespace dftfe
        const double scalarX,
        dftfe::linearAlgebra::MultiVector<dataTypes::numberFP32, memorySpace>
                  &dst,
-       const bool onlyHPrimePartForFirstOrderDensityMatResponse = false);
+       const bool onlyHPrimePartForFirstOrderDensityMatResponse =
+         false) override;
     /**
      * @brief Computing Y = scalarHX*M^{1/2}HM^{1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision. Used for TD-DFT and Inverse DFT calc.
      *
