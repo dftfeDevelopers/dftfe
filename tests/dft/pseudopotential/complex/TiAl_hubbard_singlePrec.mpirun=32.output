@@ -24,7 +24,7 @@ number of degrees of freedom for the Kohn-Sham eigenvalue problem : 1000
 
 Setting initial guess for wavefunctions....
 =============================================================================================================================
-number of electrons: 15
+number of electrons: 1.500000000000000000e+01
 number of eigen values: 27
 =============================================================================================================================
 
@@ -39,7 +39,7 @@ SCF iterations converged to the specified tolerance after: 31 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -59.38530783
+             Total energy:         -59.38530761
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------

@@ -22,7 +22,7 @@
 #  include "dftfeDataTypes.h"
 #  include <DeviceDataTypeOverloads.h>
 #  include <DeviceAPICalls.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <forceWfcContractionsDeviceKernels.h>
 
 namespace dftfe
@@ -31,8 +31,68 @@ namespace dftfe
   {
     namespace
     {
-      __global__ void
-      computeELocWfcEshelbyTensorContributions(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeELocWfcEshelbyTensorContributions,
+        {
+          const dftfe::uInt numberEntries =
+            numContiguousBlocks * contiguousBlockSize;
+
+          for (dftfe::uInt index = globalThreadId; index < numberEntries;
+               index += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockIndex = index / contiguousBlockSize;
+              const dftfe::uInt intraBlockIndex =
+                index - blockIndex * contiguousBlockSize;
+              const dftfe::uInt blockIndex2  = blockIndex / 9;
+              const dftfe::uInt eshelbyIndex = blockIndex - 9 * blockIndex2;
+              const dftfe::uInt cellIndex    = blockIndex2 / numQuads;
+              const dftfe::uInt quadId = blockIndex2 - cellIndex * numQuads;
+              const dftfe::uInt tempIndex =
+                (cellIndex)*numQuads * contiguousBlockSize +
+                quadId * contiguousBlockSize + intraBlockIndex;
+              const dftfe::uInt tempIndex2 =
+                (cellIndex)*numQuads * contiguousBlockSize * 3 +
+                quadId * contiguousBlockSize + intraBlockIndex;
+              const double psi      = psiQuadValues[tempIndex];
+              const double gradPsiX = gradPsiQuadValues[tempIndex2];
+              const double gradPsiY =
+                gradPsiQuadValues[tempIndex2 + numQuads * contiguousBlockSize];
+              const double gradPsiZ =
+                gradPsiQuadValues[tempIndex2 +
+                                  2 * numQuads * contiguousBlockSize];
+              const double eigenValue = eigenValues[intraBlockIndex];
+              const double partOcc    = partialOccupancies[intraBlockIndex];
+
+              const double identityFactor =
+                partOcc * (gradPsiX * gradPsiX + gradPsiY * gradPsiY +
+                           gradPsiZ * gradPsiZ) -
+                2.0 * partOcc * eigenValue * psi * psi;
+
+              if (eshelbyIndex == 0)
+                eshelbyTensor[index] =
+                  -2.0 * partOcc * gradPsiX * gradPsiX + identityFactor;
+              else if (eshelbyIndex == 1)
+                eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiY;
+              else if (eshelbyIndex == 2)
+                eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiZ;
+              else if (eshelbyIndex == 3)
+                eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiX;
+              else if (eshelbyIndex == 4)
+                eshelbyTensor[index] =
+                  -2.0 * partOcc * gradPsiY * gradPsiY + identityFactor;
+              else if (eshelbyIndex == 5)
+                eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiZ;
+              else if (eshelbyIndex == 6)
+                eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiX;
+              else if (eshelbyIndex == 7)
+                eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiY;
+              else if (eshelbyIndex == 8)
+                eshelbyTensor[index] =
+                  -2.0 * partOcc * gradPsiZ * gradPsiZ + identityFactor;
+            }
+        },
         const dftfe::uInt contiguousBlockSize,
         const dftfe::uInt numContiguousBlocks,
         const dftfe::uInt numQuads,
@@ -40,71 +100,323 @@ namespace dftfe
         const double     *gradPsiQuadValues,
         const double     *eigenValues,
         const double     *partialOccupancies,
-        double           *eshelbyTensor)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const dftfe::uInt numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (dftfe::uInt index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockIndex = index / contiguousBlockSize;
-            const dftfe::uInt intraBlockIndex =
-              index - blockIndex * contiguousBlockSize;
-            const dftfe::uInt blockIndex2  = blockIndex / 9;
-            const dftfe::uInt eshelbyIndex = blockIndex - 9 * blockIndex2;
-            const dftfe::uInt cellIndex    = blockIndex2 / numQuads;
-            const dftfe::uInt quadId       = blockIndex2 - cellIndex * numQuads;
-            const dftfe::uInt tempIndex =
-              (cellIndex)*numQuads * contiguousBlockSize +
-              quadId * contiguousBlockSize + intraBlockIndex;
-            const dftfe::uInt tempIndex2 =
-              (cellIndex)*numQuads * contiguousBlockSize * 3 +
-              quadId * contiguousBlockSize + intraBlockIndex;
-            const double psi      = psiQuadValues[tempIndex];
-            const double gradPsiX = gradPsiQuadValues[tempIndex2];
-            const double gradPsiY =
-              gradPsiQuadValues[tempIndex2 + numQuads * contiguousBlockSize];
-            const double gradPsiZ =
-              gradPsiQuadValues[tempIndex2 +
-                                2 * numQuads * contiguousBlockSize];
-            const double eigenValue = eigenValues[intraBlockIndex];
-            const double partOcc    = partialOccupancies[intraBlockIndex];
-
-            const double identityFactor =
-              partOcc * (gradPsiX * gradPsiX + gradPsiY * gradPsiY +
-                         gradPsiZ * gradPsiZ) -
-              2.0 * partOcc * eigenValue * psi * psi;
-
-            if (eshelbyIndex == 0)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * gradPsiX * gradPsiX + identityFactor;
-            else if (eshelbyIndex == 1)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiY;
-            else if (eshelbyIndex == 2)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiX * gradPsiZ;
-            else if (eshelbyIndex == 3)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiX;
-            else if (eshelbyIndex == 4)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * gradPsiY * gradPsiY + identityFactor;
-            else if (eshelbyIndex == 5)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiY * gradPsiZ;
-            else if (eshelbyIndex == 6)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiX;
-            else if (eshelbyIndex == 7)
-              eshelbyTensor[index] = -2.0 * partOcc * gradPsiZ * gradPsiY;
-            else if (eshelbyIndex == 8)
-              eshelbyTensor[index] =
-                -2.0 * partOcc * gradPsiZ * gradPsiZ + identityFactor;
-          }
-      }
+        double           *eshelbyTensor);
 
 
-      __global__ void
-      computeELocWfcEshelbyTensorContributions(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        computeELocWfcEshelbyTensorContributions,
+        {
+          const dftfe::uInt numberEntries =
+            numContiguousBlocks * contiguousBlockSize;
+
+          for (dftfe::uInt index = globalThreadId; index < numberEntries;
+               index += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockIndex = index / contiguousBlockSize;
+              const dftfe::uInt intraBlockIndex =
+                index - blockIndex * contiguousBlockSize;
+              const dftfe::uInt blockIndex2  = blockIndex / 9;
+              const dftfe::uInt eshelbyIndex = blockIndex - 9 * blockIndex2;
+              const dftfe::uInt cellIndex    = blockIndex2 / numQuads;
+              const dftfe::uInt quadId = blockIndex2 - cellIndex * numQuads;
+              const dftfe::uInt tempIndex =
+                (cellIndex)*numQuads * contiguousBlockSize +
+                quadId * contiguousBlockSize + intraBlockIndex;
+              const dftfe::uInt tempIndex2 =
+                (cellIndex)*numQuads * contiguousBlockSize * 3 +
+                quadId * contiguousBlockSize + intraBlockIndex;
+              const dftfe::utils::deviceDoubleComplex psi =
+                psiQuadValues[tempIndex];
+              const dftfe::utils::deviceDoubleComplex psiConj =
+                dftfe::utils::conj(psiQuadValues[tempIndex]);
+              const dftfe::utils::deviceDoubleComplex gradPsiX =
+                gradPsiQuadValues[tempIndex2];
+              const dftfe::utils::deviceDoubleComplex gradPsiY =
+                gradPsiQuadValues[tempIndex2 + numQuads * contiguousBlockSize];
+              const dftfe::utils::deviceDoubleComplex gradPsiZ =
+                gradPsiQuadValues[tempIndex2 +
+                                  2 * numQuads * contiguousBlockSize];
+              const dftfe::utils::deviceDoubleComplex gradPsiXConj =
+                dftfe::utils::conj(gradPsiQuadValues[tempIndex2]);
+              const dftfe::utils::deviceDoubleComplex gradPsiYConj =
+                dftfe::utils::conj(
+                  gradPsiQuadValues[tempIndex2 +
+                                    numQuads * contiguousBlockSize]);
+              const dftfe::utils::deviceDoubleComplex gradPsiZConj =
+                dftfe::utils::conj(
+                  gradPsiQuadValues[tempIndex2 +
+                                    2 * numQuads * contiguousBlockSize]);
+              const double eigenValue = eigenValues[intraBlockIndex];
+              const double partOcc    = partialOccupancies[intraBlockIndex];
+
+              const double identityFactor =
+                partOcc *
+                ((dftfe::utils::realPartDevice(
+                    dftfe::utils::mult(gradPsiXConj, gradPsiX)) +
+                  dftfe::utils::realPartDevice(
+                    dftfe::utils::mult(gradPsiYConj, gradPsiY)) +
+                  dftfe::utils::realPartDevice(
+                    dftfe::utils::mult(gradPsiZConj, gradPsiZ))) +
+                 2.0 * (kcoordx * dftfe::utils::imagPartDevice(
+                                    dftfe::utils::mult(psiConj, gradPsiX)) +
+                        kcoordy * dftfe::utils::imagPartDevice(
+                                    dftfe::utils::mult(psiConj, gradPsiY)) +
+                        kcoordz * dftfe::utils::imagPartDevice(
+                                    dftfe::utils::mult(psiConj, gradPsiZ))) +
+                 (kcoordx * kcoordx + kcoordy * kcoordy + kcoordz * kcoordz -
+                  2.0 * eigenValue) *
+                   dftfe::utils::realPartDevice(
+                     dftfe::utils::mult(psiConj, psi)));
+              if (addEk)
+                {
+                  if (eshelbyIndex == 0)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiX)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordx -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordx -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordx * kcoordx +
+                      identityFactor;
+                  else if (eshelbyIndex == 1)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiY)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordy -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordx -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordx * kcoordy;
+                  else if (eshelbyIndex == 2)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiZ)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordz -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordx -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordx * kcoordz;
+                  else if (eshelbyIndex == 3)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiX)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordx -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordy -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordy * kcoordx;
+                  else if (eshelbyIndex == 4)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiY)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordy -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordy -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordy * kcoordy +
+                      identityFactor;
+                  else if (eshelbyIndex == 5)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiZ)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordz -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordy -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordy * kcoordz;
+                  else if (eshelbyIndex == 6)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiX)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordx -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordz -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordz * kcoordx;
+                  else if (eshelbyIndex == 7)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiY)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordy -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordz -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordz * kcoordy;
+                  else if (eshelbyIndex == 8)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiZ)) +
+                      -2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordz -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordz -
+                      2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(psiConj, psi)) *
+                        kcoordz * kcoordz +
+                      identityFactor;
+                }
+              else
+                {
+                  if (eshelbyIndex == 0)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiX)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordx +
+                      identityFactor;
+                  else if (eshelbyIndex == 1)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiY)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordy;
+                  else if (eshelbyIndex == 2)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiXConj, gradPsiZ)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiX)) *
+                        kcoordz;
+                  else if (eshelbyIndex == 3)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiX)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordx;
+                  else if (eshelbyIndex == 4)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiY)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordy +
+                      identityFactor;
+                  else if (eshelbyIndex == 5)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiYConj, gradPsiZ)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiY)) *
+                        kcoordz;
+                  else if (eshelbyIndex == 6)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiX)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordx;
+                  else if (eshelbyIndex == 7)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiY)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordy;
+                  else if (eshelbyIndex == 8)
+                    eshelbyTensor[index] =
+                      -2.0 * partOcc *
+                        dftfe::utils::realPartDevice(
+                          dftfe::utils::mult(gradPsiZConj, gradPsiZ)) -
+                      2.0 * partOcc *
+                        dftfe::utils::imagPartDevice(
+                          dftfe::utils::mult(psiConj, gradPsiZ)) *
+                        kcoordz +
+                      identityFactor;
+                }
+            }
+        },
         const dftfe::uInt                        contiguousBlockSize,
         const dftfe::uInt                        numContiguousBlocks,
         const dftfe::uInt                        numQuads,
@@ -116,225 +428,36 @@ namespace dftfe
         const double                             kcoordy,
         const double                             kcoordz,
         double                                  *eshelbyTensor,
-        const bool                               addEk)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const dftfe::uInt numberEntries =
-          numContiguousBlocks * contiguousBlockSize;
-
-        for (dftfe::uInt index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockIndex = index / contiguousBlockSize;
-            const dftfe::uInt intraBlockIndex =
-              index - blockIndex * contiguousBlockSize;
-            const dftfe::uInt blockIndex2  = blockIndex / 9;
-            const dftfe::uInt eshelbyIndex = blockIndex - 9 * blockIndex2;
-            const dftfe::uInt cellIndex    = blockIndex2 / numQuads;
-            const dftfe::uInt quadId       = blockIndex2 - cellIndex * numQuads;
-            const dftfe::uInt tempIndex =
-              (cellIndex)*numQuads * contiguousBlockSize +
-              quadId * contiguousBlockSize + intraBlockIndex;
-            const dftfe::uInt tempIndex2 =
-              (cellIndex)*numQuads * contiguousBlockSize * 3 +
-              quadId * contiguousBlockSize + intraBlockIndex;
-            const dftfe::utils::deviceDoubleComplex psi =
-              psiQuadValues[tempIndex];
-            const dftfe::utils::deviceDoubleComplex psiConj =
-              dftfe::utils::conj(psiQuadValues[tempIndex]);
-            const dftfe::utils::deviceDoubleComplex gradPsiX =
-              gradPsiQuadValues[tempIndex2];
-            const dftfe::utils::deviceDoubleComplex gradPsiY =
-              gradPsiQuadValues[tempIndex2 + numQuads * contiguousBlockSize];
-            const dftfe::utils::deviceDoubleComplex gradPsiZ =
-              gradPsiQuadValues[tempIndex2 +
-                                2 * numQuads * contiguousBlockSize];
-            const dftfe::utils::deviceDoubleComplex gradPsiXConj =
-              dftfe::utils::conj(gradPsiQuadValues[tempIndex2]);
-            const dftfe::utils::deviceDoubleComplex gradPsiYConj =
-              dftfe::utils::conj(
-                gradPsiQuadValues[tempIndex2 + numQuads * contiguousBlockSize]);
-            const dftfe::utils::deviceDoubleComplex gradPsiZConj =
-              dftfe::utils::conj(
-                gradPsiQuadValues[tempIndex2 +
-                                  2 * numQuads * contiguousBlockSize]);
-            const double eigenValue = eigenValues[intraBlockIndex];
-            const double partOcc    = partialOccupancies[intraBlockIndex];
-
-            const double identityFactor =
-              partOcc *
-              ((dftfe::utils::mult(gradPsiXConj, gradPsiX).x +
-                dftfe::utils::mult(gradPsiYConj, gradPsiY).x +
-                dftfe::utils::mult(gradPsiZConj, gradPsiZ).x) +
-               2.0 * (kcoordx * dftfe::utils::mult(psiConj, gradPsiX).y +
-                      kcoordy * dftfe::utils::mult(psiConj, gradPsiY).y +
-                      kcoordz * dftfe::utils::mult(psiConj, gradPsiZ).y) +
-               (kcoordx * kcoordx + kcoordy * kcoordy + kcoordz * kcoordz -
-                2.0 * eigenValue) *
-                 dftfe::utils::mult(psiConj, psi).x);
-            if (addEk)
-              {
-                if (eshelbyIndex == 0)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiXConj, gradPsiX).x +
-                    -2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordx -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordx -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordx * kcoordx +
-                    identityFactor;
-                else if (eshelbyIndex == 1)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiXConj, gradPsiY).x +
-                    -2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordy -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordx -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordx * kcoordy;
-                else if (eshelbyIndex == 2)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiXConj, gradPsiZ).x +
-                    -2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordz -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordx -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordx * kcoordz;
-                else if (eshelbyIndex == 3)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiYConj, gradPsiX).x +
-                    -2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordx -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordy -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordy * kcoordx;
-                else if (eshelbyIndex == 4)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiYConj, gradPsiY).x +
-                    -2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordy -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordy -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordy * kcoordy +
-                    identityFactor;
-                else if (eshelbyIndex == 5)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiYConj, gradPsiZ).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordz -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordy -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordy * kcoordz;
-                else if (eshelbyIndex == 6)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiZConj, gradPsiX).x +
-                    -2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordx -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordz -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordz * kcoordx;
-                else if (eshelbyIndex == 7)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiZConj, gradPsiY).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordy -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordz -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordz * kcoordy;
-                else if (eshelbyIndex == 8)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiZConj, gradPsiZ).x +
-                    -2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordz -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordz -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, psi).x *
-                      kcoordz * kcoordz +
-                    identityFactor;
-              }
-            else
-              {
-                if (eshelbyIndex == 0)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiXConj, gradPsiX).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordx +
-                    identityFactor;
-                else if (eshelbyIndex == 1)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiXConj, gradPsiY).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordy;
-                else if (eshelbyIndex == 2)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiXConj, gradPsiZ).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiX).y *
-                      kcoordz;
-                else if (eshelbyIndex == 3)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiYConj, gradPsiX).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordx;
-                else if (eshelbyIndex == 4)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiYConj, gradPsiY).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordy +
-                    identityFactor;
-                else if (eshelbyIndex == 5)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiYConj, gradPsiZ).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiY).y *
-                      kcoordz;
-                else if (eshelbyIndex == 6)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiZConj, gradPsiX).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordx;
-                else if (eshelbyIndex == 7)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiZConj, gradPsiY).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordy;
-                else if (eshelbyIndex == 8)
-                  eshelbyTensor[index] =
-                    -2.0 * partOcc *
-                      dftfe::utils::mult(gradPsiZConj, gradPsiZ).x -
-                    2.0 * partOcc * dftfe::utils::mult(psiConj, gradPsiZ).y *
-                      kcoordz +
-                    identityFactor;
-              }
-          }
-      }
+        const bool                               addEk);
 
 
-      __global__ void
-      nlpContractionContributionPsiIndexDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        nlpContractionContributionPsiIndexDeviceKernel,
+        {
+          const dftfe::uInt numberEntries =
+            totalNonTrivialPseudoWfcs * numQuadsNLP * numPsi;
+
+          for (dftfe::uInt index = globalThreadId; index < numberEntries;
+               index += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockIndex  = index / numPsi;
+              const dftfe::uInt wfcId       = index - blockIndex * numPsi;
+              dftfe::uInt       pseudoWfcId = blockIndex / numQuadsNLP;
+              const dftfe::uInt quadId = blockIndex - pseudoWfcId * numQuadsNLP;
+              pseudoWfcId += startingId;
+              nlpContractionContribution[index] =
+                partialOccupancies[wfcId] *
+                gradPsiOrPsiQuadValuesNLP[nonTrivialIdToElemIdMap[pseudoWfcId] *
+                                            numQuadsNLP * numPsi +
+                                          quadId * numPsi + wfcId] *
+                projectorKetTimesVectorPar
+                  [projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId] *
+                     numPsi +
+                   wfcId];
+            }
+        },
         const dftfe::uInt  numPsi,
         const dftfe::uInt  numQuadsNLP,
         const dftfe::uInt  totalNonTrivialPseudoWfcs,
@@ -344,35 +467,40 @@ namespace dftfe
         const double      *partialOccupancies,
         const dftfe::uInt *nonTrivialIdToElemIdMap,
         const dftfe::uInt *projecterKetTimesFlattenedVectorLocalIds,
-        double            *nlpContractionContribution)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const dftfe::uInt numberEntries =
-          totalNonTrivialPseudoWfcs * numQuadsNLP * numPsi;
+        double            *nlpContractionContribution);
 
-        for (dftfe::uInt index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockIndex  = index / numPsi;
-            const dftfe::uInt wfcId       = index - blockIndex * numPsi;
-            dftfe::uInt       pseudoWfcId = blockIndex / numQuadsNLP;
-            const dftfe::uInt quadId = blockIndex - pseudoWfcId * numQuadsNLP;
-            pseudoWfcId += startingId;
-            nlpContractionContribution[index] =
-              partialOccupancies[wfcId] *
-              gradPsiOrPsiQuadValuesNLP[nonTrivialIdToElemIdMap[pseudoWfcId] *
-                                          numQuadsNLP * numPsi +
-                                        quadId * numPsi + wfcId] *
-              projectorKetTimesVectorPar
-                [projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId] *
-                   numPsi +
-                 wfcId];
-          }
-      }
 
-      __global__ void
-      nlpContractionContributionPsiIndexDeviceKernel(
+
+      DFTFE_CREATE_KERNEL(
+        void,
+        nlpContractionContributionPsiIndexDeviceKernel,
+        {
+          const dftfe::uInt numberEntries =
+            totalNonTrivialPseudoWfcs * numQuadsNLP * numPsi;
+
+          for (dftfe::uInt index = globalThreadId; index < numberEntries;
+               index += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockIndex  = index / numPsi;
+              const dftfe::uInt wfcId       = index - blockIndex * numPsi;
+              dftfe::uInt       pseudoWfcId = blockIndex / numQuadsNLP;
+              const dftfe::uInt quadId = blockIndex - pseudoWfcId * numQuadsNLP;
+              pseudoWfcId += startingId;
+
+              const dftfe::utils::deviceDoubleComplex temp = dftfe::utils::mult(
+                dftfe::utils::conj(gradPsiOrPsiQuadValuesNLP
+                                     [nonTrivialIdToElemIdMap[pseudoWfcId] *
+                                        numQuadsNLP * numPsi +
+                                      quadId * numPsi + wfcId]),
+                projectorKetTimesVectorPar
+                  [projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId] *
+                     numPsi +
+                   wfcId]);
+              nlpContractionContribution[index] = dftfe::utils::makeComplex(
+                partialOccupancies[wfcId] * dftfe::utils::realPartDevice(temp),
+                partialOccupancies[wfcId] * dftfe::utils::imagPartDevice(temp));
+            }
+        },
         const dftfe::uInt                        numPsi,
         const dftfe::uInt                        numQuadsNLP,
         const dftfe::uInt                        totalNonTrivialPseudoWfcs,
@@ -382,36 +510,8 @@ namespace dftfe
         const double                            *partialOccupancies,
         const dftfe::uInt                       *nonTrivialIdToElemIdMap,
         const dftfe::uInt *projecterKetTimesFlattenedVectorLocalIds,
-        dftfe::utils::deviceDoubleComplex *nlpContractionContribution)
-      {
-        const dftfe::uInt globalThreadId =
-          blockIdx.x * blockDim.x + threadIdx.x;
-        const dftfe::uInt numberEntries =
-          totalNonTrivialPseudoWfcs * numQuadsNLP * numPsi;
+        dftfe::utils::deviceDoubleComplex *nlpContractionContribution);
 
-        for (dftfe::uInt index = globalThreadId; index < numberEntries;
-             index += blockDim.x * gridDim.x)
-          {
-            const dftfe::uInt blockIndex  = index / numPsi;
-            const dftfe::uInt wfcId       = index - blockIndex * numPsi;
-            dftfe::uInt       pseudoWfcId = blockIndex / numQuadsNLP;
-            const dftfe::uInt quadId = blockIndex - pseudoWfcId * numQuadsNLP;
-            pseudoWfcId += startingId;
-
-            const dftfe::utils::deviceDoubleComplex temp = dftfe::utils::mult(
-              dftfe::utils::conj(
-                gradPsiOrPsiQuadValuesNLP[nonTrivialIdToElemIdMap[pseudoWfcId] *
-                                            numQuadsNLP * numPsi +
-                                          quadId * numPsi + wfcId]),
-              projectorKetTimesVectorPar
-                [projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId] *
-                   numPsi +
-                 wfcId]);
-            nlpContractionContribution[index] =
-              dftfe::utils::makeComplex(partialOccupancies[wfcId] * temp.x,
-                                        partialOccupancies[wfcId] * temp.y);
-          }
-      }
 
     } // namespace
 
@@ -434,8 +534,7 @@ namespace dftfe
         (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * blockSizeNlp,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        dftfe::utils::defaultStream,
         wfcBlockSize,
         numQuadsNLP,
         blockSizeNlp,
@@ -475,8 +574,7 @@ namespace dftfe
         (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
           dftfe::utils::DEVICE_BLOCK_SIZE * cellsBlockSize * numQuads * 9,
         dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        0,
+        dftfe::utils::defaultStream,
         wfcBlockSize,
         cellsBlockSize * numQuads * 9,
         numQuads,

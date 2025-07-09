@@ -581,9 +581,9 @@ namespace dftfe
               }
           }
 
-        d_alpha = d_normDeltaXnew > d_maxStepLength ?
+        d_alpha = d_normDeltaXnew * d_alpha > d_maxStepLength ?
                     d_maxStepLength / d_normDeltaXnew :
-                    1.0;
+                    d_alpha;
         if (d_debugLevel >= 1 && d_normDeltaXnew > d_maxStepLength)
           pcout
             << "Step length exceeded the maximum allowed limit, scaling the step by: "

@@ -27,7 +27,7 @@ namespace dftfe
   template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
   void
   computeKineticEnergyDensity(
-    const dftfe::linearAlgebra::BLASWrapper<memorySpace>       &BLASWrapperPtr,
+    dftfe::linearAlgebra::BLASWrapper<memorySpace>             &BLASWrapperPtr,
     const dftfe::utils::MemoryStorage<NumberType, memorySpace> *X,
     const dftfe::uInt                       totalNumWaveFunctions,
     const std::vector<std::vector<double>> &partialOccupancies,
@@ -48,7 +48,7 @@ namespace dftfe
   template <typename NumberType>
   void
   computeKineticEnergyDensityFromInterpolatedValues(
-    const dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>
+    dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>
                                              &BLASWrapperPtr,
     const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
     const std::pair<dftfe::uInt, dftfe::uInt> vecRange,
