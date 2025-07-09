@@ -28,8 +28,8 @@ number of eigen values: 12
 Reading initial guess for electron-density.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 14 iterations.
+SCF iterations converged to the specified tolerance after: 16 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -73.53580513
+             Total energy:         -73.53580512
