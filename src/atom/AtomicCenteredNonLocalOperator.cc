@@ -38,7 +38,7 @@ namespace dftfe
                       atomCenteredSphericalFunctionContainer,
       const MPI_Comm &mpi_comm_parent,
       const bool      memOptMode,
-      const bool      computeConfigurationalForce,
+      const bool      floatingNuclearCharges,
       const bool      useGlobalCMatrix,
       const bool      computeIonForces,
       const bool      computeCellStress)
@@ -57,14 +57,14 @@ namespace dftfe
       atomCenteredSphericalFunctionContainer;
     d_maxSingleAtomContribution = d_atomCenteredSphericalFunctionContainer
                                     ->getMaximumNumberOfSphericalFunctions();
-    d_memoryOptMode               = memOptMode;
-    d_computeConfigurationalForce = computeConfigurationalForce;
-    d_useGlobalCMatrix            = useGlobalCMatrix;
-    d_cellsBlockSize              = 0;
-    d_numCellBatches              = 0;
-    d_wfcStartPointer             = NULL;
-    d_computeIonForces            = computeIonForces;
-    d_computeCellStress           = computeCellStress;
+    d_memoryOptMode          = memOptMode;
+    d_floatingNuclearCharges = floatingNuclearCharges;
+    d_useGlobalCMatrix       = useGlobalCMatrix;
+    d_cellsBlockSize         = 0;
+    d_numCellBatches         = 0;
+    d_wfcStartPointer        = NULL;
+    d_computeIonForces       = computeIonForces && !floatingNuclearCharges;
+    d_computeCellStress      = computeCellStress && !floatingNuclearCharges;
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -296,7 +296,7 @@ namespace dftfe
         accumNonTrivialSphericalFnCells +=
           d_nonTrivialSphericalFnPerCell[iElem];
       }
-    if (d_computeConfigurationalForce)
+    if (d_floatingNuclearCharges)
       {
         d_atomCenteredKpointIndexedSphericalFnQuadValues.resize(
           maxkPoints * d_sumNonTrivialSphericalFnOverAllCells *
@@ -631,7 +631,7 @@ namespace dftfe
                     [ChargeId]
                     [elementIndex]; // extract the location of the ChargeId's
                                     // first projector in the cell
-                if (d_computeConfigurationalForce)
+                if (d_floatingNuclearCharges)
                   {
                     for (dftfe::Int kPoint = 0; kPoint < maxkPoints; ++kPoint)
                       {
@@ -4121,7 +4121,7 @@ namespace dftfe
         accumNonTrivialSphericalFnCells +=
           d_nonTrivialSphericalFnPerCell[iElem];
       }
-    if (d_computeConfigurationalForce)
+    if (d_floatingNuclearCharges)
       {
         d_atomCenteredKpointIndexedSphericalFnQuadValues.resize(
           maxkPoints * d_sumNonTrivialSphericalFnOverAllCells *
@@ -4654,7 +4654,7 @@ namespace dftfe
         accumNonTrivialSphericalFnCells +=
           d_nonTrivialSphericalFnPerCell[iElem];
       }
-    if (d_computeConfigurationalForce)
+    if (d_floatingNuclearCharges)
       {
         d_atomCenteredKpointIndexedSphericalFnQuadValues.resize(
           maxkPoints * d_sumNonTrivialSphericalFnOverAllCells *
