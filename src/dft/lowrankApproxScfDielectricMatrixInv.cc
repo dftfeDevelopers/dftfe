@@ -18,6 +18,7 @@
 //
 #include <dft.h>
 #include <linearAlgebraOperations.h>
+#include <random>
 
 namespace dftfe
 {
@@ -27,14 +28,21 @@ namespace dftfe
     relativeErrorEstimate(
       const std::deque<distributedCPUVec<double>> &fvcontainer,
       const distributedCPUVec<double>             &residualVec,
-      const double                                 k0)
+      const double                                 k0,
+      const double tikhonovRegularizationConstant)
     {
       const dftfe::uInt rank = fvcontainer.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
       for (dftfe::Int j = 0; j < rank; j++)
         for (dftfe::Int i = 0; i < rank; i++)
-          mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
+          {
+            if (i == j)
+              mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j] +
+                                   tikhonovRegularizationConstant;
+            else
+              mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
+          }
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
@@ -76,14 +84,21 @@ namespace dftfe
       const distributedCPUVec<double>             &residualVec,
       distributedCPUVec<double>                   &predictedResidualVec,
       const double                                 k0,
-      const double                                 alpha)
+      const double                                 alpha,
+      const double tikhonovRegularizationConstant)
     {
       const dftfe::uInt rank = fvcontainer.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
       for (dftfe::Int j = 0; j < rank; j++)
         for (dftfe::Int i = 0; i < rank; i++)
-          mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
+          {
+            if (i == j)
+              mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j] +
+                                   tikhonovRegularizationConstant;
+            else
+              mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
+          }
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
@@ -122,14 +137,21 @@ namespace dftfe
                        const std::deque<distributedCPUVec<double>> &vcontainer,
                        const distributedCPUVec<double>             &x,
                        const double                                 k0,
-                       distributedCPUVec<double>                   &y)
+                       distributedCPUVec<double>                   &y,
+                       const double tikhonovRegularizationConstant)
     {
       const dftfe::uInt rank = fvcontainer.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
       for (dftfe::Int j = 0; j < rank; j++)
         for (dftfe::Int i = 0; i < rank; i++)
-          mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
+          {
+            if (i == j)
+              mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j] +
+                                   tikhonovRegularizationConstant;
+            else
+              mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
+          }
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
@@ -159,14 +181,21 @@ namespace dftfe
     lowrankJacInvApply(const std::deque<distributedCPUVec<double>> &fvcontainer,
                        const std::deque<distributedCPUVec<double>> &vcontainer,
                        const distributedCPUVec<double>             &x,
-                       distributedCPUVec<double>                   &y)
+                       distributedCPUVec<double>                   &y,
+                       const double tikhonovRegularizationConstant)
     {
       const dftfe::uInt rank = fvcontainer.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
       for (dftfe::Int j = 0; j < rank; j++)
         for (dftfe::Int i = 0; i < rank; i++)
-          mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
+          {
+            if (i == j)
+              mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j] +
+                                   tikhonovRegularizationConstant;
+            else
+              mMat[j * rank + i] = fvcontainer[i] * fvcontainer[j];
+          }
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
@@ -230,14 +259,16 @@ namespace dftfe
       fVector.reinit(x);
 
       vVector = 0.0, fVector = 0.0;
-      // std::srand(this_mpi_process);
       const dftfe::uInt local_size = vVector.locally_owned_size();
 
       // for (dftfe::uInt i = 0; i < local_size; i++)
       //  vVector.local_element(i) = x.local_element(i);
-
+      unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(x.get_mpi_communicator());
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
       for (dftfe::uInt i = 0; i < local_size; i++)
-        vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
+        vVector.local_element(i) = uni(randomIntGenerator);
 
       constraintsRhoNodal.set_zero(vVector);
 
@@ -273,7 +304,8 @@ namespace dftfe
       const std::deque<distributedCPUVec<double>> &lowrankFvcontainer,
       const std::deque<distributedCPUVec<double>> &lowrankVcontainer,
       const distributedCPUVec<double>             &x,
-      const dealii::AffineConstraints<double>     &constraintsRhoNodal)
+      const dealii::AffineConstraints<double>     &constraintsRhoNodal,
+      const double tikhonovRegularizationConstant)
     {
       const double tol = 1.0e-6;
 
@@ -288,14 +320,17 @@ namespace dftfe
       fVector.reinit(x);
 
       vVector = 0.0, fVector = 0.0;
-      // std::srand(this_mpi_process);
       const dftfe::uInt local_size = vVector.locally_owned_size();
 
       // for (dftfe::uInt i = 0; i < local_size; i++)
       //   vVector.local_element(i) = x.local_element(i);
 
+      unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(x.get_mpi_communicator());
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
       for (dftfe::uInt i = 0; i < local_size; i++)
-        vVector.local_element(i) = ((double)std::rand()) / ((double)RAND_MAX);
+        vVector.local_element(i) = uni(randomIntGenerator);
 
       constraintsRhoNodal.set_zero(vVector);
 
@@ -311,7 +346,8 @@ namespace dftfe
           lowrankJacInvApply(lowrankFvcontainer,
                              lowrankVcontainer,
                              vVector,
-                             fVector);
+                             fVector,
+                             tikhonovRegularizationConstant);
           lambdaOld = lambdaNew;
           lambdaNew = (vVector * fVector);
 
@@ -389,12 +425,14 @@ namespace dftfe
     if (d_rankCurrentLRD >= 1 &&
         d_dftParamsPtr->methodSubTypeLRD == "ACCUMULATED_ADAPTIVE")
       {
-        relativeApproxError =
-          internalLowrankJacInv::relativeErrorEstimate(d_fvcontainerVals,
-                                                       residualRho,
-                                                       k0);
-        pcout << "Starting relative approx error accumulated: "
-              << relativeApproxError << std::endl;
+        relativeApproxError = internalLowrankJacInv::relativeErrorEstimate(
+          d_fvcontainerVals,
+          residualRho,
+          k0,
+          d_tikhonovRegularizationConstantLRD);
+        if (d_dftParamsPtr->verbosity >= 4)
+          pcout << "Starting relative approx error accumulated: "
+                << relativeApproxError << std::endl;
       }
 
     const double linearityRegimeFac      = d_dftParamsPtr->betaTol;
@@ -588,7 +626,10 @@ namespace dftfe
               {
                 relativeApproxError =
                   internalLowrankJacInv::relativeErrorEstimate(
-                    d_fvcontainerVals, residualRho, k0);
+                    d_fvcontainerVals,
+                    residualRho,
+                    k0,
+                    d_tikhonovRegularizationConstantLRD);
 
                 if (d_dftParamsPtr->verbosity >= 4)
                   pcout << " Relative approx error:  " << relativeApproxError
@@ -624,7 +665,12 @@ namespace dftfe
             << (rankAddedInThisScf + rankAddedBeforeClearing) << std::endl;
 
     internalLowrankJacInv::lowrankKernelApply(
-      d_fvcontainerVals, d_vcontainerVals, residualRho, k0, kernelAction);
+      d_fvcontainerVals,
+      d_vcontainerVals,
+      residualRho,
+      k0,
+      kernelAction,
+      d_tikhonovRegularizationConstantLRD);
 
     if (normValue < d_dftParamsPtr->selfConsistentSolverTolerance &&
         d_dftParamsPtr->estimateJacCondNoFinalSCFIter)
@@ -641,7 +687,8 @@ namespace dftfe
             d_fvcontainerVals,
             d_vcontainerVals,
             residualRho,
-            d_constraintsRhoNodal);
+            d_constraintsRhoNodal,
+            d_tikhonovRegularizationConstantLRD);
         pcout << " Maximum eigenvalue of low rank approx of Jacobian: "
               << maxAbsEigenValue << std::endl;
         pcout << " Minimum non-zero eigenvalue of low rank approx of Jacobian: "
@@ -668,7 +715,12 @@ namespace dftfe
             << std::endl;
 
     internalLowrankJacInv::predictNextStepResidual(
-      d_fvcontainerVals, residualRho, d_residualPredicted, k0, -const2);
+      d_fvcontainerVals,
+      residualRho,
+      d_residualPredicted,
+      k0,
+      -const2,
+      d_tikhonovRegularizationConstantLRD);
 
     // compute l2 norm of the field residual
     d_residualNormPredicted = rhofieldl2Norm(d_matrixFreeDataPRefined,

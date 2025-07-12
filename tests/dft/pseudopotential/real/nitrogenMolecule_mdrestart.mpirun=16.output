@@ -8,7 +8,7 @@ number of atoms: 2
 number of atoms types: 1
 Z:7
 =============================================================================================================================
-number of electrons: 10
+number of electrons: 1.000000000000000000e+01
 number of eigen values: 10
 =============================================================================================================================
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
@@ -17,8 +17,8 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.296487507334038058e+00 5.365505454334389135e-03 5.261733344690476891e-03
-AtomId 1:  1.296487520200330090e+00 -5.365505481765051043e-03 -5.261733373072828915e-03
+AtomId 0:  -1.296487393550975531e+00 5.365505447371216909e-03 5.261733343593902670e-03
+AtomId 1:  1.296487706554825037e+00 -5.365505474573791303e-03 -5.261733373180673204e-03
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -48,12 +48,12 @@ SCF iterations converged to the specified tolerance after: 2 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78841148
+             Total energy:         -19.78841145
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290498,0.001038,0.001018
-AtomId    1:  0.290490,0.001038,0.001018
+AtomId    0:  0.290497,0.001038,0.001018
+AtomId    1:  0.290491,0.001038,0.001018
 --------------------------------------------------------------------------------------------
 ---------------MDNVE() called------------------ 
 
@@ -72,16 +72,16 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 8 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.79364584
+             Total energy:         -19.79364581
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.289430,0.001557,0.001527
-AtomId    1:  0.289393,0.001557,0.001527
+AtomId    0:  0.289416,0.001557,0.001527
+AtomId    1:  0.289416,0.001557,0.001527
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 3 ------------------ 
  Temperature from velocities: 1829.43
@@ -114,6 +114,6 @@ AtomId    0:  0.287151,0.002070,0.002030
 AtomId    1:  0.287151,0.002070,0.002030
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 4 ------------------ 
- Temperature from velocities: 3511.53
+ Temperature from velocities: 3511.56
  Total Energy in Ha at timeIndex -19.78497
 ---MD run completed successfully---

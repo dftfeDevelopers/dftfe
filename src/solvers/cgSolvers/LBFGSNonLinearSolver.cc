@@ -580,7 +580,16 @@ namespace dftfe
                 d_noHistory = true;
               }
           }
+
+        d_alpha = d_normDeltaXnew * d_alpha > d_maxStepLength ?
+                    d_maxStepLength / d_normDeltaXnew :
+                    d_alpha;
+        if (d_debugLevel >= 1 && d_normDeltaXnew > d_maxStepLength)
+          pcout
+            << "Step length exceeded the maximum allowed limit, scaling the step by: "
+            << d_alpha << std::endl;
       }
+
     if (d_debugLevel >= 1)
       pcout << "Trying step size (scaling factor): " << d_alpha << std::endl;
   }

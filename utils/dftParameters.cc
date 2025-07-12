@@ -2213,6 +2213,10 @@ namespace dftfe
     useDevice           = false;
     useELPADeviceKernel = false;
 #endif
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    useDCCL             = false;
+    useELPADeviceKernel = false;
+#endif
 
     if (scalapackBlockSize == 0)
       {

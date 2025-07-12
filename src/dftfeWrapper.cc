@@ -713,9 +713,6 @@ namespace dftfe
                                              d_dftfeParamsPtr->nbandGrps,
                                              d_dftfeParamsPtr->verbosity);
 
-        std::srand(dealii::Utilities::MPI::this_mpi_process(
-          bandGroupsPool.get_intrapool_comm()));
-
         if (d_dftfeParamsPtr->verbosity >= 1)
           {
             dealii::ConditionalOStream pcout(
