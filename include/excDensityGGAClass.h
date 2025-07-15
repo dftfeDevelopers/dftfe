@@ -26,15 +26,15 @@ namespace dftfe
   class excDensityGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                       const dftfe::Int                            numThreads);
+    excDensityGGAClass(std::shared_ptr<xc_func_type> &funcXPtr,
+                       std::shared_ptr<xc_func_type> &funcCPtr,
+                       const bool                     useLibXC);
 
 
-    excDensityGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                       std::string      modelXCInputFile,
-                       const dftfe::Int numThreads);
+    excDensityGGAClass(std::shared_ptr<xc_func_type> &funcXPtr,
+                       std::shared_ptr<xc_func_type> &funcCPtr,
+                       std::string                    modelXCInputFile,
+                       const bool                     useLibXC);
 
 
     ~excDensityGGAClass();
@@ -106,12 +106,12 @@ namespace dftfe
     reinitKPointDependentVariables(dftfe::uInt kPointIndex) override;
 
   private:
-    NNGGA                                     *d_NNGGAPtr;
-    std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
-    std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
-    std::vector<double>                        d_spacingFDStencil;
-    dftfe::uInt                                d_vxcDivergenceTermFDStencilSize;
-    dftfe::Int                                 d_numThreads;
+    NNGGA                        *d_NNGGAPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
+    std::vector<double>           d_spacingFDStencil;
+    dftfe::uInt                   d_vxcDivergenceTermFDStencilSize;
+    bool d_useLibXC; ///< Flag to indicate whether to use libxc or not
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYGGACLASS_H

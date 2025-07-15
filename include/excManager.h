@@ -46,7 +46,8 @@ namespace dftfe
     init(std::string XCType,
          bool        isSpinPolarized,
          std::string modelXCInputFile,
-         const bool  printXCInfo = true);
+         const bool  printXCInfo = true,
+         const bool  useLibXC    = true);
 
     ExcSSDFunctionalBaseClass<memorySpace> *
     getExcSSDFunctionalObj();
@@ -64,11 +65,10 @@ namespace dftfe
 
   private:
     /// objects for various exchange-correlations (from libxc package)
-    std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
-    std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
 
     std::shared_ptr<ExcSSDFunctionalBaseClass<memorySpace>> d_excObj;
-    dftfe::Int                                              d_numThreads;
   };
 } // namespace dftfe
 

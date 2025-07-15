@@ -24,18 +24,13 @@
 #  include <DeviceAPICalls.h>
 #  include <excManagerDeviceKernels.h>
 #endif
-#ifdef _OPENMP
-#  include <omp.h>
-#else
-#  define omp_get_thread_num() 0
-#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::excTauMGGAClass(
-    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    const dftfe::Int                            numThreads)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::TauMGGA,
         densityFamilyType::GGA,
@@ -48,17 +43,17 @@ namespace dftfe
           WfcDescriptorDataAttributes::tauSpinUp,
           WfcDescriptorDataAttributes::tauSpinDown})
   {
-    d_funcXPtr   = funcXPtr;
-    d_funcCPtr   = funcCPtr;
-    d_numThreads = numThreads;
+    d_funcXPtr = funcXPtr;
+    d_funcCPtr = funcCPtr;
+    d_useLibxc = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::excTauMGGAClass(
-    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    std::string                                 modelXCInputFile,
-    const dftfe::Int                            numThreads)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    std::string                    modelXCInputFile,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::TauMGGA,
         densityFamilyType::GGA,
@@ -71,9 +66,9 @@ namespace dftfe
           WfcDescriptorDataAttributes::tauSpinUp,
           WfcDescriptorDataAttributes::tauSpinDown})
   {
-    d_funcXPtr   = funcXPtr;
-    d_funcCPtr   = funcCPtr;
-    d_numThreads = numThreads;
+    d_funcXPtr = funcXPtr;
+    d_funcCPtr = funcCPtr;
+    d_useLibxc = useLibxc;
   }
   template <dftfe::utils::MemorySpace memorySpace>
   excTauMGGAClass<memorySpace>::~excTauMGGAClass()
@@ -261,28 +256,56 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       laplacianValues(2 * nquad, 0.0);
 
-    xc_mgga_exc_vxc(d_funcXPtr[omp_get_thread_num()].get(),
-                    nquad,
-                    &densityValues[0],
-                    &sigmaValues[0],
-                    &laplacianValues[0],
-                    &tauValues[0],
-                    &exValues[0],
-                    &pdexDensityValuesNonNN[0],
-                    &pdexSigmaValues[0],
-                    &pdexLaplacianValues[0],
-                    &pdexTauValuesNonNN[0]);
-    xc_mgga_exc_vxc(d_funcCPtr[omp_get_thread_num()].get(),
-                    nquad,
-                    &densityValues[0],
-                    &sigmaValues[0],
-                    &laplacianValues[0],
-                    &tauValues[0],
-                    &ecValues[0],
-                    &pdecDensityValuesNonNN[0],
-                    &pdecSigmaValues[0],
-                    &pdecLaplacianValues[0],
-                    &pdecTauValuesNonNN[0]);
+    if (d_useLibxc)
+      {
+        xc_mgga_exc_vxc(d_funcXPtr.get(),
+                        nquad,
+                        &densityValues[0],
+                        &sigmaValues[0],
+                        &laplacianValues[0],
+                        &tauValues[0],
+                        &exValues[0],
+                        &pdexDensityValuesNonNN[0],
+                        &pdexSigmaValues[0],
+                        &pdexLaplacianValues[0],
+                        &pdexTauValuesNonNN[0]);
+        xc_mgga_exc_vxc(d_funcCPtr.get(),
+                        nquad,
+                        &densityValues[0],
+                        &sigmaValues[0],
+                        &laplacianValues[0],
+                        &tauValues[0],
+                        &ecValues[0],
+                        &pdecDensityValuesNonNN[0],
+                        &pdecSigmaValues[0],
+                        &pdecLaplacianValues[0],
+                        &pdecTauValuesNonNN[0]);
+      }
+    else
+      {
+        if (d_funcXPtr->info->name == "")
+          {
+          }
+        else if (d_funcXPtr->info->name == "")
+          {
+          }
+        else
+          {
+            dftfe::utils::throwException(
+              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the M-GGA functional.");
+          }
+        if (d_funcCPtr->info->name == "")
+          {
+          }
+        else if (d_funcCPtr->info->name == "")
+          {
+          }
+        else
+          {
+            dftfe::utils::throwException(
+              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the M-GGA functional.");
+          }
+      }
     for (size_t i = 0; i < nquad; i++)
       {
         if (std::abs(densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=

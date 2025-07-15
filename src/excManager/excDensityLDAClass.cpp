@@ -25,18 +25,14 @@
 #  include <DeviceAPICalls.h>
 #  include <excManagerDeviceKernels.h>
 #endif
-#ifdef _OPENMP
-#  include <omp.h>
-#else
-#  define omp_get_thread_num() 0
-#endif
+#include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
-    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    const dftfe::Int                            numThreads)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -44,18 +40,18 @@ namespace dftfe
           DensityDescriptorDataAttributes::valuesSpinUp,
           DensityDescriptorDataAttributes::valuesSpinDown})
   {
-    d_funcXPtr   = funcXPtr;
-    d_funcCPtr   = funcCPtr;
-    d_NNLDAPtr   = nullptr;
-    d_numThreads = numThreads;
+    d_funcXPtr = funcXPtr;
+    d_funcCPtr = funcCPtr;
+    d_NNLDAPtr = nullptr;
+    d_useLibXC = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
-    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    std::string                                 modelXCInputFile,
-    const dftfe::Int                            numThreads)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    std::string                    modelXCInputFile,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -68,7 +64,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_TORCH
     d_NNLDAPtr = new NNLDA(modelXCInputFile, true);
 #endif
-    d_numThreads = numThreads;
+    d_useLibXC = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -179,17 +175,68 @@ namespace dftfe
                                    densityValuesSpinUp,
                                    densityValuesSpinDown,
                                    densityValues);
+    if (d_useLibXC)
+      {
+        xc_lda_exc_vxc(d_funcXPtr.get(),
+                       nquad,
+                       densityValues.data(),
+                       exValues.data(),
+                       pdexDensityValuesNonNN.data());
+        xc_lda_exc_vxc(d_funcCPtr.get(),
+                       nquad,
+                       densityValues.data(),
+                       ecValues.data(),
+                       pdecDensityValuesNonNN.data());
+      }
+    else
+      {
+        if (d_funcXPtr->info->name == "")
+          {
+          }
+        else if (d_funcXPtr->info->name == "")
+          {
+          }
+        else
+          {
+            dftfe::utils::throwException(
+              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
+          }
+        if (d_funcCPtr->info->name == "")
+          {
+            if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+              {
+                LDAC_PW(nquad, densityValues, ecValues, pdecDensityValuesNonNN);
+              }
+            else
+              {
+                dftfe::utils::MemoryStorage<double, memorySpace>
+                  densityValuesTemp;
+                dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp;
+                dftfe::utils::MemoryStorage<double, memorySpace>
+                  pdecDensityTemp;
+                densityValuesTemp.resize(densityValues.size());
+                ecValuesTemp.resize(ecValues.size());
+                pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
+                densityValuesTemp.copyFrom(densityValues);
 
-    xc_lda_exc_vxc(d_funcXPtr[omp_get_thread_num()].get(),
-                   nquad,
-                   &densityValues[0],
-                   &exValues[0],
-                   &pdexDensityValuesNonNN[0]);
-    xc_lda_exc_vxc(d_funcCPtr[omp_get_thread_num()].get(),
-                   nquad,
-                   &densityValues[0],
-                   &ecValues[0],
-                   &pdecDensityValuesNonNN[0]);
+                LDAC_PW(nquad,
+                        densityValuesTemp,
+                        ecValuesTemp,
+                        pdecDensityTemp);
+
+                ecValues.copyFrom(ecValuesTemp);
+                pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+              }
+          }
+        else if (d_funcCPtr->info->name == "")
+          {
+          }
+        else
+          {
+            dftfe::utils::throwException(
+              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
+          }
+      }
 
     for (dftfe::uInt i = 0; i < nquad; i++)
       {

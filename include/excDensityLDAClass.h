@@ -27,14 +27,14 @@ namespace dftfe
   class excDensityLDAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                       const dftfe::Int                            numThreads);
+    excDensityLDAClass(std::shared_ptr<xc_func_type> &funcXPtr,
+                       std::shared_ptr<xc_func_type> &funcCPtr,
+                       const bool                     useLibXC);
 
-    excDensityLDAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                       std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                       std::string      modelXCInputFile,
-                       const dftfe::Int numThreads);
+    excDensityLDAClass(std::shared_ptr<xc_func_type> &funcXPtr,
+                       std::shared_ptr<xc_func_type> &funcCPtr,
+                       std::string                    modelXCInputFile,
+                       const bool                     useLibXC);
 
     ~excDensityLDAClass();
 
@@ -106,10 +106,10 @@ namespace dftfe
     reinitKPointDependentVariables(dftfe::uInt kPointIndex) override;
 
   private:
-    NNLDA                                     *d_NNLDAPtr;
-    std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
-    std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
-    dftfe::Int                                 d_numThreads;
+    NNLDA                        *d_NNLDAPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
+    bool d_useLibXC; ///< Flag to indicate whether to use libxc or not
   };
 } // namespace dftfe
 

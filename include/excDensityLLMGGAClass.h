@@ -14,14 +14,14 @@ namespace dftfe
   class excDensityLLMGGAClass : public ExcSSDFunctionalBaseClass<memorySpace>
   {
   public:
-    excDensityLLMGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                          std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                          const dftfe::Int numThreads);
+    excDensityLLMGGAClass(std::shared_ptr<xc_func_type> &funcXPtr,
+                          std::shared_ptr<xc_func_type> &funcCPtr,
+                          const bool                     useLibXC);
 
-    excDensityLLMGGAClass(std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-                          std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-                          std::string      modelXCInputFile,
-                          const dftfe::Int numThreads);
+    excDensityLLMGGAClass(std::shared_ptr<xc_func_type> &funcXPtr,
+                          std::shared_ptr<xc_func_type> &funcCPtr,
+                          std::string                    modelXCInputFile,
+                          const bool                     useLibXC);
 
     ~excDensityLLMGGAClass();
 
@@ -92,12 +92,12 @@ namespace dftfe
     reinitKPointDependentVariables(dftfe::uInt kPointIndex) override;
 
   private:
-    NNLLMGGA                                  *d_NNLLMGGAPtr;
-    std::vector<std::shared_ptr<xc_func_type>> d_funcXPtr;
-    std::vector<std::shared_ptr<xc_func_type>> d_funcCPtr;
-    std::vector<double>                        d_spacingFDStencil;
-    dftfe::uInt                                d_vxcDivergenceTermFDStencilSize;
-    dftfe::Int                                 d_numThreads;
+    NNLLMGGA                     *d_NNLLMGGAPtr;
+    std::shared_ptr<xc_func_type> d_funcXPtr;
+    std::shared_ptr<xc_func_type> d_funcCPtr;
+    std::vector<double>           d_spacingFDStencil;
+    dftfe::uInt                   d_vxcDivergenceTermFDStencilSize;
+    bool d_useLibXC; ///< Flag to indicate whether to use libxc or not
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYLLMGGACLASS_H

@@ -25,18 +25,13 @@
 #  include <DeviceAPICalls.h>
 #  include <excManagerDeviceKernels.h>
 #endif
-#ifdef _OPENMP
-#  include <omp.h>
-#else
-#  define omp_get_thread_num() 0
-#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityGGAClass<memorySpace>::excDensityGGAClass(
-    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    const dftfe::Int                            numThreads)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::GGA,
         densityFamilyType::GGA,
@@ -46,18 +41,18 @@ namespace dftfe
           DensityDescriptorDataAttributes::gradValuesSpinUp,
           DensityDescriptorDataAttributes::gradValuesSpinDown})
   {
-    d_funcXPtr   = funcXPtr;
-    d_funcCPtr   = funcCPtr;
-    d_NNGGAPtr   = nullptr;
-    d_numThreads = numThreads;
+    d_funcXPtr = funcXPtr;
+    d_funcCPtr = funcCPtr;
+    d_NNGGAPtr = nullptr;
+    d_useLibXC = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityGGAClass<memorySpace>::excDensityGGAClass(
-    std::vector<std::shared_ptr<xc_func_type>> &funcXPtr,
-    std::vector<std::shared_ptr<xc_func_type>> &funcCPtr,
-    std::string                                 modelXCInputFile,
-    const dftfe::Int                            numThreads)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    std::string                    modelXCInputFile,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::GGA,
         densityFamilyType::GGA,
@@ -72,7 +67,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_TORCH
     d_NNGGAPtr = new NNGGA(modelXCInputFile, true);
 #endif
-    d_numThreads = numThreads;
+    d_useLibXC = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -209,10 +204,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       pdecSigmaValues(3 * nquad, 0);
 
-    // time1 = MPI_Wtime() - time1;
-    // std::cout << "Time taken for auxDensityMatrix.applyLocalOperations: "
-    //           << time1 << " seconds" << std::endl;
-    // double time2 = MPI_Wtime();            
+
     dftfe::internal::fillRhoSigmaVector(nquad,
                                         densityValuesSpinUp,
                                         densityValuesSpinDown,
@@ -220,68 +212,49 @@ namespace dftfe
                                         gradValuesSpinDown,
                                         densityValues,
                                         sigmaValues);
-    //   time2 = MPI_Wtime() - time2;
-    // std::cout << "Time taken for fillRhoSigmaVector: " << time2
-    //           << " seconds" << std::endl;  
-    //   double time3 = MPI_Wtime();                                        
-      std::vector<dftfe::uInt> nsize(d_numThreads,dftfe::uInt(nquad/d_numThreads));
-      std::vector<dftfe::uInt> shift(d_numThreads,0);
-      dftfe::uInt nRem = nquad - nsize[0] * d_numThreads;
-      dftfe::uInt totalShift = 0;
-      for (dftfe::uInt i = 0; i < d_numThreads; i++)
-        {
-          shift[i] = totalShift; 
-          if(nRem > 0)
-          { nsize[i] ++;
-            nRem--;
-          }
-          totalShift += nsize[i];  
 
-        }
-    #pragma omp parallel num_threads(d_numThreads)    
-    {
-      //std::cout<<"Thread Id and num of Quad Points: "<<omp_get_thread_num()<<" "<<nsize[omp_get_thread_num()]<<std::endl;
-    //   std::vector<double> densityValuesLocal(2 * nsize[omp_get_thread_num()], 0.5);
-    //   std::vector<double> sigmaValuesLocal(3 * nsize[omp_get_thread_num()], 0.5);
-    //   std::vector<double> exValuesLocal(nsize[omp_get_thread_num()], 0.5);
-    //   std::vector<double> ecValuesLocal(nsize[omp_get_thread_num()], 0.5);
-    //   std::vector<double> pdexDensityValuesNonNNLocal(2 * nsize[omp_get_thread_num()], 0.5);
-    //   std::vector<double> pdecDensityValuesNonNNLocal(2 * nsize[omp_get_thread_num()], 0.5);
-    //   std::vector<double> pdexSigmaValuesLocal(3 * nsize[omp_get_thread_num()], 0.5);
-    //   std::vector<double> pdecSigmaValuesLocal(3 * nsize[omp_get_thread_num()], 0.5);
-    //   xc_gga_exc_vxc(d_funcXPtr[omp_get_thread_num()].get(),
-    //                nsize[omp_get_thread_num()],
-    //                densityValuesLocal.data(),
-    //                sigmaValuesLocal.data(),
-    //                exValuesLocal.data(),
-    //                pdexDensityValuesNonNNLocal.data(),
-    //                pdexSigmaValuesLocal.data());
-    // xc_gga_exc_vxc(d_funcCPtr[omp_get_thread_num()].get(),
-    //                nsize[omp_get_thread_num()],
-    //                densityValuesLocal.data(),
-    //                sigmaValuesLocal.data(),
-    //                ecValuesLocal.data(),
-    //                pdecDensityValuesNonNNLocal.data(),
-    //                pdecSigmaValuesLocal.data());      
-      xc_gga_exc_vxc(d_funcXPtr[omp_get_thread_num()].get(),
-                   nsize[omp_get_thread_num()],
-                   densityValues.data()+shift[omp_get_thread_num()]*2,
-                   sigmaValues.data()+shift[omp_get_thread_num()]*3,
-                   exValues.data()+shift[omp_get_thread_num()]*1,
-                   pdexDensityValuesNonNN.data()+shift[omp_get_thread_num()]*2,
-                   pdexSigmaValues.data()+shift[omp_get_thread_num()]*2);
-    xc_gga_exc_vxc(d_funcCPtr[omp_get_thread_num()].get(),
-                   nsize[omp_get_thread_num()],
-                   densityValues.data()+shift[omp_get_thread_num()]*2,
-                   sigmaValues.data()+shift[omp_get_thread_num()]*3,
-                   ecValues.data()+shift[omp_get_thread_num()]*1,
-                   pdecDensityValuesNonNN.data()+shift[omp_get_thread_num()]*2,
-                   pdecSigmaValues.data()+shift[omp_get_thread_num()]*2);
-    }
-    // time3 = MPI_Wtime() - time3;
-    // std::cout << "Time taken for xc_gga_exc_vxc: " << time3
-    //           << " seconds" << std::endl;
-    // double time4 = MPI_Wtime();          
+    if (d_useLibXC)
+      {
+        xc_gga_exc_vxc(d_funcXPtr.get(),
+                       nquad,
+                       densityValues.data(),
+                       sigmaValues.data(),
+                       exValues.data(),
+                       pdexDensityValuesNonNN.data(),
+                       pdexSigmaValues.data());
+        xc_gga_exc_vxc(d_funcCPtr.get(),
+                       nquad,
+                       densityValues.data(),
+                       sigmaValues.data(),
+                       ecValues.data(),
+                       pdecDensityValuesNonNN.data(),
+                       pdecSigmaValues.data());
+      }
+    else
+      {
+        if (d_funcXPtr->info->name == "")
+          {
+          }
+        else if (d_funcXPtr->info->name == "")
+          {
+          }
+        else
+          {
+            dftfe::utils::throwException(
+              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
+          }
+        if (d_funcCPtr->info->name == "")
+          {
+          }
+        else if (d_funcCPtr->info->name == "")
+          {
+          }
+        else
+          {
+            dftfe::utils::throwException(
+              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
+          }
+      }
     for (size_t i = 0; i < nquad; i++)
       {
         exValues[i] =
@@ -293,9 +266,7 @@ namespace dftfe
         pdecDensitySpinUpValues[i]   = pdecDensityValuesNonNN[2 * i + 0];
         pdecDensitySpinDownValues[i] = pdecDensityValuesNonNN[2 * i + 1];
       }
-    //   time4 = MPI_Wtime() - time4;
-    // std::cout << "Time taken for post processing: " << time4
-    //           << " seconds" << std::endl;
+
 
 #ifdef DFTFE_WITH_TORCH
     if (d_NNGGAPtr != nullptr)
