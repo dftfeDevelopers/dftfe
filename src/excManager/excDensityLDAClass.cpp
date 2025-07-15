@@ -190,6 +190,7 @@ namespace dftfe
       }
     else
       {
+        // Checking for exchange contribution
         if (d_funcXPtr->info->name == "")
           {
           }
@@ -201,6 +202,7 @@ namespace dftfe
             dftfe::utils::throwException(
               "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
           }
+        // Checking for correlation contribution
         if (d_funcCPtr->info->name == "")
           {
             if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)

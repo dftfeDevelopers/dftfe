@@ -15,8 +15,22 @@
 // ---------------------------------------------------------------------
 //
 
-DFTFE_FUNCTIONALEVALUATOR_LDA_C(PW,{})
-DFTFE_FUNCTIONALEVALUATOR_LDA_X(SLA,{})
+DFTFE_FUNCTIONALEVALUATOR_LDA_C(PW,{
+  //Body of correlation functional evaluation
+  // corrEnergyOut[index] = densityValues[2 * index + 0] *
+  //                        densityValues[2 * index + 1] *
+  //                        pdecDensity[index];
+  // pdecDensity[index] = densityValues[2 * index + 0] +
+  //                      densityValues[2 * index + 1];
+})
+DFTFE_FUNCTIONALEVALUATOR_LDA_X(SLA,{
+    //Body of exchange functional evaluation
+  // excEnergyOut[index] = densityValues[2 * index + 0] *
+  //                        densityValues[2 * index + 1] *
+  //                        pdecDensity[index];
+  // pdexDensity[index] = densityValues[2 * index + 0] +
+  //                      densityValues[2 * index + 1];
+})
 
 
 
