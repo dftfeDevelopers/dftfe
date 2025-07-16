@@ -14,7 +14,7 @@ end
 
 
 subsection Brillouin zone k point sampling options
-  set USE GROUP SYMMETRY         = true
+  set USE GROUP SYMMETRY         = false
   set USE TIME REVERSAL SYMMETRY = true
   subsection Monkhorst-Pack (MP) grid generation
     set SAMPLING POINTS 1 = 4

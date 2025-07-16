@@ -98,7 +98,8 @@ namespace dftfe
                                 dummy,
                                 dummy,
                                 d_tauOutQuadValues,
-                                isGradDensityDataDependent,
+                                isGradDensityDataDependent ||
+                                  (d_dftParamsPtr->printKE && isGroundState),
                                 isTauMGGA ||
                                   (d_dftParamsPtr->printKE && isGroundState),
                                 d_mpiCommParent,
@@ -119,7 +120,8 @@ namespace dftfe
                                 dummy,
                                 dummy,
                                 d_tauOutQuadValues,
-                                isGradDensityDataDependent,
+                                isGradDensityDataDependent ||
+                                  (d_dftParamsPtr->printKE && isGroundState),
                                 isTauMGGA ||
                                   (d_dftParamsPtr->printKE && isGroundState),
                                 d_mpiCommParent,
@@ -146,7 +148,8 @@ namespace dftfe
         const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
         d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
-        if (isGradDensityDataDependent)
+        if (isGradDensityDataDependent ||
+            (d_dftParamsPtr->printKE && isGroundState))
           {
             d_gradDensityOutQuadValues.resize(
               d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
@@ -184,7 +187,8 @@ namespace dftfe
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
                             d_tauOutQuadValues,
-                            isGradDensityDataDependent,
+                            isGradDensityDataDependent ||
+                              (d_dftParamsPtr->printKE && isGroundState),
                             isTauMGGA ||
                               (d_dftParamsPtr->printKE && isGroundState),
                             d_mpiCommParent,
@@ -205,7 +209,8 @@ namespace dftfe
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
                             d_tauOutQuadValues,
-                            isGradDensityDataDependent,
+                            isGradDensityDataDependent ||
+                              (d_dftParamsPtr->printKE && isGroundState),
                             isTauMGGA ||
                               (d_dftParamsPtr->printKE && isGroundState),
                             d_mpiCommParent,
