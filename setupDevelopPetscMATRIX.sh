@@ -53,7 +53,7 @@ withCustomizedDealii=OFF
 #Compiler options and flags
 cxx_compiler=mpicxx  #sets DCMAKE_CXX_COMPILER
 cxx_flags="-std=c++17 -march=native -fopenmp -fPIC" #sets DCMAKE_CXX_FLAGS
-cxx_flagsRelease="-O2 -g" #sets DCMAKE_CXX_FLAGS_RELEASE
+cxx_flagsRelease="-O2" #sets DCMAKE_CXX_FLAGS_RELEASE
 device_flags="-arch=sm_70 -ccbin=mpicxx" # set DCMAKE_CXX_CUDA_FLAGS 
                            #(only applicable for withGPU=ON)
 device_architectures="70" # set DCMAKE_CXX_CUDA_ARCHITECTURES 
@@ -139,6 +139,13 @@ fi
 cd $out
 
 
+withComplex=OFF
+dealiiDir=$dealiiPetscRealDir
+echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
+mkdir -p real && cd real
+cmake_configure "$SRC" && make -j8
+cd ..
+
 withComplex=ON
 dealiiDir=$dealiiPetscComplexDir
 echo -e "${Blu}Building Complex executable in $build_type mode...${RCol}"
@@ -146,11 +153,5 @@ mkdir -p complex && cd complex
 cmake_configure "$SRC" && make -j8
 cd ..
 
-withComplex=OFF
-dealiiDir=$dealiiPetscRealDir
-echo -e "${Blu}Building Real executable in $build_type mode...${RCol}"
-mkdir -p real && cd real
-cmake_configure "$SRC" && make -j8
-cd ..
 
 echo -e "${Blu}Build complete.${RCol}"
