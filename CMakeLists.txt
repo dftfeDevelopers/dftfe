@@ -281,7 +281,6 @@ SET(DEVICE_SRC
   ./src/dft/densityCalculatorDeviceKernels.cc
   ./src/dft/densityFirstOrderResponseCalculatorDeviceKernels.cc
   ./src/dft/solveVselfInBinsDeviceKernels.cc
-  ./src/dft/kineticEnergyDensityCalculatorDeviceKernels.cc
   ./src/linAlg/linearAlgebraOperationsDeviceKernels.cc
   ./src/force/forceWfcContractionsDeviceKernels.cc
   ./utils/constraintMatrixInfoDeviceKernels.cc
