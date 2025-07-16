@@ -155,12 +155,9 @@ namespace dftfe
             AssertThrow(error == ELPA_OK,
                         dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
-            if ((processGrid->get_process_grid_rows()) * blockSize > na)
-              {
-                elpa_set(elpaHandle, "cannon_for_generalized", 0, &error);
-                AssertThrow(error == ELPA_OK,
-                            dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-              }
+            elpa_set(elpaHandle, "cannon_for_generalized", 0, &error);
+            AssertThrow(error == ELPA_OK,
+                        dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
             /* Setup */
             AssertThrow(elpa_setup(elpaHandle) == ELPA_OK,

@@ -23,7 +23,7 @@
 #  include <deviceDirectCCLWrapper.h>
 #  include <deviceKernelsGeneric.h>
 #  include <DeviceDataTypeOverloads.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <DeviceAPICalls.h>
 #  include <Exceptions.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)
@@ -64,7 +64,7 @@ namespace dftfe
 #  endif
       if (!commStreamCreated)
         {
-          dftfe::utils::deviceStreamCreate(&d_deviceCommStream, true);
+          dftfe::utils::deviceStreamCreate(d_deviceCommStream, true);
           commStreamCreated = true;
         }
     }
@@ -174,38 +174,18 @@ namespace dftfe
       const std::complex<double> *send,
       std::complex<double>       *recv,
       dftfe::Int                  size,
-      double                     *tempReal,
-      double                     *tempImag,
       deviceStream_t             &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
       if (ncclCommInit)
         {
-          deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
-                                                               send,
-                                                               tempReal,
-                                                               tempImag);
-          NCCLCHECK(ncclGroupStart());
-          NCCLCHECK(ncclAllReduce((const void *)tempReal,
-                                  (void *)tempReal,
-                                  size,
+          NCCLCHECK(ncclAllReduce((const void *)send,
+                                  (void *)recv,
+                                  size * 2,
                                   ncclDouble,
                                   ncclSum,
                                   *ncclCommPtr,
                                   stream));
-          NCCLCHECK(ncclAllReduce((const void *)tempImag,
-                                  (void *)tempImag,
-                                  size,
-                                  ncclDouble,
-                                  ncclSum,
-                                  *ncclCommPtr,
-                                  stream));
-          NCCLCHECK(ncclGroupEnd());
-
-          deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
-                                                               tempReal,
-                                                               tempImag,
-                                                               recv);
         }
 #  endif
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
@@ -238,37 +218,18 @@ namespace dftfe
       const std::complex<float> *send,
       std::complex<float>       *recv,
       dftfe::Int                 size,
-      float                     *tempReal,
-      float                     *tempImag,
       deviceStream_t            &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
       if (ncclCommInit)
         {
-          deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size,
-                                                               send,
-                                                               tempReal,
-                                                               tempImag);
-          NCCLCHECK(ncclGroupStart());
-          NCCLCHECK(ncclAllReduce((const void *)tempReal,
-                                  (void *)tempReal,
-                                  size,
+          NCCLCHECK(ncclAllReduce((const void *)send,
+                                  (void *)recv,
+                                  size * 2,
                                   ncclFloat,
                                   ncclSum,
                                   *ncclCommPtr,
                                   stream));
-          NCCLCHECK(ncclAllReduce((const void *)tempImag,
-                                  (void *)tempImag,
-                                  size,
-                                  ncclFloat,
-                                  ncclSum,
-                                  *ncclCommPtr,
-                                  stream));
-          NCCLCHECK(ncclGroupEnd());
-          deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size,
-                                                               tempReal,
-                                                               tempImag,
-                                                               recv);
         }
 #  endif
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)
@@ -376,65 +337,27 @@ namespace dftfe
       std::complex<float>        *recv2,
       dftfe::Int                  size1,
       dftfe::Int                  size2,
-      double                     *tempReal1,
-      float                      *tempReal2,
-      double                     *tempImag1,
-      float                      *tempImag2,
       deviceStream_t             &stream)
     {
 #  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
       if (ncclCommInit)
         {
-          deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size1,
-                                                               send1,
-                                                               tempReal1,
-                                                               tempImag1);
-
-          deviceKernelsGeneric::copyComplexArrToRealArrsDevice(size2,
-                                                               send2,
-                                                               tempReal2,
-                                                               tempImag2);
-
           NCCLCHECK(ncclGroupStart());
-          NCCLCHECK(ncclAllReduce((const void *)tempReal1,
-                                  (void *)tempReal1,
-                                  size1,
+          NCCLCHECK(ncclAllReduce((const void *)send1,
+                                  (void *)recv1,
+                                  size1 * 2,
                                   ncclDouble,
                                   ncclSum,
                                   *ncclCommPtr,
                                   stream));
-          NCCLCHECK(ncclAllReduce((const void *)tempImag1,
-                                  (void *)tempImag1,
-                                  size1,
-                                  ncclDouble,
-                                  ncclSum,
-                                  *ncclCommPtr,
-                                  stream));
-          NCCLCHECK(ncclAllReduce((const void *)tempReal2,
-                                  (void *)tempReal2,
-                                  size2,
-                                  ncclFloat,
-                                  ncclSum,
-                                  *ncclCommPtr,
-                                  stream));
-          NCCLCHECK(ncclAllReduce((const void *)tempImag2,
-                                  (void *)tempImag2,
-                                  size2,
+          NCCLCHECK(ncclAllReduce((const void *)send2,
+                                  (void *)recv2,
+                                  size2 * 2,
                                   ncclFloat,
                                   ncclSum,
                                   *ncclCommPtr,
                                   stream));
           NCCLCHECK(ncclGroupEnd());
-
-          deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size1,
-                                                               tempReal1,
-                                                               tempImag1,
-                                                               recv1);
-
-          deviceKernelsGeneric::copyRealArrsToComplexArrDevice(size2,
-                                                               tempReal2,
-                                                               tempImag2,
-                                                               recv2);
         }
 #  endif
 #  if defined(DFTFE_WITH_DEVICE_AWARE_MPI)

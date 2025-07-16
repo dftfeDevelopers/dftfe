@@ -40,7 +40,7 @@ Saving Quad data in progress...
 Saving Quad data completed...
 Saving Quad data in progress...
 Saving Quad data completed...
-SCF iterations converged to the specified tolerance after: 10 iterations.
+SCF iterations converged to the specified tolerance after: 8 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -48,8 +48,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.290838,0.000000,0.000000
-AtomId    1:  0.290838,0.000000,0.000000
+AtomId    0:  0.290854,0.000000,0.000000
+AtomId    1:  0.290818,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 0 ------------------ 
  Temperature from velocities: 300.00
@@ -79,7 +79,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78599332
+             Total energy:         -19.78599331
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.78841760
+             Total energy:         -19.78841758
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -121,6 +121,6 @@ AtomId    0:  0.290496,0.001037,0.001017
 AtomId    1:  0.290495,0.001037,0.001017
 --------------------------------------------------------------------------------------------
 ---------------MD STEP 2 ------------------ 
- Temperature from velocities: 727.39
+ Temperature from velocities: 727.38
  Total Energy in Ha at timeIndex -19.78496
 ---MD run completed successfully---

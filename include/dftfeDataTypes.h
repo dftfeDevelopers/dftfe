@@ -20,14 +20,12 @@
 #ifndef dftfeDataTypes_H_
 #define dftfeDataTypes_H_
 
-#include <deal.II/base/config.h>
-#include <deal.II/base/types.h>
-
 // Include generic C++ headers
 #include <fstream>
 #include <iostream>
 #include <fenv.h>
-
+#include <complex>
+#include <mpi.h>
 // commonly used  typedefs used in dftfe go here
 namespace dftfe
 {

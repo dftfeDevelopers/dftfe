@@ -1114,7 +1114,7 @@ namespace dftfe
           prm.declare_entry(
             "TENSOR OP TYPE SINGLE PREC CHEBY",
             "FP32",
-            dealii::Patterns::Selection("FP32|TF32"),
+            dealii::Patterns::Selection("FP32|TF32|BF16"),
             "[Advanced] Tensor operation datatype for the modified single precision algorithm for Chebyshev filtering, this only used on Nvidia GPUs with compute capability greater than 80. Default setting is FP32.");
 
           prm.declare_entry(
@@ -2209,6 +2209,10 @@ namespace dftfe
 
 #ifndef DFTFE_WITH_DEVICE
     useDevice           = false;
+    useELPADeviceKernel = false;
+#endif
+#if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
+    useDCCL             = false;
     useELPADeviceKernel = false;
 #endif
 

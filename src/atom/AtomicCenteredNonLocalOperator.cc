@@ -20,7 +20,7 @@
 #if defined(DFTFE_WITH_DEVICE)
 #  include <AtomicCenteredNonLocalOperatorKernelsDevice.h>
 #  include <DeviceTypeConfig.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <DeviceAPICalls.h>
 #  include <DeviceDataTypeOverloads.h>
 #endif
