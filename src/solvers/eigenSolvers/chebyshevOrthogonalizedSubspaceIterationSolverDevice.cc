@@ -405,18 +405,7 @@ namespace dftfe
                   if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby!="STANDARD")
                       {
-                        if (d_dftParams.communPrecCheby=="FP32")
-                        {
-                            (*XBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                            (*HXBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                            (*XBlock2FP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                            (*HXBlock2FP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                        }
-                        else if (d_dftParams.communPrecCheby=="BFP16")
+                        if (d_dftParams.communPrecCheby=="BFP16")
                         {
                             (*XBlockFP32).setCommunicationPrecision(
                               dftfe::utils::mpi::communicationPrecision::Half);
@@ -449,14 +438,17 @@ namespace dftfe
                     if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby!="STANDARD")
                       {
-                        (*XBlock).setCommunicationPrecision(
-                          dftfe::utils::mpi::communicationPrecision::Double);
-                        (*HXBlock).setCommunicationPrecision(
-                          dftfe::utils::mpi::communicationPrecision::Double);
-                        (*XBlock2).setCommunicationPrecision(
-                          dftfe::utils::mpi::communicationPrecision::Double);
-                        (*HXBlock2).setCommunicationPrecision(
-                          dftfe::utils::mpi::communicationPrecision::Double);
+                        if (d_dftParams.communPrecCheby=="BFP16")
+                        {
+                            (*XBlockFP32).setCommunicationPrecision(
+                              dftfe::utils::mpi::communicationPrecision::Single);
+                            (*HXBlockFP32).setCommunicationPrecision(
+                              dftfe::utils::mpi::communicationPrecision::Single);
+                            (*XBlock2FP32).setCommunicationPrecision(
+                              dftfe::utils::mpi::communicationPrecision::Single);
+                            (*HXBlock2FP32).setCommunicationPrecision(
+                              dftfe::utils::mpi::communicationPrecision::Single);
+                        } 
                       }
                   }
                 else
@@ -468,14 +460,7 @@ namespace dftfe
                     if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby!="STANDARD")
                       {
-                        if (d_dftParams.communPrecCheby=="FP32")
-                        {
-                            (*XBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                            (*HXBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                        }
-                        else if (d_dftParams.communPrecCheby=="BFP16")
+                         if (d_dftParams.communPrecCheby=="BFP16")
                         {
                             (*XBlockFP32).setCommunicationPrecision(
                               dftfe::utils::mpi::communicationPrecision::Half);
@@ -500,10 +485,13 @@ namespace dftfe
                     if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby!="STANDARD")
                       {
-                        (*XBlock).setCommunicationPrecision(
-                          dftfe::utils::mpi::communicationPrecision::Double);
-                        (*HXBlock).setCommunicationPrecision(
-                          dftfe::utils::mpi::communicationPrecision::Double);
+                         if (d_dftParams.communPrecCheby=="BFP16")
+                        {
+                            (*XBlockFP32).setCommunicationPrecision(
+                              dftfe::utils::mpi::communicationPrecision::Single);
+                            (*HXBlockFP32).setCommunicationPrecision(
+                              dftfe::utils::mpi::communicationPrecision::Single);
+                        } 
                       }
                   }
               }
