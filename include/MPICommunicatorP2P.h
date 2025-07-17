@@ -53,8 +53,9 @@ namespace dftfe
 
       enum class communicationPrecision
       {
-        single,
-        full
+        Half,
+        Single,
+        Double
       };
 
 

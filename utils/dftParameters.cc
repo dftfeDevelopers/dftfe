@@ -1095,10 +1095,10 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Default setting is false.");
 
           prm.declare_entry(
-            "USE SINGLE PREC COMMUN CHEBY",
-            "false",
-            dealii::Patterns::Bool(),
-            "[Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.");
+            "COMMUN PREC CHEBY",
+            "STANDARD",
+            dealii::Patterns::Selection("STANDARD|FP32|BFP16"),
+            "[Advanced] Use low precision communication in Chebyshev filtering. Default setting is false.");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1408,7 +1408,7 @@ namespace dftfe
     useDevice                                      = false;
     deviceFineGrainedTimings                       = false;
     allowFullCPUMemSubspaceRot                     = true;
-    useSinglePrecCommunCheby                       = false;
+    communPrecCheby                                = "STANDARD";
     overlapComputeCommunCheby                      = false;
     overlapComputeCommunOrthoRR                    = false;
     autoDeviceBlockSizes                           = true;
@@ -1795,9 +1795,9 @@ namespace dftfe
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
         useMixedPrecCommunOnlyXtHXXtOX =
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
-        useSinglePrecCommunCheby = prm.get_bool("USE SINGLE PREC COMMUN CHEBY");
-        useSinglePrecCheby       = prm.get_bool("USE SINGLE PREC CHEBY");
-        tensorOpType             = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
+        communPrecCheby           = prm.get("COMMUN PREC CHEBY");
+        useSinglePrecCheby        = prm.get_bool("USE SINGLE PREC CHEBY");
+        tensorOpType              = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -2197,7 +2197,7 @@ namespace dftfe
         useMixedPrecXtOX                    = true;
         useMixedPrecXtHX                    = true;
         useMixedPrecCGS_SR                  = true;
-        useSinglePrecCommunCheby            = true;
+        useSinglePrecCheby                  = true;
         reuseLanczosUpperBoundFromFirstCall = true;
       }
 

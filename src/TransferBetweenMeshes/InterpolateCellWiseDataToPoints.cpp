@@ -303,7 +303,7 @@ namespace dftfe
                                             dftfe::utils::MemorySpace::HOST>>(
       d_mpiPatternP2PPtr, 1);
     d_mpiCommP2PPtr->setCommunicationPrecision(
-      dftfe::utils::mpi::communicationPrecision::full);
+      dftfe::utils::mpi::communicationPrecision::Double);
     outputData.resize(d_numPointsLocal);
 
 
@@ -397,7 +397,7 @@ namespace dftfe
             dftfe::utils::MemorySpace::HOST>>(d_mpiPatternP2PPtr,
                                               numberOfVectors);
         d_mpiCommP2PPtr->setCommunicationPrecision(
-          dftfe::utils::mpi::communicationPrecision::full);
+          dftfe::utils::mpi::communicationPrecision::Double);
         outputData.resize(d_numPointsLocal * numberOfVectors);
       }
 
@@ -483,7 +483,7 @@ namespace dftfe
           dftfe::utils::mpi::MPICommunicatorP2P<T, memorySpace>>(
           d_mpiP2PPtrMemSpace, numberOfVectors);
         d_mpiCommPtrMemSpace->setCommunicationPrecision(
-          dftfe::utils::mpi::communicationPrecision::full);
+          dftfe::utils::mpi::communicationPrecision::Double);
         outputData.resize(d_numPointsLocal * numberOfVectors);
         d_cellLevelParentNodalMemSpace.resize(totalDofsInCells *
                                               numberOfVectors);
