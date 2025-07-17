@@ -99,8 +99,10 @@ namespace dftfe
                   gradDensitySpinDown[3 * index + j] *
                   gradDensitySpinDown[3 * index + j];
               }
-            tauVector[2 * index + 0] = max(tauSpinUp[index], tauMax);
-            tauVector[2 * index + 1] = max(tauSpinDown[index], tauMax);
+            tauVector[2 * index + 0] =
+              tauSpinUp[index] > tauMax ? tauSpinUp[index] : tauMax;
+            tauVector[2 * index + 1] =
+              tauSpinDown[index] > tauMax ? tauSpinDown[index] : tauMax;
           }
       },
       const dftfe::uInt numQuadPoints,
@@ -128,17 +130,23 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         &rhoVector)
     {
-      DFTFE_LAUNCH_KERNEL(
-        fillRhoVectorKernel,
-        (numQuadPoints + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::linearAlgebra::BLASWrapper<
-          dftfe::utils::MemorySpace::DEVICE>::d_streamId,
-        numQuadPoints,
-        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinUp.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinDown.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(rhoVector.data()));
+      const auto *densitySpinUpPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinUp.data());
+      const auto *densitySpinDownPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinDown.data());
+      auto *rhoVectorPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(rhoVector.data());
+      DFTFE_LAUNCH_KERNEL(fillRhoVectorKernel,
+                          (numQuadPoints +
+                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
+                          numQuadPoints,
+                          densitySpinUpPtr,
+                          densitySpinDownPtr,
+                          rhoVectorPtr);
     }
 
     template <>
@@ -162,20 +170,33 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         &sigmaVector)
     {
-      DFTFE_LAUNCH_KERNEL(
-        fillRhoSigmaVectorKernel,
-        (numQuadPoints + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::linearAlgebra::BLASWrapper<
-          dftfe::utils::MemorySpace::DEVICE>::d_streamId,
-        numQuadPoints,
-        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinUp.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinDown.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(gradDensitySpinUp.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(gradDensitySpinDown.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(rhoVector.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(sigmaVector.data()));
+      const auto *densitySpinUpPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinUp.data());
+      const auto *densitySpinDownPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinDown.data());
+      const auto *gradDensitySpinUpPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(gradDensitySpinUp.data());
+      const auto *gradDensitySpinDownPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(gradDensitySpinDown.data());
+      auto *rhoVectorPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(rhoVector.data());
+      auto *sigmaVectorPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(sigmaVector.data());
+
+      DFTFE_LAUNCH_KERNEL(fillRhoSigmaVectorKernel,
+                          (numQuadPoints +
+                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
+                          numQuadPoints,
+                          densitySpinUpPtr,
+                          densitySpinDownPtr,
+                          gradDensitySpinUpPtr,
+                          gradDensitySpinDownPtr,
+                          rhoVectorPtr,
+                          sigmaVectorPtr);
     }
 
     template <>
@@ -208,24 +229,42 @@ namespace dftfe
                   &tauVector,
       const double tauThreshold)
     {
-      DFTFE_LAUNCH_KERNEL(
-        fillRhoSigmaTauVectorKernel,
-        (numQuadPoints + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
-          dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        dftfe::linearAlgebra::BLASWrapper<
-          dftfe::utils::MemorySpace::DEVICE>::d_streamId,
-        numQuadPoints,
-        tauThreshold,
-        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinUp.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinDown.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(gradDensitySpinUp.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(gradDensitySpinDown.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tauSpinUp.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tauSpinDown.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(rhoVector.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(sigmaVector.data()),
-        dftfe::utils::makeDataTypeDeviceCompatible(tauVector.data()));
+      const auto *densitySpinUpPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinUp.data());
+      const auto *densitySpinDownPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(densitySpinDown.data());
+      const auto *gradDensitySpinUpPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(gradDensitySpinUp.data());
+      const auto *gradDensitySpinDownPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(gradDensitySpinDown.data());
+      const auto *tauSpinUpPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(tauSpinUp.data());
+      const auto *tauSpinDownPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(tauSpinDown.data());
+      auto *rhoVectorPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(rhoVector.data());
+      auto *sigmaVectorPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(sigmaVector.data());
+      auto *tauVectorPtr =
+        dftfe::utils::makeDataTypeDeviceCompatible(tauVector.data());
+      DFTFE_LAUNCH_KERNEL(fillRhoSigmaTauVectorKernel,
+                          (numQuadPoints +
+                           (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+                            dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          dftfe::linearAlgebra::BLASWrapper<
+                            dftfe::utils::MemorySpace::DEVICE>::d_streamId,
+                          numQuadPoints,
+                          tauThreshold,
+                          densitySpinUpPtr,
+                          densitySpinDownPtr,
+                          gradDensitySpinUpPtr,
+                          gradDensitySpinDownPtr,
+                          tauSpinUpPtr,
+                          tauSpinDownPtr,
+                          rhoVectorPtr,
+                          sigmaVectorPtr,
+                          tauVectorPtr);
     }
   }; // namespace internal
 } // namespace dftfe
