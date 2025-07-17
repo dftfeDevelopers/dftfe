@@ -17,7 +17,12 @@
 // @author Kartick Ramakrishnan, Nikhil Kodali
 //
 #include <KohnShamDFTOperatorDeviceKernels.h>
-
+#include <deviceKernelsGeneric.h>
+#include <DeviceAPICalls.h>
+#include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfig.h>
+#include <DeviceKernelLauncherHelpers.h>
+#include <BLASWrapper.h>
 namespace dftfe
 {
   namespace internal
@@ -42,7 +47,9 @@ namespace dftfe
         &jxwVector,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         &VeffJxW)
-    {}
+    {
+      // Not yet implemented
+    }
     template <>
     void
     computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
@@ -70,7 +77,9 @@ namespace dftfe
         &gradientRhoOtherSpinIndex,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         &invJacderExcWithSigmaTimesGradRhoJxW)
-    {}
+    {
+      // Not yet implemented
+    }
 
     template <>
     void
@@ -92,7 +101,9 @@ namespace dftfe
         &invJacobianEntries,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         &invJacinvJacderExcWithTauJxW)
-    {}
+    {
+      // Not yet implemented
+    }
 
     template <>
     void
@@ -120,6 +131,8 @@ namespace dftfe
         &halfKSquareTimesDerExcwithTauJxW,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         &invJacKpointTimesderExcwithTauJxW)
-    {}
+    {
+      // Not yet implemented
+    }
   }; // namespace internal
 } // namespace dftfe

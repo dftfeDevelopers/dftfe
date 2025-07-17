@@ -692,7 +692,7 @@ namespace dftfe
 
         prm.declare_entry(
           "USE LIBXC FOR XC FUNCTIONAL EVALUATION",
-          "false",
+          "true",
           dealii::Patterns::Bool(),
           "[Developer] Boolean parameter specifying whether LIBXC should be used to evaluate the exchange-correlation functional. If set to true, the LIBXC library is used to evaluate the exchange-correlation functional. If set to false, the exchange-correlation functional is evaluated using the internal implementation wchih can leverage GPUs");
 
@@ -1720,16 +1720,17 @@ namespace dftfe
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
       prm.leave_subsection();
-      isPseudopotential      = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-      pseudoTestsFlag        = prm.get_bool("PSEUDO TESTS FLAG");
-      pseudoPotentialFile    = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-      XCType                 = prm.get("EXCHANGE CORRELATION TYPE");
-      useLiXCForXCEvaluation = prm.get_bool("USE LIBXC FOR XC EVALUATION");
-      spinPolarized          = prm.get_integer("SPIN POLARIZATION");
-      modelXCInputFile       = prm.get("MODEL XC INPUT FILE");
-      auxBasisTypeXC         = prm.get("AUX BASIS TYPE");
-      auxBasisDataXC         = prm.get("AUX BASIS DATA");
-      tot_magnetization      = prm.get_double("TOTAL MAGNETIZATION");
+      isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
+      pseudoPotentialFile = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
+      XCType              = prm.get("EXCHANGE CORRELATION TYPE");
+      useLiXCForXCEvaluation =
+        prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
+      spinPolarized     = prm.get_integer("SPIN POLARIZATION");
+      modelXCInputFile  = prm.get("MODEL XC INPUT FILE");
+      auxBasisTypeXC    = prm.get("AUX BASIS TYPE");
+      auxBasisDataXC    = prm.get("AUX BASIS DATA");
+      tot_magnetization = prm.get_double("TOTAL MAGNETIZATION");
       useAtomicMagnetizationGuessConstraintMag =
         prm.get_bool("USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG");
       pspCutoffImageCharges = prm.get_double("PSP CUTOFF IMAGE CHARGES");

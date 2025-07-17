@@ -232,28 +232,34 @@ namespace dftfe
       }
     else
       {
-        if (d_funcXPtr->info->name == "")
-          {
-          }
-        else if (d_funcXPtr->info->name == "")
-          {
-          }
-        else
-          {
-            dftfe::utils::throwException(
-              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
-          }
-        if (d_funcCPtr->info->name == "")
-          {
-          }
-        else if (d_funcCPtr->info->name == "")
-          {
-          }
-        else
-          {
-            dftfe::utils::throwException(
-              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
-          }
+        dftfe::utils::throwException(
+          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
+        dftfe::utils::throwException(
+          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
+        // if (d_funcXPtr->info->name == "")
+        //   {
+        //   }
+        // else if (d_funcXPtr->info->name == "")
+        //   {
+        //   }
+        // else
+        //   {
+        //     dftfe::utils::throwException(
+        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
+        //       compute the GGA functional.");
+        //   }
+        // if (d_funcCPtr->info->name == "")
+        //   {
+        //   }
+        // else if (d_funcCPtr->info->name == "")
+        //   {
+        //   }
+        // else
+        //   {
+        //     dftfe::utils::throwException(
+        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
+        //       compute the GGA functional.");
+        //   }
       }
     for (size_t i = 0; i < nquad; i++)
       {

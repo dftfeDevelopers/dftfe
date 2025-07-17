@@ -191,43 +191,51 @@ namespace dftfe
     else
       {
         // Checking for exchange contribution
-        if (d_funcXPtr->info->name == "")
+        dftfe::utils::MemoryStorage<double, memorySpace> densityValuesTemp;
+        dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp,
+          exValuesTemp;
+        dftfe::utils::MemoryStorage<double, memorySpace> pdecDensityTemp,
+          pdexDensityTemp;
+        densityValuesTemp.resize(densityValues.size());
+        ecValuesTemp.resize(ecValues.size());
+        pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
+        exValuesTemp.resize(ecValues.size());
+        pdexDensityTemp.resize(pdecDensityValuesNonNN.size());
+        if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
           {
-          }
-        else if (d_funcXPtr->info->name == "")
-          {
+            densityValuesTemp.copyFrom(densityValues);
           }
         else
           {
-            dftfe::utils::throwException(
-              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
+            densityValuesTemp.swap(densityValues);
           }
+        dftfe::utils::throwException(
+          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
+        // if (d_funcXPtr->info->name == "SLA")
+        //   {
+        //   }
+        // else if (d_funcXPtr->info->name == "")
+        //   {
+        //   }
+        // else
+        //   {
+        //     dftfe::utils::throwException(
+        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
+        //       compute the LDA functional.");
+        //   }
         // Checking for correlation contribution
-        if (d_funcCPtr->info->name == "")
+        if (d_funcCPtr->info->name == "PW")
           {
-            if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
+            LDAC_PW(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
+            if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
               {
-                LDAC_PW(nquad, densityValues, ecValues, pdecDensityValuesNonNN);
+                ecValues.copyFrom(ecValuesTemp);
+                pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
               }
             else
               {
-                dftfe::utils::MemoryStorage<double, memorySpace>
-                  densityValuesTemp;
-                dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp;
-                dftfe::utils::MemoryStorage<double, memorySpace>
-                  pdecDensityTemp;
-                densityValuesTemp.resize(densityValues.size());
-                ecValuesTemp.resize(ecValues.size());
-                pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
-                densityValuesTemp.copyFrom(densityValues);
-
-                LDAC_PW(nquad,
-                        densityValuesTemp,
-                        ecValuesTemp,
-                        pdecDensityTemp);
-
-                ecValues.copyFrom(ecValuesTemp);
-                pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+                ecValues.swap(ecValuesTemp);
+                pdecDensityValuesNonNN.swap(pdecDensityTemp);
               }
           }
         else if (d_funcCPtr->info->name == "")

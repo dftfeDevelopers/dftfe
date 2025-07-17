@@ -642,7 +642,9 @@ namespace dftfe
     d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureID);
     const dftfe::uInt totalLocallyOwnedCells =
       d_basisOperationsPtrHost->nCells();
-    const dftfe::uInt nCellsPerBatch = totalLocallyOwnedCells;
+    const dftfe::uInt nCellsPerBatch =
+      (memorySpace == dftfe::utils::MemorySpace::HOST) ? 1 :
+                                                         totalLocallyOwnedCells;
     const dftfe::uInt numberQuadraturePointsPerCell =
       d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
