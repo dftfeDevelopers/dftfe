@@ -73,18 +73,12 @@ namespace dftfe
 
     const bool useHubbard = dftPtr->isHubbardCorrectionsUsed();
 
-    FEEvaluationWrapperClass<3> forceEval(1,
-                                          d_dftParams.densityQuadratureRule,
-                                          matrixFreeData,
+    FEEvaluationWrapperClass<3> forceEval(matrixFreeData,
                                           d_forceDofHandlerIndex,
                                           dftPtr->d_densityQuadratureId);
-    FEEvaluationWrapperClass<3> forceEvalNLP(
-      1,
-      C_num1DQuadNLPSP(d_dftParams.finiteElementPolynomialOrder) *
-        C_numCopies1DQuadNLPSP(),
-      matrixFreeData,
-      d_forceDofHandlerIndex,
-      dftPtr->d_nlpspQuadratureId);
+    FEEvaluationWrapperClass<3> forceEvalNLP(matrixFreeData,
+                                             d_forceDofHandlerIndex,
+                                             dftPtr->d_nlpspQuadratureId);
 
 
     const double spinPolarizedFactor =
@@ -928,38 +922,26 @@ namespace dftfe
                            &pseudoVLocAtomsElectro,
     const vselfBinsManager &vselfBinsManagerElectro)
   {
-    FEEvaluationWrapperClass<3> forceEvalElectro(
-      1,
-      d_dftParams.densityQuadratureRule,
-      matrixFreeDataElectro,
-      d_forceDofHandlerIndexElectro,
-      dftPtr->d_densityQuadratureId);
+    FEEvaluationWrapperClass<3> forceEvalElectro(matrixFreeDataElectro,
+                                                 d_forceDofHandlerIndexElectro,
+                                                 dftPtr->d_densityQuadratureId);
 
     FEEvaluationWrapperClass<1> phiTotEvalElectro(
-      d_dftParams.finiteElementPolynomialOrderElectrostatics,
-      d_dftParams.densityQuadratureRule,
       matrixFreeDataElectro,
       phiTotDofHandlerIndexElectro,
       dftPtr->d_densityQuadratureId);
 
     FEEvaluationWrapperClass<1> phiTotEvalSmearedCharge(
-      -1,
-      1,
       matrixFreeDataElectro,
       phiTotDofHandlerIndexElectro,
       smearedChargeQuadratureId);
 
     FEEvaluationWrapperClass<3> forceEvalSmearedCharge(
-      -1,
-      1,
       matrixFreeDataElectro,
       d_forceDofHandlerIndexElectro,
       smearedChargeQuadratureId);
 
     FEEvaluationWrapperClass<3> forceEvalElectroLpsp(
-      1,
-      C_num1DQuadLPSP(d_dftParams.finiteElementPolynomialOrderElectrostatics) *
-        C_numCopies1DQuadLPSP(),
       matrixFreeDataElectro,
       d_forceDofHandlerIndexElectro,
       lpspQuadratureIdElectro);

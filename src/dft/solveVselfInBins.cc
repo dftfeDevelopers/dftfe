@@ -697,8 +697,6 @@ namespace dftfe
                 selfenergy_time = MPI_Wtime();
 
                 FEEvaluationWrapperClass<1> fe_eval_sc(
-                  -1,
-                  1,
                   matrix_free_data,
                   constraintMatrixIdVself,
                   smearedChargeQuadratureId);
@@ -1096,15 +1094,10 @@ namespace dftfe
 
         std::map<dealii::CellId, std::vector<double>> &bQuadValuesBin =
           bQuadValuesBins[iBin];
-        FEEvaluationWrapperClass<1> fe_eval(
-          d_dftParams.finiteElementPolynomialOrderElectrostatics,
-          d_dftParams.finiteElementPolynomialOrderElectrostatics + 1,
-          matrix_free_data,
-          constraintMatrixId,
-          matrixFreeQuadratureIdAX);
-        FEEvaluationWrapperClass<1> fe_eval_sc(-1,
-                                               1,
-                                               matrix_free_data,
+        FEEvaluationWrapperClass<1> fe_eval(matrix_free_data,
+                                            constraintMatrixId,
+                                            matrixFreeQuadratureIdAX);
+        FEEvaluationWrapperClass<1> fe_eval_sc(matrix_free_data,
                                                constraintMatrixId,
                                                smearedChargeQuadratureId);
 
@@ -1221,15 +1214,10 @@ namespace dftfe
 
               tempvec.update_ghost_values();
               constraintsMatrixDataInfo2.distribute(tempvec);
-              FEEvaluationWrapperClass<1> fe_eval2(
-                d_dftParams.finiteElementPolynomialOrderElectrostatics,
-                d_dftParams.finiteElementPolynomialOrderElectrostatics + 1,
-                matrix_free_data,
-                constraintMatrixId2,
-                matrixFreeQuadratureIdAX);
+              FEEvaluationWrapperClass<1> fe_eval2(matrix_free_data,
+                                                   constraintMatrixId2,
+                                                   matrixFreeQuadratureIdAX);
               FEEvaluationWrapperClass<1> fe_eval_sc2(
-                -1,
-                1,
                 matrix_free_data,
                 constraintMatrixId2,
                 smearedChargeQuadratureId);
@@ -1516,8 +1504,6 @@ namespace dftfe
                 selfenergy_time = MPI_Wtime();
 
                 FEEvaluationWrapperClass<1> fe_eval_sc(
-                  -1,
-                  1,
                   matrix_free_data,
                   constraintMatrixId,
                   smearedChargeQuadratureId);
