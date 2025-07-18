@@ -184,6 +184,11 @@ namespace dftfe
                    std::complex<double>  value,
                    std::size_t           size);
 
+    template void
+    deviceSetValue(uint16_t *devPtr,
+                   uint16_t  value,
+                   std::size_t           size);
+
     deviceError_t
     deviceFree(void *devPtr)
     {
