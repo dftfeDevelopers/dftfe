@@ -761,6 +761,17 @@ namespace dftfe
       return a;
     }
 
+    inline uint16_t
+    makeDataTypeDeviceCompatible(uint16_t a)
+    {
+      return a;
+    }
+
+    inline uint16_t *
+    makeDataTypeDeviceCompatible(uint16_t * a)
+    {
+      return a;
+    }
   } // namespace utils
 
 } // namespace dftfe

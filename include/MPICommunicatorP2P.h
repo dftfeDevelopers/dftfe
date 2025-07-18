@@ -131,14 +131,6 @@ namespace dftfe
 
         MemoryStorage<ValueType, memorySpace> d_sendRecvBuffer;
 
-        MemoryStorage<double, memorySpace> d_tempDoubleRealArrayForAtomics;
-
-        MemoryStorage<double, memorySpace> d_tempDoubleImagArrayForAtomics;
-
-        MemoryStorage<float, memorySpace> d_tempFloatRealArrayForAtomics;
-
-        MemoryStorage<float, memorySpace> d_tempFloatImagArrayForAtomics;
-
         MemoryStorage<
           typename dftfe::dataTypes::singlePrecType<ValueType>::type,
           memorySpace>
@@ -148,6 +140,16 @@ namespace dftfe
           typename dftfe::dataTypes::singlePrecType<ValueType>::type,
           memorySpace>
           d_ghostDataCopySinglePrec;
+
+        MemoryStorage<
+          typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+          memorySpace>
+          d_sendRecvBufferHalfPrec;
+        
+        MemoryStorage<
+          typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+          memorySpace>
+          d_ghostDataCopyHalfPrec;
 
 #ifdef DFTFE_WITH_DEVICE
         std::shared_ptr<MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>
@@ -165,6 +167,17 @@ namespace dftfe
           typename dftfe::dataTypes::singlePrecType<ValueType>::type,
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferSinglePrecHostPinnedPtr;
+
+        std::shared_ptr<MemoryStorage<
+          typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+          MemorySpace::HOST_PINNED>>
+          d_ghostDataCopyHalfPrecHostPinnedPtr;
+
+        std::shared_ptr<MemoryStorage<
+          typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+          MemorySpace::HOST_PINNED>>
+          d_sendRecvBufferHalfPrecHostPinnedPtr;
+
 #endif // DFTFE_WITH_DEVICE
 
         std::vector<MPI_Request> d_requestsUpdateGhostValues;
@@ -175,7 +188,6 @@ namespace dftfe
         communicationProtocol  d_commProtocol;
         communicationPrecision d_commPrecision;
       };
-
     } // namespace mpi
   }   // namespace utils
 } // namespace dftfe
