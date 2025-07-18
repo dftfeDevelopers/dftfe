@@ -2009,11 +2009,9 @@ namespace dftfe
             dealii::ExcMessage(
               "DFT-FE Error: Computation of ION FORCE with MGGA functional in all-electron calculation is not completed yet."));
         AssertThrow(
-          !(mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
-            mixingMethod == "ANDERSON_WITH_KERKER" ||
-            mixingMethod == "ANDERSON_WITH_RESTA"),
+          mixingMethod != "LOW_RANK_DIELECM_PRECOND",
           dealii::ExcMessage(
-            "DFT-FE Error: ANDERSON_WITH_RESTA or ANDERSON_WITH_KERKER or LRDM mixing scheme in MGGA functional is not completed yet."));
+            "DFT-FE Error: LRDM mixing scheme in MGGA functional is not completed yet."));
       }
 
     bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");

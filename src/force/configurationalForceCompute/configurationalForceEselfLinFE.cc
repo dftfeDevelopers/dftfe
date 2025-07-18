@@ -152,8 +152,6 @@ namespace dftfe
           vselfBinsManagerElectro.getAtomIdsBins();
 
         FEEvaluationWrapperClass<3> forceEvalSmearedCharge(
-          -1,
-          1,
           matrixFreeDataElectro,
           d_forceDofHandlerIndexElectro,
           smearedChargeQuadratureId);
@@ -190,8 +188,6 @@ namespace dftfe
                 iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
               {
                 FEEvaluationWrapperClass<1> vselfEvalSmearedCharge(
-                  -1,
-                  1,
                   matrixFreeDataElectro,
                   dftPtr->d_binsStartDofHandlerIndexElectro + 4 * iBin,
                   smearedChargeQuadratureId);
@@ -492,15 +488,11 @@ namespace dftfe
   void
   forceClass<memorySpace>::computeConfigurationalForcePhiExtLinFE()
   {
-    FEEvaluationWrapperClass<3> forceEval(1,
-                                          d_dftParams.densityQuadratureRule,
-                                          dftPtr->matrix_free_data,
+    FEEvaluationWrapperClass<3> forceEval(dftPtr->matrix_free_data,
                                           d_forceDofHandlerIndex,
                                           0);
 
     FEEvaluationWrapperClass<1> eshelbyEval(
-      d_dftParams.finiteElementPolynomialOrderElectrostatics,
-      d_dftParams.densityQuadratureRule,
       dftPtr->d_matrixFreeDataPRefined,
       dftPtr->d_phiExtDofHandlerIndexElectro,
       0); // no constraints
@@ -532,15 +524,11 @@ namespace dftfe
   void
   forceClass<memorySpace>::computeConfigurationalForceEselfNoSurfaceLinFE()
   {
-    FEEvaluationWrapperClass<3> forceEval(1,
-                                          d_dftParams.densityQuadratureRule,
-                                          dftPtr->matrix_free_data,
+    FEEvaluationWrapperClass<3> forceEval(dftPtr->matrix_free_data,
                                           d_forceDofHandlerIndex,
                                           0);
 
     FEEvaluationWrapperClass<1> eshelbyEval(
-      d_dftParams.finiteElementPolynomialOrderElectrostatics,
-      d_dftParams.densityQuadratureRule,
       dftPtr->d_matrixFreeDataPRefined,
       dftPtr->d_phiExtDofHandlerIndexElectro,
       0); // no constraints

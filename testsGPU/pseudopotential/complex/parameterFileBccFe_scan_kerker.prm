@@ -52,7 +52,7 @@ end
 subsection SCF parameters
   set CONSTRAINT MAGNETIZATION=true
   set MIXING PARAMETER =0.5
-  set MIXING METHOD= ANDERSON
+  set MIXING METHOD= ANDERSON_WITH_KERKER
   set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
   set TEMPERATURE              = 500
   set TOLERANCE                = 1e-7
