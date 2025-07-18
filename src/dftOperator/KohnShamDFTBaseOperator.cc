@@ -643,8 +643,9 @@ namespace dftfe
     const dftfe::uInt totalLocallyOwnedCells =
       d_basisOperationsPtrHost->nCells();
     const dftfe::uInt nCellsPerBatch =
-      (memorySpace == dftfe::utils::MemorySpace::HOST) ? 1 :
-                                                         totalLocallyOwnedCells;
+      (memorySpace == dftfe::utils::MemorySpace::HOST) ?
+        1 :
+        (d_dftParamsPtr->useLiXCForXCEvaluation ? 1 : totalLocallyOwnedCells);
     const dftfe::uInt numberQuadraturePointsPerCell =
       d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
