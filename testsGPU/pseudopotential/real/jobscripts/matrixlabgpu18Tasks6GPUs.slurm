@@ -15,6 +15,7 @@ module load spack
 module load openmpi/5.0.6-gcc-13.3.0-ytficip nccl/2.23.4-1-gcc-13.3.0-xyspmp2 gdrcopy/2.4.1-gcc-13.3.0-dvwa323
 export LIBRARY_PATH="/storage/dftfeDependenciesNoMKL/linAlgLibs/install/lib:$LIBRARY_PATH"
 
+
 ###needs to change this DFTFE_PATH
 export DFTFE_PATH=/home/kartickr/dftfe_development/DFTFE_MinvHX/build/release/real/
 export UCX_LOG_LEVEL=ERROR

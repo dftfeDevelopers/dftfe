@@ -105,19 +105,24 @@ namespace dftfe
   public:
     /// Constructor
     FEEvaluationWrapperClass(
-      const dftfe::Int                     feOrder,
-      const dftfe::Int                     quadrature,
       const dealii::MatrixFree<3, double> &matrixFreeData,
       const dftfe::uInt                    matrixFreeVectorComponent,
       const dftfe::uInt                    matrixFreeQuadratureComponent)
-      : d_FEEvaluationObject(
-          createFEEvaluationObject<components>(feOrder,
-                                               quadrature,
-                                               matrixFreeData,
-                                               matrixFreeVectorComponent,
-                                               matrixFreeQuadratureComponent))
-      , n_q_points(matrixFreeData.get_n_q_points(matrixFreeQuadratureComponent))
-    {}
+      : n_q_points(matrixFreeData.get_n_q_points(matrixFreeQuadratureComponent))
+    {
+      dftfe::Int feOrder =
+        matrixFreeData.get_dof_handler(matrixFreeVectorComponent)
+          .get_fe()
+          .tensor_degree();
+      dftfe::Int quadrature = static_cast<dftfe::Int>(
+        std::round(std::cbrt(static_cast<double>(n_q_points))));
+      d_FEEvaluationObject = std::move(
+        createFEEvaluationObject<components>(feOrder,
+                                             quadrature,
+                                             matrixFreeData,
+                                             matrixFreeVectorComponent,
+                                             matrixFreeQuadratureComponent));
+    }
 
     template <typename... Args>
     void

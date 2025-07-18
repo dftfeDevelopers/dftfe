@@ -47,3 +47,4 @@ mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileGaAs.prm > outputGaAs
 mpirun -n $SLURM_NTASKS  $DFTFE_PATH/dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
 mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
+mpirun -n 6  $DFTFE_PATH/dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker
