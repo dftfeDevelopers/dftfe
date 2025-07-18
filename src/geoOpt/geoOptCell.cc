@@ -52,8 +52,9 @@ namespace dftfe
   //
 
   void
-  geoOptCell::init(const std::string &restartPath)
+  geoOptCell::init(const std::string &restartPath,const dftfe::Int cycleId)
   {
+    d_cycle=cycleId;
     d_restartPath   = restartPath + "/cellRelax";
     d_solverRestart = d_isRestart;
     if (d_dftPtr->getParametersObject().cellOptSolver == "BFGS")
@@ -222,7 +223,8 @@ namespace dftfe
               {
                 std::string fileName =
                   "structureEnergyForcesGSData_cellRelaxStep" +
-                  std::to_string(d_totalUpdateCalls) + ".txt";
+                  std::to_string(d_totalUpdateCalls)+ "_cycle" +
+                  std::to_string(d_cycle)+ ".txt";
                 d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
               }
           }
@@ -413,8 +415,8 @@ namespace dftfe
             d_dftPtr->getParametersObject()
               .writeStructreEnergyForcesFileForPostProcess)
           {
-            std::string fileName = "structureEnergyForcesGSDataCellRelaxed.txt";
-            d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
+            std::string fileName = std::string("structureEnergyForcesGSDataCellRelaxed")+ "_cycle" +std::to_string(d_cycle)+ ".txt";
+	    d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
           }
 
 
@@ -671,9 +673,12 @@ namespace dftfe
     if (d_dftPtr->getParametersObject()
           .writeStructreEnergyForcesFileForPostProcess)
       {
-        std::string fileName = "structureEnergyForcesGSData_cellRelaxStep" +
-                               std::to_string(d_totalUpdateCalls) + ".txt";
-        d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
+        std::string fileName =
+                  "structureEnergyForcesGSData_cellRelaxStep" +
+                  std::to_string(d_totalUpdateCalls)+ "_cycle" +
+                  std::to_string(d_cycle)+ ".txt";
+        
+	d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
       }
   }
 
