@@ -36,8 +36,8 @@ namespace dftfe
     template <>
     void
     computeVeffJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                          numQuadsPerCell,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &phiVector,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -71,8 +71,8 @@ namespace dftfe
     template <>
     void
     computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                          numQuadsPerCell,
       const dftfe::Int                            spinIndex,
       const dftfe::Int                            cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -175,8 +175,8 @@ namespace dftfe
     template <>
     void
     computeHalfInvJacinvJacderExcWithTauJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                          numQuadsPerCell,
       const dftfe::Int                            cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &pdecVector,
@@ -261,8 +261,8 @@ namespace dftfe
     template <>
     void
     computeKPointDependenderExcWithTauJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                          numQuadsPerCell,
       const dftfe::Int                            cellsTypeFlag,
       const dftfe::uInt                           offset,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -848,13 +848,13 @@ namespace dftfe
 
         if (isGGA)
           auxDensityXCRepresentation->applyLocalOperations(
-            std::make_pair<dftfe::uInt, dftfe::uInt>(
+            std::make_pair(
               iCell * numberQuadraturePointsPerCell,
               (iCell + nCellsPerBatch) * numberQuadraturePointsPerCell),
             densityData);
 
         dftfe::internal::computeVeffJxWEntries(
-          std::make_pair<unsigned int, unsigned int>(iCell,
+          std::make_pair(iCell,
                                                      iCell + nCellsPerBatch),
           numberQuadraturePointsPerCell,
           phiValues,
@@ -865,7 +865,7 @@ namespace dftfe
         if (isGGA)
           {
             dftfe::internal::computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
-              std::make_pair<unsigned int, unsigned int>(iCell,
+              std::make_pair(iCell,
                                                          iCell +
                                                            nCellsPerBatch),
               numberQuadraturePointsPerCell,
@@ -883,7 +883,7 @@ namespace dftfe
         if (isTauMGGA)
           {
             dftfe::internal::computeHalfInvJacinvJacderExcWithTauJxWEntries(
-              std::make_pair<unsigned int, unsigned int>(iCell,
+              std::make_pair(iCell,
                                                          iCell +
                                                            nCellsPerBatch),
               numberQuadraturePointsPerCell,
@@ -930,7 +930,7 @@ namespace dftfe
                   kPointCoords(3);
                 kPointCoords.copyFrom(kPointCoordsVector);
                 dftfe::internal::computeKPointDependenderExcWithTauJxWEntries(
-                  std::make_pair<unsigned int, unsigned int>(iCell,
+                  std::make_pair(iCell,
                                                              iCell +
                                                                nCellsPerBatch),
                   numberQuadraturePointsPerCell,

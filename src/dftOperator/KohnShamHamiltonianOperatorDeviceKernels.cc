@@ -31,8 +31,8 @@ namespace dftfe
     template <>
     void
     computeVeffJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                          numQuadsPerCell,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &phiVector,
@@ -53,8 +53,8 @@ namespace dftfe
     template <>
     void
     computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                          numQuadsPerCell,
       const dftfe::Int                            spinIndex,
       const dftfe::Int                            cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double,
@@ -84,8 +84,8 @@ namespace dftfe
     template <>
     void
     computeHalfInvJacinvJacderExcWithTauJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                          numQuadsPerCell,
       const dftfe::Int                            cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
@@ -108,8 +108,8 @@ namespace dftfe
     template <>
     void
     computeKPointDependenderExcWithTauJxWEntries(
-      const std::pair<unsigned int, unsigned int> cellRange,
-      const unsigned int                          numQuadsPerCell,
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                          numQuadsPerCell,
       const dftfe::Int                            cellsTypeFlag,
       const dftfe::uInt                           offset,
       const dftfe::utils::MemoryStorage<double,
