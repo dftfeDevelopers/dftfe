@@ -19,6 +19,7 @@
 
 #include <cuComplex.h>
 #include <cublas_v2.h>
+#include <cuda_fp16.h>
 namespace dftfe
 {
   namespace utils
@@ -28,6 +29,8 @@ namespace dftfe
     typedef cudaEvent_t     deviceEvent_t;
     typedef cuDoubleComplex deviceDoubleComplex;
     typedef cuFloatComplex  deviceFloatComplex;
+    typedef __nv_bfloat16   __device_bfloat16;
+    typedef __nv_bfloat162  __device_bfloat162;
 
     // static consts
     static const deviceError_t deviceSuccess = cudaSuccess;

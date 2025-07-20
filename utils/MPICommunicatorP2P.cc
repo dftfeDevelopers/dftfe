@@ -631,14 +631,13 @@ namespace dftfe
                 0)
 #ifdef DFTFE_WITH_DEVICE
               if constexpr (memorySpace == MemorySpace::DEVICE)
-                /*MPICommunicatorP2PKernels<ValueType, memorySpace>::
-                  gatherLocallyOwnedEntriesSendBufferToTargetProcs(
+                MPICommunicatorP2PKernels<ValueType, memorySpace>::
+                  gatherLocallyOwnedEntriesSendBufferToTargetProcsHalfPrec(
                     dataArray,
                     d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
                     d_blockSize,
                     d_sendRecvBufferHalfPrec,
-                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);*/
-                {}
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
               else
 #endif
                 {
@@ -804,14 +803,13 @@ namespace dftfe
                       d_ghostDataCopyHalfPrecHostPinnedPtr->data());
                 }
             if constexpr (memorySpace == MemorySpace::DEVICE)
-              /*MPICommunicatorP2PKernels<ValueType, memorySpace>::
-                copyValueType1ArrToValueType2Arr(
+              MPICommunicatorP2PKernels<ValueType, memorySpace>::
+                copyHalfPrecArrToValueTypeArr(
                   d_ghostDataCopyHalfPrec.size(),
                   d_ghostDataCopyHalfPrec.data(),
                   dataArray.begin() +
                     d_mpiPatternP2P->localOwnedSize() * d_blockSize,
-                  dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);*/
-              {}
+                  dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
             else
 #endif
               {
@@ -1319,17 +1317,15 @@ namespace dftfe
                 0)
 #ifdef DFTFE_WITH_DEVICE
               if constexpr (memorySpace == MemorySpace::DEVICE)
-                {
-                }
-              /*   MPICommunicatorP2PKernels<ValueType, memorySpace>::
-                   accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
-                     d_sendRecvBufferHalfPrec,
-                     d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-                     d_blockSize,
-                     d_locallyOwnedSize,
-                     d_ghostSize,
-                     dataArray,
-                     dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);*/
+                MPICommunicatorP2PKernels<ValueType, memorySpace>::
+                  accumAddLocallyOwnedContrRecvBufferFromTargetProcsHalfPrec(
+                    d_sendRecvBufferHalfPrec,
+                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
+                    d_blockSize,
+                    d_locallyOwnedSize,
+                    d_ghostSize,
+                    dataArray,
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
               else
 #endif
                 {

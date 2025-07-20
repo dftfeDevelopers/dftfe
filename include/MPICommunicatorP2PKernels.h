@@ -26,6 +26,7 @@
 #include <MemoryStorage.h>
 #include <TypeConfig.h>
 #include <DataTypeOverloads.h>
+#include <dftfeDataTypes.h>
 #ifdef DFTFE_WITH_DEVICE
 #  include <DeviceTypeConfig.h>
 #endif
@@ -160,6 +161,32 @@ namespace dftfe
         MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream);
 
+      static void
+      gatherLocallyOwnedEntriesSendBufferToTargetProcsHalfPrec(
+        const MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+          &dataArray,
+        const MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        MemoryStorage<typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+                      dftfe::utils::MemorySpace::DEVICE> &sendBuffer,
+        dftfe::utils::deviceStream_t                      deviceCommStream);
+
+
+      static void
+      accumAddLocallyOwnedContrRecvBufferFromTargetProcsHalfPrec(
+        const MemoryStorage<
+          typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+          dftfe::utils::MemorySpace::DEVICE> &recvBuffer,
+        const MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        const dftfe::uInt locallyOwnedSize,
+        const dftfe::uInt ghostSize,
+        MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+
       /**
        * @brief Function template for copying type1 to type2
        * @param[in] blockSize
@@ -172,6 +199,14 @@ namespace dftfe
         const dftfe::uInt            blockSize,
         const ValueType1            *type1Array,
         ValueType2                  *type2Array,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+      static void
+      copyHalfPrecArrToValueTypeArr(
+        const dftfe::uInt blockSize,
+        const typename dftfe::dataTypes::halfPrecType<ValueType>::type
+                                    *halfPrecArray,
+        ValueType                   *valueTypeArray,
         dftfe::utils::deviceStream_t deviceCommStream);
     };
 #endif
