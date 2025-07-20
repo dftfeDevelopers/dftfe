@@ -768,7 +768,7 @@ namespace dftfe
     }
 
     inline uint16_t *
-    makeDataTypeDeviceCompatible(uint16_t * a)
+    makeDataTypeDeviceCompatible(uint16_t *a)
     {
       return a;
     }

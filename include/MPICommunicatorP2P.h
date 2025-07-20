@@ -141,14 +141,12 @@ namespace dftfe
           memorySpace>
           d_ghostDataCopySinglePrec;
 
-        MemoryStorage<
-          typename dftfe::dataTypes::halfPrecType<ValueType>::type,
-          memorySpace>
+        MemoryStorage<typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+                      memorySpace>
           d_sendRecvBufferHalfPrec;
-        
-        MemoryStorage<
-          typename dftfe::dataTypes::halfPrecType<ValueType>::type,
-          memorySpace>
+
+        MemoryStorage<typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+                      memorySpace>
           d_ghostDataCopyHalfPrec;
 
 #ifdef DFTFE_WITH_DEVICE

@@ -1795,9 +1795,9 @@ namespace dftfe
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
         useMixedPrecCommunOnlyXtHXXtOX =
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
-        communPrecCheby           = prm.get("COMMUN PREC CHEBY");
-        useSinglePrecCheby        = prm.get_bool("USE SINGLE PREC CHEBY");
-        tensorOpType              = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
+        communPrecCheby    = prm.get("COMMUN PREC CHEBY");
+        useSinglePrecCheby = prm.get_bool("USE SINGLE PREC CHEBY");
+        tensorOpType       = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =

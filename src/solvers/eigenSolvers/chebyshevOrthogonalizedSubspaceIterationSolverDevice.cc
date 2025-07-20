@@ -402,20 +402,28 @@ namespace dftfe
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
-                  if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby!="STANDARD")
+                    if (useMixedPrecOverall &&
+                        d_dftParams.communPrecCheby != "STANDARD")
                       {
-                        if (d_dftParams.communPrecCheby=="BFP16")
-                        {
-                            (*XBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Half);
-                            (*HXBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Half);
-                            (*XBlock2FP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Half);
-                            (*HXBlock2FP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Half);
-                        } 
+                        if (d_dftParams.communPrecCheby == "BFP16")
+                          {
+                            (*XBlockFP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*HXBlockFP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*XBlock2FP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*HXBlock2FP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                          }
                       }
                     linearAlgebraOperationsDevice::
                       reformulatedChebyshevFilterOverlapComputeCommunication(
@@ -436,19 +444,27 @@ namespace dftfe
                         d_lowerBoundWantedSpectrum,
                         d_dftParams.approxOverlapMatrix);
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby!="STANDARD")
+                        d_dftParams.communPrecCheby != "STANDARD")
                       {
-                        if (d_dftParams.communPrecCheby=="BFP16")
-                        {
-                            (*XBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                            (*HXBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                            (*XBlock2FP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                            (*HXBlock2FP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                        } 
+                        if (d_dftParams.communPrecCheby == "BFP16")
+                          {
+                            (*XBlockFP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*HXBlockFP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*XBlock2FP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*HXBlock2FP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                          }
                       }
                   }
                 else
@@ -458,15 +474,19 @@ namespace dftfe
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby!="STANDARD")
+                        d_dftParams.communPrecCheby != "STANDARD")
                       {
-                         if (d_dftParams.communPrecCheby=="BFP16")
-                        {
-                            (*XBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Half);
-                            (*HXBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Half);
-                        } 
+                        if (d_dftParams.communPrecCheby == "BFP16")
+                          {
+                            (*XBlockFP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*HXBlockFP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                          }
                       }
                     linearAlgebraOperations::reformulatedChebyshevFilter(
                       BLASWrapperPtr,
@@ -483,15 +503,19 @@ namespace dftfe
                       d_dftParams.approxOverlapMatrix);
 
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby!="STANDARD")
+                        d_dftParams.communPrecCheby != "STANDARD")
                       {
-                         if (d_dftParams.communPrecCheby=="BFP16")
-                        {
-                            (*XBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                            (*HXBlockFP32).setCommunicationPrecision(
-                              dftfe::utils::mpi::communicationPrecision::Single);
-                        } 
+                        if (d_dftParams.communPrecCheby == "BFP16")
+                          {
+                            (*XBlockFP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*HXBlockFP32)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                          }
                       }
                   }
               }
@@ -507,38 +531,46 @@ namespace dftfe
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby!="STANDARD")
+                        d_dftParams.communPrecCheby != "STANDARD")
                       {
-                          if (d_dftParams.communPrecCheby=="FP32")
+                        if (d_dftParams.communPrecCheby == "FP32")
                           {
-                              (*ResidualBlock)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Single);
-                              (*ResidualBlockNew)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Single);
-                              (*ResidualBlock2)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Single);
-                              (*ResidualBlockNew2)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Single);
+                            (*ResidualBlock)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*ResidualBlockNew)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*ResidualBlock2)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*ResidualBlockNew2)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
                           }
-                          else if (d_dftParams.communPrecCheby=="BFP16")
+                        else if (d_dftParams.communPrecCheby == "BFP16")
                           {
-                              (*ResidualBlock)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Half);
-                              (*ResidualBlockNew)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Half);
-                              (*ResidualBlock2)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Half);
-                              (*ResidualBlockNew2)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Half);
-                          } 
+                            (*ResidualBlock)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*ResidualBlockNew)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*ResidualBlock2)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*ResidualBlockNew2)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                          }
                       }
                     linearAlgebraOperationsDevice::
                       reformulatedChebyshevFilterOverlapComputeCommunication(
@@ -559,7 +591,7 @@ namespace dftfe
                         d_lowerBoundWantedSpectrum,
                         d_dftParams.approxOverlapMatrix);
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby!="STANDARD")
+                        d_dftParams.communPrecCheby != "STANDARD")
                       {
                         (*ResidualBlock)
                           .setCommunicationPrecision(
@@ -582,26 +614,30 @@ namespace dftfe
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby!="STANDARD")
+                        d_dftParams.communPrecCheby != "STANDARD")
                       {
-                          if (d_dftParams.communPrecCheby=="FP32")
+                        if (d_dftParams.communPrecCheby == "FP32")
                           {
-                              (*ResidualBlock)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Single);
-                              (*ResidualBlockNew)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Single);
+                            (*ResidualBlock)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*ResidualBlockNew)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
                           }
-                          else if (d_dftParams.communPrecCheby=="BFP16")
+                        else if (d_dftParams.communPrecCheby == "BFP16")
                           {
-                              (*ResidualBlock)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Half);
-                              (*ResidualBlockNew)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Half);
-                          } 
+                            (*ResidualBlock)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*ResidualBlockNew)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                          }
                       }
                     linearAlgebraOperations::reformulatedChebyshevFilter(
                       BLASWrapperPtr,
@@ -618,7 +654,7 @@ namespace dftfe
                       d_dftParams.approxOverlapMatrix);
 
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby!="STANDARD")
+                        d_dftParams.communPrecCheby != "STANDARD")
                       {
                         (*ResidualBlock)
                           .setCommunicationPrecision(
@@ -632,10 +668,11 @@ namespace dftfe
             else if (d_dftParams.overlapComputeCommunCheby &&
                      numSimultaneousBlocksCurrent == 2)
               {
-                if (useMixedPrecOverall && d_dftParams.communPrecCheby!="STANDARD")
+                if (useMixedPrecOverall &&
+                    d_dftParams.communPrecCheby != "STANDARD")
                   {
-                    if (d_dftParams.communPrecCheby=="FP32")
-                    {
+                    if (d_dftParams.communPrecCheby == "FP32")
+                      {
                         (*XBlock).setCommunicationPrecision(
                           dftfe::utils::mpi::communicationPrecision::Single);
                         (*HXBlock).setCommunicationPrecision(
@@ -644,9 +681,9 @@ namespace dftfe
                           dftfe::utils::mpi::communicationPrecision::Single);
                         (*HXBlock2).setCommunicationPrecision(
                           dftfe::utils::mpi::communicationPrecision::Single);
-                    }
-                    else if (d_dftParams.communPrecCheby=="BFP16")
-                    {
+                      }
+                    else if (d_dftParams.communPrecCheby == "BFP16")
+                      {
                         (*XBlock).setCommunicationPrecision(
                           dftfe::utils::mpi::communicationPrecision::Half);
                         (*HXBlock).setCommunicationPrecision(
@@ -655,7 +692,7 @@ namespace dftfe
                           dftfe::utils::mpi::communicationPrecision::Half);
                         (*HXBlock2).setCommunicationPrecision(
                           dftfe::utils::mpi::communicationPrecision::Half);
-                    }                    
+                      }
                   }
                 linearAlgebraOperationsDevice::
                   chebyshevFilterOverlapComputeCommunication(
@@ -668,7 +705,8 @@ namespace dftfe
                     d_lowerBoundUnWantedSpectrum,
                     d_upperBoundUnWantedSpectrum,
                     d_lowerBoundWantedSpectrum);
-                if (useMixedPrecOverall && d_dftParams.communPrecCheby!="STANDARD")
+                if (useMixedPrecOverall &&
+                    d_dftParams.communPrecCheby != "STANDARD")
                   {
                     (*XBlock).setCommunicationPrecision(
                       dftfe::utils::mpi::communicationPrecision::Double);
@@ -682,29 +720,34 @@ namespace dftfe
               }
             else
               {
-              if (useMixedPrecOverall && d_dftParams.communPrecCheby!="STANDARD")
+                if (useMixedPrecOverall &&
+                    d_dftParams.communPrecCheby != "STANDARD")
                   {
                     if (d_dftParams.useReformulatedChFSI &&
                         !isFirstFilteringCall)
                       {
-                          if (d_dftParams.communPrecCheby=="FP32")
+                        if (d_dftParams.communPrecCheby == "FP32")
                           {
-                              (*ResidualBlock)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Single);
-                              (*ResidualBlockNew)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Single);
+                            (*ResidualBlock)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
+                            (*ResidualBlockNew)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Single);
                           }
-                          else if (d_dftParams.communPrecCheby=="BFP16")
+                        else if (d_dftParams.communPrecCheby == "BFP16")
                           {
-                              (*ResidualBlock)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Half);
-                              (*ResidualBlockNew)
-                                .setCommunicationPrecision(
-                                  dftfe::utils::mpi::communicationPrecision::Half);
-                          }                         
+                            (*ResidualBlock)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                            (*ResidualBlockNew)
+                              .setCommunicationPrecision(
+                                dftfe::utils::mpi::communicationPrecision::
+                                  Half);
+                          }
                       }
                   }
 
@@ -740,7 +783,8 @@ namespace dftfe
                       d_upperBoundUnWantedSpectrum,
                       d_lowerBoundWantedSpectrum);
                   }
-                 if (useMixedPrecOverall && d_dftParams.communPrecCheby!="STANDARD")
+                if (useMixedPrecOverall &&
+                    d_dftParams.communPrecCheby != "STANDARD")
                   {
                     if (d_dftParams.useReformulatedChFSI &&
                         !isFirstFilteringCall)
