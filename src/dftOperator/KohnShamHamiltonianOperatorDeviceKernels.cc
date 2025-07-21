@@ -32,7 +32,7 @@ namespace dftfe
     void
     computeVeffJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-      const dftfe::uInt                          numQuadsPerCell,
+      const dftfe::uInt                         numQuadsPerCell,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &phiVector,
@@ -54,9 +54,9 @@ namespace dftfe
     void
     computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-      const dftfe::uInt                          numQuadsPerCell,
-      const dftfe::Int                            spinIndex,
-      const dftfe::Int                            cellsTypeFlag,
+      const dftfe::uInt                         numQuadsPerCell,
+      const dftfe::Int                          spinIndex,
+      const dftfe::Int                          cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &pdecVector,
@@ -85,8 +85,8 @@ namespace dftfe
     void
     computeHalfInvJacinvJacderExcWithTauJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-      const dftfe::uInt                          numQuadsPerCell,
-      const dftfe::Int                            cellsTypeFlag,
+      const dftfe::uInt                         numQuadsPerCell,
+      const dftfe::Int                          cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &pdecVector,
@@ -109,9 +109,9 @@ namespace dftfe
     void
     computeKPointDependenderExcWithTauJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-      const dftfe::uInt                          numQuadsPerCell,
-      const dftfe::Int                            cellsTypeFlag,
-      const dftfe::uInt                           offset,
+      const dftfe::uInt                         numQuadsPerCell,
+      const dftfe::Int                          cellsTypeFlag,
+      const dftfe::uInt                         offset,
       const dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::DEVICE>
         &kPointCoordinate,

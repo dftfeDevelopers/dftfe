@@ -37,7 +37,7 @@ namespace dftfe
     void
     computeVeffJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-      const dftfe::uInt                          numQuadsPerCell,
+      const dftfe::uInt                         numQuadsPerCell,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &phiVector,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -72,9 +72,9 @@ namespace dftfe
     void
     computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-      const dftfe::uInt                          numQuadsPerCell,
-      const dftfe::Int                            spinIndex,
-      const dftfe::Int                            cellsTypeFlag,
+      const dftfe::uInt                         numQuadsPerCell,
+      const dftfe::Int                          spinIndex,
+      const dftfe::Int                          cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &pdecVector,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -176,8 +176,8 @@ namespace dftfe
     void
     computeHalfInvJacinvJacderExcWithTauJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-      const dftfe::uInt                          numQuadsPerCell,
-      const dftfe::Int                            cellsTypeFlag,
+      const dftfe::uInt                         numQuadsPerCell,
+      const dftfe::Int                          cellsTypeFlag,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &pdecVector,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -262,9 +262,9 @@ namespace dftfe
     void
     computeKPointDependenderExcWithTauJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
-      const dftfe::uInt                          numQuadsPerCell,
-      const dftfe::Int                            cellsTypeFlag,
-      const dftfe::uInt                           offset,
+      const dftfe::uInt                         numQuadsPerCell,
+      const dftfe::Int                          cellsTypeFlag,
+      const dftfe::uInt                         offset,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &kPointCoordinate,
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -848,14 +848,13 @@ namespace dftfe
 
         if (isGGA)
           auxDensityXCRepresentation->applyLocalOperations(
-            std::make_pair(
-              iCell * numberQuadraturePointsPerCell,
-              (iCell + nCellsPerBatch) * numberQuadraturePointsPerCell),
+            std::make_pair(iCell * numberQuadraturePointsPerCell,
+                           (iCell + nCellsPerBatch) *
+                             numberQuadraturePointsPerCell),
             densityData);
 
         dftfe::internal::computeVeffJxWEntries(
-          std::make_pair(iCell,
-                                                     iCell + nCellsPerBatch),
+          std::make_pair(iCell, iCell + nCellsPerBatch),
           numberQuadraturePointsPerCell,
           phiValues,
           pdexDensitySpinIndex,
@@ -865,9 +864,7 @@ namespace dftfe
         if (isGGA)
           {
             dftfe::internal::computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
-              std::make_pair(iCell,
-                                                         iCell +
-                                                           nCellsPerBatch),
+              std::make_pair(iCell, iCell + nCellsPerBatch),
               numberQuadraturePointsPerCell,
               spinIndex,
               d_basisOperationsPtrHost->cellsTypeFlag(),
@@ -883,9 +880,7 @@ namespace dftfe
         if (isTauMGGA)
           {
             dftfe::internal::computeHalfInvJacinvJacderExcWithTauJxWEntries(
-              std::make_pair(iCell,
-                                                         iCell +
-                                                           nCellsPerBatch),
+              std::make_pair(iCell, iCell + nCellsPerBatch),
               numberQuadraturePointsPerCell,
               d_basisOperationsPtrHost->cellsTypeFlag(),
               pdecTauSpinIndex,
@@ -930,9 +925,7 @@ namespace dftfe
                   kPointCoords(3);
                 kPointCoords.copyFrom(kPointCoordsVector);
                 dftfe::internal::computeKPointDependenderExcWithTauJxWEntries(
-                  std::make_pair(iCell,
-                                                             iCell +
-                                                               nCellsPerBatch),
+                  std::make_pair(iCell, iCell + nCellsPerBatch),
                   numberQuadraturePointsPerCell,
                   d_basisOperationsPtrHost->cellsTypeFlag(),
                   offsetFactor,
