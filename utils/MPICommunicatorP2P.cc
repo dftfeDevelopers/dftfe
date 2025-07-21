@@ -1187,8 +1187,130 @@ namespace dftfe
                     d_blockSize;
                 }
           }
-      }
+        else if (d_commPrecision == communicationPrecision::Half)
+          {
+            // initiate non-blocking receives from target processors
+            typename dftfe::dataTypes::halfPrecType<ValueType>::type
+              *recvArrayStartPtr = d_sendRecvBufferHalfPrec.data();
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              {
+                if (d_commProtocol == communicationProtocol::mpiHost)
+                  recvArrayStartPtr =
+                    d_sendRecvBufferHalfPrecHostPinnedPtr->begin();
 
+                dftfe::utils::deviceSynchronize();
+              }
+#endif
+
+            if (d_commProtocol != communicationProtocol::nccl)
+              for (dftfe::uInt i = 0;
+                   i < (d_mpiPatternP2P->getTargetProcIds()).size();
+                   ++i)
+                {
+                  const int err =
+                    MPI_Irecv(recvArrayStartPtr,
+                              d_mpiPatternP2P
+                                  ->getNumOwnedIndicesForTargetProcs()
+                                  .data()[i] *
+                                d_blockSize *
+                                sizeof(typename dftfe::dataTypes::halfPrecType<
+                                       ValueType>::type),
+                              MPI_BYTE,
+                              d_mpiPatternP2P->getTargetProcIds().data()[i],
+                              static_cast<dftfe::uInt>(
+                                MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
+                                communicationChannel,
+                              d_mpiCommunicator,
+                              &d_requestsAccumulateAddLocallyOwned[i]);
+
+                  std::string errMsg = "Error occured while using MPI_Irecv. "
+                                       "Error code: " +
+                                       std::to_string(err);
+                  throwException(err == MPI_SUCCESS, errMsg);
+
+
+                  recvArrayStartPtr +=
+                    d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                      .data()[i] *
+                    d_blockSize;
+                }
+
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              MPICommunicatorP2PKernels<ValueType, memorySpace>::
+                copyValueTypeArrToHalfPrecArr(
+                  d_ghostDataCopyHalfPrec.size(),
+                  dataArray.data() +
+                    d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                  d_ghostDataCopyHalfPrec.data(),
+                  dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+#endif
+
+            // initiate non-blocking sends to ghost processors
+            typename dftfe::dataTypes::halfPrecType<ValueType>::type
+              *sendArrayStartPtr = d_ghostDataCopyHalfPrec.data();
+
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              {
+                if (d_commProtocol != communicationProtocol::nccl)
+                  dftfe::utils::deviceStreamSynchronize(
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+                if (d_commProtocol == communicationProtocol::mpiHost)
+                  {
+                    MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
+                      memoryTransfer;
+                    if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                      memoryTransfer.copy(
+                        d_ghostDataCopyHalfPrecHostPinnedPtr->size(),
+                        d_ghostDataCopyHalfPrecHostPinnedPtr->begin(),
+                        d_ghostDataCopyHalfPrec.data());
+
+                    sendArrayStartPtr =
+                      d_ghostDataCopyHalfPrecHostPinnedPtr->begin();
+                  }
+              }
+#endif
+
+            if (d_commProtocol != communicationProtocol::nccl)
+              for (dftfe::uInt i = 0;
+                   i < (d_mpiPatternP2P->getGhostProcIds()).size();
+                   ++i)
+                {
+                  const int err = MPI_Isend(
+                    sendArrayStartPtr,
+                    (d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                       .data()[2 * i + 1] -
+                     d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                       .data()[2 * i]) *
+                      d_blockSize *
+                      sizeof(typename dftfe::dataTypes::halfPrecType<
+                             ValueType>::type),
+                    MPI_BYTE,
+                    d_mpiPatternP2P->getGhostProcIds().data()[i],
+                    static_cast<dftfe::uInt>(
+                      MPITags::MPI_P2P_COMMUNICATOR_GATHER_TAG) +
+                      communicationChannel,
+                    d_mpiCommunicator,
+                    &d_requestsAccumulateAddLocallyOwned
+                      [(d_mpiPatternP2P->getTargetProcIds()).size() + i]);
+
+
+                  std::string errMsg = "Error occured while using MPI_Isend. "
+                                       "Error code: " +
+                                       std::to_string(err);
+                  throwException(err == MPI_SUCCESS, errMsg);
+
+                  sendArrayStartPtr +=
+                    (d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                       .data()[2 * i + 1] -
+                     d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                       .data()[2 * i]) *
+                    d_blockSize;
+                }
+          }
+      }
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
       void
@@ -1339,7 +1461,6 @@ namespace dftfe
             dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
 #endif
       }
-
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
       void

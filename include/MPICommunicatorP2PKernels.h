@@ -208,6 +208,13 @@ namespace dftfe
                                     *halfPrecArray,
         ValueType                   *valueTypeArray,
         dftfe::utils::deviceStream_t deviceCommStream);
+
+      static void
+      copyValueTypeArrToHalfPrecArr(
+        const dftfe::uInt blockSize,
+        const ValueType  *valueTypeArray,
+        typename dftfe::dataTypes::halfPrecType<ValueType>::type *halfPrecArray,
+        dftfe::utils::deviceStream_t deviceCommStream);
     };
 #endif
   } // namespace utils

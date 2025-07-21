@@ -777,6 +777,104 @@ namespace dftfe
         }
     }
 
+    __global__ void
+    copyValueTypeArrToHalfPrecArrDeviceKernel(
+      const dftfe::uInt                                        size,
+      const double                                          *valueTypeArray,
+      typename dftfe::dataTypes::halfPrecType<double>::type *halfPrecArray)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      for (dftfe::uInt i = globalThreadId; i < size; i += blockDim.x * gridDim.x)
+        *(reinterpret_cast<dftfe::utils::__device_bfloat16 *>(halfPrecArray) +
+          i) = __float2bfloat16((float)valueTypeArray[i]);
+    }
+
+    __global__ void
+    copyValueTypeArrToHalfPrecArrDeviceKernel(
+      const dftfe::uInt                                       size,
+      const float                                          *valueTypeArray,
+      typename dftfe::dataTypes::halfPrecType<float>::type *halfPrecArray)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      for (dftfe::uInt i = globalThreadId; i < size; i += blockDim.x * gridDim.x)
+        *(reinterpret_cast<dftfe::utils::__device_bfloat16 *>(halfPrecArray) +
+          i) = __float2bfloat16(valueTypeArray[i]);
+    }
+
+    __global__ void
+    copyValueTypeArrToHalfPrecArrDeviceKernel(
+      const dftfe::uInt            size,
+      const deviceDoubleComplex *valueTypeArray,
+      typename dftfe::dataTypes::halfPrecType<std::complex<double>>::type
+        *halfPrecArray)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      for (dftfe::uInt i = globalThreadId; i < size; i += blockDim.x * gridDim.x)
+        {
+          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
+               halfPrecArray) +
+             i))
+            .x = __float2bfloat16((double)valueTypeArray[i].x);
+          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
+               halfPrecArray) +
+             i))
+            .y = __float2bfloat16((double)valueTypeArray[i].y);
+        }
+    }
+
+    __global__ void
+    copyValueTypeArrToHalfPrecArrDeviceKernel(
+      const dftfe::uInt           size,
+      const deviceFloatComplex *valueTypeArray,
+      typename dftfe::dataTypes::halfPrecType<std::complex<float>>::type
+        *halfPrecArray)
+    {
+      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
+      for (dftfe::uInt i = globalThreadId; i < size; i += blockDim.x * gridDim.x)
+        {
+          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
+               halfPrecArray) +
+             i))
+            .x = __float2bfloat16(valueTypeArray[i].x);
+          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
+               halfPrecArray) +
+             i))
+            .y = __float2bfloat16(valueTypeArray[i].y);
+        }
+    }
+
+
+    template <typename ValueType>
+    void
+    MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
+      copyValueTypeArrToHalfPrecArr(
+        const dftfe::uInt blockSize,
+        const ValueType  *valueTypeArray,
+        typename dftfe::dataTypes::halfPrecType<ValueType>::type *halfPrecArray,
+        dftfe::utils::deviceStream_t deviceCommStream)
+    {
+#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
+      copyValueTypeArrToHalfPrecArrDeviceKernel<<<
+        (blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        0,
+        deviceCommStream>>>(blockSize,
+                            dftfe::utils::makeDataTypeDeviceCompatible(
+                              valueTypeArray),
+                            halfPrecArray); /*
+ #  elif DFTFE_WITH_DEVICE_LANG_HIP
+       hipLaunchKernelGGL(copyValueTypeArrToHalfPrecArrDeviceKernel,
+                          (blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
+                          dftfe::utils::DEVICE_BLOCK_SIZE,
+                          0,
+                          deviceCommStream,
+                          blockSize,
+                          dftfe::utils::makeDataTypeDeviceCompatible(
+                            valueTypeArray),
+                          halfPrecArray);*/
+#  endif
+    }
+
 
     template <typename ValueType>
     void
