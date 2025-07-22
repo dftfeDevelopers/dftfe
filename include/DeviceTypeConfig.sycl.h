@@ -19,6 +19,7 @@
 
 #include <oneapi/mkl/types.hpp>
 #include <oneapi/mkl/blas/types.hpp>
+#include <sycl/ext/oneapi/bfloat16.hpp>
 #include <complex>
 #include <set>
 #include <map>
@@ -26,11 +27,15 @@ namespace dftfe
 {
   namespace utils
   {
-    typedef std::error_code      deviceError_t;
-    typedef dftfe::uInt          deviceStream_t;
-    typedef sycl::event          deviceEvent_t;
-    typedef std::complex<double> deviceDoubleComplex;
-    typedef std::complex<float>  deviceFloatComplex;
+    typedef std::error_code             deviceError_t;
+    typedef dftfe::uInt                 deviceStream_t;
+    typedef sycl::event                 deviceEvent_t;
+    typedef std::complex<double>        deviceDoubleComplex;
+    typedef std::complex<float>         deviceFloatComplex;
+    typedef sycl::ext::oneapi::bfloat16 __device_bfloat16;
+    typedef sycl::ext::oneapi::experimental::complex<
+      sycl::ext::oneapi::bfloat16>
+      __device_bfloat162;
 
     // static consts
     static std::error_code deviceSuccess = make_error_code(sycl::errc::success);
