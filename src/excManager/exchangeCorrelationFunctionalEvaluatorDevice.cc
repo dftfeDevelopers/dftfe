@@ -58,55 +58,65 @@ namespace dftfe
 #undef DFTFE_FUNCTIONALEVALUATOR_LDA_C
 namespace dftfe
 {
-#define DFTFE_FUNCTIONALEVALUATOR_LDA_X(NAME, BODY)                        \
-  template <>                                                              \
-  void LDAX_##NAME(                                                        \
-    dftfe::uInt numPoints,                                                 \
-    const dftfe::utils::MemoryStorage<double,                              \
-                                      dftfe::utils::MemorySpace::DEVICE>   \
-      &densityValues,                                                      \
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> \
-      &excEnergyOut,                                                       \
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> \
-      &pdexDensity)                                                        \
-  {                                                                        \
-    DFTFE_LAUNCH_KERNEL(                                                   \
-      exchangeEvaluationKernel##NAME,                                      \
-      (numPoints + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /                  \
-        dftfe::utils::DEVICE_BLOCK_SIZE,                                   \
-      dftfe::utils::DEVICE_BLOCK_SIZE,                                     \
-      dftfe::linearAlgebra::BLASWrapper<                                   \
-        dftfe::utils::MemorySpace::DEVICE>::d_streamId,                    \
-      numPoints,                                                           \
-      dftfe::utils::makeDataTypeDeviceCompatible(densityValues.data()),    \
-      dftfe::utils::makeDataTypeDeviceCompatible(excEnergyOut.data()),     \
-      dftfe::utils::makeDataTypeDeviceCompatible(pdexDensity.data()));     \
+#define DFTFE_FUNCTIONALEVALUATOR_LDA_X(NAME, BODY)                         \
+  template <>                                                               \
+  void LDAX_##NAME(                                                         \
+    dftfe::uInt numPoints,                                                  \
+    const dftfe::utils::MemoryStorage<double,                               \
+                                      dftfe::utils::MemorySpace::DEVICE>    \
+      &densityValues,                                                       \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>  \
+      &excEnergyOut,                                                        \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>  \
+      &pdexDensity)                                                         \
+  {                                                                         \
+    const auto *densityValuesTemp =                                         \
+      dftfe::utils::makeDataTypeDeviceCompatible(densityValues.data());     \
+    auto *excEnergyOutTemp =                                                \
+      dftfe::utils::makeDataTypeDeviceCompatible(excEnergyOut.data());      \
+    auto *pdexDensitytTemp =                                                \
+      dftfe::utils::makeDataTypeDeviceCompatible(pdexDensity.data());       \
+    DFTFE_LAUNCH_KERNEL(exchangeEvaluationKernel##NAME,                     \
+                        (numPoints + dftfe::utils::DEVICE_BLOCK_SIZE - 1) / \
+                          dftfe::utils::DEVICE_BLOCK_SIZE,                  \
+                        dftfe::utils::DEVICE_BLOCK_SIZE,                    \
+                        dftfe::linearAlgebra::BLASWrapper<                  \
+                          dftfe::utils::MemorySpace::DEVICE>::d_streamId,   \
+                        numPoints,                                          \
+                        densityValuesTemp,                                  \
+                        excEnergyOutTemp,                                   \
+                        pdexDensitytTemp);                                  \
   }
 
 
-#define DFTFE_FUNCTIONALEVALUATOR_LDA_C(NAME, BODY)                        \
-  template <>                                                              \
-  void LDAC_##NAME(                                                        \
-    dftfe::uInt numPoints,                                                 \
-    const dftfe::utils::MemoryStorage<double,                              \
-                                      dftfe::utils::MemorySpace::DEVICE>   \
-      &densityValues,                                                      \
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> \
-      &corrEnergyOut,                                                      \
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> \
-      &pdecDensity)                                                        \
-  {                                                                        \
-    DFTFE_LAUNCH_KERNEL(                                                   \
-      correlationEvaluationKernel##NAME,                                   \
-      (numPoints + dftfe::utils::DEVICE_BLOCK_SIZE - 1) /                  \
-        dftfe::utils::DEVICE_BLOCK_SIZE,                                   \
-      dftfe::utils::DEVICE_BLOCK_SIZE,                                     \
-      dftfe::linearAlgebra::BLASWrapper<                                   \
-        dftfe::utils::MemorySpace::DEVICE>::d_streamId,                    \
-      numPoints,                                                           \
-      dftfe::utils::makeDataTypeDeviceCompatible(densityValues.data()),    \
-      dftfe::utils::makeDataTypeDeviceCompatible(corrEnergyOut.data()),    \
-      dftfe::utils::makeDataTypeDeviceCompatible(pdecDensity.data()));     \
+#define DFTFE_FUNCTIONALEVALUATOR_LDA_C(NAME, BODY)                         \
+  template <>                                                               \
+  void LDAC_##NAME(                                                         \
+    dftfe::uInt numPoints,                                                  \
+    const dftfe::utils::MemoryStorage<double,                               \
+                                      dftfe::utils::MemorySpace::DEVICE>    \
+      &densityValues,                                                       \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>  \
+      &corrEnergyOut,                                                       \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>  \
+      &pdecDensity)                                                         \
+  {                                                                         \
+    const auto *densityValuesTemp =                                         \
+      dftfe::utils::makeDataTypeDeviceCompatible(densityValues.data());     \
+    auto *corrEnergyOutTemp =                                               \
+      dftfe::utils::makeDataTypeDeviceCompatible(corrEnergyOut.data());     \
+    auto *pdecDensitytTemp =                                                \
+      dftfe::utils::makeDataTypeDeviceCompatible(pdecDensity.data());       \
+    DFTFE_LAUNCH_KERNEL(correlationEvaluationKernel##NAME,                  \
+                        (numPoints + dftfe::utils::DEVICE_BLOCK_SIZE - 1) / \
+                          dftfe::utils::DEVICE_BLOCK_SIZE,                  \
+                        dftfe::utils::DEVICE_BLOCK_SIZE,                    \
+                        dftfe::linearAlgebra::BLASWrapper<                  \
+                          dftfe::utils::MemorySpace::DEVICE>::d_streamId,   \
+                        numPoints,                                          \
+                        densityValuesTemp,                                  \
+                        corrEnergyOutTemp,                                  \
+                        pdecDensitytTemp);                                  \
   }
 #include <exchangeCorrelationFunctionalEvaluation.def>
 } // namespace dftfe
