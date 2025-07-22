@@ -15,10 +15,10 @@ DFT-FE code builds on top of the deal.II library for everything that has to do w
 The steps to install the necessary dependencies and DFT-FE itself are described in the *Installation* section of the DFT-FE manual (download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). 
 
 We have created several shell based installation scripts for the development version of DFT-FE (`publicGithubDevelop` branch) on various machines:
-  - [OLCF Frontier](https://github.com/dftfeDevelopers/install_DFTFE/tree/frontier_uInt64)
-  - [NERSC Perlmutter](https://github.com/dftfeDevelopers/install_DFTFE/tree/perlmutterScriptDealii9.5.2Elpa2025)
+  - [OLCF Frontier](https://github.com/dftfeDevelopers/install_DFTFE/tree/frontierDevelop)
+  - [NERSC Perlmutter](https://github.com/dftfeDevelopers/install_DFTFE/tree/perlmutterDevelop)
   - [ALCF Polaris](https://github.com/dftfeDevelopers/install_DFTFE/tree/polarisScript)
-  - [UMICH Greatlakes](https://github.com/dftfeDevelopers/install_DFTFE/tree/greatlakesScriptDealii9.5.2)
+  - [UMICH Greatlakes](https://github.com/dftfeDevelopers/install_DFTFE/tree/greatlakesDevelop)
     
 
 
