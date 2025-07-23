@@ -48,3 +48,4 @@ srun ./dftfe parameterFileGaAs.prm > outputGaAs
 srun ./dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
 srun ./dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
 srun ./dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
+srun ./dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker

@@ -23,7 +23,6 @@
 //
 #include <dft.h>
 #include <densityCalculator.h>
-#include <kineticEnergyDensityCalculator.h>
 #include <fileReaders.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
@@ -44,45 +43,7 @@ namespace dftfe
       matrix_free_data.get_quadrature(d_densityQuadratureId);
     const dftfe::uInt n_q_points = quadratureFormula.size();
 
-    //
-    // compute kinetic energy density values
-    //
-#ifdef DFTFE_WITH_DEVICE
-    if (d_dftParamsPtr->useDevice)
-      computeKineticEnergyDensity(*d_BLASWrapperPtr,
-                                  &d_eigenVectorsFlattenedDevice,
-                                  d_numEigenValues,
-                                  d_partialOccupancies,
-                                  d_basisOperationsPtrDevice,
-                                  d_densityQuadratureId,
-                                  d_kPointCoordinates,
-                                  d_kPointWeights,
-                                  kineticEnergyDensityValues,
-                                  d_mpiCommParent,
-                                  interpoolcomm,
-                                  interBandGroupComm,
-                                  mpi_communicator,
-                                  *d_dftParamsPtr);
-#endif
-    if (!d_dftParamsPtr->useDevice)
-      computeKineticEnergyDensity(*d_BLASWrapperPtrHost,
-                                  &d_eigenVectorsFlattenedHost,
-                                  d_numEigenValues,
-                                  d_partialOccupancies,
-                                  d_basisOperationsPtrHost,
-                                  d_densityQuadratureId,
-                                  d_kPointCoordinates,
-                                  d_kPointWeights,
-                                  kineticEnergyDensityValues,
-                                  d_mpiCommParent,
-                                  interpoolcomm,
-                                  interBandGroupComm,
-                                  mpi_communicator,
-                                  *d_dftParamsPtr);
-
     MPI_Barrier(MPI_COMM_WORLD);
-
-
 
     double kineticEnergy = 0;
 

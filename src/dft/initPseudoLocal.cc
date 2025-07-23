@@ -430,14 +430,9 @@ namespace dftfe
           }         // intercomm paral
       }             // cell loop
 
-    FEEvaluationWrapperClass<1> feEvalObj(
-      d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics,
-      C_num1DQuadLPSP(
-        d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics) *
-        C_numCopies1DQuadLPSP(),
-      _matrix_free_data,
-      _phiExtDofHandlerIndex,
-      lpspQuadratureId);
+    FEEvaluationWrapperClass<1> feEvalObj(_matrix_free_data,
+                                          _phiExtDofHandlerIndex,
+                                          lpspQuadratureId);
     AssertThrow(
       _matrix_free_data.get_quadrature(lpspQuadratureId).size() ==
         feEvalObj.n_q_points,
