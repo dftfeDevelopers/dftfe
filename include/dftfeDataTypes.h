@@ -139,7 +139,7 @@ namespace dftfe
     template <>
     struct halfPrecType<std::complex<double>>
     {
-      typedef float type;
+      typedef std::complex<uint16_t> type;
     };
 
     template <>
@@ -151,7 +151,7 @@ namespace dftfe
     template <>
     struct halfPrecType<std::complex<float>>
     {
-      typedef float type;
+      typedef std::complex<uint16_t> type;
     };
   } // namespace dataTypes
 } // namespace dftfe

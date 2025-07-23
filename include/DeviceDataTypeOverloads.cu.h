@@ -21,6 +21,8 @@
 #include <complex>
 #include <cuComplex.h>
 #include <TypeConfig.h>
+#include <cuda_bf16.h>
+#include <cstring>
 namespace dftfe
 {
   namespace utils
@@ -761,17 +763,35 @@ namespace dftfe
       return a;
     }
 
-    inline uint16_t
+    // uint16_t saves bits only
+    // not for arithmetic operations
+    inline __nv_bfloat16
     makeDataTypeDeviceCompatible(uint16_t a)
     {
-      return a;
+      __nv_bfloat16 result;
+      std::memcpy(&result, &a, sizeof(a));
+      return result;
     }
 
-    inline uint16_t *
+    inline __nv_bfloat16 *
     makeDataTypeDeviceCompatible(uint16_t *a)
     {
-      return a;
+      return reinterpret_cast<__nv_bfloat16 *>(a);
     }
+
+    inline __nv_bfloat162
+    makeDataTypeDeviceCompatible(std::complex<uint16_t> a)
+    {
+      __nv_bfloat162 result;
+      std::memcpy(&result, &a, sizeof(result));
+    }
+
+    inline __nv_bfloat162 *
+    makeDataTypeDeviceCompatible(std::complex<uint16_t> *a)
+    {
+      return reinterpret_cast<__nv_bfloat162 *>(a);
+    }
+
   } // namespace utils
 
 } // namespace dftfe

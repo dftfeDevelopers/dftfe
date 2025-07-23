@@ -360,7 +360,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
       const dftfe::uInt numIndices =
         ownedLocalIndicesForTargetProcs.size() * blockSize;
-      DFTFE_LAUNCH_KERNEL(gatherSendBufferDeviceKernel,
+      /*DFTFE_LAUNCH_KERNEL(gatherSendBufferDeviceKernel,
                           (numIndices) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
                           deviceCommStream,
@@ -368,7 +368,7 @@ namespace dftfe
                           blockSize,
                           dataArray_data,
                           ownedLocalIndicesForTargetProcs_data,
-                          sendBuffer_data);
+                          sendBuffer_data);*/
     }
 
     __global__ void
@@ -779,37 +779,40 @@ namespace dftfe
 
     __global__ void
     copyValueTypeArrToHalfPrecArrDeviceKernel(
-      const dftfe::uInt                                        size,
+      const dftfe::uInt                                      size,
       const double                                          *valueTypeArray,
       typename dftfe::dataTypes::halfPrecType<double>::type *halfPrecArray)
     {
       const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size; i += blockDim.x * gridDim.x)
+      for (dftfe::uInt i = globalThreadId; i < size;
+           i += blockDim.x * gridDim.x)
         *(reinterpret_cast<dftfe::utils::__device_bfloat16 *>(halfPrecArray) +
           i) = __float2bfloat16((float)valueTypeArray[i]);
     }
 
     __global__ void
     copyValueTypeArrToHalfPrecArrDeviceKernel(
-      const dftfe::uInt                                       size,
+      const dftfe::uInt                                     size,
       const float                                          *valueTypeArray,
       typename dftfe::dataTypes::halfPrecType<float>::type *halfPrecArray)
     {
       const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size; i += blockDim.x * gridDim.x)
+      for (dftfe::uInt i = globalThreadId; i < size;
+           i += blockDim.x * gridDim.x)
         *(reinterpret_cast<dftfe::utils::__device_bfloat16 *>(halfPrecArray) +
           i) = __float2bfloat16(valueTypeArray[i]);
     }
 
     __global__ void
     copyValueTypeArrToHalfPrecArrDeviceKernel(
-      const dftfe::uInt            size,
+      const dftfe::uInt          size,
       const deviceDoubleComplex *valueTypeArray,
       typename dftfe::dataTypes::halfPrecType<std::complex<double>>::type
         *halfPrecArray)
     {
       const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size; i += blockDim.x * gridDim.x)
+      for (dftfe::uInt i = globalThreadId; i < size;
+           i += blockDim.x * gridDim.x)
         {
           (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
                halfPrecArray) +
@@ -824,13 +827,14 @@ namespace dftfe
 
     __global__ void
     copyValueTypeArrToHalfPrecArrDeviceKernel(
-      const dftfe::uInt           size,
+      const dftfe::uInt         size,
       const deviceFloatComplex *valueTypeArray,
       typename dftfe::dataTypes::halfPrecType<std::complex<float>>::type
         *halfPrecArray)
     {
       const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size; i += blockDim.x * gridDim.x)
+      for (dftfe::uInt i = globalThreadId; i < size;
+           i += blockDim.x * gridDim.x)
         {
           (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
                halfPrecArray) +
@@ -1075,6 +1079,53 @@ namespace dftfe
 
     template void
     MPICommunicatorP2PKernels<double, utils::MemorySpace::DEVICE>::
+      gatherLocallyOwnedEntriesSendBufferToTargetProcs(
+        const MemoryStorage<double, utils::MemorySpace::DEVICE> &dataArray,
+        const MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        MemoryStorage<uint16_t, utils::MemorySpace::DEVICE> &sendBuffer,
+        dftfe::utils::deviceStream_t                         deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<float, utils::MemorySpace::DEVICE>::
+      gatherLocallyOwnedEntriesSendBufferToTargetProcs(
+        const MemoryStorage<float, utils::MemorySpace::DEVICE> &dataArray,
+        const MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        MemoryStorage<uint16_t, utils::MemorySpace::DEVICE> &sendBuffer,
+        dftfe::utils::deviceStream_t                         deviceCommStream);
+
+
+    template void
+    MPICommunicatorP2PKernels<std::complex<double>,
+                              utils::MemorySpace::DEVICE>::
+      gatherLocallyOwnedEntriesSendBufferToTargetProcs(
+        const MemoryStorage<std::complex<double>, utils::MemorySpace::DEVICE>
+          &dataArray,
+        const MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        MemoryStorage<std::complex<uint16_t>, utils::MemorySpace::DEVICE>
+                                    &sendBuffer,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<std::complex<float>, utils::MemorySpace::DEVICE>::
+      gatherLocallyOwnedEntriesSendBufferToTargetProcs(
+        const MemoryStorage<std::complex<float>, utils::MemorySpace::DEVICE>
+          &dataArray,
+        const MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        MemoryStorage<std::complex<uint16_t>, utils::MemorySpace::DEVICE>
+                                    &sendBuffer,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+
+    template void
+    MPICommunicatorP2PKernels<double, utils::MemorySpace::DEVICE>::
       accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
         const MemoryStorage<double, utils::MemorySpace::DEVICE> &recvBuffer,
         const utils::MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
@@ -1282,6 +1333,77 @@ namespace dftfe
         const std::complex<float>   *type1Array,
         std::complex<float>         *type2Array,
         dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<double, dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(
+        const dftfe::uInt            blockSize,
+        const double                *type1Array,
+        uint16_t                    *type2Array,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<double, dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(
+        const dftfe::uInt            blockSize,
+        const uint16_t              *type1Array,
+        double                      *type2Array,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+
+    template void
+    MPICommunicatorP2PKernels<float, dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(
+        const dftfe::uInt            blockSize,
+        const float                 *type1Array,
+        uint16_t                    *type2Array,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<float, dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(
+        const dftfe::uInt            blockSize,
+        const uint16_t              *type1Array,
+        float                       *type2Array,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<std::complex<double>,
+                              dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(
+        const dftfe::uInt            blockSize,
+        const std::complex<double>  *type1Array,
+        std::complex<uint16_t>      *type2Array,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<std::complex<double>,
+                              dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(
+        const dftfe::uInt             blockSize,
+        const std::complex<uint16_t> *type1Array,
+        std::complex<double>         *type2Array,
+        dftfe::utils::deviceStream_t  deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<std::complex<float>,
+                              dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(
+        const dftfe::uInt            blockSize,
+        const std::complex<float>   *type1Array,
+        std::complex<uint16_t>      *type2Array,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<std::complex<float>,
+                              dftfe::utils::MemorySpace::DEVICE>::
+      copyValueType1ArrToValueType2Arr(
+        const dftfe::uInt             blockSize,
+        const std::complex<uint16_t> *type1Array,
+        std::complex<float>          *type2Array,
+        dftfe::utils::deviceStream_t  deviceCommStream);
+
+
 
   } // namespace utils
 } // namespace dftfe
