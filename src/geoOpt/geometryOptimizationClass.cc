@@ -270,8 +270,7 @@ namespace dftfe
             if (d_dftPtr->getParametersObject()
                   .writeStructreEnergyForcesFileForPostProcess)
               {
-                std::string fileName =
-                  "structureEnergyForcesGSData_0.txt";
+                std::string fileName = "structureEnergyForcesGSData_0.txt";
                 d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
               }
           }
@@ -280,7 +279,7 @@ namespace dftfe
           {
             if (d_dftPtr->getParametersObject().verbosity >= 1)
               pcout << "Starting ion optimization" << std::endl;
-            d_geoOptIonPtr->init(restartPath,d_cycle);
+            d_geoOptIonPtr->init(restartPath, d_cycle);
             dftfe::Int geoOptStatus = d_geoOptIonPtr->run();
             if (d_optMode == 0)
               {
@@ -308,7 +307,7 @@ namespace dftfe
           {
             if (d_dftPtr->getParametersObject().verbosity >= 1)
               pcout << "Starting cell optimization" << std::endl;
-            d_geoOptCellPtr->init(restartPath,d_cycle);
+            d_geoOptCellPtr->init(restartPath, d_cycle);
             dftfe::Int geoOptStatus = d_geoOptCellPtr->run();
             if (d_optMode == 1)
               {
