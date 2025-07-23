@@ -43,7 +43,6 @@ namespace dftfe
     namespace
     {
       template <typename ValueType1, typename ValueType2>
-
       DFTFE_CREATE_KERNEL(
         void,
         gatherSendBufferDeviceKernel,
@@ -65,9 +64,7 @@ namespace dftfe
         const dftfe::uInt *ownedLocalIndicesForTargetProcs,
         ValueType2        *sendBuffer);
 
-
       template <>
-
       DFTFE_CREATE_KERNEL(
         void,
         gatherSendBufferDeviceKernel,
@@ -94,9 +91,106 @@ namespace dftfe
         const dftfe::uInt                *ownedLocalIndicesForTargetProcs,
         dftfe::utils::deviceFloatComplex *sendBuffer);
 
+      template <>
+      DFTFE_CREATE_KERNEL(
+        void,
+        gatherSendBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              sendBuffer[i]                  = __float2bfloat16(
+                (float)dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                   blockSize +
+                                 intraBlockId]);
+            }
+        },
+        const dftfe::uInt                totalFlattenedSize,
+        const dftfe::uInt                blockSize,
+        const double                    *dataArray,
+        const dftfe::uInt               *ownedLocalIndicesForTargetProcs,
+        dftfe::utils::__device_bfloat16 *sendBuffer);
+
+      template <>
+      DFTFE_CREATE_KERNEL(
+        void,
+        gatherSendBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              sendBuffer[i]                  = __float2bfloat16(
+                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                          intraBlockId]);
+            }
+        },
+        const dftfe::uInt                totalFlattenedSize,
+        const dftfe::uInt                blockSize,
+        const float                     *dataArray,
+        const dftfe::uInt               *ownedLocalIndicesForTargetProcs,
+        dftfe::utils::__device_bfloat16 *sendBuffer);
+
+      template <>
+      DFTFE_CREATE_KERNEL(
+        void,
+        gatherSendBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              sendBuffer[i].x                = __float2bfloat16(
+                (float)dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                   blockSize +
+                                 intraBlockId]
+                  .x);
+              sendBuffer[i].y = __float2bfloat16(
+                (float)dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                   blockSize +
+                                 intraBlockId]
+                  .y);
+            }
+        },
+        const dftfe::uInt                        totalFlattenedSize,
+        const dftfe::uInt                        blockSize,
+        const dftfe::utils::deviceDoubleComplex *dataArray,
+        const dftfe::uInt                *ownedLocalIndicesForTargetProcs,
+        dftfe::utils::__device_bfloat162 *sendBuffer);
+
+      template <>
+      DFTFE_CREATE_KERNEL(
+        void,
+        gatherSendBufferDeviceKernel,
+        {
+          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+               i += nThreadsPerBlock * nThreadBlock)
+            {
+              const dftfe::uInt blockId      = i / blockSize;
+              const dftfe::uInt intraBlockId = i - blockId * blockSize;
+              // do it in one shot later
+              sendBuffer[i].x = __float2bfloat16(
+                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                          intraBlockId]
+                  .x);
+              sendBuffer[i].y = __float2bfloat16(
+                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
+                          intraBlockId]
+                  .y);
+            }
+        },
+        const dftfe::uInt                       totalFlattenedSize,
+        const dftfe::uInt                       blockSize,
+        const dftfe::utils::deviceFloatComplex *dataArray,
+        const dftfe::uInt                      *ownedLocalIndicesForTargetProcs,
+        dftfe::utils::__device_bfloat162       *sendBuffer);
+
 
       template <typename ValueType1, typename ValueType2>
-
       DFTFE_CREATE_KERNEL(
         void,
         accumAddFromRecvBufferDeviceKernel,
@@ -122,7 +216,6 @@ namespace dftfe
 
 
       template <>
-
       DFTFE_CREATE_KERNEL(
         void,
         accumAddFromRecvBufferDeviceKernel,
@@ -153,7 +246,6 @@ namespace dftfe
 
 
       template <>
-
       DFTFE_CREATE_KERNEL(
         void,
         accumAddFromRecvBufferDeviceKernel,
@@ -184,7 +276,130 @@ namespace dftfe
 
 
       template <>
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumAddFromRecvBufferDeviceKernel,
+        {
+          /*
+           for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                i += nThreadsPerBlock * nThreadBlock)
+             {
+               const dftfe::uInt blockId      = i / blockSize;
+               const dftfe::uInt intraBlockId = i - blockId * blockSize;
 
+               auto *add_real = reinterpret_cast<double *>(
+                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                              blockSize +
+                            intraBlockId]);
+               auto *add_imag = add_real + 1;
+
+               dftfe::utils::atomicAddWrapper(
+                 add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
+               dftfe::utils::atomicAddWrapper(
+                 add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
+             }*/
+        },
+        const dftfe::uInt                      totalFlattenedSize,
+        const dftfe::uInt                      blockSize,
+        const dftfe::utils::__device_bfloat16 *recvBuffer,
+        const dftfe::uInt                     *ownedLocalIndicesForTargetProcs,
+        float                                 *dataArray);
+
+
+      template <>
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumAddFromRecvBufferDeviceKernel,
+        {
+          /*
+           for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                i += nThreadsPerBlock * nThreadBlock)
+             {
+               const dftfe::uInt blockId      = i / blockSize;
+               const dftfe::uInt intraBlockId = i - blockId * blockSize;
+
+               auto *add_real = reinterpret_cast<double *>(
+                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                              blockSize +
+                            intraBlockId]);
+               auto *add_imag = add_real + 1;
+
+               dftfe::utils::atomicAddWrapper(
+                 add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
+               dftfe::utils::atomicAddWrapper(
+                 add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
+             }*/
+        },
+        const dftfe::uInt                      totalFlattenedSize,
+        const dftfe::uInt                      blockSize,
+        const dftfe::utils::__device_bfloat16 *recvBuffer,
+        const dftfe::uInt                     *ownedLocalIndicesForTargetProcs,
+        double                                *dataArray);
+
+
+      template <>
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumAddFromRecvBufferDeviceKernel,
+        {
+          /*
+           for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                i += nThreadsPerBlock * nThreadBlock)
+             {
+               const dftfe::uInt blockId      = i / blockSize;
+               const dftfe::uInt intraBlockId = i - blockId * blockSize;
+
+               auto *add_real = reinterpret_cast<double *>(
+                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                              blockSize +
+                            intraBlockId]);
+               auto *add_imag = add_real + 1;
+
+               dftfe::utils::atomicAddWrapper(
+                 add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
+               dftfe::utils::atomicAddWrapper(
+                 add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
+             }*/
+        },
+        const dftfe::uInt                       totalFlattenedSize,
+        const dftfe::uInt                       blockSize,
+        const dftfe::utils::__device_bfloat162 *recvBuffer,
+        const dftfe::uInt                      *ownedLocalIndicesForTargetProcs,
+        dftfe::utils::deviceDoubleComplex      *dataArray);
+
+      template <>
+      DFTFE_CREATE_KERNEL(
+        void,
+        accumAddFromRecvBufferDeviceKernel,
+        {
+          /*
+           for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                i += nThreadsPerBlock * nThreadBlock)
+             {
+               const dftfe::uInt blockId      = i / blockSize;
+               const dftfe::uInt intraBlockId = i - blockId * blockSize;
+
+               auto *add_real = reinterpret_cast<double *>(
+                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                              blockSize +
+                            intraBlockId]);
+               auto *add_imag = add_real + 1;
+
+               dftfe::utils::atomicAddWrapper(
+                 add_real, dftfe::utils::realPartDevice(recvBuffer[i]));
+               dftfe::utils::atomicAddWrapper(
+                 add_imag, dftfe::utils::imagPartDevice(recvBuffer[i]));
+             }*/
+        },
+        const dftfe::uInt                       totalFlattenedSize,
+        const dftfe::uInt                       blockSize,
+        const dftfe::utils::__device_bfloat162 *recvBuffer,
+        const dftfe::uInt                      *ownedLocalIndicesForTargetProcs,
+        dftfe::utils::deviceFloatComplex       *dataArray);
+
+
+
+      template <>
       DFTFE_CREATE_KERNEL(
         void,
         accumAddFromRecvBufferDeviceKernel,
@@ -217,7 +432,6 @@ namespace dftfe
 
 
       template <typename ValueType1, typename ValueType2>
-
       DFTFE_CREATE_KERNEL(
         void,
         accumInsertFromRecvBufferDeviceKernel,
@@ -360,7 +574,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(sendBuffer.data());
       const dftfe::uInt numIndices =
         ownedLocalIndicesForTargetProcs.size() * blockSize;
-      /*DFTFE_LAUNCH_KERNEL(gatherSendBufferDeviceKernel,
+      DFTFE_LAUNCH_KERNEL(gatherSendBufferDeviceKernel,
                           (numIndices) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
                           deviceCommStream,
@@ -368,551 +582,8 @@ namespace dftfe
                           blockSize,
                           dataArray_data,
                           ownedLocalIndicesForTargetProcs_data,
-                          sendBuffer_data);*/
+                          sendBuffer_data);
     }
-
-    __global__ void
-    accumAddFromRecvBufferHalfPrecDeviceKernel(
-      const dftfe::uInt totalFlattenedSize,
-      const dftfe::uInt blockSize,
-      const typename dftfe::dataTypes::halfPrecType<double>::type *recvBuffer,
-      const dftfe::uInt *ownedLocalIndicesForTargetProcs,
-      double            *dataArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-           i += blockDim.x * gridDim.x)
-        {
-          const dftfe::uInt blockId      = i / blockSize;
-          const dftfe::uInt intraBlockId = i - blockId * blockSize;
-          const double      recvVal      = __bfloat162float(
-            *(reinterpret_cast<const dftfe::utils::__device_bfloat16 *>(
-                recvBuffer) +
-              i));
-          atomicAdd(
-            &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                       intraBlockId],
-            recvVal);
-        }
-    }
-
-
-    __global__ void
-    accumAddFromRecvBufferHalfPrecDeviceKernel(
-      const dftfe::uInt totalFlattenedSize,
-      const dftfe::uInt blockSize,
-      const typename dftfe::dataTypes::halfPrecType<double>::type *recvBuffer,
-      const dftfe::uInt *ownedLocalIndicesForTargetProcs,
-      float             *dataArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-           i += blockDim.x * gridDim.x)
-        {
-          const dftfe::uInt blockId      = i / blockSize;
-          const dftfe::uInt intraBlockId = i - blockId * blockSize;
-          const float       recvVal      = __bfloat162float(
-            *(reinterpret_cast<const dftfe::utils::__device_bfloat16 *>(
-                recvBuffer) +
-              i));
-          atomicAdd(
-            &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                       intraBlockId],
-            recvVal);
-        }
-    }
-
-
-    __global__ void
-    accumAddFromRecvBufferHalfPrecDeviceKernel(
-      const dftfe::uInt totalFlattenedSize,
-      const dftfe::uInt blockSize,
-      const typename dftfe::dataTypes::halfPrecType<std::complex<double>>::type
-                          *recvBuffer,
-      const dftfe::uInt   *ownedLocalIndicesForTargetProcs,
-      deviceDoubleComplex *dataArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-           i += blockDim.x * gridDim.x)
-        {
-          const dftfe::uInt blockId      = i / blockSize;
-          const dftfe::uInt intraBlockId = i - blockId * blockSize;
-          atomicAdd(
-            &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                       intraBlockId]
-               .x,
-            (double)__bfloat162float(
-              (*(reinterpret_cast<const dftfe::utils::__device_bfloat162 *>(
-                   recvBuffer) +
-                 i))
-                .x));
-          atomicAdd(
-            &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                       intraBlockId]
-               .y,
-            (double)__bfloat162float(
-              (*(reinterpret_cast<const dftfe::utils::__device_bfloat162 *>(
-                   recvBuffer) +
-                 i))
-                .y));
-        }
-    }
-    __global__ void
-    gatherSendBufferHalfPrecDeviceKernel(
-      const dftfe::uInt  totalFlattenedSize,
-      const dftfe::uInt  blockSize,
-      const double      *dataArray,
-      const dftfe::uInt *ownedLocalIndicesForTargetProcs,
-      typename dftfe::dataTypes::halfPrecType<double>::type *sendBuffer)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-           i += blockDim.x * gridDim.x)
-        {
-          const dftfe::uInt blockId      = i / blockSize;
-          const dftfe::uInt intraBlockId = i - blockId * blockSize;
-          *(reinterpret_cast<dftfe::utils::__device_bfloat16 *>(sendBuffer) +
-            i) =
-            dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                      intraBlockId];
-        }
-    }
-
-    __global__ void
-    gatherSendBufferHalfPrecDeviceKernel(
-      const dftfe::uInt  totalFlattenedSize,
-      const dftfe::uInt  blockSize,
-      const float       *dataArray,
-      const dftfe::uInt *ownedLocalIndicesForTargetProcs,
-      typename dftfe::dataTypes::halfPrecType<float>::type *sendBuffer)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-           i += blockDim.x * gridDim.x)
-        {
-          const dftfe::uInt blockId      = i / blockSize;
-          const dftfe::uInt intraBlockId = i - blockId * blockSize;
-          *(reinterpret_cast<dftfe::utils::__device_bfloat16 *>(sendBuffer) +
-            i) =
-            dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                      intraBlockId];
-        }
-    }
-
-
-    __global__ void
-    gatherSendBufferHalfPrecDeviceKernel(
-      const dftfe::uInt          totalFlattenedSize,
-      const dftfe::uInt          blockSize,
-      const deviceDoubleComplex *dataArray,
-      const dftfe::uInt         *ownedLocalIndicesForTargetProcs,
-      typename dftfe::dataTypes::halfPrecType<std::complex<double>>::type
-        *sendBuffer)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-           i += blockDim.x * gridDim.x)
-        {
-          const dftfe::uInt blockId      = i / blockSize;
-          const dftfe::uInt intraBlockId = i - blockId * blockSize;
-          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(sendBuffer) +
-             i))
-            .x =
-            dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                      intraBlockId]
-              .x;
-          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(sendBuffer) +
-             i))
-            .y =
-            dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                      intraBlockId]
-              .y;
-        }
-    }
-
-
-    __global__ void
-    gatherSendBufferHalfPrecDeviceKernel(
-      const dftfe::uInt         totalFlattenedSize,
-      const dftfe::uInt         blockSize,
-      const deviceFloatComplex *dataArray,
-      const dftfe::uInt        *ownedLocalIndicesForTargetProcs,
-      typename dftfe::dataTypes::halfPrecType<std::complex<float>>::type
-        *sendBuffer)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-           i += blockDim.x * gridDim.x)
-        {
-          const dftfe::uInt blockId      = i / blockSize;
-          const dftfe::uInt intraBlockId = i - blockId * blockSize;
-          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(sendBuffer) +
-             i))
-            .x =
-            dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                      intraBlockId]
-              .x;
-          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(sendBuffer) +
-             i))
-            .y =
-            dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                      intraBlockId]
-              .y;
-        }
-    }
-
-
-    __global__ void
-    accumAddFromRecvBufferHalfPrecDeviceKernel(
-      const dftfe::uInt totalFlattenedSize,
-      const dftfe::uInt blockSize,
-      const typename dftfe::dataTypes::halfPrecType<std::complex<float>>::type
-                         *recvBuffer,
-      const dftfe::uInt  *ownedLocalIndicesForTargetProcs,
-      deviceFloatComplex *dataArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-           i += blockDim.x * gridDim.x)
-        {
-          const dftfe::uInt blockId      = i / blockSize;
-          const dftfe::uInt intraBlockId = i - blockId * blockSize;
-          atomicAdd(
-            &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                       intraBlockId]
-               .x,
-            (float)__bfloat162float(
-              (*(reinterpret_cast<const dftfe::utils::__device_bfloat162 *>(
-                   recvBuffer) +
-                 i))
-                .x));
-          atomicAdd(
-            &dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                       intraBlockId]
-               .y,
-            (float)__bfloat162float(
-              (*(reinterpret_cast<const dftfe::utils::__device_bfloat162 *>(
-                   recvBuffer) +
-                 i))
-                .y));
-        }
-    }
-
-
-
-    template <typename ValueType>
-    void
-    MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
-      accumAddLocallyOwnedContrRecvBufferFromTargetProcsHalfPrec(
-        const MemoryStorage<
-          typename dftfe::dataTypes::halfPrecType<ValueType>::type,
-          utils::MemorySpace::DEVICE> &recvBuffer,
-        const utils::MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
-                         &ownedLocalIndicesForTargetProcs,
-        const dftfe::uInt blockSize,
-        const dftfe::uInt locallyOwnedSize,
-        const dftfe::uInt ghostSize,
-        MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE> &dataArray,
-        dftfe::utils::deviceStream_t deviceCommStream)
-    {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      accumAddFromRecvBufferHalfPrecDeviceKernel<<<
-        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream>>>(ownedLocalIndicesForTargetProcs.size() * blockSize,
-                            blockSize,
-                            recvBuffer.data(),
-                            dftfe::utils::makeDataTypeDeviceCompatible(
-                              ownedLocalIndicesForTargetProcs.data()),
-                            dftfe::utils::makeDataTypeDeviceCompatible(
-                              dataArray.data())); // CHECK
-/*
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(accumAddFromRecvBufferHalfPrecDeviceKernel,
-                         (ownedLocalIndicesForTargetProcs.size() * blockSize) /
-                             dftfe::utils::DEVICE_BLOCK_SIZE +
-                           1,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         deviceCommStream,
-                         ownedLocalIndicesForTargetProcs.size() * blockSize,
-                         blockSize,
-                         recvBuffer.data(),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           ownedLocalIndicesForTargetProcs.data()),
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           dataArray.data()));*/
-#  endif
-    }
-
-    template <typename ValueType>
-    void
-    MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
-      gatherLocallyOwnedEntriesSendBufferToTargetProcsHalfPrec(
-        const MemoryStorage<ValueType, utils::MemorySpace::DEVICE> &dataArray,
-        const MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
-                         &ownedLocalIndicesForTargetProcs,
-        const dftfe::uInt blockSize,
-        MemoryStorage<typename dftfe::dataTypes::halfPrecType<ValueType>::type,
-                      utils::MemorySpace::DEVICE> &sendBuffer,
-        dftfe::utils::deviceStream_t               deviceCommStream)
-    {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      gatherSendBufferHalfPrecDeviceKernel<<<
-        (ownedLocalIndicesForTargetProcs.size() * blockSize) /
-            dftfe::utils::DEVICE_BLOCK_SIZE +
-          1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream>>>(ownedLocalIndicesForTargetProcs.size() * blockSize,
-                            blockSize,
-                            dftfe::utils::makeDataTypeDeviceCompatible(
-                              dataArray.data()),
-                            dftfe::utils::makeDataTypeDeviceCompatible(
-                              ownedLocalIndicesForTargetProcs.data()),
-                            sendBuffer.data());
-      // CHECK
-      /*
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
-    hipLaunchKernelGGL(
-      gatherSendBufferHalfPrecDeviceKernel,
-      (ownedLocalIndicesForTargetProcs.size() * blockSize) /
-          dftfe::utils::DEVICE_BLOCK_SIZE +
-        1,
-      dftfe::utils::DEVICE_BLOCK_SIZE,
-      0,
-      deviceCommStream,
-      ownedLocalIndicesForTargetProcs.size() * blockSize,
-      blockSize,
-      dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data()),
-      dftfe::utils::makeDataTypeDeviceCompatible(
-        ownedLocalIndicesForTargetProcs.data()),
-      sendBuffer.data());*/
-#  endif
-    }
-
-
-    __global__ void
-    copyHalfPrecArrToValueTypeArrDeviceKernel(
-      const dftfe::uInt size,
-      const typename dftfe::dataTypes::halfPrecType<double>::type
-             *halfPrecArray,
-      double *valueTypeArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        valueTypeArray[i] = __bfloat162float(
-          *(reinterpret_cast<const dftfe::utils::__device_bfloat16 *>(
-              halfPrecArray) +
-            i));
-    }
-
-    __global__ void
-    copyHalfPrecArrToValueTypeArrDeviceKernel(
-      const dftfe::uInt                                           size,
-      const typename dftfe::dataTypes::halfPrecType<float>::type *halfPrecArray,
-      float *valueTypeArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        valueTypeArray[i] = __bfloat162float(
-          *(reinterpret_cast<const dftfe::utils::__device_bfloat16 *>(
-              halfPrecArray) +
-            i));
-    }
-
-
-    __global__ void
-    copyHalfPrecArrToValueTypeArrDeviceKernel(
-      const dftfe::uInt size,
-      const typename dftfe::dataTypes::halfPrecType<std::complex<double>>::type
-                          *halfPrecArray,
-      deviceDoubleComplex *valueTypeArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        {
-          valueTypeArray[i].x = __bfloat162float(
-            (*(reinterpret_cast<const dftfe::utils::__device_bfloat162 *>(
-                 halfPrecArray) +
-               i))
-              .x);
-          valueTypeArray[i].y = __bfloat162float(
-            (*(reinterpret_cast<const dftfe::utils::__device_bfloat162 *>(
-                 halfPrecArray) +
-               i))
-              .y);
-        }
-    }
-
-
-    __global__ void
-    copyHalfPrecArrToValueTypeArrDeviceKernel(
-      const dftfe::uInt size,
-      const typename dftfe::dataTypes::halfPrecType<std::complex<float>>::type
-                         *halfPrecArray,
-      deviceFloatComplex *valueTypeArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        {
-          valueTypeArray[i].x = __bfloat162float(
-            (*(reinterpret_cast<const dftfe::utils::__device_bfloat162 *>(
-                 halfPrecArray) +
-               i))
-              .x);
-          valueTypeArray[i].y = __bfloat162float(
-            (*(reinterpret_cast<const dftfe::utils::__device_bfloat162 *>(
-                 halfPrecArray) +
-               i))
-              .y);
-        }
-    }
-
-    __global__ void
-    copyValueTypeArrToHalfPrecArrDeviceKernel(
-      const dftfe::uInt                                      size,
-      const double                                          *valueTypeArray,
-      typename dftfe::dataTypes::halfPrecType<double>::type *halfPrecArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        *(reinterpret_cast<dftfe::utils::__device_bfloat16 *>(halfPrecArray) +
-          i) = __float2bfloat16((float)valueTypeArray[i]);
-    }
-
-    __global__ void
-    copyValueTypeArrToHalfPrecArrDeviceKernel(
-      const dftfe::uInt                                     size,
-      const float                                          *valueTypeArray,
-      typename dftfe::dataTypes::halfPrecType<float>::type *halfPrecArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        *(reinterpret_cast<dftfe::utils::__device_bfloat16 *>(halfPrecArray) +
-          i) = __float2bfloat16(valueTypeArray[i]);
-    }
-
-    __global__ void
-    copyValueTypeArrToHalfPrecArrDeviceKernel(
-      const dftfe::uInt          size,
-      const deviceDoubleComplex *valueTypeArray,
-      typename dftfe::dataTypes::halfPrecType<std::complex<double>>::type
-        *halfPrecArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        {
-          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
-               halfPrecArray) +
-             i))
-            .x = __float2bfloat16((double)valueTypeArray[i].x);
-          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
-               halfPrecArray) +
-             i))
-            .y = __float2bfloat16((double)valueTypeArray[i].y);
-        }
-    }
-
-    __global__ void
-    copyValueTypeArrToHalfPrecArrDeviceKernel(
-      const dftfe::uInt         size,
-      const deviceFloatComplex *valueTypeArray,
-      typename dftfe::dataTypes::halfPrecType<std::complex<float>>::type
-        *halfPrecArray)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      for (dftfe::uInt i = globalThreadId; i < size;
-           i += blockDim.x * gridDim.x)
-        {
-          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
-               halfPrecArray) +
-             i))
-            .x = __float2bfloat16(valueTypeArray[i].x);
-          (*(reinterpret_cast<dftfe::utils::__device_bfloat162 *>(
-               halfPrecArray) +
-             i))
-            .y = __float2bfloat16(valueTypeArray[i].y);
-        }
-    }
-
-
-    template <typename ValueType>
-    void
-    MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
-      copyValueTypeArrToHalfPrecArr(
-        const dftfe::uInt blockSize,
-        const ValueType  *valueTypeArray,
-        typename dftfe::dataTypes::halfPrecType<ValueType>::type *halfPrecArray,
-        dftfe::utils::deviceStream_t deviceCommStream)
-    {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      copyValueTypeArrToHalfPrecArrDeviceKernel<<<
-        (blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream>>>(blockSize,
-                            dftfe::utils::makeDataTypeDeviceCompatible(
-                              valueTypeArray),
-                            halfPrecArray); /*
- #  elif DFTFE_WITH_DEVICE_LANG_HIP
-       hipLaunchKernelGGL(copyValueTypeArrToHalfPrecArrDeviceKernel,
-                          (blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-                          dftfe::utils::DEVICE_BLOCK_SIZE,
-                          0,
-                          deviceCommStream,
-                          blockSize,
-                          dftfe::utils::makeDataTypeDeviceCompatible(
-                            valueTypeArray),
-                          halfPrecArray);*/
-#  endif
-    }
-
-
-    template <typename ValueType>
-    void
-    MPICommunicatorP2PKernels<ValueType, utils::MemorySpace::DEVICE>::
-      copyHalfPrecArrToValueTypeArr(
-        const dftfe::uInt blockSize,
-        const typename dftfe::dataTypes::halfPrecType<ValueType>::type
-                                    *halfPrecArray,
-        ValueType                   *valueTypeArray,
-        dftfe::utils::deviceStream_t deviceCommStream)
-    {
-#  ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-      copyHalfPrecArrToValueTypeArrDeviceKernel<<<
-        (blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-        dftfe::utils::DEVICE_BLOCK_SIZE,
-        0,
-        deviceCommStream>>>(blockSize,
-                            halfPrecArray,
-                            dftfe::utils::makeDataTypeDeviceCompatible(
-                              valueTypeArray));
-#  elif DFTFE_WITH_DEVICE_LANG_HIP
-      hipLaunchKernelGGL(copyHalfPrecArrToValueTypeArrDeviceKernel,
-                         (blockSize) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
-                         dftfe::utils::DEVICE_BLOCK_SIZE,
-                         0,
-                         deviceCommStream,
-                         blockSize,
-                         halfPrecArray,
-                         dftfe::utils::makeDataTypeDeviceCompatible(
-                           valueTypeArray));
-#  endif
-    }
-
-
 
     template <typename ValueType>
     template <typename ValueTypeComm>
@@ -938,7 +609,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
       const dftfe::uInt numIndices =
         ownedLocalIndicesForTargetProcs.size() * blockSize;
-      /*DFTFE_LAUNCH_KERNEL(accumAddFromRecvBufferDeviceKernel,
+      DFTFE_LAUNCH_KERNEL(accumAddFromRecvBufferDeviceKernel,
                           (numIndices) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
                           deviceCommStream,
@@ -946,7 +617,7 @@ namespace dftfe
                           blockSize,
                           recvBuffer_data,
                           ownedLocalIndicesForTargetProcs_data,
-                          dataArray_data);*/
+                          dataArray_data);
     }
 
     template <typename ValueType>
