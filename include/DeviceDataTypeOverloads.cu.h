@@ -792,6 +792,19 @@ namespace dftfe
       return reinterpret_cast<__nv_bfloat162 *>(a);
     }
 
+
+    inline const __nv_bfloat16 *
+    makeDataTypeDeviceCompatible(const uint16_t *a)
+    {
+      return reinterpret_cast<const __nv_bfloat16 *>(a);
+    }
+
+    inline const __nv_bfloat162 *
+    makeDataTypeDeviceCompatible(const std::complex<uint16_t> *a)
+    {
+      return reinterpret_cast<const __nv_bfloat162 *>(a);
+    }
+
   } // namespace utils
 
 } // namespace dftfe

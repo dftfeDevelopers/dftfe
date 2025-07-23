@@ -938,7 +938,7 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(dataArray.data());
       const dftfe::uInt numIndices =
         ownedLocalIndicesForTargetProcs.size() * blockSize;
-      DFTFE_LAUNCH_KERNEL(accumAddFromRecvBufferDeviceKernel,
+      /*DFTFE_LAUNCH_KERNEL(accumAddFromRecvBufferDeviceKernel,
                           (numIndices) / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
                           dftfe::utils::DEVICE_BLOCK_SIZE,
                           deviceCommStream,
@@ -946,7 +946,7 @@ namespace dftfe
                           blockSize,
                           recvBuffer_data,
                           ownedLocalIndicesForTargetProcs_data,
-                          dataArray_data);
+                          dataArray_data);*/
     }
 
     template <typename ValueType>
@@ -1202,6 +1202,61 @@ namespace dftfe
         const dftfe::uInt ghostSize,
         MemoryStorage<std::complex<float>, dftfe::utils::MemorySpace::DEVICE>
                                     &dataArray,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<std::complex<float>, utils::MemorySpace::DEVICE>::
+      accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<std::complex<uint16_t>, utils::MemorySpace::DEVICE>
+          &recvBuffer,
+        const utils::MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        const dftfe::uInt locallyOwnedSize,
+        const dftfe::uInt ghostSize,
+        MemoryStorage<std::complex<float>, dftfe::utils::MemorySpace::DEVICE>
+                                    &dataArray,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+
+
+    template void
+    MPICommunicatorP2PKernels<std::complex<double>,
+                              utils::MemorySpace::DEVICE>::
+      accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<std::complex<uint16_t>, utils::MemorySpace::DEVICE>
+          &recvBuffer,
+        const utils::MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        const dftfe::uInt locallyOwnedSize,
+        const dftfe::uInt ghostSize,
+        MemoryStorage<std::complex<double>, dftfe::utils::MemorySpace::DEVICE>
+                                    &dataArray,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<double, utils::MemorySpace::DEVICE>::
+      accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<uint16_t, utils::MemorySpace::DEVICE> &recvBuffer,
+        const utils::MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        const dftfe::uInt locallyOwnedSize,
+        const dftfe::uInt ghostSize,
+        MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE> &dataArray,
+        dftfe::utils::deviceStream_t deviceCommStream);
+
+    template void
+    MPICommunicatorP2PKernels<float, utils::MemorySpace::DEVICE>::
+      accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
+        const MemoryStorage<uint16_t, utils::MemorySpace::DEVICE> &recvBuffer,
+        const utils::MemoryStorage<dftfe::uInt, utils::MemorySpace::DEVICE>
+                         &ownedLocalIndicesForTargetProcs,
+        const dftfe::uInt blockSize,
+        const dftfe::uInt locallyOwnedSize,
+        const dftfe::uInt ghostSize,
+        MemoryStorage<float, dftfe::utils::MemorySpace::DEVICE> &dataArray,
         dftfe::utils::deviceStream_t deviceCommStream);
 
     template void

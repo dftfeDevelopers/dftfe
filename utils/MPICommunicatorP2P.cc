@@ -1239,7 +1239,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               MPICommunicatorP2PKernels<ValueType, memorySpace>::
-                copyValueTypeArrToHalfPrecArr(
+                copyValueType1ArrToValueType2Arr(
                   d_ghostDataCopyHalfPrec.size(),
                   dataArray.data() +
                     d_mpiPatternP2P->localOwnedSize() * d_blockSize,
@@ -1440,7 +1440,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
               if constexpr (memorySpace == MemorySpace::DEVICE)
                 MPICommunicatorP2PKernels<ValueType, memorySpace>::
-                  accumAddLocallyOwnedContrRecvBufferFromTargetProcsHalfPrec(
+                  accumAddLocallyOwnedContrRecvBufferFromTargetProcs(
                     d_sendRecvBufferHalfPrec,
                     d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
                     d_blockSize,
