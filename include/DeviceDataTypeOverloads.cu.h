@@ -84,6 +84,19 @@ namespace dftfe
     }
 
     __forceinline__ __device__ void
+    copyValue(__nv_bfloat16 *a, const float b)
+    {
+      *a = __float2bfloat16(b);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(__nv_bfloat16 *a, const double b)
+    {
+      *a = __float2bfloat16((float)b);
+    }
+
+
+    __forceinline__ __device__ void
     copyValue(double *a, const float b)
     {
       *a = b;
@@ -123,6 +136,36 @@ namespace dftfe
     copyValue(cuFloatComplex *a, const double b)
     {
       *a = make_cuFloatComplex(b, 0);
+    }
+
+
+    __forceinline__ __device__ void
+    copyValue(__nv_bfloat162 *a, const cuFloatComplex b)
+    {
+      a->x = __float2bfloat16(b.x);
+      a->y = __float2bfloat16(b.y);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(__nv_bfloat162 *a, const cuDoubleComplex b)
+    {
+      a->x = __float2bfloat16((float)b.x);
+      a->y = __float2bfloat16((float)b.y);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(cuFloatComplex *a, const __nv_bfloat162 b)
+
+    {
+      a->x = __bfloat162float(b.x);
+      a->y = __bfloat162float(b.y);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(cuDoubleComplex *a, const __nv_bfloat162 b)
+    {
+      a->x = __bfloat162float((double)b.x);
+      a->y = __bfloat162float((double)b.y);
     }
 
     // real part obverloads
@@ -310,7 +353,6 @@ namespace dftfe
     {
       return cuCmulf(a, b);
     }
-
 
     //
     // mult for complex heterogeneous types e.g. (cuDoubleComplex,
@@ -779,6 +821,12 @@ namespace dftfe
       return reinterpret_cast<__nv_bfloat16 *>(a);
     }
 
+    inline const __nv_bfloat16 *
+    makeDataTypeDeviceCompatible(const uint16_t *a)
+    {
+      return reinterpret_cast<const __nv_bfloat16 *>(a);
+    }
+
     inline __nv_bfloat162
     makeDataTypeDeviceCompatible(std::complex<uint16_t> a)
     {
@@ -792,19 +840,11 @@ namespace dftfe
       return reinterpret_cast<__nv_bfloat162 *>(a);
     }
 
-
-    inline const __nv_bfloat16 *
-    makeDataTypeDeviceCompatible(const uint16_t *a)
-    {
-      return reinterpret_cast<const __nv_bfloat16 *>(a);
-    }
-
     inline const __nv_bfloat162 *
     makeDataTypeDeviceCompatible(const std::complex<uint16_t> *a)
     {
       return reinterpret_cast<const __nv_bfloat162 *>(a);
     }
-
   } // namespace utils
 
 } // namespace dftfe

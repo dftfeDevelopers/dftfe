@@ -184,16 +184,15 @@ namespace dftfe
         ValueType2                  *valueType2Arr,
         dftfe::utils::deviceStream_t streamId)
     {
-      /*DFTFE_LAUNCH_KERNEL(
+      DFTFE_LAUNCH_KERNEL(
         copyValueType1ArrToValueType2ArrDeviceKernel,
         size / dftfe::utils::DEVICE_BLOCK_SIZE + 1,
         dftfe::utils::DEVICE_BLOCK_SIZE,
         streamId,
         size,
         dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
-        dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));*/
+        dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
-
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(

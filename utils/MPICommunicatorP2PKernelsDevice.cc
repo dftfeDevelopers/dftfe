@@ -52,10 +52,10 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-
-              sendBuffer[i] =
+              dftfe::utils::copyValue(
+                sendBuffer + i,
                 dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId];
+                          intraBlockId]);
             }
         },
         const dftfe::uInt  totalFlattenedSize,
@@ -63,132 +63,115 @@ namespace dftfe
         const ValueType1  *dataArray,
         const dftfe::uInt *ownedLocalIndicesForTargetProcs,
         ValueType2        *sendBuffer);
+      /*
+            template <>
+            DFTFE_CREATE_KERNEL(
+              void,
+              gatherSendBufferDeviceKernel,
+              {
+                for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                     i += nThreadsPerBlock * nThreadBlock)
+                  {
+                    const dftfe::uInt blockId      = i / blockSize;
+                    const dftfe::uInt intraBlockId = i - blockId * blockSize;
+                    sendBuffer[i]                  = dftfe::utils::makeComplex(
+                      (float)dftfe::utils::realPartDevice(
+                        dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                    blockSize +
+                                  intraBlockId]),
+                      (float)dftfe::utils::imagPartDevice(
+                        dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                    blockSize +
+                                  intraBlockId]));
+                  }
+              },
+              const dftfe::uInt                        totalFlattenedSize,
+              const dftfe::uInt                        blockSize,
+              const dftfe::utils::deviceDoubleComplex *dataArray,
+              const dftfe::uInt                *ownedLocalIndicesForTargetProcs,
+              dftfe::utils::deviceFloatComplex *sendBuffer);
 
-      template <>
-      DFTFE_CREATE_KERNEL(
-        void,
-        gatherSendBufferDeviceKernel,
-        {
-          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-               i += nThreadsPerBlock * nThreadBlock)
-            {
-              const dftfe::uInt blockId      = i / blockSize;
-              const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              sendBuffer[i]                  = dftfe::utils::makeComplex(
-                (float)dftfe::utils::realPartDevice(
-                  dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                              blockSize +
-                            intraBlockId]),
-                (float)dftfe::utils::imagPartDevice(
-                  dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                              blockSize +
-                            intraBlockId]));
-            }
-        },
-        const dftfe::uInt                        totalFlattenedSize,
-        const dftfe::uInt                        blockSize,
-        const dftfe::utils::deviceDoubleComplex *dataArray,
-        const dftfe::uInt                *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::deviceFloatComplex *sendBuffer);
+            template <>
+            DFTFE_CREATE_KERNEL(
+              void,
+              gatherSendBufferDeviceKernel,
+              {
+                for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                     i += nThreadsPerBlock * nThreadBlock)
+                  {
+                    const dftfe::uInt blockId      = i / blockSize;
+                    const dftfe::uInt intraBlockId = i - blockId * blockSize;
+                    dftfe::utils::copyValue(sendBuffer+i,dataArray[ownedLocalIndicesForTargetProcs[blockId]
+         * blockSize + intraBlockId]);
+                  }
+              },
+              const dftfe::uInt                totalFlattenedSize,
+              const dftfe::uInt                blockSize,
+              const double                    *dataArray,
+              const dftfe::uInt               *ownedLocalIndicesForTargetProcs,
+              dftfe::utils::__device_bfloat16 *sendBuffer);
 
-      template <>
-      DFTFE_CREATE_KERNEL(
-        void,
-        gatherSendBufferDeviceKernel,
-        {
-          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-               i += nThreadsPerBlock * nThreadBlock)
-            {
-              const dftfe::uInt blockId      = i / blockSize;
-              const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              sendBuffer[i]                  = __float2bfloat16(
-                (float)dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                   blockSize +
-                                 intraBlockId]);
-            }
-        },
-        const dftfe::uInt                totalFlattenedSize,
-        const dftfe::uInt                blockSize,
-        const double                    *dataArray,
-        const dftfe::uInt               *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::__device_bfloat16 *sendBuffer);
+            template <>
+            DFTFE_CREATE_KERNEL(
+              void,
+              gatherSendBufferDeviceKernel,
+              {
+                for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                     i += nThreadsPerBlock * nThreadBlock)
+                  {
+                    const dftfe::uInt blockId      = i / blockSize;
+                    const dftfe::uInt intraBlockId = i - blockId * blockSize;
+                    dftfe::utils::copyValue(sendBuffer+i,dataArray[ownedLocalIndicesForTargetProcs[blockId]
+         * blockSize + intraBlockId]);
+                  }
+              },
+              const dftfe::uInt                totalFlattenedSize,
+              const dftfe::uInt                blockSize,
+              const float                     *dataArray,
+              const dftfe::uInt               *ownedLocalIndicesForTargetProcs,
+              dftfe::utils::__device_bfloat16 *sendBuffer);
 
-      template <>
-      DFTFE_CREATE_KERNEL(
-        void,
-        gatherSendBufferDeviceKernel,
-        {
-          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-               i += nThreadsPerBlock * nThreadBlock)
-            {
-              const dftfe::uInt blockId      = i / blockSize;
-              const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              sendBuffer[i]                  = __float2bfloat16(
-                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId]);
-            }
-        },
-        const dftfe::uInt                totalFlattenedSize,
-        const dftfe::uInt                blockSize,
-        const float                     *dataArray,
-        const dftfe::uInt               *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::__device_bfloat16 *sendBuffer);
+            template <>
+            DFTFE_CREATE_KERNEL(
+              void,
+              gatherSendBufferDeviceKernel,
+              {
+                for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                     i += nThreadsPerBlock * nThreadBlock)
+                  {
+                    const dftfe::uInt blockId      = i / blockSize;
+                    const dftfe::uInt intraBlockId = i - blockId * blockSize;
+                    dftfe::utils::copyValue(sendBuffer+i,dataArray[ownedLocalIndicesForTargetProcs[blockId]
+         * blockSize + intraBlockId]);
+                  }
+              },
+              const dftfe::uInt                        totalFlattenedSize,
+              const dftfe::uInt                        blockSize,
+              const dftfe::utils::deviceDoubleComplex *dataArray,
+              const dftfe::uInt                *ownedLocalIndicesForTargetProcs,
+              dftfe::utils::__device_bfloat162 *sendBuffer);
 
-      template <>
-      DFTFE_CREATE_KERNEL(
-        void,
-        gatherSendBufferDeviceKernel,
-        {
-          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-               i += nThreadsPerBlock * nThreadBlock)
-            {
-              const dftfe::uInt blockId      = i / blockSize;
-              const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              sendBuffer[i].x                = __float2bfloat16(
-                (float)dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                   blockSize +
-                                 intraBlockId]
-                  .x);
-              sendBuffer[i].y = __float2bfloat16(
-                (float)dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                   blockSize +
-                                 intraBlockId]
-                  .y);
-            }
-        },
-        const dftfe::uInt                        totalFlattenedSize,
-        const dftfe::uInt                        blockSize,
-        const dftfe::utils::deviceDoubleComplex *dataArray,
-        const dftfe::uInt                *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::__device_bfloat162 *sendBuffer);
-
-      template <>
-      DFTFE_CREATE_KERNEL(
-        void,
-        gatherSendBufferDeviceKernel,
-        {
-          for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
-               i += nThreadsPerBlock * nThreadBlock)
-            {
-              const dftfe::uInt blockId      = i / blockSize;
-              const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              // do it in one shot later
-              sendBuffer[i].x = __float2bfloat16(
-                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId]
-                  .x);
-              sendBuffer[i].y = __float2bfloat16(
-                dataArray[ownedLocalIndicesForTargetProcs[blockId] * blockSize +
-                          intraBlockId]
-                  .y);
-            }
-        },
-        const dftfe::uInt                       totalFlattenedSize,
-        const dftfe::uInt                       blockSize,
-        const dftfe::utils::deviceFloatComplex *dataArray,
-        const dftfe::uInt                      *ownedLocalIndicesForTargetProcs,
-        dftfe::utils::__device_bfloat162       *sendBuffer);
-
+            template <>
+            DFTFE_CREATE_KERNEL(
+              void,
+              gatherSendBufferDeviceKernel,
+              {
+                for (dftfe::uInt i = globalThreadId; i < totalFlattenedSize;
+                     i += nThreadsPerBlock * nThreadBlock)
+                  {
+                    const dftfe::uInt blockId      = i / blockSize;
+                    const dftfe::uInt intraBlockId = i - blockId * blockSize;
+                    // do it in one shot later
+                                  dftfe::utils::copyValue(sendBuffer+i,dataArray[ownedLocalIndicesForTargetProcs[blockId]
+         * blockSize + intraBlockId]);
+                  }
+              },
+              const dftfe::uInt                       totalFlattenedSize,
+              const dftfe::uInt                       blockSize,
+              const dftfe::utils::deviceFloatComplex *dataArray,
+              const dftfe::uInt *ownedLocalIndicesForTargetProcs,
+              dftfe::utils::__device_bfloat162       *sendBuffer);
+      */
 
       template <typename ValueType1, typename ValueType2>
       DFTFE_CREATE_KERNEL(
