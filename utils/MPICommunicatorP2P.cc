@@ -1639,7 +1639,7 @@ namespace dftfe
                     d_blockSize;
                 }
           }
-        else if (d_commPrecision == communicationPrecision::Double)
+        else
           {
             // initiate non-blocking receives from target processors
             typename dftfe::dataTypes::singlePrecType<ValueType>::type
