@@ -21,9 +21,9 @@
 #include <NNLDA.h>
 #include <Exceptions.h>
 #include <dftfeDataTypes.h>
+#include <excManagerDeviceKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
 #  include <DeviceAPICalls.h>
-#  include <excManagerDeviceKernels.h>
 #endif
 #include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
