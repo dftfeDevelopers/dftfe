@@ -15,7 +15,7 @@
 // ---------------------------------------------------------------------
 //
 
-#include <excManagerDeviceKernels.h>
+#include <excManagerKernels.h>
 #include <deviceKernelsGeneric.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>

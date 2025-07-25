@@ -21,7 +21,7 @@
 #include "NNGGA.h"
 #include "Exceptions.h"
 #include <dftfeDataTypes.h>
-#include <excManagerDeviceKernels.h>
+#include <excManagerKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
 #  include <DeviceAPICalls.h>
 #endif

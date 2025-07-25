@@ -18,6 +18,7 @@
 //
 
 #include <KohnShamDFTBaseOperator.h>
+#  include <KohnShamDFTOperatorKernels.h>
 #include <ExcDFTPlusU.h>
 #ifdef _OPENMP
 #  include <omp.h>
@@ -26,7 +27,6 @@
 #endif
 #if defined(DFTFE_WITH_DEVICE)
 #  include <DeviceAPICalls.h>
-#  include <KohnShamDFTOperatorDeviceKernels.h>
 #endif
 
 namespace dftfe
@@ -906,10 +906,10 @@ namespace dftfe
                 offsetFactor = kPointIndex * totalLocallyOwnedCells *
                                numberQuadraturePointsPerCell;
 #else
-                &d_halfKSquareTimesDerExcwithTauJxWHost =
+               auto  &d_halfKSquareTimesDerExcwithTauJxWHost =
                   d_halfKSquareTimesDerExcwithTauJxW[kPointIndex];
 
-                &d_derExcwithTauTimesinvJacKpointTimesJxWHost =
+               auto  &d_derExcwithTauTimesinvJacKpointTimesJxWHost =
                   d_derExcwithTauTimesinvJacKpointTimesJxW[kPointIndex];
                 offsetFactor = 0;
 

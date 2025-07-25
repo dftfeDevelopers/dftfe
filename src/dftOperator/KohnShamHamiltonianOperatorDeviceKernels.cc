@@ -16,7 +16,7 @@
 //
 // @author Kartick Ramakrishnan, Nikhil Kodali
 //
-#include <KohnShamDFTOperatorDeviceKernels.h>
+#include <KohnShamDFTOperatorKernels.h>
 #include <deviceKernelsGeneric.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>

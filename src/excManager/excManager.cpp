@@ -23,9 +23,9 @@
 #include <excDensityLLMGGAClass.h>
 #include <excTauMGGAClass.h>
 #include "ExcDFTPlusU.h"
+#include <excManagerKernels.h>
 #if defined(DFTFE_WITH_DEVICE)
 #  include <DeviceAPICalls.h>
-#  include <excManagerDeviceKernels.h>
 #endif
 namespace dftfe
 {
