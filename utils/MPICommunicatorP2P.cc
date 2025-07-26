@@ -39,7 +39,7 @@ namespace dftfe
         , d_blockSize(blockSize)
         , d_locallyOwnedSize(mpiPatternP2P->localOwnedSize())
         , d_ghostSize(mpiPatternP2P->localGhostSize())
-        , d_commPrecision(communicationPrecision::Double)
+        , d_commPrecision(communicationPrecision::standard)
       {
         d_commProtocol = communicationProtocol::mpiHost;
 #if defined(DFTFE_WITH_DEVICE) && defined(DFTFE_WITH_DEVICE_AWARE_MPI)
@@ -94,7 +94,7 @@ namespace dftfe
         if (d_commPrecision == precision)
           return;
         d_commPrecision = precision;
-        if (precision == communicationPrecision::Double)
+        if (precision == communicationPrecision::standard)
           {
             if (d_sendRecvBuffer.size() !=
                 d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
@@ -120,7 +120,7 @@ namespace dftfe
                 }
 #endif
           }
-        else if (precision == communicationPrecision::Single)
+        else if (precision == communicationPrecision::single)
           {
             if (d_sendRecvBufferSinglePrec.size() !=
                 d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
@@ -154,7 +154,7 @@ namespace dftfe
 #endif
           }
 
-        else if (precision == communicationPrecision::Half)
+        else if (precision == communicationPrecision::half)
           {
             if (d_sendRecvBufferHalfPrec.size() !=
                 d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
@@ -189,7 +189,6 @@ namespace dftfe
           }
       }
 
-
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
       void
       MPICommunicatorP2P<ValueType, memorySpace>::updateGhostValues(
@@ -207,7 +206,7 @@ namespace dftfe
         const dftfe::uInt                      communicationChannel)
       {
         // initiate non-blocking receives from ghost processors
-        if (d_commPrecision == communicationPrecision::Double)
+        if (d_commPrecision == communicationPrecision::standard)
           {
             ValueType *recvArrayStartPtr =
               dataArray.data() +
@@ -386,7 +385,7 @@ namespace dftfe
                     d_blockSize;
                 }
           }
-        else if (d_commPrecision == communicationPrecision::Single)
+        else if (d_commPrecision == communicationPrecision::single)
           {
             typename dftfe::dataTypes::singlePrecType<ValueType>::type
               *recvArrayStartPtr = d_ghostDataCopySinglePrec.data();
@@ -578,7 +577,7 @@ namespace dftfe
                     d_blockSize;
                 }
           }
-        else if (d_commPrecision == communicationPrecision::Half)
+        else if (d_commPrecision == communicationPrecision::half)
           {
             typename dftfe::dataTypes::halfPrecType<ValueType>::type
               *recvArrayStartPtr = d_ghostDataCopyHalfPrec.data();
@@ -734,7 +733,7 @@ namespace dftfe
                 throwException(err == MPI_SUCCESS, errMsg);
               }
           }
-        if (d_commPrecision == communicationPrecision::Double)
+        if (d_commPrecision == communicationPrecision::standard)
           {
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -751,7 +750,7 @@ namespace dftfe
                 }
 #endif
           }
-        else if (d_commPrecision == communicationPrecision::Single)
+        else if (d_commPrecision == communicationPrecision::single)
           {
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -788,7 +787,7 @@ namespace dftfe
 #endif
           }
 
-        else if (d_commPrecision == communicationPrecision::Half)
+        else if (d_commPrecision == communicationPrecision::half)
           {
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -824,7 +823,6 @@ namespace dftfe
           }
       }
 
-
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
       void
       MPICommunicatorP2P<ValueType, memorySpace>::accumulateAddLocallyOwned(
@@ -842,7 +840,7 @@ namespace dftfe
           MemoryStorage<ValueType, memorySpace> &dataArray,
           const dftfe::uInt                      communicationChannel)
       {
-        if (d_commPrecision == communicationPrecision::Double)
+        if (d_commPrecision == communicationPrecision::standard)
           {
             // initiate non-blocking receives from target processors
             ValueType *recvArrayStartPtr = d_sendRecvBuffer.data();
@@ -998,7 +996,7 @@ namespace dftfe
                     d_blockSize;
                 }
           }
-        else if (d_commPrecision == communicationPrecision::Single)
+        else if (d_commPrecision == communicationPrecision::single)
           {
             // initiate non-blocking receives from target processors
             typename dftfe::dataTypes::singlePrecType<ValueType>::type
@@ -1187,7 +1185,7 @@ namespace dftfe
                     d_blockSize;
                 }
           }
-        else if (d_commPrecision == communicationPrecision::Half)
+        else if (d_commPrecision == communicationPrecision::half)
           {
             // initiate non-blocking receives from target processors
             typename dftfe::dataTypes::halfPrecType<ValueType>::type
@@ -1339,7 +1337,7 @@ namespace dftfe
                 throwException(err == MPI_SUCCESS, errMsg);
               }
           }
-        if (d_commPrecision == communicationPrecision::Double)
+        if (d_commPrecision == communicationPrecision::standard)
           {
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -1378,7 +1376,7 @@ namespace dftfe
                     d_ghostSize,
                     dataArray);
           }
-        else if (d_commPrecision == communicationPrecision::Single)
+        else if (d_commPrecision == communicationPrecision::single)
           {
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -1419,7 +1417,7 @@ namespace dftfe
                     dataArray);
           }
 
-        else if (d_commPrecision == communicationPrecision::Half)
+        else if (d_commPrecision == communicationPrecision::half)
           {
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -1479,7 +1477,7 @@ namespace dftfe
           MemoryStorage<ValueType, memorySpace> &dataArray,
           const dftfe::uInt                      communicationChannel)
       {
-        if (d_commPrecision == communicationPrecision::Double)
+        if (d_commPrecision == communicationPrecision::standard)
           {
             // initiate non-blocking receives from target processors
             ValueType *recvArrayStartPtr = d_sendRecvBuffer.data();
@@ -1862,7 +1860,7 @@ namespace dftfe
                 throwException(err == MPI_SUCCESS, errMsg);
               }
           }
-        if (d_commPrecision == communicationPrecision::Double)
+        if (d_commPrecision == communicationPrecision::standard)
           {
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)

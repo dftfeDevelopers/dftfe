@@ -53,11 +53,10 @@ namespace dftfe
 
       enum class communicationPrecision
       {
-        Half,
-        Single,
-        Double
+        half,    //explicitly BFP16 
+        single,  //explicitly FP32
+        standard //same as valueType
       };
-
 
       template <typename ValueType, MemorySpace memorySpace>
       class MPICommunicatorP2P
@@ -75,7 +74,6 @@ namespace dftfe
         accumulateAddLocallyOwned(
           MemoryStorage<ValueType, memorySpace> &dataArray,
           const dftfe::uInt                      communicationChannel = 0);
-
 
         void
         updateGhostValuesBegin(MemoryStorage<ValueType, memorySpace> &dataArray,

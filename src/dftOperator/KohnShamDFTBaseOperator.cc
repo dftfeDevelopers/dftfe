@@ -981,16 +981,16 @@ namespace dftfe
               numWaveFunctions,
               d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
       }
-
-    if (d_dftParamsPtr->communPrecCheby == "FP32")
-      d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
-        .setCommunicationPrecision(
-          dftfe::utils::mpi::communicationPrecision::Single);
-    else if (d_dftParamsPtr->communPrecCheby == "BFP16")
-      d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
-        .setCommunicationPrecision(
-          dftfe::utils::mpi::communicationPrecision::Half);
-
+    /*
+        if (d_dftParamsPtr->communPrecCheby == "FP32")
+          d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+            .setCommunicationPrecision(
+              dftfe::utils::mpi::communicationPrecision::single);
+        else if (d_dftParamsPtr->communPrecCheby == "BFP16")
+          d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+            .setCommunicationPrecision(
+              dftfe::utils::mpi::communicationPrecision::half);
+    */
     d_basisOperationsPtr->reinit(numWaveFunctions,
                                  d_cellsBlockSizeHX,
                                  d_densityQuadratureID,
