@@ -46,7 +46,9 @@ namespace dftfe
     virtual void
     applyLocalOperations(
       const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-      std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+      std::unordered_map<
+        DensityDescriptorDataAttributes,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &densityData) = 0;
 
 
@@ -54,7 +56,9 @@ namespace dftfe
     virtual void
     applyLocalOperations(
       const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-      std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+      std::unordered_map<
+        WfcDescriptorDataAttributes,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &wfcData) = 0;
 
     /**
@@ -62,8 +66,11 @@ namespace dftfe
      * supplied set of quadrature points and their associated weights
      */
     virtual void
-    evalOverlapMatrixStart(const std::vector<double> &quadpts,
-                           const std::vector<double> &quadWt) = 0;
+    evalOverlapMatrixStart(
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadpts,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &quadWt) = 0;
 
     /**
      * @brief for MPI accumulation
@@ -79,7 +86,9 @@ namespace dftfe
     projectDensityMatrixStart(
       const std::unordered_map<std::string, std::vector<dataTypes::number>>
         &projectionInputsDataType,
-      const std::unordered_map<std::string, std::vector<double>>
+      const std::unordered_map<
+        std::string,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
                       &projectionInputsReal,
       const dftfe::Int iSpin) = 0;
 
@@ -95,7 +104,9 @@ namespace dftfe
      */
     virtual void
     projectDensityStart(
-      const std::unordered_map<std::string, std::vector<double>>
+      const std::unordered_map<
+        std::string,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &projectionInputs) = 0;
 
     /**

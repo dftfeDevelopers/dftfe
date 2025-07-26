@@ -5582,10 +5582,12 @@ namespace dftfe
 
     if (d_dftParamsPtr->auxBasisTypeXC == "FE")
       {
-        std::unordered_map<std::string, std::vector<double>>
-                             densityProjectionInputs;
-        std::vector<double> &densityValsForXC =
-          densityProjectionInputs["densityFunc"];
+        std::unordered_map<
+          std::string,
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          densityProjectionInputs;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &densityValsForXC = densityProjectionInputs["densityFunc"];
         densityValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell, 0);
 
         if (spinPolarizedFactor == 1)
@@ -5646,8 +5648,9 @@ namespace dftfe
           }
         if (isGGA)
           {
-            std::vector<double> &gradDensityValsForXC =
-              densityProjectionInputs["gradDensityFunc"];
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              &gradDensityValsForXC =
+                densityProjectionInputs["gradDensityFunc"];
 
             gradDensityValsForXC.resize(2 * totalLocallyOwnedCells *
                                           nQuadsPerCell * 3,
@@ -5737,8 +5740,8 @@ namespace dftfe
           }
         if (isTauMGGA)
           {
-            std::vector<double> &tauValsForXC =
-              densityProjectionInputs["tauFunc"];
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              &tauValsForXC = densityProjectionInputs["tauFunc"];
             tauValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell, 0);
             if (spinPolarizedFactor == 1)
               {
@@ -5789,12 +5792,12 @@ namespace dftfe
 
         auto quadPoints = d_basisOperationsPtrHost->quadPoints();
 
-        auto                 quadWeights = d_basisOperationsPtrHost->JxW();
-        std::vector<double> &quadPointsStdVec =
-          densityProjectionInputs["quadpts"];
+        auto quadWeights = d_basisOperationsPtrHost->JxW();
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &quadPointsStdVec = densityProjectionInputs["quadpts"];
         quadPointsStdVec.resize(quadPoints.size());
-        std::vector<double> &quadWeightsStdVec =
-          densityProjectionInputs["quadWt"];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &quadWeightsStdVec = densityProjectionInputs["quadWt"];
         quadWeightsStdVec.resize(quadWeights.size());
         for (dftfe::uInt iQuad = 0; iQuad < quadWeightsStdVec.size(); ++iQuad)
           {

@@ -103,6 +103,7 @@ SET(TARGET_SRC
   ./src/excManager/SlaterBasis.cpp
   ./src/excManager/GaussianBasis.cpp
   ./src/excManager/hubbardClass.cpp
+  ./src/excManager/exchangeCorrelationFunctionalEvaluatorCPU.cc
   ./src/poisson/poissonSolverProblem.cc
   ./src/poisson/MultiVectorPoissonLinearSolverProblem.cpp
   ./src/helmholtz/kerkerSolverProblem.cc
@@ -253,6 +254,9 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
+  ./src/excManager/excManagerDeviceKernels.cc
+  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc  
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 SET(DEVICE_SRC
@@ -272,6 +276,9 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
+  ./src/excManager/excManagerDeviceKernels.cc
+  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
 SET(DEVICE_SRC
@@ -291,6 +298,9 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
+  ./src/excManager/excManagerDeviceKernels.cc
+  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc  
   )
 
 ENDIF()
