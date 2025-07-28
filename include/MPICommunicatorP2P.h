@@ -170,9 +170,7 @@ namespace dftfe
         std::vector<MPI_Request> d_requestsAccumulateAddLocallyOwned;
         std::vector<MPI_Request> d_requestsAccumulateInsertLocallyOwned;
         MPI_Comm                 d_mpiCommunicator;
-#ifdef DFTFE_WITH_DEVICE
-        dftfe::utils::deviceStream_t d_deviceCommStream;
-#endif
+
         communicationProtocol  d_commProtocol;
         communicationPrecision d_commPrecision;
       };

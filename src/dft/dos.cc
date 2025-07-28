@@ -20,9 +20,6 @@
 #include <fileReaders.h>
 #include <vectorUtilities.h>
 #include <sys/stat.h>
-#include <boost/math/distributions/normal.hpp>
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-#include <boost/random/normal_distribution.hpp>
 
 namespace dftfe
 {

@@ -22,6 +22,7 @@ end
 
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=2
+  set DENSITY QUADRATURE RULE = 5
   subsection Auto mesh generation parameters
     set AUTO ADAPT BASE MESH SIZE=false
     set MESH SIZE AROUND ATOM  = 0.5

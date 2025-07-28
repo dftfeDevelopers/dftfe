@@ -25,6 +25,8 @@
 #      include "DeviceTypeConfig.cu.h"
 #    elif DFTFE_WITH_DEVICE_LANG_HIP
 #      include "DeviceTypeConfig.hip.h"
+#    elif DFTFE_WITH_DEVICE_LANG_SYCL
+#      include "DeviceTypeConfig.sycl.h"
 #    endif
 
 #  endif // dftfeDeviceTypeConfig_h

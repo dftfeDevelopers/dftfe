@@ -462,6 +462,9 @@ namespace dftfe
         if (d_dftParamsPtr->tensorOpType == "TF32")
           d_BLASWrapperPtr->setTensorOpDataType(
             dftfe::linearAlgebra::tensorOpDataType::tf32);
+        if (d_dftParamsPtr->tensorOpType == "BF16")
+          d_BLASWrapperPtr->setTensorOpDataType(
+            dftfe::linearAlgebra::tensorOpDataType::bf16);
       }
 #endif
     if (d_numVectorsInternal != numberWavefunctions)

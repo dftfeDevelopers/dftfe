@@ -46,7 +46,7 @@ namespace dftfe
      *
      */
     void
-    init(const std::string &restartPath);
+    init(const std::string &restartPath, const dftfe::Int cycleId);
 
     /**
      * @brief calls the cell stress relaxation solver.
@@ -144,9 +144,10 @@ namespace dftfe
     dftfe::Int  d_solver;
     /// total number of calls to update()
     dftfe::Int d_totalUpdateCalls;
+    dftfe::Int d_cycle;
     double     d_domainVolumeInitial;
-    /// current strain tensor applied on the domain
-    dealii::Tensor<2, 3, double> d_strainEpsilon;
+    /// current deformation gradient applied on the undeformed starting domain
+    dealii::Tensor<2, 3, double> d_deformationGradientCurrent;
 
     /// pointer to dft class
     dftBase                         *d_dftPtr;

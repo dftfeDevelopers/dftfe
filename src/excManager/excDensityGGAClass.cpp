@@ -21,13 +21,17 @@
 #include "NNGGA.h"
 #include "Exceptions.h"
 #include <dftfeDataTypes.h>
-
+#include <excManagerKernels.h>
+#if defined(DFTFE_WITH_DEVICE)
+#  include <DeviceAPICalls.h>
+#endif
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityGGAClass<memorySpace>::excDensityGGAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::GGA,
         densityFamilyType::GGA,
@@ -40,13 +44,15 @@ namespace dftfe
     d_funcXPtr = funcXPtr;
     d_funcCPtr = funcCPtr;
     d_NNGGAPtr = nullptr;
+    d_useLibXC = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityGGAClass<memorySpace>::excDensityGGAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr,
-    std::string                   modelXCInputFile)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    std::string                    modelXCInputFile,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::GGA,
         densityFamilyType::GGA,
@@ -61,6 +67,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_TORCH
     d_NNGGAPtr = new NNGGA(modelXCInputFile, true);
 #endif
+    d_useLibXC = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -106,11 +113,16 @@ namespace dftfe
   excDensityGGAClass<memorySpace>::computeRhoTauDependentXCData(
     AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
     const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &xDataOut,
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &cDataOut) const
   {
+    // double time1 = MPI_Wtime();
     const dftfe::uInt nquad = quadIndexRange.second - quadIndexRange.first;
     std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
     for (const auto &element : xDataOut)
@@ -119,7 +131,9 @@ namespace dftfe
     checkInputOutputDataAttributesConsistency(outputDataAttributes);
 
 
-    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+    std::unordered_map<
+      DensityDescriptorDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       densityDescriptorData;
 
     for (size_t i = 0; i < this->d_densityDescriptorAttributesList.size(); i++)
@@ -129,13 +143,17 @@ namespace dftfe
             this->d_densityDescriptorAttributesList[i] ==
               DensityDescriptorDataAttributes::valuesSpinDown)
           densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
-            std::vector<double>(nquad, 0);
+            dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::HOST>(nquad,
+                                                                         0);
         else if (this->d_densityDescriptorAttributesList[i] ==
                    DensityDescriptorDataAttributes::gradValuesSpinUp ||
                  this->d_densityDescriptorAttributesList[i] ==
                    DensityDescriptorDataAttributes::gradValuesSpinDown)
           densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
-            std::vector<double>(3 * nquad, 0);
+            dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::HOST>(
+              3 * nquad, 0);
       }
 
     auxDensityMatrix.applyLocalOperations(quadIndexRange,
@@ -160,50 +178,89 @@ namespace dftfe
 
 
 
-    std::vector<double> densityValues(2 * nquad, 0);
-    std::vector<double> sigmaValues(3 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      densityValues(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      sigmaValues(3 * nquad, 0);
 
-    std::vector<double> exValues(nquad, 0);
-    std::vector<double> ecValues(nquad, 0);
-    std::vector<double> pdexDensityValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdecDensityValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdexDensitySpinUpValues(nquad, 0);
-    std::vector<double> pdexDensitySpinDownValues(nquad, 0);
-    std::vector<double> pdecDensitySpinUpValues(nquad, 0);
-    std::vector<double> pdecDensitySpinDownValues(nquad, 0);
-    std::vector<double> pdexSigmaValues(3 * nquad, 0);
-    std::vector<double> pdecSigmaValues(3 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      exValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      ecValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensityValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensityValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensitySpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensitySpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensitySpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensitySpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexSigmaValues(3 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecSigmaValues(3 * nquad, 0);
 
-    for (size_t i = 0; i < nquad; i++)
+
+    dftfe::internal::fillRhoSigmaVector(nquad,
+                                        densityValuesSpinUp,
+                                        densityValuesSpinDown,
+                                        gradValuesSpinUp,
+                                        gradValuesSpinDown,
+                                        densityValues,
+                                        sigmaValues);
+
+    if (d_useLibXC)
       {
-        densityValues[2 * i + 0] = densityValuesSpinUp[i];
-        densityValues[2 * i + 1] = densityValuesSpinDown[i];
-        for (size_t j = 0; j < 3; j++)
-          {
-            sigmaValues[3 * i + 0] +=
-              gradValuesSpinUp[3 * i + j] * gradValuesSpinUp[3 * i + j];
-            sigmaValues[3 * i + 1] +=
-              gradValuesSpinUp[3 * i + j] * gradValuesSpinDown[3 * i + j];
-            sigmaValues[3 * i + 2] +=
-              gradValuesSpinDown[3 * i + j] * gradValuesSpinDown[3 * i + j];
-          }
+        xc_gga_exc_vxc(d_funcXPtr.get(),
+                       nquad,
+                       densityValues.data(),
+                       sigmaValues.data(),
+                       exValues.data(),
+                       pdexDensityValuesNonNN.data(),
+                       pdexSigmaValues.data());
+        xc_gga_exc_vxc(d_funcCPtr.get(),
+                       nquad,
+                       densityValues.data(),
+                       sigmaValues.data(),
+                       ecValues.data(),
+                       pdecDensityValuesNonNN.data(),
+                       pdecSigmaValues.data());
       }
-
-    xc_gga_exc_vxc(d_funcXPtr.get(),
-                   nquad,
-                   &densityValues[0],
-                   &sigmaValues[0],
-                   &exValues[0],
-                   &pdexDensityValuesNonNN[0],
-                   &pdexSigmaValues[0]);
-    xc_gga_exc_vxc(d_funcCPtr.get(),
-                   nquad,
-                   &densityValues[0],
-                   &sigmaValues[0],
-                   &ecValues[0],
-                   &pdecDensityValuesNonNN[0],
-                   &pdecSigmaValues[0]);
-
+    else
+      {
+        dftfe::utils::throwException(
+          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
+        dftfe::utils::throwException(
+          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
+        // if (d_funcXPtr->info->name == "")
+        //   {
+        //   }
+        // else if (d_funcXPtr->info->name == "")
+        //   {
+        //   }
+        // else
+        //   {
+        //     dftfe::utils::throwException(
+        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
+        //       compute the GGA functional.");
+        //   }
+        // if (d_funcCPtr->info->name == "")
+        //   {
+        //   }
+        // else if (d_funcCPtr->info->name == "")
+        //   {
+        //   }
+        // else
+        //   {
+        //     dftfe::utils::throwException(
+        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
+        //       compute the GGA functional.");
+        //   }
+      }
     for (size_t i = 0; i < nquad; i++)
       {
         exValues[i] =
@@ -216,13 +273,15 @@ namespace dftfe
         pdecDensitySpinDownValues[i] = pdecDensityValuesNonNN[2 * i + 1];
       }
 
+
 #ifdef DFTFE_WITH_TORCH
     if (d_NNGGAPtr != nullptr)
       {
-        std::vector<double> excValuesFromNN(nquad, 0);
-        const size_t        numDescriptors = 5;
-        std::vector<double> pdexcDescriptorValuesFromNN(numDescriptors * nquad,
-                                                        0);
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                     excValuesFromNN(nquad, 0);
+        const size_t numDescriptors = 5;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          pdexcDescriptorValuesFromNN(numDescriptors * nquad, 0);
         d_NNGGAPtr->evaluatevxc(&(densityValues[0]),
                                 &sigmaValues[0],
                                 nquad,

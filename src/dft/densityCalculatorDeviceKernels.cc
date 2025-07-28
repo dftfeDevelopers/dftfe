@@ -24,8 +24,51 @@ namespace dftfe
 {
   namespace
   {
-    __global__ void
-    computeRhoGradRhoFromInterpolatedValues(
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeRhoGradRhoFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const double psi                = wfcContributions[index];
+            rhoCellsWfcContributions[index] = psi * psi;
+
+            if (isEvaluateGradRho)
+              {
+                dftfe::uInt  iCell          = index / numEntriesPerCell;
+                dftfe::uInt  intraCellIndex = index - iCell * numEntriesPerCell;
+                dftfe::uInt  iQuad          = intraCellIndex / numVectors;
+                dftfe::uInt  iVec     = intraCellIndex - iQuad * numVectors;
+                const double gradPsiX = //[iVec * numCells * numVectors + + 0]
+                  gradwfcContributions[intraCellIndex +
+                                       numEntriesPerCell * 3 * iCell];
+                gradRhoCellsWfcContributions[iVec + 3 * iQuad * numVectors +
+                                             numEntriesPerCell * 3 * iCell] =
+                  2.0 * psi * gradPsiX;
+
+                const double gradPsiY =
+                  gradwfcContributions[intraCellIndex + numEntriesPerCell +
+                                       numEntriesPerCell * 3 * iCell];
+                gradRhoCellsWfcContributions[iVec + numVectors +
+                                             3 * iQuad * numVectors +
+                                             numEntriesPerCell * 3 * iCell] =
+                  2.0 * psi * gradPsiY;
+
+                const double gradPsiZ =
+                  gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
+                                       numEntriesPerCell * 3 * iCell];
+                gradRhoCellsWfcContributions[iVec + 2 * numVectors +
+                                             3 * iQuad * numVectors +
+                                             numEntriesPerCell * 3 * iCell] =
+                  2.0 * psi * gradPsiZ;
+              }
+          }
+      },
       const dftfe::uInt numVectors,
       const dftfe::uInt numCells,
       const dftfe::uInt nQuadsPerCell,
@@ -33,52 +76,68 @@ namespace dftfe
       double           *gradwfcContributions,
       double           *rhoCellsWfcContributions,
       double           *gradRhoCellsWfcContributions,
-      const bool        isEvaluateGradRho)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
-      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+      const bool        isEvaluateGradRho);
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const double psi                = wfcContributions[index];
-          rhoCellsWfcContributions[index] = psi * psi;
 
-          if (isEvaluateGradRho)
-            {
-              dftfe::uInt  iCell          = index / numEntriesPerCell;
-              dftfe::uInt  intraCellIndex = index - iCell * numEntriesPerCell;
-              dftfe::uInt  iQuad          = intraCellIndex / numVectors;
-              dftfe::uInt  iVec           = intraCellIndex - iQuad * numVectors;
-              const double gradPsiX = //[iVec * numCells * numVectors + + 0]
-                gradwfcContributions[intraCellIndex +
-                                     numEntriesPerCell * 3 * iCell];
-              gradRhoCellsWfcContributions[iVec + 3 * iQuad * numVectors +
-                                           numEntriesPerCell * 3 * iCell] =
-                2.0 * psi * gradPsiX;
 
-              const double gradPsiY =
-                gradwfcContributions[intraCellIndex + numEntriesPerCell +
-                                     numEntriesPerCell * 3 * iCell];
-              gradRhoCellsWfcContributions[iVec + numVectors +
-                                           3 * iQuad * numVectors +
-                                           numEntriesPerCell * 3 * iCell] =
-                2.0 * psi * gradPsiY;
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeRhoGradRhoFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
 
-              const double gradPsiZ =
-                gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
-                                     numEntriesPerCell * 3 * iCell];
-              gradRhoCellsWfcContributions[iVec + 2 * numVectors +
-                                           3 * iQuad * numVectors +
-                                           numEntriesPerCell * 3 * iCell] =
-                2.0 * psi * gradPsiZ;
-            }
-        }
-    }
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const dftfe::utils::deviceDoubleComplex psi =
+              wfcContributions[index];
+            rhoCellsWfcContributions[index] =
+              dftfe::utils::realPartDevice(psi) *
+                dftfe::utils::realPartDevice(psi) +
+              dftfe::utils::imagPartDevice(psi) *
+                dftfe::utils::imagPartDevice(psi);
 
-    __global__ void
-    computeRhoGradRhoFromInterpolatedValues(
+            if (isEvaluateGradRho)
+              {
+                dftfe::uInt iCell          = index / numEntriesPerCell;
+                dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
+                dftfe::uInt iQuad          = intraCellIndex / numVectors;
+                dftfe::uInt iVec = intraCellIndex - iQuad * numVectors;
+                const dftfe::utils::deviceDoubleComplex gradPsiX =
+                  gradwfcContributions[intraCellIndex +
+                                       numEntriesPerCell * 3 * iCell];
+                gradRhoCellsWfcContributions[iVec + 3 * iQuad * numVectors +
+                                             numEntriesPerCell * 3 * iCell] =
+                  2.0 * (dftfe::utils::realPartDevice(psi) *
+                           dftfe::utils::realPartDevice(gradPsiX) +
+                         dftfe::utils::imagPartDevice(psi) *
+                           dftfe::utils::imagPartDevice(gradPsiX));
+
+                const dftfe::utils::deviceDoubleComplex gradPsiY =
+                  gradwfcContributions[intraCellIndex + numEntriesPerCell +
+                                       numEntriesPerCell * 3 * iCell];
+                gradRhoCellsWfcContributions[iVec + numVectors +
+                                             3 * iQuad * numVectors +
+                                             numEntriesPerCell * 3 * iCell] =
+                  2.0 * (dftfe::utils::realPartDevice(psi) *
+                           dftfe::utils::realPartDevice(gradPsiY) +
+                         dftfe::utils::imagPartDevice(psi) *
+                           dftfe::utils::imagPartDevice(gradPsiY));
+
+                const dftfe::utils::deviceDoubleComplex gradPsiZ =
+                  gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
+                                       numEntriesPerCell * 3 * iCell];
+                gradRhoCellsWfcContributions[iVec + 2 * numVectors +
+                                             3 * iQuad * numVectors +
+                                             numEntriesPerCell * 3 * iCell] =
+                  2.0 * (dftfe::utils::realPartDevice(psi) *
+                           dftfe::utils::realPartDevice(gradPsiZ) +
+                         dftfe::utils::imagPartDevice(psi) *
+                           dftfe::utils::imagPartDevice(gradPsiZ));
+              }
+          }
+      },
       const dftfe::uInt                  numVectors,
       const dftfe::uInt                  numCells,
       const dftfe::uInt                  nQuadsPerCell,
@@ -86,145 +145,123 @@ namespace dftfe
       dftfe::utils::deviceDoubleComplex *gradwfcContributions,
       double                            *rhoCellsWfcContributions,
       double                            *gradRhoCellsWfcContributions,
-      const bool                         isEvaluateGradRho)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
-      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
-
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const dftfe::utils::deviceDoubleComplex psi = wfcContributions[index];
-          rhoCellsWfcContributions[index] = psi.x * psi.x + psi.y * psi.y;
-
-          if (isEvaluateGradRho)
-            {
-              dftfe::uInt iCell          = index / numEntriesPerCell;
-              dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
-              dftfe::uInt iQuad          = intraCellIndex / numVectors;
-              dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
-              const dftfe::utils::deviceDoubleComplex gradPsiX =
-                gradwfcContributions[intraCellIndex +
-                                     numEntriesPerCell * 3 * iCell];
-              gradRhoCellsWfcContributions[iVec + 3 * iQuad * numVectors +
-                                           numEntriesPerCell * 3 * iCell] =
-                2.0 * (psi.x * gradPsiX.x + psi.y * gradPsiX.y);
-
-              const dftfe::utils::deviceDoubleComplex gradPsiY =
-                gradwfcContributions[intraCellIndex + numEntriesPerCell +
-                                     numEntriesPerCell * 3 * iCell];
-              gradRhoCellsWfcContributions[iVec + numVectors +
-                                           3 * iQuad * numVectors +
-                                           numEntriesPerCell * 3 * iCell] =
-                2.0 * (psi.x * gradPsiY.x + psi.y * gradPsiY.y);
-
-              const dftfe::utils::deviceDoubleComplex gradPsiZ =
-                gradwfcContributions[intraCellIndex + 2 * numEntriesPerCell +
-                                     numEntriesPerCell * 3 * iCell];
-              gradRhoCellsWfcContributions[iVec + 2 * numVectors +
-                                           3 * iQuad * numVectors +
-                                           numEntriesPerCell * 3 * iCell] =
-                2.0 * (psi.x * gradPsiZ.x + psi.y * gradPsiZ.y);
-            }
-        }
-    }
-
-    __global__ void
-    computeTauFromInterpolatedValues(const dftfe::uInt numVectors,
-                                     const dftfe::uInt numCells,
-                                     const dftfe::uInt nQuadsPerCell,
-                                     double           *wfcContributions,
-                                     double           *gradwfcContributions,
-                                     double           *kCoord,
-                                     double           *tauCellsWfcContributions)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
-      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const double psi = wfcContributions[index];
-
-          dftfe::uInt iCell          = index / numEntriesPerCell;
-          dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
-          dftfe::uInt iQuad          = intraCellIndex / numVectors;
-          dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
-
-          double gradPsiDirVal;
-          tauCellsWfcContributions[index] = 0.0;
-          for (dftfe::uInt dirIdx = 0; dirIdx < 3; dirIdx++)
-            {
-              gradPsiDirVal =
-                gradwfcContributions[intraCellIndex +
-                                     dirIdx * numEntriesPerCell +
-                                     numEntriesPerCell * 3 * iCell];
-
-              tauCellsWfcContributions[index] += gradPsiDirVal * gradPsiDirVal;
-            }
-          tauCellsWfcContributions[index] =
-            0.5 * tauCellsWfcContributions[index];
-        }
-    }
+      const bool                         isEvaluateGradRho);
 
 
-    __global__ void
-    computeTauFromInterpolatedValues(
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeTauFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const double psi = wfcContributions[index];
+
+            dftfe::uInt iCell          = index / numEntriesPerCell;
+            dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
+            dftfe::uInt iQuad          = intraCellIndex / numVectors;
+            dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
+
+            double gradPsiDirVal;
+            tauCellsWfcContributions[index] = 0.0;
+            for (dftfe::uInt dirIdx = 0; dirIdx < 3; dirIdx++)
+              {
+                gradPsiDirVal =
+                  gradwfcContributions[intraCellIndex +
+                                       dirIdx * numEntriesPerCell +
+                                       numEntriesPerCell * 3 * iCell];
+
+                tauCellsWfcContributions[index] +=
+                  gradPsiDirVal * gradPsiDirVal;
+              }
+            tauCellsWfcContributions[index] =
+              0.5 * tauCellsWfcContributions[index];
+          }
+      },
+      const dftfe::uInt numVectors,
+      const dftfe::uInt numCells,
+      const dftfe::uInt nQuadsPerCell,
+      double           *wfcContributions,
+      double           *gradwfcContributions,
+      double           *kCoord,
+      double           *tauCellsWfcContributions);
+
+
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeTauFromInterpolatedValues,
+      {
+        const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
+        const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
+        const double      kPointCoordSq =
+          kCoord[0] * kCoord[0] + kCoord[1] * kCoord[1] + kCoord[2] * kCoord[2];
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const dftfe::utils::deviceDoubleComplex psi =
+              wfcContributions[index];
+
+            dftfe::uInt iCell          = index / numEntriesPerCell;
+            dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
+            dftfe::uInt iQuad          = intraCellIndex / numVectors;
+            dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
+
+            dftfe::utils::deviceDoubleComplex tempImag;
+
+            tempImag = dftfe::utils::makeComplex(0.0, 0.0);
+
+            dftfe::utils::deviceDoubleComplex gradPsiDirVal;
+            tauCellsWfcContributions[index] = 0.0;
+            for (dftfe::uInt dirIdx = 0; dirIdx < 3; dirIdx++)
+              {
+                gradPsiDirVal =
+                  gradwfcContributions[intraCellIndex +
+                                       dirIdx * numEntriesPerCell +
+                                       numEntriesPerCell * 3 * iCell];
+
+                tauCellsWfcContributions[index] +=
+                  dftfe::utils::realPartDevice(gradPsiDirVal) *
+                    dftfe::utils::realPartDevice(gradPsiDirVal) +
+                  dftfe::utils::imagPartDevice(gradPsiDirVal) *
+                    dftfe::utils::imagPartDevice(gradPsiDirVal);
+
+                tempImag = dftfe::utils::makeComplex(
+                  dftfe::utils::realPartDevice(tempImag) +
+                    kCoord[dirIdx] *
+                      dftfe::utils::realPartDevice(gradPsiDirVal),
+                  dftfe::utils::imagPartDevice(tempImag) +
+                    kCoord[dirIdx] *
+                      dftfe::utils::imagPartDevice(gradPsiDirVal));
+              }
+
+            tauCellsWfcContributions[index] =
+              0.5 * tauCellsWfcContributions[index];
+            tauCellsWfcContributions[index] +=
+              0.5 * kPointCoordSq *
+              (dftfe::utils::realPartDevice(psi) *
+                 dftfe::utils::realPartDevice(psi) +
+               dftfe::utils::imagPartDevice(psi) *
+                 dftfe::utils::imagPartDevice(psi));
+            tauCellsWfcContributions[index] +=
+              dftfe::utils::realPartDevice(psi) *
+                dftfe::utils::imagPartDevice(tempImag) -
+              dftfe::utils::imagPartDevice(psi) *
+                dftfe::utils::realPartDevice(tempImag);
+          }
+      },
       const dftfe::uInt                  numVectors,
       const dftfe::uInt                  numCells,
       const dftfe::uInt                  nQuadsPerCell,
       dftfe::utils::deviceDoubleComplex *wfcContributions,
       dftfe::utils::deviceDoubleComplex *gradwfcContributions,
       double                            *kCoord,
-      double                            *tauCellsWfcContributions)
-    {
-      const dftfe::uInt globalThreadId = blockIdx.x * blockDim.x + threadIdx.x;
-      const dftfe::uInt numEntriesPerCell = numVectors * nQuadsPerCell;
-      const dftfe::uInt numberEntries     = numEntriesPerCell * numCells;
-      const double      kPointCoordSq =
-        kCoord[0] * kCoord[0] + kCoord[1] * kCoord[1] + kCoord[2] * kCoord[2];
+      double                            *tauCellsWfcContributions);
 
-      for (dftfe::uInt index = globalThreadId; index < numberEntries;
-           index += blockDim.x * gridDim.x)
-        {
-          const dftfe::utils::deviceDoubleComplex psi = wfcContributions[index];
-
-          dftfe::uInt iCell          = index / numEntriesPerCell;
-          dftfe::uInt intraCellIndex = index - iCell * numEntriesPerCell;
-          dftfe::uInt iQuad          = intraCellIndex / numVectors;
-          dftfe::uInt iVec           = intraCellIndex - iQuad * numVectors;
-
-          dftfe::utils::deviceDoubleComplex tempImag;
-
-          tempImag.x = 0.0;
-          tempImag.y = 0.0;
-
-          dftfe::utils::deviceDoubleComplex gradPsiDirVal;
-          tauCellsWfcContributions[index] = 0.0;
-          for (dftfe::uInt dirIdx = 0; dirIdx < 3; dirIdx++)
-            {
-              gradPsiDirVal =
-                gradwfcContributions[intraCellIndex +
-                                     dirIdx * numEntriesPerCell +
-                                     numEntriesPerCell * 3 * iCell];
-
-              tauCellsWfcContributions[index] +=
-                gradPsiDirVal.x * gradPsiDirVal.x +
-                gradPsiDirVal.y * gradPsiDirVal.y;
-
-              tempImag.x += kCoord[dirIdx] * gradPsiDirVal.x;
-              tempImag.y += kCoord[dirIdx] * gradPsiDirVal.y;
-            }
-
-          tauCellsWfcContributions[index] =
-            0.5 * tauCellsWfcContributions[index];
-          tauCellsWfcContributions[index] +=
-            0.5 * kPointCoordSq * (psi.x * psi.x + psi.y * psi.y);
-          tauCellsWfcContributions[index] +=
-            psi.x * tempImag.y - psi.y * tempImag.x;
-        }
-    }
 
   } // namespace
   template <typename NumberType>
@@ -256,8 +293,7 @@ namespace dftfe
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
       dftfe::utils::DEVICE_BLOCK_SIZE,
-      0,
-      0,
+      dftfe::utils::defaultStream,
       vectorsBlockSize,
       cellsBlockSize,
       nQuadsPerCell,
@@ -321,8 +357,7 @@ namespace dftfe
       (vectorsBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
         dftfe::utils::DEVICE_BLOCK_SIZE * nQuadsPerCell * cellsBlockSize,
       dftfe::utils::DEVICE_BLOCK_SIZE,
-      0,
-      0,
+      dftfe::utils::defaultStream,
       vectorsBlockSize,
       cellsBlockSize,
       nQuadsPerCell,

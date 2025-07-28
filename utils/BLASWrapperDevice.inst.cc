@@ -117,34 +117,31 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockScale(
   std::complex<float> *x);
 // for xscal
 template void
-BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-  double           *x,
-  const double      a,
-  const dftfe::uInt n) const;
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(double           *x,
+                                                      const double      a,
+                                                      const dftfe::uInt n);
 
 template void
-BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-  float            *x,
-  const float       a,
-  const dftfe::uInt n) const;
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(float            *x,
+                                                      const float       a,
+                                                      const dftfe::uInt n);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
   std::complex<double>      *x,
   const std::complex<double> a,
-  const dftfe::uInt          n) const;
+  const dftfe::uInt          n);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
   std::complex<float>      *x,
   const std::complex<float> a,
-  const dftfe::uInt         n) const;
+  const dftfe::uInt         n);
 
 template void
-BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(
-  std::complex<double> *x,
-  const double          a,
-  const dftfe::uInt     n) const;
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xscal(std::complex<double> *x,
+                                                      const double          a,
+                                                      const dftfe::uInt     n);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedCopyToBlock(
@@ -380,7 +377,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
                                    const dftfe::uInt numBlocks,
                                    const dftfe::uInt startingId,
                                    const double     *copyFromVec,
-                                   double           *copyToVec) const;
+                                   double           *copyToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
@@ -389,7 +386,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
                                    const dftfe::uInt           numBlocks,
                                    const dftfe::uInt           startingId,
                                    const std::complex<double> *copyFromVec,
-                                   std::complex<double>       *copyToVec) const;
+                                   std::complex<double>       *copyToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
@@ -398,7 +395,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
                                    const dftfe::uInt numBlocks,
                                    const dftfe::uInt startingId,
                                    const float      *copyFromVec,
-                                   float            *copyToVec) const;
+                                   float            *copyToVec);
 
 
 template void
@@ -408,7 +405,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
                                    const dftfe::uInt          numBlocks,
                                    const dftfe::uInt          startingId,
                                    const std::complex<float> *copyFromVec,
-                                   std::complex<float>       *copyToVec) const;
+                                   std::complex<float>       *copyToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
@@ -417,7 +414,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
                                    const dftfe::uInt numBlocks,
                                    const dftfe::uInt startingId,
                                    const double     *copyFromVec,
-                                   float            *copyToVec) const;
+                                   float            *copyToVec);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
   stridedCopyToBlockConstantStride(const dftfe::uInt blockSizeTo,
@@ -425,7 +422,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
                                    const dftfe::uInt numBlocks,
                                    const dftfe::uInt startingId,
                                    const float      *copyFromVec,
-                                   double           *copyToVec) const;
+                                   double           *copyToVec);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
   stridedCopyToBlockConstantStride(const dftfe::uInt           blockSizeTo,
@@ -433,7 +430,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
                                    const dftfe::uInt           numBlocks,
                                    const dftfe::uInt           startingId,
                                    const std::complex<double> *copyFromVec,
-                                   std::complex<float>        *copyToVec) const;
+                                   std::complex<float>        *copyToVec);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
   stridedCopyToBlockConstantStride(const dftfe::uInt          blockSizeTo,
@@ -441,7 +438,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
                                    const dftfe::uInt          numBlocks,
                                    const dftfe::uInt          startingId,
                                    const std::complex<float> *copyFromVec,
-                                   std::complex<double>      *copyToVec) const;
+                                   std::complex<double>      *copyToVec);
 // axpyStridedBlockAtomicAdd
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -449,7 +446,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const dftfe::uInt  numContiguousBlocks,
   const double      *addFromVec,
   double            *addToVec,
-  const dftfe::uInt *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -457,7 +454,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const dftfe::uInt           numContiguousBlocks,
   const std::complex<double> *addFromVec,
   std::complex<double>       *addToVec,
-  const dftfe::uInt          *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt          *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -467,7 +464,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const double      *s,
   const double      *addFromVec,
   double            *addToVec,
-  const dftfe::uInt *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -477,7 +474,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const double               *s,
   const std::complex<double> *addFromVec,
   std::complex<double>       *addToVec,
-  const dftfe::uInt          *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt          *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -487,7 +484,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const double      *s,
   const float       *addFromVec,
   float             *addToVec,
-  const dftfe::uInt *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -497,7 +494,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const double              *s,
   const std::complex<float> *addFromVec,
   std::complex<float>       *addToVec,
-  const dftfe::uInt         *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt         *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -507,7 +504,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const float       *s,
   const float       *addFromVec,
   float             *addToVec,
-  const dftfe::uInt *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -517,7 +514,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const float               *s,
   const std::complex<float> *addFromVec,
   std::complex<float>       *addToVec,
-  const dftfe::uInt         *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt         *addToVecStartingContiguousBlockIds);
 
 
 template void
@@ -527,7 +524,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const double       a,
   const double      *addFromVec,
   double            *addToVec,
-  const dftfe::uInt *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -536,7 +533,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const double                a,
   const std::complex<double> *addFromVec,
   std::complex<double>       *addToVec,
-  const dftfe::uInt          *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt          *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -545,7 +542,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const double       a,
   const float       *addFromVec,
   float             *addToVec,
-  const dftfe::uInt *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -554,7 +551,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const double               a,
   const std::complex<float> *addFromVec,
   std::complex<float>       *addToVec,
-  const dftfe::uInt         *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt         *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -563,7 +560,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const float        a,
   const float       *addFromVec,
   float             *addToVec,
-  const dftfe::uInt *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
@@ -572,14 +569,14 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpyStridedBlockAtomicAdd(
   const float                a,
   const std::complex<float> *addFromVec,
   std::complex<float>       *addToVec,
-  const dftfe::uInt         *addToVecStartingContiguousBlockIds) const;
+  const dftfe::uInt         *addToVecStartingContiguousBlockIds);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpby(const dftfe::uInt n,
                                                       const double      alpha,
                                                       const double     *x,
                                                       const double      beta,
-                                                      double *y) const;
+                                                      double           *y);
 
 
 template void
@@ -588,14 +585,14 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpby(
   const double                alpha,
   const std::complex<double> *x,
   const double                beta,
-  std::complex<double>       *y) const;
+  std::complex<double>       *y);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpby(const dftfe::uInt n,
                                                       const double      alpha,
                                                       const float      *x,
                                                       const double      beta,
-                                                      float *y) const;
+                                                      float            *y);
 
 
 template void
@@ -604,7 +601,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::axpby(
   const double               alpha,
   const std::complex<float> *x,
   const double               beta,
-  std::complex<float>       *y) const;
+  std::complex<float>       *y);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(const dftfe::uInt m,
@@ -613,7 +610,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(const dftfe::uInt m,
                                                       const double     *A,
                                                       const double     *B,
                                                       const double     *D,
-                                                      double *C) const;
+                                                      double           *C);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(
   const dftfe::uInt           m,
@@ -622,7 +619,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(
   const std::complex<double> *A,
   const std::complex<double> *B,
   const double               *D,
-  std::complex<double>       *C) const;
+  std::complex<double>       *C);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(const dftfe::uInt m,
@@ -631,7 +628,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(const dftfe::uInt m,
                                                       const float      *A,
                                                       const double     *B,
                                                       const double     *D,
-                                                      float *C) const;
+                                                      float            *C);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(const dftfe::uInt m,
                                                       const dftfe::uInt n,
@@ -639,7 +636,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(const dftfe::uInt m,
                                                       const float      *A,
                                                       const double     *B,
                                                       const double     *D,
-                                                      double *C) const;
+                                                      double           *C);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(
   const dftfe::uInt           m,
@@ -648,7 +645,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(
   const std::complex<float>  *A,
   const std::complex<double> *B,
   const double               *D,
-  std::complex<float>        *C) const;
+  std::complex<float>        *C);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(
@@ -658,7 +655,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::ApaBD(
   const std::complex<float>  *A,
   const std::complex<double> *B,
   const double               *D,
-  std::complex<double>       *C) const;
+  std::complex<double>       *C);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::copyRealArrsToComplexArr(
@@ -673,35 +670,35 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProduct(
   const dftfe::uInt m,
   const double     *X,
   const double     *Y,
-  double           *output) const;
+  double           *output);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProduct(
   const dftfe::uInt m,
   const float      *X,
   const float      *Y,
-  float            *output) const;
+  float            *output);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProductWithConj(
   const dftfe::uInt m,
   const double     *X,
   const double     *Y,
-  double           *output) const;
+  double           *output);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProductWithConj(
   const dftfe::uInt m,
   const float      *X,
   const float      *Y,
-  float            *output) const;
+  float            *output);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::hadamardProductWithConj(
   const dftfe::uInt           m,
   const std::complex<double> *X,
   const std::complex<double> *Y,
-  std::complex<double>       *output) const;
+  std::complex<double>       *output);
 
 
 // stridedBlockScaleColumnWise
@@ -825,7 +822,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
   const double     *onesVec,
   double           *tempVector,
   double           *tempResults,
-  double           *result) const;
+  double           *result);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
@@ -837,7 +834,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
   double           *tempVector,
   double           *tempResults,
   const MPI_Comm   &mpi_communicator,
-  double           *result) const;
+  double           *result);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
@@ -848,7 +845,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
   const std::complex<double> *onesVec,
   std::complex<double>       *tempVector,
   std::complex<double>       *tempResults,
-  std::complex<double>       *result) const;
+  std::complex<double>       *result);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
   const dftfe::uInt           contiguousBlockSize,
@@ -859,7 +856,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::MultiVectorXDot(
   std::complex<double>       *tempVector,
   std::complex<double>       *tempResults,
   const MPI_Comm             &mpi_communicator,
-  std::complex<double>       *result) const;
+  std::complex<double>       *result);
 
 // strided copy from block constant stride
 template void
@@ -1102,7 +1099,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const double     *addFromVec,
   const double     *scalingVector,
   const double      a,
-  double           *addToVec) const;
+  double           *addToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
@@ -1111,7 +1108,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const float      *addFromVec,
   const double     *scalingVector,
   const double      a,
-  float            *addToVec) const;
+  float            *addToVec);
 
 
 template void
@@ -1121,7 +1118,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const std::complex<double> *addFromVec,
   const std::complex<double> *scalingVector,
   const std::complex<double>  a,
-  std::complex<double>       *addToVec) const;
+  std::complex<double>       *addToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
@@ -1130,7 +1127,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const std::complex<double> *addFromVec,
   const double               *scalingVector,
   const double                a,
-  std::complex<double>       *addToVec) const;
+  std::complex<double>       *addToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
@@ -1139,7 +1136,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const std::complex<float> *addFromVec,
   const double              *scalingVector,
   const double               a,
-  std::complex<float>       *addToVec) const;
+  std::complex<float>       *addToVec);
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::rightDiagonalScale(
   const dftfe::uInt numberofVectors,
@@ -1163,7 +1160,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
   const double     *scalingVector,
   const double      a,
   const double      b,
-  double           *addToVec) const;
+  double           *addToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
@@ -1173,7 +1170,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
   const double     *scalingVector,
   const double      a,
   const double      b,
-  float            *addToVec) const;
+  float            *addToVec);
 
 
 template void
@@ -1184,7 +1181,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
   const std::complex<double> *scalingVector,
   const std::complex<double>  a,
   const std::complex<double>  b,
-  std::complex<double>       *addToVec) const;
+  std::complex<double>       *addToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
@@ -1194,7 +1191,7 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
   const double               *scalingVector,
   const double                a,
   const double                b,
-  std::complex<double>       *addToVec) const;
+  std::complex<double>       *addToVec);
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
@@ -1204,4 +1201,4 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpBy(
   const double              *scalingVector,
   const double               a,
   const double               b,
-  std::complex<float>       *addToVec) const;
+  std::complex<float>       *addToVec);

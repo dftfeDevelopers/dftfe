@@ -37,25 +37,22 @@ namespace dftfe
     std::fill(d_forceDispersion.begin(), d_forceDispersion.end(), 0.0);
     std::fill(d_stressDispersion.begin(), d_stressDispersion.end(), 0.0);
     for (dftfe::uInt i = 0; i < d_natoms; ++i)
-      {
-        d_atomicNumbers[i] = atomLocations[i][0];
-      }
+      d_atomicNumbers[i] = atomLocations[i][0];
 
-    for (dftfe::uInt irow = 0; irow < d_natoms; ++irow)
+    for (dftfe::uInt iVec = 0; iVec < 3; ++iVec)
+      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+        d_latticeVectors[iVec * 3 + iDim] = d_domainBoundingVectors[iVec][iDim];
+    std::vector<double> cellCentroid(3);
+    for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
       {
-        for (dftfe::uInt icol = 0; icol < 3; ++icol)
-          {
-            d_atomCoordinates[irow * 3 + icol] = atomLocations[irow][2 + icol];
-          }
+        cellCentroid[iDim] = 0.0;
+        for (dftfe::uInt iVec = 0; iVec < 3; ++iVec)
+          cellCentroid[iDim] += d_domainBoundingVectors[iVec][iDim] * 0.5;
       }
-    for (dftfe::uInt irow = 0; irow < 3; ++irow)
-      {
-        for (dftfe::uInt icol = 0; icol < 3; ++icol)
-          {
-            d_latticeVectors[irow * 3 + icol] =
-              d_domainBoundingVectors[irow][icol];
-          }
-      }
+    for (dftfe::uInt iAtom = 0; iAtom < d_natoms; ++iAtom)
+      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+        d_atomCoordinates[iAtom * 3 + iDim] =
+          atomLocations[iAtom][2 + iDim] + cellCentroid[iDim];
   }
 
 

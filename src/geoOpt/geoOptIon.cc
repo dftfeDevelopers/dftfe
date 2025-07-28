@@ -53,8 +53,9 @@ namespace dftfe
   //
 
   void
-  geoOptIon::init(const std::string &restartPath)
+  geoOptIon::init(const std::string &restartPath, const dftfe::Int cycleId)
   {
+    d_cycle         = cycleId;
     d_restartPath   = restartPath + "/ionRelax";
     d_solverRestart = d_isRestart;
     if (d_dftPtr->getParametersObject().ionOptSolver == "BFGS")
@@ -152,7 +153,8 @@ namespace dftfe
               {
                 std::string fileName =
                   "structureEnergyForcesGSData_ionRelaxStep" +
-                  std::to_string(d_totalUpdateCalls) + ".txt";
+                  std::to_string(d_totalUpdateCalls) + "_cycle" +
+                  std::to_string(d_cycle) + ".txt";
                 d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
               }
           }
@@ -347,7 +349,10 @@ namespace dftfe
             d_dftPtr->getParametersObject()
               .writeStructreEnergyForcesFileForPostProcess)
           {
-            std::string fileName = "structureEnergyForcesGSDataIonRelaxed.txt";
+            std::string fileName =
+              std::string("structureEnergyForcesGSDataIonRelaxed") + "_cycle" +
+              std::to_string(d_cycle) + ".txt";
+
             d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
           }
 
@@ -739,7 +744,9 @@ namespace dftfe
           .writeStructreEnergyForcesFileForPostProcess)
       {
         std::string fileName = "structureEnergyForcesGSData_ionRelaxStep" +
-                               std::to_string(d_totalUpdateCalls) + ".txt";
+                               std::to_string(d_totalUpdateCalls) + "_cycle" +
+                               std::to_string(d_cycle) + ".txt";
+
         d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
       }
   }

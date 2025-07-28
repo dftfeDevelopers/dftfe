@@ -18,6 +18,7 @@
 //
 #include <dft.h>
 #include <linearAlgebraOperations.h>
+#include <random>
 
 namespace dftfe
 {
@@ -36,15 +37,23 @@ namespace dftfe
       const std::deque<distributedCPUVec<double>> &fvcontainerSpin1,
       const distributedCPUVec<double>             &residualVecSpin0,
       const distributedCPUVec<double>             &residualVecSpin1,
-      const double                                 k0)
+      const double                                 k0,
+      const double tikhonovRegularizationConstant)
     {
       const dftfe::uInt rank = fvcontainerSpin0.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
       for (dftfe::Int j = 0; j < rank; j++)
         for (dftfe::Int i = 0; i < rank; i++)
-          mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
-                               fvcontainerSpin1[i] * fvcontainerSpin1[j];
+          {
+            if (i == j)
+              mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
+                                   fvcontainerSpin1[i] * fvcontainerSpin1[j] +
+                                   tikhonovRegularizationConstant;
+            else
+              mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
+                                   fvcontainerSpin1[i] * fvcontainerSpin1[j];
+          }
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
@@ -112,15 +121,23 @@ namespace dftfe
       const distributedCPUVec<double>             &xSpin1,
       const double                                 k0,
       distributedCPUVec<double>                   &ySpin0,
-      distributedCPUVec<double>                   &ySpin1)
+      distributedCPUVec<double>                   &ySpin1,
+      const double tikhonovRegularizationConstant)
     {
       const dftfe::uInt rank = fvcontainerSpin0.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
       for (dftfe::Int j = 0; j < rank; j++)
         for (dftfe::Int i = 0; i < rank; i++)
-          mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
-                               fvcontainerSpin1[i] * fvcontainerSpin1[j];
+          {
+            if (i == j)
+              mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
+                                   fvcontainerSpin1[i] * fvcontainerSpin1[j] +
+                                   tikhonovRegularizationConstant;
+            else
+              mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
+                                   fvcontainerSpin1[i] * fvcontainerSpin1[j];
+          }
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
@@ -165,15 +182,23 @@ namespace dftfe
       const distributedCPUVec<double>             &xSpin0,
       const distributedCPUVec<double>             &xSpin1,
       distributedCPUVec<double>                   &ySpin0,
-      distributedCPUVec<double>                   &ySpin1)
+      distributedCPUVec<double>                   &ySpin1,
+      const double tikhonovRegularizationConstant)
     {
       const dftfe::uInt rank = fvcontainerSpin0.size();
 
       std::vector<double> mMat(rank * rank, 0.0);
       for (dftfe::Int j = 0; j < rank; j++)
         for (dftfe::Int i = 0; i < rank; i++)
-          mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
-                               fvcontainerSpin1[i] * fvcontainerSpin1[j];
+          {
+            if (i == j)
+              mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
+                                   fvcontainerSpin1[i] * fvcontainerSpin1[j] +
+                                   tikhonovRegularizationConstant;
+            else
+              mMat[j * rank + i] = fvcontainerSpin0[i] * fvcontainerSpin0[j] +
+                                   fvcontainerSpin1[i] * fvcontainerSpin1[j];
+          }
 
       dftfe::linearAlgebraOperations::inverse(&mMat[0], rank);
 
@@ -269,18 +294,19 @@ namespace dftfe
 
       vVectorSpin0 = 0.0, fVectorSpin0 = 0.0;
       vVectorSpin1 = 0.0, fVectorSpin1 = 0.0;
-      // std::srand(this_mpi_process);
       const dftfe::uInt local_size = vVectorSpin0.locally_owned_size();
 
       // for (dftfe::uInt i = 0; i < local_size; i++)
       //  vVector.local_element(i) = x.local_element(i);
+      unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(xSpin0.get_mpi_communicator());
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
 
       for (dftfe::uInt i = 0; i < local_size; i++)
         {
-          vVectorSpin0.local_element(i) =
-            ((double)std::rand()) / ((double)RAND_MAX);
-          vVectorSpin1.local_element(i) =
-            ((double)std::rand()) / ((double)RAND_MAX);
+          vVectorSpin0.local_element(i) = uni(randomIntGenerator);
+          vVectorSpin1.local_element(i) = uni(randomIntGenerator);
         }
 
       constraintsRhoNodal.set_zero(vVectorSpin0);
@@ -336,7 +362,8 @@ namespace dftfe
       const std::deque<distributedCPUVec<double>> &lowrankVSpin1container,
       const distributedCPUVec<double>             &xSpin0,
       const distributedCPUVec<double>             &xSpin1,
-      const dealii::AffineConstraints<double>     &constraintsRhoNodal)
+      const dealii::AffineConstraints<double>     &constraintsRhoNodal,
+      const double tikhonovRegularizationConstant)
     {
       const double tol = 1.0e-6;
 
@@ -355,18 +382,20 @@ namespace dftfe
 
       vVectorSpin0 = 0.0, fVectorSpin0 = 0.0;
       vVectorSpin1 = 0.0, fVectorSpin1 = 0.0;
-      // std::srand(this_mpi_process);
+
       const dftfe::uInt local_size = vVectorSpin0.locally_owned_size();
 
       // for (dftfe::uInt i = 0; i < local_size; i++)
       //  vVector.local_element(i) = x.local_element(i);
 
+      unsigned int this_mpi_process =
+        dealii::Utilities::MPI::this_mpi_process(xSpin0.get_mpi_communicator());
+      std::mt19937 randomIntGenerator(this_mpi_process);
+      std::uniform_real_distribution<double> uni{0.0, 1.0};
       for (dftfe::uInt i = 0; i < local_size; i++)
         {
-          vVectorSpin0.local_element(i) =
-            ((double)std::rand()) / ((double)RAND_MAX);
-          vVectorSpin1.local_element(i) =
-            ((double)std::rand()) / ((double)RAND_MAX);
+          vVectorSpin0.local_element(i) = uni(randomIntGenerator);
+          vVectorSpin1.local_element(i) = uni(randomIntGenerator);
         }
 
       constraintsRhoNodal.set_zero(vVectorSpin0);
@@ -391,7 +420,8 @@ namespace dftfe
                                  vVectorSpin0,
                                  vVectorSpin1,
                                  fVectorSpin0,
-                                 fVectorSpin1);
+                                 fVectorSpin1,
+                                 tikhonovRegularizationConstant);
           lambdaOld = lambdaNew;
           lambdaNew =
             (vVectorSpin0 * fVectorSpin0 + vVectorSpin1 * fVectorSpin1) /
@@ -672,7 +702,8 @@ namespace dftfe
                 d_fvSpin1containerVals,
                 residualRhoSpin0,
                 residualRhoSpin1,
-                k0);
+                k0,
+                d_tikhonovRegularizationConstantLRD);
 
             if (d_dftParamsPtr->verbosity >= 4)
               pcout << " Relative approx error:  " << relativeApproxError
@@ -709,15 +740,17 @@ namespace dftfe
       pcout << " Net accumulated kernel rank:  " << d_rankCurrentLRD
             << " Accumulated in this scf: " << rankAddedInThisScf << std::endl;
 
-    internalLowrankJacInv::lowrankKernelApplySpin(d_fvSpin0containerVals,
-                                                  d_fvSpin1containerVals,
-                                                  d_vSpin0containerVals,
-                                                  d_vSpin1containerVals,
-                                                  residualRhoSpin0,
-                                                  residualRhoSpin1,
-                                                  k0,
-                                                  kernelActionSpin0,
-                                                  kernelActionSpin1);
+    internalLowrankJacInv::lowrankKernelApplySpin(
+      d_fvSpin0containerVals,
+      d_fvSpin1containerVals,
+      d_vSpin0containerVals,
+      d_vSpin1containerVals,
+      residualRhoSpin0,
+      residualRhoSpin1,
+      k0,
+      kernelActionSpin0,
+      kernelActionSpin1,
+      d_tikhonovRegularizationConstantLRD);
 
     if (normValue < d_dftParamsPtr->selfConsistentSolverTolerance &&
         d_dftParamsPtr->estimateJacCondNoFinalSCFIter)
@@ -740,7 +773,8 @@ namespace dftfe
                     d_vSpin1containerVals,
                     residualRhoSpin0,
                     residualRhoSpin1,
-                    d_constraintsRhoNodal);
+                    d_constraintsRhoNodal,
+                    d_tikhonovRegularizationConstantLRD);
         pcout << " Maximum eigenvalue of low rank approx of Jacobian: "
               << maxAbsEigenValue << std::endl;
         pcout << " Minimum non-zero eigenvalue of low rank approx of Jacobian: "

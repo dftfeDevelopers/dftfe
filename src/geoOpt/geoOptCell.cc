@@ -52,8 +52,9 @@ namespace dftfe
   //
 
   void
-  geoOptCell::init(const std::string &restartPath)
+  geoOptCell::init(const std::string &restartPath, const dftfe::Int cycleId)
   {
+    d_cycle         = cycleId;
     d_restartPath   = restartPath + "/cellRelax";
     d_solverRestart = d_isRestart;
     if (d_dftPtr->getParametersObject().cellOptSolver == "BFGS")
@@ -62,14 +63,16 @@ namespace dftfe
       d_solver = 1;
     else if (d_dftPtr->getParametersObject().cellOptSolver == "CGPRP")
       d_solver = 2;
-    // initialize d_strainEpsilon to identity
-    d_strainEpsilon = 0;
+    // initialize d_deformationGradientCurrent to identity
+    // deformation gradient is a second order tensor.
+    // We constrain it be symmetric (no rigid rotation modes)
+    // with six independent components
+    d_deformationGradientCurrent = 0;
     for (dftfe::uInt i = 0; i < 3; ++i)
-      d_strainEpsilon[i][i] = 1.0;
+      d_deformationGradientCurrent[i][i] = 1.0;
 
     d_domainVolumeInitial = d_dftPtr->getCellVolume();
 
-    // strain tensor is a symmetric second order with six independent components
     d_relaxationFlags.clear();
     d_relaxationFlags.resize(6, 0);
 
@@ -220,7 +223,8 @@ namespace dftfe
               {
                 std::string fileName =
                   "structureEnergyForcesGSData_cellRelaxStep" +
-                  std::to_string(d_totalUpdateCalls) + ".txt";
+                  std::to_string(d_totalUpdateCalls) + "_cycle" +
+                  std::to_string(d_cycle) + ".txt";
                 d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
               }
           }
@@ -411,7 +415,9 @@ namespace dftfe
             d_dftPtr->getParametersObject()
               .writeStructreEnergyForcesFileForPostProcess)
           {
-            std::string fileName = "structureEnergyForcesGSDataCellRelaxed.txt";
+            std::string fileName =
+              std::string("structureEnergyForcesGSDataCellRelaxed") + "_cycle" +
+              std::to_string(d_cycle) + ".txt";
             d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
           }
 
@@ -530,7 +536,7 @@ namespace dftfe
     gradient.clear();
     const dealii::Tensor<2, 3, double> tempGradient =
       d_dftPtr->getCellVolume() *
-      (d_dftPtr->getCellStress() * invert(d_strainEpsilon)) /
+      (d_dftPtr->getCellStress() * invert(d_deformationGradientCurrent)) /
       d_domainVolumeInitial;
 
     if (d_relaxationFlags[0] == 1)
@@ -586,40 +592,41 @@ namespace dftfe
               0,
               mpi_communicator);
 
-    dealii::Tensor<2, 3, double> strainEpsilonNew = d_strainEpsilon;
+    dealii::Tensor<2, 3, double> deformationGradientNext =
+      d_deformationGradientCurrent;
 
     dftfe::uInt count = 0;
     if (d_relaxationFlags[0] == 1)
       {
-        strainEpsilonNew[0][0] += bcastSolution[count];
+        deformationGradientNext[0][0] += bcastSolution[count];
         count++;
       }
     if (d_relaxationFlags[1] == 1)
       {
-        strainEpsilonNew[0][1] += bcastSolution[count];
-        strainEpsilonNew[1][0] += bcastSolution[count];
+        deformationGradientNext[0][1] += bcastSolution[count];
+        deformationGradientNext[1][0] += bcastSolution[count];
         count++;
       }
     if (d_relaxationFlags[2] == 1)
       {
-        strainEpsilonNew[0][2] += bcastSolution[count];
-        strainEpsilonNew[2][0] += bcastSolution[count];
+        deformationGradientNext[0][2] += bcastSolution[count];
+        deformationGradientNext[2][0] += bcastSolution[count];
         count++;
       }
     if (d_relaxationFlags[3] == 1)
       {
-        strainEpsilonNew[1][1] += bcastSolution[count];
+        deformationGradientNext[1][1] += bcastSolution[count];
         count++;
       }
     if (d_relaxationFlags[4] == 1)
       {
-        strainEpsilonNew[1][2] += bcastSolution[count];
-        strainEpsilonNew[2][1] += bcastSolution[count];
+        deformationGradientNext[1][2] += bcastSolution[count];
+        deformationGradientNext[2][1] += bcastSolution[count];
         count++;
       }
     if (d_relaxationFlags[5] == 1)
       {
-        strainEpsilonNew[2][2] += bcastSolution[count];
+        deformationGradientNext[2][2] += bcastSolution[count];
         count++;
       }
 
@@ -627,15 +634,32 @@ namespace dftfe
     if (d_dftPtr->getParametersObject().cellConstraintType ==
         1) // isotropic (shape fixed isotropic volume optimization)
       {
-        strainEpsilonNew[1][1] = strainEpsilonNew[0][0];
-        strainEpsilonNew[2][2] = strainEpsilonNew[0][0];
+        deformationGradientNext[1][1] = deformationGradientNext[0][0];
+        deformationGradientNext[2][2] = deformationGradientNext[0][0];
       }
 
     // To transform the domain under the strain we have to first do a inverse
     // transformation to bring the domain back to the unstrained state.
     dealii::Tensor<2, 3, double> deformationGradient =
-      strainEpsilonNew * invert(d_strainEpsilon);
-    d_strainEpsilon = strainEpsilonNew;
+      deformationGradientNext * invert(d_deformationGradientCurrent);
+    d_deformationGradientCurrent = deformationGradientNext;
+
+    const double a11         = deformationGradientNext[0][0];
+    const double a12         = deformationGradientNext[0][1];
+    const double a13         = deformationGradientNext[0][2];
+    const double a21         = deformationGradientNext[1][0];
+    const double a22         = deformationGradientNext[1][1];
+    const double a23         = deformationGradientNext[1][2];
+    const double a31         = deformationGradientNext[2][0];
+    const double a32         = deformationGradientNext[2][1];
+    const double a33         = deformationGradientNext[2][2];
+    const double determinant = a11 * (a22 * a33 - a23 * a32) -
+                               a12 * (a21 * a33 - a23 * a31) +
+                               a13 * (a21 * a32 - a22 * a31);
+    AssertThrow(
+      determinant > 1e-3,
+      dealii::ExcMessage(
+        "Deformation gradient must have determinant greater than zero."));
 
     // deform fem mesh and reinit
     d_dftPtr->deformDomain(deformationGradient,
@@ -652,7 +676,9 @@ namespace dftfe
           .writeStructreEnergyForcesFileForPostProcess)
       {
         std::string fileName = "structureEnergyForcesGSData_cellRelaxStep" +
-                               std::to_string(d_totalUpdateCalls) + ".txt";
+                               std::to_string(d_totalUpdateCalls) + "_cycle" +
+                               std::to_string(d_cycle) + ".txt";
+
         d_dftPtr->writeStructureEnergyForcesDataPostProcess(fileName);
       }
   }

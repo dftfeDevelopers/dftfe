@@ -6,7 +6,7 @@ set USE GPU = true
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE      = bccFe_coordinates.inp
+  set ATOMIC COORDINATES FILE      = bccFe_coordinates_distorted.inp
   set DOMAIN VECTORS FILE = bccFe_domainVectors.inp
   subsection Optimization
     set ION FORCE = true
@@ -21,6 +21,7 @@ end
 
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=5
+  set DENSITY QUADRATURE RULE = 8
   subsection Auto mesh generation parameters
     set MESH SIZE AROUND ATOM = 1.0
     set ATOM BALL RADIUS=10.0

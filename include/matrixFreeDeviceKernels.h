@@ -2,7 +2,7 @@
 #define poissonSolverProblemDeviceKernels_H
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
-#include <DeviceKernelLauncherConstants.h>
+#include <DeviceKernelLauncherHelpers.h>
 
 
 namespace dftfe

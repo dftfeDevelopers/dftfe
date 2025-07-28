@@ -21,13 +21,18 @@
 #include <NNLDA.h>
 #include <Exceptions.h>
 #include <dftfeDataTypes.h>
-
+#include <excManagerKernels.h>
+#if defined(DFTFE_WITH_DEVICE)
+#  include <DeviceAPICalls.h>
+#endif
+#include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -38,13 +43,15 @@ namespace dftfe
     d_funcXPtr = funcXPtr;
     d_funcCPtr = funcCPtr;
     d_NNLDAPtr = nullptr;
+    d_useLibXC = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
-    std::shared_ptr<xc_func_type> funcXPtr,
-    std::shared_ptr<xc_func_type> funcCPtr,
-    std::string                   modelXCInputFile)
+    std::shared_ptr<xc_func_type> &funcXPtr,
+    std::shared_ptr<xc_func_type> &funcCPtr,
+    std::string                    modelXCInputFile,
+    const bool                     useLibxc)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -57,6 +64,7 @@ namespace dftfe
 #ifdef DFTFE_WITH_TORCH
     d_NNLDAPtr = new NNLDA(modelXCInputFile, true);
 #endif
+    d_useLibXC = useLibxc;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -99,9 +107,13 @@ namespace dftfe
   excDensityLDAClass<memorySpace>::computeRhoTauDependentXCData(
     AuxDensityMatrix<memorySpace>             &auxDensityMatrix,
     const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &xDataOut,
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &cDataOut) const
   {
     const dftfe::uInt nquad = quadIndexRange.second - quadIndexRange.first;
@@ -112,14 +124,17 @@ namespace dftfe
     checkInputOutputDataAttributesConsistency(outputDataAttributes);
 
 
-    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+    std::unordered_map<
+      DensityDescriptorDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       densityDescriptorData;
 
     for (dftfe::uInt i = 0; i < this->d_densityDescriptorAttributesList.size();
          i++)
       {
         densityDescriptorData[this->d_densityDescriptorAttributesList[i]] =
-          std::vector<double>(nquad, 0);
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+            nquad, 0);
       }
 
     auxDensityMatrix.applyLocalOperations(quadIndexRange,
@@ -136,33 +151,102 @@ namespace dftfe
 
 
 
-    std::vector<double> densityValues(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      densityValues(2 * nquad, 0);
 
-    std::vector<double> exValues(nquad, 0);
-    std::vector<double> ecValues(nquad, 0);
-    std::vector<double> pdexDensityValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdecDensityValuesNonNN(2 * nquad, 0);
-    std::vector<double> pdexDensitySpinUpValues(nquad, 0);
-    std::vector<double> pdexDensitySpinDownValues(nquad, 0);
-    std::vector<double> pdecDensitySpinUpValues(nquad, 0);
-    std::vector<double> pdecDensitySpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      exValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      ecValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensityValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensityValuesNonNN(2 * nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensitySpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexDensitySpinDownValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensitySpinUpValues(nquad, 0);
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecDensitySpinDownValues(nquad, 0);
 
-    for (dftfe::uInt i = 0; i < nquad; i++)
+    dftfe::internal::fillRhoVector(nquad,
+                                   densityValuesSpinUp,
+                                   densityValuesSpinDown,
+                                   densityValues);
+    if (d_useLibXC)
       {
-        densityValues[2 * i + 0] = densityValuesSpinUp[i];
-        densityValues[2 * i + 1] = densityValuesSpinDown[i];
+        xc_lda_exc_vxc(d_funcXPtr.get(),
+                       nquad,
+                       densityValues.data(),
+                       exValues.data(),
+                       pdexDensityValuesNonNN.data());
+        xc_lda_exc_vxc(d_funcCPtr.get(),
+                       nquad,
+                       densityValues.data(),
+                       ecValues.data(),
+                       pdecDensityValuesNonNN.data());
       }
-
-    xc_lda_exc_vxc(d_funcXPtr.get(),
-                   nquad,
-                   &densityValues[0],
-                   &exValues[0],
-                   &pdexDensityValuesNonNN[0]);
-    xc_lda_exc_vxc(d_funcCPtr.get(),
-                   nquad,
-                   &densityValues[0],
-                   &ecValues[0],
-                   &pdecDensityValuesNonNN[0]);
+    else
+      {
+        // Checking for exchange contribution
+        dftfe::utils::MemoryStorage<double, memorySpace> densityValuesTemp;
+        dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp,
+          exValuesTemp;
+        dftfe::utils::MemoryStorage<double, memorySpace> pdecDensityTemp,
+          pdexDensityTemp;
+        densityValuesTemp.resize(densityValues.size());
+        ecValuesTemp.resize(ecValues.size());
+        pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
+        exValuesTemp.resize(ecValues.size());
+        pdexDensityTemp.resize(pdecDensityValuesNonNN.size());
+        if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+          {
+            densityValuesTemp.copyFrom(densityValues);
+          }
+        else
+          {
+            densityValuesTemp.swap(densityValues);
+          }
+        dftfe::utils::throwException(
+          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
+        // if (d_funcXPtr->info->name == "SLA")
+        //   {
+        //   }
+        // else if (d_funcXPtr->info->name == "")
+        //   {
+        //   }
+        // else
+        //   {
+        //     dftfe::utils::throwException(
+        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
+        //       compute the LDA functional.");
+        //   }
+        // Checking for correlation contribution
+        if (d_funcCPtr->info->name == "PW")
+          {
+            LDAC_PW(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
+            if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+              {
+                ecValues.copyFrom(ecValuesTemp);
+                pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+              }
+            else
+              {
+                ecValues.swap(ecValuesTemp);
+                pdecDensityValuesNonNN.swap(pdecDensityTemp);
+              }
+          }
+        else if (d_funcCPtr->info->name == "")
+          {
+          }
+        else
+          {
+            dftfe::utils::throwException(
+              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
+          }
+      }
 
     for (dftfe::uInt i = 0; i < nquad; i++)
       {
@@ -179,10 +263,11 @@ namespace dftfe
 #ifdef DFTFE_WITH_TORCH
     if (d_NNLDAPtr != nullptr)
       {
-        std::vector<double> excValuesFromNN(nquad, 0);
-        const dftfe::uInt   numDescriptors = 2;
-        std::vector<double> pdexcDescriptorValuesFromNN(numDescriptors * nquad,
-                                                        0);
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                          excValuesFromNN(nquad, 0);
+        const dftfe::uInt numDescriptors = 2;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          pdexcDescriptorValuesFromNN(numDescriptors * nquad, 0);
         d_NNLDAPtr->evaluatevxc(&(densityValues[0]),
                                 nquad,
                                 &excValuesFromNN[0],

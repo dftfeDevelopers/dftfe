@@ -24,6 +24,7 @@ Finite element mesh information
 FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 2
 FE interpolating polynomial order for electrostatics solve: 2
 FE interpolating polynomial order for nodal electron density computation: 4
+quadrature rule for electron density and kinetic energy density computation: 5
 number of elements: 1331
 number of degrees of freedom for the Kohn-Sham eigenvalue problem : 12167
 -------------------------------------------------
@@ -35,9 +36,9 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.39504431
-kinetic energy: 3.44431869
+             Total energy:          -8.39475203
+kinetic energy: 3.44650503

@@ -87,6 +87,14 @@ namespace dftfe
               if (d_this_mpi_process == 0)
                 mkdir(d_restartFilesPath.c_str(), ACCESSPERMS);
             }
+          if (d_this_mpi_process == 0)
+            {
+              for (int iImage = 0; iImage < d_numberOfImages; iImage++)
+                mkdir((d_restartFilesPath + "/QuadDataForImage" +
+                       std::to_string(iImage))
+                        .c_str(),
+                      ACCESSPERMS);
+            }
         }
 
 
@@ -138,7 +146,7 @@ namespace dftfe
               Image == 0 ? true : false,
               Image == 0 ? true : false,
               "NEB",
-              d_restartFilesPath,
+              d_restartFilesPath + "/QuadDataForImage" + std::to_string(Image),
               d_verbosity < 4 ? -1 : d_verbosity,
               useDevice,
               Image == 0 ? false : true));
@@ -166,13 +174,9 @@ namespace dftfe
                              std::to_string(d_totalUpdateCalls) +
                              "/maxForce.chk");
         d_maximumAtomForceToBeRelaxed = tmp[0][0];
-        if (!d_dftPtr->getParametersObject().reproducible_output)
-          {
-            pcout << "Solver update: NEB is in Restart mode" << std::endl;
-            pcout << "Checking for files in Step: " << d_totalUpdateCalls
-                  << std::endl;
-          }
-
+        pcout << "Solver update: NEB is in Restart mode" << std::endl;
+        pcout << "Checking for files in Step: " << d_totalUpdateCalls
+              << std::endl;
         for (dftfe::Int Image = 0; Image < d_numberOfImages; Image++)
           {
             std::string coordinatesFile, domainVectorsFile;
@@ -195,7 +199,7 @@ namespace dftfe
               Image == 0 ? true : false,
               Image == 0 ? true : false,
               "NEB",
-              d_restartFilesPath,
+              d_restartFilesPath + "/QuadDataForImage" + std::to_string(Image),
               d_verbosity < 4 ? -1 : d_verbosity,
               useDevice,
               Image == 0 ? false : true));
@@ -816,7 +820,7 @@ namespace dftfe
         if (!d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << std::endl
-                  << "--Path Length: " << Length << " Bohr" << std::endl;
+                  << "--Max Path Length: " << Length << " Bohr" << std::endl;
             pcout << "----------------------------------------------"
                   << std::endl;
           }
@@ -923,7 +927,7 @@ namespace dftfe
         if (!d_dftPtr->getParametersObject().reproducible_output)
           {
             pcout << std::endl
-                  << "--Path Length: " << Length << " Bohr" << std::endl;
+                  << "--Max Path Length: " << Length << " Bohr" << std::endl;
             pcout << "----------------------------------------------"
                   << std::endl;
           }
@@ -1053,7 +1057,7 @@ namespace dftfe
     if (!d_dftPtr->getParametersObject().reproducible_output)
       {
         pcout << std::endl
-              << "--Path Length: " << Length << " Bohr" << std::endl;
+              << "--Max Path Length: " << Length << " Bohr" << std::endl;
         pcout << "----------------------------------------------" << std::endl;
       }
     dftfe::Int FlagTotal = std::accumulate(Flag.begin(), Flag.end(), 0);
@@ -1604,7 +1608,7 @@ namespace dftfe
         double Length = 0.0;
         Length        = CalculatePathLength(false);
         pcout << std::endl
-              << "--Path Length: " << Length << " Bohr" << std::endl;
+              << "--Max Path Length: " << Length << " Bohr" << std::endl;
         step_time = MPI_Wtime() - step_time;
         pcout << "Time taken for initial dft solve of all images: " << step_time
               << std::endl;

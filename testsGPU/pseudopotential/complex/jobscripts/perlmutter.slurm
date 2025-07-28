@@ -12,6 +12,7 @@
 
 module load gcc-native/12.3
 module load PrgEnv-gnu
+module load cray-mpich/8.1.28
 module load cudatoolkit
 module load cray-libsci
 module load cmake
@@ -47,3 +48,4 @@ srun ./dftfe parameterFileGaAs.prm > outputGaAs
 srun ./dftfe parameterFileGaAs_BANDS.prm > outputGaAs_bands
 srun ./dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
 srun ./dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
+srun ./dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker

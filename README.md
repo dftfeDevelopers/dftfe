@@ -12,19 +12,19 @@ Installation instructions
 -------------------------
 
 DFT-FE code builds on top of the deal.II library for everything that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
-The steps to install the necessary dependencies and DFT-FE itself are described in the *Installation* section of the DFT-FE manual (compile doc/manual/manual.tex or download the release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-release1.2.pdf)). 
+The steps to install the necessary dependencies and DFT-FE itself are described in the *Installation* section of the DFT-FE manual (download the release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-release.pdf)). 
 
 We have created several shell based installation scripts for the development version of DFT-FE (`publicGithubDevelop` branch) on various machines:
-  - [OLCF Frontier](https://github.com/dftfeDevelopers/install_DFTFE/tree/frontierCurrentRelease)
-  - [NERSC Perlmutter](https://github.com/dftfeDevelopers/install_DFTFE/tree/perlmutterCurrentRelease)
-  - [UMICH Greatlakes](https://github.com/dftfeDevelopers/install_DFTFE/tree/greatlakesCurrentRelease)
+  - [OLCF Frontier](https://github.com/dftfeDevelopers/install_DFTFE/tree/frontierRelease)
+  - [NERSC Perlmutter](https://github.com/dftfeDevelopers/install_DFTFE/tree/perlmutterRelease)
+  - [UMICH Greatlakes](https://github.com/dftfeDevelopers/install_DFTFE/tree/greatlakesRelease)
     
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-release1.2.pdf)). Beyond the demo examples in the manual, we also refer to our [benchmarks repository](https://github.com/dftfeDevelopers/dftfe-benchmarks) which contains several accuracy and performance benchmarks on a range of system sizes.
+Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (download the release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-release.pdf)). Beyond the demo examples in the manual, we also refer to our [benchmarks repository](https://github.com/dftfeDevelopers/dftfe-benchmarks) which contains several accuracy and performance benchmarks on a range of system sizes.
 
 
 Contributing to DFT-FE

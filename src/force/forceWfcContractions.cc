@@ -27,7 +27,7 @@
 #if defined(DFTFE_WITH_DEVICE)
 #  include <DeviceDataTypeOverloads.h>
 #  include <DeviceAPICalls.h>
-#  include <DeviceKernelLauncherConstants.h>
+#  include <DeviceKernelLauncherHelpers.h>
 #  include <forceWfcContractionsDeviceKernels.h>
 #endif
 
