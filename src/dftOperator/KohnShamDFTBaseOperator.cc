@@ -980,8 +980,7 @@ namespace dftfe
             ->initialiseFlattenedDataStructure(
               numWaveFunctions,
               d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
-      }
-    /*
+
         if (d_dftParamsPtr->communPrecCheby == "FP32")
           d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
             .setCommunicationPrecision(
@@ -990,7 +989,8 @@ namespace dftfe
           d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
             .setCommunicationPrecision(
               dftfe::utils::mpi::communicationPrecision::half);
-    */
+      }
+
     d_basisOperationsPtr->reinit(numWaveFunctions,
                                  d_cellsBlockSizeHX,
                                  d_densityQuadratureID,

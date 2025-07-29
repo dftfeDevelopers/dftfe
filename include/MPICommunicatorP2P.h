@@ -53,9 +53,9 @@ namespace dftfe
 
       enum class communicationPrecision
       {
-        half,    //explicitly BFP16 
-        single,  //explicitly FP32
-        standard //same as valueType
+        half,    // explicitly BFP16
+        single,  // explicitly FP32
+        standard // same as valueType
       };
 
       template <typename ValueType, MemorySpace memorySpace>
