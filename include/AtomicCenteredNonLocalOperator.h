@@ -54,6 +54,7 @@ namespace dftfe
   enum class allReduceVectorType
   {
     CconjTransX,
+    CRconjTransX,
     DconjTransX,
     DDyadicRconjTransX
   };
@@ -343,6 +344,16 @@ namespace dftfe
                        const std::pair<dftfe::uInt, dftfe::uInt> cellRange);
 
     /**
+     * @brief computes the results of CRconjtransX on the cells of interst specied by cellRange
+     * @param[in] X input cell level vector
+     * @param[in] cellRange start and end element id in list of nonlocal
+     * elements
+     */
+    void
+    applyCRconjtransOnX(const ValueType                          *X,
+                        const std::pair<dftfe::uInt, dftfe::uInt> cellRange);
+
+    /**
      * @brief computes the results of CconjtransX on the cells of interst specied by cellRange
      * @param[in] X input cell level vector
      * @param[in] cellRange start and end element id in list of nonlocal
@@ -491,6 +502,29 @@ namespace dftfe
       std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
     getGlobalCMatrix() const;
 
+    /**
+     * @brief Computes the inner products summing over the sphericalFn and WaveFns for each atom
+     * @param[in] vectorDimension dimension of
+     * sphericalFunctionKetTimesVectorParFlattened vector type
+     * @param[in] VCconjTransXsphericalFunctionKetTimesVectorParFlattened
+     * VCconjTransX vector type.
+     * @param[in] sphericalFunctionKetTimesVectorParFlattened distributed vector
+     * of dimension vectorDimension.
+     * @param[in] reinitFlag flag to reinit the vector. @Nikhil make sure you
+     * set this correctly in the block loop
+     * @param[out] outputVector output vector  whose dimensions depend on
+     * vectorDimension
+     */
+    void
+    computeInnerProductOverSphericalFnsWaveFns(
+      const dftfe::Int vectorDimension,
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+        &VCconjTransXsphericalFunctionKetTimesVectorParFlattened,
+      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
+                             &sphericalFunctionKetTimesVectorParFlattened,
+      const bool              reinitFlag,
+      std::vector<ValueType> &outputVector);
+
 
   protected:
     /**
@@ -537,28 +571,6 @@ namespace dftfe
                 &sphericalFunctionKetTimesVectorParFlattened,
       const bool flagScaleInternalMatrix = false);
 
-    /**
-     * @brief Computes the inner products summing over the sphericalFn and WaveFns for each atom
-     * @param[in] vectorDimension dimension of
-     * sphericalFunctionKetTimesVectorParFlattened vector type
-     * @param[in] VCconjTransXsphericalFunctionKetTimesVectorParFlattened
-     * VCconjTransX vector type.
-     * @param[in] sphericalFunctionKetTimesVectorParFlattened distributed vector
-     * of dimension vectorDimension.
-     * @param[in] reinitFlag flag to reinit the vector. @Nikhil make sure you
-     * set this correctly in the block loop
-     * @param[out] outputVector output vector  whose dimensions depend on
-     * vectorDimension
-     */
-    void
-    computeInnerProductOverSphericalFnsWaveFns(
-      const dftfe::Int vectorDimension,
-      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-        &VCconjTransXsphericalFunctionKetTimesVectorParFlattened,
-      const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                             &sphericalFunctionKetTimesVectorParFlattened,
-      const bool              reinitFlag,
-      std::vector<ValueType> &outputVector);
 
     bool                d_AllReduceCompleted;
     std::vector<double> d_kPointWeights;
@@ -655,6 +667,7 @@ namespace dftfe
     // Host CMatrix Entries are stored here
     std::vector<std::vector<std::vector<ValueType>>> d_CMatrixEntriesConjugate,
       d_CMatrixEntriesTranspose;
+    std::vector<std::vector<std::vector<ValueType>>> d_CRMatrixEntriesConjugate;
     std::vector<std::vector<std::vector<ValueType>>> d_DMatrixEntriesConjugate;
     std::vector<std::vector<std::vector<ValueType>>>
       d_DDyadicRMatrixEntriesConjugate;
@@ -728,6 +741,12 @@ namespace dftfe
       dftfe::uInt,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
       d_sphericalFnTimesWavefunMatrix;
+
+    std::map<
+      dftfe::uInt,
+      dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
+      d_sphericalFnTimesXTimesWavefunMatrix;
+
     std::map<
       dftfe::uInt,
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::HOST>>
@@ -820,13 +839,15 @@ namespace dftfe
     std::vector<std::vector<ValueType **>> devicePointerDDaggerInCellRange,
       devicePointerDDaggerOutTempInCellRange,
       devicePointerDdyadicRDaggerInCellRange,
-      devicePointerDdyadicRDaggerOutTempInCellRange;
+      devicePointerDdyadicRDaggerOutTempInCellRange,
+      devicePointerCRDaggerInCellRange, devicePointerCRDaggerOutTempInCellRange;
     std::vector<ValueType **> hostWfcPointersInCellRange,
       hostPointerCDaggerInCellRange, hostPointerCDaggerOutTempInCellRange;
     std::vector<std::vector<ValueType **>> hostPointerDDaggerInCellRange,
       hostPointerDDaggerOutTempInCellRange,
       hostPointerDdyadicRDaggerInCellRange,
-      hostPointerDdyadicRDaggerOutTempInCellRange;
+      hostPointerDdyadicRDaggerOutTempInCellRange,
+      hostPointerCRDaggerInCellRange, hostPointerCRDaggerOutTempInCellRange;
     std::vector<ValueType *> d_wfcStartPointerInCellRange;
     dftfe::uInt              d_cellsBlockSize, d_numCellBatches;
     std::vector<dftfe::uInt> d_nonLocalElementsInCellRange;
@@ -841,6 +862,8 @@ namespace dftfe
       d_sphericalFnTimesVectorDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesWavefunctionMatrix;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnTimesXTimesWavefunctionMatrix;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesGradientWavefunctionMatrix;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
@@ -858,6 +881,12 @@ namespace dftfe
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionTransposeDevice;
 
+    // CRconjTranspose  entries flattened with iElem as outermost
+    // index
+    std::vector<ValueType>
+      d_IntegralFEMShapeFunctionValueTimesXTimesAtomicSphericalFunctionConjugate;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_IntegralFEMShapeFunctionValueTimesXTimesAtomicSphericalFunctionConjugateDevice;
     // DconjTranspose  entries flattened with iElem as outermost
     // index
     std::vector<ValueType>
@@ -876,6 +905,8 @@ namespace dftfe
       d_cellHamMatrixTimesWaveMatrixNonLocalDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesVectorAllCellsDevice;
+    dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
+      d_sphericalFnTimesXTimesVectorAllCellsDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
       d_sphericalFnTimesGradientVectorAllCellsDevice;
     dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>

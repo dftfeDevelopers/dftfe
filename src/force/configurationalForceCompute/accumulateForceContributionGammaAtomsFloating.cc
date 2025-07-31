@@ -53,7 +53,10 @@ namespace dftfe
                       MPI_DOUBLE,
                       MPI_SUM,
                       mpi_communicator);
-
+        pcout << "DEBUGC ";
+        for (dftfe::uInt idim = 0; idim < 3; idim++)
+          pcout << forceContributionLocalGammaiAtomGlobal[idim] << " ";
+        pcout << std::endl;
         for (dftfe::uInt idim = 0; idim < 3; idim++)
           accumForcesVector[iAtom * 3 + idim] +=
             forceContributionLocalGammaiAtomGlobal[idim];

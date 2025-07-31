@@ -57,10 +57,10 @@ namespace dftfe
      *  @param mpi_comm_parent parent mpi_communicator
      *  @param mpi_comm_domain domain decomposition mpi_communicator
      */
-    forceClass(dftClass<memorySpace> *_dftPtr,
-               const MPI_Comm        &mpi_comm_parent,
-               const MPI_Comm        &mpi_comm_domain,
-               const dftParameters   &dftParams);
+    forceClass(dftfe::dftClass<memorySpace> *_dftPtr,
+               const MPI_Comm               &mpi_comm_parent,
+               const MPI_Comm               &mpi_comm_domain,
+               const dftParameters          &dftParams);
 
     /** @brief initializes data structures inside forceClass assuming unmoved triangulation.
      *
@@ -325,17 +325,11 @@ namespace dftfe
       const vselfBinsManager &vselfBinsManagerElectro);
 
     void
-    computeConfigurationalForcePhiExtLinFE();
-
-    void
     computeConfigurationalForceEselfLinFE(
       const dealii::DoFHandler<3>         &dofHandlerElectro,
       const vselfBinsManager              &vselfBinsManagerElectro,
       const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
       const dftfe::uInt                    smearedChargeQuadratureId);
-
-    void
-    computeConfigurationalForceEselfNoSurfaceLinFE();
 
     void
     computeConfigurationalForceTotalLinFE(
@@ -753,7 +747,7 @@ namespace dftfe
     const bool d_allowGaussianOverlapOnAtoms = false;
 
     /// pointer to dft class
-    dftClass<memorySpace> *dftPtr;
+    dftfe::dftClass<memorySpace> *dftPtr;
 
     /// Finite element object for configurational force computation. Linear
     /// finite elements with three force field components are used.

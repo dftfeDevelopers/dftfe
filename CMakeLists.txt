@@ -210,6 +210,7 @@ SET(TARGET_SRC
   ./src/force/configurationalStressCompute/stress.cc
   ./src/force/createBinObjectsForce.cc
   ./src/force/locateAtomCoreNodesForce.cc
+  ./src/force/configurationalForce.cc
   ./utils/FEBasisOperationsKernelsInternalHost.cc
   ./utils/FEBasisOperations.cc
   ./utils/FEBasisOperationsKernels.cc
@@ -226,7 +227,7 @@ SET(TARGET_SRC
   ./src/atom/AtomCenteredSphericalFunctionCoreDensitySpline.cc
   ./src/atom/AtomCenteredSphericalFunctionLocalPotentialSpline.cc
   ./src/atom/AtomCenteredSphericalFunctionProjectorSpline.cc
-        ./src/atom/AtomCenteredPseudoWavefunctionSpline.cpp
+  ./src/atom/AtomCenteredPseudoWavefunctionSpline.cpp
   ./src/TransferBetweenMeshes/InterpolateFromCellToLocalPoints.cpp
   ./src/TransferBetweenMeshes/TransferBetweenMeshesIncompatiblePartitioning.cpp
   ./src/TransferBetweenMeshes/InterpolateCellWiseDataToPoints.cpp
@@ -255,6 +256,7 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/force/configurationalForceKernels.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 SET(DEVICE_SRC
@@ -275,6 +277,7 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/force/configurationalForceKernels.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "sycl")
 SET(DEVICE_SRC
@@ -295,6 +298,7 @@ SET(DEVICE_SRC
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
+  ./src/force/configurationalForceKernels.cc
   )
 
 ENDIF()

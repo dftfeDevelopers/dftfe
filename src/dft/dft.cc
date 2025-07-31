@@ -4005,7 +4005,7 @@ namespace dftfe
             << d_dftParamsPtr->selfConsistentSolverTolerance
             << ", recommended to use TOLERANCE below 1e-4." << std::endl;
 
-        if (computeForces)
+        if (computeForces && !d_dftParamsPtr->floatingNuclearCharges)
           {
             computing_timer.enter_subsection("Ion force computation");
             computingTimerStandard.enter_subsection("Ion force computation");
@@ -4038,7 +4038,7 @@ namespace dftfe
           }
       }
 
-    if (d_dftParamsPtr->isCellStress)
+    if (d_dftParamsPtr->isCellStress && !d_dftParamsPtr->floatingNuclearCharges)
       {
         if (d_dftParamsPtr->selfConsistentSolverTolerance > 1e-4 &&
             d_dftParamsPtr->verbosity >= 1)
@@ -4054,6 +4054,154 @@ namespace dftfe
             computeStress();
             computingTimerStandard.leave_subsection("Cell stress computation");
             computing_timer.leave_subsection("Cell stress computation");
+          }
+      }
+    if ((d_dftParamsPtr->isIonForce || d_dftParamsPtr->isCellStress) &&
+        d_dftParamsPtr->floatingNuclearCharges)
+      {
+        if (computeForces || computestress)
+          {
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+              d_configForcePtr = std::make_shared<
+                configurationalForceClass<dftfe::utils::MemorySpace::DEVICE>>(
+                d_BLASWrapperPtr,
+                d_BLASWrapperPtrHost,
+                d_basisOperationsPtrDevice,
+                d_basisOperationsPtrHost,
+                d_basisOperationsPtrElectroDevice,
+                d_basisOperationsPtrElectroHost,
+                d_oncvClassPtr,
+                d_excManagerPtr,
+                d_densityQuadratureId,
+                d_densityQuadratureIdElectro,
+                d_lpspQuadratureId,
+                d_lpspQuadratureIdElectro,
+                d_smearedChargeQuadratureIdElectro,
+                d_mpiCommParent,
+                mpi_communicator,
+                interpoolcomm,
+                interBandGroupComm,
+                *d_dftParamsPtr);
+            else
+#endif
+              d_configForcePtr = std::make_shared<
+                configurationalForceClass<dftfe::utils::MemorySpace::HOST>>(
+                d_BLASWrapperPtrHost,
+                d_BLASWrapperPtrHost,
+                d_basisOperationsPtrHost,
+                d_basisOperationsPtrHost,
+                d_basisOperationsPtrElectroHost,
+                d_basisOperationsPtrElectroHost,
+                d_oncvClassPtr,
+                d_excManagerPtr,
+                d_densityQuadratureId,
+                d_densityQuadratureIdElectro,
+                d_lpspQuadratureId,
+                d_lpspQuadratureIdElectro,
+                d_smearedChargeQuadratureIdElectro,
+                d_mpiCommParent,
+                mpi_communicator,
+                interpoolcomm,
+                interBandGroupComm,
+                *d_dftParamsPtr);
+            if (computestress && (d_dftParamsPtr->isPseudopotential ||
+                                  d_dftParamsPtr->smearedNuclearCharges))
+              {
+                computeVselfFieldGateauxDerFD();
+              }
+
+            computing_timer.enter_subsection("Ion force computation 2");
+            computingTimerStandard.enter_subsection("Ion force computation 2");
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+              d_configForcePtr->computeForceAndStress(
+                d_numEigenValues,
+                d_kPointCoordinates,
+                d_kPointWeights,
+                d_domainVolume,
+                groupSymmetryPtr,
+                d_dispersionCorr,
+                d_eigenVectorsFlattenedDevice,
+                eigenValues,
+                d_partialOccupancies,
+                atomLocations,
+                d_imageIdsTrunc,
+                d_imageChargesTrunc,
+                d_imagePositionsTrunc,
+                d_phiTotRhoOut,
+                d_rhoOutNodalValuesDistributed,
+                d_densityOutQuadValues,
+                d_gradDensityOutQuadValues,
+                d_tauOutQuadValues,
+                d_densityTotalOutValuesLpspQuad,
+                d_gradDensityTotalOutValuesLpspQuad,
+                d_auxDensityMatrixXCOutPtr,
+                d_rhoCore,
+                d_gradRhoCore,
+                d_hessianRhoCore,
+                d_gradRhoCoreAtoms,
+                d_hessianRhoCoreAtoms,
+                d_pseudoVLoc,
+                d_pseudoVLocAtoms,
+                d_dofHandlerRhoNodal,
+                d_vselfBinsManager,
+                d_vselfFieldGateauxDerStrainFDBins,
+                d_binsStartDofHandlerIndexElectro,
+                d_bQuadAtomIdsAllAtoms,
+                d_bQuadAtomIdsAllAtomsImages,
+
+                d_bQuadValuesAllAtoms,
+                d_dftParamsPtr->floatingNuclearCharges,
+                computeForces,
+                computestress);
+            else
+#endif
+              d_configForcePtr->computeForceAndStress(
+                d_numEigenValues,
+                d_kPointCoordinates,
+                d_kPointWeights,
+                d_domainVolume,
+                groupSymmetryPtr,
+                d_dispersionCorr,
+                d_eigenVectorsFlattenedHost,
+                eigenValues,
+                d_partialOccupancies,
+                atomLocations,
+                d_imageIdsTrunc,
+                d_imageChargesTrunc,
+                d_imagePositionsTrunc,
+                d_phiTotRhoOut,
+                d_rhoOutNodalValuesDistributed,
+                d_densityOutQuadValues,
+                d_gradDensityOutQuadValues,
+                d_tauOutQuadValues,
+                d_densityTotalOutValuesLpspQuad,
+                d_gradDensityTotalOutValuesLpspQuad,
+                d_auxDensityMatrixXCOutPtr,
+                d_rhoCore,
+                d_gradRhoCore,
+                d_hessianRhoCore,
+                d_gradRhoCoreAtoms,
+                d_hessianRhoCoreAtoms,
+                d_pseudoVLoc,
+                d_pseudoVLocAtoms,
+                d_dofHandlerRhoNodal,
+                d_vselfBinsManager,
+                d_vselfFieldGateauxDerStrainFDBins,
+                d_binsStartDofHandlerIndexElectro,
+                d_bQuadAtomIdsAllAtoms,
+                d_bQuadAtomIdsAllAtomsImages,
+                d_bQuadValuesAllAtoms,
+                d_dftParamsPtr->floatingNuclearCharges,
+                computeForces,
+                computestress);
+            if (computeForces && (d_dftParamsPtr->verbosity >= 0))
+              d_configForcePtr->printAtomsForces();
+            if (computestress && (d_dftParamsPtr->verbosity >= 0))
+              d_configForcePtr->printStress();
+            computingTimerStandard.leave_subsection("Ion force computation 2");
+            computing_timer.leave_subsection("Ion force computation 2");
           }
       }
     return std::make_tuple(scfConverged, norm);
@@ -4774,14 +4922,20 @@ namespace dftfe
   const std::vector<double> &
   dftClass<memorySpace>::getForceonAtoms() const
   {
-    return (forcePtr->getAtomsForces());
+    if (d_dftParamsPtr->floatingNuclearCharges)
+      return (d_configForcePtr->getAtomsForces());
+    else
+      return (forcePtr->getAtomsForces());
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
   const dealii::Tensor<2, 3, double> &
   dftClass<memorySpace>::getCellStress() const
   {
-    return (forcePtr->getStress());
+    if (d_dftParamsPtr->floatingNuclearCharges)
+      return (d_configForcePtr->getStress());
+    else
+      return (forcePtr->getStress());
   }
 
   template <dftfe::utils::MemorySpace memorySpace>

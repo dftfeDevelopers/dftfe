@@ -26,6 +26,7 @@
 #include <FEBasisOperations.h>
 #include <BLASWrapper.h>
 #include <AuxDensityMatrix.h>
+#include <configurationalForce.h>
 
 #include <complex>
 #include <deque>
@@ -1575,8 +1576,9 @@ namespace dftfe
       localProc_dof_indicesImag;
     std::vector<bool> selectedDofsHanging;
 
-    forceClass<memorySpace>                   *forcePtr;
-    std::shared_ptr<dftfe::groupSymmetryClass> groupSymmetryPtr;
+    forceClass<memorySpace>                                *forcePtr;
+    std::shared_ptr<dftfe::groupSymmetryClass>              groupSymmetryPtr;
+    std::shared_ptr<configurationalForceClass<memorySpace>> d_configForcePtr;
 
     elpaScalaManager *d_elpaScala;
 

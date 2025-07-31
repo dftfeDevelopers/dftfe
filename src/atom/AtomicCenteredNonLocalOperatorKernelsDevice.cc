@@ -110,8 +110,8 @@ namespace dftfe
 
             sphericalFnTimesWfcDealiiParallelVec[mappedIndex * numWfcs *
                                                    dimension +
-                                                 dim * numWfcs +
-                                                 intraBlockIndex] =
+                                                 intraBlockIndex * dimension +
+                                                 dim] =
               sphericalFnTimesWfcParallelVec[index];
           }
       },

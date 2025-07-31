@@ -403,10 +403,17 @@ namespace dftfe
 
             dftfe::basis::UpdateFlags updateFlagsDensity =
               dftfe::basis::update_values | dftfe::basis::update_jxw;
+            if (d_dftParamsPtr->isCellStress)
+              updateFlagsDensity =
+                updateFlagsDensity | dftfe::basis::update_quadpoints;
 
             dftfe::basis::UpdateFlags updateFlagsLPSP =
               dftfe::basis::update_values | dftfe::basis::update_jxw |
               dftfe::basis::update_quadpoints;
+
+            dftfe::basis::UpdateFlags updateFlagsSmearedCharge =
+              dftfe::basis::update_quadpoints | dftfe::basis::update_values |
+              dftfe::basis::update_jxw;
 
             dftfe::basis::UpdateFlags updateFlagsphiTotAX =
               d_dftParamsPtr->useDevice &&
@@ -423,7 +430,7 @@ namespace dftfe
             std::vector<dftfe::basis::UpdateFlags> updateFlags{
               updateFlagsDensity,
               updateFlagsLPSP,
-              dftfe::basis::update_quadpoints,
+              updateFlagsSmearedCharge,
               updateFlagsphiTotAX};
             d_basisOperationsPtrElectroHost->init(d_matrixFreeDataPRefined,
                                                   d_constraintsVectorElectro,

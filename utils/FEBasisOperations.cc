@@ -2426,11 +2426,11 @@ namespace dftfe
                 &scalarCoeffAlpha,
                 tempCellGradientData.data(),
                 nDofsPerCell * 3,
-                nDofsPerCell * 3,
+                nDofsPerCell * 3 * nQuadsPerCell,
                 scalarField.data() +
                   iKpt * nQuadsPerCell * numberOfElements * noOfVectors,
                 nQuadsPerCell,
-                noOfVectors,
+                noOfVectors * nQuadsPerCell,
                 &scalarCoeffBeta,
                 tempData.data(),
                 nDofsPerCell * 3,
@@ -2629,14 +2629,14 @@ namespace dftfe
                 &scalarCoeffAlpha,
                 tempCellGradientData.data(),
                 nDofsPerCell * 3,
-                nDofsPerCell * 3,
+                nDofsPerCell * 3 * nQuadsPerCell,
                 vectorField.data() +
                   iKpt * nQuadsPerCell * numberOfElements * noOfVectors * 3,
                 nQuadsPerCell,
-                noOfVectors * 3,
+                noOfVectors * 3 * nQuadsPerCell,
                 &scalarCoeffBeta,
                 tempData.data(),
-                nDofsPerCell * 3 * 3,
+                nDofsPerCell * 3,
                 nDofsPerCell * 3 * 3 * noOfVectors,
                 numberOfElements);
               // Reshape
@@ -3469,7 +3469,8 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                   &quadratureHessianValueData,
         const bool isEvaluateGradData,
-        const bool isEvaluateHessianData) const
+        const bool isEvaluateHessianData,
+        const bool isEvaluateData) const
     {
       auto itr = std::find(d_quadratureIDsVector.begin(),
                            d_quadratureIDsVector.end(),
@@ -3482,8 +3483,11 @@ namespace dftfe
         std::distance(d_quadratureIDsVector.begin(), itr);
       const dftfe::uInt nQuadsPerCell = d_nQuadsPerCell[quadratureIndex];
       const dftfe::uInt nCells        = this->nCells();
-      quadratureValueData.clear();
-      quadratureValueData.resize(nQuadsPerCell * nCells);
+      if (isEvaluateData)
+        {
+          quadratureValueData.clear();
+          quadratureValueData.resize(nQuadsPerCell * nCells);
+        }
       if (isEvaluateGradData)
         {
           quadratureGradValueData.clear();
@@ -3509,7 +3513,9 @@ namespace dftfe
           "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
 
       dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
-      auto evalFlags = dealii::EvaluationFlags::values;
+      auto evalFlags = dealii::EvaluationFlags::nothing;
+      if (isEvaluateData)
+        evalFlags = evalFlags | dealii::EvaluationFlags::values;
       if (isEvaluateGradData)
         evalFlags = evalFlags | dealii::EvaluationFlags::gradients;
       if (isEvaluateHessianData)
@@ -3534,14 +3540,153 @@ namespace dftfe
               dealii::CellId subCellId = subCellPtr->id();
               dftfe::uInt    cellIndex = this->cellIndex(subCellId);
 
-              double *tempVec =
-                quadratureValueData.data() + cellIndex * nQuadsPerCell;
-
-              for (dftfe::uInt q_point = 0; q_point < nQuadsPerCell; ++q_point)
+              if (isEvaluateData)
                 {
-                  tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
+                  double *tempVec =
+                    quadratureValueData.data() + cellIndex * nQuadsPerCell;
+
+                  for (dftfe::uInt q_point = 0; q_point < nQuadsPerCell;
+                       ++q_point)
+                    {
+                      tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
+                    }
                 }
 
+              if (isEvaluateGradData)
+                {
+                  double *tempVec2 = quadratureGradValueData.data() +
+                                     3 * cellIndex * nQuadsPerCell;
+
+                  for (dftfe::uInt q_point = 0; q_point < nQuadsPerCell;
+                       ++q_point)
+                    {
+                      const dealii::
+                        Tensor<1, 3, dealii::VectorizedArray<double>>
+                          &gradVals = feEvalObj.get_gradient(q_point);
+                      tempVec2[3 * q_point + 0] = gradVals[0][iSubCell];
+                      tempVec2[3 * q_point + 1] = gradVals[1][iSubCell];
+                      tempVec2[3 * q_point + 2] = gradVals[2][iSubCell];
+                    }
+                }
+
+              if (isEvaluateHessianData)
+                {
+                  double *tempVec3 = quadratureHessianValueData.data() +
+                                     9 * cellIndex * nQuadsPerCell;
+
+                  for (dftfe::uInt q_point = 0; q_point < nQuadsPerCell;
+                       ++q_point)
+                    {
+                      const dealii::
+                        Tensor<2, 3, dealii::VectorizedArray<double>>
+                          &hessianVals = feEvalObj.get_hessian(q_point);
+                      for (dftfe::uInt i = 0; i < 3; i++)
+                        for (dftfe::uInt j = 0; j < 3; j++)
+                          tempVec3[9 * q_point + 3 * i + j] =
+                            hessianVals[i][j][iSubCell];
+                    }
+                }
+            }
+        }
+    }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      interpolateNoConstraints(
+        const distributedCPUVec<double> &nodalField,
+        const dftfe::uInt                dofHandlerId,
+        const dftfe::uInt                quadratureId,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &quadratureValueData,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &quadratureGradValueData,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                  &quadratureHessianValueData,
+        const bool isEvaluateGradData,
+        const bool isEvaluateHessianData,
+        const bool isEvaluateData) const
+    {
+      auto itr = std::find(d_quadratureIDsVector.begin(),
+                           d_quadratureIDsVector.end(),
+                           quadratureId);
+      AssertThrow(
+        itr != d_quadratureIDsVector.end(),
+        dealii::ExcMessage(
+          "DFT-FE Error: FEBasisOperations Class not initialized with this quadrature Index."));
+      dftfe::uInt quadratureIndex =
+        std::distance(d_quadratureIDsVector.begin(), itr);
+      const dftfe::uInt nQuadsPerCell = d_nQuadsPerCell[quadratureIndex];
+      const dftfe::uInt nCells        = this->nCells();
+      if (isEvaluateData)
+        {
+          quadratureValueData.clear();
+          quadratureValueData.resize(nQuadsPerCell * nCells);
+        }
+      if (isEvaluateGradData)
+        {
+          quadratureGradValueData.clear();
+          quadratureGradValueData.resize(3 * nQuadsPerCell * nCells);
+        }
+      if (isEvaluateHessianData)
+        {
+          quadratureHessianValueData.clear();
+          quadratureHessianValueData.resize(9 * nQuadsPerCell * nCells);
+        }
+
+      FEEvaluationWrapperClass<1> feEvalObj(
+        this->matrixFreeData().get_dof_handler(dofHandlerId).get_fe().degree,
+        std::round(std::cbrt(nQuadsPerCell)),
+        this->matrixFreeData(),
+        dofHandlerId,
+        quadratureId);
+
+      AssertThrow(
+        this->matrixFreeData().get_quadrature(quadratureId).size() ==
+          nQuadsPerCell,
+        dealii::ExcMessage(
+          "DFT-FE Error: mismatch in quadrature rule usage in interpolateNodalDataToQuadratureData."));
+
+      dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
+      auto evalFlags = dealii::EvaluationFlags::nothing;
+      if (isEvaluateData)
+        evalFlags = evalFlags | dealii::EvaluationFlags::values;
+      if (isEvaluateGradData)
+        evalFlags = evalFlags | dealii::EvaluationFlags::gradients;
+      if (isEvaluateHessianData)
+        evalFlags = evalFlags | dealii::EvaluationFlags::hessians;
+      for (dftfe::uInt cell = 0; cell < this->matrixFreeData().n_cell_batches();
+           ++cell)
+        {
+          feEvalObj.reinit(cell);
+          feEvalObj.read_dof_values_plain(nodalField);
+          feEvalObj.evaluate(evalFlags);
+
+          for (dftfe::uInt iSubCell = 0;
+               iSubCell <
+               this->matrixFreeData().n_active_entries_per_cell_batch(cell);
+               ++iSubCell)
+            {
+              subCellPtr =
+                this->matrixFreeData().get_cell_iterator(cell,
+                                                         iSubCell,
+                                                         dofHandlerId);
+              dealii::CellId subCellId = subCellPtr->id();
+              dftfe::uInt    cellIndex = this->cellIndex(subCellId);
+
+              if (isEvaluateData)
+                {
+                  double *tempVec =
+                    quadratureValueData.data() + cellIndex * nQuadsPerCell;
+
+                  for (dftfe::uInt q_point = 0; q_point < nQuadsPerCell;
+                       ++q_point)
+                    {
+                      tempVec[q_point] = feEvalObj.get_value(q_point)[iSubCell];
+                    }
+                }
               if (isEvaluateGradData)
                 {
                   double *tempVec2 = quadratureGradValueData.data() +
