@@ -75,10 +75,10 @@ namespace dftfe
                       atomCenteredSphericalFunctionContainer,
       const MPI_Comm &mpi_comm_parent,
       const bool      memOptMode             = false,
-      const bool computeConfigurationalForce = true, //@Kartick to be removed
-      const bool useGlobalCMatrix            = false,
-      const bool computeIonForces            = false,
-      const bool computeCellStress           = false);
+      const bool      floatingNuclearCharges = true, //@Kartick to be removed
+      const bool      useGlobalCMatrix       = false,
+      const bool      computeIonForces       = false,
+      const bool      computeCellStress      = false);
 
     /**
      * @brief Resizes various internal data members and selects the kpoint of interest.
@@ -762,7 +762,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
       d_flattenedNonLocalCellDofIndexToProcessDofIndexMap;
     std::vector<dftfe::uInt> d_nonlocalElemIdToCellIdVector;
-    bool                     d_computeConfigurationalForce;
+    bool                     d_floatingNuclearCharges;
     bool                     d_computeIonForces;
     bool                     d_computeCellStress;
     bool                     d_useGlobalCMatrix;
