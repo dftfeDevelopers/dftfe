@@ -50,15 +50,16 @@ namespace dftfe
     distributedCPUVec<double>         &x,
     double                             kerkerMixingParameter,
     const dftfe::uInt                  matrixFreeVectorComponent,
-    const dftfe::uInt                  matrixFreeQuadratureComponent)
+    const dftfe::uInt                  matrixFreeQuadratureComponent,
+    const dftfe::uInt                  matrixFreeAxQuadratureComponent)
   {
-    d_basisOperationsPtr            = basisOperationsPtr;
-    d_matrixFreeDataPRefinedPtr     = &(basisOperationsPtr->matrixFreeData());
-    d_constraintMatrixPRefinedPtr   = &constraintMatrixPRefined;
-    d_gamma                         = kerkerMixingParameter;
-    d_matrixFreeVectorComponent     = matrixFreeVectorComponent;
-    d_matrixFreeQuadratureComponent = matrixFreeQuadratureComponent;
-
+    d_basisOperationsPtr              = basisOperationsPtr;
+    d_matrixFreeDataPRefinedPtr       = &(basisOperationsPtr->matrixFreeData());
+    d_constraintMatrixPRefinedPtr     = &constraintMatrixPRefined;
+    d_gamma                           = kerkerMixingParameter;
+    d_matrixFreeVectorComponent       = matrixFreeVectorComponent;
+    d_matrixFreeQuadratureComponent   = matrixFreeQuadratureComponent;
+    d_matrixFreeAxQuadratureComponent = matrixFreeAxQuadratureComponent;
     d_matrixFreeDataPRefinedPtr->initialize_dof_vector(
       x, d_matrixFreeVectorComponent);
     computeDiagonalA();
@@ -99,9 +100,7 @@ namespace dftfe
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    FEEvaluationWrapperClass<1> fe_eval(FEOrderElectro,
-                                        C_num1DQuad(FEOrderElectro),
-                                        *d_matrixFreeDataPRefinedPtr,
+    FEEvaluationWrapperClass<1> fe_eval(*d_matrixFreeDataPRefinedPtr,
                                         d_matrixFreeVectorComponent,
                                         d_matrixFreeQuadratureComponent);
 
@@ -228,11 +227,9 @@ namespace dftfe
     const distributedCPUVec<double>           &src,
     const std::pair<dftfe::uInt, dftfe::uInt> &cell_range) const
   {
-    FEEvaluationWrapperClass<1> fe_eval(FEOrderElectro,
-                                        C_num1DQuad(FEOrderElectro),
-                                        matrixFreeData,
+    FEEvaluationWrapperClass<1> fe_eval(matrixFreeData,
                                         d_matrixFreeVectorComponent,
-                                        d_matrixFreeQuadratureComponent);
+                                        d_matrixFreeAxQuadratureComponent);
 
     dealii::VectorizedArray<double> kerkerConst =
       dealii::make_vectorized_array(4 * M_PI * d_gamma);

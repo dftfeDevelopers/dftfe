@@ -3032,12 +3032,9 @@ namespace dftfe
           quadratureHessianValueData.resize(9 * nQuadsPerCell * nCells);
         }
 
-      FEEvaluationWrapperClass<1> feEvalObj(
-        this->matrixFreeData().get_dof_handler(dofHandlerId).get_fe().degree,
-        std::round(std::cbrt(nQuadsPerCell)),
-        this->matrixFreeData(),
-        dofHandlerId,
-        quadratureId);
+      FEEvaluationWrapperClass<1> feEvalObj(this->matrixFreeData(),
+                                            dofHandlerId,
+                                            quadratureId);
 
       AssertThrow(
         this->matrixFreeData().get_quadrature(quadratureId).size() ==

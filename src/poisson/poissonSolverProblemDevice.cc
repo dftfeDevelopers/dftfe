@@ -265,8 +265,6 @@ namespace dftfe
     if (d_rhoValuesPtr)
       {
         FEEvaluationWrapperClass<1> fe_eval_density(
-          FEOrderElectro,
-          -1,
           *d_matrixFreeDataPtr,
           d_matrixFreeVectorComponent,
           d_matrixFreeQuadratureComponentRhsDensity);

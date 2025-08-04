@@ -1501,6 +1501,7 @@ namespace dftfe
     dftfe::uInt                   d_phiTotDofHandlerIndexElectro;
     dftfe::uInt                   d_phiPrimeDofHandlerIndexElectro;
     dftfe::uInt                   d_phiTotAXQuadratureIdElectro;
+    dftfe::uInt                   d_kerkerAXQuadratureIdElectro;
     dftfe::uInt                   d_helmholtzDofHandlerIndexElectro;
     dftfe::uInt                   d_binsStartDofHandlerIndexElectro;
     dftfe::uInt                   d_densityQuadratureId;

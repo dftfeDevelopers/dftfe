@@ -57,7 +57,8 @@ namespace dftfe
          distributedCPUVec<double>         &x,
          double                             kerkerMixingParameter,
          const dftfe::uInt                  matrixFreeVectorComponent,
-         const dftfe::uInt                  matrixFreeQuadratureComponent);
+         const dftfe::uInt                  matrixFreeQuadratureComponent,
+         const dftfe::uInt                  matrixFreeAxQuadratureComponent);
 
 
 
@@ -171,7 +172,7 @@ namespace dftfe
 
     /// matrix free quadrature index
     dftfe::uInt d_matrixFreeQuadratureComponent;
-
+    dftfe::uInt d_matrixFreeAxQuadratureComponent;
 
     /// pointer to electron density cell and grad residual data
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
