@@ -432,11 +432,12 @@ namespace dftfe
               updateFlagsLPSP,
               updateFlagsSmearedCharge,
               updateFlagsphiTotAX};
-            d_basisOperationsPtrElectroHost->init(d_matrixFreeDataPRefined,
-                                                  d_constraintsVectorElectro,
-                                                  d_baseDofHandlerIndexElectro,
-                                                  quadratureIndices,
-                                                  updateFlags);
+            d_basisOperationsPtrElectroHost->init(
+              d_matrixFreeDataPRefined,
+              d_constraintsVectorElectro,
+              d_phiTotDofHandlerIndexElectro,
+              quadratureIndices,
+              updateFlags);
           }
       }
     else
@@ -469,7 +470,7 @@ namespace dftfe
             d_basisOperationsPtrElectroDevice->init(
               d_matrixFreeDataPRefined,
               d_constraintsVectorElectro,
-              d_baseDofHandlerIndexElectro,
+              d_phiTotDofHandlerIndexElectro,
               quadratureIndices,
               updateFlags);
             if (d_dftParamsPtr->finiteElementPolynomialOrder !=

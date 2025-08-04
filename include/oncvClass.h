@@ -83,7 +83,9 @@ namespace dftfe
       const std::vector<std::vector<double>>  &atomLocations,
       dftfe::uInt                              numEigenValues,
       const bool                               singlePrecNonLocalOperator,
-      const bool computeSphericalFnTimesXNonLocalOperator = true);
+      const bool                               floatingNuclearCharges,
+      const bool                               computeForce,
+      const bool                               computeStress);
 
     /**
      * @brief Initialises all the data members with addresses/values to/of dftClass.
@@ -103,7 +105,6 @@ namespace dftfe
      */
     void
     initialiseNonLocalContribution(
-      const std::vector<std::vector<double>> &atomLocations,
       const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &periodicCoords,
       const std::vector<double>              &kPointWeights,
@@ -113,7 +114,6 @@ namespace dftfe
 
     void
     initialiseNonLocalContribution(
-      const std::vector<std::vector<double>> &atomLocations,
       const std::vector<dftfe::Int>          &imageIds,
       const std::vector<std::vector<double>> &periodicCoords,
       const std::vector<double>              &kPointWeights,
@@ -195,6 +195,14 @@ namespace dftfe
       typename dftfe::dataTypes::singlePrecType<ValueType>::type,
       memorySpace>>
     getNonLocalOperatorSinglePrec();
+
+    void
+    determineAtomsOfInterstPseudopotential(
+      const std::vector<std::vector<double>> &atomCoordinates);
+
+    const std::map<dftfe::uInt, dftfe::uInt> &
+    getPSPAtomIdToGloablIdMap();
+
 
   private:
     /**
@@ -315,6 +323,9 @@ namespace dftfe
     /// FIXME: eventually it should be a map of atomic number to struct-
     /// {valence number, mesh input etc}
     std::map<dftfe::uInt, dftfe::uInt> d_atomTypeAtributes;
+    std::vector<std::vector<double>>   d_atomLocationsInterestPseudopotential;
+    std::map<dftfe::uInt, dftfe::uInt>
+      d_atomIdPseudopotentialInterestToGlobalId;
 
 
 

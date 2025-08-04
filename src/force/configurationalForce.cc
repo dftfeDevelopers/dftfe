@@ -18,6 +18,8 @@
 #include <configurationalForce.h>
 #include <configurationalForceKernels.h>
 #include <constants.h>
+#include <ExcDFTPlusU.h>
+#include <feevaluationWrapper.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -80,11 +82,13 @@ namespace dftfe
     , d_lpspQuadratureIdElectro(lpspQuadratureIdElectro)
     , d_smearedChargeQuadratureIdElectro(smearedChargeQuadratureIdElectro)
     , FEForce(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2)), 3)
-  {
-    if (d_dftParams.isPseudopotential)
-      d_pseudopotentialNonLocalOperator =
-        d_pseudopotentialClassPtr->getNonLocalOperator();
-  }
+    , computing_timer(mpi_comm_domain,
+                      pcout,
+                      dftParams.reproducible_output || dftParams.verbosity < 4 ?
+                        dealii::TimerOutput::never :
+                        dealii::TimerOutput::every_call_and_summary,
+                      dealii::TimerOutput::wall_times)
+  {}
   template <dftfe::utils::MemorySpace memorySpace>
   void
   configurationalForceClass<memorySpace>::computeForceAndStress(
@@ -143,6 +147,8 @@ namespace dftfe
     const bool                                           computeForce,
     const bool                                           computeStress)
   {
+    d_forceTotal.clear();
+    d_stressTotal.clear();
     if (computeForce)
       d_forceTotal.resize(d_dftParams.natoms * 3, 0.0);
     if (computeStress)
@@ -192,16 +198,63 @@ namespace dftfe
           }
       }
 
-
-    computeWfcContribAll(numEigenValues,
-                         kPointCoords,
-                         kPointWeights,
-                         eigenVectors,
-                         eigenValues,
-                         partialOccupancies,
-                         floatingNuclearCharges,
-                         computeForce,
-                         computeStress);
+    if (d_dftParams.isPseudopotential)
+      {
+        const dftfe::uInt numSpinComponents =
+          (d_dftParams.spinPolarized == 1) ? 2 : 1;
+        std::vector<
+          const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> *>
+          couplingMatrixPtrs;
+        for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents;
+             ++spinIndex)
+          couplingMatrixPtrs.push_back(
+            &(d_pseudopotentialClassPtr->getCouplingMatrix()));
+        computeWfcContribNloc(
+          d_pseudopotentialClassPtr->getNonLocalOperator(),
+          CouplingStructure::diagonal,
+          couplingMatrixPtrs,
+          d_pseudopotentialClassPtr->getPSPAtomIdToGloablIdMap(),
+          numEigenValues,
+          kPointCoords,
+          kPointWeights,
+          eigenVectors,
+          eigenValues,
+          partialOccupancies,
+          floatingNuclearCharges,
+          computeForce,
+          computeStress);
+      }
+    if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+        ExcFamilyType::DFTPlusU)
+      {
+        std::shared_ptr<ExcDFTPlusU<dataTypes::number, memorySpace>>
+          excHubbPtr = std::dynamic_pointer_cast<
+            ExcDFTPlusU<dataTypes::number, memorySpace>>(
+            d_excManagerPtr->getSSDSharedObj());
+        const dftfe::uInt numSpinComponents =
+          (d_dftParams.spinPolarized == 1) ? 2 : 1;
+        std::vector<
+          const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> *>
+          couplingMatrixPtrs;
+        for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents;
+             ++spinIndex)
+          couplingMatrixPtrs.push_back(
+            &(excHubbPtr->getHubbardClass()->getCouplingMatrix(spinIndex)));
+        computeWfcContribNloc(
+          excHubbPtr->getHubbardClass()->getNonLocalOperator(),
+          CouplingStructure::dense,
+          couplingMatrixPtrs,
+          excHubbPtr->getHubbardClass()->getHubbardAtomIdToGloablIdMap(),
+          numEigenValues,
+          kPointCoords,
+          kPointWeights,
+          eigenVectors,
+          eigenValues,
+          partialOccupancies,
+          floatingNuclearCharges,
+          computeForce,
+          computeStress);
+      }
     computeWfcContribLocal(numEigenValues,
                            kPointCoords,
                            kPointWeights,
@@ -668,8 +721,8 @@ namespace dftfe
                       MPI_DOUBLE,
                       MPI_SUM,
                       d_mpiCommParent);
-        // pcout << "Stress Tensor Loc: " << StressLocContrib.size() << std::endl;
-        // for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+        // pcout << "Stress Tensor Loc: " << StressLocContrib.size() <<
+        // std::endl; for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
         //   {
         //     for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
         //       pcout << StressLocContrib[3 * iDim + jDim] << " ";
@@ -969,39 +1022,85 @@ namespace dftfe
     const dftfe::uInt nQuadsPerCell =
       d_basisOperationsPtrElectroHost->nQuadsPerCell();
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      gradPhiTotRhoOutQuadValues;
-    d_basisOperationsPtrElectroHost->interpolateNoConstraints(
-      phiTotRhoOutValues,
+                                gradPhiTotRhoOutQuadValues;
+    FEEvaluationWrapperClass<1> feEvalObjPhiSmeared(
+      d_basisOperationsPtrElectroHost->matrixFreeData()
+        .get_dof_handler(d_basisOperationsPtrElectroHost->d_dofHandlerID)
+        .get_fe()
+        .degree,
+      std::round(std::cbrt(nQuadsPerCell)),
+      d_basisOperationsPtrElectroHost->matrixFreeData(),
       d_basisOperationsPtrElectroHost->d_dofHandlerID,
-      d_smearedChargeQuadratureIdElectro,
-      gradPhiTotRhoOutQuadValues,
-      gradPhiTotRhoOutQuadValues,
-      gradPhiTotRhoOutQuadValues,
-      true,
-      false,
-      false);
-    for (dftfe::uInt iAtom = 0; iAtom < totalNumAtomsInclImages; iAtom++)
+      d_smearedChargeQuadratureIdElectro);
+
+    std::vector<std::array<double, 3>> atomLocation(
+      computeStress ? totalNumAtomsInclImages : 0);
+    if (computeStress)
+      for (dftfe::uInt iAtom = 0; iAtom < totalNumAtomsInclImages; iAtom++)
+        {
+          if (iAtom < d_dftParams.natoms)
+            {
+              atomLocation[iAtom][0] = atomLocations[iAtom][2];
+              atomLocation[iAtom][1] = atomLocations[iAtom][3];
+              atomLocation[iAtom][2] = atomLocations[iAtom][4];
+            }
+          else
+            {
+              const dftfe::Int imageId = iAtom - d_dftParams.natoms;
+              atomLocation[iAtom][0]   = imagePositions[imageId][0];
+              atomLocation[iAtom][1]   = imagePositions[imageId][1];
+              atomLocation[iAtom][2]   = imagePositions[imageId][2];
+            }
+        }
+    for (dftfe::uInt iMacroCell = 0;
+         iMacroCell <
+         d_basisOperationsPtrElectroHost->matrixFreeData().n_cell_batches();
+         ++iMacroCell)
       {
-        std::array<double, 3> atomLocation;
-        if (iAtom < d_dftParams.natoms)
-          {
-            atomLocation[0] = atomLocations[iAtom][2];
-            atomLocation[1] = atomLocations[iAtom][3];
-            atomLocation[2] = atomLocations[iAtom][4];
-          }
-        else
-          {
-            const dftfe::Int imageId = iAtom - d_dftParams.natoms;
-            atomLocation[0]          = imagePositions[imageId][0];
-            atomLocation[1]          = imagePositions[imageId][1];
-            atomLocation[2]          = imagePositions[imageId][2];
-          }
-        for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+        bool isCellNonTrivial = false;
+        for (dftfe::uInt iSubCell = 0;
+             iSubCell < d_basisOperationsPtrElectroHost->matrixFreeData()
+                          .n_active_entries_per_cell_batch(iMacroCell);
+             ++iSubCell)
           {
             dealii::CellId currentCellId =
-              d_basisOperationsPtrElectroHost->cellID(iCell);
-            dealii::DoFHandler<3>::active_cell_iterator currentCellPtr =
-              d_basisOperationsPtrElectroHost->getCellIterator(iCell);
+              d_basisOperationsPtrElectroHost->matrixFreeData()
+                .get_cell_iterator(
+                  iMacroCell,
+                  iSubCell,
+                  d_basisOperationsPtrElectroHost->d_dofHandlerID)
+                ->id();
+
+            const std::vector<dftfe::Int> &bQuadAtomIdsImagesCell =
+              bQuadAtomIdsAllAtomsImages.find(currentCellId)->second;
+
+            for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+              if ((bQuadAtomIdsImagesCell[iQuad] >= 0) &&
+                  (bQuadAtomIdsImagesCell[iQuad] < totalNumAtomsInclImages))
+                isCellNonTrivial = true;
+          }
+        if (!isCellNonTrivial)
+          continue;
+
+        feEvalObjPhiSmeared.reinit(iMacroCell);
+        feEvalObjPhiSmeared.read_dof_values_plain(phiTotRhoOutValues);
+        feEvalObjPhiSmeared.evaluate(dealii::EvaluationFlags::gradients);
+
+        for (dftfe::uInt iSubCell = 0;
+             iSubCell < d_basisOperationsPtrElectroHost->matrixFreeData()
+                          .n_active_entries_per_cell_batch(iMacroCell);
+             ++iSubCell)
+          {
+            dealii::CellId currentCellId =
+              d_basisOperationsPtrElectroHost->matrixFreeData()
+                .get_cell_iterator(
+                  iMacroCell,
+                  iSubCell,
+                  d_basisOperationsPtrElectroHost->d_dofHandlerID)
+                ->id();
+            dftfe::uInt iCell =
+              d_basisOperationsPtrElectroHost->cellIndex(currentCellId);
+
             const std::vector<dftfe::Int> &bQuadAtomIdsCell =
               bQuadAtomIdsAllAtoms.find(currentCellId)->second;
             const std::vector<dftfe::Int> &bQuadAtomIdsImagesCell =
@@ -1016,27 +1115,33 @@ namespace dftfe
             const double *quadPointsCurrentCell =
               d_basisOperationsPtrElectroHost->quadPoints().data() +
               iCell * nQuadsPerCell * 3;
+
             for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
               {
+                const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+                  &gradVals = feEvalObjPhiSmeared.get_gradient(iQuad);
                 if (computeForce)
-                  if (bQuadAtomIdsCell[iQuad] == iAtom)
+                  if ((bQuadAtomIdsCell[iQuad]) >= 0 &&
+                      (bQuadAtomIdsCell[iQuad]) < d_dftParams.natoms)
                     {
                       for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                        forceContribSmeared[3 * iAtom + iDim] +=
+                        forceContribSmeared[3 * bQuadAtomIdsCell[iQuad] +
+                                            iDim] +=
                           bQuadAtomValuesCell[iQuad] *
-                          gradPhiTotRhoOutQuadValuesCell[iQuad * 3 + iDim] *
-                          JxWValues[iQuad];
+                          gradVals[iDim][iSubCell] * JxWValues[iQuad];
                     }
                 if (computeStress)
-                  if (bQuadAtomIdsImagesCell[iQuad] == iAtom)
+                  if ((bQuadAtomIdsImagesCell[iQuad] >= 0) &&
+                      (bQuadAtomIdsImagesCell[iQuad] < totalNumAtomsInclImages))
                     {
                       for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                         for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                           stressContribSmeared[3 * iDim + jDim] -=
                             bQuadAtomValuesCell[iQuad] *
-                            gradPhiTotRhoOutQuadValuesCell[iQuad * 3 + iDim] *
+                            gradVals[iDim][iSubCell] *
                             (quadPointsCurrentCell[iQuad * 3 + jDim] -
-                             atomLocation[jDim]) *
+                             atomLocation[bQuadAtomIdsImagesCell[iQuad]]
+                                         [jDim]) *
                             JxWValues[iQuad];
                     }
               }
@@ -1049,40 +1154,67 @@ namespace dftfe
       {
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           gradVSelfQuadValuesCurrentBin(3 * nQuadsPerCell * nCells, 0.0);
-        d_basisOperationsPtrElectroHost->interpolateNoConstraints(
-          vselfBinsManager.getVselfFieldBins()[iBin],
-          binsStartDofHandlerIndexElectro + 4 * iBin,
-          d_smearedChargeQuadratureIdElectro,
-          gradVSelfQuadValuesCurrentBin,
-          gradVSelfQuadValuesCurrentBin,
-          gradVSelfQuadValuesCurrentBin,
-          true,
-          false,
-          false);
+        const dftfe::uInt currentBinDofHandlerId =
+          binsStartDofHandlerIndexElectro + 4 * iBin;
+        FEEvaluationWrapperClass<1> feEvalObjVselfSmeared(
+          d_basisOperationsPtrElectroHost->matrixFreeData()
+            .get_dof_handler(currentBinDofHandlerId)
+            .get_fe()
+            .degree,
+          std::round(std::cbrt(nQuadsPerCell)),
+          d_basisOperationsPtrElectroHost->matrixFreeData(),
+          currentBinDofHandlerId,
+          d_smearedChargeQuadratureIdElectro);
         const std::set<dftfe::Int> &atomIdsInBin =
           imageIdsBins.find(iBin)->second;
-        for (const dftfe::Int &iAtom : atomIdsInBin)
+        for (dftfe::uInt iMacroCell = 0;
+             iMacroCell <
+             d_basisOperationsPtrElectroHost->matrixFreeData().n_cell_batches();
+             ++iMacroCell)
           {
-            std::array<double, 3> atomLocation;
-            if (iAtom < d_dftParams.natoms)
-              {
-                atomLocation[0] = atomLocations[iAtom][2];
-                atomLocation[1] = atomLocations[iAtom][3];
-                atomLocation[2] = atomLocations[iAtom][4];
-              }
-            else
-              {
-                const dftfe::Int imageId = iAtom - d_dftParams.natoms;
-                atomLocation[0]          = imagePositions[imageId][0];
-                atomLocation[1]          = imagePositions[imageId][1];
-                atomLocation[2]          = imagePositions[imageId][2];
-              }
-            for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+            bool isCellNonTrivial = false;
+            for (dftfe::uInt iSubCell = 0;
+                 iSubCell < d_basisOperationsPtrElectroHost->matrixFreeData()
+                              .n_active_entries_per_cell_batch(iMacroCell);
+                 ++iSubCell)
               {
                 dealii::CellId currentCellId =
-                  d_basisOperationsPtrElectroHost->cellID(iCell);
-                dealii::DoFHandler<3>::active_cell_iterator currentCellPtr =
-                  d_basisOperationsPtrElectroHost->getCellIterator(iCell);
+                  d_basisOperationsPtrElectroHost->matrixFreeData()
+                    .get_cell_iterator(iMacroCell,
+                                       iSubCell,
+                                       currentBinDofHandlerId)
+                    ->id();
+
+                const std::vector<dftfe::Int> &bQuadAtomIdsImagesCell =
+                  bQuadAtomIdsAllAtomsImages.find(currentCellId)->second;
+
+                for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                  if (atomIdsInBin.find(bQuadAtomIdsImagesCell[iQuad]) !=
+                      atomIdsInBin.end())
+                    isCellNonTrivial = true;
+              }
+
+            if (!isCellNonTrivial)
+              continue;
+            feEvalObjVselfSmeared.reinit(iMacroCell);
+            feEvalObjVselfSmeared.read_dof_values_plain(
+              vselfBinsManager.getVselfFieldBins()[iBin]);
+            feEvalObjVselfSmeared.evaluate(dealii::EvaluationFlags::gradients);
+
+            for (dftfe::uInt iSubCell = 0;
+                 iSubCell < d_basisOperationsPtrElectroHost->matrixFreeData()
+                              .n_active_entries_per_cell_batch(iMacroCell);
+                 ++iSubCell)
+              {
+                dealii::CellId currentCellId =
+                  d_basisOperationsPtrElectroHost->matrixFreeData()
+                    .get_cell_iterator(iMacroCell,
+                                       iSubCell,
+                                       currentBinDofHandlerId)
+                    ->id();
+                dftfe::uInt iCell =
+                  d_basisOperationsPtrElectroHost->cellIndex(currentCellId);
+
                 const std::vector<dftfe::Int> &bQuadAtomIdsCell =
                   bQuadAtomIdsAllAtoms.find(currentCellId)->second;
                 const std::vector<dftfe::Int> &bQuadAtomIdsImagesCell =
@@ -1092,35 +1224,38 @@ namespace dftfe
                 const double *JxWValues =
                   d_basisOperationsPtrElectroHost->JxWBasisData().data() +
                   nQuadsPerCell * iCell;
-                const double *gradVSelfQuadValuesCurrentBinCell =
-                  gradVSelfQuadValuesCurrentBin.data() +
-                  iCell * nQuadsPerCell * 3;
+                const double *gradPhiTotRhoOutQuadValuesCell =
+                  gradPhiTotRhoOutQuadValues.data() + iCell * nQuadsPerCell * 3;
                 const double *quadPointsCurrentCell =
                   d_basisOperationsPtrElectroHost->quadPoints().data() +
                   iCell * nQuadsPerCell * 3;
+
                 for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
                   {
+                    const dealii::Tensor<1, 3, dealii::VectorizedArray<double>>
+                      &gradVals = feEvalObjVselfSmeared.get_gradient(iQuad);
                     if (computeForce)
-                      if (bQuadAtomIdsCell[iQuad] == iAtom)
+                      if (atomIdsInBin.find(bQuadAtomIdsCell[iQuad]) !=
+                          atomIdsInBin.end())
                         {
                           for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                            forceContribSmeared[3 * iAtom + iDim] -=
+                            forceContribSmeared[3 * bQuadAtomIdsCell[iQuad] +
+                                                iDim] -=
                               bQuadAtomValuesCell[iQuad] *
-                              gradVSelfQuadValuesCurrentBinCell[iQuad * 3 +
-                                                                iDim] *
-                              JxWValues[iQuad];
+                              gradVals[iDim][iSubCell] * JxWValues[iQuad];
                         }
                     if (computeStress)
-                      if (bQuadAtomIdsImagesCell[iQuad] == iAtom)
+                      if (atomIdsInBin.find(bQuadAtomIdsImagesCell[iQuad]) !=
+                          atomIdsInBin.end())
                         {
                           for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                             for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                               stressContribSmeared[3 * iDim + jDim] +=
                                 bQuadAtomValuesCell[iQuad] *
-                                gradVSelfQuadValuesCurrentBinCell[iQuad * 3 +
-                                                                  iDim] *
+                                gradVals[iDim][iSubCell] *
                                 (quadPointsCurrentCell[iQuad * 3 + jDim] -
-                                 atomLocation[jDim]) *
+                                 atomLocation[bQuadAtomIdsImagesCell[iQuad]]
+                                             [jDim]) *
                                 JxWValues[iQuad];
                         }
                   }
@@ -1594,8 +1729,9 @@ namespace dftfe
                       MPI_DOUBLE,
                       MPI_SUM,
                       d_mpiCommDomain);
-        // pcout << "Force Vector LPSP: " << forceContribLPSP.size() << std::endl;
-        // for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
+        // pcout << "Force Vector LPSP: " << forceContribLPSP.size() <<
+        // std::endl; for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms;
+        // iAtom++)
         //   {
         //     for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
         //       pcout << forceContribLPSP[3 * iAtom + iDim] << " ";
@@ -1990,10 +2126,18 @@ namespace dftfe
 
   template <dftfe::utils::MemorySpace memorySpace>
   void
-  configurationalForceClass<memorySpace>::computeWfcContribAll(
-    const dftfe::uInt         &numEigenValues,
-    const std::vector<double> &kPointCoords,
-    const std::vector<double> &kPointWeights,
+  configurationalForceClass<memorySpace>::computeWfcContribNloc(
+    std::shared_ptr<
+      AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                            nonLocalOperator,
+    const CouplingStructure couplingtype,
+    const std::vector<
+      const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> *>
+                                            &couplingMatrixPtrs,
+    const std::map<dftfe::uInt, dftfe::uInt> nonlocalAtomIdToGlobalIdMap,
+    const dftfe::uInt                       &numEigenValues,
+    const std::vector<double>               &kPointCoords,
+    const std::vector<double>               &kPointWeights,
     const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
                                            &eigenVectors,
     const std::vector<std::vector<double>> &eigenValues,
@@ -2015,9 +2159,11 @@ namespace dftfe
     const dftfe::uInt totalLocallyOwnedCells = d_basisOperationsPtr->nCells();
 
     const dftfe::uInt cellsBlockSize =
-      memorySpace == dftfe::utils::MemorySpace::DEVICE ?
-        (d_dftParams.memOptMode ? 50 : nCells) :
-        1;
+      nonLocalOperator->isGlobalCMatrix() ?
+        nCells :
+        (memorySpace == dftfe::utils::MemorySpace::DEVICE ?
+           (d_dftParams.memOptMode ? 50 : nCells) :
+           1);
     const dftfe::uInt numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
     const dftfe::uInt remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
@@ -2047,15 +2193,15 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       *flattenedArrayBlock;
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock;
+      couplingMatrixTimesNonLocalProjectorTimesVectorBlock;
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      pseudopotentialNonLocalProjectorTimesVectorBlock;
+      nonLocalProjectorTimesVectorBlock;
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      pseudopotentialNonLocalProjectorTimesXTimesVectorBlock;
+      nonLocalProjectorTimesXTimesVectorBlock;
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      pseudopotentialNonLocalProjectorTimesGradientVectorBlock;
+      nonLocalProjectorTimesGradientVectorBlock;
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
-      pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock;
+      nonLocalProjectorTimesRDyadicGradientVectorBlock;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       sqrtPartialOccupVecHost(wfcBlockSize, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -2085,47 +2231,44 @@ namespace dftfe
             allReduceVectorType::DDyadicRconjTransX);
         if (computeStress && !isGammaPoint)
           nonLocalOperationsList.push_back(allReduceVectorType::CRconjTransX);
-        d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
+        nonLocalOperator->initialiseOperatorActionOnX(
           kPoint, allReduceVectorType::CconjTransX);
-        d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
+        nonLocalOperator->initialiseFlattenedDataStructure(
           wfcBlockSize,
-          couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock,
+          couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
           allReduceVectorType::CconjTransX);
         if (computeForce)
           {
-            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
+            nonLocalOperator->initialiseOperatorActionOnX(
               kPoint, allReduceVectorType::DconjTransX);
-            d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
+            nonLocalOperator->initialiseFlattenedDataStructure(
               wfcBlockSize,
-              pseudopotentialNonLocalProjectorTimesGradientVectorBlock,
+              nonLocalProjectorTimesGradientVectorBlock,
               allReduceVectorType::DconjTransX);
           }
         if (computeStress)
           {
-            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
+            nonLocalOperator->initialiseOperatorActionOnX(
               kPoint, allReduceVectorType::DDyadicRconjTransX);
-            d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
+            nonLocalOperator->initialiseFlattenedDataStructure(
               wfcBlockSize,
-              pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,
+              nonLocalProjectorTimesRDyadicGradientVectorBlock,
               allReduceVectorType::DDyadicRconjTransX);
             if (!isGammaPoint)
               {
-                d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
+                nonLocalOperator->initialiseOperatorActionOnX(
                   kPoint, allReduceVectorType::CRconjTransX);
-                d_pseudopotentialNonLocalOperator
-                  ->initialiseFlattenedDataStructure(
-                    wfcBlockSize,
-                    pseudopotentialNonLocalProjectorTimesXTimesVectorBlock,
-                    allReduceVectorType::CRconjTransX);
+                nonLocalOperator->initialiseFlattenedDataStructure(
+                  wfcBlockSize,
+                  nonLocalProjectorTimesXTimesVectorBlock,
+                  allReduceVectorType::CRconjTransX);
               }
           }
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           {
-            d_pseudopotentialNonLocalOperator->freeDeviceVectors();
-            d_pseudopotentialNonLocalOperator
-              ->initialiseCellWaveFunctionPointers(cellWaveFunctionMatrix,
-                                                   cellsBlockSize,
-                                                   nonLocalOperationsList);
+            nonLocalOperator->freeDeviceVectors();
+            nonLocalOperator->initialiseCellWaveFunctionPointers(
+              cellWaveFunctionMatrix, cellsBlockSize, nonLocalOperationsList);
           }
 
         for (dftfe::uInt spinIndex = 0; spinIndex < numSpinComponents;
@@ -2146,49 +2289,43 @@ namespace dftfe
                     if constexpr (dftfe::utils::MemorySpace::HOST ==
                                   memorySpace)
                       {
-                        d_pseudopotentialNonLocalOperator
-                          ->initialiseOperatorActionOnX(
-                            kPoint, allReduceVectorType::CconjTransX);
+                        nonLocalOperator->initialiseOperatorActionOnX(
+                          kPoint, allReduceVectorType::CconjTransX);
                         if (computeForce)
-                          d_pseudopotentialNonLocalOperator
-                            ->initialiseOperatorActionOnX(
-                              kPoint, allReduceVectorType::DconjTransX);
+                          nonLocalOperator->initialiseOperatorActionOnX(
+                            kPoint, allReduceVectorType::DconjTransX);
                         if (computeStress)
                           {
-                            d_pseudopotentialNonLocalOperator
-                              ->initialiseOperatorActionOnX(
-                                kPoint,
-                                allReduceVectorType::DDyadicRconjTransX);
+                            nonLocalOperator->initialiseOperatorActionOnX(
+                              kPoint, allReduceVectorType::DDyadicRconjTransX);
                             if (!isGammaPoint)
-                              d_pseudopotentialNonLocalOperator
-                                ->initialiseOperatorActionOnX(
-                                  kPoint, allReduceVectorType::CRconjTransX);
+                              nonLocalOperator->initialiseOperatorActionOnX(
+                                kPoint, allReduceVectorType::CRconjTransX);
                           }
                         if (wfcBlockSize != currentBlockSize)
                           {
-                            d_pseudopotentialNonLocalOperator
-                              ->initialiseFlattenedDataStructure(
-                                currentBlockSize,
-                                couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock,
-                                allReduceVectorType::CconjTransX);
+                            nonLocalOperator->initialiseFlattenedDataStructure(
+                              currentBlockSize,
+                              couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
+                              allReduceVectorType::CconjTransX);
                             if (computeForce)
-                              d_pseudopotentialNonLocalOperator
+                              nonLocalOperator
                                 ->initialiseFlattenedDataStructure(
                                   currentBlockSize,
-                                  pseudopotentialNonLocalProjectorTimesGradientVectorBlock,
+                                  nonLocalProjectorTimesGradientVectorBlock,
                                   allReduceVectorType::DconjTransX);
                             if (computeStress)
                               {
-                                d_pseudopotentialNonLocalOperator
+                                nonLocalOperator
                                   ->initialiseFlattenedDataStructure(
                                     currentBlockSize,
-                                    pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,
+                                    nonLocalProjectorTimesRDyadicGradientVectorBlock,
                                     allReduceVectorType::DDyadicRconjTransX);
                                 if (!isGammaPoint)
-                                  d_pseudopotentialNonLocalOperator
+                                  nonLocalOperator
                                     ->initialiseFlattenedDataStructure(
                                       currentBlockSize,
-                                      pseudopotentialNonLocalProjectorTimesXTimesVectorBlock,
+                                      nonLocalProjectorTimesXTimesVectorBlock,
                                       allReduceVectorType::CRconjTransX);
                               }
                           }
@@ -2196,11 +2333,10 @@ namespace dftfe
                     for (dftfe::uInt iEigenVec = 0;
                          iEigenVec < currentBlockSize;
                          ++iEigenVec)
-                      *(sqrtPartialOccupVecHost.begin() + iEigenVec) =
-                        std::sqrt(partialOccupancies[kPoint][numEigenValues *
-                                                               spinIndex +
-                                                             jvec + iEigenVec] *
-                                  kPointWeights[kPoint] * spinPolarizedFactor);
+                      sqrtPartialOccupVecHost[iEigenVec] = std::sqrt(
+                        partialOccupancies[kPoint][numEigenValues * spinIndex +
+                                                   jvec + iEigenVec] *
+                        kPointWeights[kPoint] * spinPolarizedFactor);
 
 #if defined(DFTFE_WITH_DEVICE)
                     sqrtPartialOccupVec.copyFrom(sqrtPartialOccupVecHost);
@@ -2248,87 +2384,81 @@ namespace dftfe
                               *(flattenedArrayBlock),
                               cellWaveFunctionMatrix.data(),
                               cellRange);
-                            d_pseudopotentialNonLocalOperator
-                              ->applyCconjtransOnX(
+                            if (nonLocalOperator->isGlobalCMatrix())
+                              nonLocalOperator->applyCconjtransOnX(
+                                *(flattenedArrayBlock));
+                            else
+                              nonLocalOperator->applyCconjtransOnX(
                                 cellWaveFunctionMatrix.data(), cellRange);
                             if (computeForce)
-                              d_pseudopotentialNonLocalOperator
-                                ->applyDconjtransOnX(
-                                  cellWaveFunctionMatrix.data(), cellRange);
+                              nonLocalOperator->applyDconjtransOnX(
+                                cellWaveFunctionMatrix.data(), cellRange);
                             if (computeStress)
                               {
-                                d_pseudopotentialNonLocalOperator
-                                  ->applyDDyadicRconjtransOnX(
-                                    cellWaveFunctionMatrix.data(), cellRange);
+                                nonLocalOperator->applyDDyadicRconjtransOnX(
+                                  cellWaveFunctionMatrix.data(), cellRange);
                                 if (!isGammaPoint)
-                                  d_pseudopotentialNonLocalOperator
-                                    ->applyCRconjtransOnX(
-                                      cellWaveFunctionMatrix.data(), cellRange);
+                                  nonLocalOperator->applyCRconjtransOnX(
+                                    cellWaveFunctionMatrix.data(), cellRange);
                               }
 
                           } // non-trivial cell block check
                       }     // cells block loop
 
-                    couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock
+                    couplingMatrixTimesNonLocalProjectorTimesVectorBlock
                       .setValue(0);
-                    d_pseudopotentialNonLocalOperator
-                      ->applyAllReduceOnCconjtransX(
-                        couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock,
-                        false,
-                        allReduceVectorType::CconjTransX);
-                    d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
-                      CouplingStructure::diagonal,
-                      d_pseudopotentialClassPtr->getCouplingMatrix(),
-                      couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock,
+                    nonLocalOperator->applyAllReduceOnCconjtransX(
+                      couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
+                      false,
+                      allReduceVectorType::CconjTransX);
+                    nonLocalOperator->applyVOnCconjtransX(
+                      couplingtype,
+                      *(couplingMatrixPtrs[spinIndex]),
+                      couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
                       false);
                     if (computeForce)
                       {
-                        pseudopotentialNonLocalProjectorTimesGradientVectorBlock
-                          .setValue(0);
-                        d_pseudopotentialNonLocalOperator
-                          ->applyAllReduceOnCconjtransX(
-                            pseudopotentialNonLocalProjectorTimesGradientVectorBlock,
-                            false,
-                            allReduceVectorType::DconjTransX);
+                        nonLocalProjectorTimesGradientVectorBlock.setValue(0);
+                        nonLocalOperator->applyAllReduceOnCconjtransX(
+                          nonLocalProjectorTimesGradientVectorBlock,
+                          false,
+                          allReduceVectorType::DconjTransX);
                         if (!isGammaPoint)
-                          pseudopotentialNonLocalProjectorTimesVectorBlock =
-                            couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock;
+                          nonLocalProjectorTimesVectorBlock =
+                            couplingMatrixTimesNonLocalProjectorTimesVectorBlock;
                       }
                     if (computeStress)
                       {
-                        pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock
+                        nonLocalProjectorTimesRDyadicGradientVectorBlock
                           .setValue(0);
-                        d_pseudopotentialNonLocalOperator
-                          ->applyAllReduceOnCconjtransX(
-                            pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,
-                            false,
-                            allReduceVectorType::DDyadicRconjTransX);
+                        nonLocalOperator->applyAllReduceOnCconjtransX(
+                          nonLocalProjectorTimesRDyadicGradientVectorBlock,
+                          false,
+                          allReduceVectorType::DDyadicRconjTransX);
                         if (!isGammaPoint)
                           {
-                            pseudopotentialNonLocalProjectorTimesXTimesVectorBlock
-                              .setValue(0);
-                            d_pseudopotentialNonLocalOperator
-                              ->applyAllReduceOnCconjtransX(
-                                pseudopotentialNonLocalProjectorTimesXTimesVectorBlock,
-                                false,
-                                allReduceVectorType::CRconjTransX);
+                            nonLocalProjectorTimesXTimesVectorBlock.setValue(0);
+                            nonLocalOperator->applyAllReduceOnCconjtransX(
+                              nonLocalProjectorTimesXTimesVectorBlock,
+                              false,
+                              allReduceVectorType::CRconjTransX);
                           }
                       }
                     if (computeForce)
-                      d_pseudopotentialNonLocalOperator
+                      nonLocalOperator
                         ->computeInnerProductOverSphericalFnsWaveFns(
                           3,
-                          couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock,
-                          pseudopotentialNonLocalProjectorTimesGradientVectorBlock,
-                          false,
+                          couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
+                          nonLocalProjectorTimesGradientVectorBlock,
+                          nonlocalAtomIdToGlobalIdMap,
                           ForceNlocContrib);
                     if (computeStress)
-                      d_pseudopotentialNonLocalOperator
+                      nonLocalOperator
                         ->computeInnerProductOverSphericalFnsWaveFns(
                           9,
-                          couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock,
-                          pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,
-                          false,
+                          couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
+                          nonLocalProjectorTimesRDyadicGradientVectorBlock,
+                          nonlocalAtomIdToGlobalIdMap,
                           StressNlocContrib);
                     if constexpr (std::is_same<dataTypes::number,
                                                std::complex<double>>::value)
@@ -2340,12 +2470,12 @@ namespace dftfe
                                 generatorAtAtomsNlocContribForce.begin(),
                                 generatorAtAtomsNlocContribForce.end(),
                                 0.0);
-                              d_pseudopotentialNonLocalOperator
+                              nonLocalOperator
                                 ->computeInnerProductOverSphericalFnsWaveFns(
                                   1,
-                                  couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock,
-                                  pseudopotentialNonLocalProjectorTimesVectorBlock,
-                                  false,
+                                  couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
+                                  nonLocalProjectorTimesVectorBlock,
+                                  nonlocalAtomIdToGlobalIdMap,
                                   generatorAtAtomsNlocContribForce);
                               for (dftfe::uInt iAtom = 0;
                                    iAtom < d_dftParams.natoms;
@@ -2363,12 +2493,12 @@ namespace dftfe
                                 generatorAtAtomsNlocContribStress.begin(),
                                 generatorAtAtomsNlocContribStress.end(),
                                 0.0);
-                              d_pseudopotentialNonLocalOperator
+                              nonLocalOperator
                                 ->computeInnerProductOverSphericalFnsWaveFns(
                                   3,
-                                  couplingMatrixTimesPseudopotentialNonLocalProjectorTimesVectorBlock,
-                                  pseudopotentialNonLocalProjectorTimesXTimesVectorBlock,
-                                  false,
+                                  couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
+                                  nonLocalProjectorTimesXTimesVectorBlock,
+                                  nonlocalAtomIdToGlobalIdMap,
                                   generatorAtAtomsNlocContribStress);
                               for (dftfe::uInt iAtom = 0;
                                    iAtom < d_dftParams.natoms;

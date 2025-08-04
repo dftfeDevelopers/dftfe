@@ -2496,24 +2496,22 @@ namespace dftfe
       if constexpr (memorySpace == dftfe::utils::MemorySpace::HOST)
         {
           dftfe::basis::FEBasisOperationsKernelsInternal::
-            reshapeToNonAffineLayoutHost(
-              nDofsPerCell,
-              nQuadsPerCell,
-              3,
-              1,
-              shapeFunctionGradientBasisData().data(),
-              tempCellGradientsBlock.data());
+            reshapeToNonAffineLayoutHost(nDofsPerCell,
+                                         nQuadsPerCell,
+                                         3,
+                                         1,
+                                         shapeFunctionGradientData().data(),
+                                         tempCellGradientsBlockCoeff.data());
         }
       else
         {
           dftfe::basis::FEBasisOperationsKernelsInternal::
-            reshapeToNonAffineLayoutDevice(
-              nDofsPerCell,
-              nQuadsPerCell,
-              3,
-              1,
-              shapeFunctionGradientBasisData().data(),
-              tempCellGradientsBlock.data());
+            reshapeToNonAffineLayoutDevice(nDofsPerCell,
+                                           nQuadsPerCell,
+                                           3,
+                                           1,
+                                           shapeFunctionGradientData().data(),
+                                           tempCellGradientsBlockCoeff.data());
         }
       if (numberOfElements > 0)
         {

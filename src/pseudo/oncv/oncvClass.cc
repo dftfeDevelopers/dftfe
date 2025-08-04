@@ -122,7 +122,9 @@ namespace dftfe
     const std::vector<std::vector<double>>  &atomLocations,
     dftfe::uInt                              numEigenValues,
     const bool                               singlePrecNonLocalOperator,
-    const bool computeSphericalFnTimesXNonLocalOperator)
+    const bool                               floatingNuclearCharges,
+    const bool                               computeForce,
+    const bool                               computeStress)
   {
     MPI_Barrier(d_mpiCommParent);
     d_BasisOperatorHostPtr = basisOperationsHostPtr;
@@ -165,10 +167,10 @@ namespace dftfe
             d_atomicProjectorFnsContainer,
             d_mpiCommParent,
             d_memoryOptMode,
-            computeSphericalFnTimesXNonLocalOperator,
+            floatingNuclearCharges,
             false,
-            true,
-            true);
+            computeForce,
+            computeStress);
 
         if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
           if (d_singlePrecNonLocalOperator)
@@ -179,8 +181,7 @@ namespace dftfe
                               d_BasisOperatorHostPtr,
                               d_atomicProjectorFnsContainer,
                               d_mpiCommParent,
-                              d_memoryOptMode,
-                              computeSphericalFnTimesXNonLocalOperator);
+                              d_memoryOptMode);
       }
 #if defined(DFTFE_WITH_DEVICE)
     else
@@ -193,10 +194,10 @@ namespace dftfe
             d_atomicProjectorFnsContainer,
             d_mpiCommParent,
             d_memoryOptMode,
-            computeSphericalFnTimesXNonLocalOperator,
+            floatingNuclearCharges,
             false,
-            true,
-            true);
+            computeForce,
+            computeStress);
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
           if (d_singlePrecNonLocalOperator)
             d_nonLocalOperatorSinglePrec =
@@ -206,8 +207,7 @@ namespace dftfe
                               d_BasisOperatorDevicePtr,
                               d_atomicProjectorFnsContainer,
                               d_mpiCommParent,
-                              d_memoryOptMode,
-                              computeSphericalFnTimesXNonLocalOperator);
+                              d_memoryOptMode);
       }
 #endif
 
@@ -216,7 +216,6 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   oncvClass<ValueType, memorySpace>::initialiseNonLocalContribution(
-    const std::vector<std::vector<double>> &atomLocations,
     const std::vector<dftfe::Int>          &imageIds,
     const std::vector<std::vector<double>> &periodicCoords,
     const std::vector<double>              &kPointWeights,
@@ -227,11 +226,15 @@ namespace dftfe
     std::vector<double>      atomCoords;
 
 
-    for (dftfe::Int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
+    for (dftfe::Int iAtom = 0;
+         iAtom < d_atomLocationsInterestPseudopotential.size();
+         iAtom++)
       {
-        atomicNumbers.push_back(atomLocations[iAtom][0]);
+        atomicNumbers.push_back(
+          d_atomLocationsInterestPseudopotential[iAtom][0]);
         for (dftfe::Int dim = 2; dim < 5; dim++)
-          atomCoords.push_back(atomLocations[iAtom][dim]);
+          atomCoords.push_back(
+            d_atomLocationsInterestPseudopotential[iAtom][dim]);
       }
 
 
@@ -285,7 +288,6 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   oncvClass<ValueType, memorySpace>::initialiseNonLocalContribution(
-    const std::vector<std::vector<double>> &atomLocations,
     const std::vector<dftfe::Int>          &imageIds,
     const std::vector<std::vector<double>> &periodicCoords,
     const std::vector<double>              &kPointWeights,
@@ -303,11 +305,15 @@ namespace dftfe
     std::vector<double>      atomCoords;
 
 
-    for (dftfe::Int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
+    for (dftfe::Int iAtom = 0;
+         iAtom < d_atomLocationsInterestPseudopotential.size();
+         iAtom++)
       {
-        atomicNumbers.push_back(atomLocations[iAtom][0]);
+        atomicNumbers.push_back(
+          d_atomLocationsInterestPseudopotential[iAtom][0]);
         for (dftfe::Int dim = 2; dim < 5; dim++)
-          atomCoords.push_back(atomLocations[iAtom][dim]);
+          atomCoords.push_back(
+            d_atomLocationsInterestPseudopotential[iAtom][dim]);
       }
 
 
@@ -550,6 +556,35 @@ namespace dftfe
 
       } //*it loop
   }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  void
+  oncvClass<ValueType, memorySpace>::determineAtomsOfInterstPseudopotential(
+    const std::vector<std::vector<double>> &atomCoordinates)
+  {
+    d_atomLocationsInterestPseudopotential.clear();
+    d_atomIdPseudopotentialInterestToGlobalId.clear();
+    dftfe::uInt atomIdPseudo = 0;
+    // pcout<<"Atoms of interest: "<<std::endl;
+    for (dftfe::uInt iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
+      {
+        if (true)
+          {
+            d_atomLocationsInterestPseudopotential.push_back(
+              atomCoordinates[iAtom]);
+            d_atomIdPseudopotentialInterestToGlobalId[atomIdPseudo] = iAtom;
+            // pcout<<iAtom<<" "<<atomIdPseudo<<" ";
+            // for(dftfe::Int i = 0; i <
+            // d_atomLocationsInterestPseudopotential[atomIdPseudo].size();
+            // i++)
+            //   pcout<<d_atomLocationsInterestPseudopotential[atomIdPseudo][i]<<"
+            //   ";
+            // pcout<<std::endl;
+            atomIdPseudo++;
+          }
+      }
+  }
+
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   double
   oncvClass<ValueType, memorySpace>::getRadialValenceDensity(dftfe::uInt Znum,
@@ -794,6 +829,14 @@ namespace dftfe
     return (
       d_atomicProjectorFnsContainer->getTotalNumberOfSphericalFunctionsPerAtom(
         atomicNumbers[atomId]));
+  }
+
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  const std::map<dftfe::uInt, dftfe::uInt> &
+  oncvClass<ValueType, memorySpace>::getPSPAtomIdToGloablIdMap()
+  {
+    return d_atomIdPseudopotentialInterestToGlobalId;
   }
   template class oncvClass<dataTypes::number, dftfe::utils::MemorySpace::HOST>;
 #if defined(DFTFE_WITH_DEVICE)

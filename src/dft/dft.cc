@@ -975,12 +975,11 @@ namespace dftfe
           pcout
             << "initPseudoPotentialAll: Time taken for initializing core density for non-linear core correction: "
             << init_core << std::endl;
-        determineAtomsOfInterstPseudopotential(atomLocations);
+        d_oncvClassPtr->determineAtomsOfInterstPseudopotential(atomLocations);
         MPI_Barrier(d_mpiCommParent);
         if (d_dftParamsPtr->isPseudopotential == true)
           {
             d_oncvClassPtr->initialiseNonLocalContribution(
-              d_atomLocationsInterestPseudopotential,
               d_imageIdsTrunc,
               d_imagePositionsTrunc,
               d_kPointWeights,     // accounts for interpool
@@ -992,13 +991,13 @@ namespace dftfe
             if (d_dftParamsPtr->writePdosFile)
               {
                 d_atomCenteredOrbitalsPostProcessingPtr
-                  ->initialiseNonLocalContribution(
-                    d_atomLocationsInterestPseudopotential,
-                    d_imageIdsTrunc,
-                    d_imagePositionsTrunc,
-                    d_kPointWeights,
-                    d_kPointCoordinates,
-                    updateNonlocalSparsity);
+                  ->determineAtomsOfInterstPostProcessing(atomLocations);
+                d_atomCenteredOrbitalsPostProcessingPtr
+                  ->initialiseNonLocalContribution(d_imageIdsTrunc,
+                                                   d_imagePositionsTrunc,
+                                                   d_kPointWeights,
+                                                   d_kPointCoordinates,
+                                                   updateNonlocalSparsity);
               }
           }
       }
@@ -1276,8 +1275,9 @@ namespace dftfe
                                  atomLocations,
                                  d_numEigenValues,
                                  d_dftParamsPtr->useSinglePrecCheby,
-                                 (d_dftParamsPtr->isIonForce) ||
-                                   d_dftParamsPtr->isCellStress);
+                                 d_dftParamsPtr->floatingNuclearCharges,
+                                 d_dftParamsPtr->isIonForce,
+                                 d_dftParamsPtr->isCellStress);
 
     if (d_dftParamsPtr->solverMode == "NSCF")
       {
@@ -1433,6 +1433,54 @@ namespace dftfe
     d_netFloatingDispSinceLastCheckForSmearedChargeOverlaps.resize(
       atomLocations.size() * 3, 0.0);
 
+    if ((d_dftParamsPtr->isIonForce || d_dftParamsPtr->isCellStress) &&
+        d_dftParamsPtr->floatingNuclearCharges)
+      {
+#ifdef DFTFE_WITH_DEVICE
+        if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+          d_configForcePtr = std::make_shared<
+            configurationalForceClass<dftfe::utils::MemorySpace::DEVICE>>(
+            d_BLASWrapperPtr,
+            d_BLASWrapperPtrHost,
+            d_basisOperationsPtrDevice,
+            d_basisOperationsPtrHost,
+            d_basisOperationsPtrElectroDevice,
+            d_basisOperationsPtrElectroHost,
+            d_oncvClassPtr,
+            d_excManagerPtr,
+            d_densityQuadratureId,
+            d_densityQuadratureIdElectro,
+            d_lpspQuadratureId,
+            d_lpspQuadratureIdElectro,
+            d_smearedChargeQuadratureIdElectro,
+            d_mpiCommParent,
+            mpi_communicator,
+            interpoolcomm,
+            interBandGroupComm,
+            *d_dftParamsPtr);
+        else
+#endif
+          d_configForcePtr = std::make_shared<
+            configurationalForceClass<dftfe::utils::MemorySpace::HOST>>(
+            d_BLASWrapperPtrHost,
+            d_BLASWrapperPtrHost,
+            d_basisOperationsPtrHost,
+            d_basisOperationsPtrHost,
+            d_basisOperationsPtrElectroHost,
+            d_basisOperationsPtrElectroHost,
+            d_oncvClassPtr,
+            d_excManagerPtr,
+            d_densityQuadratureId,
+            d_densityQuadratureIdElectro,
+            d_lpspQuadratureId,
+            d_lpspQuadratureIdElectro,
+            d_smearedChargeQuadratureIdElectro,
+            d_mpiCommParent,
+            mpi_communicator,
+            interpoolcomm,
+            interBandGroupComm,
+            *d_dftParamsPtr);
+      }
     computingTimerStandard.leave_subsection("KSDFT problem initialization");
   }
 
@@ -4061,58 +4109,15 @@ namespace dftfe
       {
         if (computeForces || computestress)
           {
-#ifdef DFTFE_WITH_DEVICE
-            if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-              d_configForcePtr = std::make_shared<
-                configurationalForceClass<dftfe::utils::MemorySpace::DEVICE>>(
-                d_BLASWrapperPtr,
-                d_BLASWrapperPtrHost,
-                d_basisOperationsPtrDevice,
-                d_basisOperationsPtrHost,
-                d_basisOperationsPtrElectroDevice,
-                d_basisOperationsPtrElectroHost,
-                d_oncvClassPtr,
-                d_excManagerPtr,
-                d_densityQuadratureId,
-                d_densityQuadratureIdElectro,
-                d_lpspQuadratureId,
-                d_lpspQuadratureIdElectro,
-                d_smearedChargeQuadratureIdElectro,
-                d_mpiCommParent,
-                mpi_communicator,
-                interpoolcomm,
-                interBandGroupComm,
-                *d_dftParamsPtr);
-            else
-#endif
-              d_configForcePtr = std::make_shared<
-                configurationalForceClass<dftfe::utils::MemorySpace::HOST>>(
-                d_BLASWrapperPtrHost,
-                d_BLASWrapperPtrHost,
-                d_basisOperationsPtrHost,
-                d_basisOperationsPtrHost,
-                d_basisOperationsPtrElectroHost,
-                d_basisOperationsPtrElectroHost,
-                d_oncvClassPtr,
-                d_excManagerPtr,
-                d_densityQuadratureId,
-                d_densityQuadratureIdElectro,
-                d_lpspQuadratureId,
-                d_lpspQuadratureIdElectro,
-                d_smearedChargeQuadratureIdElectro,
-                d_mpiCommParent,
-                mpi_communicator,
-                interpoolcomm,
-                interBandGroupComm,
-                *d_dftParamsPtr);
-            if (computestress && (d_dftParamsPtr->isPseudopotential ||
-                                  d_dftParamsPtr->smearedNuclearCharges))
+            computing_timer.enter_subsection("Force and Stress computation");
+            computingTimerStandard.enter_subsection(
+              "Force and Stress computation");
+            if (d_dftParamsPtr->isCellStress && computestress &&
+                (d_dftParamsPtr->isPseudopotential ||
+                 d_dftParamsPtr->smearedNuclearCharges))
               {
                 computeVselfFieldGateauxDerFD();
               }
-
-            computing_timer.enter_subsection("Ion force computation 2");
-            computingTimerStandard.enter_subsection("Ion force computation 2");
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
               d_configForcePtr->computeForceAndStress(
@@ -4153,8 +4158,8 @@ namespace dftfe
 
                 d_bQuadValuesAllAtoms,
                 d_dftParamsPtr->floatingNuclearCharges,
-                computeForces,
-                computestress);
+                d_dftParamsPtr->isIonForce && computeForces,
+                d_dftParamsPtr->isCellStress && computestress);
             else
 #endif
               d_configForcePtr->computeForceAndStress(
@@ -4194,14 +4199,17 @@ namespace dftfe
                 d_bQuadAtomIdsAllAtomsImages,
                 d_bQuadValuesAllAtoms,
                 d_dftParamsPtr->floatingNuclearCharges,
-                computeForces,
-                computestress);
-            if (computeForces && (d_dftParamsPtr->verbosity >= 0))
+                d_dftParamsPtr->isIonForce && computeForces,
+                d_dftParamsPtr->isCellStress && computestress);
+            if (d_dftParamsPtr->isIonForce && computeForces &&
+                (d_dftParamsPtr->verbosity >= 0))
               d_configForcePtr->printAtomsForces();
-            if (computestress && (d_dftParamsPtr->verbosity >= 0))
+            if (d_dftParamsPtr->isCellStress && computestress &&
+                (d_dftParamsPtr->verbosity >= 0))
               d_configForcePtr->printStress();
-            computingTimerStandard.leave_subsection("Ion force computation 2");
-            computing_timer.leave_subsection("Ion force computation 2");
+            computingTimerStandard.leave_subsection(
+              "Force and Stress computation");
+            computing_timer.leave_subsection("Force and Stress computation");
           }
       }
     return std::make_tuple(scfConverged, norm);
@@ -5226,33 +5234,6 @@ namespace dftfe
                                       d_densityDofHandlerIndexElectro,
                                       d_densityQuadratureIdElectro);
     return normValue;
-  }
-  template <dftfe::utils::MemorySpace memorySpace>
-  void
-  dftClass<memorySpace>::determineAtomsOfInterstPseudopotential(
-    const std::vector<std::vector<double>> &atomCoordinates)
-  {
-    d_atomLocationsInterestPseudopotential.clear();
-    d_atomIdPseudopotentialInterestToGlobalId.clear();
-    dftfe::uInt atomIdPseudo = 0;
-    // pcout<<"Atoms of interest: "<<std::endl;
-    for (dftfe::uInt iAtom = 0; iAtom < atomCoordinates.size(); iAtom++)
-      {
-        if (true)
-          {
-            d_atomLocationsInterestPseudopotential.push_back(
-              atomCoordinates[iAtom]);
-            d_atomIdPseudopotentialInterestToGlobalId[atomIdPseudo] = iAtom;
-            // pcout<<iAtom<<" "<<atomIdPseudo<<" ";
-            // for(dftfe::Int i = 0; i <
-            // d_atomLocationsInterestPseudopotential[atomIdPseudo].size();
-            // i++)
-            //   pcout<<d_atomLocationsInterestPseudopotential[atomIdPseudo][i]<<"
-            //   ";
-            // pcout<<std::endl;
-            atomIdPseudo++;
-          }
-      }
   }
 
   template <dftfe::utils::MemorySpace memorySpace>

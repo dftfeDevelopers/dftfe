@@ -270,6 +270,9 @@ namespace dftfe
     void
     readHubbOccFromFile();
 
+    const std::map<dftfe::uInt, dftfe::uInt> &
+    getHubbardAtomIdToGloablIdMap();
+
 
   private:
     std::map<dftfe::uInt, dftfe::uInt> d_mapHubbardAtomToGlobalAtomId;

@@ -139,10 +139,18 @@ namespace dftfe
 
   private:
     void
-    computeWfcContribAll(
-      const dftfe::uInt         &numEigenValues,
-      const std::vector<double> &kPointCoords,
-      const std::vector<double> &kPointWeights,
+    computeWfcContribNloc(
+      std::shared_ptr<
+        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                              nonLocalOperator,
+      const CouplingStructure couplingtype,
+      const std::vector<
+        const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> *>
+                                              &couplingMatrixPtrs,
+      const std::map<dftfe::uInt, dftfe::uInt> nonlocalAtomIdToGlobalIdMap,
+      const dftfe::uInt                       &numEigenValues,
+      const std::vector<double>               &kPointCoords,
+      const std::vector<double>               &kPointWeights,
       const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
                                              &eigenVectors,
       const std::vector<std::vector<double>> &eigenValues,
@@ -291,14 +299,6 @@ namespace dftfe
       dftfe::pseudopotentialBaseClass<dataTypes::number, memorySpace>>
       d_pseudopotentialClassPtr;
 
-    std::shared_ptr<
-      AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-      d_pseudopotentialNonLocalOperator;
-
-    std::shared_ptr<
-      AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-      d_HubbardNonLocalOperator;
-
     std::shared_ptr<excManager<memorySpace>> d_excManagerPtr;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -371,6 +371,9 @@ namespace dftfe
     /// Finite element object for configurational force computation. Linear
     /// finite elements with three force field components are used.
     dealii::FESystem<3> FEForce;
+
+
+    dealii::TimerOutput computing_timer;
   };
   void
   computeWavefuncEshelbyContributionLocal(

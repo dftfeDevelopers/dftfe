@@ -174,11 +174,11 @@ namespace dftfe
         d_BasisOperatorMemPtr,
         d_atomicProjectorFnsContainer,
         d_mpi_comm_domain,
+        d_dftParamsPtr->memOptMode,
+        d_dftParamsPtr->floatingNuclearCharges,
         true,
-        true,
-        true);
-    // d_dftParamsPtr->isIonForce,
-    // d_dftParamsPtr->isCellStress);
+        d_dftParamsPtr->isIonForce,
+        d_dftParamsPtr->isCellStress);
 
     if (d_useSinglePrec)
       {
@@ -189,7 +189,7 @@ namespace dftfe
                           d_BasisOperatorMemPtr,
                           d_atomicProjectorFnsContainer,
                           d_mpi_comm_domain,
-                          true,
+                          d_dftParamsPtr->memOptMode,
                           true,
                           true);
       }
@@ -1360,6 +1360,13 @@ namespace dftfe
   hubbard<ValueType, memorySpace>::getExpectationOfHubbardPotential()
   {
     return d_expectationOfHubbardPotential;
+  }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  const std::map<dftfe::uInt, dftfe::uInt> &
+  hubbard<ValueType, memorySpace>::getHubbardAtomIdToGloablIdMap()
+  {
+    return d_mapHubbardAtomToGlobalAtomId;
   }
 
   template class hubbard<dataTypes::number, dftfe::utils::MemorySpace::HOST>;

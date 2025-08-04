@@ -63,8 +63,8 @@ namespace dftfe
     d_cellsBlockSize         = 0;
     d_numCellBatches         = 0;
     d_wfcStartPointer        = NULL;
-    d_computeIonForces       = computeIonForces && !floatingNuclearCharges;
-    d_computeCellStress      = computeCellStress && !floatingNuclearCharges;
+    d_computeIonForces       = computeIonForces && floatingNuclearCharges;
+    d_computeCellStress      = computeCellStress && floatingNuclearCharges;
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -312,7 +312,7 @@ namespace dftfe
         accumNonTrivialSphericalFnCells +=
           d_nonTrivialSphericalFnPerCell[iElem];
       }
-    if (d_floatingNuclearCharges)
+    if (!d_floatingNuclearCharges)
       {
         d_atomCenteredKpointIndexedSphericalFnQuadValues.resize(
           maxkPoints * d_sumNonTrivialSphericalFnOverAllCells *
@@ -648,7 +648,7 @@ namespace dftfe
                     [ChargeId]
                     [elementIndex]; // extract the location of the ChargeId's
                                     // first projector in the cell
-                if (d_floatingNuclearCharges)
+                if (!d_floatingNuclearCharges)
                   {
                     for (dftfe::Int kPoint = 0; kPoint < maxkPoints; ++kPoint)
                       {
@@ -1929,7 +1929,7 @@ namespace dftfe
         "Incorrect numbering and/or partitioning of non local projectors"));
 
     d_sphericalFunctionIdsNumberingMapCurrentProcess.clear();
-
+    d_OwnedAtomIdsInCurrentProcessor.clear();
     for (dealii::IndexSet::ElementIterator it =
            ownedAtomIdsInCurrentProcess.begin();
          it != ownedAtomIdsInCurrentProcess.end();
@@ -4522,7 +4522,7 @@ namespace dftfe
         accumNonTrivialSphericalFnCells +=
           d_nonTrivialSphericalFnPerCell[iElem];
       }
-    if (d_floatingNuclearCharges)
+    if (!d_floatingNuclearCharges)
       {
         d_atomCenteredKpointIndexedSphericalFnQuadValues.resize(
           maxkPoints * d_sumNonTrivialSphericalFnOverAllCells *
@@ -5055,7 +5055,7 @@ namespace dftfe
         accumNonTrivialSphericalFnCells +=
           d_nonTrivialSphericalFnPerCell[iElem];
       }
-    if (d_floatingNuclearCharges)
+    if (!d_floatingNuclearCharges)
       {
         d_atomCenteredKpointIndexedSphericalFnQuadValues.resize(
           maxkPoints * d_sumNonTrivialSphericalFnOverAllCells *
@@ -5466,7 +5466,13 @@ namespace dftfe
 
 #endif
   }
-
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  bool
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::isGlobalCMatrix()
+    const
+  {
+    return d_useGlobalCMatrix;
+  }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   const std::vector<dftfe::uInt> &
@@ -5894,53 +5900,25 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
         &VCconjTransXsphericalFunctionKetTimesVectorParFlattened,
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                             &sphericalFunctionKetTimesVectorParFlattened,
-      const bool              reinitFlag,
-      std::vector<ValueType> &outputVector)
+        &sphericalFunctionKetTimesVectorParFlattened,
+      const std::map<dftfe::uInt, dftfe::uInt> nonlocalAtomIdToGlobalIdMap,
+      std::vector<ValueType>                  &outputVector)
   {
     const std::vector<dftfe::uInt> &atomicNumber =
       d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
     const dftfe::uInt numberOfAtoms = atomicNumber.size();
-    if (reinitFlag == true)
-      {
-        outputVector.clear();
-        if (vectorDimension == 1)
-          {
-            outputVector.resize(numberOfAtoms, 0.0);
-          }
-        if (vectorDimension == 3)
-          {
-            outputVector.resize(numberOfAtoms * 3, 0.0);
-          }
-        else if (vectorDimension == 9)
-          {
-            outputVector.resize(9, 0.0);
-          }
-        else
-          {
-            AssertThrow(
-              false,
-              dealii::ExcMessage(
-                "computeInnerProductOverSphericalFnsWaveFns: vector dimension not supported"));
-          }
-      }
-    else
-      {
-        AssertThrow(
-          outputVector.size() == vectorDimension == 9 ?
-            9 :
-            numberOfAtoms * vectorDimension,
-          dealii::ExcMessage(
-            "computeInnerProductOverSphericalFnsWaveFns: output vector size mismatch"));
-      }
-    dftfe::utils::MemoryStorage<ValueType, memorySpace> tempVec(
-      (vectorDimension == 9 ? 9 : numberOfAtoms * vectorDimension), 0.0);
-    tempVec.copyFrom(outputVector);
+    dftfe::utils::MemoryStorage<ValueType, memorySpace> tempVec(vectorDimension,
+                                                                0.0);
     for (dftfe::Int iAtom = 0; iAtom < d_OwnedAtomIdsInCurrentProcessor.size();
          iAtom++)
       {
-        dftfe::uInt atomId = d_OwnedAtomIdsInCurrentProcessor[iAtom];
-        dftfe::uInt Znum   = atomicNumber[atomId];
+        dftfe::uInt atomId   = d_OwnedAtomIdsInCurrentProcessor[iAtom];
+        dftfe::uInt globalId = nonlocalAtomIdToGlobalIdMap.find(atomId)->second;
+        tempVec.copyFrom(outputVector,
+                         vectorDimension,
+                         vectorDimension == 9 ? 0 : globalId * vectorDimension,
+                         0);
+        dftfe::uInt Znum = atomicNumber[atomId];
         dftfe::uInt numberOfSphericalFunctions =
           d_atomCenteredSphericalFunctionContainer
             ->getTotalNumberOfSphericalFunctionsPerAtom(Znum);
@@ -5965,26 +5943,13 @@ namespace dftfe
             id * vectorDimension * d_numberWaveFunctions,
           vectorDimension,
           &scalarCoeffOne,
-          tempVec.data() +
-            (vectorDimension == 9 ? 0 : atomId * vectorDimension),
+          tempVec.data(),
           1);
-        // d_BLASWrapperPtr->xgemv(
-        //   'N',
-        //   vectorDimension,
-        //   d_numberWaveFunctions * numberOfSphericalFunctions,
-        //   &scalarCoeffOne,
-        //   sphericalFunctionKetTimesVectorParFlattened.begin() +
-        //     id * vectorDimension * d_numberWaveFunctions,
-        //   vectorDimension,
-        //   VCconjTransXsphericalFunctionKetTimesVectorParFlattened.begin() +
-        //     id * d_numberWaveFunctions,
-        //   1,
-        //   &scalarCoeffOne,
-        //   tempVec.data() +
-        //     (vectorDimension == 9 ? 0 : atomId * vectorDimension),
-        //   1);
+        tempVec.copyTo(outputVector,
+                       vectorDimension,
+                       0,
+                       vectorDimension == 9 ? 0 : globalId * vectorDimension);
       }
-    tempVec.copyTo(outputVector);
   }
 
   template class AtomicCenteredNonLocalOperator<

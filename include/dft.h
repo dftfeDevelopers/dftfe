@@ -756,11 +756,6 @@ namespace dftfe
     void
     initHubbardOperator();
 
-    void
-    determineAtomsOfInterstPseudopotential(
-      const std::vector<std::vector<double>> &atomCoordinates);
-
-
     /**
      *@brief project ground state electron density from previous mesh into
      * the new mesh to be used as initial guess for the new ground state solve
@@ -1321,9 +1316,6 @@ namespace dftfe
     /// FIXME: remove atom type atributes from atomLocations
     std::vector<std::vector<double>> atomLocations, atomLocationsFractional,
       d_reciprocalLatticeVectors, d_domainBoundingVectors, d_meshSizes;
-    std::vector<std::vector<double>> d_atomLocationsInterestPseudopotential;
-    std::map<dftfe::uInt, dftfe::uInt>
-                                     d_atomIdPseudopotentialInterestToGlobalId;
     std::vector<std::vector<double>> d_atomLocationsAutoMesh;
     std::vector<std::vector<double>> d_imagePositionsAutoMesh;
 

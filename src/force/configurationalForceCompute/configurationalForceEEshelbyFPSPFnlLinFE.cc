@@ -464,7 +464,7 @@ namespace dftfe
                 nonLocalAtomIdPsP[iAtom] =
                   dftPtr->d_oncvClassPtr->getAtomIdInCurrentProcessor(iAtom);
                 globalChargeIdNonLocalAtomPsP[iAtom] =
-                  dftPtr->d_atomIdPseudopotentialInterestToGlobalId
+                  dftPtr->d_oncvClassPtr->getPSPAtomIdToGloablIdMap()
                     .find(nonLocalAtomIdPsP[iAtom])
                     ->second;
                 numberPseudoWaveFunctionsPerAtomPsP[iAtom] =

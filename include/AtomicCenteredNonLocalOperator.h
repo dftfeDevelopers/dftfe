@@ -196,6 +196,10 @@ namespace dftfe
     // Getter functions
     // Returns the vector that takes in nonlocalElementIndex and returns the
     // cellID
+
+    bool
+    isGlobalCMatrix() const;
+
     const std::vector<dftfe::uInt> &
     getNonlocalElementToCellIdVector() const;
     // Returns the number of atoms in current processor
@@ -521,9 +525,9 @@ namespace dftfe
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
         &VCconjTransXsphericalFunctionKetTimesVectorParFlattened,
       const dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                             &sphericalFunctionKetTimesVectorParFlattened,
-      const bool              reinitFlag,
-      std::vector<ValueType> &outputVector);
+        &sphericalFunctionKetTimesVectorParFlattened,
+      const std::map<dftfe::uInt, dftfe::uInt> nonlocalAtomIdToGlobalIdMap,
+      std::vector<ValueType>                  &outputVector);
 
 
   protected:
