@@ -47,7 +47,7 @@ namespace dftfe
      *
      */
     void
-    init(const std::string &restartPath);
+    init(const std::string &restartPath, const dftfe::Int cycleId);
 
     /**
      * @brief calls the atomic force relaxation solver.
@@ -139,6 +139,7 @@ namespace dftfe
 
     /// total number of calls to update()
     dftfe::Int d_totalUpdateCalls;
+    dftfe::Int d_cycle;
 
     /// pointer to dft class
     dftBase                         *d_dftPtr;

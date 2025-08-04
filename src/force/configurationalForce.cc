@@ -1024,11 +1024,6 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                                 gradPhiTotRhoOutQuadValues;
     FEEvaluationWrapperClass<1> feEvalObjPhiSmeared(
-      d_basisOperationsPtrElectroHost->matrixFreeData()
-        .get_dof_handler(d_basisOperationsPtrElectroHost->d_dofHandlerID)
-        .get_fe()
-        .degree,
-      std::round(std::cbrt(nQuadsPerCell)),
       d_basisOperationsPtrElectroHost->matrixFreeData(),
       d_basisOperationsPtrElectroHost->d_dofHandlerID,
       d_smearedChargeQuadratureIdElectro);
@@ -1157,11 +1152,6 @@ namespace dftfe
         const dftfe::uInt currentBinDofHandlerId =
           binsStartDofHandlerIndexElectro + 4 * iBin;
         FEEvaluationWrapperClass<1> feEvalObjVselfSmeared(
-          d_basisOperationsPtrElectroHost->matrixFreeData()
-            .get_dof_handler(currentBinDofHandlerId)
-            .get_fe()
-            .degree,
-          std::round(std::cbrt(nQuadsPerCell)),
           d_basisOperationsPtrElectroHost->matrixFreeData(),
           currentBinDofHandlerId,
           d_smearedChargeQuadratureIdElectro);
@@ -1802,24 +1792,34 @@ namespace dftfe
       d_basisOperationsPtrElectroHost->nQuadsPerCell();
 
 
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       xDensityOutDataOut;
-    std::unordered_map<xcRemainderOutputDataAttributes, std::vector<double>>
+    std::unordered_map<
+      xcRemainderOutputDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       cDensityOutDataOut;
 
-    std::vector<double> &xEnergyDensityOut =
-      xDensityOutDataOut[xcRemainderOutputDataAttributes::e];
-    std::vector<double> &cEnergyDensityOut =
-      cDensityOutDataOut[xcRemainderOutputDataAttributes::e];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &xEnergyDensityOut =
+        xDensityOutDataOut[xcRemainderOutputDataAttributes::e];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &cEnergyDensityOut =
+        cDensityOutDataOut[xcRemainderOutputDataAttributes::e];
 
-    std::vector<double> &pdexDensityOutSpinUp =
-      xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
-    std::vector<double> &pdexDensityOutSpinDown =
-      xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
-    std::vector<double> &pdecDensityOutSpinUp =
-      cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
-    std::vector<double> &pdecDensityOutSpinDown =
-      cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &pdexDensityOutSpinUp =
+        xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &pdexDensityOutSpinDown =
+        xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &pdecDensityOutSpinUp =
+        cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &pdecDensityOutSpinDown =
+        cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
     bool isIntegrationByPartsGradDensityDependenceVxc =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
@@ -1828,9 +1828,11 @@ namespace dftfe
     if (isIntegrationByPartsGradDensityDependenceVxc)
       {
         xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
-          std::vector<double>();
+          dftfe::utils::MemoryStorage<double,
+                                      dftfe::utils::MemorySpace::HOST>();
         cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
-          std::vector<double>();
+          dftfe::utils::MemoryStorage<double,
+                                      dftfe::utils::MemorySpace::HOST>();
       }
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -1856,22 +1858,32 @@ namespace dftfe
           xDensityOutDataOut,
           cDensityOutDataOut);
 
-        std::vector<double> &xEnergyDensityOut =
-          xDensityOutDataOut[xcRemainderOutputDataAttributes::e];
-        std::vector<double> &cEnergyDensityOut =
-          cDensityOutDataOut[xcRemainderOutputDataAttributes::e];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &xEnergyDensityOut =
+            xDensityOutDataOut[xcRemainderOutputDataAttributes::e];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &cEnergyDensityOut =
+            cDensityOutDataOut[xcRemainderOutputDataAttributes::e];
 
-        std::vector<double> &pdexDensityOutSpinUp =
+        dftfe::utils::MemoryStorage<
+          double,
+          dftfe::utils::MemorySpace::HOST> &pdexDensityOutSpinUp =
           xDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
-        std::vector<double> &pdexDensityOutSpinDown = xDensityOutDataOut
-          [xcRemainderOutputDataAttributes::pdeDensitySpinDown];
-        std::vector<double> &pdecDensityOutSpinUp =
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdexDensityOutSpinDown = xDensityOutDataOut
+            [xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+        dftfe::utils::MemoryStorage<
+          double,
+          dftfe::utils::MemorySpace::HOST> &pdecDensityOutSpinUp =
           cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
-        std::vector<double> &pdecDensityOutSpinDown = cDensityOutDataOut
-          [xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdecDensityOutSpinDown = cDensityOutDataOut
+            [xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
-        std::vector<double> pdexDensityOutSigma;
-        std::vector<double> pdecDensityOutSigma;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          pdexDensityOutSigma;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          pdecDensityOutSigma;
         if (isIntegrationByPartsGradDensityDependenceVxc)
           {
             pdexDensityOutSigma =
@@ -1880,11 +1892,16 @@ namespace dftfe
               cDensityOutDataOut[xcRemainderOutputDataAttributes::pdeSigma];
           }
 
-        std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
-                             densityXCOutData;
-        std::vector<double> &gradDensityXCOutSpinUp =
-          densityXCOutData[DensityDescriptorDataAttributes::gradValuesSpinUp];
-        std::vector<double> &gradDensityXCOutSpinDown =
+        std::unordered_map<
+          DensityDescriptorDataAttributes,
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          densityXCOutData;
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &gradDensityXCOutSpinUp =
+            densityXCOutData[DensityDescriptorDataAttributes::gradValuesSpinUp];
+        dftfe::utils::MemoryStorage<
+          double,
+          dftfe::utils::MemorySpace::HOST> &gradDensityXCOutSpinDown =
           densityXCOutData[DensityDescriptorDataAttributes::gradValuesSpinDown];
 
         if (isIntegrationByPartsGradDensityDependenceVxc)

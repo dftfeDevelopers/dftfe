@@ -12,8 +12,10 @@ namespace dftfe
   {
     void
     fillDensityAttributeData(
-      std::vector<double>                       &attributeData,
-      const std::vector<double>                 &values,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &attributeData,
+      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                                                &values,
       const std::pair<dftfe::uInt, dftfe::uInt> &indexRange)
     {
       dftfe::uInt startIndex = indexRange.first;
@@ -39,7 +41,9 @@ namespace dftfe
   void
   AuxDensityMatrixFE<memorySpace>::applyLocalOperations(
     const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-    std::unordered_map<DensityDescriptorDataAttributes, std::vector<double>>
+    std::unordered_map<
+      DensityDescriptorDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &densityData)
   {
     std::pair<dftfe::uInt, dftfe::uInt> indexRangeVal;
@@ -101,7 +105,9 @@ namespace dftfe
   void
   AuxDensityMatrixFE<memorySpace>::applyLocalOperations(
     const std::pair<dftfe::uInt, dftfe::uInt> &quadIndexRange,
-    std::unordered_map<WfcDescriptorDataAttributes, std::vector<double>>
+    std::unordered_map<
+      WfcDescriptorDataAttributes,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &wfcData)
   {
     std::pair<dftfe::uInt, dftfe::uInt> indexRangeVal;
@@ -144,8 +150,10 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   AuxDensityMatrixFE<memorySpace>::evalOverlapMatrixStart(
-    const std::vector<double> &quadpts,
-    const std::vector<double> &quadWt)
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadpts,
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &quadWt)
   {
     std::string errMsg = "Not implemented";
     dftfe::utils::throwException(false, errMsg);
@@ -165,7 +173,9 @@ namespace dftfe
   AuxDensityMatrixFE<memorySpace>::projectDensityMatrixStart(
     const std::unordered_map<std::string, std::vector<dataTypes::number>>
       &projectionInputsDataType,
-    const std::unordered_map<std::string, std::vector<double>>
+    const std::unordered_map<
+      std::string,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
                     &projectionInputsReal,
     const dftfe::Int iSpin)
   {
@@ -186,13 +196,15 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   AuxDensityMatrixFE<memorySpace>::projectDensityStart(
-    const std::unordered_map<std::string, std::vector<double>>
+    const std::unordered_map<
+      std::string,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &projectionInputs)
   {
     d_quadPointsAll  = projectionInputs.find("quadpts")->second;
     d_quadWeightsAll = projectionInputs.find("quadWt")->second;
-    const std::vector<double> &densityVals =
-      projectionInputs.find("densityFunc")->second;
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      &densityVals       = projectionInputs.find("densityFunc")->second;
     const dftfe::uInt nQ = d_quadWeightsAll.size();
     d_densityValsTotalAllQuads.resize(nQ, 0);
     d_densityValsSpinUpAllQuads.resize(nQ, 0);
@@ -209,8 +221,9 @@ namespace dftfe
 
     if (projectionInputs.find("gradDensityFunc") != projectionInputs.end())
       {
-        const std::vector<double> &gradDensityVals =
-          projectionInputs.find("gradDensityFunc")->second;
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>
+          &gradDensityVals = projectionInputs.find("gradDensityFunc")->second;
         d_gradDensityValsSpinUpAllQuads.resize(nQ * 3, 0);
         d_gradDensityValsSpinDownAllQuads.resize(nQ * 3, 0);
 
@@ -227,8 +240,9 @@ namespace dftfe
 
     if (projectionInputs.find("tauFunc") != projectionInputs.end())
       {
-        const std::vector<double> &tauVals =
-          projectionInputs.find("tauFunc")->second;
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>
+          &tauVals = projectionInputs.find("tauFunc")->second;
         d_tauValsTotalAllQuads.resize(nQ, 0);
         d_tauValsSpinUpAllQuads.resize(nQ, 0);
         d_tauValsSpinDownAllQuads.resize(nQ, 0);

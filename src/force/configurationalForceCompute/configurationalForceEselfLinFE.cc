@@ -152,8 +152,6 @@ namespace dftfe
           vselfBinsManagerElectro.getAtomIdsBins();
 
         FEEvaluationWrapperClass<3> forceEvalSmearedCharge(
-          -1,
-          1,
           matrixFreeDataElectro,
           d_forceDofHandlerIndexElectro,
           smearedChargeQuadratureId);
@@ -190,8 +188,6 @@ namespace dftfe
                 iBin >= kptGroupLowHighPlusOneIndices[2 * kptGroupTaskId])
               {
                 FEEvaluationWrapperClass<1> vselfEvalSmearedCharge(
-                  -1,
-                  1,
                   matrixFreeDataElectro,
                   dftPtr->d_binsStartDofHandlerIndexElectro + 4 * iBin,
                   smearedChargeQuadratureId);

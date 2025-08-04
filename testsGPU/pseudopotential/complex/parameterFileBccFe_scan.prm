@@ -21,6 +21,7 @@ end
 
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=5
+  set DENSITY QUADRATURE RULE = 8
   subsection Auto mesh generation parameters
     set MESH SIZE AROUND ATOM = 1.0
     set ATOM BALL RADIUS=10.0
