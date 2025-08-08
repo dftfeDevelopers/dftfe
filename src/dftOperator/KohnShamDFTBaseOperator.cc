@@ -697,19 +697,23 @@ namespace dftfe
       &pdecDensitySpinDown =
         cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
 
-    pdexDensitySpinUp.resize(nCellsPerBatch * totalLocallyOwnedCells, 0.0);
-    pdecDensitySpinUp.resize(nCellsPerBatch * totalLocallyOwnedCells, 0.0);
-    pdexDensitySpinDown.resize(nCellsPerBatch * totalLocallyOwnedCells, 0.0);
-    pdecDensitySpinDown.resize(nCellsPerBatch * totalLocallyOwnedCells, 0.0);
+    pdexDensitySpinUp.resize(numberQuadraturePointsPerCell * nCellsPerBatch,
+                             0.0);
+    pdecDensitySpinUp.resize(numberQuadraturePointsPerCell * nCellsPerBatch,
+                             0.0);
+    pdexDensitySpinDown.resize(numberQuadraturePointsPerCell * nCellsPerBatch,
+                               0.0);
+    pdecDensitySpinDown.resize(numberQuadraturePointsPerCell * nCellsPerBatch,
+                               0.0);
 
     if (isGGA)
       {
         xDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
           dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
-            3 * nCellsPerBatch * totalLocallyOwnedCells, 0.0);
+            3 * numberQuadraturePointsPerCell * nCellsPerBatch, 0.0);
         cDataOut[xcRemainderOutputDataAttributes::pdeSigma] =
           dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
-            3 * nCellsPerBatch * totalLocallyOwnedCells, 0.0);
+            3 * numberQuadraturePointsPerCell * nCellsPerBatch, 0.0);
       }
     if (isTauMGGA)
       {
