@@ -14,7 +14,7 @@ Installation instructions
 DFT-FE code builds on top of the deal.II library for everything that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
 The steps to install the necessary dependencies and DFT-FE itself are described in the *Installation* section of the DFT-FE manual (download the release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-release.pdf)). 
 
-We have created several shell based installation scripts for the development version of DFT-FE (`publicGithubDevelop` branch) on various machines:
+We have created several shell based installation scripts for the current release version of DFT-FE (`release(*)` branch) on various machines:
   - [OLCF Frontier](https://github.com/dftfeDevelopers/install_DFTFE/tree/frontierRelease)
   - [NERSC Perlmutter](https://github.com/dftfeDevelopers/install_DFTFE/tree/perlmutterRelease)
   - [UMICH Greatlakes](https://github.com/dftfeDevelopers/install_DFTFE/tree/greatlakesRelease)
