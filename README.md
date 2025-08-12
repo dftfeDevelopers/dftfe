@@ -25,8 +25,7 @@ We have created several shell based installation scripts for the development ver
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). Beyond the demo examples in the manual, we also refer to our [benchmarks repository](https://github.com/dftfeDevelopers/dftfe-benchmarks) which contains several accuracy and performance benchmarks on a range of system sizes.
-
+Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (download the development version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-develop.pdf)). Beyond the demo examples in the manual, we also refer to our [benchmarks repository](https://github.com/dftfeDevelopers/dftfe-benchmarks/tree/master) which contains several accuracy benchmarks demonstrating the various capabilites of DFT-FE such as different boundary conditions, XC functionals (GGA, MGGA, DFT+U), calculations on magnetic materials, structural relaxation and Nudged Elastic Band calculations. Further, several post-processing capabilites such as band-structure and density of states are demonstrated. The same repository also includes performance benchmarks on a range of system sizes.
 
 Contributing to DFT-FE
 ----------------------
