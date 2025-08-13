@@ -30,6 +30,7 @@
 #ifdef DFTFE_WITH_DEVICE
 #  include <DeviceKernelLauncherHelpers.h>
 #  include <DeviceDataTypeOverloads.h>
+#  include <DeviceTypeConfigHalfPrec.h>
 #  include <MPICommunicatorP2PKernels.h>
 #  include <Exceptions.h>
 #  include <complex>

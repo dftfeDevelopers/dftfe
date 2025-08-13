@@ -20,8 +20,6 @@
 #include <hip/hip_runtime.h>
 #include <hip/hip_complex.h>
 #include <hipblas.h>
-#include <hip/hip_fp16.h>
-#include <hip/hip_bf16.h>
 namespace dftfe
 {
   namespace utils
@@ -31,8 +29,6 @@ namespace dftfe
     typedef hipEvent_t       deviceEvent_t;
     typedef hipDoubleComplex deviceDoubleComplex;
     typedef hipFloatComplex  deviceFloatComplex;
-    typedef __hip_bfloat16   __device_bfloat16;
-    typedef __hip_bfloat162  __device_bfloat162;
 
     // static consts
     static const deviceError_t deviceSuccess = hipSuccess;
