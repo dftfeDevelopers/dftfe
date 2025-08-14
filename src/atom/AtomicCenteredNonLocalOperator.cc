@@ -60,11 +60,13 @@ namespace dftfe
     d_memoryOptMode          = memOptMode;
     d_floatingNuclearCharges = floatingNuclearCharges;
     d_useGlobalCMatrix       = useGlobalCMatrix;
-    d_cellsBlockSize         = 0;
-    d_numCellBatches         = 0;
-    d_wfcStartPointer        = NULL;
-    d_computeIonForces       = computeIonForces && floatingNuclearCharges;
-    d_computeCellStress      = computeCellStress && floatingNuclearCharges;
+#if defined(DFTFE_WITH_DEVICE)
+    d_cellsBlockSize  = 0;
+    d_numCellBatches  = 0;
+    d_wfcStartPointer = NULL;
+#endif
+    d_computeIonForces  = computeIonForces && floatingNuclearCharges;
+    d_computeCellStress = computeCellStress && floatingNuclearCharges;
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -194,8 +196,10 @@ namespace dftfe
     const dftfe::uInt quadratureIndex)
   {
     d_locallyOwnedCells = basisOperationsPtr->nCells();
+#if defined(DFTFE_WITH_DEVICE)
     d_elementIdToNonLocalElementIdMap.clear();
     d_elementIdToNonLocalElementIdMap.resize(d_locallyOwnedCells);
+#endif
     basisOperationsPtr->reinit(0, 0, quadratureIndex);
     const dftfe::uInt numberAtomsOfInterest =
       d_atomCenteredSphericalFunctionContainer->getNumAtomCentersSize();
@@ -1433,8 +1437,10 @@ namespace dftfe
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
               waveFunctionBlockSize,
               sphericalFunctionKetTimesVectorParFlattened);
+#if defined(DFTFE_WITH_DEVICE)
             d_distributedVectorCconjTransX =
               sphericalFunctionKetTimesVectorParFlattened.begin();
+#endif
             d_sphericalFnTimesWavefunMatrix.clear();
             const std::vector<dftfe::uInt> atomIdsInProcessor =
               d_atomCenteredSphericalFunctionContainer
@@ -2289,11 +2295,13 @@ namespace dftfe
   {
     if (d_totalNonLocalEntries > 0)
       {
+#if defined(DFTFE_WITH_DEVICE)
         AssertThrow(
           sphericalFunctionKetTimesVectorParFlattened.begin() ==
             d_distributedVectorCconjTransX,
           dealii::ExcMessage(
             "DFT-FE Error: applyVOnCconjtransX can only be called with distributed vector of CconjTransX"));
+#endif
 
         if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
           {
@@ -3628,8 +3636,8 @@ namespace dftfe
                 d_cellHamMatrixTimesWaveMatrixNonLocalDevice,
                 Xout);
           }
-#endif
       }
+#endif
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -4963,8 +4971,10 @@ namespace dftfe
     const dftfe::uInt quadratureIndex)
   {
     d_locallyOwnedCells = basisOperationsPtr->nCells();
+#if defined(DFTFE_WITH_DEVICE)
     d_elementIdToNonLocalElementIdMap.clear();
     d_elementIdToNonLocalElementIdMap.resize(d_locallyOwnedCells);
+#endif
     basisOperationsPtr->reinit(0, 0, quadratureIndex);
     const dftfe::uInt numberAtomsOfInterest =
       d_atomCenteredSphericalFunctionContainer->getNumAtomCentersSize();

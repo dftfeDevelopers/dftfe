@@ -209,6 +209,7 @@ namespace dftfe
              ++spinIndex)
           couplingMatrixPtrs.push_back(
             &(d_pseudopotentialClassPtr->getCouplingMatrix()));
+        // eqn 34(full) and 35(nloc term only)
         computeWfcContribNloc(
           d_pseudopotentialClassPtr->getNonLocalOperator(),
           CouplingStructure::diagonal,
@@ -255,6 +256,7 @@ namespace dftfe
           computeForce,
           computeStress);
       }
+    // only the wfc parts in eqn 33 and 35
     computeWfcContribLocal(numEigenValues,
                            kPointCoords,
                            kPointWeights,
@@ -262,8 +264,10 @@ namespace dftfe
                            eigenValues,
                            partialOccupancies,
                            floatingNuclearCharges,
+                           auxDensityXCOutRepresentationPtr,
                            computeForce,
                            computeStress);
+    // terms conatining f_xc in eqn 33 and nlcc terms. Not in paper
     computeXCContribAll(atomLocations,
                         imageIds,
                         imagePositions,
@@ -286,6 +290,7 @@ namespace dftfe
                           d_AtomIdBinIdLocalDofHandlerElectro,
                           d_cellFacesVselfBallSurfacesDofHandlerElectro,
                           d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
+    //(v_loc-v_self)rho and f_ext,corr fully in eqn 36
     computeLPSPContribAll(atomLocations,
                           imageIds,
                           imageCharges,
@@ -301,6 +306,7 @@ namespace dftfe
                           floatingNuclearCharges,
                           computeForce,
                           computeStress);
+    // Eq 37 full
     computeSmearedContribAll(atomLocations,
                              imagePositions,
                              vselfBinsManager,
@@ -312,11 +318,13 @@ namespace dftfe
                              floatingNuclearCharges,
                              computeForce,
                              computeStress);
+    // All the terms conatining V_el in 33
     computeElectroContribEshelby(phiTotRhoOutValues,
                                  densityOutValuesSpinPolarized[0],
                                  floatingNuclearCharges,
                                  computeForce,
                                  computeStress);
+    /// Eqn 32 full
     computeESelfContribEshelby(atomLocations,
                                imageIds,
                                imageCharges,
@@ -510,8 +518,10 @@ namespace dftfe
     const std::vector<std::vector<double>> &eigenValues,
     const std::vector<std::vector<double>> &partialOccupancies,
     const bool                              floatingNuclearCharges,
-    const bool                              computeForce,
-    const bool                              computeStress)
+    const std::shared_ptr<AuxDensityMatrix<memorySpace>>
+               auxDensityXCOutRepresentationPtr,
+    const bool computeForce,
+    const bool computeStress)
   {
     std::vector<double> StressLocContrib(9, 0.0);
     d_basisOperationsPtr->reinit(0, 0, d_densityQuadratureId);
@@ -522,6 +532,117 @@ namespace dftfe
     const dftfe::uInt nQuadsPerCell = d_basisOperationsPtr->nQuadsPerCell();
     const dftfe::uInt numLocalDofs  = d_basisOperationsPtr->nOwnedDofs();
     const dftfe::uInt totalLocallyOwnedCells = d_basisOperationsPtr->nCells();
+
+    const bool isTauMGGA =
+      (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
+       ExcFamilyType::TauMGGA);
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdexTauLocallyOwnedCellsHost;
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      pdecTauLocallyOwnedCellsHost;
+
+    if (isTauMGGA)
+      {
+        pdexTauLocallyOwnedCellsHost.resize(2 * nCells * nQuadsPerCell, 0.0);
+        pdecTauLocallyOwnedCellsHost.resize(2 * nCells * nQuadsPerCell, 0.0);
+
+        std::unordered_map<
+          xcRemainderOutputDataAttributes,
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          xDataOut;
+        std::unordered_map<
+          xcRemainderOutputDataAttributes,
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          cDataOut;
+
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdexDensitySpinUp =
+            xDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdexDensitySpinDown =
+            xDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdecDensitySpinUp =
+            cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinUp];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdecDensitySpinDown =
+            cDataOut[xcRemainderOutputDataAttributes::pdeDensitySpinDown];
+
+
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdexSigma = xDataOut[xcRemainderOutputDataAttributes::pdeSigma];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdecSigma = cDataOut[xcRemainderOutputDataAttributes::pdeSigma];
+
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdexTauSpinUp =
+            xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdexTauSpinDown =
+            xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdecTauSpinUp =
+            cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp];
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &pdecTauSpinDown =
+            cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown];
+
+
+        pdexDensitySpinUp.resize(nQuadsPerCell, 0.0);
+        pdexDensitySpinDown.resize(nQuadsPerCell, 0.0);
+        pdexSigma.resize(3 * nQuadsPerCell, 0.0);
+        pdexTauSpinUp.resize(nQuadsPerCell, 0.0);
+        pdexTauSpinDown.resize(nQuadsPerCell, 0.0);
+
+        pdecDensitySpinUp.resize(nQuadsPerCell, 0.0);
+        pdecDensitySpinDown.resize(nQuadsPerCell, 0.0);
+        pdecSigma.resize(3 * nQuadsPerCell, 0.0);
+        pdecTauSpinUp.resize(nQuadsPerCell, 0.0);
+        pdecTauSpinDown.resize(nQuadsPerCell, 0.0);
+
+
+        for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+          {
+            d_excManagerPtr->getExcSSDFunctionalObj()
+              ->computeRhoTauDependentXCData(
+                *auxDensityXCOutRepresentationPtr,
+                std::make_pair(iCell * nQuadsPerCell,
+                               (iCell + 1) * nQuadsPerCell),
+                xDataOut,
+                cDataOut);
+
+            d_BLASWrapperPtrHost->xcopy(
+              nQuadsPerCell,
+              &xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp][0],
+              1,
+              &pdexTauLocallyOwnedCellsHost[iCell * nQuadsPerCell],
+              1);
+
+            d_BLASWrapperPtrHost->xcopy(
+              nQuadsPerCell,
+              &xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown][0],
+              1,
+              &pdexTauLocallyOwnedCellsHost[nCells * nQuadsPerCell +
+                                            iCell * nQuadsPerCell],
+              1);
+
+            d_BLASWrapperPtrHost->xcopy(
+              nQuadsPerCell,
+              &cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp][0],
+              1,
+              &pdecTauLocallyOwnedCellsHost[iCell * nQuadsPerCell],
+              1);
+
+            d_BLASWrapperPtrHost->xcopy(
+              nQuadsPerCell,
+              &cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown][0],
+              1,
+              &pdecTauLocallyOwnedCellsHost[nCells * nQuadsPerCell +
+                                            iCell * nQuadsPerCell],
+              1);
+          }
+      }
 
     const dftfe::uInt cellsBlockSize =
       memorySpace == dftfe::utils::MemorySpace::DEVICE ?
@@ -578,10 +699,16 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace> eigenValuesVec(
       eigenValuesVecHost.size());
     dftfe::utils::MemoryStorage<double, memorySpace> kCoord(kCoordHost.size());
+    dftfe::utils::MemoryStorage<double, memorySpace> pdexTauLocallyOwnedCells(
+      pdexTauLocallyOwnedCellsHost.size());
+    dftfe::utils::MemoryStorage<double, memorySpace> pdecTauLocallyOwnedCells(
+      pdecTauLocallyOwnedCellsHost.size());
 #else
-    auto &partialOccupVec     = partialOccupVecHost;
-    auto &eigenValuesVec      = eigenValuesVecHost;
-    auto &kCoord              = kCoordHost;
+    auto &partialOccupVec          = partialOccupVecHost;
+    auto &eigenValuesVec           = eigenValuesVecHost;
+    auto &kCoord                   = kCoordHost;
+    auto &pdexTauLocallyOwnedCells = pdexTauLocallyOwnedCellsHost;
+    auto &pdecTauLocallyOwnedCells = pdecTauLocallyOwnedCellsHost;
 #endif
     for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
@@ -622,6 +749,13 @@ namespace dftfe
                     partialOccupVec.copyFrom(partialOccupVecHost);
                     eigenValuesVec.copyFrom(eigenValuesVecHost);
                     kCoord.copyFrom(kCoordHost);
+                    if (isTauMGGA)
+                      {
+                        pdexTauLocallyOwnedCells.copyFrom(
+                          pdexTauLocallyOwnedCellsHost);
+                        pdecTauLocallyOwnedCells.copyFrom(
+                          pdecTauLocallyOwnedCellsHost);
+                      }
 #endif
                     d_BLASWrapperPtr->stridedCopyToBlockConstantStride(
                       currentBlockSize,
@@ -681,6 +815,15 @@ namespace dftfe
                               eshelbyContributions.data(),
                               eshelbyTensor.data(),
                               floatingNuclearCharges,
+                              isTauMGGA,
+                              isTauMGGA ? pdexTauLocallyOwnedCells.data() +
+                                            spinIndex * nCells * nQuadsPerCell +
+                                            startingCellId * nQuadsPerCell :
+                                          NULL,
+                              isTauMGGA ? pdecTauLocallyOwnedCells.data() +
+                                            spinIndex * nCells * nQuadsPerCell +
+                                            startingCellId * nQuadsPerCell :
+                                          NULL,
                               computeForce,
                               computeStress);
                             eshelbyTensorHost.copyFrom(eshelbyTensor);
@@ -2228,8 +2371,8 @@ namespace dftfe
       sqrtPartialOccupVecHost.size());
     dftfe::utils::MemoryStorage<double, memorySpace> kCoord(kCoordHost.size());
 #else
-    auto &sqrtPartialOccupVec = sqrtPartialOccupVecHost;
-    auto &kCoord              = kCoordHost;
+    auto &sqrtPartialOccupVec      = sqrtPartialOccupVecHost;
+    auto &kCoord                   = kCoordHost;
 #endif
     for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
@@ -2800,6 +2943,9 @@ namespace dftfe
     double                                   *eshelbyContributions,
     double                                   *eshelbyTensor,
     const bool                                floatingNuclearCharges,
+    const bool                                isTauMGGA,
+    double                                   *pdexTauLocallyOwnedCellsBlock,
+    double                                   *pdecTauLocallyOwnedCellsBlock,
     const bool                                computeForce,
     const bool                                computeStress)
   {
@@ -2813,89 +2959,98 @@ namespace dftfe
       kcoord[0] * kcoord[0] + kcoord[1] * kcoord[1] + kcoord[2] * kcoord[2];
     for (dftfe::uInt iCell = 0; iCell < cellsBlockSize; iCell++)
       for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; iQuad++)
-        for (dftfe::uInt iWfc = 0; iWfc < wfcBlockSize; iWfc++)
-          {
-            const dataTypes::number psiQuad =
-              wfcQuadPointData[iCell * nQuadsPerCell * wfcBlockSize +
-                               iQuad * wfcBlockSize + iWfc];
-            const double partOcc    = partialOccupVec[iWfc];
-            const double eigenValue = eigenValuesVec[iWfc];
+        {
+          double pdexcTau = 0.0;
+          if (isTauMGGA)
+            pdexcTau =
+              pdexTauLocallyOwnedCellsBlock[iCell * nQuadsPerCell + iQuad] +
+              pdecTauLocallyOwnedCellsBlock[iCell * nQuadsPerCell + iQuad];
+          for (dftfe::uInt iWfc = 0; iWfc < wfcBlockSize; iWfc++)
+            {
+              const dataTypes::number psiQuad =
+                wfcQuadPointData[iCell * nQuadsPerCell * wfcBlockSize +
+                                 iQuad * wfcBlockSize + iWfc];
+              const double partOcc    = partialOccupVec[iWfc];
+              const double eigenValue = eigenValuesVec[iWfc];
 
-            std::vector<dataTypes::number> gradPsiQuad(3);
-            gradPsiQuad[0] =
-              gradWfcQuadPointData[iCell * 3 * nQuadsPerCell * wfcBlockSize +
-                                   iQuad * wfcBlockSize + iWfc];
-            gradPsiQuad[1] =
-              gradWfcQuadPointData[iCell * 3 * nQuadsPerCell * wfcBlockSize +
-                                   nQuadsPerCell * wfcBlockSize +
-                                   iQuad * wfcBlockSize + iWfc];
+              std::vector<dataTypes::number> gradPsiQuad(3);
+              gradPsiQuad[0] =
+                gradWfcQuadPointData[iCell * 3 * nQuadsPerCell * wfcBlockSize +
+                                     iQuad * wfcBlockSize + iWfc];
+              gradPsiQuad[1] =
+                gradWfcQuadPointData[iCell * 3 * nQuadsPerCell * wfcBlockSize +
+                                     nQuadsPerCell * wfcBlockSize +
+                                     iQuad * wfcBlockSize + iWfc];
 
-            gradPsiQuad[2] =
-              gradWfcQuadPointData[iCell * 3 * nQuadsPerCell * wfcBlockSize +
-                                   2 * nQuadsPerCell * wfcBlockSize +
-                                   iQuad * wfcBlockSize + iWfc];
+              gradPsiQuad[2] =
+                gradWfcQuadPointData[iCell * 3 * nQuadsPerCell * wfcBlockSize +
+                                     2 * nQuadsPerCell * wfcBlockSize +
+                                     iQuad * wfcBlockSize + iWfc];
 
-            const double identityFactor =
-              0.5 * partOcc *
-                dftfe::utils::realPart(
-                  (dftfe::utils::complexConj(gradPsiQuad[0]) * gradPsiQuad[0] +
-                   dftfe::utils::complexConj(gradPsiQuad[1]) * gradPsiQuad[1] +
-                   dftfe::utils::complexConj(gradPsiQuad[2]) * gradPsiQuad[2] +
-                   dataTypes::number(absksq - 2.0 * eigenValue) *
-                     dftfe::utils::complexConj(psiQuad) * psiQuad)) +
-              partOcc *
-                dftfe::utils::imagPart(dftfe::utils::complexConj(psiQuad) *
-                                       (kcoord[0] * gradPsiQuad[0] +
-                                        kcoord[1] * gradPsiQuad[1] +
-                                        kcoord[2] * gradPsiQuad[2]));
-            for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
-              for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
-                {
-                  eshelbyContributions[iCell * nQuadsPerCell * 9 *
-                                         wfcBlockSize +
-                                       iQuad * 9 * wfcBlockSize +
-                                       iDim * 3 * wfcBlockSize +
-                                       jDim * wfcBlockSize + iWfc] =
-                    -0.5 * partOcc *
-                      dftfe::utils::realPart(
-                        dftfe::utils::complexConj(gradPsiQuad[iDim]) *
-                          gradPsiQuad[jDim] +
-                        gradPsiQuad[iDim] *
-                          dftfe::utils::complexConj(gradPsiQuad[jDim])) -
-                    partOcc * dftfe::utils::imagPart(
-                                dftfe::utils::complexConj(psiQuad) *
-                                (gradPsiQuad[iDim] * kcoord[jDim]));
-
-                  if (iDim == jDim)
+              const double identityFactor =
+                0.5 * partOcc *
+                  dftfe::utils::realPart((
+                    dftfe::utils::complexConj(gradPsiQuad[0]) * gradPsiQuad[0] +
+                    dftfe::utils::complexConj(gradPsiQuad[1]) * gradPsiQuad[1] +
+                    dftfe::utils::complexConj(gradPsiQuad[2]) * gradPsiQuad[2] +
+                    dataTypes::number(absksq - 2.0 * eigenValue) *
+                      dftfe::utils::complexConj(psiQuad) * psiQuad)) +
+                partOcc *
+                  dftfe::utils::imagPart(dftfe::utils::complexConj(psiQuad) *
+                                         (kcoord[0] * gradPsiQuad[0] +
+                                          kcoord[1] * gradPsiQuad[1] +
+                                          kcoord[2] * gradPsiQuad[2]));
+              for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+                for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
+                  {
                     eshelbyContributions[iCell * nQuadsPerCell * 9 *
                                            wfcBlockSize +
                                          iQuad * 9 * wfcBlockSize +
                                          iDim * 3 * wfcBlockSize +
-                                         jDim * wfcBlockSize + iWfc] +=
-                      identityFactor;
-                }
-#ifdef USE_COMPLEX
-            if (computeStress)
-              {
-                for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
-                  for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
-                    {
+                                         jDim * wfcBlockSize + iWfc] =
+                      -0.5 * partOcc * (1 + pdexcTau) *
+                        dftfe::utils::realPart(
+                          dftfe::utils::complexConj(gradPsiQuad[iDim]) *
+                            gradPsiQuad[jDim] +
+                          gradPsiQuad[iDim] *
+                            dftfe::utils::complexConj(gradPsiQuad[jDim])) -
+                      partOcc * (1 + pdexcTau) *
+                        dftfe::utils::imagPart(
+                          dftfe::utils::complexConj(psiQuad) *
+                          (gradPsiQuad[iDim] * kcoord[jDim]));
+
+                    if (iDim == jDim)
                       eshelbyContributions[iCell * nQuadsPerCell * 9 *
                                              wfcBlockSize +
                                            iQuad * 9 * wfcBlockSize +
                                            iDim * 3 * wfcBlockSize +
                                            jDim * wfcBlockSize + iWfc] +=
-                        -partOcc * dftfe::utils::imagPart(
-                                     dftfe::utils::complexConj(psiQuad) *
-                                     (kcoord[iDim] * gradPsiQuad[jDim])) -
-                        partOcc *
-                          dftfe::utils::realPart(
-                            kcoord[iDim] * kcoord[jDim] *
-                            dftfe::utils::complexConj(psiQuad) * psiQuad);
-                    }
-              }
+                        identityFactor;
+                  }
+#ifdef USE_COMPLEX
+              if (computeStress)
+                {
+                  for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+                    for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
+                      {
+                        eshelbyContributions[iCell * nQuadsPerCell * 9 *
+                                               wfcBlockSize +
+                                             iQuad * 9 * wfcBlockSize +
+                                             iDim * 3 * wfcBlockSize +
+                                             jDim * wfcBlockSize + iWfc] +=
+                          -partOcc * (1 + pdexcTau) *
+                            dftfe::utils::imagPart(
+                              dftfe::utils::complexConj(psiQuad) *
+                              (kcoord[iDim] * gradPsiQuad[jDim])) -
+                          partOcc * (1 + pdexcTau) *
+                            dftfe::utils::realPart(
+                              kcoord[iDim] * kcoord[jDim] *
+                              dftfe::utils::complexConj(psiQuad) * psiQuad);
+                      }
+                }
 #endif
-          }
+            }
+        }
     const double scalarCoeffAlphaEshelby = 1.0;
     const double scalarCoeffBetaEshelby  = 0.0;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>

@@ -169,8 +169,10 @@ namespace dftfe
       const std::vector<std::vector<double>> &eigenValues,
       const std::vector<std::vector<double>> &partialOccupancies,
       const bool                              floatingNuclearCharges,
-      const bool                              computeForce,
-      const bool                              computeStress);
+      const std::shared_ptr<AuxDensityMatrix<memorySpace>>
+                 auxDensityXCOutRepresentationPtr,
+      const bool computeForce,
+      const bool computeStress);
 
     void
     computeElectroContribEshelby(
@@ -393,6 +395,9 @@ namespace dftfe
     double                                   *eshelbyContributions,
     double                                   *eshelbyTensor,
     const bool                                floatingNuclearCharges,
+    const bool                                isTauMGGA,
+    double                                   *pdexTauLocallyOwnedCellsBlock,
+    double                                   *pdecTauLocallyOwnedCellsBlock,
     const bool                                computeForce,
     const bool                                computeStress);
 

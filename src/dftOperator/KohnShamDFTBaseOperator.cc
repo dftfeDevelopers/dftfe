@@ -899,8 +899,7 @@ namespace dftfe
             std::is_same<dataTypes::number, std::complex<double>>::value)
           {
             // The Hamiltonian operator for the MGGA case is dependent on the k
-            // point. All the GGA calculations are done inside the condition
-            // (kPointIndex == 0)
+            // point.
             dftfe::uInt offsetFactor = 0;
             for (dftfe::uInt kPointIndex = 0;
                  kPointIndex < d_kPointWeights.size();
