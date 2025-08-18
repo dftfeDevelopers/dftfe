@@ -21,6 +21,7 @@
 #  include <vector>
 #  include <DeviceDataTypeOverloads.h>
 #  include <DeviceKernelLauncherHelpers.h>
+#  include <DeviceTypeConfigHalfPrec.h>
 #  include <Exceptions.h>
 namespace dftfe
 {

@@ -16,14 +16,98 @@
 //
 #ifndef dftfeDeviceTypeConfigHalfPrec_hiph
 #define dftfeDeviceTypeConfigHalfPrec_hiph
+#include <complex>
+#include <hip/hip_complex.h>
 #include <hip/hip_fp16.h>
 #include <hip/hip_bf16.h>
 namespace dftfe
 {
   namespace utils
   {
-    typedef __hip_bfloat16   __device_bfloat16;
-    typedef __hip_bfloat162  __device_bfloat162;
+    typedef __hip_bfloat16  __device_bfloat16;
+    typedef __hip_bfloat162 __device_bfloat162;
+
+    __forceinline__ __device__ void
+    copyValue(__hip_bfloat16 *a, const float b)
+    {
+      *a = __float2bfloat16(b);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(__hip_bfloat16 *a, const double b)
+    {
+      *a = __float2bfloat16((float)b);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(__hip_bfloat162 *a, const hipFloatComplex b)
+    {
+      a->x = __float2bfloat16(b.x);
+      a->y = __float2bfloat16(b.y);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(__hip_bfloat162 *a, const hipDoubleComplex b)
+    {
+      a->x = __float2bfloat16((float)b.x);
+      a->y = __float2bfloat16((float)b.y);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(hipFloatComplex *a, const __hip_bfloat162 b)
+
+    {
+      a->x = __bfloat162float(b.x);
+      a->y = __bfloat162float(b.y);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(hipDoubleComplex *a, const __hip_bfloat162 b)
+    {
+      a->x = (double)__bfloat162float(b.x);
+      a->y = (double)__bfloat162float(b.y);
+    }
+
+    // uint16_t saves bits only
+    // not for arithmetic operations
+
+    inline __hip_bfloat16
+    makeDataTypeDeviceCompatible(uint16_t a)
+    {
+      return __hip_bfloat16{__hip_bfloat16_raw{a}};
+    }
+
+    inline __hip_bfloat16 *
+    makeDataTypeDeviceCompatible(uint16_t *a)
+    {
+      return reinterpret_cast<__hip_bfloat16 *>(a);
+    }
+
+    inline const __hip_bfloat16 *
+    makeDataTypeDeviceCompatible(const uint16_t *a)
+    {
+      return reinterpret_cast<const __hip_bfloat16 *>(a);
+    }
+
+    inline __hip_bfloat162
+    makeDataTypeDeviceCompatible(std::complex<uint16_t> a)
+    {
+      return __hip_bfloat162{__hip_bfloat16{__hip_bfloat16_raw{a.real()}},
+                             __hip_bfloat16{__hip_bfloat16_raw{a.imag()}}};
+    }
+
+    inline __hip_bfloat162 *
+    makeDataTypeDeviceCompatible(std::complex<uint16_t> *a)
+    {
+      return reinterpret_cast<__hip_bfloat162 *>(a);
+    }
+
+    inline const __hip_bfloat162 *
+    makeDataTypeDeviceCompatible(const std::complex<uint16_t> *a)
+    {
+      return reinterpret_cast<const __hip_bfloat162 *>(a);
+    }
+
   } // namespace utils
 } // namespace dftfe
 
