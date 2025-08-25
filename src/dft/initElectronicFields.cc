@@ -52,7 +52,12 @@ namespace dftfe
       d_densityInNodalValues[iComp] = 0;
     for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size(); ++iComp)
       d_densityOutNodalValues[iComp] = 0;
-
+    if (d_dftParamsPtr->useSymm)
+      {
+        d_tauOutNodalValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+        for (dftfe::uInt iComp = 0; iComp < d_tauOutNodalValues.size(); ++iComp)
+          d_tauOutNodalValues[iComp].reinit(d_densityInNodalValues[0]);
+      }
 
     if ((d_dftParamsPtr->reuseDensityGeoOpt == 2 &&
          d_dftParamsPtr->solverMode == "GEOOPT") ||

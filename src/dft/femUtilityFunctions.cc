@@ -105,6 +105,7 @@ namespace dftfe
       funcRho,
       nodalField);
     constraintMatrix.set_zero(nodalField);
+    constraintMatrix.distribute(nodalField);
     nodalField.update_ghost_values();
   }
   //

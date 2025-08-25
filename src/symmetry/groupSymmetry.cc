@@ -45,21 +45,16 @@ namespace dftfe
 
   void
   groupSymmetryClass::initGroupSymmetry(
-    std::shared_ptr<
-      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-                                     &BLASWrapperPtrHost,
     std::vector<std::vector<double>> &atomLocationsFractional,
     std::vector<std::vector<double>> &domainBoundingVectors,
     std::vector<bool>                &periodicBoundaryConditions,
     const bool                        isCollinearSpin)
   {
     d_numAtoms = atomLocationsFractional.size();
-    d_atomicCoordsCart.clear();
     d_atomicCoordsFrac.clear();
     d_domainBoundingVectors.clear();
     d_domainBoundingVectorsInverse.clear();
     d_periodicBoundaryConditions.clear();
-    d_atomicCoordsCart.resize(3 * d_numAtoms, 0.0);
     d_atomicCoordsFrac.resize(3 * d_numAtoms, 0.0);
     d_domainBoundingVectors.resize(9, 0.0);
     d_domainBoundingVectorsInverse.resize(9, 0.0);
@@ -96,21 +91,6 @@ namespace dftfe
     };
     d_domainBoundingVectorsInverse.resize(9, 0.0);
     d_domainBoundingVectorsInverse.copyFrom(inv3(d_domainBoundingVectors));
-    const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
-    BLASWrapperPtrHost->xgemm('N',
-                              'N',
-                              3,
-                              d_numAtoms,
-                              3,
-                              &scalarCoeffAlpha,
-                              &d_domainBoundingVectors[0],
-                              3,
-                              &d_atomicCoordsFrac[0],
-                              3,
-                              &scalarCoeffBeta,
-                              &d_atomicCoordsCart[0],
-                              3);
-
     if (d_isGroupSymmetry)
       {
         const dftfe::Int max_size = 500;
@@ -145,18 +125,19 @@ namespace dftfe
               spins[iAtom] = atomLocationsFractional[iAtom].size() == 6 ?
                                atomLocationsFractional[iAtom][5] :
                                0.0;
-            spg_get_symmetry_with_collinear_spin(rotation,
-                                                 translation,
-                                                 equivalent_atoms,
-                                                 max_size,
-                                                 lattice,
-                                                 position,
-                                                 types,
-                                                 spins,
-                                                 d_numAtoms,
-                                                 1e-5);
+            d_numSymm = spg_get_symmetry_with_collinear_spin(rotation,
+                                                             translation,
+                                                             equivalent_atoms,
+                                                             max_size,
+                                                             lattice,
+                                                             position,
+                                                             types,
+                                                             spins,
+                                                             d_numAtoms,
+                                                             1e-5);
           }
         d_symmMat.reserve(d_numSymm);
+        d_symmMatInverse.reserve(d_numSymm);
         d_translation.reserve(d_numSymm);
         dftfe::uInt numSymm = 0;
         for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
@@ -168,10 +149,12 @@ namespace dftfe
               d_translation.push_back(std::vector<double>(3, 0.0));
               for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                 for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
-                  d_symmMat.back()[jDim * 3 + kDim] =
+                  d_symmMat.back()[kDim * 3 + jDim] =
                     static_cast<double>(rotation[iSymm][jDim][kDim]);
+              d_symmMatInverse.push_back(inv3(d_symmMat.back()));
             }
         d_symmMat.shrink_to_fit();
+        d_symmMatInverse.shrink_to_fit();
         d_translation.shrink_to_fit();
         d_numSymm = d_symmMat.size();
       }
@@ -179,6 +162,7 @@ namespace dftfe
       {
         d_numSymm = 1;
         d_symmMat.resize(d_numSymm, std::vector<double>(9, 0.0));
+        d_symmMatInverse.resize(d_numSymm, std::vector<double>(9, 0.0));
         d_translation.resize(d_numSymm, std::vector<double>(3, 0.0));
         for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
           for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
@@ -186,13 +170,118 @@ namespace dftfe
               d_translation[iSymm][jDim] = 0.0;
               for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
                 d_symmMat[iSymm][jDim * 3 + kDim] = jDim == kDim ? 1.0 : 0.0;
+              for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
+                d_symmMatInverse[iSymm][jDim * 3 + kDim] =
+                  jDim == kDim ? 1.0 : 0.0;
             }
       }
-    computePointMapsFromGlobalFractionalCoordinates(
-      d_atomicCoordsFrac, dftfe::pointSet::atomicCoord, false);
+    d_symmMatCart.resize(d_numSymm, std::vector<double>(9, 0.0));
+    for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
+      {
+        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+          for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+            for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
+              for (dftfe::uInt pDim = 0; pDim < 3; ++pDim)
+                d_symmMatCart[iSymm][pDim + 3 * jDim] +=
+                  d_domainBoundingVectors[pDim + kDim * 3] *
+                  d_symmMat[iSymm][kDim + 3 * iDim] *
+                  d_domainBoundingVectorsInverse[iDim + jDim * 3];
+      }
+    if (!computeAtomIdMapsFromGlobalFractionalCoordinates(d_atomicCoordsFrac))
+      {
+        pcout << "Not all atoms found in symmetry class. " << std::endl;
+        throw std::runtime_error("Not all atoms found in symmetry class.");
+      }
   }
 
+  void
+  groupSymmetryClass::reinitGroupSymmetry(
+    std::vector<std::vector<double>> &atomLocationsFractional,
+    std::vector<std::vector<double>> &domainBoundingVectors)
+  {
+    d_atomicCoordsFrac.clear();
+    d_domainBoundingVectors.clear();
+    d_domainBoundingVectorsInverse.clear();
+    d_atomicCoordsFrac.resize(3 * d_numAtoms, 0.0);
+    d_domainBoundingVectors.resize(9, 0.0);
+    d_domainBoundingVectorsInverse.resize(9, 0.0);
+    for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
+      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+        d_atomicCoordsFrac[3 * iAtom + iDim] =
+          atomLocationsFractional[iAtom][2 + iDim] -
+          std::floor(atomLocationsFractional[iAtom][2 + iDim]);
 
+    for (dftfe::uInt iVec = 0; iVec < 3; ++iVec)
+      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+        d_domainBoundingVectors[3 * iVec + iDim] =
+          domainBoundingVectors[iVec][iDim];
+    auto inv3 = [](auto const &m) {
+      auto cross = [](std::array<double, 3> a, std::array<double, 3> b) {
+        return std::array<double, 3>{a[1] * b[2] - a[2] * b[1],
+                                     a[2] * b[0] - a[0] * b[2],
+                                     a[0] * b[1] - a[1] * b[0]};
+      };
+      auto   c0  = cross({m[3], m[4], m[5]}, {m[6], m[7], m[8]});
+      auto   c1  = cross({m[6], m[7], m[8]}, {m[0], m[1], m[2]});
+      auto   c2  = cross({m[0], m[1], m[2]}, {m[3], m[4], m[5]});
+      double det = m[0] * c0[0] + m[1] * c0[1] + m[2] * c0[2];
+      return std::vector<double>{c0[0] / det,
+                                 c1[0] / det,
+                                 c2[0] / det,
+                                 c0[1] / det,
+                                 c1[1] / det,
+                                 c2[1] / det,
+                                 c0[2] / det,
+                                 c1[2] / det,
+                                 c2[2] / det};
+    };
+    d_domainBoundingVectorsInverse.resize(9, 0.0);
+    d_domainBoundingVectorsInverse.copyFrom(inv3(d_domainBoundingVectors));
+
+    d_symmMatCart.resize(d_numSymm, std::vector<double>(9, 0.0));
+    for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
+      {
+        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+          for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+            for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
+              for (dftfe::uInt pDim = 0; pDim < 3; ++pDim)
+                d_symmMatCart[iSymm][pDim + 3 * jDim] +=
+                  d_domainBoundingVectors[pDim + kDim * 3] *
+                  d_symmMat[iSymm][kDim + 3 * iDim] *
+                  d_domainBoundingVectorsInverse[iDim + jDim * 3];
+      }
+    auto isOrthogonal = [](const std::vector<double> &m) -> bool {
+      for (int iDim = 0; iDim < 3; ++iDim)
+        {
+          for (int jDim = iDim; jDim < 3; ++jDim)
+            {
+              double dot = 0.0;
+              for (int kDim = 0; kDim < 3; ++kDim)
+                dot += m[iDim * 3 + kDim] * m[jDim * 3 + kDim];
+              double orthoVal = iDim == jDim ? 1.0 : 0.0;
+              if (std::fabs(dot - orthoVal) > 1e-6)
+                return false;
+            }
+        }
+      return true;
+    };
+    bool areSymmetriesOrthogonal = true;
+    for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
+      areSymmetriesOrthogonal =
+        areSymmetriesOrthogonal && isOrthogonal(d_symmMatCart[iSymm]);
+    if (!areSymmetriesOrthogonal)
+      {
+        pcout << "Cell symmetries are not valid in symmetry class."
+              << std::endl;
+        throw std::runtime_error(
+          "Cell symmetries are not valid in symmetry class.");
+      }
+    if (!computeAtomIdMapsFromGlobalFractionalCoordinates(d_atomicCoordsFrac))
+      {
+        pcout << "Not all atoms found in symmetry class." << std::endl;
+        throw std::runtime_error("Not all atoms found in symmetry class.");
+      }
+  }
 
   void
   groupSymmetryClass::reduceKPointGrid(
@@ -216,11 +305,11 @@ namespace dftfe
             std::vector<double> transformedKPoint = {0.0, 0.0, 0.0};
             for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
               transformedKPoint[jDim] +=
-                d_symmMat[iSymm][0 * 3 + jDim] *
+                d_symmMat[iSymm][jDim * 3 + 0] *
                   kPointCoordinatesFrac[3 * iKPoint + 0] +
-                d_symmMat[iSymm][1 * 3 + jDim] *
+                d_symmMat[iSymm][jDim * 3 + 1] *
                   kPointCoordinatesFrac[3 * iKPoint + 1] +
-                d_symmMat[iSymm][2 * 3 + jDim] *
+                d_symmMat[iSymm][jDim * 3 + 2] *
                   kPointCoordinatesFrac[3 * iKPoint + 2];
             for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
               transformedKPoint[jDim] = wrap(transformedKPoint[jDim]);
@@ -282,410 +371,139 @@ namespace dftfe
   }
 
   void
-  groupSymmetryClass::computePointMapFromLocalCartesianCoordinates(
-    std::shared_ptr<
-      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-      &BLASWrapperPtrHost,
-    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                         &localPointCoords,
-    const dftfe::pointSet pointSetType,
-    const bool            cellOrdered)
+  groupSymmetryClass::setupCommPatternForNodalField(
+    const dealii::DoFHandler<3> &dofHandler)
   {
-    int numLocalCoords = localPointCoords.size();
-    // Compute the fractional coordinates of the local points
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                 localPointCoordsFrac(numLocalCoords, 0.0);
-    const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
-    BLASWrapperPtrHost->xgemm('N',
-                              'N',
-                              3,
-                              numLocalCoords / 3,
-                              3,
-                              &scalarCoeffAlpha,
-                              &d_domainBoundingVectorsInverse[0],
-                              3,
-                              &localPointCoords[0],
-                              3,
-                              &scalarCoeffBeta,
-                              &localPointCoordsFrac[0],
-                              3);
-    for (dftfe::uInt iPoint = 0; iPoint < numLocalCoords / 3; ++iPoint)
-      for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-        localPointCoordsFrac[3 * iPoint + iDim] =
-          localPointCoordsFrac[3 * iPoint + iDim] -
-          std::floor(localPointCoordsFrac[3 * iPoint + iDim]);
+    const dealii::IndexSet &locallyOwnedNodes = dofHandler.locally_owned_dofs();
 
-    // Gather the local cell centroids from all MPI processes
-    std::vector<int> numCoordsPerMPITask(n_mpi_processes, 0);
-    numCoordsPerMPITask[this_mpi_process] = numLocalCoords;
-    MPI_Gather(&numLocalCoords,
-               1,
-               dftfe::dataTypes::mpi_type_id(&numLocalCoords),
-               numCoordsPerMPITask.data(),
-               1,
-               dftfe::dataTypes::mpi_type_id(numCoordsPerMPITask.data()),
-               0,
-               d_mpiCommDomain);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      globalPointCoordsFrac;
-    if (this_mpi_process == 0)
+    auto nodalCoordinates =
+      dealii::DoFTools::map_dofs_to_support_points(mapping, dofHandler);
+
+    requiredPointCoordinates.reserve(d_numSymm * nodalCoordinates.size());
+    localDoFIndexToPointIndexMap.resize(d_numSymm);
+    for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
+      for (dealii::IndexSet::ElementIterator it = locallyOwnedNodes.begin();
+           it != locallyOwnedNodes.end();
+           it++)
+        {
+          const dealii::Point<3> &currentNodeCoordinatesCart =
+            nodalCoordinates.find(*it)->second;
+
+          dealii::Point<3> currentNodeCoordinatesFrac(0, 0, 0);
+          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+              currentNodeCoordinatesFrac[iDim] +=
+                d_domainBoundingVectorsInverse[3 * jDim + iDim] *
+                currentNodeCoordinatesCart[jDim];
+          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+            currentNodeCoordinatesFrac[iDim] =
+              currentNodeCoordinatesFrac[iDim] + 0.5 -
+              std::floor(currentNodeCoordinatesFrac[iDim] + 0.5);
+
+          dealii::Point<3> transformedNodeCoordinatesFrac(0, 0, 0);
+          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+              transformedNodeCoordinatesFrac[iDim] +=
+                d_symmMatInverse[iSymm][jDim * 3 + iDim] *
+                currentNodeCoordinatesFrac[jDim];
+          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+            transformedNodeCoordinatesFrac[iDim] =
+              transformedNodeCoordinatesFrac[iDim] -
+              std::floor(transformedNodeCoordinatesFrac[iDim]) - 0.5;
+
+          dealii::Point<3> transformedNodeCoordinatesCart(0, 0, 0);
+          for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+              transformedNodeCoordinatesCart[iDim] +=
+                d_domainBoundingVectors[3 * jDim + iDim] *
+                transformedNodeCoordinatesFrac[jDim];
+          requiredPointCoordinates.push_back(transformedNodeCoordinatesCart);
+          localDoFIndexToPointIndexMap[iSymm][locallyOwnedNodes
+                                                .index_within_set(*it)] =
+            requiredPointCoordinates.size() - 1;
+        }
+    requiredPointCoordinates.shrink_to_fit();
+    remotePointCache.reinit(requiredPointCoordinates,
+                            dofHandler.get_triangulation(),
+                            mapping);
+    if (!remotePointCache.all_points_found())
       {
-        int totalNumCoords = std::accumulate(numCoordsPerMPITask.begin(),
-                                             numCoordsPerMPITask.end(),
-                                             0);
-        globalPointCoordsFrac.resize(totalNumCoords, 0.0);
-        std::vector<int> MPIDisplacements(n_mpi_processes, 0);
-        for (dftfe::Int i = 1; i < n_mpi_processes; i++)
-          MPIDisplacements[i] =
-            numCoordsPerMPITask[i - 1] + MPIDisplacements[i - 1];
-        MPI_Gatherv(localPointCoordsFrac.data(),
-                    numLocalCoords,
-                    dftfe::dataTypes::mpi_type_id(localPointCoordsFrac.data()),
-                    globalPointCoordsFrac.data(),
-                    numCoordsPerMPITask.data(),
-                    MPIDisplacements.data(),
-                    dftfe::dataTypes::mpi_type_id(globalPointCoordsFrac.data()),
-                    0,
-                    d_mpiCommDomain);
+        pcout << "Not all points found in remotePointCache." << std::endl;
+        throw std::runtime_error("Not all points found in remotePointCache.");
       }
-    else
-      MPI_Gatherv(localPointCoordsFrac.data(),
-                  numLocalCoords,
-                  dftfe::dataTypes::mpi_type_id(localPointCoordsFrac.data()),
-                  nullptr,
-                  nullptr,
-                  nullptr,
-                  dftfe::dataTypes::mpi_type_id(globalPointCoordsFrac.data()),
-                  0,
-                  d_mpiCommDomain);
-    computePointMapsFromGlobalFractionalCoordinates(globalPointCoordsFrac,
-                                                    pointSetType,
-                                                    cellOrdered);
   }
 
-
-  void
-  groupSymmetryClass::computePointMapsFromGlobalFractionalCoordinates(
+  bool
+  groupSymmetryClass::computeAtomIdMapsFromGlobalFractionalCoordinates(
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                         &globalPointCoords,
-    const dftfe::pointSet pointSetType,
-    const bool            cellOrdered)
+      &globalPointCoords)
   {
     bool allPointsFound = true;
     auto periodicDist   = [](double a, double b) noexcept {
       double d = std::fabs(a - b);
       return (d <= 0.5 ? d : 1.0 - d);
     };
-    if (this_mpi_process == 0 && cellOrdered)
-      {
-        std::vector<std::vector<dftfe::uInt>> &cellMapForSymmetry =
-          d_pointMapsForSymmetry.find(dftfe::pointSet::cellCentroids)->second;
-        std::vector<std::vector<dftfe::uInt>> &pointMapForSymmetry =
-          d_pointMapsForSymmetry[pointSetType];
-        pointMapForSymmetry.clear();
-        const dftfe::uInt numPoints        = globalPointCoords.size() / 3;
-        const dftfe::uInt numCells         = cellMapForSymmetry[0].size();
-        const dftfe::uInt numPointsPerCell = numPoints / numCells;
-        pointMapForSymmetry.resize(d_numSymm,
-                                   std::vector<dftfe::uInt>(numPoints, 0));
-
-        for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
-          for (dftfe::uInt iCell = 0; iCell < numCells; ++iCell)
-            for (dftfe::uInt iPoint = iCell * numPointsPerCell;
-                 iPoint < (iCell + 1) * numPointsPerCell;
-                 ++iPoint)
+    d_pointMapsForSymmetry.clear();
+    const dftfe::uInt numPoints = globalPointCoords.size() / 3;
+    d_pointMapsForSymmetry.resize(d_numSymm,
+                                  std::vector<dftfe::uInt>(numPoints, 0));
+    for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
+      for (dftfe::uInt iPoint = 0; iPoint < numPoints; ++iPoint)
+        {
+          std::vector<double> transformedPoint = d_translation[iSymm];
+          for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+            transformedPoint[jDim] += d_symmMatInverse[iSymm][0 * 3 + jDim] *
+                                        globalPointCoords[3 * iPoint + 0] +
+                                      d_symmMatInverse[iSymm][1 * 3 + jDim] *
+                                        globalPointCoords[3 * iPoint + 1] +
+                                      d_symmMatInverse[iSymm][2 * 3 + jDim] *
+                                        globalPointCoords[3 * iPoint + 2];
+          for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+            transformedPoint[jDim] =
+              transformedPoint[jDim] - std::floor(transformedPoint[jDim]);
+          bool pointFound = false;
+          for (dftfe::uInt jPoint = 0; jPoint < numPoints; ++jPoint)
+            if (periodicDist(transformedPoint[0],
+                             globalPointCoords[3 * jPoint + 0]) < 1e-8 &&
+                periodicDist(transformedPoint[1],
+                             globalPointCoords[3 * jPoint + 1]) < 1e-8 &&
+                periodicDist(transformedPoint[2],
+                             globalPointCoords[3 * jPoint + 2]) < 1e-8)
               {
-                std::vector<double> transformedPoint = d_translation[iSymm];
-                for (dftfe::uInt j = 0; j < 3; ++j)
-                  transformedPoint[j] += d_symmMat[iSymm][0 * 3 + j] *
-                                           globalPointCoords[3 * iPoint + 0] +
-                                         d_symmMat[iSymm][1 * 3 + j] *
-                                           globalPointCoords[3 * iPoint + 1] +
-                                         d_symmMat[iSymm][2 * 3 + j] *
-                                           globalPointCoords[3 * iPoint + 2];
-                for (dftfe::uInt j = 0; j < 3; ++j)
-                  transformedPoint[j] =
-                    transformedPoint[j] - std::floor(transformedPoint[j]);
-                const dftfe::uInt mappedCell = cellMapForSymmetry[iSymm][iCell];
-                bool              pointFound = false;
-                for (dftfe::uInt jPoint = mappedCell * numPointsPerCell;
-                     jPoint < (mappedCell + 1) * numPointsPerCell;
-                     ++jPoint)
-                  if (periodicDist(transformedPoint[0],
-                                   globalPointCoords[3 * jPoint + 0]) < 1e-8 &&
-                      periodicDist(transformedPoint[1],
-                                   globalPointCoords[3 * jPoint + 1]) < 1e-8 &&
-                      periodicDist(transformedPoint[2],
-                                   globalPointCoords[3 * jPoint + 2]) < 1e-8)
-                    {
-                      pointFound                         = true;
-                      pointMapForSymmetry[iSymm][iPoint] = jPoint;
-                      break;
-                    }
-                if (!pointFound)
-                  std::cout << "Symmetry class " << iSymm << " point " << iPoint
-                            << " found: " << pointFound << " "
-                            << pointMapForSymmetry[iSymm][iPoint] << " "
-                            << transformedPoint[0] << " " << transformedPoint[1]
-                            << " " << transformedPoint[2] << std::endl;
-                allPointsFound = allPointsFound && pointFound;
+                pointFound                            = true;
+                d_pointMapsForSymmetry[iSymm][iPoint] = jPoint;
+                break;
               }
-      }
-    else if (this_mpi_process == 0)
-      {
-        std::vector<std::vector<dftfe::uInt>> &pointMapForSymmetry =
-          d_pointMapsForSymmetry[pointSetType];
-        pointMapForSymmetry.clear();
-        const dftfe::uInt numPoints = globalPointCoords.size() / 3;
-        pointMapForSymmetry.resize(d_numSymm,
-                                   std::vector<dftfe::uInt>(numPoints, 0));
-        for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
-          for (dftfe::uInt iPoint = 0; iPoint < numPoints; ++iPoint)
-            {
-              std::vector<double> transformedPoint = d_translation[iSymm];
-              for (dftfe::uInt j = 0; j < 3; ++j)
-                transformedPoint[j] += d_symmMat[iSymm][0 * 3 + j] *
-                                         globalPointCoords[3 * iPoint + 0] +
-                                       d_symmMat[iSymm][1 * 3 + j] *
-                                         globalPointCoords[3 * iPoint + 1] +
-                                       d_symmMat[iSymm][2 * 3 + j] *
-                                         globalPointCoords[3 * iPoint + 2];
-              for (dftfe::uInt j = 0; j < 3; ++j)
-                transformedPoint[j] =
-                  transformedPoint[j] - std::floor(transformedPoint[j]);
-              bool pointFound = false;
-              for (dftfe::uInt jPoint = 0; jPoint < numPoints; ++jPoint)
-                if (periodicDist(transformedPoint[0],
-                                 globalPointCoords[3 * jPoint + 0]) < 1e-8 &&
-                    periodicDist(transformedPoint[1],
-                                 globalPointCoords[3 * jPoint + 1]) < 1e-8 &&
-                    periodicDist(transformedPoint[2],
-                                 globalPointCoords[3 * jPoint + 2]) < 1e-8)
-                  {
-                    pointFound                         = true;
-                    pointMapForSymmetry[iSymm][iPoint] = jPoint;
-                    break;
-                  }
-              if (!pointFound)
-                std::cout << "Symmetry class " << iSymm << " point " << iPoint
-                          << " found: " << pointFound << " "
-                          << pointMapForSymmetry[iSymm][iPoint] << " "
-                          << transformedPoint[0] << " " << transformedPoint[1]
-                          << " " << transformedPoint[2] << std::endl;
-              allPointsFound = allPointsFound && pointFound;
-            }
-      }
+          allPointsFound = allPointsFound && pointFound;
+        }
     int allPointsFoundCheck = allPointsFound ? 1 : 0;
     MPI_Allreduce(
       MPI_IN_PLACE, &allPointsFoundCheck, 1, MPI_INT, MPI_MIN, d_mpiCommDomain);
-    if (allPointsFoundCheck == 0)
-      {
-        pcout << "Not all points found in symmetry class. " << std::endl;
-        throw std::runtime_error("Not all points found in symmetry class.");
-      }
+    return (allPointsFoundCheck == 1);
   }
 
   void
   groupSymmetryClass::symmetrizeScalarFieldFromLocalValues(
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                         &scalarFieldValues,
-    const dftfe::pointSet pointSetType) const
+    distributedCPUVec<double>   &scalarField,
+    const dealii::DoFHandler<3> &dofHandler)
   {
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                     globalScalarFieldValues;
-    int              numLocalPoints = scalarFieldValues.size();
-    std::vector<int> numPointsPerMPITask(n_mpi_processes, 0);
-    std::vector<int> MPIDisplacements(n_mpi_processes, 0);
-    numPointsPerMPITask[this_mpi_process] = numLocalPoints;
-    MPI_Gather(&numLocalPoints,
-               1,
-               dftfe::dataTypes::mpi_type_id(&numLocalPoints),
-               numPointsPerMPITask.data(),
-               1,
-               dftfe::dataTypes::mpi_type_id(numPointsPerMPITask.data()),
-               0,
-               d_mpiCommDomain);
-    if (this_mpi_process == 0)
-      {
-        int totalNumPoints = std::accumulate(numPointsPerMPITask.begin(),
-                                             numPointsPerMPITask.end(),
-                                             0);
-        globalScalarFieldValues.resize(totalNumPoints, 0.0);
-        for (dftfe::Int i = 1; i < n_mpi_processes; i++)
-          MPIDisplacements[i] =
-            numPointsPerMPITask[i - 1] + MPIDisplacements[i - 1];
-        MPI_Gatherv(scalarFieldValues.data(),
-                    numLocalPoints,
-                    dftfe::dataTypes::mpi_type_id(scalarFieldValues.data()),
-                    globalScalarFieldValues.data(),
-                    numPointsPerMPITask.data(),
-                    MPIDisplacements.data(),
-                    dftfe::dataTypes::mpi_type_id(
-                      globalScalarFieldValues.data()),
-                    0,
-                    d_mpiCommDomain);
-      }
-    else
-      {
-        MPI_Gatherv(scalarFieldValues.data(),
-                    numLocalPoints,
-                    dftfe::dataTypes::mpi_type_id(scalarFieldValues.data()),
-                    nullptr,
-                    nullptr,
-                    nullptr,
-                    dftfe::dataTypes::mpi_type_id(
-                      globalScalarFieldValues.data()),
-                    0,
-                    d_mpiCommDomain);
-      }
-    if (this_mpi_process == 0)
-      {
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-          symmetrizedGlobalScalarFieldValues = globalScalarFieldValues;
-        symmetrizedGlobalScalarFieldValues.setValue(0.0);
-        for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
-          {
-            const std::vector<dftfe::uInt> &pointMap =
-              d_pointMapsForSymmetry.find(pointSetType)->second[iSymm];
-            for (dftfe::uInt iPoint = 0;
-                 iPoint < globalScalarFieldValues.size();
-                 ++iPoint)
-              {
-                dftfe::uInt mappedPoint = pointMap[iPoint];
-                symmetrizedGlobalScalarFieldValues[mappedPoint] +=
-                  globalScalarFieldValues[iPoint] / d_numSymm;
-              }
-          }
-        MPI_Scatterv(symmetrizedGlobalScalarFieldValues.data(),
-                     numPointsPerMPITask.data(),
-                     MPIDisplacements.data(),
-                     dftfe::dataTypes::mpi_type_id(
-                       symmetrizedGlobalScalarFieldValues.data()),
-                     scalarFieldValues.data(),
-                     numLocalPoints,
-                     dftfe::dataTypes::mpi_type_id(scalarFieldValues.data()),
-                     0,
-                     d_mpiCommDomain);
-      }
-    else
-      {
-        MPI_Scatterv(nullptr,
-                     nullptr,
-                     nullptr,
-                     dftfe::dataTypes::mpi_type_id(scalarFieldValues.data()),
-                     scalarFieldValues.data(),
-                     numLocalPoints,
-                     dftfe::dataTypes::mpi_type_id(scalarFieldValues.data()),
-                     0,
-                     d_mpiCommDomain);
-      }
-  }
-  void
-  groupSymmetryClass::symmetrizeVectorFieldFromLocalValues(
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                         &vectorFieldValues,
-    const dftfe::pointSet pointSetType) const
-  {
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                     globalVectorFieldValues;
-    int              numLocalPoints = vectorFieldValues.size();
-    std::vector<int> numPointsPerMPITask(n_mpi_processes, 0);
-    std::vector<int> MPIDisplacements(n_mpi_processes, 0);
-    numPointsPerMPITask[this_mpi_process] = numLocalPoints;
-    MPI_Gather(&numLocalPoints,
-               1,
-               dftfe::dataTypes::mpi_type_id(&numLocalPoints),
-               numPointsPerMPITask.data(),
-               1,
-               dftfe::dataTypes::mpi_type_id(numPointsPerMPITask.data()),
-               0,
-               d_mpiCommDomain);
-    if (this_mpi_process == 0)
-      {
-        int totalNumPoints = std::accumulate(numPointsPerMPITask.begin(),
-                                             numPointsPerMPITask.end(),
-                                             0);
-        globalVectorFieldValues.resize(totalNumPoints, 0.0);
-        for (dftfe::Int i = 1; i < n_mpi_processes; i++)
-          MPIDisplacements[i] =
-            numPointsPerMPITask[i - 1] + MPIDisplacements[i - 1];
-        MPI_Gatherv(vectorFieldValues.data(),
-                    numLocalPoints,
-                    dftfe::dataTypes::mpi_type_id(vectorFieldValues.data()),
-                    globalVectorFieldValues.data(),
-                    numPointsPerMPITask.data(),
-                    MPIDisplacements.data(),
-                    dftfe::dataTypes::mpi_type_id(
-                      globalVectorFieldValues.data()),
-                    0,
-                    d_mpiCommDomain);
-      }
-    else
-      {
-        MPI_Gatherv(vectorFieldValues.data(),
-                    numLocalPoints,
-                    dftfe::dataTypes::mpi_type_id(vectorFieldValues.data()),
-                    nullptr,
-                    nullptr,
-                    nullptr,
-                    dftfe::dataTypes::mpi_type_id(
-                      globalVectorFieldValues.data()),
-                    0,
-                    d_mpiCommDomain);
-      }
-    if (this_mpi_process == 0)
-      {
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-          symmetrizedGlobalVectorFieldValues = globalVectorFieldValues;
-        symmetrizedGlobalVectorFieldValues.setValue(0.0);
-        for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
-          {
-            const std::vector<dftfe::uInt> &pointMap =
-              d_pointMapsForSymmetry.find(pointSetType)->second[iSymm];
-            for (dftfe::uInt iPoint = 0;
-                 iPoint < globalVectorFieldValues.size() / 3;
-                 ++iPoint)
-              {
-                dftfe::uInt mappedPoint = pointMap[iPoint];
-                for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-                  for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                    symmetrizedGlobalVectorFieldValues[mappedPoint * 3 +
-                                                       jDim] +=
-                      d_symmMat[iSymm][iDim * 3 + jDim] *
-                      globalVectorFieldValues[iPoint * 3 + iDim] / d_numSymm;
-              }
-          }
-        MPI_Scatterv(symmetrizedGlobalVectorFieldValues.data(),
-                     numPointsPerMPITask.data(),
-                     MPIDisplacements.data(),
-                     dftfe::dataTypes::mpi_type_id(
-                       symmetrizedGlobalVectorFieldValues.data()),
-                     vectorFieldValues.data(),
-                     numLocalPoints,
-                     dftfe::dataTypes::mpi_type_id(vectorFieldValues.data()),
-                     0,
-                     d_mpiCommDomain);
-      }
-    else
-      {
-        MPI_Scatterv(nullptr,
-                     nullptr,
-                     nullptr,
-                     dftfe::dataTypes::mpi_type_id(vectorFieldValues.data()),
-                     vectorFieldValues.data(),
-                     numLocalPoints,
-                     dftfe::dataTypes::mpi_type_id(vectorFieldValues.data()),
-                     0,
-                     d_mpiCommDomain);
-      }
+    const std::vector<double> &pointValues =
+      dealii::VectorTools::point_values<1>(remotePointCache,
+                                           dofHandler,
+                                           scalarField);
+    scalarField *= 0;
+    for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
+      for (dftfe::uInt iDoF = 0; iDoF < scalarField.locally_owned_size();
+           ++iDoF)
+        scalarField.local_element(iDoF) +=
+          pointValues[localDoFIndexToPointIndexMap[iSymm].find(iDoF)->second] /
+          d_numSymm;
   }
 
-
   void
-  groupSymmetryClass::symmetrizeVectorFieldFromGlobalValues(
+  groupSymmetryClass::symmetrizeForce(
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                         &vectorFieldValues,
-    const dftfe::pointSet pointSetType) const
+      &vectorFieldValues) const
   {
     if (this_mpi_process == 0)
       {
@@ -695,17 +513,16 @@ namespace dftfe
         for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
           {
             const std::vector<dftfe::uInt> &pointMap =
-              d_pointMapsForSymmetry.find(pointSetType)->second[iSymm];
+              d_pointMapsForSymmetry[iSymm];
             for (dftfe::uInt iPoint = 0; iPoint < vectorFieldValues.size() / 3;
                  ++iPoint)
               {
                 dftfe::uInt mappedPoint = pointMap[iPoint];
                 for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
                   for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                    symmetrizedGlobalVectorFieldValues[mappedPoint * 3 +
-                                                       jDim] +=
-                      d_symmMat[iSymm][iDim * 3 + jDim] *
-                      vectorFieldValues[iPoint * 3 + iDim] / d_numSymm;
+                    symmetrizedGlobalVectorFieldValues[iPoint * 3 + jDim] +=
+                      d_symmMatCart[iSymm][iDim * 3 + jDim] *
+                      vectorFieldValues[mappedPoint * 3 + iDim] / d_numSymm;
               }
           }
         vectorFieldValues = std::move(symmetrizedGlobalVectorFieldValues);
@@ -719,7 +536,7 @@ namespace dftfe
 
 
   void
-  groupSymmetryClass::symmetrizeRank2Tensor(
+  groupSymmetryClass::symmetrizeStress(
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       &tensorValues) const
   {
@@ -732,9 +549,9 @@ namespace dftfe
           for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
             for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
               for (dftfe::uInt lDim = 0; lDim < 3; ++lDim)
-                symmetrizedTensorValues[iDim * 3 + jDim] +=
-                  d_symmMat[iSymm][kDim * 3 + iDim] *
-                  d_symmMat[iSymm][lDim * 3 + jDim] *
+                symmetrizedTensorValues[jDim * 3 + iDim] +=
+                  d_symmMatCart[iSymm][kDim * 3 + iDim] *
+                  d_symmMatCart[iSymm][lDim * 3 + jDim] *
                   tensorValues[lDim * 3 + kDim] / d_numSymm;
       }
     tensorValues = std::move(symmetrizedTensorValues);
