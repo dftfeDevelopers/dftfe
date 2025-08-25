@@ -59,6 +59,8 @@ namespace dftfe
     d_domainBoundingVectors.resize(9, 0.0);
     d_domainBoundingVectorsInverse.resize(9, 0.0);
     d_periodicBoundaryConditions = periodicBoundaryConditions;
+    d_symmMatCart.clear();
+    d_symmMat.clear();
     for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
       for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
         d_atomicCoordsFrac[3 * iAtom + iDim] =
@@ -205,6 +207,7 @@ namespace dftfe
     d_atomicCoordsFrac.resize(3 * d_numAtoms, 0.0);
     d_domainBoundingVectors.resize(9, 0.0);
     d_domainBoundingVectorsInverse.resize(9, 0.0);
+    d_symmMatCart.clear();
     for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
       for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
         d_atomicCoordsFrac[3 * iAtom + iDim] =
