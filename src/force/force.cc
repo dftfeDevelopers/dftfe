@@ -343,8 +343,7 @@ namespace dftfe
           globalAtomsForces(d_globalAtomsForces.size());
         globalAtomsForces.copyFrom(d_globalAtomsForces);
 
-        groupSymmetryPtr->symmetrizeVectorFieldFromGlobalValues(
-          globalAtomsForces, dftfe::pointSet::atomicCoord);
+        groupSymmetryPtr->symmetrizeForce(globalAtomsForces);
         globalAtomsForces.copyTo(d_globalAtomsForces);
       }
 

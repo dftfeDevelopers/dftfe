@@ -25,6 +25,7 @@
 #include "constants.h"
 #include "headers.h"
 #include "BLASWrapper.h"
+#include <deal.II/base/mpi_remote_point_evaluation.h>
 namespace dftfe
 {
   /**
@@ -33,13 +34,6 @@ namespace dftfe
    *
    * @author Nikhil Kodali
    */
-  enum class pointSet
-  {
-    cellCentroids,
-    densityQuad,
-    densityNodal,
-    atomicCoord
-  };
 
   class groupSymmetryClass
   {
@@ -53,51 +47,36 @@ namespace dftfe
                        const bool      isTimeReversal);
 
     void
-    initGroupSymmetry(std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
-                        dftfe::utils::MemorySpace::HOST>> &BLASWrapperPtrHost,
-                      std::vector<std::vector<double>>    &atomLocations,
+    initGroupSymmetry(std::vector<std::vector<double>> &atomLocations,
                       std::vector<std::vector<double>> &domainBoundingVectors,
                       std::vector<bool> &periodicBoundaryConditions,
                       const bool         isCollinearSpin = false);
 
+    void
+    reinitGroupSymmetry(
+      std::vector<std::vector<double>> &atomLocations,
+      std::vector<std::vector<double>> &domainBoundingVectors);
 
     void
-    computePointMapFromLocalCartesianCoordinates(
-      std::shared_ptr<
-        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        &BLASWrapperPtrHost,
-      const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                           &localPointCoords,
-      const dftfe::pointSet pointSetType,
-      const bool            cellOrdered = false);
+    setupCommPatternForNodalField(const dealii::DoFHandler<3> &dofHandler);
 
-    void
-    computePointMapsFromGlobalFractionalCoordinates(
+    bool
+    computeAtomIdMapsFromGlobalFractionalCoordinates(
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                           &globalPointCoords,
-      const dftfe::pointSet pointSetType,
-      const bool            cellOrdered = false);
+        &globalPointCoords);
 
     void
     symmetrizeScalarFieldFromLocalValues(
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                           &scalarFieldValues,
-      const dftfe::pointSet pointSetType) const;
+      distributedCPUVec<double>   &scalarField,
+      const dealii::DoFHandler<3> &dofHandler);
 
     void
-    symmetrizeVectorFieldFromLocalValues(
+    symmetrizeForce(
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                           &vectorFieldValues,
-      const dftfe::pointSet pointSetType) const;
+        &vectorFieldValues) const;
 
     void
-    symmetrizeVectorFieldFromGlobalValues(
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                           &vectorFieldValues,
-      const dftfe::pointSet pointSetType) const;
-
-    void
-    symmetrizeRank2Tensor(
+    symmetrizeStress(
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &tensorValues) const;
 
@@ -123,11 +102,11 @@ namespace dftfe
      */
     dftfe::uInt                      d_numSymm;
     std::vector<std::vector<double>> d_symmMat;
+    std::vector<std::vector<double>> d_symmMatCart;
+    std::vector<std::vector<double>> d_symmMatInverse;
     std::vector<std::vector<double>> d_translation;
 
     dftfe::uInt d_numAtoms;
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      d_atomicCoordsCart;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_atomicCoordsFrac;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -138,11 +117,17 @@ namespace dftfe
 
     std::vector<bool> d_periodicBoundaryConditions;
 
-    std::map<dftfe::pointSet, std::vector<std::vector<dftfe::uInt>>>
-      d_pointMapsForSymmetry;
+    std::vector<std::vector<dftfe::uInt>> d_pointMapsForSymmetry;
 
     const bool d_isTimeReversal;
     const bool d_isGroupSymmetry;
+
+    std::vector<std::map<dftfe::uInt, dftfe::uInt>>
+      localDoFIndexToPointIndexMap;
+    mutable dealii::Utilities::MPI::RemotePointEvaluation<3, 3>
+                                  remotePointCache;
+    std::vector<dealii::Point<3>> requiredPointCoordinates;
+    dealii::MappingQ1<3>          mapping;
   };
 } // namespace dftfe
 #endif

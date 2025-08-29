@@ -146,7 +146,7 @@ namespace dftfe
           for (dftfe::uInt icol = 0; icol < 3; icol++)
             stressTensor[irow * 3 + icol] = d_stress[irow][icol];
 
-        groupSymmetryPtr->symmetrizeRank2Tensor(stressTensor);
+        groupSymmetryPtr->symmetrizeStress(stressTensor);
         for (dftfe::uInt irow = 0; irow < 3; irow++)
           for (dftfe::uInt icol = 0; icol < 3; icol++)
             d_stress[irow][icol] = stressTensor[irow * 3 + icol];

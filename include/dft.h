@@ -1705,7 +1705,7 @@ namespace dftfe
       d_densityResidualQuadValues;
     std::vector<distributedCPUVec<double>> d_densityInNodalValues,
       d_densityOutNodalValues, d_densityResidualNodalValues;
-
+    std::vector<distributedCPUVec<double>> d_tauOutNodalValues;
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       d_tauInQuadValues, d_tauOutQuadValues, d_tauResidualQuadValues;
