@@ -72,6 +72,7 @@ namespace dftfe
       const dftfe::uInt                         &numEigenValues,
       const std::vector<double>                 &kPointCoords,
       const std::vector<double>                 &kPointWeights,
+      const std::vector<std::vector<double>>    &domainBoundingVectors,
       const double                               domainVolume,
       const std::shared_ptr<groupSymmetryClass> &groupSymmetryPtr,
       const dispersionCorrection                &dispersionCorr,
@@ -120,9 +121,11 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<dftfe::Int>>
         &bQuadAtomIdsAllAtomsImages,
       const std::map<dealii::CellId, std::vector<double>> &bQuadValuesAllAtoms,
-      const bool floatingNuclearCharges,
-      const bool computeForce,
-      const bool computeStress);
+      const std::vector<double> &gaussianConstantsForce,
+      const std::vector<double> &generatorFlatTopWidths,
+      const bool                 floatingNuclearCharges,
+      const bool                 computeForce,
+      const bool                 computeStress);
 
     void
     printStress();
@@ -140,6 +143,27 @@ namespace dftfe
   private:
     void
     computeWfcContribNloc(
+      std::shared_ptr<
+        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                              nonLocalOperator,
+      const CouplingStructure couplingtype,
+      const std::vector<
+        const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> *>
+                                              &couplingMatrixPtrs,
+      const std::map<dftfe::uInt, dftfe::uInt> nonlocalAtomIdToGlobalIdMap,
+      const dftfe::uInt                       &numEigenValues,
+      const std::vector<double>               &kPointCoords,
+      const std::vector<double>               &kPointWeights,
+      const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+                                             &eigenVectors,
+      const std::vector<std::vector<double>> &eigenValues,
+      const std::vector<std::vector<double>> &partialOccupancies,
+      const bool                              floatingNuclearCharges,
+      const bool                              computeForce,
+      const bool                              computeStress);
+
+    void
+    computeWfcContribNlocAtomOnNode(
       std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
                               nonLocalOperator,
@@ -275,6 +299,16 @@ namespace dftfe
                            std::vector<dftfe::uInt>>>
         &cellFacesVselfBallSurfacesDofHandlerForce);
 
+    void
+    computeAtomsForcesGaussianGenerator(
+      const std::vector<std::vector<double>> &atomLocations,
+      const std::vector<dftfe::Int>          &imageIds,
+      const std::vector<std::vector<double>> &imagePositions,
+      const std::vector<double>              &gaussianConstantsForce,
+      const std::vector<double>              &generatorFlatTopWidths,
+      const distributedCPUVec<double>        &configForceVectorLinFE,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &forceContrib);
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
       d_BLASWrapperPtr;
     std::shared_ptr<
@@ -370,8 +404,11 @@ namespace dftfe
 
     /// Finite element object for configurational force computation. Linear
     /// finite elements with three force field components are used.
-    dealii::FESystem<3> FEForce;
-
+    dealii::FESystem<3>               FEForce;
+    dealii::AffineConstraints<double> d_affineConstraintsForce;
+    dealii::DoFHandler<3>             d_dofHandlerForce;
+    dealii::IndexSet                  d_locally_owned_dofsForce;
+    distributedCPUVec<double>         d_configForceContribsLinFE;
 
     dealii::TimerOutput computing_timer;
   };
