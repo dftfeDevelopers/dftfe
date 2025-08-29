@@ -110,6 +110,14 @@ namespace dftfe
     std::shared_ptr<xc_func_type> d_funcXPtr;
     std::shared_ptr<xc_func_type> d_funcCPtr;
     bool d_useLibXC; ///< Flag to indicate whether to use libxc or not
+    struct paramsMap
+    {
+      char   *keys;
+      int    *offsets;
+      double *values;
+      int     size;
+    };
+    paramsMap *h_mapX, *h_mapC, *d_mapX, *d_mapC;
   };
 } // namespace dftfe
 

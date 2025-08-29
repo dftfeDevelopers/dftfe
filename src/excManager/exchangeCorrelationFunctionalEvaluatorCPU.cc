@@ -14,7 +14,7 @@
 //
 // ---------------------------------------------------------------------
 //
-
+#include <iostream>
 #include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
@@ -25,13 +25,19 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
       &densityValues,                                                          \
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
-      &excEnergyOut,                                                           \
+      &exEnergyOut,                                                            \
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
       &pdexDensity)                                                            \
   {                                                                            \
     for (dftfe::uInt index = 0; index < numPoints; index++)                    \
       {                                                                        \
-        BODY                                                                   \
+        double tzk0, tvrho0, tvrho1;                                           \
+        double rho0 = densityValues[2 * index + 0];                            \
+        double rho1 = densityValues[2 * index + 1];                            \
+        BODY;                                                                  \
+        exEnergyOut[index]         = tzk0;                                     \
+        pdexDensity[2 * index + 0] = tvrho0;                                   \
+        pdexDensity[2 * index + 1] = tvrho1;                                   \
       }                                                                        \
   }
 
@@ -49,7 +55,173 @@ namespace dftfe
   {                                                                            \
     for (dftfe::uInt index = 0; index < numPoints; index++)                    \
       {                                                                        \
-        BODY                                                                   \
+        double tzk0, tvrho0, tvrho1;                                           \
+        double rho0 = densityValues[2 * index + 0];                            \
+        double rho1 = densityValues[2 * index + 1];                            \
+        BODY;                                                                  \
+        corrEnergyOut[index]       = tzk0;                                     \
+        pdecDensity[2 * index + 0] = tvrho0;                                   \
+        pdecDensity[2 * index + 1] = tvrho1;                                   \
+      }                                                                        \
+  }
+
+#define DFTFE_FUNCTIONALEVALUATOR_GGA_X(NAME, BODY)                            \
+  template <>                                                                  \
+  void GGAX_##NAME(                                                            \
+    dftfe::uInt numPoints,                                                     \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &densityValues,                                                          \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &sigmaValues,                                                            \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &exEnergyOut,                                                            \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdexDensity,                                                            \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdexSigma)                                                              \
+  {                                                                            \
+    for (dftfe::uInt index = 0; index < numPoints; index++)                    \
+      {                                                                        \
+        double tzk0, tvrho0, tvrho1, tvsigma0, tvsigma1, tvsigma2;             \
+        double rho0   = densityValues[2 * index + 0];                          \
+        double rho1   = densityValues[2 * index + 1];                          \
+        double sigma0 = sigmaValues[3 * index + 0];                            \
+        double sigma1 = sigmaValues[3 * index + 1];                            \
+        double sigma2 = sigmaValues[3 * index + 2];                            \
+        BODY;                                                                  \
+        exEnergyOut[index]         = tzk0;                                     \
+        pdexDensity[2 * index + 0] = tvrho0;                                   \
+        pdexDensity[2 * index + 1] = tvrho1;                                   \
+        pdexSigma[3 * index + 0]   = tvsigma0;                                 \
+        pdexSigma[3 * index + 1]   = tvsigma1;                                 \
+        pdexSigma[3 * index + 2]   = tvsigma2;                                 \
+      }                                                                        \
+  }
+
+#define DFTFE_FUNCTIONALEVALUATOR_GGA_C(NAME, BODY)                            \
+  template <>                                                                  \
+  void GGAC_##NAME(                                                            \
+    dftfe::uInt numPoints,                                                     \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &densityValues,                                                          \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &sigmaValues,                                                            \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &corrEnergyOut,                                                          \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdecDensity,                                                            \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdecSigma)                                                              \
+  {                                                                            \
+    for (dftfe::uInt index = 0; index < numPoints; index++)                    \
+      {                                                                        \
+        double tzk0, tvrho0, tvrho1, tvsigma0, tvsigma1, tvsigma2;             \
+        double rho0   = densityValues[2 * index + 0];                          \
+        double rho1   = densityValues[2 * index + 1];                          \
+        double sigma0 = sigmaValues[3 * index + 0];                            \
+        double sigma1 = sigmaValues[3 * index + 1];                            \
+        double sigma2 = sigmaValues[3 * index + 2];                            \
+        BODY;                                                                  \
+        corrEnergyOut[index]       = tzk0;                                     \
+        pdecDensity[2 * index + 0] = tvrho0;                                   \
+        pdecDensity[2 * index + 1] = tvrho1;                                   \
+        pdecSigma[3 * index + 0]   = tvsigma0;                                 \
+        pdecSigma[3 * index + 1]   = tvsigma1;                                 \
+        pdecSigma[3 * index + 2]   = tvsigma2;                                 \
+      }                                                                        \
+  }
+
+#define DFTFE_FUNCTIONALEVALUATOR_MGGA_X(NAME, BODY)                           \
+  template <>                                                                  \
+  void MGGAX_##NAME(                                                           \
+    dftfe::uInt numPoints,                                                     \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &densityValues,                                                          \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &sigmaValues,                                                            \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &tauValues,                                                              \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &exEnergyOut,                                                            \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdexDensity,                                                            \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdexSigma,                                                              \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdexTau)                                                                \
+  {                                                                            \
+    for (dftfe::uInt index = 0; index < numPoints; index++)                    \
+      {                                                                        \
+        double tzk0, tvrho0, tvrho1, tvsigma0, tvsigma1, tvsigma2;             \
+        double tvtau0, tvtau1;                                                 \
+        double rho0   = densityValues[2 * index + 0];                          \
+        double rho1   = densityValues[2 * index + 1];                          \
+        double sigma0 = sigmaValues[3 * index + 0];                            \
+        double sigma1 = sigmaValues[3 * index + 1];                            \
+        double sigma2 = sigmaValues[3 * index + 2];                            \
+        double tau0   = tauValues[2 * index + 0];                              \
+        double tau1   = tauValues[2 * index + 1];                              \
+        sigma0        = m_min(sigma0, 8 * rho0 * tau0);                        \
+        sigma2        = m_min(sigma2, 8 * rho1 * tau1);                        \
+        double s_ave  = 0.5 * (sigma0 + sigma2);                               \
+        sigma1        = (sigma1 >= -s_ave ? sigma1 : -s_ave);                  \
+        sigma1        = (sigma1 <= s_ave ? sigma1 : s_ave);                    \
+        BODY;                                                                  \
+        exEnergyOut[index]         = tzk0;                                     \
+        pdexDensity[2 * index + 0] = tvrho0;                                   \
+        pdexDensity[2 * index + 1] = tvrho1;                                   \
+        pdexSigma[3 * index + 0]   = tvsigma0;                                 \
+        pdexSigma[3 * index + 1]   = tvsigma1;                                 \
+        pdexSigma[3 * index + 2]   = tvsigma2;                                 \
+        pdexTau[2 * index + 0]     = tvtau0;                                   \
+        pdexTau[2 * index + 1]     = tvtau1;                                   \
+      }                                                                        \
+  }
+
+#define DFTFE_FUNCTIONALEVALUATOR_MGGA_C(NAME, BODY)                           \
+  template <>                                                                  \
+  void MGGAC_##NAME(                                                           \
+    dftfe::uInt numPoints,                                                     \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &densityValues,                                                          \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &sigmaValues,                                                            \
+    const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST> \
+      &tauValues,                                                              \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &corrEnergyOut,                                                          \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdecDensity,                                                            \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdecSigma,                                                              \
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
+      &pdecTau)                                                                \
+  {                                                                            \
+    for (dftfe::uInt index = 0; index < numPoints; index++)                    \
+      {                                                                        \
+        double tzk0, tvrho0, tvrho1, tvsigma0, tvsigma1, tvsigma2;             \
+        double tvtau0, tvtau1;                                                 \
+        double rho0   = densityValues[2 * index + 0];                          \
+        double rho1   = densityValues[2 * index + 1];                          \
+        double sigma0 = sigmaValues[3 * index + 0];                            \
+        double sigma1 = sigmaValues[3 * index + 1];                            \
+        double sigma2 = sigmaValues[3 * index + 2];                            \
+        double tau0   = tauValues[2 * index + 0];                              \
+        double tau1   = tauValues[2 * index + 1];                              \
+        sigma0        = m_min(sigma0, 8 * rho0 * tau0);                        \
+        sigma2        = m_min(sigma2, 8 * rho1 * tau1);                        \
+        double s_ave  = 0.5 * (sigma0 + sigma2);                               \
+        sigma1        = (sigma1 >= -s_ave ? sigma1 : -s_ave);                  \
+        sigma1        = (sigma1 <= s_ave ? sigma1 : s_ave);                    \
+        BODY;                                                                  \
+        corrEnergyOut[index]       = tzk0;                                     \
+        pdecDensity[2 * index + 0] = tvrho0;                                   \
+        pdecDensity[2 * index + 1] = tvrho1;                                   \
+        pdecSigma[3 * index + 0]   = tvsigma0;                                 \
+        pdecSigma[3 * index + 1]   = tvsigma1;                                 \
+        pdecSigma[3 * index + 2]   = tvsigma2;                                 \
+        pdecTau[2 * index + 0]     = tvtau0;                                   \
+        pdecTau[2 * index + 1]     = tvtau1;                                   \
       }                                                                        \
   }
 #include <exchangeCorrelationFunctionalEvaluation.def>
@@ -58,3 +230,7 @@ namespace dftfe
 
 #undef DFTFE_FUNCTIONALEVALUATOR_LDA_X
 #undef DFTFE_FUNCTIONALEVALUATOR_LDA_C
+#undef DFTFE_FUNCTIONALEVALUATOR_GGA_X
+#undef DFTFE_FUNCTIONALEVALUATOR_GGA_C
+#undef DFTFE_FUNCTIONALEVALUATOR_MGGA_X
+#undef DFTFE_FUNCTIONALEVALUATOR_MGGA_C

@@ -645,7 +645,7 @@ namespace dftfe
     const dftfe::uInt nCellsPerBatch =
       (memorySpace == dftfe::utils::MemorySpace::HOST) ?
         1 :
-        (d_dftParamsPtr->useLiXCForXCEvaluation ? 1 : totalLocallyOwnedCells);
+        (d_dftParamsPtr->useLibXCForXCEvaluation ? 1 : totalLocallyOwnedCells);
     const dftfe::uInt numberQuadraturePointsPerCell =
       d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
@@ -780,6 +780,7 @@ namespace dftfe
     for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells;
          iCell += nCellsPerBatch)
       {
+        // std::cout << "iCell: " << iCell << std::endl;
         d_excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
           *auxDensityXCRepresentation,
           std::make_pair<dftfe::uInt, dftfe::uInt>(
@@ -943,6 +944,7 @@ namespace dftfe
               } // Kpoint Loop
           }     // TauMGGA
       }         // cell loop
+                // exit(-1);
 
 #if defined(DFTFE_WITH_DEVICE)
     if (isTauMGGA)

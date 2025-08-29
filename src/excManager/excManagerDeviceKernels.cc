@@ -58,11 +58,12 @@ namespace dftfe
             rhoVector[2 * index + 1] = densitySpinDown[index];
             for (dftfe::uInt j = 0; j < 3; j++)
               {
-                sigmaVector[3 * index + 0] = gradDensitySpinUp[3 * index + j] *
-                                             gradDensitySpinUp[3 * index + j];
-                sigmaVector[3 * index + 1] = gradDensitySpinUp[3 * index + j] *
-                                             gradDensitySpinDown[3 * index + j];
-                sigmaVector[3 * index + 2] =
+                sigmaVector[3 * index + 0] += gradDensitySpinUp[3 * index + j] *
+                                              gradDensitySpinUp[3 * index + j];
+                sigmaVector[3 * index + 1] +=
+                  gradDensitySpinUp[3 * index + j] *
+                  gradDensitySpinDown[3 * index + j];
+                sigmaVector[3 * index + 2] +=
                   gradDensitySpinDown[3 * index + j] *
                   gradDensitySpinDown[3 * index + j];
               }
@@ -91,11 +92,12 @@ namespace dftfe
             rhoVector[2 * index + 1] = densitySpinDown[index];
             for (dftfe::uInt j = 0; j < 3; j++)
               {
-                sigmaVector[3 * index + 0] = gradDensitySpinUp[3 * index + j] *
-                                             gradDensitySpinUp[3 * index + j];
-                sigmaVector[3 * index + 1] = gradDensitySpinUp[3 * index + j] *
-                                             gradDensitySpinDown[3 * index + j];
-                sigmaVector[3 * index + 2] =
+                sigmaVector[3 * index + 0] += gradDensitySpinUp[3 * index + j] *
+                                              gradDensitySpinUp[3 * index + j];
+                sigmaVector[3 * index + 1] +=
+                  gradDensitySpinUp[3 * index + j] *
+                  gradDensitySpinDown[3 * index + j];
+                sigmaVector[3 * index + 2] +=
                   gradDensitySpinDown[3 * index + j] *
                   gradDensitySpinDown[3 * index + j];
               }

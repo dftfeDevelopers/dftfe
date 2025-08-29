@@ -24,6 +24,7 @@
 #if defined(DFTFE_WITH_DEVICE)
 #  include <DeviceAPICalls.h>
 #endif
+#include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -118,9 +119,9 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &cDataOut) const
   {
-    double tauThresholdMgga = 1e-9;
-    double rhoThresholdMgga = 1e-9;
-    // double sigmaThresholdMgga   = 1e-24;
+    double tauThresholdMgga   = 1e-9;
+    double rhoThresholdMgga   = 1e-9;
+    double sigmaThresholdMgga = 1e-24;
 
     const dftfe::uInt nquad = quadIndexRange.second - quadIndexRange.first;
     std::vector<xcRemainderOutputDataAttributes> outputDataAttributes;
@@ -283,29 +284,170 @@ namespace dftfe
       }
     else
       {
-        if (d_funcXPtr->info->name == "")
+        /*uncomment and modify the below part to get the parameters for  */
+        
+        // typedef struct
+        // {
+        //   double eta;
+        // } mgga_c_r2scan_params;
+
+        // mgga_x_scan_params *params;
+        // mgga_c_r2scan_params *paramsC;
+
+        // params = (mgga_x_scan_params *)d_funcXPtr->params;
+        // paramsC = (mgga_c_r2scan_params *)d_funcCPtr->params;
+
+        // std::cout << "c1: " << params->c1 << std::endl;
+        // std::cout << "c2: " << params->c2 << std::endl;
+        // std::cout << "d: " << params->d << std::endl;
+        // std::cout << "k1: " << params->k1 << std::endl;
+
+        // std::cout << "eta: " << paramsC->eta << std::endl;
+        // std::cout << "dens_threshold: " << d_funcXPtr->dens_threshold
+        //           << std::endl;
+        // std::cout << "zeta_threshold: " << d_funcXPtr->zeta_threshold
+        //           << std::endl;
+        //         std::cout << "flags: " << d_funcXPtr->info->flags <<
+        //         std::endl;
+        // #ifndef XC_FLAGS_ENFORCE_FHC
+        // #  define XC_FLAGS_NEEDS_TAU (1 << 16)
+        // #  define XC_FLAGS_ENFORCE_FHC (1 << 17)
+        // #endif
+        //         std::cout << "XC_FLAGS_NEEDS_TAU: "
+        //                   << (d_funcXPtr->info->flags & XC_FLAGS_NEEDS_TAU)
+        //                   << std::endl;
+        //         std::cout << "XC_FLAGS_ENFORCE_FHC: "
+        //                   << (d_funcXPtr->info->flags & XC_FLAGS_ENFORCE_FHC)
+        //                   << std::endl;
+#if defined(DFTFE_WITH_DEVICE)
+        dftfe::utils::MemoryStorage<double, memorySpace> densityValuesTemp,
+          sigmaValuesTemp, tauValuesTemp;
+        dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp,
+          exValuesTemp;
+        dftfe::utils::MemoryStorage<double, memorySpace> pdecDensityTemp,
+          pdexDensityTemp, pdecSigmaValuesTemp, pdexSigmaValuesTemp,
+          pdexTauValuesTemp, pdecTauValuesTemp;
+
+        densityValuesTemp.resize(densityValues.size());
+        densityValuesTemp.copyFrom(densityValues);
+        sigmaValuesTemp.resize(sigmaValues.size());
+        sigmaValuesTemp.copyFrom(sigmaValues);
+        tauValuesTemp.resize(tauValues.size());
+        tauValuesTemp.copyFrom(tauValues);
+        exValuesTemp.resize(exValues.size());
+        ecValuesTemp.resize(ecValues.size());
+        pdexDensityTemp.resize(pdexDensityValuesNonNN.size());
+        pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
+        pdexSigmaValuesTemp.resize(pdexSigmaValues.size());
+        pdecSigmaValuesTemp.resize(pdecSigmaValues.size());
+        pdexTauValuesTemp.resize(pdexTauValuesNonNN.size());
+        pdecTauValuesTemp.resize(pdecTauValuesNonNN.size());
+#else
+        auto &densityValuesTemp   = densityValues;
+        auto &sigmaValuesTemp     = sigmaValues;
+        auto &tauValuesTemp       = tauValues;
+        auto &exValuesTemp        = exValues;
+        auto &ecValuesTemp        = ecValues;
+        auto &pdecDensityTemp     = pdecDensityValuesNonNN;
+        auto &pdexDensityTemp     = pdexDensityValuesNonNN;
+        auto &pdecSigmaValuesTemp = pdecSigmaValues;
+        auto &pdexSigmaValuesTemp = pdexSigmaValues;
+        auto &pdecTauValuesTemp   = pdecTauValuesNonNN;
+        auto &pdexTauValuesTemp   = pdexTauValuesNonNN;
+#endif
+        if (d_funcXPtr->info->number == 497)
           {
+            MGGAX_R2SCAN(nquad,
+                         densityValuesTemp,
+                         sigmaValuesTemp,
+                         tauValuesTemp,
+                         exValuesTemp,
+                         pdexDensityTemp,
+                         pdexSigmaValuesTemp,
+                         pdexTauValuesTemp);
+#if defined(DFTFE_WITH_DEVICE)
+            exValues.copyFrom(exValuesTemp);
+            pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+            pdexSigmaValues.copyFrom(pdexSigmaValuesTemp);
+            pdexTauValuesNonNN.copyFrom(pdexTauValuesTemp);
+#endif
           }
-        else if (d_funcXPtr->info->name == "")
+        if (d_funcCPtr->info->number == 498)
           {
+            MGGAC_R2SCAN(nquad,
+                         densityValuesTemp,
+                         sigmaValuesTemp,
+                         tauValuesTemp,
+                         ecValuesTemp,
+                         pdecDensityTemp,
+                         pdecSigmaValuesTemp,
+                         pdecTauValuesTemp);
+#if defined(DFTFE_WITH_DEVICE)
+            ecValues.copyFrom(ecValuesTemp);
+            pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+            pdecSigmaValues.copyFrom(pdecSigmaValuesTemp);
+            pdecTauValuesNonNN.copyFrom(pdecTauValuesTemp);
+#endif
           }
         else
           {
             dftfe::utils::throwException(
               "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the M-GGA functional.");
           }
-        if (d_funcCPtr->info->name == "")
-          {
-          }
-        else if (d_funcCPtr->info->name == "")
-          {
-          }
-        else
-          {
-            dftfe::utils::throwException(
-              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the M-GGA functional.");
-          }
+        /////////////////////////////////////////////////////////////////////////
+        // {
+        //   double diff;
+        //   for (int i = 0; i < nquad; i++)
+        //     {
+        // std::cout << "densityValues: " << densityValues[2 * i] <<
+        // std::endl; std::cout << "sigmaValues: " << sigmaValues[3 * i] <<
+        // std::endl; std::cout << "tauValues: " << tauValues[2 * i] <<
+        // std::endl;
+        // diff = ecValuesTemp[i] - ecValues[i];
+        // if (std::abs(diff) > 1e-14)
+        //   {
+        //     std::cout << "alter exValues: " << ecValuesTemp[i] << std::endl;
+        //     std::cout << "libxc exValues: " << ecValues[i] << std::endl;
+        //     std::cout << "diff: " << diff << std::endl;
+        //     std::cout << std::endl;
+        //   }
+        // diff = pdexDensityTemp[i] - pdexDensityValuesNonNN[i];
+        // if (std::abs(diff) > 1e-14)
+        //   {
+        //     std::cout << "alter pdexrho: " << pdexDensityTemp[i]
+        //               << std::endl;
+        //     std::cout << "libxc pdexrho: " << pdexDensityValuesNonNN[i]
+        //               << std::endl;
+        //     std::cout << "diff: " << diff << std::endl;
+        //     std::cout << std::endl;
+        //   }
+        // diff = pdexSigmaValuesTemp[i] - pdexSigmaValues[i];
+        // if (std::abs(diff) > 1e-14)
+        //   {
+        //     std::cout << "alter pdexsigma: " << pdexSigmaValuesTemp[i]
+        //               << std::endl;
+        //     std::cout << "libxc pdexsigma: " << pdexSigmaValues[i]
+        //               << std::endl;
+        //     std::cout << "diff: " << diff << std::endl;
+        //     std::cout << std::endl;
+        //   }
+
+        // diff = pdexTauValuesTemp[i] - pdexTauValuesNonNN[i];
+
+        // if (std::abs(diff) > 1e-10)
+        //   {
+        //     std::cout << "alter pdextau: " << pdexTauValuesTemp[i]
+        //               << std::endl;
+        //     std::cout << "libxc pdextau: " << pdexTauValuesNonNN[i]
+        //               << std::endl;
+        //     std::cout << "diff: " << diff << std::endl;
+        //     std::cout << std::endl;
+        //   }
+        //     }
+        // }
+        ///////////////////////////////////////////////////////////////////
       }
+
     for (size_t i = 0; i < nquad; i++)
       {
         if (std::abs(densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=

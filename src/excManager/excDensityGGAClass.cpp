@@ -25,6 +25,7 @@
 #if defined(DFTFE_WITH_DEVICE)
 #  include <DeviceAPICalls.h>
 #endif
+#include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
   template <dftfe::utils::MemorySpace memorySpace>
@@ -232,34 +233,68 @@ namespace dftfe
       }
     else
       {
-        dftfe::utils::throwException(
-          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
-        dftfe::utils::throwException(
-          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the GGA functional.");
-        // if (d_funcXPtr->info->name == "")
-        //   {
-        //   }
-        // else if (d_funcXPtr->info->name == "")
-        //   {
-        //   }
-        // else
-        //   {
-        //     dftfe::utils::throwException(
-        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
-        //       compute the GGA functional.");
-        //   }
-        // if (d_funcCPtr->info->name == "")
-        //   {
-        //   }
-        // else if (d_funcCPtr->info->name == "")
-        //   {
-        //   }
-        // else
-        //   {
-        //     dftfe::utils::throwException(
-        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
-        //       compute the GGA functional.");
-        //   }
+#if defined(DFTFE_WITH_DEVICE)
+        dftfe::utils::MemoryStorage<double, memorySpace> densityValuesTemp,
+          sigmaValuesTemp;
+        dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp,
+          exValuesTemp;
+        dftfe::utils::MemoryStorage<double, memorySpace> pdecDensityTemp,
+          pdexDensityTemp, pdecSigmaValuesTemp, pdexSigmaValuesTemp;
+
+        densityValuesTemp.resize(densityValues.size());
+        densityValuesTemp.copyFrom(densityValues);
+        sigmaValuesTemp.resize(sigmaValues.size());
+        sigmaValuesTemp.copyFrom(sigmaValues);
+        exValuesTemp.resize(exValues.size());
+        ecValuesTemp.resize(ecValues.size());
+        pdexDensityTemp.resize(pdexDensityValuesNonNN.size());
+        pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
+        pdexSigmaValuesTemp.resize(pdexSigmaValues.size());
+        pdecSigmaValuesTemp.resize(pdecSigmaValues.size());
+#else
+        auto &densityValuesTemp   = densityValues;
+        auto &sigmaValuesTemp     = sigmaValues;
+        auto &exValuesTemp        = exValues;
+        auto &ecValuesTemp        = ecValues;
+        auto &pdecDensityTemp     = pdecDensityValuesNonNN;
+        auto &pdexDensityTemp     = pdexDensityValuesNonNN;
+        auto &pdecSigmaValuesTemp = pdecSigmaValues;
+        auto &pdexSigmaValuesTemp = pdexSigmaValues;
+#endif
+        if (d_funcXPtr->info->number == 101)
+          {
+            GGAX_PBE(nquad,
+                     densityValuesTemp,
+                     sigmaValuesTemp,
+                     exValuesTemp,
+                     pdexDensityTemp,
+                     pdexSigmaValuesTemp);
+#if defined(DFTFE_WITH_DEVICE)
+            exValues.copyFrom(exValuesTemp);
+            pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+            pdexSigmaValues.copyFrom(pdexSigmaValuesTemp);
+#endif
+          }
+
+        if (d_funcCPtr->info->number == 130)
+          {
+            GGAC_PBE(nquad,
+                     densityValuesTemp,
+                     sigmaValuesTemp,
+                     ecValuesTemp,
+                     pdecDensityTemp,
+                     pdecSigmaValuesTemp);
+#if defined(DFTFE_WITH_DEVICE)
+            ecValues.copyFrom(ecValuesTemp);
+            pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+            pdecSigmaValues.copyFrom(pdecSigmaValuesTemp);
+#endif
+          }
+        else
+          {
+            dftfe::utils::throwException(
+              "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
+          }
       }
     for (size_t i = 0; i < nquad; i++)
       {

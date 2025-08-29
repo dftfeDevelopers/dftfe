@@ -250,6 +250,7 @@ namespace dftfe
         }
     }
 
+    // Use what quantum espresso uses.
     template <>
     void
     fillRhoSigmaTauVector(
@@ -276,8 +277,8 @@ namespace dftfe
     {
       for (dftfe::uInt iQuad = 0; iQuad < numQuadPoints; iQuad++)
         {
-          rhoVector[2 * iQuad + 0] = densitySpinUp[iQuad];
-          rhoVector[2 * iQuad + 1] = densitySpinDown[iQuad];
+          rhoVector[2 * iQuad + 0] = std::max(densitySpinUp[iQuad], 1e-12);
+          rhoVector[2 * iQuad + 1] = std::max(densitySpinDown[iQuad], 1e-12);
           for (dftfe::uInt j = 0; j < 3; j++)
             {
               sigmaVector[3 * iQuad + 0] += gradDensitySpinUp[3 * iQuad + j] *
@@ -287,8 +288,14 @@ namespace dftfe
               sigmaVector[3 * iQuad + 2] += gradDensitySpinDown[3 * iQuad + j] *
                                             gradDensitySpinDown[3 * iQuad + j];
             }
-          tauVector[2 * iQuad + 0] = std::max(tauSpinUp[iQuad], tauThreshold);
-          tauVector[2 * iQuad + 1] = std::max(tauSpinDown[iQuad], tauThreshold);
+          sigmaVector[3 * iQuad + 0] =
+            std::max(sigmaVector[3 * iQuad + 0], 1e-24);
+          sigmaVector[3 * iQuad + 1] =
+            std::max(sigmaVector[3 * iQuad + 1], 1e-24);
+          sigmaVector[3 * iQuad + 2] =
+            std::max(sigmaVector[3 * iQuad + 2], 1e-24);
+          tauVector[2 * iQuad + 0] = std::max(tauSpinUp[iQuad], 1e-12);
+          tauVector[2 * iQuad + 1] = std::max(tauSpinDown[iQuad], 1e-12);
         }
     }
 

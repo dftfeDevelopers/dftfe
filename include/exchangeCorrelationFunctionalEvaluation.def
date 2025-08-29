@@ -14,25 +14,50 @@
 //
 // ---------------------------------------------------------------------
 //
+//
+#include <XCfunctionalDefs/lda_x.h>
+#include <XCfunctionalDefs/lda_c_pw.h>
+#include <XCfunctionalDefs/gga_x_pbe.h>
+#include <XCfunctionalDefs/gga_c_pbe.h>
+#include <XCfunctionalDefs/mgga_x_r2scan.h>
+#include <XCfunctionalDefs/mgga_c_r2scan.h>
+#include <XCfunctionalDefs/mgga_x_scan.h>
 
-DFTFE_FUNCTIONALEVALUATOR_LDA_C(PW,{
-  //Body of correlation functional evaluation
-  // corrEnergyOut[index] = densityValues[2 * index + 0] *
-  //                        densityValues[2 * index + 1] *
-  //                        pdecDensity[index];
-  // pdecDensity[index] = densityValues[2 * index + 0] +
-  //                      densityValues[2 * index + 1];
-})
-DFTFE_FUNCTIONALEVALUATOR_LDA_X(SLA,{
-    //Body of exchange functional evaluation
-  // excEnergyOut[index] = densityValues[2 * index + 0] *
-  //                        densityValues[2 * index + 1] *
-  //                        pdecDensity[index];
-  // pdexDensity[index] = densityValues[2 * index + 0] +
-  //                      densityValues[2 * index + 1];
-})
+#ifndef UTILS
+#define UTILS
 
+#define M_SQRTPI        1.772453850905516027298167483341145182798L
+#define M_CBRTPI        1.464591887561523263020142527263790391739L
+#define M_SQRT3         1.732050807568877293527446341505872366943L
+#define M_CBRT2         1.259921049894873164767210607278228350570L
+#define M_CBRT3         1.442249570307408382321638310780109588392L
+#define M_CBRT4         1.587401051968199474751705639272308260391L
+#define M_CBRT5         1.709975946676696989353108872543860109868L
+#define M_CBRT6         1.817120592832139658891211756327260502428L
+#define M_CBRT7         1.912931182772389101199116839548760282862L
+#define M_CBRT9         2.080083823051904114530056824357885386338L
+#define M_PI            3.14159265358979323846
+#define POW_1_3(x) pow((x), 1.0/3.0)
 
+#define LOG_DBL_MIN        (std::log(DBL_MIN))
+#define LOG_DBL_MAX        (std::log(DBL_MAX))
+#define SQRT_DBL_EPSILON   (std::sqrt(DBL_EPSILON))
+#define DBL_EPSILON        2.2204460492503131e-16
 
+#define my_piecewise3(c, x1, x2) ((c) ? (x1) : (x2))
+#define my_piecewise5(c1, x1, c2, x2, x3) ((c1) ? (x1) : ((c2) ? (x2) : (x3)))
+#define m_min(x,y)  (((x)<(y)) ? (x) : (y))
 
+#define DFTFE_KERNEL_NAME(...) __VA_ARGS__
+#endif
+DFTFE_FUNCTIONALEVALUATOR_LDA_X(PW,DFTFE_KERNEL_NAME(LDA_X)) 
+DFTFE_FUNCTIONALEVALUATOR_LDA_C(PW,DFTFE_KERNEL_NAME(LDA_C_PW))   
 
+DFTFE_FUNCTIONALEVALUATOR_GGA_X(PBE, DFTFE_KERNEL_NAME(GGA_X_PBE))
+DFTFE_FUNCTIONALEVALUATOR_GGA_C(PBE, DFTFE_KERNEL_NAME(GGA_C_PBE))
+
+DFTFE_FUNCTIONALEVALUATOR_MGGA_X(R2SCAN, DFTFE_KERNEL_NAME(MGGA_X_R2SCAN))
+DFTFE_FUNCTIONALEVALUATOR_MGGA_C(R2SCAN, DFTFE_KERNEL_NAME(MGGA_C_R2SCAN))
+
+// DFTFE_FUNCTIONALEVALUATOR_MGGA_X(SCAN, DFTFE_KERNEL_NAME(MGGA_X_SCAN))
+// DFTFE_FUNCTIONALEVALUATOR_MGGA_C(SCAN, DFTFE_KERNEL_NAME(MGGA_C_R2SCAN))

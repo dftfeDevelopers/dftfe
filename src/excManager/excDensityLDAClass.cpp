@@ -190,56 +190,41 @@ namespace dftfe
       }
     else
       {
-        // Checking for exchange contribution
+#if defined(DFTFE_WITH_DEVICE)
         dftfe::utils::MemoryStorage<double, memorySpace> densityValuesTemp;
         dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp,
           exValuesTemp;
         dftfe::utils::MemoryStorage<double, memorySpace> pdecDensityTemp,
           pdexDensityTemp;
+
         densityValuesTemp.resize(densityValues.size());
+        densityValuesTemp.copyFrom(densityValues);
         ecValuesTemp.resize(ecValues.size());
         pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
-        exValuesTemp.resize(ecValues.size());
-        pdexDensityTemp.resize(pdecDensityValuesNonNN.size());
-        if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+        exValuesTemp.resize(exValues.size());
+        pdexDensityTemp.resize(pdexDensityValuesNonNN.size());
+#else
+        auto &densityValuesTemp = densityValues;
+        auto &exValuesTemp      = exValues;
+        auto &ecValuesTemp      = ecValues;
+        auto &pdecDensityTemp   = pdecDensityValuesNonNN;
+        auto &pdexDensityTemp   = pdexDensityValuesNonNN;
+#endif
+        if (d_funcXPtr->info->number == 1)
           {
-            densityValuesTemp.copyFrom(densityValues);
+            LDAX_PW(nquad, densityValuesTemp, exValuesTemp, pdexDensityTemp);
+#if defined(DFTFE_WITH_DEVICE)
+            exValues.copyFrom(exValuesTemp);
+            pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+#endif
           }
-        else
-          {
-            densityValuesTemp.swap(densityValues);
-          }
-        dftfe::utils::throwException(
-          "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
-        // if (d_funcXPtr->info->name == "SLA")
-        //   {
-        //   }
-        // else if (d_funcXPtr->info->name == "")
-        //   {
-        //   }
-        // else
-        //   {
-        //     dftfe::utils::throwException(
-        //       "xc_func_type name is not implemented in DFT-FE. Use LIBXC to
-        //       compute the LDA functional.");
-        //   }
-        // Checking for correlation contribution
-        if (d_funcCPtr->info->name == "PW")
+        if (d_funcCPtr->info->number == 12)
           {
             LDAC_PW(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
-            if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-              {
-                ecValues.copyFrom(ecValuesTemp);
-                pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
-              }
-            else
-              {
-                ecValues.swap(ecValuesTemp);
-                pdecDensityValuesNonNN.swap(pdecDensityTemp);
-              }
-          }
-        else if (d_funcCPtr->info->name == "")
-          {
+#if defined(DFTFE_WITH_DEVICE)
+            ecValues.copyFrom(ecValuesTemp);
+            pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+#endif
           }
         else
           {

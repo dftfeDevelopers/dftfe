@@ -690,16 +690,11 @@ namespace dftfe
           dealii::Patterns::Bool(),
           "[Developer] Boolean parameter specifying the explicit path of pseudopotential upf format files used for ctests");
 
-        // prm.declare_entry(
-        //   "USE LIBXC FOR XC FUNCTIONAL EVALUATION",
-        //   "true",
-        //   dealii::Patterns::Bool(),
-        //   "[Developer] Boolean parameter specifying whether LIBXC should be
-        //   used to evaluate the exchange-correlation functional. If set to
-        //   true, the LIBXC library is used to evaluate the
-        //   exchange-correlation functional. If set to false, the
-        //   exchange-correlation functional is evaluated using the internal
-        //   implementation wchih can leverage GPUs");
+        prm.declare_entry(
+          "USE LIBXC FOR XC FUNCTIONAL EVALUATION",
+          "true",
+          dealii::Patterns::Bool(),
+          "[Developer] Boolean parameter specifying whether LIBXC should be used to evaluate the exchange-correlation functional. If set to true, the LIBXC library is used to evaluate the exchange-correlation functional. If set to false, the exchange-correlation functional is evaluated using the internal implementation wchih can leverage GPUs");
 
         prm.declare_entry(
           "PSEUDOPOTENTIAL FILE NAMES LIST",
@@ -1293,7 +1288,7 @@ namespace dftfe
     n_refinement_steps                         = 1;
     numberEigenValues                          = 1;
     XCType                                     = "GGA-PBE";
-    useLiXCForXCEvaluation                     = true;
+    useLibXCForXCEvaluation                    = true;
     spinPolarized                              = 0;
     modelXCInputFile                           = "";
     auxBasisTypeXC                             = "";
@@ -1725,12 +1720,12 @@ namespace dftfe
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
       prm.leave_subsection();
-      isPseudopotential      = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-      pseudoTestsFlag        = prm.get_bool("PSEUDO TESTS FLAG");
-      pseudoPotentialFile    = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-      XCType                 = prm.get("EXCHANGE CORRELATION TYPE");
-      useLiXCForXCEvaluation = true;
-      //  prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
+      isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
+      pseudoPotentialFile = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
+      XCType              = prm.get("EXCHANGE CORRELATION TYPE");
+      useLibXCForXCEvaluation =
+        prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
       spinPolarized     = prm.get_integer("SPIN POLARIZATION");
       modelXCInputFile  = prm.get("MODEL XC INPUT FILE");
       auxBasisTypeXC    = prm.get("AUX BASIS TYPE");
