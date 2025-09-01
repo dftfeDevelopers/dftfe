@@ -38,6 +38,15 @@ namespace dftfe
                           double tvrho0, tvrho1;                         \
                           double rho0 = densityValues[2 * index + 0];    \
                           double rho1 = densityValues[2 * index + 1];    \
+                          if ((rho0 + rho1) < DENS_THRESHOLD_X_##NAME)   \
+                            {                                            \
+                              exEnergyOut[index]         = 0.0;          \
+                              pdexDensity[2 * index + 0] = 0.0;          \
+                              pdexDensity[2 * index + 1] = 0.0;          \
+                              continue;                                  \
+                            }                                            \
+                          rho0 = m_max(DENS_THRESHOLD_X_##NAME, rho0);   \
+                          rho1 = m_max(DENS_THRESHOLD_X_##NAME, rho1);   \
                           BODY;                                          \
                           exEnergyOut[index]         = tzk0;             \
                           pdexDensity[2 * index + 0] = tvrho0;           \
@@ -59,6 +68,15 @@ namespace dftfe
                           double tvrho0, tvrho1;                         \
                           double rho0 = densityValues[2 * index + 0];    \
                           double rho1 = densityValues[2 * index + 1];    \
+                          if ((rho0 + rho1) < DENS_THRESHOLD_C_##NAME)   \
+                            {                                            \
+                              corrEnergyOut[index]       = 0.0;          \
+                              pdecDensity[2 * index + 0] = 0.0;          \
+                              pdecDensity[2 * index + 1] = 0.0;          \
+                              continue;                                  \
+                            }                                            \
+                          rho0 = m_max(DENS_THRESHOLD_C_##NAME, rho0);   \
+                          rho1 = m_max(DENS_THRESHOLD_C_##NAME, rho1);   \
                           BODY;                                          \
                           corrEnergyOut[index]       = tzk0;             \
                           pdecDensity[2 * index + 0] = tvrho0;           \
@@ -70,149 +88,243 @@ namespace dftfe
                       double           *pdecDensity);
 
 
-#define DFTFE_FUNCTIONALEVALUATOR_GGA_X(NAME, BODY)                      \
-  DFTFE_CREATE_KERNEL(void,                                              \
-                      exchangeEvaluationKernel##NAME,                    \
-                      DFTFE_KERNEL_NAME(                                 \
-                        for (dftfe::uInt index = globalThreadId;         \
-                             index < numPoints;                          \
-                             index += nThreadsPerBlock * nThreadBlock) { \
-                          double rho0   = densityValues[2 * index + 0];  \
-                          double rho1   = densityValues[2 * index + 1];  \
-                          double sigma0 = sigmaValues[3 * index + 0];    \
-                          double sigma1 = sigmaValues[3 * index + 1];    \
-                          double sigma2 = sigmaValues[3 * index + 2];    \
-                          double tzk0;                                   \
-                          double tvrho0, tvrho1;                         \
-                          double tvsigma0, tvsigma1, tvsigma2;           \
-                          BODY;                                          \
-                          exEnergyOut[index]         = tzk0;             \
-                          pdexDensity[2 * index + 0] = tvrho0;           \
-                          pdexDensity[2 * index + 1] = tvrho1;           \
-                          pdexSigma[3 * index + 0]   = tvsigma0;         \
-                          pdexSigma[3 * index + 1]   = tvsigma1;         \
-                          pdexSigma[3 * index + 2]   = tvsigma2;         \
-                        }),                                              \
-                      const dftfe::uInt numPoints,                       \
-                      const double     *densityValues,                   \
-                      const double     *sigmaValues,                     \
-                      double           *exEnergyOut,                     \
-                      double           *pdexDensity,                     \
-                      double           *pdexSigma);
+#define DFTFE_FUNCTIONALEVALUATOR_GGA_X(NAME, BODY)                    \
+  DFTFE_CREATE_KERNEL(                                                 \
+    void,                                                              \
+    exchangeEvaluationKernel##NAME,                                    \
+    DFTFE_KERNEL_NAME(for (dftfe::uInt index = globalThreadId;         \
+                           index < numPoints;                          \
+                           index += nThreadsPerBlock * nThreadBlock) { \
+      double tzk0;                                                     \
+      double tvrho0, tvrho1;                                           \
+      double tvsigma0, tvsigma1, tvsigma2;                             \
+      double rho0 = densityValues[2 * index + 0];                      \
+      double rho1 = densityValues[2 * index + 1];                      \
+      if ((rho0 + rho1) < DENS_THRESHOLD_X_##NAME)                     \
+        {                                                              \
+          exEnergyOut[index]         = 0.0;                            \
+          pdexDensity[2 * index + 0] = 0.0;                            \
+          pdexDensity[2 * index + 1] = 0.0;                            \
+          pdexSigma[3 * index + 0]   = 0.0;                            \
+          pdexSigma[3 * index + 1]   = 0.0;                            \
+          pdexSigma[3 * index + 2]   = 0.0;                            \
+          continue;                                                    \
+        }                                                              \
+      rho0 = m_max(DENS_THRESHOLD_X_##NAME, rho0);                     \
+      rho1 = m_max(DENS_THRESHOLD_X_##NAME, rho1);                     \
+      double sigma0 =                                                  \
+        m_max(SIGMA_THRESHOLD_X_##NAME * SIGMA_THRESHOLD_X_##NAME,     \
+              sigmaValues[3 * index + 0]);                             \
+      double sigma2 =                                                  \
+        m_max(SIGMA_THRESHOLD_X_##NAME * SIGMA_THRESHOLD_X_##NAME,     \
+              sigmaValues[3 * index + 2]);                             \
+      double sigma1 = sigmaValues[3 * index + 1];                      \
+      double s      = 0.5 * (sigma0 + sigma2);                         \
+      sigma1        = (sigma1 >= -s ? sigma1 : -s);                    \
+      sigma1        = (sigma1 <= s ? sigma1 : s);                      \
+      BODY;                                                            \
+      exEnergyOut[index]         = tzk0;                               \
+      pdexDensity[2 * index + 0] = tvrho0;                             \
+      pdexDensity[2 * index + 1] = tvrho1;                             \
+      pdexSigma[3 * index + 0]   = tvsigma0;                           \
+      pdexSigma[3 * index + 1]   = tvsigma1;                           \
+      pdexSigma[3 * index + 2]   = tvsigma2;                           \
+    }),                                                                \
+    const dftfe::uInt numPoints,                                       \
+    const double     *densityValues,                                   \
+    const double     *sigmaValues,                                     \
+    double           *exEnergyOut,                                     \
+    double           *pdexDensity,                                     \
+    double           *pdexSigma);
 
-#define DFTFE_FUNCTIONALEVALUATOR_GGA_C(NAME, BODY)                      \
-  DFTFE_CREATE_KERNEL(void,                                              \
-                      correlationEvaluationKernel##NAME,                 \
-                      DFTFE_KERNEL_NAME(                                 \
-                        for (dftfe::uInt index = globalThreadId;         \
-                             index < numPoints;                          \
-                             index += nThreadsPerBlock * nThreadBlock) { \
-                          double rho0   = densityValues[2 * index + 0];  \
-                          double rho1   = densityValues[2 * index + 1];  \
-                          double sigma0 = sigmaValues[3 * index + 0];    \
-                          double sigma1 = sigmaValues[3 * index + 1];    \
-                          double sigma2 = sigmaValues[3 * index + 2];    \
-                          double tzk0;                                   \
-                          double tvrho0, tvrho1;                         \
-                          double tvsigma0, tvsigma1, tvsigma2;           \
-                          BODY;                                          \
-                          corrEnergyOut[index]       = tzk0;             \
-                          pdecDensity[2 * index + 0] = tvrho0;           \
-                          pdecDensity[2 * index + 1] = tvrho1;           \
-                          pdecSigma[3 * index + 0]   = tvsigma0;         \
-                          pdecSigma[3 * index + 1]   = tvsigma1;         \
-                          pdecSigma[3 * index + 2]   = tvsigma2;         \
-                        }),                                              \
-                      const dftfe::uInt numPoints,                       \
-                      const double     *densityValues,                   \
-                      const double     *sigmaValues,                     \
-                      double           *corrEnergyOut,                   \
-                      double           *pdecDensity,                     \
-                      double           *pdecSigma);
+#define DFTFE_FUNCTIONALEVALUATOR_GGA_C(NAME, BODY)                    \
+  DFTFE_CREATE_KERNEL(                                                 \
+    void,                                                              \
+    correlationEvaluationKernel##NAME,                                 \
+    DFTFE_KERNEL_NAME(for (dftfe::uInt index = globalThreadId;         \
+                           index < numPoints;                          \
+                           index += nThreadsPerBlock * nThreadBlock) { \
+      double tzk0;                                                     \
+      double tvrho0, tvrho1;                                           \
+      double tvsigma0, tvsigma1, tvsigma2;                             \
+      double rho0 = densityValues[2 * index + 0];                      \
+      double rho1 = densityValues[2 * index + 1];                      \
+      if ((rho0 + rho1) < DENS_THRESHOLD_C_##NAME)                     \
+        {                                                              \
+          corrEnergyOut[index]       = 0.0;                            \
+          pdecDensity[2 * index + 0] = 0.0;                            \
+          pdecDensity[2 * index + 1] = 0.0;                            \
+          pdecSigma[3 * index + 0]   = 0.0;                            \
+          pdecSigma[3 * index + 1]   = 0.0;                            \
+          pdecSigma[3 * index + 2]   = 0.0;                            \
+          continue;                                                    \
+        }                                                              \
+      rho0 = m_max(DENS_THRESHOLD_C_##NAME, rho0);                     \
+      rho1 = m_max(DENS_THRESHOLD_C_##NAME, rho1);                     \
+      double sigma0 =                                                  \
+        m_max(SIGMA_THRESHOLD_C_##NAME * SIGMA_THRESHOLD_C_##NAME,     \
+              sigmaValues[3 * index + 0]);                             \
+      double sigma2 =                                                  \
+        m_max(SIGMA_THRESHOLD_C_##NAME * SIGMA_THRESHOLD_C_##NAME,     \
+              sigmaValues[3 * index + 2]);                             \
+      double sigma1 = sigmaValues[3 * index + 1];                      \
+      double s      = 0.5 * (sigma0 + sigma2);                         \
+      sigma1        = (sigma1 >= -s ? sigma1 : -s);                    \
+      sigma1        = (sigma1 <= s ? sigma1 : s);                      \
+      BODY;                                                            \
+      corrEnergyOut[index]       = tzk0;                               \
+      pdecDensity[2 * index + 0] = tvrho0;                             \
+      pdecDensity[2 * index + 1] = tvrho1;                             \
+      pdecSigma[3 * index + 0]   = tvsigma0;                           \
+      pdecSigma[3 * index + 1]   = tvsigma1;                           \
+      pdecSigma[3 * index + 2]   = tvsigma2;                           \
+    }),                                                                \
+    const dftfe::uInt numPoints,                                       \
+    const double     *densityValues,                                   \
+    const double     *sigmaValues,                                     \
+    double           *corrEnergyOut,                                   \
+    double           *pdecDensity,                                     \
+    double           *pdecSigma);
 
-#define DFTFE_FUNCTIONALEVALUATOR_MGGA_X(NAME, BODY)                           \
-  DFTFE_CREATE_KERNEL(void,                                                    \
-                      exchangeEvaluationKernel##NAME,                          \
-                      DFTFE_KERNEL_NAME(                                       \
-                        for (dftfe::uInt index = globalThreadId;               \
-                             index < numPoints;                                \
-                             index += nThreadsPerBlock * nThreadBlock) {       \
-                          double rho0   = densityValues[2 * index + 0];        \
-                          double rho1   = densityValues[2 * index + 1];        \
-                          double sigma0 = sigmaValues[3 * index + 0];          \
-                          double sigma1 = sigmaValues[3 * index + 1];          \
-                          double sigma2 = sigmaValues[3 * index + 2];          \
-                          double tau0   = tauValues[2 * index + 0];            \
-                          double tau1   = tauValues[2 * index + 1];            \
-                          double tzk0;                                         \
-                          double tvrho0, tvrho1;                               \
-                          double tvsigma0, tvsigma1, tvsigma2;                 \
-                          double tvtau0, tvtau1;                               \
-                          sigma0       = m_min(sigma0, 8 * rho0 * tau0);       \
-                          sigma2       = m_min(sigma2, 8 * rho1 * tau1);       \
-                          double s_ave = 0.5 * (sigma0 + sigma2);              \
-                          sigma1       = (sigma1 >= -s_ave ? sigma1 : -s_ave); \
-                          sigma1       = (sigma1 <= s_ave ? sigma1 : s_ave);   \
-                          BODY;                                                \
-                          exEnergyOut[index]         = tzk0;                   \
-                          pdexDensity[2 * index + 0] = tvrho0;                 \
-                          pdexDensity[2 * index + 1] = tvrho1;                 \
-                          pdexSigma[3 * index + 0]   = tvsigma0;               \
-                          pdexSigma[3 * index + 1]   = tvsigma1;               \
-                          pdexSigma[3 * index + 2]   = tvsigma2;               \
-                          pdexTau[2 * index + 0]     = tvtau0;                 \
-                          pdexTau[2 * index + 1]     = tvtau1;                 \
-                        }),                                                    \
-                      const dftfe::uInt numPoints,                             \
-                      const double     *densityValues,                         \
-                      const double     *sigmaValues,                           \
-                      const double     *tauValues,                             \
-                      double           *exEnergyOut,                           \
-                      double           *pdexDensity,                           \
-                      double           *pdexSigma,                             \
-                      double           *pdexTau);
+#define DFTFE_FUNCTIONALEVALUATOR_MGGA_X(NAME, BODY)                      \
+  DFTFE_CREATE_KERNEL(                                                    \
+    void,                                                                 \
+    exchangeEvaluationKernel##NAME,                                       \
+    DFTFE_KERNEL_NAME(for (dftfe::uInt index = globalThreadId;            \
+                           index < numPoints;                             \
+                           index += nThreadsPerBlock * nThreadBlock) {    \
+      double tzk0;                                                        \
+      double tvrho0, tvrho1;                                              \
+      double tvsigma0, tvsigma1, tvsigma2;                                \
+      double tvtau0, tvtau1;                                              \
+      double rho0 = densityValues[2 * index + 0];                         \
+      double rho1 = densityValues[2 * index + 1];                         \
+      if ((rho0 + rho1) < DENS_THRESHOLD_X_##NAME)                        \
+        {                                                                 \
+          exEnergyOut[index]         = 0.0;                               \
+          pdexDensity[2 * index + 0] = 0.0;                               \
+          pdexDensity[2 * index + 1] = 0.0;                               \
+          pdexSigma[3 * index + 0]   = 0.0;                               \
+          pdexSigma[3 * index + 1]   = 0.0;                               \
+          pdexSigma[3 * index + 2]   = 0.0;                               \
+          pdexTau[2 * index + 0]     = 0.0;                               \
+          pdexTau[2 * index + 1]     = 0.0;                               \
+          continue;                                                       \
+        }                                                                 \
+      rho0 = m_max(DENS_THRESHOLD_X_##NAME, rho0);                        \
+      rho1 = m_max(DENS_THRESHOLD_X_##NAME, rho1);                        \
+      double sigma0 =                                                     \
+        m_max(SIGMA_THRESHOLD_X_##NAME * SIGMA_THRESHOLD_X_##NAME,        \
+              sigmaValues[3 * index + 0]);                                \
+      double sigma2 =                                                     \
+        m_max(SIGMA_THRESHOLD_X_##NAME * SIGMA_THRESHOLD_X_##NAME,        \
+              sigmaValues[3 * index + 2]);                                \
+      double tau0;                                                        \
+      double tau1;                                                        \
+      if (tauNeededX)                                                     \
+        {                                                                 \
+          tau0 = m_max(TAU_THRESHOLD_X_##NAME, tauValues[2 * index + 0]); \
+          tau1 = m_max(TAU_THRESHOLD_X_##NAME, tauValues[2 * index + 1]); \
+          if (enforceFHCX)                                                \
+            {                                                             \
+              sigma0 = m_min(sigma0, 8.0 * rho0 * tau0);                  \
+              sigma2 = m_min(sigma2, 8.0 * rho1 * tau1);                  \
+            }                                                             \
+        }                                                                 \
+      double sigma1 = sigmaValues[3 * index + 1];                         \
+      double s      = 0.5 * (sigma0 + sigma2);                            \
+      sigma1        = (sigma1 >= -s ? sigma1 : -s);                       \
+      sigma1        = (sigma1 <= s ? sigma1 : s);                         \
+      BODY;                                                               \
+      exEnergyOut[index]         = tzk0;                                  \
+      pdexDensity[2 * index + 0] = tvrho0;                                \
+      pdexDensity[2 * index + 1] = tvrho1;                                \
+      pdexSigma[3 * index + 0]   = tvsigma0;                              \
+      pdexSigma[3 * index + 1]   = tvsigma1;                              \
+      pdexSigma[3 * index + 2]   = tvsigma2;                              \
+      pdexTau[2 * index + 0]     = tvtau0;                                \
+      pdexTau[2 * index + 1]     = tvtau1;                                \
+    }),                                                                   \
+    const dftfe::uInt numPoints,                                          \
+    const double     *densityValues,                                      \
+    const double     *sigmaValues,                                        \
+    const double     *tauValues,                                          \
+    double           *exEnergyOut,                                        \
+    double           *pdexDensity,                                        \
+    double           *pdexSigma,                                          \
+    double           *pdexTau,                                            \
+    bool              tauNeededX,                                         \
+    bool              enforceFHCX);
 
-#define DFTFE_FUNCTIONALEVALUATOR_MGGA_C(NAME, BODY)                           \
-  DFTFE_CREATE_KERNEL(void,                                                    \
-                      correlationEvaluationKernel##NAME,                       \
-                      DFTFE_KERNEL_NAME(                                       \
-                        for (dftfe::uInt index = globalThreadId;               \
-                             index < numPoints;                                \
-                             index += nThreadsPerBlock * nThreadBlock) {       \
-                          double rho0   = densityValues[2 * index + 0];        \
-                          double rho1   = densityValues[2 * index + 1];        \
-                          double sigma0 = sigmaValues[3 * index + 0];          \
-                          double sigma1 = sigmaValues[3 * index + 1];          \
-                          double sigma2 = sigmaValues[3 * index + 2];          \
-                          double tau0   = tauValues[2 * index + 0];            \
-                          double tau1   = tauValues[2 * index + 1];            \
-                          double tzk0;                                         \
-                          double tvrho0, tvrho1;                               \
-                          double tvsigma0, tvsigma1, tvsigma2;                 \
-                          double tvtau0, tvtau1;                               \
-                          sigma0       = m_min(sigma0, 8 * rho0 * tau0);       \
-                          sigma2       = m_min(sigma2, 8 * rho1 * tau1);       \
-                          double s_ave = 0.5 * (sigma0 + sigma2);              \
-                          sigma1       = (sigma1 >= -s_ave ? sigma1 : -s_ave); \
-                          sigma1       = (sigma1 <= s_ave ? sigma1 : s_ave);   \
-                          BODY;                                                \
-                          corrEnergyOut[index]       = tzk0;                   \
-                          pdecDensity[2 * index + 0] = tvrho0;                 \
-                          pdecDensity[2 * index + 1] = tvrho1;                 \
-                          pdecSigma[3 * index + 0]   = tvsigma0;               \
-                          pdecSigma[3 * index + 1]   = tvsigma1;               \
-                          pdecSigma[3 * index + 2]   = tvsigma2;               \
-                          pdecTau[2 * index + 0]     = tvtau0;                 \
-                          pdecTau[2 * index + 1]     = tvtau1;                 \
-                        }),                                                    \
-                      const dftfe::uInt numPoints,                             \
-                      const double     *densityValues,                         \
-                      const double     *sigmaValues,                           \
-                      const double     *tauValues,                             \
-                      double           *corrEnergyOut,                         \
-                      double           *pdecDensity,                           \
-                      double           *pdecSigma,                             \
-                      double           *pdecTau);
+#define DFTFE_FUNCTIONALEVALUATOR_MGGA_C(NAME, BODY)                      \
+  DFTFE_CREATE_KERNEL(                                                    \
+    void,                                                                 \
+    correlationEvaluationKernel##NAME,                                    \
+    DFTFE_KERNEL_NAME(for (dftfe::uInt index = globalThreadId;            \
+                           index < numPoints;                             \
+                           index += nThreadsPerBlock * nThreadBlock) {    \
+      double tzk0;                                                        \
+      double tvrho0, tvrho1;                                              \
+      double tvsigma0, tvsigma1, tvsigma2;                                \
+      double tvtau0, tvtau1;                                              \
+      double rho0 = densityValues[2 * index + 0];                         \
+      double rho1 = densityValues[2 * index + 1];                         \
+      if ((rho0 + rho1) < DENS_THRESHOLD_C_##NAME)                        \
+        {                                                                 \
+          corrEnergyOut[index]       = 0.0;                               \
+          pdecDensity[2 * index + 0] = 0.0;                               \
+          pdecDensity[2 * index + 1] = 0.0;                               \
+          pdecSigma[3 * index + 0]   = 0.0;                               \
+          pdecSigma[3 * index + 1]   = 0.0;                               \
+          pdecSigma[3 * index + 2]   = 0.0;                               \
+          pdecTau[2 * index + 0]     = 0.0;                               \
+          pdecTau[2 * index + 1]     = 0.0;                               \
+          continue;                                                       \
+        }                                                                 \
+      rho0 = m_max(DENS_THRESHOLD_C_##NAME, rho0);                        \
+      rho1 = m_max(DENS_THRESHOLD_C_##NAME, rho1);                        \
+      double sigma0 =                                                     \
+        m_max(SIGMA_THRESHOLD_C_##NAME * SIGMA_THRESHOLD_C_##NAME,        \
+              sigmaValues[3 * index + 0]);                                \
+      double sigma2 =                                                     \
+        m_max(SIGMA_THRESHOLD_C_##NAME * SIGMA_THRESHOLD_C_##NAME,        \
+              sigmaValues[3 * index + 2]);                                \
+      double tau0;                                                        \
+      double tau1;                                                        \
+      if (tauNeededC)                                                     \
+        {                                                                 \
+          tau0 = m_max(TAU_THRESHOLD_C_##NAME, tauValues[2 * index + 0]); \
+          tau1 = m_max(TAU_THRESHOLD_C_##NAME, tauValues[2 * index + 1]); \
+          if (enforceFHCC)                                                \
+            {                                                             \
+              sigma0 = m_min(sigma0, 8.0 * rho0 * tau0);                  \
+              sigma2 = m_min(sigma2, 8.0 * rho1 * tau1);                  \
+            }                                                             \
+        }                                                                 \
+      double sigma1 = sigmaValues[3 * index + 1];                         \
+      double s      = 0.5 * (sigma0 + sigma2);                            \
+      sigma1        = (sigma1 >= -s ? sigma1 : -s);                       \
+      sigma1        = (sigma1 <= s ? sigma1 : s);                         \
+      BODY;                                                               \
+      corrEnergyOut[index]       = tzk0;                                  \
+      pdecDensity[2 * index + 0] = tvrho0;                                \
+      pdecDensity[2 * index + 1] = tvrho1;                                \
+      pdecSigma[3 * index + 0]   = tvsigma0;                              \
+      pdecSigma[3 * index + 1]   = tvsigma1;                              \
+      pdecSigma[3 * index + 2]   = tvsigma2;                              \
+      pdecTau[2 * index + 0]     = tvtau0;                                \
+      pdecTau[2 * index + 1]     = tvtau1;                                \
+    }),                                                                   \
+    const dftfe::uInt numPoints,                                          \
+    const double     *densityValues,                                      \
+    const double     *sigmaValues,                                        \
+    const double     *tauValues,                                          \
+    double           *corrEnergyOut,                                      \
+    double           *pdecDensity,                                        \
+    double           *pdecSigma,                                          \
+    double           *pdecTau,                                            \
+    bool              tauNeededC,                                         \
+    bool              enforceFHCC);
   } // namespace
 #include <exchangeCorrelationFunctionalEvaluation.def>
 } // namespace dftfe
@@ -388,7 +500,9 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>  \
       &pdexSigma,                                                           \
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>  \
-      &pdexTau)                                                             \
+        &pdexTau,                                                           \
+    bool tauNeededX,                                                        \
+    bool enforceFHCX)                                                       \
   {                                                                         \
     const auto *densityValuesTemp =                                         \
       dftfe::utils::makeDataTypeDeviceCompatible(densityValues.data());     \
@@ -417,7 +531,9 @@ namespace dftfe
                         exEnergyOutTemp,                                    \
                         pdexDensityTemp,                                    \
                         pdexSigmaTemp,                                      \
-                        pdexTauTemp);                                       \
+                        pdexTauTemp,                                        \
+                        tauNeededX,                                         \
+                        enforceFHCX);                                       \
   }
 
 #define DFTFE_FUNCTIONALEVALUATOR_MGGA_C(NAME, BODY)                        \
@@ -440,7 +556,9 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>  \
       &pdecSigma,                                                           \
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>  \
-      &pdecTau)                                                             \
+        &pdecTau,                                                           \
+    bool tauNeededC,                                                        \
+    bool enforceFHCC)                                                       \
   {                                                                         \
     const auto *densityValuesTemp =                                         \
       dftfe::utils::makeDataTypeDeviceCompatible(densityValues.data());     \
@@ -469,7 +587,9 @@ namespace dftfe
                         corrEnergyOutTemp,                                  \
                         pdecDensityTemp,                                    \
                         pdecSigmaTemp,                                      \
-                        pdecTauTemp);                                       \
+                        pdecTauTemp,                                        \
+                        tauNeededC,                                         \
+                        enforceFHCC);                                       \
   }
 #include <exchangeCorrelationFunctionalEvaluation.def>
 } // namespace dftfe

@@ -14,7 +14,6 @@
 //
 // ---------------------------------------------------------------------
 //
-#include <iostream>
 #include <exchangeCorrelationFunctionalEvaluator.h>
 namespace dftfe
 {
@@ -34,6 +33,15 @@ namespace dftfe
         double tzk0, tvrho0, tvrho1;                                           \
         double rho0 = densityValues[2 * index + 0];                            \
         double rho1 = densityValues[2 * index + 1];                            \
+        if ((rho0 + rho1) < DENS_THRESHOLD_X_##NAME)                           \
+          {                                                                    \
+            exEnergyOut[index]         = 0.0;                                  \
+            pdexDensity[2 * index + 0] = 0.0;                                  \
+            pdexDensity[2 * index + 1] = 0.0;                                  \
+            continue;                                                          \
+          }                                                                    \
+        rho0 = m_max(DENS_THRESHOLD_X_##NAME, rho0);                           \
+        rho1 = m_max(DENS_THRESHOLD_X_##NAME, rho1);                           \
         BODY;                                                                  \
         exEnergyOut[index]         = tzk0;                                     \
         pdexDensity[2 * index + 0] = tvrho0;                                   \
@@ -58,6 +66,15 @@ namespace dftfe
         double tzk0, tvrho0, tvrho1;                                           \
         double rho0 = densityValues[2 * index + 0];                            \
         double rho1 = densityValues[2 * index + 1];                            \
+        if ((rho0 + rho1) < DENS_THRESHOLD_C_##NAME)                           \
+          {                                                                    \
+            corrEnergyOut[index]       = 0.0;                                  \
+            pdecDensity[2 * index + 0] = 0.0;                                  \
+            pdecDensity[2 * index + 1] = 0.0;                                  \
+            continue;                                                          \
+          }                                                                    \
+        rho0 = m_max(DENS_THRESHOLD_C_##NAME, rho0);                           \
+        rho1 = m_max(DENS_THRESHOLD_C_##NAME, rho1);                           \
         BODY;                                                                  \
         corrEnergyOut[index]       = tzk0;                                     \
         pdecDensity[2 * index + 0] = tvrho0;                                   \
@@ -83,11 +100,30 @@ namespace dftfe
     for (dftfe::uInt index = 0; index < numPoints; index++)                    \
       {                                                                        \
         double tzk0, tvrho0, tvrho1, tvsigma0, tvsigma1, tvsigma2;             \
-        double rho0   = densityValues[2 * index + 0];                          \
-        double rho1   = densityValues[2 * index + 1];                          \
-        double sigma0 = sigmaValues[3 * index + 0];                            \
+        double rho0 = densityValues[2 * index + 0];                            \
+        double rho1 = densityValues[2 * index + 1];                            \
+        if ((rho0 + rho1) < DENS_THRESHOLD_X_##NAME)                           \
+          {                                                                    \
+            exEnergyOut[index]         = 0.0;                                  \
+            pdexDensity[2 * index + 0] = 0.0;                                  \
+            pdexDensity[2 * index + 1] = 0.0;                                  \
+            pdexSigma[3 * index + 0]   = 0.0;                                  \
+            pdexSigma[3 * index + 1]   = 0.0;                                  \
+            pdexSigma[3 * index + 2]   = 0.0;                                  \
+            continue;                                                          \
+          }                                                                    \
+        rho0 = m_max(DENS_THRESHOLD_X_##NAME, rho0);                           \
+        rho1 = m_max(DENS_THRESHOLD_X_##NAME, rho1);                           \
+        double sigma0 =                                                        \
+          m_max(SIGMA_THRESHOLD_X_##NAME * SIGMA_THRESHOLD_X_##NAME,           \
+                sigmaValues[3 * index + 0]);                                   \
+        double sigma2 =                                                        \
+          m_max(SIGMA_THRESHOLD_X_##NAME * SIGMA_THRESHOLD_X_##NAME,           \
+                sigmaValues[3 * index + 2]);                                   \
         double sigma1 = sigmaValues[3 * index + 1];                            \
-        double sigma2 = sigmaValues[3 * index + 2];                            \
+        double s      = 0.5 * (sigma0 + sigma2);                               \
+        sigma1        = (sigma1 >= -s ? sigma1 : -s);                          \
+        sigma1        = (sigma1 <= s ? sigma1 : s);                            \
         BODY;                                                                  \
         exEnergyOut[index]         = tzk0;                                     \
         pdexDensity[2 * index + 0] = tvrho0;                                   \
@@ -116,11 +152,30 @@ namespace dftfe
     for (dftfe::uInt index = 0; index < numPoints; index++)                    \
       {                                                                        \
         double tzk0, tvrho0, tvrho1, tvsigma0, tvsigma1, tvsigma2;             \
-        double rho0   = densityValues[2 * index + 0];                          \
-        double rho1   = densityValues[2 * index + 1];                          \
-        double sigma0 = sigmaValues[3 * index + 0];                            \
+        double rho0 = densityValues[2 * index + 0];                            \
+        double rho1 = densityValues[2 * index + 1];                            \
+        if ((rho0 + rho1) < DENS_THRESHOLD_C_##NAME)                           \
+          {                                                                    \
+            corrEnergyOut[index]       = 0.0;                                  \
+            pdecDensity[2 * index + 0] = 0.0;                                  \
+            pdecDensity[2 * index + 1] = 0.0;                                  \
+            pdecSigma[3 * index + 0]   = 0.0;                                  \
+            pdecSigma[3 * index + 1]   = 0.0;                                  \
+            pdecSigma[3 * index + 2]   = 0.0;                                  \
+            continue;                                                          \
+          }                                                                    \
+        rho0 = m_max(DENS_THRESHOLD_C_##NAME, rho0);                           \
+        rho1 = m_max(DENS_THRESHOLD_C_##NAME, rho1);                           \
+        double sigma0 =                                                        \
+          m_max(SIGMA_THRESHOLD_C_##NAME * SIGMA_THRESHOLD_C_##NAME,           \
+                sigmaValues[3 * index + 0]);                                   \
+        double sigma2 =                                                        \
+          m_max(SIGMA_THRESHOLD_C_##NAME * SIGMA_THRESHOLD_C_##NAME,           \
+                sigmaValues[3 * index + 2]);                                   \
         double sigma1 = sigmaValues[3 * index + 1];                            \
-        double sigma2 = sigmaValues[3 * index + 2];                            \
+        double s      = 0.5 * (sigma0 + sigma2);                               \
+        sigma1        = (sigma1 >= -s ? sigma1 : -s);                          \
+        sigma1        = (sigma1 <= s ? sigma1 : s);                            \
         BODY;                                                                  \
         corrEnergyOut[index]       = tzk0;                                     \
         pdecDensity[2 * index + 0] = tvrho0;                                   \
@@ -148,24 +203,52 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
       &pdexSigma,                                                              \
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
-      &pdexTau)                                                                \
+        &pdexTau,                                                              \
+    bool tauNeededX,                                                           \
+    bool enforceFHCX)                                                          \
   {                                                                            \
     for (dftfe::uInt index = 0; index < numPoints; index++)                    \
       {                                                                        \
         double tzk0, tvrho0, tvrho1, tvsigma0, tvsigma1, tvsigma2;             \
         double tvtau0, tvtau1;                                                 \
-        double rho0   = densityValues[2 * index + 0];                          \
-        double rho1   = densityValues[2 * index + 1];                          \
-        double sigma0 = sigmaValues[3 * index + 0];                            \
+        double rho0 = densityValues[2 * index + 0];                            \
+        double rho1 = densityValues[2 * index + 1];                            \
+        if ((rho0 + rho1) < DENS_THRESHOLD_X_##NAME)                           \
+          {                                                                    \
+            exEnergyOut[index]         = 0.0;                                  \
+            pdexDensity[2 * index + 0] = 0.0;                                  \
+            pdexDensity[2 * index + 1] = 0.0;                                  \
+            pdexSigma[3 * index + 0]   = 0.0;                                  \
+            pdexSigma[3 * index + 1]   = 0.0;                                  \
+            pdexSigma[3 * index + 2]   = 0.0;                                  \
+            pdexTau[2 * index + 0]     = 0.0;                                  \
+            pdexTau[2 * index + 1]     = 0.0;                                  \
+            continue;                                                          \
+          }                                                                    \
+        rho0 = m_max(DENS_THRESHOLD_X_##NAME, rho0);                           \
+        rho1 = m_max(DENS_THRESHOLD_X_##NAME, rho1);                           \
+        double sigma0 =                                                        \
+          m_max(SIGMA_THRESHOLD_X_##NAME * SIGMA_THRESHOLD_X_##NAME,           \
+                sigmaValues[3 * index + 0]);                                   \
+        double sigma2 =                                                        \
+          m_max(SIGMA_THRESHOLD_X_##NAME * SIGMA_THRESHOLD_X_##NAME,           \
+                sigmaValues[3 * index + 2]);                                   \
+        double tau0;                                                           \
+        double tau1;                                                           \
+        if (tauNeededX)                                                        \
+          {                                                                    \
+            tau0 = m_max(TAU_THRESHOLD_X_##NAME, tauValues[2 * index + 0]);    \
+            tau1 = m_max(TAU_THRESHOLD_X_##NAME, tauValues[2 * index + 1]);    \
+            if (enforceFHCX)                                                   \
+              {                                                                \
+                sigma0 = m_min(sigma0, 8.0 * rho0 * tau0);                     \
+                sigma2 = m_min(sigma2, 8.0 * rho1 * tau1);                     \
+              }                                                                \
+          }                                                                    \
         double sigma1 = sigmaValues[3 * index + 1];                            \
-        double sigma2 = sigmaValues[3 * index + 2];                            \
-        double tau0   = tauValues[2 * index + 0];                              \
-        double tau1   = tauValues[2 * index + 1];                              \
-        sigma0        = m_min(sigma0, 8 * rho0 * tau0);                        \
-        sigma2        = m_min(sigma2, 8 * rho1 * tau1);                        \
-        double s_ave  = 0.5 * (sigma0 + sigma2);                               \
-        sigma1        = (sigma1 >= -s_ave ? sigma1 : -s_ave);                  \
-        sigma1        = (sigma1 <= s_ave ? sigma1 : s_ave);                    \
+        double s      = 0.5 * (sigma0 + sigma2);                               \
+        sigma1        = (sigma1 >= -s ? sigma1 : -s);                          \
+        sigma1        = (sigma1 <= s ? sigma1 : s);                            \
         BODY;                                                                  \
         exEnergyOut[index]         = tzk0;                                     \
         pdexDensity[2 * index + 0] = tvrho0;                                   \
@@ -195,24 +278,52 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
       &pdecSigma,                                                              \
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>       \
-      &pdecTau)                                                                \
+        &pdecTau,                                                              \
+    bool tauNeededC,                                                           \
+    bool enforceFHCC)                                                          \
   {                                                                            \
     for (dftfe::uInt index = 0; index < numPoints; index++)                    \
       {                                                                        \
         double tzk0, tvrho0, tvrho1, tvsigma0, tvsigma1, tvsigma2;             \
         double tvtau0, tvtau1;                                                 \
-        double rho0   = densityValues[2 * index + 0];                          \
-        double rho1   = densityValues[2 * index + 1];                          \
-        double sigma0 = sigmaValues[3 * index + 0];                            \
+        double rho0 = densityValues[2 * index + 0];                            \
+        double rho1 = densityValues[2 * index + 1];                            \
+        if ((rho0 + rho1) < DENS_THRESHOLD_C_##NAME)                           \
+          {                                                                    \
+            corrEnergyOut[index]       = 0.0;                                  \
+            pdecDensity[2 * index + 0] = 0.0;                                  \
+            pdecDensity[2 * index + 1] = 0.0;                                  \
+            pdecSigma[3 * index + 0]   = 0.0;                                  \
+            pdecSigma[3 * index + 1]   = 0.0;                                  \
+            pdecSigma[3 * index + 2]   = 0.0;                                  \
+            pdecTau[2 * index + 0]     = 0.0;                                  \
+            pdecTau[2 * index + 1]     = 0.0;                                  \
+            continue;                                                          \
+          }                                                                    \
+        rho0 = m_max(DENS_THRESHOLD_C_##NAME, rho0);                           \
+        rho1 = m_max(DENS_THRESHOLD_C_##NAME, rho1);                           \
+        double sigma0 =                                                        \
+          m_max(SIGMA_THRESHOLD_C_##NAME * SIGMA_THRESHOLD_C_##NAME,           \
+                sigmaValues[3 * index + 0]);                                   \
+        double sigma2 =                                                        \
+          m_max(SIGMA_THRESHOLD_C_##NAME * SIGMA_THRESHOLD_C_##NAME,           \
+                sigmaValues[3 * index + 2]);                                   \
+        double tau0;                                                           \
+        double tau1;                                                           \
+        if (tauNeededC)                                                        \
+          {                                                                    \
+            tau0 = m_max(TAU_THRESHOLD_C_##NAME, tauValues[2 * index + 0]);    \
+            tau1 = m_max(TAU_THRESHOLD_C_##NAME, tauValues[2 * index + 1]);    \
+            if (enforceFHCC)                                                   \
+              {                                                                \
+                sigma0 = m_min(sigma0, 8.0 * rho0 * tau0);                     \
+                sigma2 = m_min(sigma2, 8.0 * rho1 * tau1);                     \
+              }                                                                \
+          }                                                                    \
         double sigma1 = sigmaValues[3 * index + 1];                            \
-        double sigma2 = sigmaValues[3 * index + 2];                            \
-        double tau0   = tauValues[2 * index + 0];                              \
-        double tau1   = tauValues[2 * index + 1];                              \
-        sigma0        = m_min(sigma0, 8 * rho0 * tau0);                        \
-        sigma2        = m_min(sigma2, 8 * rho1 * tau1);                        \
-        double s_ave  = 0.5 * (sigma0 + sigma2);                               \
-        sigma1        = (sigma1 >= -s_ave ? sigma1 : -s_ave);                  \
-        sigma1        = (sigma1 <= s_ave ? sigma1 : s_ave);                    \
+        double s      = 0.5 * (sigma0 + sigma2);                               \
+        sigma1        = (sigma1 >= -s ? sigma1 : -s);                          \
+        sigma1        = (sigma1 <= s ? sigma1 : s);                            \
         BODY;                                                                  \
         corrEnergyOut[index]       = tzk0;                                     \
         pdecDensity[2 * index + 0] = tvrho0;                                   \

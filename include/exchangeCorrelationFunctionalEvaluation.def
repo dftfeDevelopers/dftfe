@@ -22,6 +22,7 @@
 #include <XCfunctionalDefs/mgga_x_r2scan.h>
 #include <XCfunctionalDefs/mgga_c_r2scan.h>
 #include <XCfunctionalDefs/mgga_x_scan.h>
+#include <XCfunctionalDefs/mgga_c_scan.h>
 
 #ifndef UTILS
 #define UTILS
@@ -38,6 +39,8 @@
 #define M_CBRT9         2.080083823051904114530056824357885386338L
 #define M_PI            3.14159265358979323846
 #define POW_1_3(x) pow((x), 1.0/3.0)
+#define POW_3_2(x) pow((x), 3.0/2.0)
+#define POW_1_4(x) pow((x), 1.0/4.0)
 
 #define LOG_DBL_MIN        (std::log(DBL_MIN))
 #define LOG_DBL_MAX        (std::log(DBL_MAX))
@@ -47,6 +50,7 @@
 #define my_piecewise3(c, x1, x2) ((c) ? (x1) : (x2))
 #define my_piecewise5(c1, x1, c2, x2, x3) ((c1) ? (x1) : ((c2) ? (x2) : (x3)))
 #define m_min(x,y)  (((x)<(y)) ? (x) : (y))
+#define m_max(x,y)  (((x)>(y)) ? (x) : (y))
 
 #define DFTFE_KERNEL_NAME(...) __VA_ARGS__
 #endif
@@ -59,5 +63,5 @@ DFTFE_FUNCTIONALEVALUATOR_GGA_C(PBE, DFTFE_KERNEL_NAME(GGA_C_PBE))
 DFTFE_FUNCTIONALEVALUATOR_MGGA_X(R2SCAN, DFTFE_KERNEL_NAME(MGGA_X_R2SCAN))
 DFTFE_FUNCTIONALEVALUATOR_MGGA_C(R2SCAN, DFTFE_KERNEL_NAME(MGGA_C_R2SCAN))
 
-// DFTFE_FUNCTIONALEVALUATOR_MGGA_X(SCAN, DFTFE_KERNEL_NAME(MGGA_X_SCAN))
-// DFTFE_FUNCTIONALEVALUATOR_MGGA_C(SCAN, DFTFE_KERNEL_NAME(MGGA_C_R2SCAN))
+DFTFE_FUNCTIONALEVALUATOR_MGGA_X(SCAN, DFTFE_KERNEL_NAME(MGGA_X_SCAN))
+DFTFE_FUNCTIONALEVALUATOR_MGGA_C(SCAN, DFTFE_KERNEL_NAME(MGGA_C_SCAN))

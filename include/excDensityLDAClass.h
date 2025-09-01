@@ -29,12 +29,14 @@ namespace dftfe
   public:
     excDensityLDAClass(std::shared_ptr<xc_func_type> &funcXPtr,
                        std::shared_ptr<xc_func_type> &funcCPtr,
-                       const bool                     useLibXC);
+                       const bool                     useLibXC,
+                       std::string                    XCType);
 
     excDensityLDAClass(std::shared_ptr<xc_func_type> &funcXPtr,
                        std::shared_ptr<xc_func_type> &funcCPtr,
                        std::string                    modelXCInputFile,
-                       const bool                     useLibXC);
+                       const bool                     useLibXC,
+                       std::string                    XCType);
 
     ~excDensityLDAClass();
 
@@ -109,15 +111,8 @@ namespace dftfe
     NNLDA                        *d_NNLDAPtr;
     std::shared_ptr<xc_func_type> d_funcXPtr;
     std::shared_ptr<xc_func_type> d_funcCPtr;
-    bool d_useLibXC; ///< Flag to indicate whether to use libxc or not
-    struct paramsMap
-    {
-      char   *keys;
-      int    *offsets;
-      double *values;
-      int     size;
-    };
-    paramsMap *h_mapX, *h_mapC, *d_mapX, *d_mapC;
+    bool        d_useLibXC; ///< Flag to indicate whether to use libxc or not
+    std::string d_XCType;
   };
 } // namespace dftfe
 

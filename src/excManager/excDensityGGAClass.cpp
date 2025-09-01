@@ -32,7 +32,8 @@ namespace dftfe
   excDensityGGAClass<memorySpace>::excDensityGGAClass(
     std::shared_ptr<xc_func_type> &funcXPtr,
     std::shared_ptr<xc_func_type> &funcCPtr,
-    const bool                     useLibxc)
+    const bool                     useLibxc,
+    std::string                    XCType)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::GGA,
         densityFamilyType::GGA,
@@ -46,6 +47,7 @@ namespace dftfe
     d_funcCPtr = funcCPtr;
     d_NNGGAPtr = nullptr;
     d_useLibXC = useLibxc;
+    d_XCType   = XCType;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -53,7 +55,8 @@ namespace dftfe
     std::shared_ptr<xc_func_type> &funcXPtr,
     std::shared_ptr<xc_func_type> &funcCPtr,
     std::string                    modelXCInputFile,
-    const bool                     useLibxc)
+    const bool                     useLibxc,
+    std::string                    XCType)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::GGA,
         densityFamilyType::GGA,
@@ -69,6 +72,7 @@ namespace dftfe
     d_NNGGAPtr = new NNGGA(modelXCInputFile, true);
 #endif
     d_useLibXC = useLibxc;
+    d_XCType   = XCType;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -261,7 +265,7 @@ namespace dftfe
         auto &pdecSigmaValuesTemp = pdecSigmaValues;
         auto &pdexSigmaValuesTemp = pdexSigmaValues;
 #endif
-        if (d_funcXPtr->info->number == 101)
+        if (d_XCType == "GGA-PBE")
           {
             GGAX_PBE(nquad,
                      densityValuesTemp,
@@ -274,10 +278,6 @@ namespace dftfe
             pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
             pdexSigmaValues.copyFrom(pdexSigmaValuesTemp);
 #endif
-          }
-
-        if (d_funcCPtr->info->number == 130)
-          {
             GGAC_PBE(nquad,
                      densityValuesTemp,
                      sigmaValuesTemp,

@@ -32,7 +32,8 @@ namespace dftfe
   excDensityLDAClass<memorySpace>::excDensityLDAClass(
     std::shared_ptr<xc_func_type> &funcXPtr,
     std::shared_ptr<xc_func_type> &funcCPtr,
-    const bool                     useLibxc)
+    const bool                     useLibxc,
+    std::string                    XCType)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -44,6 +45,7 @@ namespace dftfe
     d_funcCPtr = funcCPtr;
     d_NNLDAPtr = nullptr;
     d_useLibXC = useLibxc;
+    d_XCType   = XCType;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -51,7 +53,8 @@ namespace dftfe
     std::shared_ptr<xc_func_type> &funcXPtr,
     std::shared_ptr<xc_func_type> &funcCPtr,
     std::string                    modelXCInputFile,
-    const bool                     useLibxc)
+    const bool                     useLibxc,
+    std::string                    XCType)
     : ExcSSDFunctionalBaseClass<memorySpace>(
         ExcFamilyType::LDA,
         densityFamilyType::LDA,
@@ -65,6 +68,7 @@ namespace dftfe
     d_NNLDAPtr = new NNLDA(modelXCInputFile, true);
 #endif
     d_useLibXC = useLibxc;
+    d_XCType   = XCType;
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
@@ -210,16 +214,13 @@ namespace dftfe
         auto &pdecDensityTemp   = pdecDensityValuesNonNN;
         auto &pdexDensityTemp   = pdexDensityValuesNonNN;
 #endif
-        if (d_funcXPtr->info->number == 1)
+        if (d_XCType == "LDA-PW")
           {
             LDAX_PW(nquad, densityValuesTemp, exValuesTemp, pdexDensityTemp);
 #if defined(DFTFE_WITH_DEVICE)
             exValues.copyFrom(exValuesTemp);
             pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
 #endif
-          }
-        if (d_funcCPtr->info->number == 12)
-          {
             LDAC_PW(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
 #if defined(DFTFE_WITH_DEVICE)
             ecValues.copyFrom(ecValuesTemp);

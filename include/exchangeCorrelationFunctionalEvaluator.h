@@ -17,11 +17,8 @@
 #ifndef DFTFE_EXCORRFUNCTIONALEVALUATOR_H
 #define DFTFE_EXCORRFUNCTIONALEVALUATOR_H
 #include <MemoryStorage.h>
-#include <xc.h>
-#include <memory>
 #include <cmath>
 #include <XCfunctionalDefs/xc_params.h>
-#include <DeviceKernelLauncherHelpers.h>
 
 namespace dftfe
 {
@@ -71,7 +68,9 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace>       &exEnergyOut,   \
     dftfe::utils::MemoryStorage<double, memorySpace>       &pdexDensity,   \
     dftfe::utils::MemoryStorage<double, memorySpace>       &pdexSigma,     \
-    dftfe::utils::MemoryStorage<double, memorySpace>       &pdexTau);
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdexTau,       \
+    bool                                                    tauNeededX,    \
+    bool                                                    enforceFHCX);
 
 #define DFTFE_FUNCTIONALEVALUATOR_MGGA_C(NAME, BODY)                       \
   template <dftfe::utils::MemorySpace memorySpace>                         \
@@ -83,7 +82,9 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, memorySpace>       &corrEnergyOut, \
     dftfe::utils::MemoryStorage<double, memorySpace>       &pdecDensity,   \
     dftfe::utils::MemoryStorage<double, memorySpace>       &pdecSigma,     \
-    dftfe::utils::MemoryStorage<double, memorySpace>       &pdecTau);
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdecTau,       \
+    bool                                                    tauNeededC,    \
+    bool                                                    enforceFHCC);
 
 #include <exchangeCorrelationFunctionalEvaluation.def>
 

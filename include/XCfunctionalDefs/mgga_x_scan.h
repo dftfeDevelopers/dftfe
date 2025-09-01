@@ -48,7 +48,6 @@
   double t635, t641, t642, t643, t647, t648, t649, t650;                       \
   double t654, t655, t658, t659, t660, t663;                                   \
                                                                                \
-                                                                               \
   struct mgga_x_scan_params                                                    \
   {                                                                            \
     double c1 = 0.667;                                                         \
@@ -56,7 +55,6 @@
     double d  = 1.24;                                                          \
     double k1 = 0.065;                                                         \
   } params;                                                                    \
-                                                                               \
                                                                                \
   t2   = rho0 <= DENS_THRESHOLD_X_SCAN;                                        \
   t3   = M_CBRT3;                                                              \
@@ -215,7 +213,6 @@
   t238 = t226 * t237;                                                          \
   t241 = my_piecewise3(t146, 0, -0.3e1 / 0.8e1 * t155 * t238);                 \
   tzk0 = t145 + t241;                                                          \
-                                                                               \
                                                                                \
   t242 = t7 * t7;                                                              \
   t243 = 0.1e1 / t242;                                                         \
@@ -381,7 +378,6 @@
                        -0.3e1 / 0.8e1 * t27 * t526 +                       \
                          0.63344011248391453166e0 * t346 * t532);          \
   tvsigma0 = t7 * t536;                                                        \
-                                                                               \
                                                                                \
   tvsigma1 = 0.e0;                                                             \
                                                                                \
