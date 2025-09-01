@@ -257,7 +257,6 @@ namespace dftfe
         }
     }
 
-    // Use what quantum espresso uses.
     template <>
     void
     fillRhoSigmaTauVector(

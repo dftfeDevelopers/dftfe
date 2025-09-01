@@ -780,7 +780,6 @@ namespace dftfe
     for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells;
          iCell += nCellsPerBatch)
       {
-        // std::cout << "iCell: " << iCell << std::endl;
         d_excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
           *auxDensityXCRepresentation,
           std::make_pair<dftfe::uInt, dftfe::uInt>(

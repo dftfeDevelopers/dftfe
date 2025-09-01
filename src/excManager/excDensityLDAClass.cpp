@@ -217,21 +217,20 @@ namespace dftfe
         if (d_XCType == "LDA-PW")
           {
             LDAX_PW(nquad, densityValuesTemp, exValuesTemp, pdexDensityTemp);
-#if defined(DFTFE_WITH_DEVICE)
-            exValues.copyFrom(exValuesTemp);
-            pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
-#endif
             LDAC_PW(nquad, densityValuesTemp, ecValuesTemp, pdecDensityTemp);
-#if defined(DFTFE_WITH_DEVICE)
-            ecValues.copyFrom(ecValuesTemp);
-            pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
-#endif
           }
         else
           {
             dftfe::utils::throwException(
               "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
           }
+#if defined(DFTFE_WITH_DEVICE)
+        exValues.copyFrom(exValuesTemp);
+        pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+
+        ecValues.copyFrom(ecValuesTemp);
+        pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+#endif
       }
 
     for (dftfe::uInt i = 0; i < nquad; i++)

@@ -273,28 +273,27 @@ namespace dftfe
                      exValuesTemp,
                      pdexDensityTemp,
                      pdexSigmaValuesTemp);
-#if defined(DFTFE_WITH_DEVICE)
-            exValues.copyFrom(exValuesTemp);
-            pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
-            pdexSigmaValues.copyFrom(pdexSigmaValuesTemp);
-#endif
             GGAC_PBE(nquad,
                      densityValuesTemp,
                      sigmaValuesTemp,
                      ecValuesTemp,
                      pdecDensityTemp,
                      pdecSigmaValuesTemp);
-#if defined(DFTFE_WITH_DEVICE)
-            ecValues.copyFrom(ecValuesTemp);
-            pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
-            pdecSigmaValues.copyFrom(pdecSigmaValuesTemp);
-#endif
           }
         else
           {
             dftfe::utils::throwException(
               "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
           }
+#if defined(DFTFE_WITH_DEVICE)
+        exValues.copyFrom(exValuesTemp);
+        pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+        pdexSigmaValues.copyFrom(pdexSigmaValuesTemp);
+
+        ecValues.copyFrom(ecValuesTemp);
+        pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+        pdecSigmaValues.copyFrom(pdecSigmaValuesTemp);
+#endif
       }
     for (size_t i = 0; i < nquad; i++)
       {
