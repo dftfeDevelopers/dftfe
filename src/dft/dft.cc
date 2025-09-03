@@ -854,10 +854,10 @@ namespace dftfe
     std::vector<bool> periodicBc = {d_dftParamsPtr->periodicX,
                                     d_dftParamsPtr->periodicY,
                                     d_dftParamsPtr->periodicZ};
-    groupSymmetryPtr->initGroupSymmetry(d_BLASWrapperPtrHost,
-                                        atomLocationsFractional,
+    groupSymmetryPtr->initGroupSymmetry(atomLocationsFractional,
                                         d_domainBoundingVectors,
-                                        periodicBc);
+                                        periodicBc,
+                                        d_dftParamsPtr->spinPolarized == 1);
     if (d_dftParamsPtr->solverMode == "BANDS")
       readkPointData();
     else
@@ -1233,24 +1233,9 @@ namespace dftfe
 #ifdef USE_COMPLEX
     if (d_dftParamsPtr->useSymm)
       {
-        groupSymmetryPtr->computePointMapFromLocalCartesianCoordinates(
-          d_BLASWrapperPtrHost,
-          d_basisOperationsPtrHost->cellCentroids(),
-          dftfe::pointSet::cellCentroids);
-
-        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId);
-        groupSymmetryPtr->computePointMapFromLocalCartesianCoordinates(
-          d_BLASWrapperPtrHost,
-          d_basisOperationsPtrHost->quadPoints(),
-          dftfe::pointSet::densityQuad,
-          true);
-
-        d_basisOperationsPtrHost->reinit(0, 0, d_gllQuadratureId);
-        groupSymmetryPtr->computePointMapFromLocalCartesianCoordinates(
-          d_BLASWrapperPtrHost,
-          d_basisOperationsPtrHost->quadPoints(),
-          dftfe::pointSet::densityNodal,
-          true);
+        groupSymmetryPtr->reinitGroupSymmetry(atomLocationsFractional,
+                                              d_domainBoundingVectors);
+        groupSymmetryPtr->setupCommPatternForNodalField(d_dofHandlerRhoNodal);
       }
 #endif
 
@@ -1599,6 +1584,14 @@ namespace dftfe
     d_smearedChargeMomentsComputed = false;
     MPI_Barrier(d_mpiCommParent);
     init_bc = MPI_Wtime() - init_bc;
+#ifdef USE_COMPLEX
+    if (d_dftParamsPtr->useSymm)
+      {
+        groupSymmetryPtr->reinitGroupSymmetry(atomLocationsFractional,
+                                              d_domainBoundingVectors);
+        groupSymmetryPtr->setupCommPatternForNodalField(d_dofHandlerRhoNodal);
+      }
+#endif
     if (d_dftParamsPtr->verbosity >= 2)
       pcout
         << "updateAtomPositionsAndMoveMesh: Time taken for initBoundaryConditions: "
@@ -2531,7 +2524,8 @@ namespace dftfe
     // Have to be called once for each variable
     // initialise the variables in the mixing scheme
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
+        d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
+        d_dftParamsPtr->useSymm)
       {
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           rhoNodalMassVec;
@@ -2699,7 +2693,8 @@ namespace dftfe
                         << norm << std::endl;
               }
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
-                     d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
+                     d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
+                     d_dftParamsPtr->useSymm)
               {
                 // Fill in New Kerker framework here
                 std::vector<double> norms(
@@ -2792,21 +2787,32 @@ namespace dftfe
                   d_densityResidualNodalValues[0].begin(),
                   d_densityResidualNodalValues[0].locally_owned_size());
 
-                applyKerkerPreconditionerToTotalDensityResidual(
+                if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
+                    d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA")
+                  {
+                    applyKerkerPreconditionerToTotalDensityResidual(
 #ifdef DFTFE_WITH_DEVICE
-                  kerkerPreconditionedResidualSolverProblemDevice,
-                  CGSolverDevice,
+                      kerkerPreconditionedResidualSolverProblemDevice,
+                      CGSolverDevice,
 #endif
-                  kerkerPreconditionedResidualSolverProblem,
-                  CGSolver,
-                  d_densityResidualNodalValues[0],
-                  d_preCondTotalDensityResidualVector);
+                      kerkerPreconditionedResidualSolverProblem,
+                      CGSolver,
+                      d_densityResidualNodalValues[0],
+                      d_preCondTotalDensityResidualVector);
 
-                d_mixingScheme.mixPreconditionedResidual(
-                  mixingVariable::rho,
-                  d_preCondTotalDensityResidualVector.begin(),
-                  d_densityInNodalValues[0].begin(),
-                  d_densityInNodalValues[0].locally_owned_size());
+                    d_mixingScheme.mixPreconditionedResidual(
+                      mixingVariable::rho,
+                      d_preCondTotalDensityResidualVector.begin(),
+                      d_densityInNodalValues[0].begin(),
+                      d_densityInNodalValues[0].locally_owned_size());
+                  }
+                else
+                  {
+                    d_mixingScheme.mixVariable(
+                      mixingVariable::rho,
+                      d_densityInNodalValues[0].begin(),
+                      d_densityInNodalValues[0].locally_owned_size());
+                  }
 
                 for (dftfe::uInt iComp = 1; iComp < norms.size(); ++iComp)
                   {
