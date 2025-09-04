@@ -1909,11 +1909,6 @@ namespace dftfe
         dealii::ExcMessage(
           "DFT-FE Error: FLOATING NUCLEAR CHARGES can only be used if SMEARED NUCLEAR CHARGES is set to true."));
 #ifdef USE_COMPLEX
-    if (isIonForce || isCellStress)
-      AssertThrow(
-        !useSymm,
-        dealii::ExcMessage(
-          "DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
     if (solverMode == "BANDS")
       AssertThrow(
         kPointDataFile != "",
@@ -2021,6 +2016,12 @@ namespace dftfe
           mixingMethod == "ANDERSON_WITH_RESTA"),
         dealii::ExcMessage(
           "DFT-FE Error: ANDERSON_WITH_RESTA or ANDERSON_WITH_KERKER for Hubbard is not completed yet."));
+
+    if (isHubbard)
+      AssertThrow(
+        !(useSymm),
+        dealii::ExcMessage(
+          "DFT-FE Error: Group symmetry for Hubbard is not implemented yet."));
 
     if (dc_dispersioncorrectiontype == 1 || dc_dispersioncorrectiontype == 2)
       {

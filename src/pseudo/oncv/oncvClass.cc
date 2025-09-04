@@ -154,9 +154,7 @@ namespace dftfe
 
     d_atomicProjectorFnsContainer =
       std::make_shared<AtomCenteredSphericalFunctionContainer>();
-
     d_atomicProjectorFnsContainer->init(atomicNumbers, d_atomicProjectorFnsMap);
-
     if (!d_useDevice)
       {
         if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)

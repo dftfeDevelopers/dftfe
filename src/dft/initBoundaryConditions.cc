@@ -284,7 +284,8 @@ namespace dftfe
               dftfe::basis::update_gradients | dftfe::basis::update_quadpoints;
             dftfe::basis::UpdateFlags updateFlagsGLL =
               dftfe::basis::update_values | dftfe::basis::update_jxw;
-            if (d_dftParamsPtr->auxBasisTypeXC == "SlaterAE")
+            if (d_dftParamsPtr->auxBasisTypeXC == "SlaterAE" ||
+                d_dftParamsPtr->useSymm)
               updateFlagsGLL = updateFlagsGLL | dftfe::basis::update_quadpoints;
             dftfe::basis::UpdateFlags updateFlagsLPSP =
               dftfe::basis::update_values | dftfe::basis::update_jxw;
