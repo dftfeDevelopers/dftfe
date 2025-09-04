@@ -381,8 +381,9 @@ namespace dftfe
 
     auto nodalCoordinates =
       dealii::DoFTools::map_dofs_to_support_points(mapping, dofHandler);
-
+    requiredPointCoordinates.clear();
     requiredPointCoordinates.reserve(d_numSymm * nodalCoordinates.size());
+    localDoFIndexToPointIndexMap.clear();
     localDoFIndexToPointIndexMap.resize(d_numSymm);
     for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
       for (dealii::IndexSet::ElementIterator it = locallyOwnedNodes.begin();
