@@ -74,40 +74,48 @@ namespace dftfe
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::mpiHost)
             {
-              {
-                auto ghostSize = d_mpiPatternP2P->localGhostSize() * blockSize;
-                auto sendRecvSize =
+              d_ghostDataCopyHostPinnedPtr = std::make_shared<
+                MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
+                d_mpiPatternP2P->localGhostSize() * blockSize, 0.0);
+
+              d_sendRecvBufferHostPinnedPtr = std::make_shared<
+                MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
+                d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                  blockSize,
+                0.0);
+
+
+              d_ghostDataCopySinglePrecHostPinnedPtr =
+                std::make_shared<MemoryStorage<
+                  typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+                  MemorySpace::HOST_PINNED>>(d_mpiPatternP2P->localGhostSize() *
+                                               d_blockSize,
+                                             0.0);
+
+              d_sendRecvBufferSinglePrecHostPinnedPtr =
+                std::make_shared<MemoryStorage<
+                  typename dftfe::dataTypes::singlePrecType<ValueType>::type,
+                  MemorySpace::HOST_PINNED>>(
                   d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                  blockSize;
+                    d_blockSize,
+                  0.0);
 
-                // Standard precision
-                d_ghostDataCopyHostPinnedPtr = std::make_shared<
-                  MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(ghostSize,
-                                                                      0.0);
-                d_sendRecvBufferHostPinnedPtr = std::make_shared<
-                  MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
-                  sendRecvSize, 0.0);
 
-                // Single precision
-                using SinglePrecValueType =
-                  typename dftfe::dataTypes::singlePrecType<ValueType>::type;
-                d_ghostDataCopySinglePrecHostPinnedPtr = std::make_shared<
-                  MemoryStorage<SinglePrecValueType, MemorySpace::HOST_PINNED>>(
-                  ghostSize, 0.0);
-                d_sendRecvBufferSinglePrecHostPinnedPtr = std::make_shared<
-                  MemoryStorage<SinglePrecValueType, MemorySpace::HOST_PINNED>>(
-                  sendRecvSize, 0.0);
+              d_ghostDataCopyHalfPrecHostPinnedPtr =
+                std::make_shared<MemoryStorage<
+                  typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+                  MemorySpace::HOST_PINNED>>(d_mpiPatternP2P->localGhostSize() *
+                                               d_blockSize,
+                                             0.0);
 
-                // Half precision
-                using HalfPrecValueType =
-                  typename dftfe::dataTypes::halfPrecType<ValueType>::type;
-                d_ghostDataCopyHalfPrecHostPinnedPtr = std::make_shared<
-                  MemoryStorage<HalfPrecValueType, MemorySpace::HOST_PINNED>>(
-                  ghostSize, 0.0);
-                d_sendRecvBufferHalfPrecHostPinnedPtr = std::make_shared<
-                  MemoryStorage<HalfPrecValueType, MemorySpace::HOST_PINNED>>(
-                  sendRecvSize, 0.0);
-              }
+
+              d_sendRecvBufferHalfPrecHostPinnedPtr =
+                std::make_shared<MemoryStorage<
+                  typename dftfe::dataTypes::halfPrecType<ValueType>::type,
+                  MemorySpace::HOST_PINNED>>(
+                  d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                    d_blockSize,
+                  0.0);
             }
 #endif
       }
@@ -133,41 +141,23 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::mpiHost)
-
                 {
-                  auto ghostExpectedSize =
-                    d_mpiPatternP2P->localGhostSize() * d_blockSize;
-                  auto sendRecvExpectedSize =
-                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                      .size() *
-                    d_blockSize;
+                  if (d_ghostDataCopyHostPinnedPtr->size() !=
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize)
+                    d_ghostDataCopyHostPinnedPtr = std::make_shared<
+                      MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize, 0.0);
 
-                  if (!d_ghostDataCopyHostPinnedPtr)
-                    {
-                      d_ghostDataCopyHostPinnedPtr = std::make_shared<
-                        MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
-                        ghostExpectedSize, 0.0);
-                    }
-                  else if (d_ghostDataCopyHostPinnedPtr->size() !=
-                           ghostExpectedSize)
-                    {
-                      d_ghostDataCopyHostPinnedPtr->resize(ghostExpectedSize,
-                                                           0.0);
-                    }
-
-
-                  if (!d_sendRecvBufferHostPinnedPtr)
-                    {
-                      d_sendRecvBufferHostPinnedPtr = std::make_shared<
-                        MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
-                        sendRecvExpectedSize, 0.0);
-                    }
-                  else if (d_sendRecvBufferHostPinnedPtr->size() !=
-                           sendRecvExpectedSize)
-                    {
-                      d_sendRecvBufferHostPinnedPtr->resize(
-                        sendRecvExpectedSize, 0.0);
-                    }
+                  if (d_sendRecvBufferHostPinnedPtr->size() !=
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize)
+                    d_sendRecvBufferHostPinnedPtr = std::make_shared<
+                      MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize,
+                      0.0);
                 }
 #endif
           }
@@ -187,48 +177,45 @@ namespace dftfe
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::mpiHost)
-
-
                 {
-                  auto ghostExpectedSize =
-                    d_mpiPatternP2P->localGhostSize() * d_blockSize;
-                  auto sendRecvExpectedSize =
-                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                      .size() *
-                    d_blockSize;
-                  using SinglePrecValueType =
-                    typename dftfe::dataTypes::singlePrecType<ValueType>::type;
-
                   if (!d_ghostDataCopySinglePrecHostPinnedPtr)
-                    {
-                      d_ghostDataCopySinglePrecHostPinnedPtr = std::make_shared<
-                        MemoryStorage<SinglePrecValueType,
-                                      MemorySpace::HOST_PINNED>>(
-                        ghostExpectedSize, 0.0);
-                    }
-                  else if (d_ghostDataCopySinglePrecHostPinnedPtr->size() !=
-                           ghostExpectedSize)
-                    {
-                      d_ghostDataCopySinglePrecHostPinnedPtr->resize(
-                        ghostExpectedSize, 0.0);
-                    }
+                    d_ghostDataCopySinglePrecHostPinnedPtr = std::make_shared<
+                      MemoryStorage<typename dftfe::dataTypes::singlePrecType<
+                                      ValueType>::type,
+                                    MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize, 0.0);
 
                   if (!d_sendRecvBufferSinglePrecHostPinnedPtr)
-                    {
-                      d_sendRecvBufferSinglePrecHostPinnedPtr =
-                        std::make_shared<
-                          MemoryStorage<SinglePrecValueType,
-                                        MemorySpace::HOST_PINNED>>(
-                          sendRecvExpectedSize, 0.0);
-                    }
-                  else if (d_sendRecvBufferSinglePrecHostPinnedPtr->size() !=
-                           sendRecvExpectedSize)
-                    {
-                      d_sendRecvBufferSinglePrecHostPinnedPtr->resize(
-                        sendRecvExpectedSize, 0.0);
-                    }
-                }
+                    d_sendRecvBufferSinglePrecHostPinnedPtr = std::make_shared<
+                      MemoryStorage<typename dftfe::dataTypes::singlePrecType<
+                                      ValueType>::type,
+                                    MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize,
+                      0.0);
 
+                  if (d_ghostDataCopySinglePrecHostPinnedPtr->size() !=
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize)
+                    d_ghostDataCopySinglePrecHostPinnedPtr = std::make_shared<
+                      MemoryStorage<typename dftfe::dataTypes::singlePrecType<
+                                      ValueType>::type,
+                                    MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize, 0.0);
+
+                  if (d_sendRecvBufferSinglePrecHostPinnedPtr->size() !=
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize)
+                    d_sendRecvBufferSinglePrecHostPinnedPtr = std::make_shared<
+                      MemoryStorage<typename dftfe::dataTypes::singlePrecType<
+                                      ValueType>::type,
+                                    MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize,
+                      0.0);
+                }
 #endif
           }
 
@@ -249,44 +236,44 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::mpiHost)
                 {
-                  auto ghostExpectedSize =
-                    d_mpiPatternP2P->localGhostSize() * d_blockSize;
-                  auto sendRecvExpectedSize =
-                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
-                      .size() *
-                    d_blockSize;
-                  using HalfPrecValueType =
-                    typename dftfe::dataTypes::halfPrecType<ValueType>::type;
-
                   if (!d_ghostDataCopyHalfPrecHostPinnedPtr)
-                    {
-                      d_ghostDataCopyHalfPrecHostPinnedPtr = std::make_shared<
-                        MemoryStorage<HalfPrecValueType,
-                                      MemorySpace::HOST_PINNED>>(
-                        ghostExpectedSize, 0.0);
-                    }
-                  else if (d_ghostDataCopyHalfPrecHostPinnedPtr->size() !=
-                           ghostExpectedSize)
-                    {
-                      d_ghostDataCopyHalfPrecHostPinnedPtr->resize(
-                        ghostExpectedSize, 0.0);
-                    }
+                    d_ghostDataCopyHalfPrecHostPinnedPtr = std::make_shared<
+                      MemoryStorage<typename dftfe::dataTypes::halfPrecType<
+                                      ValueType>::type,
+                                    MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize, 0.0);
 
                   if (!d_sendRecvBufferHalfPrecHostPinnedPtr)
-                    {
-                      d_sendRecvBufferHalfPrecHostPinnedPtr = std::make_shared<
-                        MemoryStorage<HalfPrecValueType,
-                                      MemorySpace::HOST_PINNED>>(
-                        sendRecvExpectedSize, 0.0);
-                    }
-                  else if (d_sendRecvBufferHalfPrecHostPinnedPtr->size() !=
-                           sendRecvExpectedSize)
-                    {
-                      d_sendRecvBufferHalfPrecHostPinnedPtr->resize(
-                        sendRecvExpectedSize, 0.0);
-                    }
-                }
+                    d_sendRecvBufferHalfPrecHostPinnedPtr = std::make_shared<
+                      MemoryStorage<typename dftfe::dataTypes::halfPrecType<
+                                      ValueType>::type,
+                                    MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize,
+                      0.0);
 
+                  if (d_ghostDataCopyHalfPrecHostPinnedPtr->size() !=
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize)
+                    d_ghostDataCopyHalfPrecHostPinnedPtr = std::make_shared<
+                      MemoryStorage<typename dftfe::dataTypes::halfPrecType<
+                                      ValueType>::type,
+                                    MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize, 0.0);
+
+                  if (d_sendRecvBufferHalfPrecHostPinnedPtr->size() !=
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize)
+                    d_sendRecvBufferHalfPrecHostPinnedPtr = std::make_shared<
+                      MemoryStorage<typename dftfe::dataTypes::halfPrecType<
+                                      ValueType>::type,
+                                    MemorySpace::HOST_PINNED>>(
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                          .size() *
+                        d_blockSize,
+                      0.0);
+                }
 #endif
           }
       }
