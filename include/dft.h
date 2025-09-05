@@ -72,6 +72,8 @@
 #include <atomCenteredPostProcessing.h>
 #include <poissonSolverProblemWrapper.h>
 #include <kerkerSolverProblemWrapper.h>
+#include <groupSymmetry.h>
+
 namespace dftfe
 {
   //
@@ -92,9 +94,6 @@ namespace dftfe
   };
 
   /* code that must be skipped by Doxygen */
-  // forward declarations
-  template <dftfe::utils::MemorySpace memory>
-  class symmetryClass;
   template <dftfe::utils::MemorySpace memory>
   class forceClass;
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
@@ -110,8 +109,6 @@ namespace dftfe
   class dftClass : public dftBase
   {
     friend class forceClass<memorySpace>;
-
-    friend class symmetryClass<memorySpace>;
 
   public:
     /**
@@ -1504,6 +1501,7 @@ namespace dftfe
     dftfe::uInt                   d_phiTotDofHandlerIndexElectro;
     dftfe::uInt                   d_phiPrimeDofHandlerIndexElectro;
     dftfe::uInt                   d_phiTotAXQuadratureIdElectro;
+    dftfe::uInt                   d_kerkerAXQuadratureIdElectro;
     dftfe::uInt                   d_helmholtzDofHandlerIndexElectro;
     dftfe::uInt                   d_binsStartDofHandlerIndexElectro;
     dftfe::uInt                   d_densityQuadratureId;
@@ -1578,8 +1576,8 @@ namespace dftfe
       localProc_dof_indicesImag;
     std::vector<bool> selectedDofsHanging;
 
-    forceClass<memorySpace>    *forcePtr;
-    symmetryClass<memorySpace> *symmetryPtr;
+    forceClass<memorySpace>                   *forcePtr;
+    std::shared_ptr<dftfe::groupSymmetryClass> groupSymmetryPtr;
 
     elpaScalaManager *d_elpaScala;
 
@@ -1713,7 +1711,7 @@ namespace dftfe
       d_densityResidualQuadValues;
     std::vector<distributedCPUVec<double>> d_densityInNodalValues,
       d_densityOutNodalValues, d_densityResidualNodalValues;
-
+    std::vector<distributedCPUVec<double>> d_tauOutNodalValues;
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       d_tauInQuadValues, d_tauOutQuadValues, d_tauResidualQuadValues;
@@ -1843,7 +1841,7 @@ namespace dftfe
     std::vector<double> d_kPointCoordinates;
 
     /// k point crystal coordinates
-    std::vector<double> kPointReducedCoordinates;
+    std::vector<double> d_kPointCoordinatesFrac;
 
     /// k point weights
     std::vector<double> d_kPointWeights;

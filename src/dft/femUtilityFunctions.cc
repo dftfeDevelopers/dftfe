@@ -30,13 +30,8 @@ namespace dftfe
     const distributedCPUVec<double>     &nodalField)
 
   {
-    FEEvaluationWrapperClass<1> fe_evalField(
-      d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal,
-      d_dftParamsPtr->densityQuadratureRule,
-      matrixFreeDataObject,
-      0,
-      0);
-    const dftfe::uInt numQuadPoints = fe_evalField.n_q_points;
+    FEEvaluationWrapperClass<1> fe_evalField(matrixFreeDataObject, 0, 0);
+    const dftfe::uInt           numQuadPoints = fe_evalField.n_q_points;
     nodalField.update_ghost_values();
 
     // AssertThrow(nodalField.partitioners_are_globally_compatible(*matrixFreeDataObject.get_vector_partitioner(0)),
@@ -92,24 +87,38 @@ namespace dftfe
   {
     basisOperationsPtr->reinit(0, 0, quadratureId, false);
     const dftfe::uInt nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
-    std::function<
-      double(const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-             const dftfe::uInt                                           q)>
-      funcRho =
-        [&](const typename dealii::DoFHandler<3>::active_cell_iterator &cell,
-            const dftfe::uInt                                           q) {
-          return quadratureValueData[basisOperationsPtr->cellIndex(cell->id()) *
-                                       nQuadsPerCell +
-                                     q];
-        };
-    dealii::VectorTools::project<3, distributedCPUVec<double>>(
-      dealii::MappingQ1<3, 3>(),
-      basisOperationsPtr->matrixFreeData().get_dof_handler(dofHandlerId),
-      constraintMatrix,
-      basisOperationsPtr->matrixFreeData().get_quadrature(quadratureId),
-      funcRho,
-      nodalField);
+    std::function<dealii::VectorizedArray<double>(const dftfe::uInt cell,
+                                                  const dftfe::uInt q)>
+      funcRho = [&](const dftfe::uInt cell, const dftfe::uInt q) {
+        dealii::VectorizedArray<double> valuesAtQuadPoint =
+          dealii::make_vectorized_array(0.0);
+        for (dftfe::uInt iSubCell = 0;
+             iSubCell < basisOperationsPtr->matrixFreeData()
+                          .n_active_entries_per_cell_batch(cell);
+             ++iSubCell)
+          {
+            dealii::DoFHandler<3>::active_cell_iterator subCellPtr =
+              basisOperationsPtr->matrixFreeData().get_cell_iterator(
+                cell, iSubCell, dofHandlerId);
+            dealii::CellId subCellId = subCellPtr->id();
+            valuesAtQuadPoint[iSubCell] =
+              quadratureValueData[basisOperationsPtr->cellIndex(subCellId) *
+                                    nQuadsPerCell +
+                                  q];
+          }
+        return valuesAtQuadPoint;
+      };
+    auto matrixFreePtr = std::shared_ptr<const dealii::MatrixFree<3, double>>(
+      &(basisOperationsPtr->matrixFreeData()),
+      [](const dealii::MatrixFree<3, double> *) noexcept {});
+    dealii::VectorTools::project<3, distributedCPUVec<double>>(matrixFreePtr,
+                                                               constraintMatrix,
+                                                               std::cbrt(
+                                                                 nQuadsPerCell),
+                                                               funcRho,
+                                                               nodalField);
     constraintMatrix.set_zero(nodalField);
+    constraintMatrix.distribute(nodalField);
     nodalField.update_ghost_values();
   }
   //

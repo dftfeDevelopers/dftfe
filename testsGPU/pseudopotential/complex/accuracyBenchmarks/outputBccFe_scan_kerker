@@ -1,0 +1,48 @@
+number of atoms: 2
+number of atoms types: 1
+Total number of k-points 8
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 5.368001262539999985e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 5.368001262539999985e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 5.368001262539999985e+00
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  5.999999999999999778e-01 5.999999999999999778e-01 5.999999999999999778e-01
+-----------------------------------------------------------------------------------------
+Number Image Charges  2089
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 5
+FE interpolating polynomial order for electrostatics solve: 5
+FE interpolating polynomial order for nodal electron density computation: 7
+quadrature rule for electron density and kinetic energy density computation: 8
+number of elements: 216
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 29791
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+=============================================================================================================================
+number of electrons: 3.200000000000000000e+01
+number of eigen values: 36
+=============================================================================================================================
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 20 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:        -236.70086739
+Absolute magnetization: 4.456
+Net magnetization     : 4.000
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.056567,0.056567,0.056567
+AtomId    1:  0.056295,0.056295,0.056295
+--------------------------------------------------------------------------------------------

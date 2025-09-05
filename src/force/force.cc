@@ -270,14 +270,15 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<memorySpace>::computeAtomsForces(
-    const dealii::MatrixFree<3, double> &matrixFreeData,
-    const dispersionCorrection          &dispersionCorr,
-    const dftfe::uInt                    eigenDofHandlerIndex,
-    const dftfe::uInt                    smearedChargeQuadratureId,
-    const dftfe::uInt                    lpspQuadratureIdElectro,
-    const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-    const dftfe::uInt                    phiTotDofHandlerIndexElectro,
-    const distributedCPUVec<double>     &phiTotRhoOutElectro,
+    const dealii::MatrixFree<3, double>       &matrixFreeData,
+    const std::shared_ptr<groupSymmetryClass> &groupSymmetryPtr,
+    const dispersionCorrection                &dispersionCorr,
+    const dftfe::uInt                          eigenDofHandlerIndex,
+    const dftfe::uInt                          smearedChargeQuadratureId,
+    const dftfe::uInt                          lpspQuadratureIdElectro,
+    const dealii::MatrixFree<3, double>       &matrixFreeDataElectro,
+    const dftfe::uInt                          phiTotDofHandlerIndexElectro,
+    const distributedCPUVec<double>           &phiTotRhoOutElectro,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &rhoOutValues,
@@ -356,6 +357,15 @@ namespace dftfe
           }
       }
 
+    if (d_dftParams.useSymm)
+      {
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          globalAtomsForces(d_globalAtomsForces.size());
+        globalAtomsForces.copyFrom(d_globalAtomsForces);
+
+        groupSymmetryPtr->symmetrizeForce(globalAtomsForces);
+        globalAtomsForces.copyTo(d_globalAtomsForces);
+      }
 
     if (this_mpi_process == 0 && d_dftParams.verbosity >= 4)
       std::cout

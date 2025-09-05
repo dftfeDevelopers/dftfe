@@ -52,14 +52,16 @@ namespace dftfe
     distributedCPUVec<double>         &x,
     double                             kerkerMixingParameter,
     const dftfe::uInt                  matrixFreeVectorComponent,
-    const dftfe::uInt                  matrixFreeQuadratureComponent)
+    const dftfe::uInt                  matrixFreeQuadratureComponent,
+    const dftfe::uInt                  matrixFreeAxQuadratureComponent)
   {
-    d_basisOperationsPtr            = basisOperationsPtr;
-    d_matrixFreeDataPRefinedPtr     = &(basisOperationsPtr->matrixFreeData());
-    d_constraintMatrixPRefinedPtr   = &constraintMatrixPRefined;
-    d_gamma                         = kerkerMixingParameter;
-    d_matrixFreeVectorComponent     = matrixFreeVectorComponent;
-    d_matrixFreeQuadratureComponent = matrixFreeQuadratureComponent;
+    d_basisOperationsPtr              = basisOperationsPtr;
+    d_matrixFreeDataPRefinedPtr       = &(basisOperationsPtr->matrixFreeData());
+    d_constraintMatrixPRefinedPtr     = &constraintMatrixPRefined;
+    d_gamma                           = kerkerMixingParameter;
+    d_matrixFreeVectorComponent       = matrixFreeVectorComponent;
+    d_matrixFreeQuadratureComponent   = matrixFreeQuadratureComponent;
+    d_matrixFreeAxQuadratureComponent = matrixFreeAxQuadratureComponent;
     d_nLocalCells = d_matrixFreeDataPRefinedPtr->n_cell_batches();
 
     d_matrixFreeDataPRefinedPtr->initialize_dof_vector(
@@ -156,9 +158,11 @@ namespace dftfe
 
     dealii::DoFHandler<3>::active_cell_iterator subCellPtr;
 
-    FEEvaluationWrapperClass<1> fe_eval(FEOrderElectro,
-                                        C_num1DQuad(FEOrderElectro),
-                                        *d_matrixFreeDataPRefinedPtr,
+    dftfe::Int feOrder1 =
+      d_matrixFreeDataPRefinedPtr->get_dof_handler(d_matrixFreeVectorComponent)
+        .get_fe()
+        .tensor_degree();
+    FEEvaluationWrapperClass<1> fe_eval(*d_matrixFreeDataPRefinedPtr,
                                         d_matrixFreeVectorComponent,
                                         d_matrixFreeQuadratureComponent);
 
@@ -295,9 +299,9 @@ namespace dftfe
     auto dofInfo =
       d_matrixFreeDataPRefinedPtr->get_dof_info(d_matrixFreeVectorComponent);
     auto shapeInfo = d_matrixFreeDataPRefinedPtr->get_shape_info(
-      d_matrixFreeVectorComponent, d_matrixFreeQuadratureComponent);
+      d_matrixFreeVectorComponent, d_matrixFreeAxQuadratureComponent);
     auto mappingData = d_matrixFreeDataPRefinedPtr->get_mapping_info()
-                         .cell_data[d_matrixFreeQuadratureComponent];
+                         .cell_data[d_matrixFreeAxQuadratureComponent];
     auto shapeData = shapeInfo.get_shape_data();
 
     // Shape Function Values, Gradients and their Transposes

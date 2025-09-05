@@ -27,12 +27,12 @@ end
 
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER = 2
+  set POLYNOMIAL ORDER = 3
   
   subsection Auto mesh generation parameters
     set AUTO ADAPT BASE MESH SIZE=false
     set BASE MESH SIZE = 1.0 
-    set ATOM BALL RADIUS = 2.0
+    set ATOM BALL RADIUS = 3.0
     set MESH SIZE AROUND ATOM = 0.5
     set MESH SIZE AT ATOM = 0.5 
   end
@@ -51,7 +51,7 @@ subsection Brillouin zone k point sampling options
     set SAMPLING SHIFT 3 = 0
   end
 
-  set USE GROUP SYMMETRY =true
+  set USE GROUP SYMMETRY =false
   set USE TIME REVERSAL SYMMETRY =true
 end
 
@@ -66,19 +66,25 @@ end
 
 
 subsection SCF parameters
-   set COMPUTE ENERGY EACH ITER=false
-
+  set COMPUTE ENERGY EACH ITER=false
   set MAXIMUM ITERATIONS = 40 
   set TOLERANCE          = 1e-6
   set MIXING PARAMETER   = 0.5
-  set MIXING HISTORY     = 70
+  set MIXING METHOD=LOW_RANK_DIELECM_PRECOND  
   set TEMPERATURE                        = 500
-  set STARTING WFC=ATOMIC
-  
+  set STARTING WFC=RANDOM
+ 
+  subsection LOW RANK DIELECM PRECOND
+      set METHOD SUB TYPE=ADAPTIVE
+      set STARTING NORM LARGE DAMPING=2.0
+      set ADAPTIVE RANK REL TOL=0.2
+      set POISSON SOLVER ABS TOL=1.0e-10
+  end
+
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
-      set CHEBYSHEV POLYNOMIAL DEGREE = 10
-      set CHEBYSHEV FILTER TOLERANCE=1e-4
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+      set CHEBYSHEV POLYNOMIAL DEGREE = 15
+      set CHEBYSHEV FILTER TOLERANCE=1e-5
       set ORTHOGONALIZATION TYPE=CGS
       set USE ELPA=true
   end

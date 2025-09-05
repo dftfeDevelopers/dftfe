@@ -160,7 +160,8 @@ namespace dftfe
     // to do this initialization every SCF
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->useSymm)
       {
         d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
@@ -176,6 +177,12 @@ namespace dftfe
           {
             d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
+
+            for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
+                 ++iComp)
+              {
+                d_tauOutQuadValues[iComp].resize(n_q_points * nCells);
+              }
           }
       }
 
@@ -190,7 +197,8 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->useSymm)
       {
         const dealii::IndexSet &locallyOwnedSet =
           d_dofHandlerRhoNodal.locally_owned_dofs();
@@ -915,55 +923,51 @@ namespace dftfe
               }
           }
 
-        if (isTauMGGA)
-          {
-            double const prefact =
-              (3.0 / 10.0) * std::pow(3 * C_pi * C_pi, 2.0 / 3.0);
-            for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
-              {
-                for (dftfe::uInt iQuad = 0; iQuad < n_q_points; ++iQuad)
-                  {
-                    if (d_dftParamsPtr->spinPolarized == 0)
-                      {
-                        double rho =
-                          d_densityInQuadValues[0][iCell * n_q_points + iQuad];
-                        d_tauInQuadValues[0][iCell * n_q_points + iQuad] =
-                          prefact * std::pow(std::abs(rho), 5.0 / 3.0);
-                      }
-                    else
-                      {
-                        double rhoSpinUp =
-                          (d_densityInQuadValues[0]
-                                                [iCell * n_q_points + iQuad] +
-                           d_densityInQuadValues[1]
-                                                [iCell * n_q_points + iQuad]) /
-                          2;
-                        double rhoSpinDown =
-                          (d_densityInQuadValues[0]
-                                                [iCell * n_q_points + iQuad] -
-                           d_densityInQuadValues[1]
-                                                [iCell * n_q_points + iQuad]) /
-                          2;
-
-                        d_tauInQuadValues[0][iCell * n_q_points + iQuad] =
-                          prefact *
-                          (std::pow(std::abs(rhoSpinUp) * 2, 5.0 / 3.0) +
-                           std::pow(std::abs(rhoSpinDown) * 2, 5.0 / 3.0)) /
-                          2;
-                        d_tauInQuadValues[1][iCell * n_q_points + iQuad] =
-                          prefact *
-                          (std::pow(std::abs(rhoSpinUp) * 2, 5.0 / 3.0) -
-                           std::pow(std::abs(rhoSpinDown) * 2, 5.0 / 3.0)) /
-                          2;
-                      }
-                  }
-              }
-          }
         normalizeRhoInQuadValues();
         if (d_dftParamsPtr->constraintMagnetization)
           normalizeRhoMagInInitialGuessQuadValues();
       }
     //
+    if (isTauMGGA)
+      {
+        double const prefact =
+          (3.0 / 10.0) * std::pow(3 * C_pi * C_pi, 2.0 / 3.0);
+        for (dftfe::uInt iCell = 0; iCell < nCells; ++iCell)
+          {
+            for (dftfe::uInt iQuad = 0; iQuad < n_q_points; ++iQuad)
+              {
+                if (d_dftParamsPtr->spinPolarized == 0)
+                  {
+                    double rho =
+                      d_densityInQuadValues[0][iCell * n_q_points + iQuad];
+                    d_tauInQuadValues[0][iCell * n_q_points + iQuad] =
+                      prefact * std::pow(std::abs(rho), 5.0 / 3.0);
+                  }
+                else
+                  {
+                    double rhoSpinUp =
+                      (d_densityInQuadValues[0][iCell * n_q_points + iQuad] +
+                       d_densityInQuadValues[1][iCell * n_q_points + iQuad]) /
+                      2;
+                    double rhoSpinDown =
+                      (d_densityInQuadValues[0][iCell * n_q_points + iQuad] -
+                       d_densityInQuadValues[1][iCell * n_q_points + iQuad]) /
+                      2;
+
+                    d_tauInQuadValues[0][iCell * n_q_points + iQuad] =
+                      prefact *
+                      (std::pow(std::abs(rhoSpinUp) * 2, 5.0 / 3.0) +
+                       std::pow(std::abs(rhoSpinDown) * 2, 5.0 / 3.0)) /
+                      2;
+                    d_tauInQuadValues[1][iCell * n_q_points + iQuad] =
+                      prefact *
+                      (std::pow(std::abs(rhoSpinUp) * 2, 5.0 / 3.0) -
+                       std::pow(std::abs(rhoSpinDown) * 2, 5.0 / 3.0)) /
+                      2;
+                  }
+              }
+          }
+      }
     computingTimerStandard.leave_subsection("initialize density");
   }
 
@@ -1637,16 +1641,26 @@ namespace dftfe
     // to do this initialization every SCF
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->useSymm)
       {
         d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
-
 
         if (isGradDensityDataDependent)
           {
             d_gradDensityOutQuadValues.resize(
               d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+          }
+        if (isTauMGGA)
+          {
+            d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                           1);
+            for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
+                 ++iComp)
+              {
+                d_tauOutQuadValues[iComp].resize(nCells * n_q_points);
+              }
           }
       }
     if (isGradDensityDataDependent)
@@ -1737,7 +1751,8 @@ namespace dftfe
             << integralChargeFromQuadDataInput << std::endl;
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->useSymm)
       {
         for (dftfe::uInt iComp = 0; iComp < d_densityInQuadValues.size();
              ++iComp)

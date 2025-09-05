@@ -52,6 +52,7 @@ namespace dftfe
     std::string modelXCInputFile;
     std::string auxBasisTypeXC;
     std::string auxBasisDataXC;
+    bool        useLiXCForXCEvaluation;
 
     double radiusAtomBall, mixingParameter, spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;

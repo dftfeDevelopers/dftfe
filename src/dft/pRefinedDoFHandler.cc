@@ -387,13 +387,16 @@ namespace dftfe
         dealii::QIterated<1>(dealii::QGauss<1>(C_num1DQuadSmearedCharge()),
                              C_numCopies1DQuadSmearedCharge()));
     quadratureVector.push_back(dealii::QGauss<1>(
-      d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics + 1));
+      C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)));
+    quadratureVector.push_back(dealii::QGauss<1>(
+      C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal)));
 
 
     d_densityQuadratureIdElectro       = 0;
     d_lpspQuadratureIdElectro          = 1;
     d_smearedChargeQuadratureIdElectro = 2;
     d_phiTotAXQuadratureIdElectro      = 3;
+    d_kerkerAXQuadratureIdElectro      = 4;
 
     d_matrixFreeDataPRefined.reinit(dealii::MappingQ1<3, 3>(),
                                     matrixFreeDofHandlerVectorInput,
@@ -425,16 +428,21 @@ namespace dftfe
                 dftfe::basis::update_gradients :
                 dftfe::basis::update_default;
 
+            dftfe::basis::UpdateFlags updateFlagsKerkerAX =
+              dftfe::basis::update_default;
+
             std::vector<dftfe::uInt> quadratureIndices{
               d_densityQuadratureIdElectro,
               d_lpspQuadratureIdElectro,
               d_smearedChargeQuadratureIdElectro,
-              d_phiTotAXQuadratureIdElectro};
+              d_phiTotAXQuadratureIdElectro,
+              d_kerkerAXQuadratureIdElectro};
             std::vector<dftfe::basis::UpdateFlags> updateFlags{
               updateFlagsDensity,
               updateFlagsLPSP,
               dftfe::basis::update_quadpoints,
-              updateFlagsphiTotAX};
+              updateFlagsphiTotAX,
+              updateFlagsKerkerAX};
             d_basisOperationsPtrElectroHost->init(d_matrixFreeDataPRefined,
                                                   d_constraintsVectorElectro,
                                                   d_baseDofHandlerIndexElectro,

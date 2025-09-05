@@ -38,9 +38,14 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->useSymm)
       {
         computeRhoNodalFromPSI();
+        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
+        const dftfe::uInt nQuadsPerCell =
+          d_basisOperationsPtrHost->nQuadsPerCell();
+        const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
 
         // normalize rho
         const double charge =
@@ -54,6 +59,10 @@ namespace dftfe
              ++iComp)
           d_densityOutNodalValues[iComp] *= scalingFactor;
 
+        std::vector<
+          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+          dummy;
+        dummy.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
         // interpolate nodal rhoOut data to quadrature data
         for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
              ++iComp)
@@ -66,6 +75,85 @@ namespace dftfe
             d_gradDensityOutQuadValues[iComp],
             isGradDensityDataDependent);
 
+        if (isTauMGGA || (d_dftParamsPtr->printKE && isGroundState))
+          {
+            d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                           1);
+            for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
+                 ++iComp)
+              {
+                d_tauOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
+              }
+
+#ifdef DFTFE_WITH_DEVICE
+            if (d_dftParamsPtr->useDevice)
+              computeRhoFromPSI(&d_eigenVectorsFlattenedDevice,
+                                d_numEigenValues,
+                                d_partialOccupancies,
+                                d_basisOperationsPtrDevice,
+                                d_BLASWrapperPtr,
+                                d_densityDofHandlerIndex,
+                                d_densityQuadratureId,
+                                d_kPointCoordinates,
+                                d_kPointWeights,
+                                dummy,
+                                dummy,
+                                d_tauOutQuadValues,
+                                isGradDensityDataDependent ||
+                                  (d_dftParamsPtr->printKE && isGroundState),
+                                isTauMGGA ||
+                                  (d_dftParamsPtr->printKE && isGroundState),
+                                d_mpiCommParent,
+                                interpoolcomm,
+                                interBandGroupComm,
+                                *d_dftParamsPtr);
+#endif
+            if (!d_dftParamsPtr->useDevice)
+              computeRhoFromPSI(&d_eigenVectorsFlattenedHost,
+                                d_numEigenValues,
+                                d_partialOccupancies,
+                                d_basisOperationsPtrHost,
+                                d_BLASWrapperPtrHost,
+                                d_densityDofHandlerIndex,
+                                d_densityQuadratureId,
+                                d_kPointCoordinates,
+                                d_kPointWeights,
+                                dummy,
+                                dummy,
+                                d_tauOutQuadValues,
+                                isGradDensityDataDependent ||
+                                  (d_dftParamsPtr->printKE && isGroundState),
+                                isTauMGGA ||
+                                  (d_dftParamsPtr->printKE && isGroundState),
+                                d_mpiCommParent,
+                                interpoolcomm,
+                                interBandGroupComm,
+                                *d_dftParamsPtr);
+          }
+
+        if (d_dftParamsPtr->useSymm)
+          {
+            for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
+                 ++iComp)
+              {
+                l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                        d_constraintsRhoNodal,
+                                        d_densityDofHandlerIndexElectro,
+                                        d_densityQuadratureIdElectro,
+                                        d_tauOutQuadValues[iComp],
+                                        d_tauOutNodalValues[iComp]);
+                groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+                  d_tauOutNodalValues[iComp], d_dofHandlerRhoNodal);
+                d_basisOperationsPtrElectroHost->interpolate(
+                  d_tauOutNodalValues[iComp],
+                  d_densityDofHandlerIndexElectro,
+                  d_densityQuadratureIdElectro,
+                  d_tauOutQuadValues[iComp],
+                  d_tauOutQuadValues[iComp],
+                  d_tauOutQuadValues[iComp],
+                  false);
+              }
+          }
         if (d_dftParamsPtr->verbosity >= 3)
           {
             pcout << "Total Charge before scaling: " << charge << std::endl;
@@ -83,15 +171,11 @@ namespace dftfe
         const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
         d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
                                                                            1);
-        if (isGradDensityDataDependent)
+        if (isGradDensityDataDependent ||
+            (d_dftParamsPtr->printKE && isGroundState))
           {
             d_gradDensityOutQuadValues.resize(
               d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-          }
-        if (isTauMGGA)
-          {
-            d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
-                                                                           1);
           }
         for (dftfe::uInt iComp = 0; iComp < d_densityOutQuadValues.size();
              ++iComp)
@@ -101,9 +185,15 @@ namespace dftfe
              ++iComp)
           d_gradDensityOutQuadValues[iComp].resize(3 * nQuadsPerCell * nCells);
 
-        for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size(); ++iComp)
+        if (isTauMGGA || (d_dftParamsPtr->printKE && isGroundState))
           {
-            d_tauOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
+            d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
+                                                                           1);
+            for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
+                 ++iComp)
+              {
+                d_tauOutQuadValues[iComp].resize(nQuadsPerCell * nCells);
+              }
           }
 
 #ifdef DFTFE_WITH_DEVICE
@@ -120,8 +210,10 @@ namespace dftfe
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
                             d_tauOutQuadValues,
-                            isGradDensityDataDependent,
-                            isTauMGGA,
+                            isGradDensityDataDependent ||
+                              (d_dftParamsPtr->printKE && isGroundState),
+                            isTauMGGA ||
+                              (d_dftParamsPtr->printKE && isGroundState),
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
@@ -140,8 +232,10 @@ namespace dftfe
                             d_densityOutQuadValues,
                             d_gradDensityOutQuadValues,
                             d_tauOutQuadValues,
-                            isGradDensityDataDependent,
-                            isTauMGGA,
+                            isGradDensityDataDependent ||
+                              (d_dftParamsPtr->printKE && isGroundState),
+                            isTauMGGA ||
+                              (d_dftParamsPtr->printKE && isGroundState),
                             d_mpiCommParent,
                             interpoolcomm,
                             interBandGroupComm,
@@ -239,7 +333,8 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->useSymm)
       {
         d_densityInNodalValues = d_densityOutNodalValues;
 
@@ -298,7 +393,7 @@ namespace dftfe
 
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      tauPRefinedNodalData;
+      dummy;
     // initialize variables to be used later
     const dftfe::uInt dofs_per_cell =
       d_dofHandlerRhoNodal.get_fe().dofs_per_cell;
@@ -338,7 +433,7 @@ namespace dftfe
 
     // allocate the storage to compute 2p nodal values from wavefunctions
     densityPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    tauPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    dummy.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
 
     // compute rho from wavefunctions at nodal locations of 2p DoFHandler
     // nodes in each cell
@@ -355,7 +450,7 @@ namespace dftfe
                         d_kPointWeights,
                         densityPRefinedNodalData,
                         gradDensityPRefinedNodalData,
-                        tauPRefinedNodalData,
+                        dummy,
                         false,
                         false,
                         d_mpiCommParent,
@@ -375,7 +470,7 @@ namespace dftfe
                         d_kPointWeights,
                         densityPRefinedNodalData,
                         gradDensityPRefinedNodalData,
-                        tauPRefinedNodalData,
+                        dummy,
                         false,
                         false,
                         d_mpiCommParent,
@@ -446,6 +541,17 @@ namespace dftfe
               }
           }
       }
+    if (d_dftParamsPtr->useSymm)
+      for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
+           ++iComp)
+        {
+          d_constraintsRhoNodal.distribute(d_densityOutNodalValues[iComp]);
+          d_densityOutNodalValues[iComp].update_ghost_values();
+          groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+            d_densityOutNodalValues[iComp], d_dofHandlerRhoNodal);
+          d_constraintsRhoNodal.set_zero(d_densityOutNodalValues[iComp]);
+          d_densityOutNodalValues[iComp].zero_out_ghost_values();
+        }
   }
 #include "dft.inst.cc"
 
