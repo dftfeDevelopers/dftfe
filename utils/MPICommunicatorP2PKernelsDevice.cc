@@ -269,11 +269,11 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              float val = 0.0;
+              float             val          = 0.0;
               dftfe::utils::copyValue(&val, recvBuffer[i]);
               auto *add = &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                                        blockSize +
-                                      intraBlockId];
+                                       blockSize +
+                                     intraBlockId];
               dftfe::utils::atomicAddWrapper(add, val);
             }
         },
@@ -294,12 +294,11 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              double val = 0.0;
+              double            val          = 0.0;
               dftfe::utils::copyValue(&val, recvBuffer[i]);
-              auto           *add =
-                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                             blockSize +
-                           intraBlockId];
+              auto *add = &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+                                       blockSize +
+                                     intraBlockId];
               dftfe::utils::atomicAddWrapper(add, val);
             }
         },
@@ -320,11 +319,13 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              double valx = 0.0;
-              double valy = 0.0;
-              dftfe::utils::copyValue(&valx,(double)dftfe::utils::realPartDevice(recvBuffer[i]));
-              dftfe::utils::copyValue(&valy,(double)dftfe::utils::imagPartDevice(recvBuffer[i]));
-             auto     *add_real = reinterpret_cast<double *>(
+              double            valx         = 0.0;
+              double            valy         = 0.0;
+              dftfe::utils::copyValue(
+                &valx, (double)dftfe::utils::realPartDevice(recvBuffer[i]));
+              dftfe::utils::copyValue(
+                &valy, (double)dftfe::utils::imagPartDevice(recvBuffer[i]));
+              auto *add_real = reinterpret_cast<double *>(
                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
                            intraBlockId]);
@@ -349,11 +350,13 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              float valx = 0.0;
-              float valy = 0.0;
-              dftfe::utils::copyValue(&valx,dftfe::utils::realPartDevice(recvBuffer[i]));
-              dftfe::utils::copyValue(&valy,dftfe::utils::imagPartDevice(recvBuffer[i]));
-              auto            *add_real = reinterpret_cast<float *> (
+              float             valx         = 0.0;
+              float             valy         = 0.0;
+              dftfe::utils::copyValue(
+                &valx, dftfe::utils::realPartDevice(recvBuffer[i]));
+              dftfe::utils::copyValue(
+                &valy, dftfe::utils::imagPartDevice(recvBuffer[i]));
+              auto *add_real = reinterpret_cast<float *>(
                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
                            intraBlockId]);

@@ -26,11 +26,11 @@ namespace dftfe
 {
   namespace utils
   {
-    typedef std::error_code             deviceError_t;
-    typedef dftfe::uInt                 deviceStream_t;
-    typedef sycl::event                 deviceEvent_t;
-    typedef std::complex<double>        deviceDoubleComplex;
-    typedef std::complex<float>         deviceFloatComplex;
+    typedef std::error_code      deviceError_t;
+    typedef dftfe::uInt          deviceStream_t;
+    typedef sycl::event          deviceEvent_t;
+    typedef std::complex<double> deviceDoubleComplex;
+    typedef std::complex<float>  deviceFloatComplex;
 
     // static consts
     static std::error_code deviceSuccess = make_error_code(sycl::errc::success);
