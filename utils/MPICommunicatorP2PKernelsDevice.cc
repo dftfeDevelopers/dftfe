@@ -269,8 +269,9 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              const float       val          = __bfloat162float(recvBuffer[i]);
-              float *add = &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
+              float val = 0.0;
+              dftfe::utils::copyValue(&val, recvBuffer[i]);
+              auto *add = &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                                         blockSize +
                                       intraBlockId];
               dftfe::utils::atomicAddWrapper(add, val);
@@ -293,8 +294,9 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              const double      val = (double)__bfloat162float(recvBuffer[i]);
-              double           *add =
+              double val = 0.0;
+              dftfe::utils::copyValue(&val, recvBuffer[i]);
+              auto           *add =
                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
                            intraBlockId];
@@ -318,18 +320,15 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              const double valx = (double)__bfloat162float(recvBuffer[i].x);
-              const double valy = (double)__bfloat162float(recvBuffer[i].y);
-              double      *add_real =
+              double valx = 0.0;
+              double valy = 0.0;
+              dftfe::utils::copyValue(&valx,(double)dftfe::utils::realPartDevice(recvBuffer[i]));
+              dftfe::utils::copyValue(&valy,(double)dftfe::utils::imagPartDevice(recvBuffer[i]));
+             auto     *add_real = reinterpret_cast<double *>(
                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
-                           intraBlockId]
-                   .x;
-              double *add_imag =
-                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                             blockSize +
-                           intraBlockId]
-                   .y;
+                           intraBlockId]);
+              auto *add_imag = add_real + 1;
               dftfe::utils::atomicAddWrapper(add_real, valx);
               dftfe::utils::atomicAddWrapper(add_imag, valy);
             }
@@ -350,18 +349,15 @@ namespace dftfe
             {
               const dftfe::uInt blockId      = i / blockSize;
               const dftfe::uInt intraBlockId = i - blockId * blockSize;
-              const float       valx = __bfloat162float(recvBuffer[i].x);
-              const float       valy = __bfloat162float(recvBuffer[i].y);
-              float            *add_real =
+              float valx = 0.0;
+              float valy = 0.0;
+              dftfe::utils::copyValue(&valx,dftfe::utils::realPartDevice(recvBuffer[i]));
+              dftfe::utils::copyValue(&valy,dftfe::utils::imagPartDevice(recvBuffer[i]));
+              auto            *add_real = reinterpret_cast<float *> (
                 &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
                              blockSize +
-                           intraBlockId]
-                   .x;
-              float *add_imag =
-                &dataArray[ownedLocalIndicesForTargetProcs[blockId] *
-                             blockSize +
-                           intraBlockId]
-                   .y;
+                           intraBlockId]);
+              auto *add_imag = add_real + 1;
               dftfe::utils::atomicAddWrapper(add_real, valx);
               dftfe::utils::atomicAddWrapper(add_imag, valy);
             }
@@ -371,8 +367,6 @@ namespace dftfe
         const dftfe::utils::__device_bfloat162 *recvBuffer,
         const dftfe::uInt                      *ownedLocalIndicesForTargetProcs,
         dftfe::utils::deviceFloatComplex       *dataArray);
-
-
 
       template <>
       DFTFE_CREATE_KERNEL(

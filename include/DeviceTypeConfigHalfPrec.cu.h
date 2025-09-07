@@ -53,8 +53,19 @@ namespace dftfe
     }
 
     __forceinline__ __device__ void
-    copyValue(cuFloatComplex *a, const __nv_bfloat162 b)
+    copyValue(float *a, const __nv_bfloat16 b)
+    {
+      *a = __bfloat162float(b);
+    }
 
+    __forceinline__ __device__ void
+    copyValue(double *a, const __nv_bfloat16 b)
+    {
+      *a = (double)__bfloat162float(b);
+    }
+
+    __forceinline__ __device__ void
+    copyValue(cuFloatComplex *a, const __nv_bfloat162 b)
     {
       a->x = __bfloat162float(b.x);
       a->y = __bfloat162float(b.y);
@@ -65,6 +76,18 @@ namespace dftfe
     {
       a->x = (double)__bfloat162float(b.x);
       a->y = (double)__bfloat162float(b.y);
+    }
+
+    __forceinline__ __device__ float
+    realPartDevice(const __nv_bfloat162 a)
+    {
+      return a.x;
+    }
+
+    __forceinline__ __device__ float
+    imagPartDevice(const __nv_bfloat162 a)
+    {
+      return a.y;
     }
 
     // uint16_t saves bits only
