@@ -17,8 +17,11 @@
 #ifndef dftfeDeviceTypeConfigHalfPrec_syclh
 #define dftfeDeviceTypeConfigHalfPrec_syclh
 
+#include <complex>
+#include <cstdint>
+#include <sycl/sycl.hpp>
 #include <sycl/ext/oneapi/bfloat16.hpp>
-#include <sycl/ext/intel/math/imf_fp_conversions.hpp>
+
 namespace dftfe
 {
   namespace utils
@@ -26,53 +29,133 @@ namespace dftfe
     typedef sycl::ext::oneapi::bfloat16               __device_bfloat16;
     typedef std::complex<sycl::ext::oneapi::bfloat16> __device_bfloat162;
 
-    inline void
-    copyValue(__device_bfloat16 *a, float b);
+    inline float
+    bfloat16_to_float(__device_bfloat16 bf16)
+    {
+      uint16_t bits       = sycl::bit_cast<uint16_t>(bf16);
+      uint32_t float_bits = (bits << 16);
+      return sycl::bit_cast<float>(float_bits);
+    }
+
+    inline __device_bfloat16
+    float_to_bfloat16(float f)
+    {
+      uint32_t float_bits    = sycl::bit_cast<uint32_t>(f);
+      uint32_t rounding_bias = ((float_bits >> 16) & 1) + 0x7FFF;
+      uint32_t rounded_bits  = float_bits + rounding_bias;
+      uint16_t bf16_bits     = (rounded_bits >> 16) & 0xFFFF;
+      return sycl::bit_cast<__device_bfloat16>(bf16_bits);
+    }
+
+    inline __device_bfloat16
+    ushort_as_bfloat16(uint16_t a)
+    {
+      return sycl::bit_cast<__device_bfloat16>(a);
+    }
 
     inline void
-    copyValue(__device_bfloat16 *a, double b);
+    copyValue(__device_bfloat16 *a, const float b)
+    {
+      *a = float_to_bfloat16(b);
+    }
 
     inline void
-    copyValue(__device_bfloat162 *a, const std::complex<float> &b);
+    copyValue(__device_bfloat16 *a, const double b)
+    {
+      *a = float_to_bfloat16((float)b);
+    }
 
     inline void
-    copyValue(__device_bfloat162 *a, const std::complex<double> &b);
+    copyValue(__device_bfloat162 *a, const std::complex<float> &b)
+    {
+      *a = __device_bfloat162(float_to_bfloat16(b.real()),
+                              float_to_bfloat16(b.imag()));
+    }
 
     inline void
-    copyValue(float *a, const __device_bfloat16 b);
+    copyValue(__device_bfloat162 *a, const std::complex<double> &b)
+    {
+      *a = __device_bfloat162(float_to_bfloat16((float)(b.real())),
+                              float_to_bfloat16((float)(b.imag())));
+    }
 
     inline void
-    copyValue(double *a, const __device_bfloat16 b);
+    copyValue(float *a, const __device_bfloat16 &b)
+    {
+      *a = bfloat16_to_float(b);
+    }
 
     inline void
-    copyValue(std::complex<float> *a, const __device_bfloat162 &b);
+    copyValue(double *a, const __device_bfloat16 &b)
+    {
+      *a = (double)bfloat16_to_float(b);
+    }
 
     inline void
-    copyValue(std::complex<double> *a, const __device_bfloat162 &b);
+    copyValue(std::complex<float> *a, const __device_bfloat162 &b)
+    {
+      *a = std::complex<float>(bfloat16_to_float(b.real()),
+                               bfloat16_to_float(b.imag()));
+    }
+
+    inline void
+    copyValue(std::complex<double> *a, const __device_bfloat162 &b)
+    {
+      *a = std::complex<double>((double)bfloat16_to_float(b.real()),
+                                (double)bfloat16_to_float(b.imag()));
+    }
 
     inline float
-    realPartDevice(const __device_bfloat162 a);
+    realPartDevice(const __device_bfloat162 a)
+    {
+      return a.real();
+    }
 
     inline float
-    imagPartDevice(const __device_bfloat162 a);
+    imagPartDevice(const __device_bfloat162 a)
+    {
+      return a.imag();
+    }
+
+    // uint16_t saves bits only
+    // not for arithmetic operations
 
     inline __device_bfloat162
-    makeDataTypeDeviceCompatible(uint16_t a);
+    makeDataTypeDeviceCompatible(uint16_t a)
+    {
+      return __device_bfloat16{ushort_as_bfloat16(a)};
+    }
 
     inline __device_bfloat16 *
-    makeDataTypeDeviceCompatible(uint16_t *a);
+    makeDataTypeDeviceCompatible(uint16_t *a)
+    {
+      return reinterpret_cast<__device_bfloat16 *>(a);
+    }
 
     inline const __device_bfloat16 *
-    makeDataTypeDeviceCompatible(const uint16_t *a);
+    makeDataTypeDeviceCompatible(const uint16_t *a)
+    {
+      return reinterpret_cast<const __device_bfloat16 *>(a);
+    }
 
     inline __device_bfloat162
-    makeDataTypeDeviceCompatible(std::complex<uint16_t> a);
+    makeDataTypeDeviceCompatible(std::complex<uint16_t> a)
+    {
+      return __device_bfloat162{ushort_as_bfloat16(a.real()),
+                                ushort_as_bfloat16(a.imag())};
+    }
 
     inline __device_bfloat162 *
-    makeDataTypeDeviceCompatible(std::complex<uint16_t> *a);
+    makeDataTypeDeviceCompatible(std::complex<uint16_t> *a)
+    {
+      return reinterpret_cast<__device_bfloat162 *>(a);
+    }
 
     inline const __device_bfloat162 *
-    makeDataTypeDeviceCompatible(const std::complex<uint16_t> *a);
+    makeDataTypeDeviceCompatible(const std::complex<uint16_t> *a)
+    {
+      return reinterpret_cast<const __device_bfloat162 *>(a);
+    }
 
   } // namespace utils
 } // namespace dftfe
