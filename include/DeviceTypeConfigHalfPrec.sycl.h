@@ -27,112 +27,52 @@ namespace dftfe
     typedef std::complex<sycl::ext::oneapi::bfloat16> __device_bfloat162;
 
     inline void
-    copyValue(__device_bfloat16 *a, float b)
-    {
-      *a = sycl::ext::intel::math::float2bfloat16(b);
-    }
+    copyValue(__device_bfloat16 *a, float b);
 
     inline void
-    copyValue(__device_bfloat16 *a, double b)
-    {
-      *a = sycl::ext::intel::math::double2bfloat16(b);
-    }
+    copyValue(__device_bfloat16 *a, double b);
 
     inline void
-    copyValue(__device_bfloat162 *a, const std::complex<float> &b)
-    {
-      *a = __device_bfloat162(sycl::ext::intel::math::float2bfloat16(b.real()),
-                              sycl::ext::intel::math::float2bfloat16(b.imag()));
-    }
+    copyValue(__device_bfloat162 *a, const std::complex<float> &b);
 
     inline void
-    copyValue(__device_bfloat162 *a, const std::complex<double> &b)
-    {
-      *a =
-        __device_bfloat162(sycl::ext::intel::math::double2bfloat16(b.real()),
-                           sycl::ext::intel::math::double2bfloat16(b.imag()));
-    }
+    copyValue(__device_bfloat162 *a, const std::complex<double> &b);
 
     inline void
-    copyValue(float *a, const __device_bfloat16 b)
-    {
-      *a = sycl::ext::intel::math::bfloat162float(b);
-    }
+    copyValue(float *a, const __device_bfloat16 b);
 
     inline void
-    copyValue(double *a, const __device_bfloat16 b)
-    {
-      *a = (double)sycl::ext::intel::math::bfloat162float(b);
-    }
+    copyValue(double *a, const __device_bfloat16 b);
 
     inline void
-    copyValue(std::complex<float> *a, const __device_bfloat162 &b)
-    {
-      *a =
-        std::complex<float>(sycl::ext::intel::math::bfloat162float(b.real()),
-                            sycl::ext::intel::math::bfloat162float(b.imag()));
-    }
+    copyValue(std::complex<float> *a, const __device_bfloat162 &b);
 
     inline void
-    copyValue(std::complex<double> *a, const __device_bfloat162 &b)
-    {
-      *a =
-        std::complex<double>(sycl::ext::intel::math::bfloat162float(b.real()),
-                             sycl::ext::intel::math::bfloat162float(b.imag()));
-    }
+    copyValue(std::complex<double> *a, const __device_bfloat162 &b);
 
     inline float
-    realPartDevice(const __device_bfloat162 a)
-    {
-      return a.real();
-    }
+    realPartDevice(const __device_bfloat162 a);
 
     inline float
-    imagPartDevice(const __device_bfloat162 a)
-    {
-      return a.imag();
-    }
+    imagPartDevice(const __device_bfloat162 a);
 
     inline __device_bfloat162
-    makeDataTypeDeviceCompatible(uint16_t a)
-    {
-      return __device_bfloat16{sycl::ext::intel::math::ushort_as_bfloat16(a)};
-    }
+    makeDataTypeDeviceCompatible(uint16_t a);
 
     inline __device_bfloat16 *
-    makeDataTypeDeviceCompatible(uint16_t *a)
-    {
-      return reinterpret_cast<__device_bfloat16 *>(a);
-    }
+    makeDataTypeDeviceCompatible(uint16_t *a);
 
     inline const __device_bfloat16 *
-    makeDataTypeDeviceCompatible(const uint16_t *a)
-    {
-      return reinterpret_cast<const __device_bfloat16 *>(a);
-    }
+    makeDataTypeDeviceCompatible(const uint16_t *a);
 
     inline __device_bfloat162
-    makeDataTypeDeviceCompatible(std::complex<uint16_t> a)
-    {
-      return __device_bfloat162{
-        __device_bfloat16{sycl::ext::intel::math::ushort_as_bfloat16(a.real())},
-        __device_bfloat16{
-          sycl::ext::intel::math::ushort_as_bfloat16(a.imag())}};
-    }
+    makeDataTypeDeviceCompatible(std::complex<uint16_t> a);
 
     inline __device_bfloat162 *
-    makeDataTypeDeviceCompatible(std::complex<uint16_t> *a)
-    {
-      return reinterpret_cast<__device_bfloat162 *>(a);
-    }
+    makeDataTypeDeviceCompatible(std::complex<uint16_t> *a);
 
     inline const __device_bfloat162 *
-    makeDataTypeDeviceCompatible(const std::complex<uint16_t> *a)
-    {
-      return reinterpret_cast<const __device_bfloat162 *>(a);
-    }
-
-
+    makeDataTypeDeviceCompatible(const std::complex<uint16_t> *a);
 
   } // namespace utils
 } // namespace dftfe
