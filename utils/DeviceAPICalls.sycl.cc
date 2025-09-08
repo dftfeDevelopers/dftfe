@@ -147,7 +147,10 @@ namespace dftfe
           ->second.parallel_for(
             sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
             [=](sycl::nd_item<1> ind) {
-              setValueKernel(ind, devPtr, value, size);
+              setValueKernel(ind,
+                             makeDataTypeDeviceCompatible(devPtr),
+                             makeDataTypeDeviceCompatible(value),
+                             size);
             });
       DEVICE_API_CHECK(event);
     }

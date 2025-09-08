@@ -120,7 +120,7 @@ namespace dftfe
     // uint16_t saves bits only
     // not for arithmetic operations
 
-    inline __device_bfloat162
+    inline __device_bfloat16
     makeDataTypeDeviceCompatible(uint16_t a)
     {
       return __device_bfloat16{ushort_as_bfloat16(a)};
