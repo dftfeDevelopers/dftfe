@@ -118,7 +118,7 @@ namespace dftfe
                                        position,
                                        types,
                                        d_numAtoms,
-                                       1e-5);
+                                       1e-8);
         else
           {
             int    equivalent_atoms[d_numAtoms];
@@ -136,7 +136,7 @@ namespace dftfe
                                                              types,
                                                              spins,
                                                              d_numAtoms,
-                                                             1e-5);
+                                                             1e-8);
           }
         d_symmMat.reserve(d_numSymm);
         d_symmMatInverse.reserve(d_numSymm);
@@ -262,7 +262,7 @@ namespace dftfe
               for (int kDim = 0; kDim < 3; ++kDim)
                 dot += m[iDim * 3 + kDim] * m[jDim * 3 + kDim];
               double orthoVal = iDim == jDim ? 1.0 : 0.0;
-              if (std::fabs(dot - orthoVal) > 1e-6)
+              if (std::fabs(dot - orthoVal) > 1e-8)
                 return false;
             }
         }
