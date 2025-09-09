@@ -342,8 +342,8 @@ namespace dftfe
                 dispersionCorr.getForceCorrection(iAtom, idim);
 
         if (d_dftParams.useSymm)
-          groupSymmetryPtr->symmetrizeVectorFieldFromGlobalValues(
-            d_forceTotal, dftfe::pointSet::atomicCoord);
+          groupSymmetryPtr->symmetrizeForce(
+            d_forceTotal);
         d_forceTotal.copyTo(d_forceVector);
       }
 
@@ -356,7 +356,7 @@ namespace dftfe
               d_stressTotal[3 * iDim + jDim] +=
                 dispersionCorr.getStressCorrection(iDim, jDim);
         if (d_dftParams.useSymm)
-          groupSymmetryPtr->symmetrizeRank2Tensor(d_stressTotal);
+          groupSymmetryPtr->symmetrizeStress(d_stressTotal);
 
         for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
           for (dftfe::uInt jDim = 0; jDim < 3; jDim++)
