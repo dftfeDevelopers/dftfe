@@ -409,7 +409,7 @@ namespace dftfe
      */
     virtual void
     setAdditionalExternalPotentialQuadGrid(
-      std::vector<double> &additionalExternalPotential) const;
+      std::vector<double> &additionalExternalPotential);
 
     /**
      * @brief Gets the current atom Locations in cartesian form

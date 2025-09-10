@@ -233,7 +233,7 @@ namespace dftfe
      */
     virtual void
     setAdditionalExternalPotentialQuadGrid(
-      std::vector<double> &additionalExternalPotential) const = 0;
+      std::vector<double> &additionalExternalPotential)= 0;
 
     virtual const MPI_Comm &
     getMPIDomain() const = 0;

@@ -21,6 +21,7 @@
 //
 //
 #include <dft.h>
+#include <headers.h>
 
 namespace dftfe
 {
@@ -96,7 +97,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   dftClass<memorySpace>::setAdditionalExternalPotentialQuadGrid(
-    std::vector<double> &additionalExternalPotential) const
+    std::vector<double> &additionalExternalPotential)
   {
     const unsigned int poolId =
       dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
@@ -112,14 +113,14 @@ namespace dftfe
                                       dealii::update_quadrature_points |
                                         dealii::update_JxW_values);
         const dftfe::uInt   n_q_points = quadrature_formula.size();
-
+/*
         AssertThrow(
               n_q_points==additionalExternalPotential.size(),
               dealii::ExcMessage(
                 std::string(
                   "Local size quad data supplied to setAdditionalExternalPotentialQuadGrid not
                   consistent with current quad grid")));
-
+*/
 
         d_additionalExternalPotential.clear();
         d_additionalExternalPotential.resize(additionalExternalPotential.size(),0);
@@ -148,7 +149,6 @@ namespace dftfe
                     MPI_SUM,
                     interpoolcomm);
 
-    int size;
     MPI_Comm_size(interBandGroupComm, &size);
     if (size > 1)
       MPI_Allreduce(MPI_IN_PLACE,
