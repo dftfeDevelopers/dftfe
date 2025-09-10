@@ -133,8 +133,8 @@ namespace dftfe
       &sizeArray, 1, dataTypes::mpi_type_id(&sizeArray), 0, interBandGroupComm);
     if (poolId != 0 || bandGroupId != 0)
       {
-        d_additionalExternalPotential.clear()' d_additionalExternalPotential
-          .resize(sizeArray, 0);
+        d_additionalExternalPotential.clear();
+        d_additionalExternalPotential.resize(sizeArray, 0);
       }
 
     int size;
