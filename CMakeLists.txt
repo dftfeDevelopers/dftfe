@@ -192,6 +192,7 @@ SET(TARGET_SRC
   ./src/dft/lowrankApproxScfDielectricMatrixInv.cc
   ./src/dft/lowrankApproxScfDielectricMatrixInvSpinPolarized.cc
   ./src/dft/computeOutputDensityDirectionalDerivative.cc
+  ./src/dft/apiFunctions.cc
   ./src/force/configurationalForceCompute/FNonlinearCoreCorrectionGammaAtomsElementalContribution.cc
   ./src/force/configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc
   ./src/force/configurationalForceCompute/FSmearedChargesGammaAtomsElementalContribution.cc

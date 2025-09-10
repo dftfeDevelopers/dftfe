@@ -389,6 +389,16 @@ namespace dftfe
 
 
     /**
+     * @brief get quadrature grid information and associated spin-up
+     * and spin-down electron-density for post-processing
+     */
+    virtual void
+    getGSElectronDensity(std::vector<double> & quadPointCoordinates,
+                         std::vector<double> & quadPointWeights,
+                         std::vector<double> & totalDensityVals,
+                         std::vector<double> & magDensityVals) const;
+
+    /**
      * @brief Gets the current atom Locations in cartesian form
      * (origin at center of domain) from dftClass
      */

@@ -212,6 +212,17 @@ namespace dftfe
     writeGSElectronDensity(const std::string Path) const = 0;
 
 
+    /**
+     * @brief get quadrature grid information and associated spin-up
+     * and spin-down electron-density for post-processing
+     */
+    virtual void
+    getGSElectronDensity(std::vector<double> & quadPointCoordinates,
+                         std::vector<double> & quadPointWeights,
+                         std::vector<double> & totalDensityVals,
+                         std::vector<double> & magDensityVals) const = 0;
+
+
     virtual const MPI_Comm &
     getMPIDomain() const = 0;
 
