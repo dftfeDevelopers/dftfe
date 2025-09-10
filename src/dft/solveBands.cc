@@ -284,6 +284,10 @@ namespace dftfe
                                                  dummy,
                                                  dummy);
 
+    for (dftfe::uInt iquad = 0; iquad < d_phiInQuadValues.size(); iquad++)
+      d_phiInQuadValues[iquad] += d_additionalExternalPotential[iquad];
+
+
     //
     // impose integral phi equals 0
     //

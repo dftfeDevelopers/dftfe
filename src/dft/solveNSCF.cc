@@ -293,6 +293,9 @@ namespace dftfe
                                                  d_phiInQuadValues,
                                                  dummy,
                                                  dummy);
+    for (dftfe::uInt iquad = 0; iquad < d_phiInQuadValues.size(); iquad++)
+      d_phiInQuadValues[iquad] += d_additionalExternalPotential[iquad];
+
 
     //
     // impose integral phi equals 0
@@ -610,6 +613,10 @@ namespace dftfe
                                                  d_phiOutQuadValues,
                                                  dummy,
                                                  dummy);
+
+    for (dftfe::uInt iquad = 0; iquad < d_phiOutQuadValues.size(); iquad++)
+      d_phiOutQuadValues[iquad] += d_additionalExternalPotential[iquad];
+
 
     computing_timer.leave_subsection("phiTot solve");
 

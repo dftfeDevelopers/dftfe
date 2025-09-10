@@ -3230,6 +3230,9 @@ namespace dftfe
           dummy,
           dummy);
 
+        for (dftfe::uInt iquad = 0; iquad < d_phiInQuadValues.size(); iquad++)
+          d_phiInQuadValues[iquad] += d_additionalExternalPotential[iquad];
+
         if (d_dftParamsPtr->confiningPotential)
           {
             d_expConfiningPot.addConfiningPotential(d_phiInQuadValues);
@@ -3548,6 +3551,11 @@ namespace dftfe
               d_phiOutQuadValues,
               dummy,
               dummy);
+
+            for (dftfe::uInt iquad = 0; iquad < d_phiOutQuadValues.size();
+                 iquad++)
+              d_phiOutQuadValues[iquad] += d_additionalExternalPotential[iquad];
+
             computing_timer.leave_subsection("phiTot solve");
           }
 
@@ -4000,6 +4008,9 @@ namespace dftfe
                                                  dummy,
                                                  dummy);
 
+
+    for (dftfe::uInt iquad = 0; iquad < d_phiOutQuadValues.size(); iquad++)
+      d_phiOutQuadValues[iquad] += d_additionalExternalPotential[iquad];
 
     //
     // compute and print ground state energy or energy after max scf

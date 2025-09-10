@@ -390,13 +390,26 @@ namespace dftfe
 
     /**
      * @brief get quadrature grid information and associated spin-up
-     * and spin-down electron-density for post-processing
+     * and spin-down electron-density for post-processing. The data is local
+     * to a MPI domain partition
      */
     virtual void
-    getGSElectronDensity(std::vector<double> & quadPointCoordinates,
-                         std::vector<double> & quadPointWeights,
-                         std::vector<double> & totalDensityVals,
-                         std::vector<double> & magDensityVals) const;
+    getQuadGridGSElectronDensity(std::vector<double> &quadPointCoordinates,
+                                 std::vector<double> &quadPointWeights,
+                                 std::vector<double> &totalDensityVals,
+                                 std::vector<double> &magDensityVals) const;
+
+
+    /**
+     * @brief set additional external potential (beyond the nuclear potential of the
+     * at the quantum-mechanical region) at the quadrature grid obtained from
+     * getQuadGridGSElectronDensity. The local order of the quadrature data
+     * needs to be consistent with that retrieved from
+     * getQuadGridGSElectronDensity call
+     */
+    virtual void
+    setAdditionalExternalPotentialQuadGrid(
+      std::vector<double> &additionalExternalPotential) const;
 
     /**
      * @brief Gets the current atom Locations in cartesian form
@@ -1729,7 +1742,7 @@ namespace dftfe
     // std::map<dealii::CellId, std::vector<double>> d_phiInValues,
     // d_phiOutValues;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      d_phiInQuadValues, d_phiOutQuadValues;
+      d_phiInQuadValues, d_phiOutQuadValues, d_additionalExternalPotential;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_gradPhiInQuadValues, d_gradPhiOutQuadValues, d_gradPhiResQuadValues;
     MixingScheme d_mixingScheme;
