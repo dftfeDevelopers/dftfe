@@ -53,7 +53,7 @@ namespace dftfe
 
       enum class communicationPrecision
       {
-        half,    // explicitly BFP16
+        half,    // explicitly BF16
         single,  // explicitly FP32
         standard // same as valueType
       };

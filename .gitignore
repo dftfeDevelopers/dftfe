@@ -33,6 +33,7 @@
 *.swp
 *.nfs*
 .*.swp
+.vscode/
 
 #CMAKE files
 CMakeCache.txt

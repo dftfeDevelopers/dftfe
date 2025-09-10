@@ -27,65 +27,65 @@ namespace dftfe
     typedef __nv_bfloat162 __device_bfloat162;
 
     __forceinline__ __device__ void
-    copyValue(__nv_bfloat16 *a, const float b)
+    copyValue(__device_bfloat16 *a, const float b)
     {
       *a = __float2bfloat16(b);
     }
 
     __forceinline__ __device__ void
-    copyValue(__nv_bfloat16 *a, const double b)
+    copyValue(__device_bfloat16 *a, const double b)
     {
       *a = __float2bfloat16((float)b);
     }
 
     __forceinline__ __device__ void
-    copyValue(__nv_bfloat162 *a, const cuFloatComplex b)
+    copyValue(__device_bfloat162 *a, const cuFloatComplex b)
     {
       a->x = __float2bfloat16(b.x);
       a->y = __float2bfloat16(b.y);
     }
 
     __forceinline__ __device__ void
-    copyValue(__nv_bfloat162 *a, const cuDoubleComplex b)
+    copyValue(__device_bfloat162 *a, const cuDoubleComplex b)
     {
       a->x = __float2bfloat16((float)b.x);
       a->y = __float2bfloat16((float)b.y);
     }
 
     __forceinline__ __device__ void
-    copyValue(float *a, const __nv_bfloat16 b)
+    copyValue(float *a, const __device_bfloat16 b)
     {
       *a = __bfloat162float(b);
     }
 
     __forceinline__ __device__ void
-    copyValue(double *a, const __nv_bfloat16 b)
+    copyValue(double *a, const __device_bfloat16 b)
     {
       *a = (double)__bfloat162float(b);
     }
 
     __forceinline__ __device__ void
-    copyValue(cuFloatComplex *a, const __nv_bfloat162 b)
+    copyValue(cuFloatComplex *a, const __device_bfloat162 b)
     {
       a->x = __bfloat162float(b.x);
       a->y = __bfloat162float(b.y);
     }
 
     __forceinline__ __device__ void
-    copyValue(cuDoubleComplex *a, const __nv_bfloat162 b)
+    copyValue(cuDoubleComplex *a, const __device_bfloat162 b)
     {
       a->x = (double)__bfloat162float(b.x);
       a->y = (double)__bfloat162float(b.y);
     }
 
     __forceinline__ __device__ float
-    realPartDevice(const __nv_bfloat162 a)
+    realPartDevice(const __device_bfloat162 a)
     {
       return a.x;
     }
 
     __forceinline__ __device__ float
-    imagPartDevice(const __nv_bfloat162 a)
+    imagPartDevice(const __device_bfloat162 a)
     {
       return a.y;
     }
@@ -93,41 +93,41 @@ namespace dftfe
     // uint16_t saves bits only
     // not for arithmetic operations
 
-    inline __nv_bfloat16
+    inline __device_bfloat16
     makeDataTypeDeviceCompatible(uint16_t a)
     {
-      return __nv_bfloat16{__nv_bfloat16_raw{a}};
+      return __device_bfloat16{__nv_bfloat16_raw{a}};
     }
 
-    inline __nv_bfloat16 *
+    inline __device_bfloat16 *
     makeDataTypeDeviceCompatible(uint16_t *a)
     {
-      return reinterpret_cast<__nv_bfloat16 *>(a);
+      return reinterpret_cast<__device_bfloat16 *>(a);
     }
 
-    inline const __nv_bfloat16 *
+    inline const __device_bfloat16 *
     makeDataTypeDeviceCompatible(const uint16_t *a)
     {
-      return reinterpret_cast<const __nv_bfloat16 *>(a);
+      return reinterpret_cast<const __device_bfloat16 *>(a);
     }
 
-    inline __nv_bfloat162
+    inline __device_bfloat162
     makeDataTypeDeviceCompatible(std::complex<uint16_t> a)
     {
-      return __nv_bfloat162{__nv_bfloat16{__nv_bfloat16_raw{a.real()}},
-                            __nv_bfloat16{__nv_bfloat16_raw{a.imag()}}};
+      return __device_bfloat162{__device_bfloat16{__nv_bfloat16_raw{a.real()}},
+                            __device_bfloat16{__nv_bfloat16_raw{a.imag()}}};
     }
 
-    inline __nv_bfloat162 *
+    inline __device_bfloat162 *
     makeDataTypeDeviceCompatible(std::complex<uint16_t> *a)
     {
-      return reinterpret_cast<__nv_bfloat162 *>(a);
+      return reinterpret_cast<__device_bfloat162 *>(a);
     }
 
-    inline const __nv_bfloat162 *
+    inline const __device_bfloat162 *
     makeDataTypeDeviceCompatible(const std::complex<uint16_t> *a)
     {
-      return reinterpret_cast<const __nv_bfloat162 *>(a);
+      return reinterpret_cast<const __device_bfloat162 *>(a);
     }
 
   } // namespace utils

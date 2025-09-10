@@ -1203,7 +1203,7 @@ namespace dftfe
           d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
             .setCommunicationPrecision(
               dftfe::utils::mpi::communicationPrecision::single);
-        else if (d_dftParamsPtr->communPrecCheby == "BFP16")
+        else if (d_dftParamsPtr->communPrecCheby == "BF16")
           d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
             .setCommunicationPrecision(
               dftfe::utils::mpi::communicationPrecision::half);

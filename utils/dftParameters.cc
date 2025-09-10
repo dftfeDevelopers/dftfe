@@ -1108,7 +1108,7 @@ namespace dftfe
           prm.declare_entry(
             "COMMUN PREC CHEBY",
             "STANDARD",
-            dealii::Patterns::Selection("STANDARD|FP32|BFP16"),
+            dealii::Patterns::Selection("STANDARD|FP32|BF16"),
             "[Advanced] Use low precision communication in Chebyshev filtering. Default setting is false.");
 
           prm.declare_entry(

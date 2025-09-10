@@ -401,7 +401,7 @@ namespace dftfe
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby == "BFP16")
+                        d_dftParams.communPrecCheby == "BF16")
                       {
                         (*XBlockFP32)
                           .setCommunicationPrecision(
@@ -435,7 +435,7 @@ namespace dftfe
                         d_lowerBoundWantedSpectrum,
                         d_dftParams.approxOverlapMatrix);
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby == "BFP16")
+                        d_dftParams.communPrecCheby == "BF16")
                       {
                         (*XBlockFP32)
                           .setCommunicationPrecision(
@@ -462,7 +462,7 @@ namespace dftfe
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby == "BFP16")
+                        d_dftParams.communPrecCheby == "BF16")
                       {
                         (*XBlockFP32)
                           .setCommunicationPrecision(
@@ -486,7 +486,7 @@ namespace dftfe
                       d_dftParams.approxOverlapMatrix);
 
                     if (useMixedPrecOverall &&
-                        d_dftParams.communPrecCheby == "BFP16")
+                        d_dftParams.communPrecCheby == "BF16")
                       {
                         (*XBlockFP32)
                           .setCommunicationPrecision(
