@@ -125,6 +125,10 @@ namespace dftfe
       MPICommunicatorP2P<ValueType, memorySpace>::setCommunicationPrecision(
         communicationPrecision precision)
       {
+        // Prevents explicit reduction of precision to FP32 or BF16 when running
+        // on CPUs
+        if constexpr (memorySpace == MemorySpace::HOST)
+          return;
         if (d_commPrecision == precision)
           return;
         d_commPrecision = precision;

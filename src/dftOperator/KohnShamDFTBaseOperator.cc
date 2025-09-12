@@ -1199,8 +1199,7 @@ namespace dftfe
               numWaveFunctions,
               d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
 
-        if (d_dftParamsPtr->useDevice &&
-            d_dftParamsPtr->communPrecCheby == "BF16")
+        if (d_dftParamsPtr->communPrecCheby == "BF16")
           d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
             .setCommunicationPrecision(
               dftfe::utils::mpi::communicationPrecision::half);

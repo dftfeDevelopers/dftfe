@@ -400,7 +400,7 @@ namespace dftfe
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
-                    if (useMixedPrecOverall && d_dftParams.useDevice &&
+                    if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby == "BF16")
                       {
                         (*XBlockFP32)
@@ -434,7 +434,7 @@ namespace dftfe
                         d_upperBoundUnWantedSpectrum,
                         d_lowerBoundWantedSpectrum,
                         d_dftParams.approxOverlapMatrix);
-                    if (useMixedPrecOverall && d_dftParams.useDevice &&
+                    if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby == "BF16")
                       {
                         (*XBlockFP32)
@@ -461,7 +461,7 @@ namespace dftfe
                       {
                         eigenValuesBlock[i] = eigenValues[jvec + i];
                       }
-                    if (useMixedPrecOverall && d_dftParams.useDevice &&
+                    if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby == "BF16")
                       {
                         (*XBlockFP32)
@@ -485,7 +485,7 @@ namespace dftfe
                       d_lowerBoundWantedSpectrum,
                       d_dftParams.approxOverlapMatrix);
 
-                    if (useMixedPrecOverall && d_dftParams.useDevice &&
+                    if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby == "BF16")
                       {
                         (*XBlockFP32)

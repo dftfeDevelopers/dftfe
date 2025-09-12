@@ -1109,7 +1109,7 @@ namespace dftfe
             "COMMUN PREC CHEBY",
             "STANDARD",
             dealii::Patterns::Selection("STANDARD|FP32|BF16"),
-            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32 and BF16 are ignored if USE SINGLE PREC CHEBY is false. BF16 is ignored if USE_GPU is false");
+            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32 and BF16 are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
