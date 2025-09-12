@@ -118,7 +118,7 @@ namespace dftfe
                                        position,
                                        types,
                                        d_numAtoms,
-                                       1e-5);
+                                       1e-8);
         else
           {
             int    equivalent_atoms[d_numAtoms];
@@ -136,7 +136,7 @@ namespace dftfe
                                                              types,
                                                              spins,
                                                              d_numAtoms,
-                                                             1e-5);
+                                                             1e-8);
           }
         d_symmMat.reserve(d_numSymm);
         d_symmMatInverse.reserve(d_numSymm);
@@ -295,7 +295,7 @@ namespace dftfe
     std::vector<dftfe::Int> kPointSymmetryMap(numKPoints, -1);
     auto                    wrap = [](double x) {
       double r = std::remainder(x, 1.0);
-      return (r <= -0.5 ? 0.5 : r);
+      return (r >= 0.5 ? r - 1.0 : r);
     };
     auto periodicDist = [](double a, double b) noexcept {
       double d = std::fabs(a - b);

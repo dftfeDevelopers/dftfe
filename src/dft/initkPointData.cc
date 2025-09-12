@@ -427,7 +427,7 @@ namespace dftfe
           del[0] * (std::floor((i / (nkz * nky)))) + dkx;
         for (dftfe::uInt dir = 0; dir < 3; ++dir)
           {
-            if (d_kPointCoordinatesFrac[3 * i + dir] > (0.5 + 1.0E-10))
+            if (d_kPointCoordinatesFrac[3 * i + dir] >= 0.5)
               d_kPointCoordinatesFrac[3 * i + dir] =
                 d_kPointCoordinatesFrac[3 * i + dir] - 1.0;
           }
