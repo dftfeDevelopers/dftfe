@@ -115,7 +115,7 @@ namespace dftfe
     makeDataTypeDeviceCompatible(std::complex<uint16_t> a)
     {
       return __device_bfloat162{__device_bfloat16{__nv_bfloat16_raw{a.real()}},
-                            __device_bfloat16{__nv_bfloat16_raw{a.imag()}}};
+                                __device_bfloat16{__nv_bfloat16_raw{a.imag()}}};
     }
 
     inline __device_bfloat162 *
