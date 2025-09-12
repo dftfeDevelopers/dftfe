@@ -1109,7 +1109,7 @@ namespace dftfe
             "COMMUN PREC CHEBY",
             "STANDARD",
             dealii::Patterns::Selection("STANDARD|FP32|BF16"),
-            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. Option active when USE SINGLE PREC CHEBY is true. BF16 precision allowed only when USE_GPU is true");
+            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32 and BF16 are ignored if USE SINGLE PREC CHEBY is false. BF16 is ignored if USE_GPU is false");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1930,11 +1930,6 @@ namespace dftfe
         nbandGrps <= numberEigenValues,
         dealii::ExcMessage(
           "DFT-FE Error: NPBAND is greater than NUMBER OF KOHN-SHAM WAVEFUNCTIONS."));
-
-    AssertThrow(
-      useDevice || communPrecCheby != "BF16",
-      dealii::ExcMessage(
-        "DFT-FE Error: Communication in BF16 precision is supported only with USE GPU = true"));
 
     if (nonSelfConsistentForce)
       AssertThrow(
