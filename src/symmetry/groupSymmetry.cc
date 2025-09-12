@@ -103,7 +103,7 @@ namespace dftfe
         int              types[d_numAtoms];
         for (dftfe::uInt iVec = 0; iVec < 3; ++iVec)
           for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-            lattice[iVec][jDim] = d_domainBoundingVectors[3 * iVec + jDim];
+            lattice[jDim][iVec] = d_domainBoundingVectors[3 * iVec + jDim];
         for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
           {
             types[iAtom] = atomLocationsFractional[iAtom][0];
@@ -143,18 +143,18 @@ namespace dftfe
         d_translation.reserve(d_numSymm);
         dftfe::uInt numSymm = 0;
         for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
-          if (std::abs(translation[iSymm][0]) < 1e-8 &&
-              std::abs(translation[iSymm][1]) < 1e-8 &&
-              std::abs(translation[iSymm][2]) < 1e-8)
-            {
-              d_symmMat.push_back(std::vector<double>(9, 0.0));
-              d_translation.push_back(std::vector<double>(3, 0.0));
-              for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+          {
+            d_symmMat.push_back(std::vector<double>(9, 0.0));
+            d_translation.push_back(std::vector<double>(3, 0.0));
+            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+              {
+                d_translation.back()[jDim] = translation[iSymm][jDim];
                 for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
                   d_symmMat.back()[kDim * 3 + jDim] =
                     static_cast<double>(rotation[iSymm][jDim][kDim]);
-              d_symmMatInverse.push_back(inv3(d_symmMat.back()));
-            }
+              }
+            d_symmMatInverse.push_back(inv3(d_symmMat.back()));
+          }
         d_symmMat.shrink_to_fit();
         d_symmMatInverse.shrink_to_fit();
         d_translation.shrink_to_fit();
@@ -262,7 +262,7 @@ namespace dftfe
               for (int kDim = 0; kDim < 3; ++kDim)
                 dot += m[iDim * 3 + kDim] * m[jDim * 3 + kDim];
               double orthoVal = iDim == jDim ? 1.0 : 0.0;
-              if (std::fabs(dot - orthoVal) > 1e-6)
+              if (std::fabs(dot - orthoVal) > 1e-8)
                 return false;
             }
         }
@@ -409,7 +409,7 @@ namespace dftfe
             for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
               transformedNodeCoordinatesFrac[iDim] +=
                 d_symmMatInverse[iSymm][jDim * 3 + iDim] *
-                currentNodeCoordinatesFrac[jDim];
+                (currentNodeCoordinatesFrac[jDim] - d_translation[iSymm][jDim]);
           for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
             transformedNodeCoordinatesFrac[iDim] =
               transformedNodeCoordinatesFrac[iDim] -
@@ -454,14 +454,15 @@ namespace dftfe
     for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
       for (dftfe::uInt iPoint = 0; iPoint < numPoints; ++iPoint)
         {
-          std::vector<double> transformedPoint = d_translation[iSymm];
+          std::vector<double> transformedPoint = {0.0, 0.0, 0.0};
           for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-            transformedPoint[jDim] += d_symmMatInverse[iSymm][0 * 3 + jDim] *
-                                        globalPointCoords[3 * iPoint + 0] +
-                                      d_symmMatInverse[iSymm][1 * 3 + jDim] *
-                                        globalPointCoords[3 * iPoint + 1] +
-                                      d_symmMatInverse[iSymm][2 * 3 + jDim] *
-                                        globalPointCoords[3 * iPoint + 2];
+            transformedPoint[jDim] =
+              d_symmMatInverse[iSymm][0 * 3 + jDim] *
+                (globalPointCoords[3 * iPoint + 0] - d_translation[iSymm][0]) +
+              d_symmMatInverse[iSymm][1 * 3 + jDim] *
+                (globalPointCoords[3 * iPoint + 1] - d_translation[iSymm][1]) +
+              d_symmMatInverse[iSymm][2 * 3 + jDim] *
+                (globalPointCoords[3 * iPoint + 2] - d_translation[iSymm][2]);
           for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
             transformedPoint[jDim] =
               transformedPoint[jDim] - std::floor(transformedPoint[jDim]);
