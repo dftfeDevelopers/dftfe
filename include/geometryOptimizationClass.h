@@ -65,7 +65,7 @@ namespace dftfe
     dftBase                      *d_dftPtr;
 
     // restart parameters
-    const bool        d_isRestart;
+    bool              d_isRestart;
     const std::string d_restartFilesPath;
     const dftfe::Int  d_verbosity;
     // status parameters

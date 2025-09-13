@@ -301,7 +301,10 @@ namespace dftfe
                                       d_mpiCommParent);
         if (d_optMode == 2 && d_status == 1)
           {
-            d_dftPtr->trivialSolveForStress();
+            if (!d_isRestart)
+              d_dftPtr->trivialSolveForStress();
+            else
+              d_dftPtr->solve(false, true);
           }
         if (d_status == 1)
           {
@@ -323,6 +326,7 @@ namespace dftfe
                 ++d_cycle;
               }
           }
+        d_isRestart = false;
       }
   }
 
