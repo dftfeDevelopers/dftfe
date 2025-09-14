@@ -21,6 +21,7 @@
 #  include <vector>
 #  include <DeviceDataTypeOverloads.h>
 #  include <DeviceKernelLauncherHelpers.h>
+#  include <DeviceTypeConfigHalfPrec.h>
 #  include <Exceptions.h>
 namespace dftfe
 {
@@ -142,6 +143,14 @@ namespace dftfe
     deviceSetValue(std::complex<double> *devPtr,
                    std::complex<double>  value,
                    std::size_t           size);
+
+    template void
+    deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);
+
+    template void
+    deviceSetValue(std::complex<uint16_t> *devPtr,
+                   std::complex<uint16_t>  value,
+                   std::size_t             size);
 
     deviceError_t
     deviceFree(void *devPtr)
