@@ -22,6 +22,7 @@
 #  include <vector>
 #  include <DeviceDataTypeOverloads.h>
 #  include <DeviceKernelLauncherHelpers.h>
+#  include <DeviceTypeConfigHalfPrec.sycl.h>
 #  include <Exceptions.h>
 
 namespace dftfe
@@ -146,7 +147,10 @@ namespace dftfe
           ->second.parallel_for(
             sycl::nd_range<1>(total_workitems, dftfe::utils::DEVICE_BLOCK_SIZE),
             [=](sycl::nd_item<1> ind) {
-              setValueKernel(ind, devPtr, value, size);
+              setValueKernel(ind,
+                             makeDataTypeDeviceCompatible(devPtr),
+                             makeDataTypeDeviceCompatible(value),
+                             size);
             });
       DEVICE_API_CHECK(event);
     }
@@ -183,6 +187,15 @@ namespace dftfe
     deviceSetValue(std::complex<double> *devPtr,
                    std::complex<double>  value,
                    std::size_t           size);
+
+    template void
+    deviceSetValue(uint16_t *devPtr, uint16_t value, std::size_t size);
+
+    template void
+    deviceSetValue(std::complex<uint16_t> *devPtr,
+                   std::complex<uint16_t>  value,
+                   std::size_t             size);
+
 
     deviceError_t
     deviceFree(void *devPtr)

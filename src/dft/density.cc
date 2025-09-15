@@ -38,7 +38,8 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->useSymm)
       {
         computeRhoNodalFromPSI();
         d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
@@ -130,7 +131,29 @@ namespace dftfe
                                 *d_dftParamsPtr);
           }
 
-
+        if (d_dftParamsPtr->useSymm)
+          {
+            for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
+                 ++iComp)
+              {
+                l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                        d_constraintsRhoNodal,
+                                        d_densityDofHandlerIndexElectro,
+                                        d_densityQuadratureIdElectro,
+                                        d_tauOutQuadValues[iComp],
+                                        d_tauOutNodalValues[iComp]);
+                groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+                  d_tauOutNodalValues[iComp], d_dofHandlerRhoNodal);
+                d_basisOperationsPtrElectroHost->interpolate(
+                  d_tauOutNodalValues[iComp],
+                  d_densityDofHandlerIndexElectro,
+                  d_densityQuadratureIdElectro,
+                  d_tauOutQuadValues[iComp],
+                  d_tauOutQuadValues[iComp],
+                  d_tauOutQuadValues[iComp],
+                  false);
+              }
+          }
         if (d_dftParamsPtr->verbosity >= 3)
           {
             pcout << "Total Charge before scaling: " << charge << std::endl;
@@ -310,7 +333,8 @@ namespace dftfe
 
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
-        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND")
+        d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
+        d_dftParamsPtr->useSymm)
       {
         d_densityInNodalValues = d_densityOutNodalValues;
 
@@ -517,6 +541,17 @@ namespace dftfe
               }
           }
       }
+    if (d_dftParamsPtr->useSymm)
+      for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
+           ++iComp)
+        {
+          d_constraintsRhoNodal.distribute(d_densityOutNodalValues[iComp]);
+          d_densityOutNodalValues[iComp].update_ghost_values();
+          groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+            d_densityOutNodalValues[iComp], d_dofHandlerRhoNodal);
+          d_constraintsRhoNodal.set_zero(d_densityOutNodalValues[iComp]);
+          d_densityOutNodalValues[iComp].zero_out_ghost_values();
+        }
   }
 #include "dft.inst.cc"
 

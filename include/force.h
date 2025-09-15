@@ -27,7 +27,7 @@
 #include <oncvClass.h>
 #include <AtomicCenteredNonLocalOperator.h>
 #include <feevaluationWrapper.h>
-
+#include <groupSymmetry.h>
 namespace dftfe
 {
   // forward declaration
@@ -127,14 +127,15 @@ namespace dftfe
      */
     void
     computeAtomsForces(
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dispersionCorrection          &dispersionCorr,
-      const dftfe::uInt                    eigenDofHandlerIndex,
-      const dftfe::uInt                    smearedChargeQuadratureId,
-      const dftfe::uInt                    lpspQuadratureIdElectro,
-      const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double>     &phiTotRhoOutElectro,
+      const dealii::MatrixFree<3, double>       &matrixFreeData,
+      const std::shared_ptr<groupSymmetryClass> &groupSymmetryPtr,
+      const dispersionCorrection                &dispersionCorr,
+      const dftfe::uInt                          eigenDofHandlerIndex,
+      const dftfe::uInt                          smearedChargeQuadratureId,
+      const dftfe::uInt                          lpspQuadratureIdElectro,
+      const dealii::MatrixFree<3, double>       &matrixFreeDataElectro,
+      const dftfe::uInt                          phiTotDofHandlerIndexElectro,
+      const distributedCPUVec<double>           &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,
@@ -192,14 +193,15 @@ namespace dftfe
      */
     void
     computeStress(
-      const dealii::MatrixFree<3, double> &matrixFreeData,
-      const dispersionCorrection          &dispersionCorr,
-      const dftfe::uInt                    eigenDofHandlerIndex,
-      const dftfe::uInt                    smearedChargeQuadratureId,
-      const dftfe::uInt                    lpspQuadratureIdElectro,
-      const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-      const dftfe::uInt                    phiTotDofHandlerIndexElectro,
-      const distributedCPUVec<double>     &phiTotRhoOutElectro,
+      const dealii::MatrixFree<3, double>       &matrixFreeData,
+      const std::shared_ptr<groupSymmetryClass> &groupSymmetryPtr,
+      const dispersionCorrection                &dispersionCorr,
+      const dftfe::uInt                          eigenDofHandlerIndex,
+      const dftfe::uInt                          smearedChargeQuadratureId,
+      const dftfe::uInt                          lpspQuadratureIdElectro,
+      const dealii::MatrixFree<3, double>       &matrixFreeDataElectro,
+      const dftfe::uInt                          phiTotDofHandlerIndexElectro,
+      const distributedCPUVec<double>           &phiTotRhoOutElectro,
       const std::vector<
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &rhoOutValues,

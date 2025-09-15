@@ -24,14 +24,15 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   forceClass<memorySpace>::computeStress(
-    const dealii::MatrixFree<3, double> &matrixFreeData,
-    const dispersionCorrection          &dispersionCorr,
-    const dftfe::uInt                    eigenDofHandlerIndex,
-    const dftfe::uInt                    smearedChargeQuadratureId,
-    const dftfe::uInt                    lpspQuadratureIdElectro,
-    const dealii::MatrixFree<3, double> &matrixFreeDataElectro,
-    const dftfe::uInt                    phiTotDofHandlerIndexElectro,
-    const distributedCPUVec<double>     &phiTotRhoOutElectro,
+    const dealii::MatrixFree<3, double>       &matrixFreeData,
+    const std::shared_ptr<groupSymmetryClass> &groupSymmetryPtr,
+    const dispersionCorrection                &dispersionCorr,
+    const dftfe::uInt                          eigenDofHandlerIndex,
+    const dftfe::uInt                          smearedChargeQuadratureId,
+    const dftfe::uInt                          lpspQuadratureIdElectro,
+    const dealii::MatrixFree<3, double>       &matrixFreeDataElectro,
+    const dftfe::uInt                          phiTotDofHandlerIndexElectro,
+    const distributedCPUVec<double>           &phiTotRhoOutElectro,
     const std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       &rhoOutValues,
@@ -137,6 +138,20 @@ namespace dftfe
               }
           }
       }
+    if (d_dftParams.useSymm)
+      {
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          stressTensor(9);
+        for (dftfe::uInt irow = 0; irow < 3; irow++)
+          for (dftfe::uInt icol = 0; icol < 3; icol++)
+            stressTensor[irow * 3 + icol] = d_stress[irow][icol];
+
+        groupSymmetryPtr->symmetrizeStress(stressTensor);
+        for (dftfe::uInt irow = 0; irow < 3; irow++)
+          for (dftfe::uInt icol = 0; icol < 3; icol++)
+            d_stress[irow][icol] = stressTensor[irow * 3 + icol];
+      }
+
     // Scale by inverse of domain volume
     d_stress = d_stress * (1.0 / dftPtr->d_domainVolume);
   }
