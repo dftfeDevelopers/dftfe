@@ -3355,7 +3355,7 @@ namespace dftfe
                             *d_elpaScala,
                             d_subspaceIterationSolverDevice,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                            maxPasses > 1,
+                            true,
                             0,
                             true,
                             scfIter == 0);
@@ -3369,7 +3369,7 @@ namespace dftfe
                             *d_elpaScala,
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                            maxPasses > 1,
+                            true,
                             true,
                             scfIter == 0);
                       }

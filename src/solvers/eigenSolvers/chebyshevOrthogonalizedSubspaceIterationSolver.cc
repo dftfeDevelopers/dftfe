@@ -547,21 +547,21 @@ namespace dftfe
         computing_timer.leave_subsection("Rayleigh-Ritz GEP");
 
         computing_timer.enter_subsection("eigen vectors residuals opt");
-
-        {
-          linearAlgebraOperations::computeEigenResidualNorm(
-            operatorMatrix,
-            BLASWrapperPtr,
-            eigenVectorsFlattened,
-            eigenValues,
-            totalNumberWaveFunctions,
-            localVectorSize,
-            d_mpiCommParent,
-            mpiCommDomain,
-            interBandGroupComm,
-            residualNorms,
-            d_dftParams);
-        }
+        if (computeResidual)
+          {
+            linearAlgebraOperations::computeEigenResidualNorm(
+              operatorMatrix,
+              BLASWrapperPtr,
+              eigenVectorsFlattened,
+              eigenValues,
+              totalNumberWaveFunctions,
+              localVectorSize,
+              d_mpiCommParent,
+              mpiCommDomain,
+              interBandGroupComm,
+              residualNorms,
+              d_dftParams);
+          }
         computing_timer.leave_subsection("eigen vectors residuals opt");
       }
     else if (d_dftParams.orthogType.compare("GS") == 0)
