@@ -173,16 +173,17 @@ namespace dftfe
                                                                   useLibxc,
                                                                   XCType);
         }
-      if (exceptParamX != 0 || exceptParamC != 0)
+      else
         {
           std::cout << "Error in xc code \n";
-          {
-            std::cout << "-------------------------------------" << std::endl;
-            std::cout << "Exchange or Correlation Functional not found"
-                      << std::endl;
-            std::cout << "-------------------------------------" << std::endl;
-            exit(-1);
-          }
+          if (exceptParamX != 0 || exceptParamC != 0)
+            {
+              std::cout << "-------------------------------------" << std::endl;
+              std::cout << "Exchange or Correlation Functional not found"
+                        << std::endl;
+              std::cout << "-------------------------------------" << std::endl;
+              exit(-1);
+            }
         }
 
       if (printXCInfo)
