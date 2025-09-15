@@ -15,10 +15,13 @@
 // ---------------------------------------------------------------------
 //
 //
-#include <XCfunctionalDefs/lda_x.h>
+#include <XCfunctionalDefs/lda_x_slater.h>
 #include <XCfunctionalDefs/lda_c_pw.h>
+#include <XCfunctionalDefs/lda_c_pz.h>
+#include <XCfunctionalDefs/lda_c_vwn.h>
 #include <XCfunctionalDefs/gga_x_pbe.h>
 #include <XCfunctionalDefs/gga_c_pbe.h>
+#include <XCfunctionalDefs/gga_x_rpbe.h>
 #include <XCfunctionalDefs/mgga_x_r2scan.h>
 #include <XCfunctionalDefs/mgga_c_r2scan.h>
 #include <XCfunctionalDefs/mgga_x_scan.h>
@@ -54,11 +57,19 @@
 
 #define DFTFE_KERNEL_NAME(...) __VA_ARGS__
 #endif
-DFTFE_FUNCTIONALEVALUATOR_LDA_X(PW,DFTFE_KERNEL_NAME(LDA_X)) 
+DFTFE_FUNCTIONALEVALUATOR_LDA_X(SLATER,DFTFE_KERNEL_NAME(LDA_X_SLATER)) 
+
 DFTFE_FUNCTIONALEVALUATOR_LDA_C(PW,DFTFE_KERNEL_NAME(LDA_C_PW))   
+
+DFTFE_FUNCTIONALEVALUATOR_LDA_C(PZ,DFTFE_KERNEL_NAME(LDA_C_PZ))  
+
+DFTFE_FUNCTIONALEVALUATOR_LDA_C(VWN,DFTFE_KERNEL_NAME(LDA_C_VWN))  
 
 DFTFE_FUNCTIONALEVALUATOR_GGA_X(PBE, DFTFE_KERNEL_NAME(GGA_X_PBE))
 DFTFE_FUNCTIONALEVALUATOR_GGA_C(PBE, DFTFE_KERNEL_NAME(GGA_C_PBE))
+
+DFTFE_FUNCTIONALEVALUATOR_GGA_X(RPBE, DFTFE_KERNEL_NAME(GGA_X_RPBE))
+
 
 DFTFE_FUNCTIONALEVALUATOR_MGGA_X(R2SCAN, DFTFE_KERNEL_NAME(MGGA_X_R2SCAN))
 DFTFE_FUNCTIONALEVALUATOR_MGGA_C(R2SCAN, DFTFE_KERNEL_NAME(MGGA_C_R2SCAN))

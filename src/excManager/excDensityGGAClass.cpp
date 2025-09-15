@@ -220,6 +220,26 @@ namespace dftfe
 
     if (d_useLibXC)
       {
+        // typedef struct
+        // {
+        //   double alpha, beta, gamma;
+        // } gga_x_lb_params;
+
+        // gga_x_lb_params *params;
+
+        // params = (gga_x_lb_params *)d_funcXPtr->params;
+
+        // std::cout << "d0: " << params->alpha << std::endl;
+        // std::cout << "d1: " << params->beta << std::endl;
+        // std::cout << "d2: " << params->gamma << std::endl;
+        // std::cout << "dens_thresholdX: " << d_funcXPtr->dens_threshold
+        //           << std::endl;
+        // std::cout << "zeta_thresholdX: " << d_funcXPtr->zeta_threshold
+        //           << std::endl;
+
+        // std::cout << "sigma_thresholdX: " << d_funcXPtr->sigma_threshold
+        //           << std::endl;
+
         xc_gga_exc_vxc(d_funcXPtr.get(),
                        nquad,
                        densityValues.data(),
@@ -280,6 +300,37 @@ namespace dftfe
                      pdecDensityTemp,
                      pdecSigmaValuesTemp);
           }
+        else if (d_XCType == "GGA-RPBE")
+          {
+            GGAX_RPBE(nquad,
+                      densityValuesTemp,
+                      sigmaValuesTemp,
+                      exValuesTemp,
+                      pdexDensityTemp,
+                      pdexSigmaValuesTemp);
+            GGAC_PBE(nquad,
+                     densityValuesTemp,
+                     sigmaValuesTemp,
+                     ecValuesTemp,
+                     pdecDensityTemp,
+                     pdecSigmaValuesTemp);
+          }
+
+        // else if (d_XCType == "GGA-LBxPBEc")
+        //   {
+        //     GGAX_LB(nquad,
+        //             densityValuesTemp,
+        //             sigmaValuesTemp,
+        //             exValuesTemp,
+        //             pdexDensityTemp,
+        //             pdexSigmaValuesTemp);
+        //     GGAC_PBE(nquad,
+        //              densityValuesTemp,
+        //              sigmaValuesTemp,
+        //              ecValuesTemp,
+        //              pdecDensityTemp,
+        //              pdecSigmaValuesTemp);
+        //   }
         else
           {
             dftfe::utils::throwException(

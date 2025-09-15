@@ -694,7 +694,7 @@ namespace dftfe
           "USE LIBXC FOR XC FUNCTIONAL EVALUATION",
           "true",
           dealii::Patterns::Bool(),
-          "[Developer] Boolean parameter specifying whether LIBXC should be used to evaluate the exchange-correlation functional. If set to true, the LIBXC library is used to evaluate the exchange-correlation functional. If set to false, the exchange-correlation functional is evaluated using the internal implementation wchih can leverage GPUs");
+          "[Developer] Boolean parameter specifying whether LIBXC should be used to evaluate the exchange-correlation functional. If set to true, the LIBXC library is used to evaluate the exchange-correlation functional. If set to false, the exchange-correlation functional is evaluated using the internal implementation which can leverage GPUs");
 
         prm.declare_entry(
           "PSEUDOPOTENTIAL FILE NAMES LIST",

@@ -943,7 +943,6 @@ namespace dftfe
               } // Kpoint Loop
           }     // TauMGGA
       }         // cell loop
-                // exit(-1);
 
 #if defined(DFTFE_WITH_DEVICE)
     if (isTauMGGA)

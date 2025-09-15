@@ -1,6 +1,6 @@
-#ifndef LDA_X
+#ifndef LDA_X_SLATER
 
-#define LDA_X                                                                 \
+#define LDA_X_SLATER                                                          \
   double t1, t2, t3, t5, t6, t7, t8, t10;                                     \
   double t11, t12, t13, t14, t15, t19, t20, t24;                              \
   double t25, t26, t27, t29, t30, t31, t35, t39;                              \
@@ -16,16 +16,16 @@
   {                                                                           \
     double alpha = 1;                                                         \
   } params;                                                                   \
-  t1   = rho0 <= DENS_THRESHOLD_X;                                            \
+  t1   = rho0 <= DENS_THRESHOLD_X_SLATER;                                     \
   t2   = M_CBRT3;                                                             \
   t3   = M_CBRTPI;                                                            \
   t5   = t2 / t3;                                                             \
   t6   = rho0 + rho1;                                                         \
   t7   = 0.1e1 / t6;                                                          \
   t8   = rho0 * t7;                                                           \
-  t10  = 0.2e1 * t8 <= ZETA_THRESHOLD_X;                                      \
-  t11  = std::pow(ZETA_THRESHOLD_X, 1.0 / 3.0);                               \
-  t12  = t11 * ZETA_THRESHOLD_X;                                              \
+  t10  = 0.2e1 * t8 <= ZETA_THRESHOLD_X_SLATER;                               \
+  t11  = std::pow(ZETA_THRESHOLD_X_SLATER, 1.0 / 3.0);                        \
+  t12  = t11 * ZETA_THRESHOLD_X_SLATER;                                       \
   t13  = M_CBRT2;                                                             \
   t14  = t13 * rho0;                                                          \
   t15  = std::pow(t8, 1.0 / 3.0);                                             \
@@ -33,9 +33,9 @@
   t20  = std::pow(t6, 1.0 / 3.0);                                             \
   t24  = my_piecewise3(t1, 0, -0.3e1 / 0.8e1 * t5 * t19 * t20);               \
   t25  = params.alpha * t24;                                                  \
-  t26  = rho1 <= DENS_THRESHOLD_X;                                            \
+  t26  = rho1 <= DENS_THRESHOLD_X_SLATER;                                     \
   t27  = rho1 * t7;                                                           \
-  t29  = 0.2e1 * t27 <= ZETA_THRESHOLD_X;                                     \
+  t29  = 0.2e1 * t27 <= ZETA_THRESHOLD_X_SLATER;                              \
   t30  = t13 * rho1;                                                          \
   t31  = std::pow(t27, 1.0 / 3.0);                                            \
   t35  = my_piecewise3(t29, t12, 0.2e1 * t30 * t7 * t31);                     \
