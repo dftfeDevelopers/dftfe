@@ -3678,60 +3678,63 @@ namespace dftfe
         //         d_hubbardClassPtr->writeHubbOccToFile();
         //       }
         //   }
-        if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
-            d_dftParamsPtr->solverMode == "GS")
-          {
-            std::vector<std::string> field     = {"RHO", "MAG_Z"};
-            std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
-            std::vector<std::string> field2    = {"TAU", "TAUMAG_Z"};
-            for (dftfe::Int i = 0; i < d_densityOutQuadValues.size(); i++)
-              {
-                saveQuadratureData(d_basisOperationsPtrHost,
-                                   d_densityQuadratureId,
-                                   d_densityOutQuadValues[i],
-                                   1,
-                                   field[i],
-                                   d_dftParamsPtr->restartFolder,
-                                   d_mpiCommParent,
-                                   mpi_communicator,
-                                   interpoolcomm,
-                                   interBandGroupComm);
-                bool isGradDensityDataDependent =
-                  (d_excManagerPtr->getExcSSDFunctionalObj()
-                     ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-                if (isGradDensityDataDependent)
-                  {
-                    saveQuadratureData(d_basisOperationsPtrHost,
-                                       d_densityQuadratureId,
-                                       d_gradDensityOutQuadValues[i],
-                                       3,
-                                       Gradfield[i],
-                                       d_dftParamsPtr->restartFolder,
-                                       d_mpiCommParent,
-                                       mpi_communicator,
-                                       interpoolcomm,
-                                       interBandGroupComm);
-                  }
-              }
-            if (isTauMGGA)
-              for (dftfe::Int i = 0; i < d_tauOutQuadValues.size(); i++)
-                {
-                  saveQuadratureData(d_basisOperationsPtrHost,
-                                     d_densityQuadratureId,
-                                     d_tauOutQuadValues[i],
-                                     1,
-                                     field2[i],
-                                     d_dftParamsPtr->restartFolder,
-                                     d_mpiCommParent,
-                                     mpi_communicator,
-                                     interpoolcomm,
-                                     interBandGroupComm);
-                }
-            if (d_useHubbard)
-              {
-                d_hubbardClassPtr->writeHubbOccToFile();
-              }
-          }
+
+
+        // if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
+        //     d_dftParamsPtr->solverMode == "GS")
+        //   {
+        //     std::vector<std::string> field     = {"RHO", "MAG_Z"};
+        //     std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
+        //     std::vector<std::string> field2    = {"TAU", "TAUMAG_Z"};
+        //     for (dftfe::Int i = 0; i < d_densityOutQuadValues.size(); i++)
+        //       {
+        //         saveQuadratureData(d_basisOperationsPtrHost,
+        //                            d_densityQuadratureId,
+        //                            d_densityOutQuadValues[i],
+        //                            1,
+        //                            field[i],
+        //                            d_dftParamsPtr->restartFolder,
+        //                            d_mpiCommParent,
+        //                            mpi_communicator,
+        //                            interpoolcomm,
+        //                            interBandGroupComm);
+        //         bool isGradDensityDataDependent =
+        //           (d_excManagerPtr->getExcSSDFunctionalObj()
+        //              ->getDensityBasedFamilyType() ==
+        //              densityFamilyType::GGA);
+        //         if (isGradDensityDataDependent)
+        //           {
+        //             saveQuadratureData(d_basisOperationsPtrHost,
+        //                                d_densityQuadratureId,
+        //                                d_gradDensityOutQuadValues[i],
+        //                                3,
+        //                                Gradfield[i],
+        //                                d_dftParamsPtr->restartFolder,
+        //                                d_mpiCommParent,
+        //                                mpi_communicator,
+        //                                interpoolcomm,
+        //                                interBandGroupComm);
+        //           }
+        //       }
+        //     if (isTauMGGA)
+        //       for (dftfe::Int i = 0; i < d_tauOutQuadValues.size(); i++)
+        //         {
+        //           saveQuadratureData(d_basisOperationsPtrHost,
+        //                              d_densityQuadratureId,
+        //                              d_tauOutQuadValues[i],
+        //                              1,
+        //                              field2[i],
+        //                              d_dftParamsPtr->restartFolder,
+        //                              d_mpiCommParent,
+        //                              mpi_communicator,
+        //                              interpoolcomm,
+        //                              interBandGroupComm);
+        //         }
+        //     if (d_useHubbard)
+        //       {
+        //         d_hubbardClassPtr->writeHubbOccToFile();
+        //       }
+        //   }
       }
 
     // if (d_dftParamsPtr->saveRhoData &&
@@ -3743,8 +3746,8 @@ namespace dftfe
     //         d_hubbardClassPtr->writeHubbOccToFile();
     //       }
     //   }
-    if (d_dftParamsPtr->saveQuadData &&
-        !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
+
+    if (d_dftParamsPtr->saveQuadData)
       {
         std::vector<std::string> field     = {"RHO", "MAG_Z"};
         std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
