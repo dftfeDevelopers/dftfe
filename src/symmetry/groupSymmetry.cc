@@ -95,7 +95,7 @@ namespace dftfe
     d_domainBoundingVectorsInverse.copyFrom(inv3(d_domainBoundingVectors));
     if (d_isGroupSymmetry)
       {
-        const dftfe::Int max_size = 500;
+        const dftfe::Int max_size = 2000;
         int              rotation[max_size][3][3];
         double           translation[max_size][3];
         double           lattice[3][3];
