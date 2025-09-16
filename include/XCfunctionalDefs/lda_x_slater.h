@@ -16,7 +16,7 @@
 //
 // @author Srinibas Nandi
 
-// The below code snippet has been adpated from Libxc 7.0.0
+// The below code snippet has been adapted from Libxc 7.0.0
 
 #ifndef LDA_X_SLATER
 #define LDA_X_SLATER                                                          \

@@ -16,7 +16,7 @@
 //
 // @author Srinibas Nandi
 
-// The below code snippet has been adpated from Libxc 7.0.0
+// The below code snippet has been adapted from Libxc 7.0.0
 
 #ifndef MGGA_X_SCAN
 #define MGGA_X_SCAN                                                            \
