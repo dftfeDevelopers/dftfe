@@ -15,6 +15,9 @@
 // ---------------------------------------------------------------------
 //
 //
+
+// Few macro definitions in this file are reused from Libxc 7.0.0
+
 #include <XCfunctionalDefs/lda_x_slater.h>
 #include <XCfunctionalDefs/lda_c_pw.h>
 #include <XCfunctionalDefs/lda_c_pz.h>

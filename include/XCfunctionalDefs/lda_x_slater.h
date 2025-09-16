@@ -1,5 +1,6 @@
-#ifndef LDA_X_SLATER
+// The below code snippet has been adpated from Libxc 7.0.0
 
+#ifndef LDA_X_SLATER
 #define LDA_X_SLATER                                                          \
   double t1, t2, t3, t5, t6, t7, t8, t10;                                     \
   double t11, t12, t13, t14, t15, t19, t20, t24;                              \

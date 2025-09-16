@@ -1,3 +1,5 @@
+// The below code snippet has been adpated from Libxc 7.0.0
+
 #ifndef GGA_X_LB
 #define GGA_X_LB                                                   \
   double t1, t4, t5, t6, t9, t10, t11, t13;                        \

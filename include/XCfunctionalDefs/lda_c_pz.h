@@ -1,3 +1,5 @@
+// The below code snippet has been adpated from Libxc 7.0.0
+
 #ifndef LDA_C_PZ
 #define LDA_C_PZ                                                       \
   double t1, t2, t3, t5, t6, t7, t8, t9;                               \

@@ -1,3 +1,5 @@
+// The below code snippet has been adpated from Libxc 7.0.0
+
 #ifndef MGGA_C_SCAN
 #define MGGA_C_SCAN                                                            \
                                                                                \

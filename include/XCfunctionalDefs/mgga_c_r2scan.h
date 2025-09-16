@@ -1,3 +1,5 @@
+// The below code snippet has been adpated from Libxc 7.0.0
+
 #ifndef MGGA_C_R2SCAN
 #define MGGA_C_R2SCAN                                                          \
   double t2, t3, t4, t5, t6, t7, t8, t9;                                       \

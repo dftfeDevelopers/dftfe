@@ -45,3 +45,4 @@ srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileGaAs_BANDS.prm > outp
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_relaxFullMassMatrix.prm > outputBccFe_relaxFullMassMatrix
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scan.prm > outputBccFe_scan
 srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scan_kerker.prm > outputBccFe_scan_kerker
+srun -n 6 -c 7 --gpu-bind closest $BASE/dftfe parameterFileBccFe_scan_useLibxcFalse.prm > outputBccFe_scan_useLibxcFalse
