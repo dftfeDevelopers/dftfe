@@ -21,6 +21,8 @@
 #include <complex>
 #include <cuComplex.h>
 #include <TypeConfig.h>
+#include <cuda_bf16.h>
+#include <cstring>
 namespace dftfe
 {
   namespace utils
@@ -308,7 +310,6 @@ namespace dftfe
     {
       return cuCmulf(a, b);
     }
-
 
     //
     // mult for complex heterogeneous types e.g. (cuDoubleComplex,
