@@ -164,7 +164,7 @@ namespace dftfe
 #    endif
 
 
-#    define DFTFE_KERNEL_NAME(...) __VA_ARGS__
+#    define DFTFE_KERNEL_ARGUMENT(...) __VA_ARGS__
 
 
 #    if defined(DFTFE_WITH_DEVICE_LANG_CUDA) || \

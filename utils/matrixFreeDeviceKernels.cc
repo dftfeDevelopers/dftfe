@@ -11,7 +11,7 @@ namespace dftfe
     Type,
     void,
     computeAXKernelPoisson,
-    DFTFE_KERNEL_NAME({
+    DFTFE_KERNEL_ARGUMENT({
       // V = AU
       // gridDim.x = cells;
       // First index is fastest convention used
@@ -350,7 +350,7 @@ namespace dftfe
     Type,
     void,
     computeAXKernelHelmholtz,
-    DFTFE_KERNEL_NAME({
+    DFTFE_KERNEL_ARGUMENT({
       // V = AU
       // gridDim.x = cells;
       // First index is fastest convention used
@@ -707,7 +707,7 @@ namespace dftfe
     const Type       *J,
     const dftfe::Int *map)
   {
-    DFTFE_LAUNCH_KERNEL_SMEM_D(DFTFE_KERNEL_NAME(
+    DFTFE_LAUNCH_KERNEL_SMEM_D(DFTFE_KERNEL_ARGUMENT(
                                  computeAXKernelPoisson<Type, M, N, K, dim>),
                                blocks,
                                threads,
@@ -738,7 +738,7 @@ namespace dftfe
     const dftfe::Int *map,
     const Type        coeffHelmholtz)
   {
-    DFTFE_LAUNCH_KERNEL_SMEM_D(DFTFE_KERNEL_NAME(
+    DFTFE_LAUNCH_KERNEL_SMEM_D(DFTFE_KERNEL_ARGUMENT(
                                  computeAXKernelHelmholtz<Type, M, N, K, dim>),
                                blocks,
                                threads,
