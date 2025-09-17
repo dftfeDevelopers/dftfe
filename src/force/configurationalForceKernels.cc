@@ -391,6 +391,81 @@ DFTFE_CREATE_KERNEL(
   double                                  *eshelbyTensor,
   const bool                               addEk);
 
+DFTFE_CREATE_KERNEL(
+  void,
+  nlpWfcContractionContributionDeviceKernel,
+  {
+    const dftfe::uInt numberEntries =
+      totalNonTrivialPseudoWfcs * numQuadsNLP * numPsi;
+
+    for (dftfe::uInt index = globalThreadId; index < numberEntries;
+         index += nThreadsPerBlock * nThreadBlock)
+      {
+        const dftfe::uInt blockIndex  = index / numPsi;
+        const dftfe::uInt wfcId       = index - blockIndex * numPsi;
+        dftfe::uInt       pseudoWfcId = blockIndex / numQuadsNLP;
+        const dftfe::uInt quadId      = blockIndex - pseudoWfcId * numQuadsNLP;
+        pseudoWfcId += startingId;
+        nlpContractionContribution[index] =
+          gradPsiOrPsiQuadValuesNLP[nonTrivialIdToElemIdMap[pseudoWfcId] *
+                                      numQuadsNLP * numPsi +
+                                    quadId * numPsi + wfcId] *
+          projectorKetTimesVectorPar
+            [projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId] * numPsi +
+             wfcId];
+      }
+  },
+  const dftfe::uInt  numPsi,
+  const dftfe::uInt  numQuadsNLP,
+  const dftfe::uInt  totalNonTrivialPseudoWfcs,
+  const dftfe::uInt  startingId,
+  const double      *projectorKetTimesVectorPar,
+  const double      *gradPsiOrPsiQuadValuesNLP,
+  const dftfe::uInt *nonTrivialIdToElemIdMap,
+  const dftfe::uInt *projecterKetTimesFlattenedVectorLocalIds,
+  double            *nlpContractionContribution);
+
+
+
+DFTFE_CREATE_KERNEL(
+  void,
+  nlpWfcContractionContributionDeviceKernel,
+  {
+    const dftfe::uInt numberEntries =
+      totalNonTrivialPseudoWfcs * numQuadsNLP * numPsi;
+
+    for (dftfe::uInt index = globalThreadId; index < numberEntries;
+         index += nThreadsPerBlock * nThreadBlock)
+      {
+        const dftfe::uInt blockIndex  = index / numPsi;
+        const dftfe::uInt wfcId       = index - blockIndex * numPsi;
+        dftfe::uInt       pseudoWfcId = blockIndex / numQuadsNLP;
+        const dftfe::uInt quadId      = blockIndex - pseudoWfcId * numQuadsNLP;
+        pseudoWfcId += startingId;
+
+        const dftfe::utils::deviceDoubleComplex temp = dftfe::utils::mult(
+          dftfe::utils::conj(
+            gradPsiOrPsiQuadValuesNLP[nonTrivialIdToElemIdMap[pseudoWfcId] *
+                                        numQuadsNLP * numPsi +
+                                      quadId * numPsi + wfcId]),
+          projectorKetTimesVectorPar
+            [projecterKetTimesFlattenedVectorLocalIds[pseudoWfcId] * numPsi +
+             wfcId]);
+        nlpContractionContribution[index] =
+          dftfe::utils::makeComplex(dftfe::utils::realPartDevice(temp),
+                                    dftfe::utils::imagPartDevice(temp));
+      }
+  },
+  const dftfe::uInt                        numPsi,
+  const dftfe::uInt                        numQuadsNLP,
+  const dftfe::uInt                        totalNonTrivialPseudoWfcs,
+  const dftfe::uInt                        startingId,
+  const dftfe::utils::deviceDoubleComplex *projectorKetTimesVectorPar,
+  const dftfe::utils::deviceDoubleComplex *gradPsiOrPsiQuadValuesNLP,
+  const dftfe::uInt                       *nonTrivialIdToElemIdMap,
+  const dftfe::uInt                 *projecterKetTimesFlattenedVectorLocalIds,
+  dftfe::utils::deviceDoubleComplex *nlpContractionContribution);
+
 namespace dftfe
 {
 
@@ -461,4 +536,37 @@ namespace dftfe
                           eshelbyTensor,
                           1);
   }
+
+  void
+  nlpWfcContractionContribution(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                            &BLASWrapperPtr,
+    const dftfe::uInt        wfcBlockSize,
+    const dftfe::uInt        blockSizeNlp,
+    const dftfe::uInt        numQuadsNLP,
+    const dftfe::uInt        startingIdNlp,
+    const dataTypes::number *projectorKetTimesVectorPar,
+    const dataTypes::number *gradPsiOrPsiQuadValuesNLP,
+    const dftfe::uInt       *nonTrivialIdToElemIdMap,
+    const dftfe::uInt       *projecterKetTimesFlattenedVectorLocalIds,
+    dataTypes::number       *nlpContractionContribution)
+  {
+    DFTFE_LAUNCH_KERNEL(
+      nlpWfcContractionContributionDeviceKernel,
+      (wfcBlockSize + (dftfe::utils::DEVICE_BLOCK_SIZE - 1)) /
+        dftfe::utils::DEVICE_BLOCK_SIZE * numQuadsNLP * blockSizeNlp,
+      dftfe::utils::DEVICE_BLOCK_SIZE,
+      dftfe::utils::defaultStream,
+      wfcBlockSize,
+      numQuadsNLP,
+      blockSizeNlp,
+      startingIdNlp,
+      dftfe::utils::makeDataTypeDeviceCompatible(projectorKetTimesVectorPar),
+      dftfe::utils::makeDataTypeDeviceCompatible(gradPsiOrPsiQuadValuesNLP),
+      nonTrivialIdToElemIdMap,
+      projecterKetTimesFlattenedVectorLocalIds,
+      dftfe::utils::makeDataTypeDeviceCompatible(nlpContractionContribution));
+  }
+
 } // namespace dftfe

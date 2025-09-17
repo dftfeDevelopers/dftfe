@@ -325,19 +325,6 @@ namespace dftfe
       dftUtils::printCurrentMemoryUsage(
         mpi_communicator, "Created the basic constraint matrices");
 
-    forcePtr->initUnmoved(triangulation,
-                          d_mesh.getSerialMeshUnmoved(),
-                          d_domainBoundingVectors,
-                          false);
-    forcePtr->initUnmoved(triangulation,
-                          d_mesh.getSerialMeshUnmoved(),
-                          d_domainBoundingVectors,
-                          true);
-
-    if (d_dftParamsPtr->verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator, "Force initUnmoved");
-
-
     d_excManagerPtr->init(d_dftParamsPtr->XCType,
                           true,
                           d_dftParamsPtr->modelXCInputFile,

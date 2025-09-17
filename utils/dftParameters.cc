@@ -507,12 +507,6 @@ namespace dftfe
             "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used for all-electron calculations. For pseudopotential calculations, the default value of 0.0, sets the MESH SIZE AT ATOM to be the same value as MESH SIZE AROUND ATOM. Standard users do not need to tune this parameter. Units: a.u.");
 
           prm.declare_entry(
-            "MESH ADAPTION",
-            "false",
-            dealii::Patterns::Bool(),
-            "[Developer] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
-
-          prm.declare_entry(
             "AUTO ADAPT BASE MESH SIZE",
             "true",
             dealii::Patterns::Bool(),
@@ -529,18 +523,6 @@ namespace dftfe
                             "10",
                             dealii::Patterns::Integer(0, 30),
                             "[Developer] Number of times to be refined.");
-
-          prm.declare_entry(
-            "TOLERANCE FOR MESH ADAPTION",
-            "1",
-            dealii::Patterns::Double(0.0, 1),
-            "[Developer] Tolerance criteria used for stopping the multi-level mesh adaption done apriori using single atom wavefunctions. This is used as Kinetic energy change between two successive iterations");
-
-          prm.declare_entry(
-            "ERROR ESTIMATE WAVEFUNCTIONS",
-            "5",
-            dealii::Patterns::Integer(0),
-            "[Developer] Number of wavefunctions to be used for error estimation.");
 
           prm.declare_entry(
             "GAUSSIAN CONSTANT FORCE GENERATOR",
@@ -1356,15 +1338,14 @@ namespace dftfe
 
     std::string coordinatesGaussianDispFile = "";
 
-    outerAtomBallRadius            = 2.5;
-    innerAtomBallRadius            = 0.0;
-    meshSizeOuterDomain            = 10.0;
-    meshSizeInnerBall              = 1.0;
-    meshSizeOuterBall              = 1.0;
-    numLevels                      = 1;
-    numberWaveFunctionsForEstimate = 5;
-    topfrac                        = 0.1;
-    kerkerParameter                = 0.05;
+    outerAtomBallRadius = 2.5;
+    innerAtomBallRadius = 0.0;
+    meshSizeOuterDomain = 10.0;
+    meshSizeInnerBall   = 1.0;
+    meshSizeOuterBall   = 1.0;
+    numLevels           = 1;
+    topfrac             = 0.1;
+    kerkerParameter     = 0.05;
 
     isIonForce             = false;
     isCellStress           = false;
@@ -1372,8 +1353,7 @@ namespace dftfe
     nonSelfConsistentForce = false;
     forceRelaxTol          = 1e-4; // Hartree/Bohr
     stressRelaxTol         = 1e-6; // Hartree/Bohr^3
-    toleranceKinetic       = 1e-03;
-    cellConstraintType     = 12; // all cell components to be relaxed
+    cellConstraintType     = 12;   // all cell components to be relaxed
 
     verbosity                                      = 0;
     keepScratchFolder                              = false;
@@ -1382,7 +1362,6 @@ namespace dftfe
     loadQuadData                                   = false;
     restartSpinFromNoSpin                          = false;
     reproducible_output                            = false;
-    meshAdaption                                   = false;
     pinnedNodeForPBC                               = true;
     startingWFCType                                = "";
     restrictToOnePass                              = false;
@@ -1661,13 +1640,9 @@ namespace dftfe
         meshSizeOuterDomain   = prm.get_double("BASE MESH SIZE");
         meshSizeInnerBall     = prm.get_double("MESH SIZE AT ATOM");
         meshSizeOuterBall     = prm.get_double("MESH SIZE AROUND ATOM");
-        meshAdaption          = prm.get_bool("MESH ADAPTION");
         autoAdaptBaseMeshSize = prm.get_bool("AUTO ADAPT BASE MESH SIZE");
         topfrac               = prm.get_double("TOP FRAC");
         numLevels             = prm.get_double("NUM LEVELS");
-        numberWaveFunctionsForEstimate =
-          prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
-        toleranceKinetic = prm.get_double("TOLERANCE FOR MESH ADAPTION");
         gaussianConstantForce =
           prm.get_double("GAUSSIAN CONSTANT FORCE GENERATOR");
         gaussianOrderForce = prm.get_double("GAUSSIAN ORDER FORCE GENERATOR");

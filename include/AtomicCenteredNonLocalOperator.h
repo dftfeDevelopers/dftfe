@@ -51,7 +51,7 @@ namespace dftfe
     blockDiagonal
   };
 
-  enum class allReduceVectorType
+  enum class nonLocalContractionVectorType
   {
     CconjTransX,
     CRconjTransX,
@@ -85,18 +85,20 @@ namespace dftfe
      * @param[in] kPointIndex specifies the k-point of interest
      */
     void
-    initialiseOperatorActionOnX(dftfe::uInt               kPointIndex,
-                                const allReduceVectorType AllReduceVectorType =
-                                  allReduceVectorType::CconjTransX);
+    initialiseOperatorActionOnX(
+      dftfe::uInt                         kPointIndex,
+      const nonLocalContractionVectorType NonLocalContractionVectorType =
+        nonLocalContractionVectorType::CconjTransX);
     /**
      * @brief initialises the multivector object, waveFunctionBlockSize and resizes various internal data members.
-     * !!!! It is very imporant to ensure that the vector of allReduceVectorType
-     * CconjTransX for which the coupling matrix/V matrix is to be applied on is
-     * initialised last. If not, applyV function wil Assert out. !!!!
+     * !!!! It is very imporant to ensure that the vector of
+     * nonLocalContractionVectorType CconjTransX for which the coupling matrix/V
+     * matrix is to be applied on is initialised last. If not, applyV function
+     * wil Assert out. !!!!
      * @param[in] waveFunctionBlockSize sets the wavefunction block size for the
      * action of the nonlocal operator.
-     * * @param[in] AllReduceVectorType specifies the type of allreduce
-     * operation
+     * * @param[in] NonLocalContractionVectorType specifies the type of
+     * allreduce operation
      * @param[out] sphericalFunctionKetTimesVectorParFlattened, the multivector
      * that is initialised based on blocksize and partitioner.
      *
@@ -105,9 +107,9 @@ namespace dftfe
     initialiseFlattenedDataStructure(
       dftfe::uInt waveFunctionBlockSize,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                               &sphericalFunctionKetTimesVectorParFlattened,
-      const allReduceVectorType AllReduceVectorType =
-        allReduceVectorType::CconjTransX);
+        &sphericalFunctionKetTimesVectorParFlattened,
+      const nonLocalContractionVectorType NonLocalContractionVectorType =
+        nonLocalContractionVectorType::CconjTransX);
     /**
      * @brief calls internal function: initialisePartitioner, initialiseKpoint and computeCMatrixEntries
      * @param[in] updateSparsity flag on whether the sparstiy patten was
@@ -182,15 +184,16 @@ namespace dftfe
     void
     initialiseCellWaveFunctionPointers(
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                                            &cellWaveFunctionMatrix,
-      const dftfe::uInt                      cellsBlockSize,
-      const std::vector<allReduceVectorType> AllReduceVectorType = {
-        allReduceVectorType::CconjTransX});
+                       &cellWaveFunctionMatrix,
+      const dftfe::uInt cellsBlockSize,
+      const std::vector<nonLocalContractionVectorType>
+        NonLocalContractionVectorType = {
+          nonLocalContractionVectorType::CconjTransX});
 
     void
-    freeDeviceVectors(
-      const std::vector<allReduceVectorType> AllReduceVectorType = {
-        allReduceVectorType::CconjTransX});
+    freeDeviceVectors(const std::vector<nonLocalContractionVectorType>
+                        NonLocalContractionVectorType = {
+                          nonLocalContractionVectorType::CconjTransX});
 #endif
 
     // Getter functions
@@ -273,6 +276,10 @@ namespace dftfe
 
     const std::vector<dftfe::uInt> &
     getOwnedAtomIdsInCurrentProcessor() const;
+
+    const std::vector<dftfe::uInt> &
+    getAtomIdsInCurrentProcessor() const;
+
     /**
      * @brief Computes C^{T}D^{-1}C at the global level for atomId. This is required in PAW
      */
@@ -332,10 +339,10 @@ namespace dftfe
     void
     applyAllReduceOnCconjtransX(
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                               &sphericalFunctionKetTimesVectorParFlattened,
-      const bool                skipComm = false,
-      const allReduceVectorType AllReduceVectorType =
-        allReduceVectorType::CconjTransX);
+                &sphericalFunctionKetTimesVectorParFlattened,
+      const bool skipComm = false,
+      const nonLocalContractionVectorType NonLocalContractionVectorType =
+        nonLocalContractionVectorType::CconjTransX);
 
     /**
      * @brief computes the results of CconjtransX on the cells of interst specied by cellRange
@@ -505,6 +512,12 @@ namespace dftfe
     const std::vector<
       std::vector<dftfe::utils::MemoryStorage<ValueType, memorySpace>>> &
     getGlobalCMatrix() const;
+
+    /**
+     * @brief Returns number of spherical function for a given nonlocal atom id.
+     */
+    dftfe::uInt
+    getTotalNumberOfSphericalFunctionsForAtomId(dftfe::uInt atomId);
 
     /**
      * @brief Computes the inner products summing over the sphericalFn and WaveFns for each atom
@@ -836,7 +849,6 @@ namespace dftfe
 
 
     ValueType *d_wfcStartPointer;
-    ValueType *d_distributedVectorCconjTransX;
 
     std::vector<ValueType **> deviceWfcPointersInCellRange,
       devicePointerCDaggerInCellRange, devicePointerCDaggerOutTempInCellRange;

@@ -834,7 +834,7 @@ namespace dftfe
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   const std::map<dftfe::uInt, dftfe::uInt> &
-  oncvClass<ValueType, memorySpace>::getPSPAtomIdToGloablIdMap()
+  oncvClass<ValueType, memorySpace>::getPSPAtomIdToGlobalIdMap()
   {
     return d_atomIdPseudopotentialInterestToGlobalId;
   }

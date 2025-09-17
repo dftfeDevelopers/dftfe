@@ -352,11 +352,6 @@ namespace dftfe
     for (dftfe::uInt i = 3; i < d_constraintsVectorElectro.size(); ++i)
       matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerPRefined);
 
-    forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
-                        d_constraintsVectorElectro,
-                        true);
-    d_forceDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
-
     std::vector<dealii::Quadrature<1>> quadratureVector;
     quadratureVector.push_back(
       dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));

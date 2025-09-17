@@ -23,7 +23,6 @@
 #include <dft.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
-#include <force.h>
 #include <geoOptIon.h>
 #include <sys/stat.h>
 
