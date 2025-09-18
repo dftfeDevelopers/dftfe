@@ -384,7 +384,9 @@ namespace dftfe
     requiredPointCoordinates.clear();
     requiredPointCoordinates.reserve(d_numSymm * nodalCoordinates.size());
     localDoFIndexToPointIndexMap.clear();
-    localDoFIndexToPointIndexMap.resize(d_numSymm);
+    localDoFIndexToPointIndexMap.resize(
+      d_numSymm, std::vector<dftfe::uInt>(dofHandler.n_locally_owned_dofs()));
+    std::map<std::array<std::int64_t, 3>, dftfe::uInt> pointToPointIndexMap;
     for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
       for (dealii::IndexSet::ElementIterator it = locallyOwnedNodes.begin();
            it != locallyOwnedNodes.end();
@@ -421,10 +423,30 @@ namespace dftfe
               transformedNodeCoordinatesCart[iDim] +=
                 d_domainBoundingVectors[3 * jDim + iDim] *
                 transformedNodeCoordinatesFrac[jDim];
-          requiredPointCoordinates.push_back(transformedNodeCoordinatesCart);
-          localDoFIndexToPointIndexMap[iSymm][locallyOwnedNodes
-                                                .index_within_set(*it)] =
-            requiredPointCoordinates.size() - 1;
+          std::array<std::int64_t, 3> roundedCoords;
+          roundedCoords[0] =
+            std::llround(transformedNodeCoordinatesCart[0] * 1e8);
+          roundedCoords[1] =
+            std::llround(transformedNodeCoordinatesCart[1] * 1e8);
+          roundedCoords[2] =
+            std::llround(transformedNodeCoordinatesCart[2] * 1e8);
+          auto pointIterator = pointToPointIndexMap.find(roundedCoords);
+          if (pointIterator != pointToPointIndexMap.end())
+            {
+              localDoFIndexToPointIndexMap[iSymm][locallyOwnedNodes
+                                                    .index_within_set(*it)] =
+                pointIterator->second;
+            }
+          else
+            {
+              requiredPointCoordinates.push_back(
+                transformedNodeCoordinatesCart);
+              localDoFIndexToPointIndexMap[iSymm][locallyOwnedNodes
+                                                    .index_within_set(*it)] =
+                requiredPointCoordinates.size() - 1;
+              pointToPointIndexMap[roundedCoords] =
+                requiredPointCoordinates.size() - 1;
+            }
         }
     requiredPointCoordinates.shrink_to_fit();
     remotePointCache.reinit(requiredPointCoordinates,
@@ -501,8 +523,7 @@ namespace dftfe
       for (dftfe::uInt iDoF = 0; iDoF < scalarField.locally_owned_size();
            ++iDoF)
         scalarField.local_element(iDoF) +=
-          pointValues[localDoFIndexToPointIndexMap[iSymm].find(iDoF)->second] /
-          d_numSymm;
+          pointValues[localDoFIndexToPointIndexMap[iSymm][iDoF]] / d_numSymm;
   }
 
   void
