@@ -36,7 +36,23 @@ namespace dftfe
         BLASWrapperPtr,
       std::shared_ptr<
         dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
-        BLASWrapperPtrHost,
+                           BLASWrapperPtrHost,
+      const MPI_Comm      &mpi_comm_parent,
+      const MPI_Comm      &mpi_comm_domain,
+      const MPI_Comm      &interpoolcomm,
+      const MPI_Comm      &interBandGroupComm,
+      const dftParameters &dftParams);
+
+    void
+    setUnmovedTriangulation(
+      const dealii::parallel::distributed::Triangulation<3>
+                                             &unmovedTriangulation,
+      const dealii::Triangulation<3, 3>      &serialUnmovedTriangulation,
+      const std::vector<std::vector<double>> &domainBoundingVectors);
+
+
+    void
+    initialize(
       std::shared_ptr<
         dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
         basisOperationsPtr,
@@ -60,18 +76,14 @@ namespace dftfe
       const dftfe::uInt                        densityQuadratureIdElectro,
       const dftfe::uInt                        lpspQuadratureId,
       const dftfe::uInt                        lpspQuadratureIdElectro,
-      const dftfe::uInt                        smearedChargeQuadratureIdElectro,
-      const MPI_Comm                          &mpi_comm_parent,
-      const MPI_Comm                          &mpi_comm_domain,
-      const MPI_Comm                          &interpoolcomm,
-      const MPI_Comm                          &interBandGroupComm,
-      const dftParameters                     &dftParams);
-
+      const dftfe::uInt                        nlpspQuadratureId,
+      const dftfe::uInt smearedChargeQuadratureIdElectro);
     void
     computeForceAndStress(
       const dftfe::uInt                         &numEigenValues,
       const std::vector<double>                 &kPointCoords,
       const std::vector<double>                 &kPointWeights,
+      const std::vector<std::vector<double>>    &domainBoundingVectors,
       const double                               domainVolume,
       const std::shared_ptr<groupSymmetryClass> &groupSymmetryPtr,
       const dispersionCorrection                &dispersionCorr,
@@ -120,9 +132,13 @@ namespace dftfe
       const std::map<dealii::CellId, std::vector<dftfe::Int>>
         &bQuadAtomIdsAllAtomsImages,
       const std::map<dealii::CellId, std::vector<double>> &bQuadValuesAllAtoms,
-      const bool floatingNuclearCharges,
-      const bool computeForce,
-      const bool computeStress);
+      const std::vector<double>                           &smearedChargeWidths,
+      const std::vector<double>                           &smearedChargeScaling,
+      const std::vector<double> &gaussianConstantsForce,
+      const std::vector<double> &generatorFlatTopWidths,
+      const bool                 floatingNuclearCharges,
+      const bool                 computeForce,
+      const bool                 computeStress);
 
     void
     printStress();
@@ -140,6 +156,27 @@ namespace dftfe
   private:
     void
     computeWfcContribNloc(
+      std::shared_ptr<
+        AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
+                              nonLocalOperator,
+      const CouplingStructure couplingtype,
+      const std::vector<
+        const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> *>
+                                              &couplingMatrixPtrs,
+      const std::map<dftfe::uInt, dftfe::uInt> nonlocalAtomIdToGlobalIdMap,
+      const dftfe::uInt                       &numEigenValues,
+      const std::vector<double>               &kPointCoords,
+      const std::vector<double>               &kPointWeights,
+      const dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+                                             &eigenVectors,
+      const std::vector<std::vector<double>> &eigenValues,
+      const std::vector<std::vector<double>> &partialOccupancies,
+      const bool                              floatingNuclearCharges,
+      const bool                              computeForce,
+      const bool                              computeStress);
+
+    void
+    computeWfcContribNlocAtomOnNode(
       std::shared_ptr<
         AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
                               nonLocalOperator,
@@ -227,10 +264,12 @@ namespace dftfe
       const dealii::DoFHandler<3> &dofHandlerRhoNodal,
       const vselfBinsManager      &vselfBinsManager,
       const std::vector<distributedCPUVec<double>>
-                &vselfFieldGateauxDerStrainFDBins,
-      const bool floatingNuclearCharges,
-      const bool computeForce,
-      const bool computeStress);
+                                &vselfFieldGateauxDerStrainFDBins,
+      const std::vector<double> &smearedChargeWidths,
+      const std::vector<double> &smearedChargeScaling,
+      const bool                 floatingNuclearCharges,
+      const bool                 computeForce,
+      const bool                 computeStress);
 
     void
     computeXCContribAll(
@@ -277,6 +316,17 @@ namespace dftfe
                            std::vector<dftfe::uInt>>>
         &cellFacesVselfBallSurfacesDofHandlerForce);
 
+    void
+    computeAtomsForcesGaussianGenerator(
+      const std::vector<std::vector<double>> &atomLocations,
+      const std::vector<dftfe::Int>          &imageIds,
+      const std::vector<std::vector<double>> &imagePositions,
+      const std::vector<double>              &gaussianConstantsForce,
+      const std::vector<double>              &generatorFlatTopWidths,
+      const distributedCPUVec<double>        &configForceVectorLinFE,
+      const MPI_Comm                          mpiComm,
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        &forceContrib);
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
       d_BLASWrapperPtr;
     std::shared_ptr<
@@ -320,11 +370,12 @@ namespace dftfe
     const dftfe::uInt          this_mpi_process;
     dealii::ConditionalOStream pcout;
 
-    const dftfe::uInt d_densityQuadratureId;
-    const dftfe::uInt d_densityQuadratureIdElectro;
-    const dftfe::uInt d_lpspQuadratureId;
-    const dftfe::uInt d_lpspQuadratureIdElectro;
-    const dftfe::uInt d_smearedChargeQuadratureIdElectro;
+    dftfe::uInt d_densityQuadratureId;
+    dftfe::uInt d_densityQuadratureIdElectro;
+    dftfe::uInt d_lpspQuadratureId;
+    dftfe::uInt d_lpspQuadratureIdElectro;
+    dftfe::uInt d_nlpspQuadratureId;
+    dftfe::uInt d_smearedChargeQuadratureIdElectro;
 
 
     /// Internal data: stores cell iterators of all cells in
@@ -372,8 +423,12 @@ namespace dftfe
 
     /// Finite element object for configurational force computation. Linear
     /// finite elements with three force field components are used.
-    dealii::FESystem<3> FEForce;
-
+    dealii::FESystem<3>               FEForce;
+    dealii::AffineConstraints<double> d_affineConstraintsForce;
+    dealii::DoFHandler<3>             d_dofHandlerForce;
+    dealii::IndexSet                  d_locally_owned_dofsForce;
+    distributedCPUVec<double>         d_configForceContribsLinFE;
+    distributedCPUVec<double>         d_configForceContribsWfcLinFE;
 
     dealii::TimerOutput computing_timer;
   };
@@ -400,6 +455,20 @@ namespace dftfe
     double                                   *pdecTauLocallyOwnedCellsBlock,
     const bool                                computeForce,
     const bool                                computeStress);
+  void
+  nlpWfcContractionContribution(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+                            &BLASWrapperPtr,
+    const dftfe::uInt        wfcBlockSize,
+    const dftfe::uInt        blockSizeNlp,
+    const dftfe::uInt        numQuadsNLP,
+    const dftfe::uInt        startingIdNlp,
+    const dataTypes::number *projectorKetTimesVectorPar,
+    const dataTypes::number *gradPsiOrPsiQuadValuesNLP,
+    const dftfe::uInt       *nonTrivialIdToElemIdMap,
+    const dftfe::uInt       *projecterKetTimesFlattenedVectorLocalIds,
+    dataTypes::number       *nlpContractionContribution);
 
 } // namespace dftfe
 #endif

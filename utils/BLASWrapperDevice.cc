@@ -21,6 +21,7 @@
 #include <DeviceKernelLauncherHelpers.h>
 #include <DeviceAPICalls.h>
 #include <DeviceDataTypeOverloads.h>
+#include <DeviceTypeConfigHalfPrec.h>
 #ifdef DFTFE_WITH_DEVICE_INTEL
 #  include <oneapi/mkl.hpp>
 #  include <oneapi/mkl/blas.hpp>
@@ -193,7 +194,6 @@ namespace dftfe
         dftfe::utils::makeDataTypeDeviceCompatible(valueType1Arr),
         dftfe::utils::makeDataTypeDeviceCompatible(valueType2Arr));
     }
-
 
     void
     BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::xcopy(

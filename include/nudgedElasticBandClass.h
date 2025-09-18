@@ -31,7 +31,6 @@
 #include <dft.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
-#include <force.h>
 #include <iomanip>
 #include <sys/stat.h>
 namespace dftfe

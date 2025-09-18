@@ -94,8 +94,9 @@ namespace dftfe
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
-    initialiseOperatorActionOnX(dftfe::uInt               kPointIndex,
-                                const allReduceVectorType AllReduceVectorType)
+    initialiseOperatorActionOnX(
+      dftfe::uInt                         kPointIndex,
+      const nonLocalContractionVectorType NonLocalContractionVectorType)
   {
     if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
       {
@@ -109,14 +110,17 @@ namespace dftfe
         for (dftfe::Int iAtom = 0; iAtom < d_totalAtomsInCurrentProc; iAtom++)
           {
             dftfe::uInt atomId = atomIdsInProcessor[iAtom];
-            if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+            if (NonLocalContractionVectorType ==
+                nonLocalContractionVectorType::CconjTransX)
               d_sphericalFnTimesWavefunMatrix[atomId].setValue(0.0);
-            else if (AllReduceVectorType == allReduceVectorType::CRconjTransX)
+            else if (NonLocalContractionVectorType ==
+                     nonLocalContractionVectorType::CRconjTransX)
               d_sphericalFnTimesXTimesWavefunMatrix[atomId].setValue(0.0);
-            else if (AllReduceVectorType == allReduceVectorType::DconjTransX)
+            else if (NonLocalContractionVectorType ==
+                     nonLocalContractionVectorType::DconjTransX)
               d_sphericalFnTimesGradientWavefunMatrix[atomId].setValue(0.0);
-            else if (AllReduceVectorType ==
-                     allReduceVectorType::DDyadicRconjTransX)
+            else if (NonLocalContractionVectorType ==
+                     nonLocalContractionVectorType::DDyadicRconjTransX)
               d_sphericalFnTimesGradientWavefunDyadicXMatrix[atomId].setValue(
                 0.0);
           }
@@ -125,7 +129,8 @@ namespace dftfe
     else
       {
         d_kPointIndex = kPointIndex;
-        if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+        if (NonLocalContractionVectorType ==
+            nonLocalContractionVectorType::CconjTransX)
           {
             if (!d_useGlobalCMatrix)
               {
@@ -147,7 +152,8 @@ namespace dftfe
                     0);
               }
           }
-        else if (AllReduceVectorType == allReduceVectorType::CRconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::CRconjTransX)
           {
             d_IntegralFEMShapeFunctionValueTimesXTimesAtomicSphericalFunctionConjugateDevice
               .copyFrom(
@@ -158,7 +164,8 @@ namespace dftfe
                   d_maxSingleAtomContribution * 3,
                 0);
           }
-        else if (AllReduceVectorType == allReduceVectorType::DconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::DconjTransX)
           {
             d_IntegralGradientFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
               .copyFrom(
@@ -169,7 +176,8 @@ namespace dftfe
                   d_maxSingleAtomContribution * 3,
                 0);
           }
-        else if (AllReduceVectorType == allReduceVectorType::DDyadicRconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::DDyadicRconjTransX)
           {
             d_IntegralGradientFEMShapeFunctionValueDyadicAtomicSphericalFunctionTimesRConjugateDevice
               .copyFrom(
@@ -196,10 +204,6 @@ namespace dftfe
     const dftfe::uInt quadratureIndex)
   {
     d_locallyOwnedCells = basisOperationsPtr->nCells();
-#if defined(DFTFE_WITH_DEVICE)
-    d_elementIdToNonLocalElementIdMap.clear();
-    d_elementIdToNonLocalElementIdMap.resize(d_locallyOwnedCells);
-#endif
     basisOperationsPtr->reinit(0, 0, quadratureIndex);
     const dftfe::uInt numberAtomsOfInterest =
       d_atomCenteredSphericalFunctionContainer->getNumAtomCentersSize();
@@ -997,6 +1001,8 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
     else
       {
+        d_elementIdToNonLocalElementIdMap.clear();
+        d_elementIdToNonLocalElementIdMap.resize(d_locallyOwnedCells);
         d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugate
           .clear();
         d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionTranspose
@@ -1394,8 +1400,8 @@ namespace dftfe
     initialiseFlattenedDataStructure(
       dftfe::uInt waveFunctionBlockSize,
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                               &sphericalFunctionKetTimesVectorParFlattened,
-      const allReduceVectorType AllReduceVectorType)
+        &sphericalFunctionKetTimesVectorParFlattened,
+      const nonLocalContractionVectorType NonLocalContractionVectorType)
   {
     std::vector<dftfe::uInt> tempNonLocalCellDofVector(
       d_flattenedNonLocalCellDofIndexToProcessDofIndexVector.size());
@@ -1431,16 +1437,13 @@ namespace dftfe
       {
         d_numberWaveFunctions = waveFunctionBlockSize;
 
-        if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+        if (NonLocalContractionVectorType ==
+            nonLocalContractionVectorType::CconjTransX)
           {
             dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
               waveFunctionBlockSize,
               sphericalFunctionKetTimesVectorParFlattened);
-#if defined(DFTFE_WITH_DEVICE)
-            d_distributedVectorCconjTransX =
-              sphericalFunctionKetTimesVectorParFlattened.begin();
-#endif
             d_sphericalFnTimesWavefunMatrix.clear();
             const std::vector<dftfe::uInt> atomIdsInProcessor =
               d_atomCenteredSphericalFunctionContainer
@@ -1460,7 +1463,8 @@ namespace dftfe
                   ValueType(0.0));
               }
           }
-        else if (AllReduceVectorType == allReduceVectorType::CRconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::CRconjTransX)
           {
             dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
@@ -1485,7 +1489,8 @@ namespace dftfe
                   ValueType(0.0));
               }
           }
-        else if (AllReduceVectorType == allReduceVectorType::DconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::DconjTransX)
           {
             dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
@@ -1510,7 +1515,8 @@ namespace dftfe
                   ValueType(0.0));
               }
           }
-        else if (AllReduceVectorType == allReduceVectorType::DDyadicRconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::DDyadicRconjTransX)
           {
             dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
@@ -1541,14 +1547,13 @@ namespace dftfe
       {
         d_numberWaveFunctions = waveFunctionBlockSize;
 
-        if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+        if (NonLocalContractionVectorType ==
+            nonLocalContractionVectorType::CconjTransX)
           {
             dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
               waveFunctionBlockSize,
               sphericalFunctionKetTimesVectorParFlattened);
-            d_distributedVectorCconjTransX =
-              sphericalFunctionKetTimesVectorParFlattened.begin();
             d_sphericalFnTimesVectorAllCellsDevice.clear();
             d_sphericalFnTimesVectorAllCellsDevice.resize(
               d_totalNonlocalElems * d_numberWaveFunctions *
@@ -1580,7 +1585,8 @@ namespace dftfe
             d_sphericalFnTimesWavefunctionMatrix.resize(d_numberWaveFunctions *
                                                         d_totalNonLocalEntries);
           }
-        else if (AllReduceVectorType == allReduceVectorType::CRconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::CRconjTransX)
           {
             dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
@@ -1595,7 +1601,8 @@ namespace dftfe
             d_sphericalFnTimesXTimesWavefunctionMatrix.resize(
               d_numberWaveFunctions * d_totalNonLocalEntries * 3);
           }
-        else if (AllReduceVectorType == allReduceVectorType::DconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::DconjTransX)
           {
             dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
@@ -1610,7 +1617,8 @@ namespace dftfe
             d_sphericalFnTimesGradientWavefunctionMatrix.resize(
               d_numberWaveFunctions * d_totalNonLocalEntries * 3);
           }
-        else if (AllReduceVectorType == allReduceVectorType::DDyadicRconjTransX)
+        else if (NonLocalContractionVectorType ==
+                 nonLocalContractionVectorType::DDyadicRconjTransX)
           {
             dftfe::linearAlgebra::createMultiVectorFromDealiiPartitioner(
               d_SphericalFunctionKetTimesVectorPar[0].get_partitioner(),
@@ -2295,14 +2303,6 @@ namespace dftfe
   {
     if (d_totalNonLocalEntries > 0)
       {
-#if defined(DFTFE_WITH_DEVICE)
-        AssertThrow(
-          sphericalFunctionKetTimesVectorParFlattened.begin() ==
-            d_distributedVectorCconjTransX,
-          dealii::ExcMessage(
-            "DFT-FE Error: applyVOnCconjtransX can only be called with distributed vector of CconjTransX"));
-#endif
-
         if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
           {
             const std::vector<dftfe::uInt> &atomicNumber =
@@ -2520,9 +2520,9 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
     applyAllReduceOnCconjtransX(
       dftfe::linearAlgebra::MultiVector<ValueType, memorySpace>
-                               &sphericalFunctionKetTimesVectorParFlattened,
-      const bool                skipComm,
-      const allReduceVectorType AllReduceVectorType)
+                &sphericalFunctionKetTimesVectorParFlattened,
+      const bool skipComm,
+      const nonLocalContractionVectorType NonLocalContractionVectorType)
   {
     if (d_totalNonLocalEntries > 0)
       {
@@ -2545,7 +2545,8 @@ namespace dftfe
                   d_sphericalFunctionIdsNumberingMapCurrentProcess
                     .find(std::make_pair(atomId, 0))
                     ->second;
-                if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+                if (NonLocalContractionVectorType ==
+                    nonLocalContractionVectorType::CconjTransX)
                   {
                     std::memcpy(
                       sphericalFunctionKetTimesVectorParFlattened.data() +
@@ -2557,7 +2558,8 @@ namespace dftfe
                       d_numberWaveFunctions * numberSphericalFunctions *
                         sizeof(ValueType));
                   }
-                if (AllReduceVectorType == allReduceVectorType::CRconjTransX)
+                if (NonLocalContractionVectorType ==
+                    nonLocalContractionVectorType::CRconjTransX)
                   {
                     for (dftfe::Int dim = 0; dim < 3; dim++)
                       d_BLASWrapperPtr->xcopy(
@@ -2574,8 +2576,8 @@ namespace dftfe
                           dim,
                         3);
                   }
-                else if (AllReduceVectorType ==
-                         allReduceVectorType::DconjTransX)
+                else if (NonLocalContractionVectorType ==
+                         nonLocalContractionVectorType::DconjTransX)
                   {
                     for (dftfe::Int dim = 0; dim < 3; dim++)
                       d_BLASWrapperPtr->xcopy(
@@ -2593,8 +2595,8 @@ namespace dftfe
                           dim,
                         3);
                   }
-                else if (AllReduceVectorType ==
-                         allReduceVectorType::DDyadicRconjTransX)
+                else if (NonLocalContractionVectorType ==
+                         nonLocalContractionVectorType::DDyadicRconjTransX)
                   {
                     for (dftfe::Int dim = 0; dim < 9; dim++)
                       d_BLASWrapperPtr->xcopy(
@@ -2624,7 +2626,8 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
         else
           {
-            if (AllReduceVectorType == allReduceVectorType::CconjTransX)
+            if (NonLocalContractionVectorType ==
+                nonLocalContractionVectorType::CconjTransX)
               {
                 dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
                   copyToDealiiParallelNonLocalVec(
@@ -2635,7 +2638,8 @@ namespace dftfe
                     d_sphericalFnIdsParallelNumberingMapDevice.begin(),
                     1);
               }
-            if (AllReduceVectorType == allReduceVectorType::CRconjTransX)
+            if (NonLocalContractionVectorType ==
+                nonLocalContractionVectorType::CRconjTransX)
               {
                 dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
                   copyToDealiiParallelNonLocalVec(
@@ -2646,7 +2650,8 @@ namespace dftfe
                     d_sphericalFnIdsParallelNumberingMapDevice.begin(),
                     3);
               }
-            else if (AllReduceVectorType == allReduceVectorType::DconjTransX)
+            else if (NonLocalContractionVectorType ==
+                     nonLocalContractionVectorType::DconjTransX)
               {
                 dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
                   copyToDealiiParallelNonLocalVec(
@@ -2657,8 +2662,8 @@ namespace dftfe
                     d_sphericalFnIdsParallelNumberingMapDevice.begin(),
                     3);
               }
-            else if (AllReduceVectorType ==
-                     allReduceVectorType::DDyadicRconjTransX)
+            else if (NonLocalContractionVectorType ==
+                     nonLocalContractionVectorType::DDyadicRconjTransX)
               {
                 dftfe::AtomicCenteredNonLocalOperatorKernelsDevice::
                   copyToDealiiParallelNonLocalVec(
@@ -3733,492 +3738,468 @@ namespace dftfe
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
     initialiseCellWaveFunctionPointers(
       dftfe::utils::MemoryStorage<ValueType, dftfe::utils::MemorySpace::DEVICE>
-                                            &cellWaveFunctionMatrix,
-      const dftfe::uInt                      cellsBlockSize,
-      const std::vector<allReduceVectorType> AllReduceVectorType)
+                       &cellWaveFunctionMatrix,
+      const dftfe::uInt cellsBlockSize,
+      const std::vector<nonLocalContractionVectorType>
+        NonLocalContractionVectorType)
   {
-    if (!d_useGlobalCMatrix)
+    if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
       {
-        if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
+        d_cellsBlockSize                 = cellsBlockSize;
+        const dftfe::uInt numCells       = d_locallyOwnedCells;
+        dftfe::uInt       numCellBatches = d_locallyOwnedCells / cellsBlockSize;
+        const dftfe::uInt cellRemSize    = d_locallyOwnedCells % cellsBlockSize;
+        if (cellRemSize > 0)
+          numCellBatches += 1;
+        d_numCellBatches = numCellBatches;
+
+        d_nonLocalElementsInCellRange.clear();
+        d_nonLocalElementsInCellRange.resize(numCellBatches, 0);
+        d_wfcStartPointerInCellRange.clear();
+        d_wfcStartPointerInCellRange.resize(numCellBatches);
+        for (dftfe::uInt iCellBatch = 0; iCellBatch < numCellBatches;
+             ++iCellBatch)
           {
-            if (true)
+            dftfe::uInt startCell = iCellBatch * cellsBlockSize;
+            dftfe::uInt endCell =
+              std::min(startCell + cellsBlockSize, numCells);
+            for (dftfe::uInt iCell = startCell; iCell < endCell; ++iCell)
               {
-                d_cellsBlockSize           = cellsBlockSize;
-                const dftfe::uInt numCells = d_locallyOwnedCells;
-                dftfe::uInt       numCellBatches =
-                  d_locallyOwnedCells / cellsBlockSize;
-                const dftfe::uInt cellRemSize =
-                  d_locallyOwnedCells % cellsBlockSize;
-                if (cellRemSize > 0)
-                  numCellBatches += 1;
-                d_numCellBatches = numCellBatches;
+                const std::vector<dftfe::Int> &atomIdsInElement =
+                  d_atomCenteredSphericalFunctionContainer->getAtomIdsInElement(
+                    iCell);
+                dftfe::Int numOfAtomsInElement = atomIdsInElement.size();
+                d_nonLocalElementsInCellRange[iCellBatch] +=
+                  numOfAtomsInElement;
+              }
+            d_wfcStartPointerInCellRange[iCellBatch] =
+              cellWaveFunctionMatrix.begin() +
+              (d_memoryOptMode ?
+                 0 :
+                 startCell * d_numberNodesPerElement * d_numberWaveFunctions);
+          }
+        freeDeviceVectors(NonLocalContractionVectorType);
 
-                d_nonLocalElementsInCellRange.clear();
-                d_nonLocalElementsInCellRange.resize(numCellBatches, 0);
-                d_wfcStartPointerInCellRange.clear();
-                d_wfcStartPointerInCellRange.resize(numCellBatches);
-                for (dftfe::uInt iCellBatch = 0; iCellBatch < numCellBatches;
-                     ++iCellBatch)
+        hostWfcPointersInCellRange.clear();
+        deviceWfcPointersInCellRange.clear();
+        hostWfcPointersInCellRange.resize(numCellBatches);
+        deviceWfcPointersInCellRange.resize(numCellBatches);
+
+        for (dftfe::Int iVec = 0; iVec < NonLocalContractionVectorType.size();
+             iVec++)
+          {
+            if ((NonLocalContractionVectorType[iVec] ==
+                 nonLocalContractionVectorType::CconjTransX) &&
+                !d_useGlobalCMatrix)
+              {
+                hostPointerCDaggerOutTempInCellRange.clear();
+                hostPointerCDaggerInCellRange.clear();
+                devicePointerCDaggerInCellRange.clear();
+                devicePointerCDaggerOutTempInCellRange.clear();
+
+                hostPointerCDaggerInCellRange.resize(numCellBatches);
+                hostPointerCDaggerOutTempInCellRange.resize(numCellBatches);
+                devicePointerCDaggerInCellRange.resize(numCellBatches);
+                devicePointerCDaggerOutTempInCellRange.resize(numCellBatches);
+              }
+            else if (NonLocalContractionVectorType[iVec] ==
+                     nonLocalContractionVectorType::CRconjTransX)
+              {
+                hostPointerCRDaggerOutTempInCellRange.clear();
+                hostPointerCRDaggerInCellRange.clear();
+                devicePointerCRDaggerInCellRange.clear();
+                devicePointerCRDaggerOutTempInCellRange.clear();
+
+                hostPointerCRDaggerOutTempInCellRange.resize(3);
+                hostPointerCRDaggerInCellRange.resize(3);
+                devicePointerCRDaggerInCellRange.resize(3);
+                devicePointerCRDaggerOutTempInCellRange.resize(3);
+
+                for (dftfe::Int iDim = 0; iDim < 3; iDim++)
                   {
-                    dftfe::uInt startCell = iCellBatch * cellsBlockSize;
-                    dftfe::uInt endCell =
-                      std::min(startCell + cellsBlockSize, numCells);
-                    for (dftfe::uInt iCell = startCell; iCell < endCell;
-                         ++iCell)
-                      {
-                        const std::vector<dftfe::Int> &atomIdsInElement =
-                          d_atomCenteredSphericalFunctionContainer
-                            ->getAtomIdsInElement(iCell);
-                        dftfe::Int numOfAtomsInElement =
-                          atomIdsInElement.size();
-                        d_nonLocalElementsInCellRange[iCellBatch] +=
-                          numOfAtomsInElement;
-                      }
-                    d_wfcStartPointerInCellRange[iCellBatch] =
-                      cellWaveFunctionMatrix.begin() +
-                      (d_memoryOptMode ? 0 :
-                                         startCell * d_numberNodesPerElement *
-                                           d_numberWaveFunctions);
+                    hostPointerCRDaggerInCellRange[iDim].resize(numCellBatches);
+                    hostPointerCRDaggerOutTempInCellRange[iDim].resize(
+                      numCellBatches);
+                    devicePointerCRDaggerInCellRange[iDim].resize(
+                      numCellBatches);
+                    devicePointerCRDaggerOutTempInCellRange[iDim].resize(
+                      numCellBatches);
                   }
-                freeDeviceVectors(AllReduceVectorType);
+              }
+            else if (NonLocalContractionVectorType[iVec] ==
+                     nonLocalContractionVectorType::DconjTransX)
+              {
+                hostPointerDDaggerOutTempInCellRange.clear();
+                hostPointerDDaggerInCellRange.clear();
+                devicePointerDDaggerInCellRange.clear();
+                devicePointerDDaggerOutTempInCellRange.clear();
 
-                hostWfcPointersInCellRange.clear();
-                deviceWfcPointersInCellRange.clear();
-                hostWfcPointersInCellRange.resize(numCellBatches);
-                deviceWfcPointersInCellRange.resize(numCellBatches);
+                hostPointerDDaggerOutTempInCellRange.resize(3);
+                hostPointerDDaggerInCellRange.resize(3);
+                devicePointerDDaggerInCellRange.resize(3);
+                devicePointerDDaggerOutTempInCellRange.resize(3);
 
-                for (dftfe::Int iVec = 0; iVec < AllReduceVectorType.size();
-                     iVec++)
+                for (dftfe::Int iDim = 0; iDim < 3; iDim++)
                   {
-                    if (AllReduceVectorType[iVec] ==
-                        allReduceVectorType::CconjTransX)
-                      {
-                        hostPointerCDaggerOutTempInCellRange.clear();
-                        hostPointerCDaggerInCellRange.clear();
-                        devicePointerCDaggerInCellRange.clear();
-                        devicePointerCDaggerOutTempInCellRange.clear();
-
-                        hostPointerCDaggerInCellRange.resize(numCellBatches);
-                        hostPointerCDaggerOutTempInCellRange.resize(
-                          numCellBatches);
-                        devicePointerCDaggerInCellRange.resize(numCellBatches);
-                        devicePointerCDaggerOutTempInCellRange.resize(
-                          numCellBatches);
-                      }
-                    else if (AllReduceVectorType[iVec] ==
-                             allReduceVectorType::CRconjTransX)
-                      {
-                        hostPointerCRDaggerOutTempInCellRange.clear();
-                        hostPointerCRDaggerInCellRange.clear();
-                        devicePointerCRDaggerInCellRange.clear();
-                        devicePointerCRDaggerOutTempInCellRange.clear();
-
-                        hostPointerCRDaggerOutTempInCellRange.resize(3);
-                        hostPointerCRDaggerInCellRange.resize(3);
-                        devicePointerCRDaggerInCellRange.resize(3);
-                        devicePointerCRDaggerOutTempInCellRange.resize(3);
-
-                        for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-                          {
-                            hostPointerCRDaggerInCellRange[iDim].resize(
-                              numCellBatches);
-                            hostPointerCRDaggerOutTempInCellRange[iDim].resize(
-                              numCellBatches);
-                            devicePointerCRDaggerInCellRange[iDim].resize(
-                              numCellBatches);
-                            devicePointerCRDaggerOutTempInCellRange[iDim]
-                              .resize(numCellBatches);
-                          }
-                      }
-                    else if (AllReduceVectorType[iVec] ==
-                             allReduceVectorType::DconjTransX)
-                      {
-                        hostPointerDDaggerOutTempInCellRange.clear();
-                        hostPointerDDaggerInCellRange.clear();
-                        devicePointerDDaggerInCellRange.clear();
-                        devicePointerDDaggerOutTempInCellRange.clear();
-
-                        hostPointerDDaggerOutTempInCellRange.resize(3);
-                        hostPointerDDaggerInCellRange.resize(3);
-                        devicePointerDDaggerInCellRange.resize(3);
-                        devicePointerDDaggerOutTempInCellRange.resize(3);
-
-                        for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-                          {
-                            hostPointerDDaggerInCellRange[iDim].resize(
-                              numCellBatches);
-                            hostPointerDDaggerOutTempInCellRange[iDim].resize(
-                              numCellBatches);
-                            devicePointerDDaggerInCellRange[iDim].resize(
-                              numCellBatches);
-                            devicePointerDDaggerOutTempInCellRange[iDim].resize(
-                              numCellBatches);
-                          }
-                      }
-                    else if (AllReduceVectorType[iVec] ==
-                             allReduceVectorType::DDyadicRconjTransX)
-                      {
-                        hostPointerDdyadicRDaggerOutTempInCellRange.clear();
-                        hostPointerDdyadicRDaggerInCellRange.clear();
-                        devicePointerDdyadicRDaggerInCellRange.clear();
-                        devicePointerDdyadicRDaggerOutTempInCellRange.clear();
-
-                        hostPointerDdyadicRDaggerOutTempInCellRange.resize(9);
-                        hostPointerDdyadicRDaggerInCellRange.resize(9);
-                        devicePointerDdyadicRDaggerInCellRange.resize(9);
-                        devicePointerDdyadicRDaggerOutTempInCellRange.resize(9);
-
-                        for (dftfe::Int iDim = 0; iDim < 9; iDim++)
-                          {
-                            hostPointerDdyadicRDaggerInCellRange[iDim].resize(
-                              numCellBatches);
-                            hostPointerDdyadicRDaggerOutTempInCellRange[iDim]
-                              .resize(numCellBatches);
-                            devicePointerDdyadicRDaggerInCellRange[iDim].resize(
-                              numCellBatches);
-                            devicePointerDdyadicRDaggerOutTempInCellRange[iDim]
-                              .resize(numCellBatches);
-                          }
-                      }
+                    hostPointerDDaggerInCellRange[iDim].resize(numCellBatches);
+                    hostPointerDDaggerOutTempInCellRange[iDim].resize(
+                      numCellBatches);
+                    devicePointerDDaggerInCellRange[iDim].resize(
+                      numCellBatches);
+                    devicePointerDDaggerOutTempInCellRange[iDim].resize(
+                      numCellBatches);
                   }
+              }
+            else if (NonLocalContractionVectorType[iVec] ==
+                     nonLocalContractionVectorType::DDyadicRconjTransX)
+              {
+                hostPointerDdyadicRDaggerOutTempInCellRange.clear();
+                hostPointerDdyadicRDaggerInCellRange.clear();
+                devicePointerDdyadicRDaggerInCellRange.clear();
+                devicePointerDdyadicRDaggerOutTempInCellRange.clear();
 
+                hostPointerDdyadicRDaggerOutTempInCellRange.resize(9);
+                hostPointerDdyadicRDaggerInCellRange.resize(9);
+                devicePointerDdyadicRDaggerInCellRange.resize(9);
+                devicePointerDdyadicRDaggerOutTempInCellRange.resize(9);
 
-                for (dftfe::uInt iCellBatch = 0; iCellBatch < numCellBatches;
-                     ++iCellBatch)
+                for (dftfe::Int iDim = 0; iDim < 9; iDim++)
                   {
-                    const dftfe::uInt nonLocalElements =
-                      d_nonLocalElementsInCellRange[iCellBatch];
-                    hostWfcPointersInCellRange[iCellBatch] =
+                    hostPointerDdyadicRDaggerInCellRange[iDim].resize(
+                      numCellBatches);
+                    hostPointerDdyadicRDaggerOutTempInCellRange[iDim].resize(
+                      numCellBatches);
+                    devicePointerDdyadicRDaggerInCellRange[iDim].resize(
+                      numCellBatches);
+                    devicePointerDdyadicRDaggerOutTempInCellRange[iDim].resize(
+                      numCellBatches);
+                  }
+              }
+          }
+
+
+        for (dftfe::uInt iCellBatch = 0; iCellBatch < numCellBatches;
+             ++iCellBatch)
+          {
+            const dftfe::uInt nonLocalElements =
+              d_nonLocalElementsInCellRange[iCellBatch];
+            hostWfcPointersInCellRange[iCellBatch] =
+              (ValueType **)malloc(nonLocalElements * sizeof(ValueType *));
+            dftfe::utils::deviceMalloc(
+              (void **)&deviceWfcPointersInCellRange[iCellBatch],
+              nonLocalElements * sizeof(ValueType *));
+            for (dftfe::Int iVec = 0;
+                 iVec < NonLocalContractionVectorType.size();
+                 iVec++)
+              {
+                if ((NonLocalContractionVectorType[iVec] ==
+                     nonLocalContractionVectorType::CconjTransX) &&
+                    !d_useGlobalCMatrix)
+                  {
+                    hostPointerCDaggerInCellRange[iCellBatch] =
+                      (ValueType **)malloc(nonLocalElements *
+                                           sizeof(ValueType *));
+                    hostPointerCDaggerOutTempInCellRange[iCellBatch] =
                       (ValueType **)malloc(nonLocalElements *
                                            sizeof(ValueType *));
                     dftfe::utils::deviceMalloc(
-                      (void **)&deviceWfcPointersInCellRange[iCellBatch],
+                      (void **)&devicePointerCDaggerInCellRange[iCellBatch],
                       nonLocalElements * sizeof(ValueType *));
-                    for (dftfe::Int iVec = 0; iVec < AllReduceVectorType.size();
+                    dftfe::utils::deviceMalloc(
+                      (void *
+                         *)&devicePointerCDaggerOutTempInCellRange[iCellBatch],
+                      nonLocalElements * sizeof(ValueType *));
+                  }
+                else if (NonLocalContractionVectorType[iVec] ==
+                         nonLocalContractionVectorType::CRconjTransX)
+                  {
+                    for (dftfe::Int iDim = 0; iDim < 3; iDim++)
+                      {
+                        hostPointerCRDaggerInCellRange[iDim][iCellBatch] =
+                          (ValueType **)malloc(nonLocalElements *
+                                               sizeof(ValueType *));
+                        hostPointerCRDaggerOutTempInCellRange
+                          [iDim][iCellBatch] = (ValueType **)malloc(
+                            nonLocalElements * sizeof(ValueType *));
+                        dftfe::utils::deviceMalloc(
+                          (void *
+                             *)&devicePointerCRDaggerInCellRange[iDim]
+                                                                [iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                        dftfe::utils::deviceMalloc(
+                          (void **)&devicePointerCRDaggerOutTempInCellRange
+                            [iDim][iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                      }
+                  }
+                else if (NonLocalContractionVectorType[iVec] ==
+                         nonLocalContractionVectorType::DconjTransX)
+                  {
+                    for (dftfe::Int iDim = 0; iDim < 3; iDim++)
+                      {
+                        hostPointerDDaggerInCellRange[iDim][iCellBatch] =
+                          (ValueType **)malloc(nonLocalElements *
+                                               sizeof(ValueType *));
+                        hostPointerDDaggerOutTempInCellRange[iDim][iCellBatch] =
+                          (ValueType **)malloc(nonLocalElements *
+                                               sizeof(ValueType *));
+                        dftfe::utils::deviceMalloc(
+                          (void **)&devicePointerDDaggerInCellRange[iDim]
+                                                                   [iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                        dftfe::utils::deviceMalloc(
+                          (void **)&devicePointerDDaggerOutTempInCellRange
+                            [iDim][iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                      }
+                  }
+                else if (NonLocalContractionVectorType[iVec] ==
+                         nonLocalContractionVectorType::DDyadicRconjTransX)
+                  {
+                    for (dftfe::Int iDim = 0; iDim < 9; iDim++)
+                      {
+                        hostPointerDdyadicRDaggerInCellRange[iDim][iCellBatch] =
+                          (ValueType **)malloc(nonLocalElements *
+                                               sizeof(ValueType *));
+                        hostPointerDdyadicRDaggerOutTempInCellRange
+                          [iDim][iCellBatch] = (ValueType **)malloc(
+                            nonLocalElements * sizeof(ValueType *));
+                        dftfe::utils::deviceMalloc(
+                          (void **)&devicePointerDdyadicRDaggerInCellRange
+                            [iDim][iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                        dftfe::utils::deviceMalloc(
+                          (void *
+                             *)&devicePointerDdyadicRDaggerOutTempInCellRange
+                            [iDim][iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                      }
+                  }
+              }
+
+            dftfe::uInt startCell = iCellBatch * cellsBlockSize;
+            dftfe::uInt endCell =
+              std::min(startCell + cellsBlockSize, numCells);
+            dftfe::uInt i = 0;
+            for (dftfe::uInt iCell = startCell; iCell < endCell; ++iCell)
+              {
+                const std::vector<dftfe::Int> &atomIdsInElement =
+                  d_atomCenteredSphericalFunctionContainer->getAtomIdsInElement(
+                    iCell);
+                dftfe::Int numOfAtomsInElement = atomIdsInElement.size();
+                for (dftfe::Int iAtom = 0; iAtom < numOfAtomsInElement; iAtom++)
+                  {
+                    const dftfe::uInt atomId = atomIdsInElement[iAtom];
+
+                    dftfe::uInt countElem = 0;
+                    auto        it        = std::find_if(
+                      d_elementIdToNonLocalElementIdMap[iCell].begin(),
+                      d_elementIdToNonLocalElementIdMap[iCell].end(),
+                      [&atomId](const std::pair<dftfe::uInt, dftfe::uInt> &p) {
+                        return p.first == atomId;
+                      });
+                    if (it != d_elementIdToNonLocalElementIdMap[iCell].end())
+                      countElem = it->second;
+                    else
+                      {
+                        AssertThrow(
+                          false,
+                          dealii::ExcMessage(
+                            "DFT-FE Error: Inconsistent element id to nonlocal element id map."));
+                      }
+
+                    hostWfcPointersInCellRange[iCellBatch][i] =
+                      cellWaveFunctionMatrix.begin() +
+                      (d_memoryOptMode ? iCell - startCell : iCell) *
+                        d_numberNodesPerElement * d_numberWaveFunctions;
+                    for (dftfe::Int iVec = 0;
+                         iVec < NonLocalContractionVectorType.size();
                          iVec++)
                       {
-                        if (AllReduceVectorType[iVec] ==
-                            allReduceVectorType::CconjTransX)
+                        if ((NonLocalContractionVectorType[iVec] ==
+                             nonLocalContractionVectorType::CconjTransX) &&
+                            !d_useGlobalCMatrix)
                           {
-                            hostPointerCDaggerInCellRange[iCellBatch] =
-                              (ValueType **)malloc(nonLocalElements *
-                                                   sizeof(ValueType *));
-                            hostPointerCDaggerOutTempInCellRange[iCellBatch] =
-                              (ValueType **)malloc(nonLocalElements *
-                                                   sizeof(ValueType *));
-                            dftfe::utils::deviceMalloc(
-                              (void *
-                                 *)&devicePointerCDaggerInCellRange[iCellBatch],
-                              nonLocalElements * sizeof(ValueType *));
-                            dftfe::utils::deviceMalloc(
-                              (void **)&devicePointerCDaggerOutTempInCellRange
-                                [iCellBatch],
-                              nonLocalElements * sizeof(ValueType *));
+                            hostPointerCDaggerInCellRange[iCellBatch][i] =
+                              d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
+                                .data() +
+                              countElem * d_numberNodesPerElement *
+                                d_maxSingleAtomContribution;
+                            hostPointerCDaggerOutTempInCellRange
+                              [iCellBatch][i] =
+                                d_sphericalFnTimesVectorAllCellsDevice.data() +
+                                countElem * d_numberWaveFunctions *
+                                  d_maxSingleAtomContribution;
                           }
-                        else if (AllReduceVectorType[iVec] ==
-                                 allReduceVectorType::CRconjTransX)
+                        else if (NonLocalContractionVectorType[iVec] ==
+                                 nonLocalContractionVectorType::CRconjTransX)
                           {
                             for (dftfe::Int iDim = 0; iDim < 3; iDim++)
                               {
                                 hostPointerCRDaggerInCellRange
-                                  [iDim][iCellBatch] = (ValueType **)malloc(
-                                    nonLocalElements * sizeof(ValueType *));
+                                  [iDim][iCellBatch][i] =
+                                    d_IntegralFEMShapeFunctionValueTimesXTimesAtomicSphericalFunctionConjugateDevice
+                                      .data() +
+                                    countElem * d_numberNodesPerElement *
+                                      d_maxSingleAtomContribution +
+                                    iDim * d_numberNodesPerElement *
+                                      d_maxSingleAtomContribution *
+                                      d_totalNonlocalElems;
                                 hostPointerCRDaggerOutTempInCellRange
-                                  [iDim][iCellBatch] = (ValueType **)malloc(
-                                    nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMalloc(
-                                  (void **)&devicePointerCRDaggerInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMalloc(
-                                  (void *
-                                     *)&devicePointerCRDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
+                                  [iDim][iCellBatch][i] =
+                                    d_sphericalFnTimesXTimesVectorAllCellsDevice
+                                      .data() +
+                                    countElem * d_numberWaveFunctions *
+                                      d_maxSingleAtomContribution +
+                                    iDim * d_numberWaveFunctions *
+                                      d_totalNonlocalElems *
+                                      d_maxSingleAtomContribution;
                               }
                           }
-                        else if (AllReduceVectorType[iVec] ==
-                                 allReduceVectorType::DconjTransX)
+                        else if (NonLocalContractionVectorType[iVec] ==
+                                 nonLocalContractionVectorType::DconjTransX)
                           {
                             for (dftfe::Int iDim = 0; iDim < 3; iDim++)
                               {
                                 hostPointerDDaggerInCellRange
-                                  [iDim][iCellBatch] = (ValueType **)malloc(
-                                    nonLocalElements * sizeof(ValueType *));
+                                  [iDim][iCellBatch][i] =
+                                    d_IntegralGradientFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
+                                      .data() +
+                                    countElem * d_numberNodesPerElement *
+                                      d_maxSingleAtomContribution +
+                                    iDim * d_numberNodesPerElement *
+                                      d_maxSingleAtomContribution *
+                                      d_totalNonlocalElems;
                                 hostPointerDDaggerOutTempInCellRange
-                                  [iDim][iCellBatch] = (ValueType **)malloc(
-                                    nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMalloc(
-                                  (void **)&devicePointerDDaggerInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMalloc(
-                                  (void *
-                                     *)&devicePointerDDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
+                                  [iDim][iCellBatch][i] =
+                                    d_sphericalFnTimesGradientVectorAllCellsDevice
+                                      .data() +
+                                    countElem * d_numberWaveFunctions *
+                                      d_maxSingleAtomContribution +
+                                    iDim * d_numberWaveFunctions *
+                                      d_totalNonlocalElems *
+                                      d_maxSingleAtomContribution;
                               }
                           }
-                        else if (AllReduceVectorType[iVec] ==
-                                 allReduceVectorType::DDyadicRconjTransX)
+                        else if (NonLocalContractionVectorType[iVec] ==
+                                 nonLocalContractionVectorType::
+                                   DDyadicRconjTransX)
                           {
                             for (dftfe::Int iDim = 0; iDim < 9; iDim++)
                               {
                                 hostPointerDdyadicRDaggerInCellRange
-                                  [iDim][iCellBatch] = (ValueType **)malloc(
-                                    nonLocalElements * sizeof(ValueType *));
+                                  [iDim][iCellBatch][i] =
+                                    d_IntegralGradientFEMShapeFunctionValueDyadicAtomicSphericalFunctionTimesRConjugateDevice
+                                      .data() +
+                                    (countElem * d_numberNodesPerElement *
+                                       d_maxSingleAtomContribution +
+                                     iDim * d_numberNodesPerElement *
+                                       d_maxSingleAtomContribution *
+                                       d_totalNonlocalElems);
                                 hostPointerDdyadicRDaggerOutTempInCellRange
-                                  [iDim][iCellBatch] = (ValueType **)malloc(
-                                    nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMalloc(
-                                  (void *
-                                     *)&devicePointerDdyadicRDaggerInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMalloc(
-                                  (void *
-                                     *)&devicePointerDdyadicRDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
+                                  [iDim][iCellBatch][i] =
+                                    d_sphericalFnTimesRDyadicGradientVectorAllCellsDevice
+                                      .data() +
+                                    countElem * d_numberWaveFunctions *
+                                      d_maxSingleAtomContribution +
+                                    iDim * d_numberWaveFunctions *
+                                      d_totalNonlocalElems *
+                                      d_maxSingleAtomContribution;
                               }
                           }
                       }
 
-                    dftfe::uInt startCell = iCellBatch * cellsBlockSize;
-                    dftfe::uInt endCell =
-                      std::min(startCell + cellsBlockSize, numCells);
-                    dftfe::uInt i = 0;
-                    for (dftfe::uInt iCell = startCell; iCell < endCell;
-                         ++iCell)
-                      {
-                        const std::vector<dftfe::Int> &atomIdsInElement =
-                          d_atomCenteredSphericalFunctionContainer
-                            ->getAtomIdsInElement(iCell);
-                        dftfe::Int numOfAtomsInElement =
-                          atomIdsInElement.size();
-                        for (dftfe::Int iAtom = 0; iAtom < numOfAtomsInElement;
-                             iAtom++)
-                          {
-                            const dftfe::uInt atomId = atomIdsInElement[iAtom];
 
-                            dftfe::uInt countElem = 0;
-                            auto        it        = std::find_if(
-                              d_elementIdToNonLocalElementIdMap[iCell].begin(),
-                              d_elementIdToNonLocalElementIdMap[iCell].end(),
-                              [&atomId](
-                                const std::pair<dftfe::uInt, dftfe::uInt> &p) {
-                                return p.first == atomId;
-                              });
-                            if (it !=
-                                d_elementIdToNonLocalElementIdMap[iCell].end())
-                              countElem = it->second;
-                            else
-                              {
-                                AssertThrow(
-                                  false,
-                                  dealii::ExcMessage(
-                                    "DFT-FE Error: Inconsistent element id to nonlocal element id map."));
-                              }
-
-                            hostWfcPointersInCellRange[iCellBatch][i] =
-                              cellWaveFunctionMatrix.begin() +
-                              (d_memoryOptMode ? iCell - startCell : iCell) *
-                                d_numberNodesPerElement * d_numberWaveFunctions;
-                            for (dftfe::Int iVec = 0;
-                                 iVec < AllReduceVectorType.size();
-                                 iVec++)
-                              {
-                                if (AllReduceVectorType[iVec] ==
-                                    allReduceVectorType::CconjTransX)
-                                  {
-                                    hostPointerCDaggerInCellRange[iCellBatch][i] =
-                                      d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
-                                        .data() +
-                                      countElem * d_numberNodesPerElement *
-                                        d_maxSingleAtomContribution;
-                                    hostPointerCDaggerOutTempInCellRange
-                                      [iCellBatch][i] =
-                                        d_sphericalFnTimesVectorAllCellsDevice
-                                          .data() +
-                                        countElem * d_numberWaveFunctions *
-                                          d_maxSingleAtomContribution;
-                                  }
-                                else if (AllReduceVectorType[iVec] ==
-                                         allReduceVectorType::CRconjTransX)
-                                  {
-                                    for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-                                      {
-                                        hostPointerCRDaggerInCellRange
-                                          [iDim][iCellBatch][i] =
-                                            d_IntegralFEMShapeFunctionValueTimesXTimesAtomicSphericalFunctionConjugateDevice
-                                              .data() +
-                                            countElem *
-                                              d_numberNodesPerElement *
-                                              d_maxSingleAtomContribution +
-                                            iDim * d_numberNodesPerElement *
-                                              d_maxSingleAtomContribution *
-                                              d_totalNonlocalElems;
-                                        hostPointerCRDaggerOutTempInCellRange
-                                          [iDim][iCellBatch][i] =
-                                            d_sphericalFnTimesXTimesVectorAllCellsDevice
-                                              .data() +
-                                            countElem * d_numberWaveFunctions *
-                                              d_maxSingleAtomContribution +
-                                            iDim * d_numberWaveFunctions *
-                                              d_totalNonlocalElems *
-                                              d_maxSingleAtomContribution;
-                                      }
-                                  }
-                                else if (AllReduceVectorType[iVec] ==
-                                         allReduceVectorType::DconjTransX)
-                                  {
-                                    for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-                                      {
-                                        hostPointerDDaggerInCellRange
-                                          [iDim][iCellBatch][i] =
-                                            d_IntegralGradientFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugateDevice
-                                              .data() +
-                                            countElem *
-                                              d_numberNodesPerElement *
-                                              d_maxSingleAtomContribution +
-                                            iDim * d_numberNodesPerElement *
-                                              d_maxSingleAtomContribution *
-                                              d_totalNonlocalElems;
-                                        hostPointerDDaggerOutTempInCellRange
-                                          [iDim][iCellBatch][i] =
-                                            d_sphericalFnTimesGradientVectorAllCellsDevice
-                                              .data() +
-                                            countElem * d_numberWaveFunctions *
-                                              d_maxSingleAtomContribution +
-                                            iDim * d_numberWaveFunctions *
-                                              d_totalNonlocalElems *
-                                              d_maxSingleAtomContribution;
-                                      }
-                                  }
-                                else if (AllReduceVectorType[iVec] ==
-                                         allReduceVectorType::
-                                           DDyadicRconjTransX)
-                                  {
-                                    for (dftfe::Int iDim = 0; iDim < 9; iDim++)
-                                      {
-                                        hostPointerDdyadicRDaggerInCellRange
-                                          [iDim][iCellBatch][i] =
-                                            d_IntegralGradientFEMShapeFunctionValueDyadicAtomicSphericalFunctionTimesRConjugateDevice
-                                              .data() +
-                                            (countElem *
-                                               d_numberNodesPerElement *
-                                               d_maxSingleAtomContribution +
-                                             iDim * d_numberNodesPerElement *
-                                               d_maxSingleAtomContribution *
-                                               d_totalNonlocalElems);
-                                        hostPointerDdyadicRDaggerOutTempInCellRange
-                                          [iDim][iCellBatch][i] =
-                                            d_sphericalFnTimesRDyadicGradientVectorAllCellsDevice
-                                              .data() +
-                                            countElem * d_numberWaveFunctions *
-                                              d_maxSingleAtomContribution +
-                                            iDim * d_numberWaveFunctions *
-                                              d_totalNonlocalElems *
-                                              d_maxSingleAtomContribution;
-                                      }
-                                  }
-                              }
-
-
-                            i++;
-                          } // iAtom
-                      }     // iCell
+                    i++;
+                  } // iAtom
+              }     // iCell
+            dftfe::utils::deviceMemcpyH2D(
+              deviceWfcPointersInCellRange[iCellBatch],
+              hostWfcPointersInCellRange[iCellBatch],
+              nonLocalElements * sizeof(ValueType *));
+            for (dftfe::Int iVec = 0;
+                 iVec < NonLocalContractionVectorType.size();
+                 iVec++)
+              {
+                if ((NonLocalContractionVectorType[iVec] ==
+                     nonLocalContractionVectorType::CconjTransX) &&
+                    !d_useGlobalCMatrix)
+                  {
                     dftfe::utils::deviceMemcpyH2D(
-                      deviceWfcPointersInCellRange[iCellBatch],
-                      hostWfcPointersInCellRange[iCellBatch],
+                      devicePointerCDaggerInCellRange[iCellBatch],
+                      hostPointerCDaggerInCellRange[iCellBatch],
                       nonLocalElements * sizeof(ValueType *));
-                    for (dftfe::Int iVec = 0; iVec < AllReduceVectorType.size();
-                         iVec++)
+                    dftfe::utils::deviceMemcpyH2D(
+                      devicePointerCDaggerOutTempInCellRange[iCellBatch],
+                      hostPointerCDaggerOutTempInCellRange[iCellBatch],
+                      nonLocalElements * sizeof(ValueType *));
+                  }
+                else if (NonLocalContractionVectorType[iVec] ==
+                         nonLocalContractionVectorType::CRconjTransX)
+                  {
+                    for (dftfe::Int iDim = 0; iDim < 3; iDim++)
                       {
-                        if (AllReduceVectorType[iVec] ==
-                            allReduceVectorType::CconjTransX)
-                          {
-                            dftfe::utils::deviceMemcpyH2D(
-                              devicePointerCDaggerInCellRange[iCellBatch],
-                              hostPointerCDaggerInCellRange[iCellBatch],
-                              nonLocalElements * sizeof(ValueType *));
-                            dftfe::utils::deviceMemcpyH2D(
-                              devicePointerCDaggerOutTempInCellRange
-                                [iCellBatch],
-                              hostPointerCDaggerOutTempInCellRange[iCellBatch],
-                              nonLocalElements * sizeof(ValueType *));
-                          }
-                        else if (AllReduceVectorType[iVec] ==
-                                 allReduceVectorType::CRconjTransX)
-                          {
-                            for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-                              {
-                                dftfe::utils::deviceMemcpyH2D(
-                                  devicePointerCRDaggerInCellRange[iDim]
-                                                                  [iCellBatch],
-                                  hostPointerCRDaggerInCellRange[iDim]
-                                                                [iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMemcpyH2D(
-                                  devicePointerCRDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  hostPointerCRDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                              }
-                          }
-                        else if (AllReduceVectorType[iVec] ==
-                                 allReduceVectorType::DconjTransX)
-                          {
-                            for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-                              {
-                                dftfe::utils::deviceMemcpyH2D(
-                                  devicePointerDDaggerInCellRange[iDim]
+                        dftfe::utils::deviceMemcpyH2D(
+                          devicePointerCRDaggerInCellRange[iDim][iCellBatch],
+                          hostPointerCRDaggerInCellRange[iDim][iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                        dftfe::utils::deviceMemcpyH2D(
+                          devicePointerCRDaggerOutTempInCellRange[iDim]
                                                                  [iCellBatch],
-                                  hostPointerDDaggerInCellRange[iDim]
+                          hostPointerCRDaggerOutTempInCellRange[iDim]
                                                                [iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMemcpyH2D(
-                                  devicePointerDDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  hostPointerDDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                              }
-                          }
-                        else if (AllReduceVectorType[iVec] ==
-                                 allReduceVectorType::DDyadicRconjTransX)
-                          {
-                            for (dftfe::Int iDim = 0; iDim < 9; iDim++)
-                              {
-                                dftfe::utils::deviceMemcpyH2D(
-                                  devicePointerDdyadicRDaggerInCellRange
-                                    [iDim][iCellBatch],
-                                  hostPointerDdyadicRDaggerInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                                dftfe::utils::deviceMemcpyH2D(
-                                  devicePointerDdyadicRDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  hostPointerDdyadicRDaggerOutTempInCellRange
-                                    [iDim][iCellBatch],
-                                  nonLocalElements * sizeof(ValueType *));
-                              }
-                          }
+                          nonLocalElements * sizeof(ValueType *));
                       }
-
-                  } // iCellBatch
-                d_isMallocCalled  = true;
-                d_wfcStartPointer = cellWaveFunctionMatrix.begin();
+                  }
+                else if (NonLocalContractionVectorType[iVec] ==
+                         nonLocalContractionVectorType::DconjTransX)
+                  {
+                    for (dftfe::Int iDim = 0; iDim < 3; iDim++)
+                      {
+                        dftfe::utils::deviceMemcpyH2D(
+                          devicePointerDDaggerInCellRange[iDim][iCellBatch],
+                          hostPointerDDaggerInCellRange[iDim][iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                        dftfe::utils::deviceMemcpyH2D(
+                          devicePointerDDaggerOutTempInCellRange[iDim]
+                                                                [iCellBatch],
+                          hostPointerDDaggerOutTempInCellRange[iDim]
+                                                              [iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                      }
+                  }
+                else if (NonLocalContractionVectorType[iVec] ==
+                         nonLocalContractionVectorType::DDyadicRconjTransX)
+                  {
+                    for (dftfe::Int iDim = 0; iDim < 9; iDim++)
+                      {
+                        dftfe::utils::deviceMemcpyH2D(
+                          devicePointerDdyadicRDaggerInCellRange[iDim]
+                                                                [iCellBatch],
+                          hostPointerDdyadicRDaggerInCellRange[iDim]
+                                                              [iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                        dftfe::utils::deviceMemcpyH2D(
+                          devicePointerDdyadicRDaggerOutTempInCellRange
+                            [iDim][iCellBatch],
+                          hostPointerDdyadicRDaggerOutTempInCellRange
+                            [iDim][iCellBatch],
+                          nonLocalElements * sizeof(ValueType *));
+                      }
+                  }
               }
-          }
+
+          } // iCellBatch
+        d_isMallocCalled  = true;
+        d_wfcStartPointer = cellWaveFunctionMatrix.begin();
       }
   }
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::freeDeviceVectors(
-    const std::vector<allReduceVectorType> AllReduceVectorType)
+    const std::vector<nonLocalContractionVectorType>
+      NonLocalContractionVectorType)
   {
     if (!d_useGlobalCMatrix)
       {
@@ -4234,14 +4215,15 @@ namespace dftfe
                       deviceWfcPointersInCellRange[iCellBatch]);
                   }
 
-                for (int iVec = 0; iVec < AllReduceVectorType.size(); ++iVec)
+                for (int iVec = 0; iVec < NonLocalContractionVectorType.size();
+                     ++iVec)
                   {
                     for (dftfe::uInt iCellBatch = 0;
                          iCellBatch < d_numCellBatches;
                          ++iCellBatch)
                       {
-                        if (AllReduceVectorType[iVec] ==
-                            allReduceVectorType::CconjTransX)
+                        if (NonLocalContractionVectorType[iVec] ==
+                            nonLocalContractionVectorType::CconjTransX)
                           {
                             free(hostPointerCDaggerInCellRange[iCellBatch]);
                             free(
@@ -4252,8 +4234,8 @@ namespace dftfe
                               devicePointerCDaggerOutTempInCellRange
                                 [iCellBatch]);
                           }
-                        else if (AllReduceVectorType[iVec] ==
-                                 allReduceVectorType::CRconjTransX)
+                        else if (NonLocalContractionVectorType[iVec] ==
+                                 nonLocalContractionVectorType::CRconjTransX)
                           {
                             for (dftfe::Int iDim = 0; iDim < 3; iDim++)
                               {
@@ -4270,8 +4252,8 @@ namespace dftfe
                                     [iDim][iCellBatch]);
                               }
                           }
-                        else if (AllReduceVectorType[iVec] ==
-                                   allReduceVectorType::DconjTransX &&
+                        else if (NonLocalContractionVectorType[iVec] ==
+                                   nonLocalContractionVectorType::DconjTransX &&
                                  d_computeIonForces)
                           {
                             for (dftfe::Int iDim = 0; iDim < 3; iDim++)
@@ -4288,8 +4270,9 @@ namespace dftfe
                                     [iDim][iCellBatch]);
                               }
                           }
-                        else if (AllReduceVectorType[iVec] ==
-                                   allReduceVectorType::DDyadicRconjTransX &&
+                        else if (NonLocalContractionVectorType[iVec] ==
+                                   nonLocalContractionVectorType::
+                                     DDyadicRconjTransX &&
                                  d_computeCellStress)
                           {
                             for (dftfe::Int iDim = 0; iDim < 9; iDim++)
@@ -4971,10 +4954,6 @@ namespace dftfe
     const dftfe::uInt quadratureIndex)
   {
     d_locallyOwnedCells = basisOperationsPtr->nCells();
-#if defined(DFTFE_WITH_DEVICE)
-    d_elementIdToNonLocalElementIdMap.clear();
-    d_elementIdToNonLocalElementIdMap.resize(d_locallyOwnedCells);
-#endif
     basisOperationsPtr->reinit(0, 0, quadratureIndex);
     const dftfe::uInt numberAtomsOfInterest =
       d_atomCenteredSphericalFunctionContainer->getNumAtomCentersSize();
@@ -5244,6 +5223,8 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
     else
       {
+        d_elementIdToNonLocalElementIdMap.clear();
+        d_elementIdToNonLocalElementIdMap.resize(d_locallyOwnedCells);
         d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugate
           .clear();
         d_IntegralFEMShapeFunctionValueTimesAtomicSphericalFunctionConjugate
@@ -5471,9 +5452,6 @@ namespace dftfe
               }
           }
       }
-
-
-
 #endif
   }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
@@ -5865,6 +5843,16 @@ namespace dftfe
   {
     return d_OwnedAtomIdsInCurrentProcessor;
   }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  const std::vector<dftfe::uInt> &
+  AtomicCenteredNonLocalOperator<ValueType,
+                                 memorySpace>::getAtomIdsInCurrentProcessor()
+    const
+  {
+    return d_atomCenteredSphericalFunctionContainer
+      ->getAtomIdsInCurrentProcess();
+  }
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   bool
   AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
@@ -5901,6 +5889,19 @@ namespace dftfe
   {
     return (d_CMatrixEntriesTranspose[chargeId][iElemComp]);
   }
+
+  template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
+  dftfe::uInt
+  AtomicCenteredNonLocalOperator<ValueType, memorySpace>::
+    getTotalNumberOfSphericalFunctionsForAtomId(dftfe::uInt atomId)
+  {
+    std::vector<dftfe::uInt> atomicNumbers =
+      d_atomCenteredSphericalFunctionContainer->getAtomicNumbers();
+    return (
+      d_atomCenteredSphericalFunctionContainer
+        ->getTotalNumberOfSphericalFunctionsPerAtom(atomicNumbers[atomId]));
+  }
+
 
   template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
   void
@@ -6109,118 +6110,3 @@ namespace dftfe
 #endif
 
 } // namespace dftfe
-
-
-/*
-///// Comments on How to use the class for Configurational Forces:
-
- For a given Kpoint and given block....
-  const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
-    const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const dftfe::uInt numberWavefunctions = src.numVectors();
-    src.updateGhostValues();
-    d_basisOperationsPtr->distribute(src);
-    const dataTypes::number scalarCoeffAlpha = dataTypes::number(1.0),
-                            scalarCoeffBeta  = dataTypes::number(0.0);
-         if (d_dftParamsPtr->isPseudopotential)
-          {
-            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
-              d_kPointIndex, allReduceVectorType::CconjtransX);
-                        d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
-              numWaveFunctions,
-              d_pseudopotentialNonLocalProjectorTimesVectorBlock);
-            if(computeIonForces)
-            {
-            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
-              d_kPointIndex, allReduceVectorType::DconjtransX);
-            d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
-              numWaveFunctions,
-              d_pseudopotentialNonLocalProjectorTimesGradientVectorBlock,
-allReduceVectorType::DconjtransX);
-            }
-            if(computeCellStress)
-              {
-            d_pseudopotentialNonLocalOperator->initialiseOperatorActionOnX(
-              d_kPointIndex, allReduceVectorType::DDyadicRconjtransX);
-              d_pseudopotentialNonLocalOperator->initialiseFlattenedDataStructure(
-              numWaveFunctions,
-              d_pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,
-allReduceVectorType::DDyadicRconjtransX);
-              }
-          }
-          std::vector<AllReduceVectorType> allReduceVectorTypesVector =
-{allReduceVectorType::CconjtransX, allReduceVectorType::DconjtransX,
-allReduceVectorType::DDyadicRconjtransX}; if(Device)
-           d_pseudopotentialNonLocalOperator->initialiseCellWaveFunctionPointers(d_cellWaveFunctionMatrixSrc,d_cellsBlockSizeHX,
-allReduceVectorTypesVector); for (dftfe::uInt iCell = 0; iCell < numCells; iCell
-+= d_cellsBlockSizeHX)
-      {
-        std::pair<dftfe::uInt, dftfe::uInt> cellRange(
-          iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
-        d_BLASWrapperPtr->stridedCopyToBlock(
-          numberWavefunctions,
-          numDoFsPerCell * (cellRange.second - cellRange.first),
-          src.data(),
-          d_cellWaveFunctionMatrixSrc.data() +
-            (d_dftParamsPtr->memOptMode ?
-               0 :
-               cellRange.first * numDoFsPerCell * numberWavefunctions),
-          d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
-              .data() +
-            cellRange.first * numDoFsPerCell);
-#pragma omp critical(hx_Cconj)
-        if (hasNonlocalComponents)
-          {
-            d_pseudopotentialNonLocalOperator->applyCconjtransOnX(
-              d_cellWaveFunctionMatrixSrc.data() +
-                (d_dftParamsPtr->memOptMode ?
-                   0 :
-                   cellRange.first * numDoFsPerCell * numberWavefunctions),
-              cellRange);
-              d_pseudopotentialNonLocalOperator->applyDconjtransOnX(
-              d_cellWaveFunctionMatrixSrc.data() +
-                (d_dftParamsPtr->memOptMode ?
-                   0 :
-                   cellRange.first * numDoFsPerCell * numberWavefunctions),
-              cellRange);
-            d_pseudopotentialNonLocalOperator->applyDDyadicRconjtransOnX(
-              d_cellWaveFunctionMatrixSrc.data() +
-                (d_dftParamsPtr->memOptMode ?
-                   0 :
-                   cellRange.first * numDoFsPerCell * numberWavefunctions),
-              cellRange);
-          }
-      }
-      if (hasNonlocalComponents)
-      {
-        d_pseudopotentialNonLocalProjectorTimesVectorBlock.setValue(0);
-        d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
-          d_pseudopotentialNonLocalProjectorTimesVectorBlock);
-        d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
-          CouplingStructure::diagonal,
-          d_pseudopotentialClassPtr->getCouplingMatrix(),
-          d_pseudopotentialNonLocalProjectorTimesVectorBlock,
-          false);
-        if(computeForces)
-        {
-          d_pseudopotentialNonLocalProjectorTimesGradientVectorBlock.setValue(0);
-          d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
-            d_pseudopotentialNonLocalProjectorTimesGradientVectorBlock,allReduceVectorType::DconjtransX);
-            d_pseudopotentialNonLocalOperator->computeInnerProductOverSphericalFnsWaveFns(3,d_pseudopotentialNonLocalProjectorTimesVectorBlock,d_pseudopotentialNonLocalProjectorTimesGradientVectorBlock,iBlock==0?true:false,ForceVctor);
-        }
-
-
-            if(computeCellStress)
-            {
-              d_pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock.setValue(0);
-              d_pseudopotentialNonLocalOperator->applyAllReduceOnCconjtransX(
-                d_pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,allReduceVectorType::DDyadicRconjtransX);
-              d_pseudopotentialNonLocalOperator->computeInnerProductOverSphericalFnsWaveFns(9,d_pseudopotentialNonLocalProjectorTimesVectorBlock,d_pseudopotentialNonLocalProjectorTimesRDyadicGradientVectorBlock,iBlock==0?true:false,StressTensorVctor);
-            }
-        }
-
-
-
-
-
-*/

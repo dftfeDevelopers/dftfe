@@ -201,7 +201,7 @@ namespace dftfe
       const std::vector<std::vector<double>> &atomCoordinates);
 
     const std::map<dftfe::uInt, dftfe::uInt> &
-    getPSPAtomIdToGloablIdMap();
+    getPSPAtomIdToGlobalIdMap();
 
 
   private:

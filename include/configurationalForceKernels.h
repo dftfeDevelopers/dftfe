@@ -53,6 +53,20 @@ namespace dftfe
     const bool                                computeForce,
     const bool                                computeStress);
 
+  void
+  nlpWfcContractionContribution(
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+                            &BLASWrapperPtr,
+    const dftfe::uInt        wfcBlockSize,
+    const dftfe::uInt        blockSizeNlp,
+    const dftfe::uInt        numQuadsNLP,
+    const dftfe::uInt        startingIdNlp,
+    const dataTypes::number *projectorKetTimesVectorPar,
+    const dataTypes::number *gradPsiOrPsiQuadValuesNLP,
+    const dftfe::uInt       *nonTrivialIdToElemIdMap,
+    const dftfe::uInt       *projecterKetTimesFlattenedVectorLocalIds,
+    dataTypes::number       *nlpContractionContribution);
 } // namespace dftfe
 #endif
 #endif

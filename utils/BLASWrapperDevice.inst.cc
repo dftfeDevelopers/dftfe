@@ -1093,6 +1093,73 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
     const dftfe::utils::deviceStream_t streamId);
 
 template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2ArrDeviceCall(
+    const dftfe::uInt                  size,
+    const float                       *valueType1Arr,
+    uint16_t                          *valueType2Arr,
+    const dftfe::utils::deviceStream_t streamId);
+
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2ArrDeviceCall(
+    const dftfe::uInt                  size,
+    const std::complex<float>         *valueType1Arr,
+    std::complex<uint16_t>            *valueType2Arr,
+    const dftfe::utils::deviceStream_t streamId);
+
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2ArrDeviceCall(
+    const dftfe::uInt                  size,
+    const double                      *valueType1Arr,
+    uint16_t                          *valueType2Arr,
+    const dftfe::utils::deviceStream_t streamId);
+
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2ArrDeviceCall(
+    const dftfe::uInt                  size,
+    const std::complex<double>        *valueType1Arr,
+    std::complex<uint16_t>            *valueType2Arr,
+    const dftfe::utils::deviceStream_t streamId);
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2ArrDeviceCall(
+    const dftfe::uInt                  size,
+    const std::complex<uint16_t>      *valueType1Arr,
+    std::complex<double>              *valueType2Arr,
+    const dftfe::utils::deviceStream_t streamId);
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2ArrDeviceCall(
+    const dftfe::uInt                  size,
+    const std::complex<uint16_t>      *valueType1Arr,
+    std::complex<float>               *valueType2Arr,
+    const dftfe::utils::deviceStream_t streamId);
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2ArrDeviceCall(
+    const dftfe::uInt                  size,
+    const uint16_t                    *valueType1Arr,
+    float                             *valueType2Arr,
+    const dftfe::utils::deviceStream_t streamId);
+
+template void
+BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::
+  copyValueType1ArrToValueType2ArrDeviceCall(
+    const dftfe::uInt                  size,
+    const uint16_t                    *valueType1Arr,
+    double                            *valueType2Arr,
+    const dftfe::utils::deviceStream_t streamId);
+
+template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const dftfe::uInt contiguousBlockSize,
   const dftfe::uInt numContiguousBlocks,
@@ -1109,7 +1176,6 @@ BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
   const double     *scalingVector,
   const double      a,
   float            *addToVec);
-
 
 template void
 BLASWrapper<dftfe::utils::MemorySpace::DEVICE>::stridedBlockAxpy(
