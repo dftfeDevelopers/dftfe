@@ -391,15 +391,16 @@ namespace dftfe
             computeForce,
             computeStress);
       }
-    computeWfcContribLocal(numEigenValues,
-                           kPointCoords,
-                           kPointWeights,
-                           eigenVectors,
-                           eigenValues,
-                           partialOccupancies,
-                           floatingNuclearCharges,
-                           computeForce,
-                           computeStress);
+    if (!floatingNuclearCharges || computeStress)
+      computeWfcContribLocal(numEigenValues,
+                             kPointCoords,
+                             kPointWeights,
+                             eigenVectors,
+                             eigenValues,
+                             partialOccupancies,
+                             floatingNuclearCharges,
+                             computeForce,
+                             computeStress);
     computeXCContribAll(atomLocations,
                         imageIds,
                         imagePositions,
@@ -465,7 +466,7 @@ namespace dftfe
                                floatingNuclearCharges,
                                computeForce,
                                computeStress);
-    if (!floatingNuclearCharges)
+    if (!floatingNuclearCharges && computeForce)
       {
         d_configForceContribsLinFE.compress(dealii::VectorOperation::add);
         d_affineConstraintsForce.distribute(d_configForceContribsLinFE);
