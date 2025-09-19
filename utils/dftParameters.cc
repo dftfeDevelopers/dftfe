@@ -1969,11 +1969,6 @@ namespace dftfe
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
     if (XCType.substr(0, 4) == "MGGA")
       {
-        if (!floatingNuclearCharges)
-          AssertThrow(
-            !isIonForce,
-            dealii::ExcMessage(
-              "DFT-FE Error: Computation of ION FORCE with MGGA functional for  FLOATING NUCLEAR CHARGES = true case  is not completed yet."));
         AssertThrow(
           mixingMethod != "LOW_RANK_DIELECM_PRECOND",
           dealii::ExcMessage(

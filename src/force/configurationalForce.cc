@@ -399,6 +399,7 @@ namespace dftfe
                              eigenValues,
                              partialOccupancies,
                              floatingNuclearCharges,
+                             auxDensityXCOutRepresentationPtr,
                              computeForce,
                              computeStress);
     computeXCContribAll(atomLocations,
@@ -985,15 +986,17 @@ namespace dftfe
                                   eshelbyContributions.data(),
                                   eshelbyTensor.data(),
                                   floatingNuclearCharges,
-                              isTauMGGA,
-                              isTauMGGA ? pdexTauLocallyOwnedCells.data() +
-                                            spinIndex * nCells * nQuadsPerCell +
-                                            startingCellId * nQuadsPerCell :
-                                          NULL,
-                              isTauMGGA ? pdecTauLocallyOwnedCells.data() +
-                                            spinIndex * nCells * nQuadsPerCell +
-                                            startingCellId * nQuadsPerCell :
-                                          NULL,
+                                  isTauMGGA,
+                                  isTauMGGA ?
+                                    pdexTauLocallyOwnedCells.data() +
+                                      spinIndex * nCells * nQuadsPerCell +
+                                      startingCellId * nQuadsPerCell :
+                                    NULL,
+                                  isTauMGGA ?
+                                    pdecTauLocallyOwnedCells.data() +
+                                      spinIndex * nCells * nQuadsPerCell +
+                                      startingCellId * nQuadsPerCell :
+                                    NULL,
                                   computeForce,
                                   computeStress);
                                 eshelbyTensorHost.copyFrom(eshelbyTensor);
@@ -1039,6 +1042,17 @@ namespace dftfe
                                   eshelbyContributions.data(),
                                   eshelbyTensor.data(),
                                   floatingNuclearCharges,
+                                  isTauMGGA,
+                                  isTauMGGA ?
+                                    pdexTauLocallyOwnedCells.data() +
+                                      spinIndex * nCells * nQuadsPerCell +
+                                      startingCellId * nQuadsPerCell :
+                                    NULL,
+                                  isTauMGGA ?
+                                    pdecTauLocallyOwnedCells.data() +
+                                      spinIndex * nCells * nQuadsPerCell +
+                                      startingCellId * nQuadsPerCell :
+                                    NULL,
                                   computeForce,
                                   false);
                                 eshelbyTensorHost.copyFrom(eshelbyTensor);
@@ -3226,8 +3240,8 @@ namespace dftfe
       sqrtPartialOccupVecHost.size());
     dftfe::utils::MemoryStorage<double, memorySpace> kCoord(kCoordHost.size());
 #else
-    auto &sqrtPartialOccupVec = sqrtPartialOccupVecHost;
-    auto &kCoord              = kCoordHost;
+    auto &sqrtPartialOccupVec      = sqrtPartialOccupVecHost;
+    auto &kCoord                   = kCoordHost;
 #endif
     for (dftfe::uInt kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
       {
