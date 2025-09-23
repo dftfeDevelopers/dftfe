@@ -1,0 +1,83 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2025 The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+// @author Srinibas Nandi
+
+
+/* We get the below parameters from libxc.The names of the macros should be in
+ * the form "{DENS, ZETA, SIGMA,TAU}_THRESHOLD_{X,C}_NAME". The "NAME" should be
+ * exactly the first argument we provide to "DFTFE_FUNCTIONALEVALUATOR_*" in
+ * "exchangeCorrelationFunctionalEvaluation.def" file */
+
+#ifndef XC_PARAMS
+#define XC_PARAMS
+
+#define DENS_THRESHOLD_X_SLATER 1.000000000000000078e-15
+#define ZETA_THRESHOLD_X_SLATER 2.220446049250313081e-16
+
+// PW
+#define DENS_THRESHOLD_C_PW 1.000000000000000078e-15
+#define ZETA_THRESHOLD_C_PW 2.220446049250313081e-16
+
+// PZ
+#define DENS_THRESHOLD_C_PZ 1.000000000000000078e-15
+#define ZETA_THRESHOLD_C_PZ 2.220446049250313081e-16
+
+// VWN
+#define DENS_THRESHOLD_C_VWN 1.000000000000000078e-15
+#define ZETA_THRESHOLD_C_VWN 2.220446049250313081e-16
+
+// PBE
+#define DENS_THRESHOLD_X_PBE 1.000000000000000078e-15
+#define ZETA_THRESHOLD_X_PBE 2.220446049250313081e-16
+#define SIGMA_THRESHOLD_X_PBE 1.000000000000002653e-20
+#define DENS_THRESHOLD_C_PBE 9.999999999999999799e-13
+#define ZETA_THRESHOLD_C_PBE 2.220446049250313081e-16
+#define SIGMA_THRESHOLD_C_PBE 1.000000000000002653e-20
+
+// RPBE
+#define DENS_THRESHOLD_X_RPBE 1.000000000000000078e-15
+#define ZETA_THRESHOLD_X_RPBE 2.220446049250313081e-16
+#define SIGMA_THRESHOLD_X_RPBE 1.000000000000002653e-20
+
+// LB
+
+#define DENS_THRESHOLD_X_LB 1.000000000000000078e-15
+#define ZETA_THRESHOLD_X_LB 2.220446049250313081e-16
+#define SIGMA_THRESHOLD_X_LB 1.000000000000002653e-20
+
+// R2SCAN
+#define DENS_THRESHOLD_X_R2SCAN 9.999999999999999395e-12
+#define ZETA_THRESHOLD_X_R2SCAN 2.220446049250313081e-16
+#define SIGMA_THRESHOLD_X_R2SCAN 2.154434690031887462e-15
+#define TAU_THRESHOLD_X_R2SCAN 9.999999999999999452e-21
+#define DENS_THRESHOLD_C_R2SCAN 1.000000000000000078e-15
+#define ZETA_THRESHOLD_C_R2SCAN 2.220446049250313081e-16
+#define SIGMA_THRESHOLD_C_R2SCAN 1.000000000000002653e-20
+#define TAU_THRESHOLD_C_R2SCAN 9.999999999999999452e-21
+
+// SCAN
+#define DENS_THRESHOLD_X_SCAN 9.999999999999999395e-12
+#define ZETA_THRESHOLD_X_SCAN 2.220446049250313081e-16
+#define SIGMA_THRESHOLD_X_SCAN 1.000000000000002653e-20
+#define TAU_THRESHOLD_X_SCAN 9.999999999999999452e-21
+#define DENS_THRESHOLD_C_SCAN 1.000000000000000078e-15
+#define ZETA_THRESHOLD_C_SCAN 2.220446049250313081e-16
+#define SIGMA_THRESHOLD_C_SCAN 1.000000000000002653e-20
+#define TAU_THRESHOLD_C_SCAN 9.999999999999999452e-21
+
+
+#endif

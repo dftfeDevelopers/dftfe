@@ -22,6 +22,10 @@
 #include <DeviceTypeConfig.h>
 #include <DeviceKernelLauncherHelpers.h>
 #include <BLASWrapper.h>
+#ifndef utils_funcs
+#  define max(x, y) (((x) > (y)) ? (x) : (y))
+#  define abs(x) (((x) > (0)) ? (x) : (-x))
+#endif
 namespace dftfe
 {
   namespace internal
@@ -58,11 +62,12 @@ namespace dftfe
             rhoVector[2 * index + 1] = densitySpinDown[index];
             for (dftfe::uInt j = 0; j < 3; j++)
               {
-                sigmaVector[3 * index + 0] = gradDensitySpinUp[3 * index + j] *
-                                             gradDensitySpinUp[3 * index + j];
-                sigmaVector[3 * index + 1] = gradDensitySpinUp[3 * index + j] *
-                                             gradDensitySpinDown[3 * index + j];
-                sigmaVector[3 * index + 2] =
+                sigmaVector[3 * index + 0] += gradDensitySpinUp[3 * index + j] *
+                                              gradDensitySpinUp[3 * index + j];
+                sigmaVector[3 * index + 1] +=
+                  gradDensitySpinUp[3 * index + j] *
+                  gradDensitySpinDown[3 * index + j];
+                sigmaVector[3 * index + 2] +=
                   gradDensitySpinDown[3 * index + j] *
                   gradDensitySpinDown[3 * index + j];
               }
@@ -87,26 +92,31 @@ namespace dftfe
         for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += nThreadsPerBlock * nThreadBlock)
           {
-            rhoVector[2 * index + 0] = densitySpinUp[index];
-            rhoVector[2 * index + 1] = densitySpinDown[index];
+            rhoVector[2 * index + 0] =
+              max(abs(densitySpinUp[index]), rhoThreshold);
+            rhoVector[2 * index + 1] =
+              max(abs(densitySpinDown[index]), rhoThreshold);
             for (dftfe::uInt j = 0; j < 3; j++)
               {
-                sigmaVector[3 * index + 0] = gradDensitySpinUp[3 * index + j] *
-                                             gradDensitySpinUp[3 * index + j];
-                sigmaVector[3 * index + 1] = gradDensitySpinUp[3 * index + j] *
-                                             gradDensitySpinDown[3 * index + j];
-                sigmaVector[3 * index + 2] =
+                sigmaVector[3 * index + 0] += gradDensitySpinUp[3 * index + j] *
+                                              gradDensitySpinUp[3 * index + j];
+                sigmaVector[3 * index + 1] +=
+                  gradDensitySpinUp[3 * index + j] *
+                  gradDensitySpinDown[3 * index + j];
+                sigmaVector[3 * index + 2] +=
                   gradDensitySpinDown[3 * index + j] *
                   gradDensitySpinDown[3 * index + j];
               }
-            tauVector[2 * index + 0] =
-              tauSpinUp[index] > tauMax ? tauSpinUp[index] : tauMax;
+            sigmaVector[3 * index + 0] =
+              max(abs(sigmaVector[3 * index + 0]), sigmaThreshold);
+            sigmaVector[3 * index + 2] =
+              max(abs(sigmaVector[3 * index + 2]), sigmaThreshold);
+            tauVector[2 * index + 0] = max(abs(tauSpinUp[index]), tauThreshold);
             tauVector[2 * index + 1] =
-              tauSpinDown[index] > tauMax ? tauSpinDown[index] : tauMax;
+              max(abs(tauSpinDown[index]), tauThreshold);
           }
       },
       const dftfe::uInt numQuadPoints,
-      const double      tauMax,
       const double     *densitySpinUp,
       const double     *densitySpinDown,
       const double     *gradDensitySpinUp,
@@ -115,7 +125,10 @@ namespace dftfe
       const double     *tauSpinDown,
       double           *rhoVector,
       double           *sigmaVector,
-      double           *tauVector);
+      double           *tauVector,
+      const double      rhoThreshold,
+      const double      sigmaThreshold,
+      const double      tauThreshold);
 
     template <>
     void
@@ -227,6 +240,8 @@ namespace dftfe
         &sigmaVector,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
                   &tauVector,
+      const double rhoThreshold,
+      const double sigmaThreshold,
       const double tauThreshold)
     {
       const auto *densitySpinUpPtr =
@@ -255,7 +270,6 @@ namespace dftfe
                           dftfe::linearAlgebra::BLASWrapper<
                             dftfe::utils::MemorySpace::DEVICE>::d_streamId,
                           numQuadPoints,
-                          tauThreshold,
                           densitySpinUpPtr,
                           densitySpinDownPtr,
                           gradDensitySpinUpPtr,
@@ -264,7 +278,10 @@ namespace dftfe
                           tauSpinDownPtr,
                           rhoVectorPtr,
                           sigmaVectorPtr,
-                          tauVectorPtr);
+                          tauVectorPtr,
+                          rhoThreshold,
+                          sigmaThreshold,
+                          tauThreshold);
     }
   }; // namespace internal
 } // namespace dftfe

@@ -64,7 +64,9 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, memorySpace>       &rhoVector,
       dftfe::utils::MemoryStorage<double, memorySpace>       &sigmaVector,
       dftfe::utils::MemoryStorage<double, memorySpace>       &tauVector,
-      const double tauThreshold = 0.0);
+      const double                                            rhoThreshold,
+      const double                                            sigmaThreshold,
+      const double                                            tauThreshold);
 
   } // namespace internal
 } // namespace dftfe
