@@ -3582,6 +3582,7 @@ namespace dftfe
                                      iPseudoWave * nQuadsPerCell * 3 +
                                      iDim * nQuadsPerCell + iQuad] *
                                   JxWValues[iQuad];
+#ifdef USE_COMPLEX
                           if constexpr (std::is_same<
                                           dataTypes::number,
                                           std::complex<double>>::value)
@@ -3606,6 +3607,7 @@ namespace dftfe
                                         [startingPseudoWfcIdFlattened +
                                          iPseudoWave * nQuadsPerCell + iQuad] *
                                       kCoordHost[iDim] * JxWValues[iQuad];
+#endif
                         } // non-trivial cell check
                     }     // cell loop
                 }
@@ -3744,6 +3746,7 @@ namespace dftfe
                                        iPseudoWave * nQuadsPerCell * 3 +
                                        iDim * nQuadsPerCell + iQuad] *
                                     JxWValues[iQuad];
+#ifdef USE_COMPLEX
                           if constexpr (std::is_same<
                                           dataTypes::number,
                                           std::complex<double>>::value)
@@ -3770,6 +3773,7 @@ namespace dftfe
                                            iPseudoWave * nQuadsPerCell +
                                            iQuad] *
                                         kCoordHost[jDim] * JxWValues[iQuad];
+#endif
                         } // non-trivial cell check
                     }     // cell loop
                 }
@@ -4169,6 +4173,7 @@ namespace dftfe
                           nonLocalProjectorTimesRDyadicGradientVectorBlock,
                           nonlocalAtomIdToGlobalIdMap,
                           StressNlocContrib);
+#ifdef USE_COMPLEX
                     if constexpr (std::is_same<dataTypes::number,
                                                std::complex<double>>::value)
                       if (!isGammaPoint)
@@ -4222,6 +4227,7 @@ namespace dftfe
                                           [3 * iAtom + jDim]);
                             }
                         }
+#endif
                   }
               }
           }
