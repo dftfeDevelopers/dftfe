@@ -8,7 +8,7 @@ namespace dftfe
     blockSize,
     void,
     applyPreconditionAndComputeDotProductKernel,
-    DFTFE_KERNEL_NAME({
+    DFTFE_KERNEL_ARGUMENT({
       Type       localSum;
       dftfe::Int idx = threadId + blockId * (blockSize * 2);
 
@@ -88,7 +88,7 @@ namespace dftfe
     blockSize,
     void,
     applyPreconditionComputeDotProductAndSaddKernel,
-    DFTFE_KERNEL_NAME({
+    DFTFE_KERNEL_ARGUMENT({
       dftfe::Int idx = threadId + blockId * (blockSize * 2);
 
       Type localSum;
@@ -168,7 +168,7 @@ namespace dftfe
     blockSize,
     void,
     scaleXRandComputeNormKernel,
-    DFTFE_KERNEL_NAME({
+    DFTFE_KERNEL_ARGUMENT({
       dftfe::Int idx = threadId + blockId * (blockSize * 2);
 
       Type localSum;
@@ -274,7 +274,7 @@ namespace dftfe
   {
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
-    DFTFE_LAUNCH_KERNEL_SMEM_S(DFTFE_KERNEL_NAME(
+    DFTFE_LAUNCH_KERNEL_SMEM_S(DFTFE_KERNEL_ARGUMENT(
                                  applyPreconditionAndComputeDotProductKernel<
                                    double,
                                    dftfe::utils::DEVICE_BLOCK_SIZE>),
@@ -301,9 +301,9 @@ namespace dftfe
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
     DFTFE_LAUNCH_KERNEL_SMEM_S(
-      DFTFE_KERNEL_NAME(applyPreconditionComputeDotProductAndSaddKernel<
-                        double,
-                        dftfe::utils::DEVICE_BLOCK_SIZE>),
+      DFTFE_KERNEL_ARGUMENT(applyPreconditionComputeDotProductAndSaddKernel<
+                            double,
+                            dftfe::utils::DEVICE_BLOCK_SIZE>),
       blocks,
       dftfe::utils::DEVICE_BLOCK_SIZE,
       double,
@@ -329,7 +329,7 @@ namespace dftfe
     const dftfe::Int blocks = (N + (dftfe::utils::DEVICE_BLOCK_SIZE * 2 - 1)) /
                               (dftfe::utils::DEVICE_BLOCK_SIZE * 2);
     DFTFE_LAUNCH_KERNEL_SMEM_S(
-      DFTFE_KERNEL_NAME(
+      DFTFE_KERNEL_ARGUMENT(
         scaleXRandComputeNormKernel<double, dftfe::utils::DEVICE_BLOCK_SIZE>),
       blocks,
       dftfe::utils::DEVICE_BLOCK_SIZE,

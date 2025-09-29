@@ -52,7 +52,7 @@ namespace dftfe
     std::string modelXCInputFile;
     std::string auxBasisTypeXC;
     std::string auxBasisDataXC;
-    bool        useLiXCForXCEvaluation;
+    bool        useLibXCForXCEvaluation;
 
     double radiusAtomBall, mixingParameter, spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;
@@ -148,7 +148,7 @@ namespace dftfe
     bool        useDevice;
     bool        deviceFineGrainedTimings;
     bool        allowFullCPUMemSubspaceRot;
-    bool        useSinglePrecCommunCheby;
+    std::string communPrecCheby;
     bool        useSinglePrecCheby;
     bool        overlapComputeCommunCheby;
     bool        overlapComputeCommunOrthoRR;

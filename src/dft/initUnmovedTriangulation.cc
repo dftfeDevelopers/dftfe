@@ -363,7 +363,7 @@ namespace dftfe
                           dealii::Utilities::MPI::this_mpi_process(
                             d_mpiCommParent) == 0 &&
                             d_dftParamsPtr->verbosity >= 1,
-                          d_dftParamsPtr->useLiXCForXCEvaluation);
+                          d_dftParamsPtr->useLibXCForXCEvaluation);
 
     if (d_dftParamsPtr->auxBasisTypeXC == "FE")
       {

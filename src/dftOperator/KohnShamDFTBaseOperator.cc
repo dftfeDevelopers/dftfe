@@ -645,7 +645,7 @@ namespace dftfe
     const dftfe::uInt nCellsPerBatch =
       (memorySpace == dftfe::utils::MemorySpace::HOST) ?
         1 :
-        (d_dftParamsPtr->useLiXCForXCEvaluation ? 1 : totalLocallyOwnedCells);
+        (d_dftParamsPtr->useLibXCForXCEvaluation ? 1 : totalLocallyOwnedCells);
     const dftfe::uInt numberQuadraturePointsPerCell =
       d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
@@ -1198,6 +1198,11 @@ namespace dftfe
             ->initialiseFlattenedDataStructure(
               numWaveFunctions,
               d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec);
+
+        if (d_dftParamsPtr->communPrecCheby == "BF16")
+          d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
+            .setCommunicationPrecision(
+              dftfe::utils::mpi::communicationPrecision::half);
       }
 
     d_basisOperationsPtr->reinit(numWaveFunctions,

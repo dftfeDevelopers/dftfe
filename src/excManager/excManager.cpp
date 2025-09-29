@@ -64,7 +64,8 @@ namespace dftfe
             xc_func_init(funcCPtr.get(), XC_LDA_C_PZ, XC_POLARIZED);
           excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
                                                                      funcCPtr,
-                                                                     useLibxc);
+                                                                     useLibxc,
+                                                                     XCType);
         }
       else if (XCType == "LDA-PW")
         {
@@ -74,7 +75,8 @@ namespace dftfe
 
           excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
                                                                      funcCPtr,
-                                                                     useLibxc);
+                                                                     useLibxc,
+                                                                     XCType);
         }
       else if (XCType == "LDA-VWN")
         {
@@ -83,7 +85,8 @@ namespace dftfe
             xc_func_init(funcCPtr.get(), XC_LDA_C_VWN, XC_POLARIZED);
           excObj = std::make_shared<excDensityLDAClass<memorySpace>>(funcXPtr,
                                                                      funcCPtr,
-                                                                     useLibxc);
+                                                                     useLibxc,
+                                                                     XCType);
         }
       else if (XCType == "GGA-PBE")
         {
@@ -94,7 +97,8 @@ namespace dftfe
 
           excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
                                                                      funcCPtr,
-                                                                     useLibxc);
+                                                                     useLibxc,
+                                                                     XCType);
         }
       else if (XCType == "GGA-RPBE")
         {
@@ -105,7 +109,8 @@ namespace dftfe
 
           excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
                                                                      funcCPtr,
-                                                                     useLibxc);
+                                                                     useLibxc,
+                                                                     XCType);
         }
       else if (XCType == "GGA-LBxPBEc")
         {
@@ -116,7 +121,8 @@ namespace dftfe
 
           excObj = std::make_shared<excDensityGGAClass<memorySpace>>(funcXPtr,
                                                                      funcCPtr,
-                                                                     useLibxc);
+                                                                     useLibxc,
+                                                                     XCType);
         }
       else if (XCType == "MLXC-NNLDA")
         {
@@ -124,7 +130,7 @@ namespace dftfe
           exceptParamC =
             xc_func_init(funcCPtr.get(), XC_LDA_C_PW, XC_POLARIZED);
           excObj = std::make_shared<excDensityLDAClass<memorySpace>>(
-            funcXPtr, funcCPtr, modelXCInputFile, useLibxc);
+            funcXPtr, funcCPtr, modelXCInputFile, useLibxc, XCType);
         }
       else if (XCType == "MLXC-NNGGA")
         {
@@ -133,7 +139,7 @@ namespace dftfe
           exceptParamC =
             xc_func_init(funcCPtr.get(), XC_GGA_C_PBE, XC_POLARIZED);
           excObj = std::make_shared<excDensityGGAClass<memorySpace>>(
-            funcXPtr, funcCPtr, modelXCInputFile, useLibxc);
+            funcXPtr, funcCPtr, modelXCInputFile, useLibxc, XCType);
         }
       else if (XCType == "MLXC-NNLLMGGA")
         {
@@ -153,7 +159,8 @@ namespace dftfe
             xc_func_init(funcCPtr.get(), XC_MGGA_C_SCAN, XC_POLARIZED);
           excObj = std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr,
                                                                   funcCPtr,
-                                                                  useLibxc);
+                                                                  useLibxc,
+                                                                  XCType);
         }
       else if (XCType == "MGGA-R2SCAN")
         {
@@ -163,7 +170,8 @@ namespace dftfe
             xc_func_init(funcCPtr.get(), XC_MGGA_C_R2SCAN, XC_POLARIZED);
           excObj = std::make_shared<excTauMGGAClass<memorySpace>>(funcXPtr,
                                                                   funcCPtr,
-                                                                  useLibxc);
+                                                                  useLibxc,
+                                                                  XCType);
         }
       else
         {
@@ -272,12 +280,16 @@ namespace dftfe
         &sigmaVector,
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                   &tauVector,
+      const double rhoThreshold,
+      const double sigmaThreshold,
       const double tauThreshold)
     {
       for (dftfe::uInt iQuad = 0; iQuad < numQuadPoints; iQuad++)
         {
-          rhoVector[2 * iQuad + 0] = densitySpinUp[iQuad];
-          rhoVector[2 * iQuad + 1] = densitySpinDown[iQuad];
+          rhoVector[2 * iQuad + 0] =
+            std::max(std::abs(densitySpinUp[iQuad]), rhoThreshold);
+          rhoVector[2 * iQuad + 1] =
+            std::max(std::abs(densitySpinDown[iQuad]), rhoThreshold);
           for (dftfe::uInt j = 0; j < 3; j++)
             {
               sigmaVector[3 * iQuad + 0] += gradDensitySpinUp[3 * iQuad + j] *
@@ -287,8 +299,14 @@ namespace dftfe
               sigmaVector[3 * iQuad + 2] += gradDensitySpinDown[3 * iQuad + j] *
                                             gradDensitySpinDown[3 * iQuad + j];
             }
-          tauVector[2 * iQuad + 0] = std::max(tauSpinUp[iQuad], tauThreshold);
-          tauVector[2 * iQuad + 1] = std::max(tauSpinDown[iQuad], tauThreshold);
+          sigmaVector[3 * iQuad + 0] =
+            std::max(std::abs(sigmaVector[3 * iQuad + 0]), sigmaThreshold);
+          sigmaVector[3 * iQuad + 2] =
+            std::max(std::abs(sigmaVector[3 * iQuad + 2]), sigmaThreshold);
+          tauVector[2 * iQuad + 0] =
+            std::max(std::abs(tauSpinUp[iQuad]), tauThreshold);
+          tauVector[2 * iQuad + 1] =
+            std::max(std::abs(tauSpinDown[iQuad]), tauThreshold);
         }
     }
 

@@ -128,7 +128,7 @@ namespace dftfe
           "WRITE DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Computes density of states using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true' in 'GS' calculation) and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
+          "[Standard] Computes density of states using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE QUAD DATA = true' in 'GS' calculation) and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
 
         prm.declare_entry(
           "WRITE LOCAL DENSITY OF STATES",
@@ -140,7 +140,7 @@ namespace dftfe
           "WRITE PROJECTED DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          R"([Standard] Computes projected density of states on each atomic orbital using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as the broadening parameter. Outputs files with name format 'pdosData_atom#{atom number}_wfc#{wfc number}({wfc name}).out'. For colinear, spin-unpolarized case, each of these file contain columns with format 'E sumPDOS  PDOS_0 .... PDOS_(2l)', where E: the energy is eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true'in 'GS' calculation),l: azimuthal quantum number, sumPDOS: PDOS_0 + .. +PDOS_(2l).
+          R"([Standard] Computes projected density of states on each atomic orbital using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as the broadening parameter. Outputs files with name format 'pdosData_atom#{atom number}_wfc#{wfc number}({wfc name}).out'. For colinear, spin-unpolarized case, each of these file contain columns with format 'E sumPDOS  PDOS_0 .... PDOS_(2l)', where E: the energy is eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE QUAD DATA = true'in 'GS' calculation),l: azimuthal quantum number, sumPDOS: PDOS_0 + .. +PDOS_(2l).
           For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_down PDOS_0_up PDOS_0_down .... PDOS_(2l)_up PDOS_(2l)_down', where 'up' and 'down' refer to the spin up and spin down case with all other terms having the same meaning as of the spin-unpolarized case.)");
 
         prm.declare_entry(
@@ -212,7 +212,7 @@ namespace dftfe
           "SAVE QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Saves the various variables involved in the SCF fixed point interation to restart file. Default value is false.");
+          "[Standard] Saves the various variables involved in the SCF fixed point interation to restart file at the end of each ground state calculation. Default value is false.");
 
         prm.declare_entry(
           "LOAD QUAD DATA",
@@ -690,16 +690,11 @@ namespace dftfe
           dealii::Patterns::Bool(),
           "[Developer] Boolean parameter specifying the explicit path of pseudopotential upf format files used for ctests");
 
-        // prm.declare_entry(
-        //   "USE LIBXC FOR XC FUNCTIONAL EVALUATION",
-        //   "true",
-        //   dealii::Patterns::Bool(),
-        //   "[Developer] Boolean parameter specifying whether LIBXC should be
-        //   used to evaluate the exchange-correlation functional. If set to
-        //   true, the LIBXC library is used to evaluate the
-        //   exchange-correlation functional. If set to false, the
-        //   exchange-correlation functional is evaluated using the internal
-        //   implementation wchih can leverage GPUs");
+        prm.declare_entry(
+          "USE LIBXC FOR XC FUNCTIONAL EVALUATION",
+          "true",
+          dealii::Patterns::Bool(),
+          "[Developer] Boolean parameter specifying whether LIBXC should be used to evaluate the exchange-correlation functional. If set to true, the LIBXC library is used to evaluate the exchange-correlation functional. If set to false, the exchange-correlation functional is evaluated using the internal implementation which can leverage GPUs");
 
         prm.declare_entry(
           "PSEUDOPOTENTIAL FILE NAMES LIST",
@@ -708,7 +703,7 @@ namespace dftfe
           R"([Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials(ONCV and Troullier Martins) in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2). Important Note: ONCV pseudopotentials data base in UPF format can be downloaded from http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/.  Troullier-Martins pseudopotentials in UPF format can be downloaded from http://www.quantum-espresso.org/pseudopotentials/fhi-pp-from-abinit-web-site.)");
 
         prm.declare_entry(
-          "EXCHANGE CORRELATION TYPE", "GGA-PBE", dealii::Patterns::Selection("LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U|MGGA-SCAN|MGGA-R2SCAN"), R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. Nørskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)]). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
+          "EXCHANGE CORRELATION TYPE", "GGA-PBE", dealii::Patterns::Selection("LDA-PZ|LDA-PW|LDA-VWN|GGA-PBE|GGA-RPBE|GGA-LBxPBEc|MLXC-NNLDA|MLXC-NNGGA|MLXC-NNLLMGGA|LDA-PZ+U|LDA-PW+U|LDA-VWN+U|GGA-PBE+U|GGA-RPBE+U|GGA-LBxPBEc+U|MLXC-NNLDA+U|MLXC-NNGGA+U|MLXC-NNLLMGGA+U|MGGA-SCAN|MGGA-R2SCAN"), R"([Standard] Parameter specifying the type of exchange-correlation to be used: LDA-PZ (Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), LDA-PW (Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), LDA-VWN (Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), GGA-PBE (Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]), GGA-RPBE (RPBE: B. Hammer, L. B. Hansen, and J. K. N�rskov, Phys. Rev. B 59, 7413 (1999)), GGA-LBxPBEc van Leeuwen \& Baerends exchange [Phys. Rev. A 49, 2421 (1994)] with  PBE correlation [Phys. Rev. Lett. 77, 3865 (1996)], MLXC-NNLDA (LDA-PW + NN-LDA), MLXC-NNGGA (GGA-PBE + NN-GGA), MLXC-NNLLMGGA (GGA-PBE + NN Laplacian level MGGA), MGGA-SCAN (Strongly Constrained and Appropriately Normed functional [Phys. Rev. Lett. 115, 03640 (2015)]), MGGA-R2SCAN (regularized-restored SCAN [J. Phys. Chem. Lett. 19, 8208-8215 (2020)]). Caution: MLXC options are experimental. Add +U to use hubbard correction)");
 
         prm.declare_entry(
           "MODEL XC INPUT FILE",
@@ -1106,10 +1101,10 @@ namespace dftfe
             "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Default setting is false.");
 
           prm.declare_entry(
-            "USE SINGLE PREC COMMUN CHEBY",
-            "false",
-            dealii::Patterns::Bool(),
-            "[Advanced] Use single precision communication in Chebyshev filtering. Default setting is false.");
+            "COMMUN PREC CHEBY",
+            "STANDARD",
+            dealii::Patterns::Selection("STANDARD|FP32|BF16"),
+            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32 and BF16 are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1293,7 +1288,7 @@ namespace dftfe
     n_refinement_steps                         = 1;
     numberEigenValues                          = 1;
     XCType                                     = "GGA-PBE";
-    useLiXCForXCEvaluation                     = true;
+    useLibXCForXCEvaluation                    = true;
     spinPolarized                              = 0;
     modelXCInputFile                           = "";
     auxBasisTypeXC                             = "";
@@ -1420,7 +1415,7 @@ namespace dftfe
     useDevice                                      = false;
     deviceFineGrainedTimings                       = false;
     allowFullCPUMemSubspaceRot                     = true;
-    useSinglePrecCommunCheby                       = false;
+    communPrecCheby                                = "STANDARD";
     overlapComputeCommunCheby                      = false;
     overlapComputeCommunOrthoRR                    = false;
     autoDeviceBlockSizes                           = true;
@@ -1725,12 +1720,12 @@ namespace dftfe
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
       prm.leave_subsection();
-      isPseudopotential      = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-      pseudoTestsFlag        = prm.get_bool("PSEUDO TESTS FLAG");
-      pseudoPotentialFile    = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-      XCType                 = prm.get("EXCHANGE CORRELATION TYPE");
-      useLiXCForXCEvaluation = true;
-      //  prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
+      isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
+      pseudoPotentialFile = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
+      XCType              = prm.get("EXCHANGE CORRELATION TYPE");
+      useLibXCForXCEvaluation =
+        prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
       spinPolarized     = prm.get_integer("SPIN POLARIZATION");
       modelXCInputFile  = prm.get("MODEL XC INPUT FILE");
       auxBasisTypeXC    = prm.get("AUX BASIS TYPE");
@@ -1809,9 +1804,9 @@ namespace dftfe
         useMixedPrecSubspaceRotRR = prm.get_bool("USE MIXED PREC RR_SR");
         useMixedPrecCommunOnlyXtHXXtOX =
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
-        useSinglePrecCommunCheby = prm.get_bool("USE SINGLE PREC COMMUN CHEBY");
-        useSinglePrecCheby       = prm.get_bool("USE SINGLE PREC CHEBY");
-        tensorOpType             = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
+        communPrecCheby    = prm.get("COMMUN PREC CHEBY");
+        useSinglePrecCheby = prm.get_bool("USE SINGLE PREC CHEBY");
+        tensorOpType       = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
         overlapComputeCommunOrthoRR =
@@ -2210,7 +2205,7 @@ namespace dftfe
         useMixedPrecXtOX                    = true;
         useMixedPrecXtHX                    = true;
         useMixedPrecCGS_SR                  = true;
-        useSinglePrecCommunCheby            = true;
+        useSinglePrecCheby                  = true;
         reuseLanczosUpperBoundFromFirstCall = true;
       }
 

@@ -1,0 +1,67 @@
+set VERBOSITY=0
+set MEM OPT MODE=true
+set REPRODUCIBLE OUTPUT=true
+set SOLVER MODE=GS
+set USE GPU = true
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = bccFe_coordinates_distorted.inp
+  set DOMAIN VECTORS FILE = bccFe_domainVectors.inp
+  subsection Optimization
+    set ION FORCE = true
+  end
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=5
+  set DENSITY QUADRATURE RULE = 8
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM = 1.0
+    set ATOM BALL RADIUS=10.0
+  end
+end
+subsection Brillouin zone k point sampling options
+  set USE TIME REVERSAL SYMMETRY = true
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 1
+    set SAMPLING SHIFT 2  = 1
+    set SAMPLING SHIFT 3  = 1
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = MGGA-R2SCAN
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo_bccFe_scan.inp
+  set SPIN POLARIZATION               = 1
+  set TOTAL MAGNETIZATION=0.125
+  set PSEUDO TESTS FLAG = true
+  set USE ATOMIC MAGNETIZATION GUESS FOR CONSTRAINT MAG = true
+  set USE LIBXC FOR XC FUNCTIONAL EVALUATION = false
+end
+
+subsection SCF parameters
+  set CONSTRAINT MAGNETIZATION=true
+  set MIXING PARAMETER =0.5
+  set MIXING METHOD= ANDERSON
+  set SPIN MIXING ENHANCEMENT FACTOR  = 1.0
+  set TEMPERATURE              = 500
+  set TOLERANCE                = 1e-7
+  set STARTING WFC=ATOMIC
+  subsection Eigen-solver parameters
+     set CHEBYSHEV FILTER TOLERANCE=1e-5
+  end
+end
+subsection Parallelization
+  set NPKPT                    = 2
+end

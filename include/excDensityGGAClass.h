@@ -28,13 +28,15 @@ namespace dftfe
   public:
     excDensityGGAClass(std::shared_ptr<xc_func_type> &funcXPtr,
                        std::shared_ptr<xc_func_type> &funcCPtr,
-                       const bool                     useLibXC);
+                       const bool                     useLibXC,
+                       std::string                    XCType);
 
 
     excDensityGGAClass(std::shared_ptr<xc_func_type> &funcXPtr,
                        std::shared_ptr<xc_func_type> &funcCPtr,
                        std::string                    modelXCInputFile,
-                       const bool                     useLibXC);
+                       const bool                     useLibXC,
+                       std::string                    XCType);
 
 
     ~excDensityGGAClass();
@@ -111,7 +113,8 @@ namespace dftfe
     std::shared_ptr<xc_func_type> d_funcCPtr;
     std::vector<double>           d_spacingFDStencil;
     dftfe::uInt                   d_vxcDivergenceTermFDStencilSize;
-    bool d_useLibXC; ///< Flag to indicate whether to use libxc or not
+    bool        d_useLibXC; ///< Flag to indicate whether to use libxc or not
+    std::string d_XCType;
   };
 } // namespace dftfe
 #endif // DFTFE_EXCDENSITYGGACLASS_H
