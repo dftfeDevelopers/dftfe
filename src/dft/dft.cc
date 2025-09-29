@@ -3317,6 +3317,15 @@ namespace dftfe
                       d_auxDensityMatrixXCInPtr, d_phiInQuadValues, s);
                     computing_timer.leave_subsection("VEff Computation");
                   }
+                // kohnShamDFTEigenOperator.computing_timer.print_summary();
+                // {
+                //   int rank;
+                //   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+                //   if (rank == 0)
+                //     timer_output.print_summary();
+                //   MPI_Barrier(MPI_COMM_WORLD);
+                //   exit(-1);
+                // }
                 for (dftfe::uInt kPoint = 0; kPoint < d_kPointWeights.size();
                      ++kPoint)
                   {

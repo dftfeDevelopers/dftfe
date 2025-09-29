@@ -632,6 +632,8 @@ namespace dftfe
                      &phiValues,
     const dftfe::uInt spinIndex)
   {
+    computing_timer.enter_subsection("prior to computeRhoTauDependentXCData");
+
     bool isIntegrationByPartsGradDensityDependenceVxc =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getDensityBasedFamilyType() ==
        densityFamilyType::GGA);
@@ -645,7 +647,7 @@ namespace dftfe
     const dftfe::uInt nCellsPerBatch =
       (memorySpace == dftfe::utils::MemorySpace::HOST) ?
         1 :
-        (d_dftParamsPtr->useLibXCForXCEvaluation ? 1 : totalLocallyOwnedCells);
+        (d_dftParamsPtr->useLibXCForXCEvaluation ? 1 : 50);
     const dftfe::uInt numberQuadraturePointsPerCell =
       d_basisOperationsPtrHost->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
@@ -731,6 +733,14 @@ namespace dftfe
             numberQuadraturePointsPerCell * nCellsPerBatch, 0.0);
       }
 
+    xDataOut[xcRemainderOutputDataAttributes::e] =
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+        numberQuadraturePointsPerCell * nCellsPerBatch, 0.0);
+
+    cDataOut[xcRemainderOutputDataAttributes::e] =
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
+        numberQuadraturePointsPerCell * nCellsPerBatch, 0.0);
+
 #if defined(DFTFE_WITH_DEVICE)
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       d_halfKSquareTimesDerExcwithTauJxWHost;
@@ -776,17 +786,52 @@ namespace dftfe
 
     auto quadWeightsAll = d_basisOperationsPtrHost->JxW();
 
+    computing_timer.leave_subsection("prior to computeRhoTauDependentXCData");
 
     for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells;
          iCell += nCellsPerBatch)
       {
+        int numCells = std::min(totalLocallyOwnedCells - iCell, nCellsPerBatch);
+        // int numCells = nCellsPerBatch;
+
+        if (numCells < nCellsPerBatch)
+          {
+            pdexDensitySpinUp.resize(numberQuadraturePointsPerCell * numCells);
+            pdecDensitySpinUp.resize(numberQuadraturePointsPerCell * numCells);
+            pdexDensitySpinDown.resize(numberQuadraturePointsPerCell *
+                                       numCells);
+            pdecDensitySpinDown.resize(numberQuadraturePointsPerCell *
+                                       numCells);
+
+            xDataOut[xcRemainderOutputDataAttributes::pdeSigma].resize(
+              3 * numberQuadraturePointsPerCell * numCells);
+
+            cDataOut[xcRemainderOutputDataAttributes::pdeSigma].resize(
+              3 * numberQuadraturePointsPerCell * numCells);
+
+            xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp].resize(
+              numberQuadraturePointsPerCell * numCells);
+
+            xDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown].resize(
+              numberQuadraturePointsPerCell * numCells);
+
+            cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinUp].resize(
+              numberQuadraturePointsPerCell * numCells);
+
+            cDataOut[xcRemainderOutputDataAttributes::pdeTauSpinDown].resize(
+              numberQuadraturePointsPerCell * numCells);
+          }
+
+        computing_timer.enter_subsection("computeRhoTauDependentXCData");
+
         d_excManagerPtr->getExcSSDFunctionalObj()->computeRhoTauDependentXCData(
           *auxDensityXCRepresentation,
           std::make_pair<dftfe::uInt, dftfe::uInt>(
             iCell * numberQuadraturePointsPerCell,
-            (iCell + nCellsPerBatch) * numberQuadraturePointsPerCell),
+            (iCell + numCells) * numberQuadraturePointsPerCell),
           xDataOut,
           cDataOut);
+        computing_timer.leave_subsection("computeRhoTauDependentXCData");
 
         const dftfe::utils::MemoryStorage<double,
                                           dftfe::utils::MemorySpace::HOST>
@@ -850,15 +895,21 @@ namespace dftfe
           &gradDensityXCOtherSpinIndex =
             spinIndex == 0 ? gradDensitySpinDown : gradDensitySpinUp;
 
+        computing_timer.enter_subsection(
+          "applyLocalOperations veff computation");
         if (isGGA)
           auxDensityXCRepresentation->applyLocalOperations(
             std::make_pair(iCell * numberQuadraturePointsPerCell,
-                           (iCell + nCellsPerBatch) *
-                             numberQuadraturePointsPerCell),
+                           (iCell + numCells) * numberQuadraturePointsPerCell),
             densityData);
+        computing_timer.leave_subsection(
+          "applyLocalOperations veff computation");
+
+
+        computing_timer.enter_subsection("weights veff computation");
 
         dftfe::internal::computeVeffJxWEntries(
-          std::make_pair(iCell, iCell + nCellsPerBatch),
+          std::make_pair(iCell, iCell + numCells),
           numberQuadraturePointsPerCell,
           phiValues,
           pdexDensitySpinIndex,
@@ -868,7 +919,7 @@ namespace dftfe
         if (isGGA)
           {
             dftfe::internal::computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
-              std::make_pair(iCell, iCell + nCellsPerBatch),
+              std::make_pair(iCell, iCell + numCells),
               numberQuadraturePointsPerCell,
               spinIndex,
               d_basisOperationsPtrHost->cellsTypeFlag(),
@@ -884,7 +935,7 @@ namespace dftfe
         if (isTauMGGA)
           {
             dftfe::internal::computeHalfInvJacinvJacderExcWithTauJxWEntries(
-              std::make_pair(iCell, iCell + nCellsPerBatch),
+              std::make_pair(iCell, iCell + numCells),
               numberQuadraturePointsPerCell,
               d_basisOperationsPtrHost->cellsTypeFlag(),
               pdecTauSpinIndex,
@@ -893,7 +944,7 @@ namespace dftfe
               d_basisOperationsPtrHost->inverseJacobiansBasisData(),
               d_invJacinvJacderExcWithTauJxWHost);
           }
-
+        computing_timer.leave_subsection("weights veff computation");
 
         if (isTauMGGA &&
             std::is_same<dataTypes::number, std::complex<double>>::value)
@@ -929,7 +980,7 @@ namespace dftfe
                   kPointCoords(3);
                 kPointCoords.copyFrom(kPointCoordsVector);
                 dftfe::internal::computeKPointDependenderExcWithTauJxWEntries(
-                  std::make_pair(iCell, iCell + nCellsPerBatch),
+                  std::make_pair(iCell, iCell + numCells),
                   numberQuadraturePointsPerCell,
                   d_basisOperationsPtrHost->cellsTypeFlag(),
                   offsetFactor,
@@ -943,6 +994,8 @@ namespace dftfe
               } // Kpoint Loop
           }     // TauMGGA
       }         // cell loop
+
+    computing_timer.enter_subsection("Veff end copy Calls");
 
 #if defined(DFTFE_WITH_DEVICE)
     if (isTauMGGA)
@@ -980,6 +1033,7 @@ namespace dftfe
       d_invJacinvJacderExcWithTauJxWHost.size());
     d_invJacinvJacderExcWithTauJxW.copyFrom(d_invJacinvJacderExcWithTauJxWHost);
 #endif
+    computing_timer.leave_subsection("Veff end copy Calls");
   }
 
   template <dftfe::utils::MemorySpace memorySpace>

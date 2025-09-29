@@ -153,6 +153,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       wfcDescriptorData;
 
+    timer_output.enter_subsection("resize-1");
     for (size_t i = 0; i < this->d_densityDescriptorAttributesList.size(); i++)
       {
         if (this->d_densityDescriptorAttributesList[i] ==
@@ -184,11 +185,15 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::HOST>(nquad,
                                                                          0.0);
       }
+    timer_output.leave_subsection("resize-1");
+
+    timer_output.enter_subsection("applyLocalOperations");
 
     auxDensityMatrix.applyLocalOperations(quadIndexRange,
                                           densityDescriptorData);
     auxDensityMatrix.applyLocalOperations(quadIndexRange, wfcDescriptorData);
 
+    timer_output.leave_subsection("applyLocalOperations");
 
     auto &densityValuesSpinUp =
       densityDescriptorData.find(DensityDescriptorDataAttributes::valuesSpinUp)
@@ -210,50 +215,187 @@ namespace dftfe
     auto &tauValuesSpinDown =
       wfcDescriptorData.find(WfcDescriptorDataAttributes::tauSpinDown)->second;
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      densityValues(2 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      sigmaValues(3 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      tauValues(2 * nquad, 0);
+    timer_output.enter_subsection("resize-2");
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      exValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      ecValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexDensityValuesNonNN(2 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecDensityValuesNonNN(2 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexDensitySpinUpValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexDensitySpinDownValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecDensitySpinUpValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecDensitySpinDownValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexSigmaValues(3 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecSigmaValues(3 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexTauValuesNonNN(2 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecTauValuesNonNN(2 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexTauSpinUpValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexTauSpinDownValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecTauSpinUpValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecTauSpinDownValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexLaplacianValues(2 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecLaplacianValues(2 * nquad, 0);
+    static dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      s_densityValues, s_sigmaValues, s_tauValues;
 
+    if (s_densityValues.size() != 2 * nquad)
+      s_densityValues.resize(2 * nquad);
+
+    if (s_sigmaValues.size() != 3 * nquad)
+      s_sigmaValues.resize(3 * nquad);
+
+    if (s_tauValues.size() != 2 * nquad)
+      s_tauValues.resize(2 * nquad);
+
+    auto &densityValues = s_densityValues;
+    auto &sigmaValues   = s_sigmaValues;
+    auto &tauValues     = s_tauValues;
+    sigmaValues.setValue(0.0);
+
+    // Persistent host buffers for nonNN density derivatives to avoid
+    // frequent allocations. Note: shared across calls (not thread-safe).
+    static dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      s_pdexDensityValuesNonNN, s_pdecDensityValuesNonNN, s_pdexTauValuesNonNN,
+      s_pdecTauValuesNonNN;
+
+    if (s_pdexDensityValuesNonNN.size() != 2 * nquad)
+      s_pdexDensityValuesNonNN.resize(2 * nquad);
+    if (s_pdecDensityValuesNonNN.size() != 2 * nquad)
+      s_pdecDensityValuesNonNN.resize(2 * nquad);
+
+    auto &pdexDensityValuesNonNN = s_pdexDensityValuesNonNN;
+    auto &pdecDensityValuesNonNN = s_pdecDensityValuesNonNN;
+
+    if (s_pdexTauValuesNonNN.size() != 2 * nquad)
+      s_pdexTauValuesNonNN.resize(2 * nquad);
+    if (s_pdecTauValuesNonNN.size() != 2 * nquad)
+      s_pdecTauValuesNonNN.resize(2 * nquad);
+
+    auto &pdexTauValuesNonNN = s_pdexTauValuesNonNN;
+    auto &pdecTauValuesNonNN = s_pdecTauValuesNonNN;
+
+    // Static fallback variables for when xcRemainderOutputDataAttributes::e
+    // doesn't exist
+    static dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      s_exValues, s_ecValues;
+
+    // Conditional binding: use map values if they exist, otherwise use static
+    // variables
+    auto &exValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::e) != xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::e)->second :
+        s_exValues;
+    auto &ecValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::e) != cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::e)->second :
+        s_ecValues;
+
+    // Static fallback variables for derivative outputs
+    static dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      s_pdexDensitySpinUpValues, s_pdexDensitySpinDownValues,
+      s_pdecDensitySpinUpValues, s_pdecDensitySpinDownValues, s_pdexSigmaValues,
+      s_pdecSigmaValues, s_pdexTauSpinUpValues, s_pdexTauSpinDownValues,
+      s_pdecTauSpinUpValues, s_pdecTauSpinDownValues;
+
+    // Conditional binding for density derivatives
+    auto &pdexDensitySpinUpValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinUp) !=
+       xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinUp)
+          ->second :
+        s_pdexDensitySpinUpValues;
+    auto &pdexDensitySpinDownValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinDown) !=
+       xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinDown)
+          ->second :
+        s_pdexDensitySpinDownValues;
+    auto &pdecDensitySpinUpValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinUp) !=
+       cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinUp)
+          ->second :
+        s_pdecDensitySpinUpValues;
+    auto &pdecDensitySpinDownValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinDown) !=
+       cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinDown)
+          ->second :
+        s_pdecDensitySpinDownValues;
+
+    // Conditional binding for sigma derivatives
+    auto &pdexSigmaValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::pdeSigma) !=
+       xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::pdeSigma)->second :
+        s_pdexSigmaValues;
+    auto &pdecSigmaValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::pdeSigma) !=
+       cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::pdeSigma)->second :
+        s_pdecSigmaValues;
+
+    // Conditional binding for tau derivatives
+    auto &pdexTauSpinUpValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::pdeTauSpinUp) !=
+       xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::pdeTauSpinUp)->second :
+        s_pdexTauSpinUpValues;
+    auto &pdexTauSpinDownValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::pdeTauSpinDown) !=
+       xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::pdeTauSpinDown)->second :
+        s_pdexTauSpinDownValues;
+    auto &pdecTauSpinUpValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::pdeTauSpinUp) !=
+       cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::pdeTauSpinUp)->second :
+        s_pdecTauSpinUpValues;
+    auto &pdecTauSpinDownValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::pdeTauSpinDown) !=
+       cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::pdeTauSpinDown)->second :
+        s_pdecTauSpinDownValues;
+
+    if (exValues.size() != nquad)
+      exValues.resize(nquad);
+    if (ecValues.size() != nquad)
+      ecValues.resize(nquad);
+
+
+    if (pdexDensitySpinUpValues.size() != nquad)
+      pdexDensitySpinUpValues.resize(nquad);
+
+    if (pdexDensitySpinDownValues.size() != nquad)
+      pdexDensitySpinDownValues.resize(nquad);
+
+    if (pdecDensitySpinUpValues.size() != nquad)
+      pdecDensitySpinUpValues.resize(nquad);
+
+    if (pdecDensitySpinDownValues.size() != nquad)
+      pdecDensitySpinDownValues.resize(nquad);
+
+    if (pdexSigmaValues.size() != 3 * nquad)
+      pdexSigmaValues.resize(3 * nquad);
+
+    if (pdecSigmaValues.size() != 3 * nquad)
+      pdecSigmaValues.resize(3 * nquad);
+
+
+    if (pdexTauSpinUpValues.size() != nquad)
+      pdexTauSpinUpValues.resize(nquad);
+
+    if (pdexTauSpinDownValues.size() != nquad)
+      pdexTauSpinDownValues.resize(nquad);
+
+    if (pdecTauSpinUpValues.size() != nquad)
+      pdecTauSpinUpValues.resize(nquad);
+
+    if (pdecTauSpinDownValues.size() != nquad)
+      pdecTauSpinDownValues.resize(nquad);
+
+
+    if (d_useLibxc)
+      {
+        exValues.setValue(0.0);
+        ecValues.setValue(0.0);
+
+        pdexDensityValuesNonNN.setValue(0.0);
+        pdecDensityValuesNonNN.setValue(0.0);
+
+        pdexSigmaValues.setValue(0.0);
+        pdecSigmaValues.setValue(0.0);
+
+        pdexTauValuesNonNN.setValue(0.0);
+        pdecTauValuesNonNN.setValue(0.0);
+      }
+
+
+    timer_output.leave_subsection("resize-2");
+
+    timer_output.enter_subsection("rhoTaufill");
     dftfe::internal::fillRhoSigmaTauVector(nquad,
                                            densityValuesSpinUp,
                                            densityValuesSpinDown,
@@ -267,11 +409,19 @@ namespace dftfe
                                            rhoThresholdMgga,
                                            sigmaThresholdMgga,
                                            tauThresholdMgga);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      laplacianValues(2 * nquad, 0.0);
+    timer_output.leave_subsection("rhoTaufill");
 
     if (d_useLibxc)
       {
+        // Allocate laplacian-related arrays only when using libxc
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          laplacianValues(2 * nquad, 0.0);
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          pdexLaplacianValues(2 * nquad, 0.0);
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          pdecLaplacianValues(2 * nquad, 0.0);
+
+        timer_output.enter_subsection("libXC");
         xc_mgga_exc_vxc(d_funcXPtr.get(),
                         nquad,
                         &densityValues[0],
@@ -294,6 +444,7 @@ namespace dftfe
                         &pdecSigmaValues[0],
                         &pdecLaplacianValues[0],
                         &pdecTauValuesNonNN[0]);
+        timer_output.leave_subsection("libXC");
       }
     else
       {
@@ -341,29 +492,86 @@ namespace dftfe
         //           << std::endl;
         // std::cout << "tau_thresholdC: " << d_funcCPtr->tau_threshold
         //           << std::endl;
-#if defined(DFTFE_WITH_DEVICE)
-        dftfe::utils::MemoryStorage<double, memorySpace> densityValuesTemp,
-          sigmaValuesTemp, tauValuesTemp;
-        dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp,
-          exValuesTemp;
-        dftfe::utils::MemoryStorage<double, memorySpace> pdecDensityTemp,
-          pdexDensityTemp, pdecSigmaValuesTemp, pdexSigmaValuesTemp,
-          pdexTauValuesTemp, pdecTauValuesTemp;
+        timer_output.enter_subsection("copy-1");
 
-        densityValuesTemp.resize(densityValues.size());
-        densityValuesTemp.copyFrom(densityValues);
-        sigmaValuesTemp.resize(sigmaValues.size());
-        sigmaValuesTemp.copyFrom(sigmaValues);
-        tauValuesTemp.resize(tauValues.size());
-        tauValuesTemp.copyFrom(tauValues);
-        exValuesTemp.resize(exValues.size());
-        ecValuesTemp.resize(ecValues.size());
-        pdexDensityTemp.resize(pdexDensityValuesNonNN.size());
-        pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
-        pdexSigmaValuesTemp.resize(pdexSigmaValues.size());
-        pdecSigmaValuesTemp.resize(pdecSigmaValues.size());
-        pdexTauValuesTemp.resize(pdexTauValuesNonNN.size());
-        pdecTauValuesTemp.resize(pdecTauValuesNonNN.size());
+#if defined(DFTFE_WITH_DEVICE)
+        // Persistent device temp buffers (reused across calls)
+        static dftfe::utils::MemoryStorage<double, memorySpace>
+          s_densityValuesTemp, s_sigmaValuesTemp, s_tauValuesTemp,
+          s_exValuesTemp, s_ecValuesTemp, s_pdecDensityTemp, s_pdexDensityTemp,
+          s_pdecSigmaValuesTemp, s_pdexSigmaValuesTemp, s_pdexTauValuesTemp,
+          s_pdecTauValuesTemp;
+
+        if (s_densityValuesTemp.size() != densityValues.size())
+          {
+            s_densityValuesTemp.resize(densityValues.size());
+            s_sigmaValuesTemp.resize(sigmaValues.size());
+            s_tauValuesTemp.resize(tauValues.size());
+            s_exValuesTemp.resize(exValues.size());
+            s_ecValuesTemp.resize(ecValues.size());
+            s_pdexDensityTemp.resize(pdexDensityValuesNonNN.size());
+            s_pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
+            s_pdexSigmaValuesTemp.resize(pdexSigmaValues.size());
+            s_pdecSigmaValuesTemp.resize(pdecSigmaValues.size());
+            s_pdexTauValuesTemp.resize(pdexTauValuesNonNN.size());
+            s_pdecTauValuesTemp.resize(pdecTauValuesNonNN.size());
+          }
+
+
+
+        // Single reusable pinned host buffer used for both copy-1 and copy-2
+        static void  *s_pinnedBuf = nullptr;
+        static size_t s_pinnedCap = 0;
+
+        auto ensurePinnedCapacity = [&](std::size_t needBytes) {
+          if (s_pinnedCap < needBytes)
+            {
+              if (s_pinnedBuf)
+                dftfe::utils::deviceHostFree(s_pinnedBuf);
+              dftfe::utils::deviceHostMalloc(&s_pinnedBuf, needBytes);
+              s_pinnedCap = needBytes;
+            }
+        };
+
+        // Layout for copy-1 (H2D): density, sigma, tau
+        const std::size_t bytesDensity = densityValues.size() * sizeof(double);
+        const std::size_t bytesSigma   = 1.5 * bytesDensity;
+        const std::size_t bytesTau     = bytesDensity;
+        const std::size_t bytesPhase1  = 3.5 * bytesDensity;
+        ensurePinnedCapacity(bytesPhase1);
+
+        double *p_density = static_cast<double *>(s_pinnedBuf);
+        double *p_sigma   = p_density + densityValues.size();
+        double *p_tau     = p_sigma + sigmaValues.size();
+
+        std::memcpy(p_density, &densityValues[0], bytesDensity);
+        std::memcpy(p_sigma, &sigmaValues[0], bytesSigma);
+        std::memcpy(p_tau, &tauValues[0], bytesTau);
+
+        dftfe::utils::deviceMemcpyAsyncH2D(&s_densityValuesTemp[0],
+                                           p_density,
+                                           bytesDensity);
+        dftfe::utils::deviceMemcpyAsyncH2D(&s_sigmaValuesTemp[0],
+                                           p_sigma,
+                                           bytesSigma);
+        dftfe::utils::deviceMemcpyAsyncH2D(&s_tauValuesTemp[0],
+                                           p_tau,
+                                           bytesTau);
+
+        dftfe::utils::deviceSynchronize();
+
+        // Bind references used by kernels below
+        auto &densityValuesTemp   = s_densityValuesTemp;
+        auto &sigmaValuesTemp     = s_sigmaValuesTemp;
+        auto &tauValuesTemp       = s_tauValuesTemp;
+        auto &exValuesTemp        = s_exValuesTemp;
+        auto &ecValuesTemp        = s_ecValuesTemp;
+        auto &pdecDensityTemp     = s_pdecDensityTemp;
+        auto &pdexDensityTemp     = s_pdexDensityTemp;
+        auto &pdecSigmaValuesTemp = s_pdecSigmaValuesTemp;
+        auto &pdexSigmaValuesTemp = s_pdexSigmaValuesTemp;
+        auto &pdecTauValuesTemp   = s_pdecTauValuesTemp;
+        auto &pdexTauValuesTemp   = s_pdexTauValuesTemp;
 #else
         auto &densityValuesTemp   = densityValues;
         auto &sigmaValuesTemp     = sigmaValues;
@@ -377,6 +585,10 @@ namespace dftfe
         auto &pdecTauValuesTemp   = pdecTauValuesNonNN;
         auto &pdexTauValuesTemp   = pdexTauValuesNonNN;
 #endif
+        timer_output.leave_subsection("copy-1");
+
+        timer_output.enter_subsection("libXC");
+
         if (d_XCType == "MGGA-R2SCAN")
           {
             MGGAX_R2SCAN(nquad,
@@ -428,19 +640,116 @@ namespace dftfe
             dftfe::utils::throwException(
               "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the M-GGA functional.");
           }
-#if defined(DFTFE_WITH_DEVICE)
-        exValues.copyFrom(exValuesTemp);
-        pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
-        pdexSigmaValues.copyFrom(pdexSigmaValuesTemp);
-        pdexTauValuesNonNN.copyFrom(pdexTauValuesTemp);
+        timer_output.leave_subsection("libXC");
 
-        ecValues.copyFrom(ecValuesTemp);
-        pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
-        pdecSigmaValues.copyFrom(pdecSigmaValuesTemp);
-        pdecTauValuesNonNN.copyFrom(pdecTauValuesTemp);
+        timer_output.enter_subsection("copy-2");
+#if defined(DFTFE_WITH_DEVICE)
+        if (false)
+          {
+            const std::size_t bytesEx = exValues.size() * sizeof(double);
+            const std::size_t bytesEc = ecValues.size() * sizeof(double);
+            const std::size_t bytesPxDensity =
+              pdexDensityValuesNonNN.size() * sizeof(double);
+            const std::size_t bytesPcDensity =
+              pdecDensityValuesNonNN.size() * sizeof(double);
+
+            const std::size_t bytesPxSigma =
+              pdexSigmaValues.size() * sizeof(double);
+            const std::size_t bytesPcSigma =
+              pdecSigmaValues.size() * sizeof(double);
+            const std::size_t bytesPxTau =
+              pdexTauValuesNonNN.size() * sizeof(double);
+            const std::size_t bytesPcTau =
+              pdecTauValuesNonNN.size() * sizeof(double);
+
+
+            if (bytesEx)
+              dftfe::utils::deviceMemcpyAsyncD2H(&exValues[0],
+                                                 &exValuesTemp[0],
+                                                 bytesEx);
+            if (bytesPxDensity)
+              dftfe::utils::deviceMemcpyAsyncD2H(&pdexDensityValuesNonNN[0],
+                                                 &pdexDensityTemp[0],
+                                                 bytesPxDensity);
+            if (bytesPxSigma)
+              dftfe::utils::deviceMemcpyAsyncD2H(&pdexSigmaValues[0],
+                                                 &pdexSigmaValuesTemp[0],
+                                                 bytesPxSigma);
+            if (bytesPxTau)
+              dftfe::utils::deviceMemcpyAsyncD2H(&pdexTauValuesNonNN[0],
+                                                 &pdexTauValuesTemp[0],
+                                                 bytesPxTau);
+
+            if (bytesEc)
+              dftfe::utils::deviceMemcpyAsyncD2H(&ecValues[0],
+                                                 &ecValuesTemp[0],
+                                                 bytesEc);
+            if (bytesPcDensity)
+              dftfe::utils::deviceMemcpyAsyncD2H(&pdecDensityValuesNonNN[0],
+                                                 &pdecDensityTemp[0],
+                                                 bytesPcDensity);
+            if (bytesPcSigma)
+              dftfe::utils::deviceMemcpyAsyncD2H(&pdecSigmaValues[0],
+                                                 &pdecSigmaValuesTemp[0],
+                                                 bytesPcSigma);
+            if (bytesPcTau)
+              dftfe::utils::deviceMemcpyAsyncD2H(&pdecTauValuesNonNN[0],
+                                                 &pdecTauValuesTemp[0],
+                                                 bytesPcTau);
+            dftfe::utils::deviceSynchronize();
+
+            //             cudaHostRegister(&exValues[0], bytesEc,
+            //             cudaHostRegisterDefault);
+            //             cudaHostRegister(&ecValues[0], bytesEc,
+            //             cudaHostRegisterDefault);
+            //             cudaHostRegister(&pdexDensityValuesNonNN[0],
+            //                              bytesPxDensity,
+            //                              cudaHostRegisterDefault);
+
+            //             cudaHostRegister(&pdecDensityValuesNonNN[0],
+            //                              bytesPcDensity,
+            //                              cudaHostRegisterDefault);
+
+            //             cudaHostRegister(&pdexSigmaValues[0],
+            //                              bytesPxSigma,
+            //                              cudaHostRegisterDefault);
+            //             cudaHostRegister(&pdecSigmaValues[0],
+            //                              bytesPcSigma,
+            //                              cudaHostRegisterDefault);
+            //             cudaHostRegister(&pdexTauValuesNonNN[0],
+            //                              bytesPxTau,
+            //                              cudaHostRegisterDefault);
+            //             cudaHostRegister(&pdecTauValuesNonNN[0],
+            //                              bytesPcTau,
+            //                              cudaHostRegisterDefault);
+            // dftfe::utils::memoryTransferKernelsDevice
+            //             exValues.copyFrom(exValuesTemp);
+            //             pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+            //             pdexSigmaValues.copyFrom(pdexSigmaValuesTemp);
+            //             pdexTauValuesNonNN.copyFrom(pdexTauValuesTemp);
+
+            //             ecValues.copyFrom(ecValuesTemp);
+            //             pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+            //             pdecSigmaValues.copyFrom(pdecSigmaValuesTemp);
+            //             pdecTauValuesNonNN.copyFrom(pdecTauValuesTemp);
+          }
+        else
+          {
+            exValues.copyFrom(exValuesTemp);
+            pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+            pdexSigmaValues.copyFrom(pdexSigmaValuesTemp);
+            pdexTauValuesNonNN.copyFrom(pdexTauValuesTemp);
+
+            ecValues.copyFrom(ecValuesTemp);
+            pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+            pdecSigmaValues.copyFrom(pdecSigmaValuesTemp);
+            pdecTauValuesNonNN.copyFrom(pdecTauValuesTemp);
+          }
 #endif
+        timer_output.leave_subsection("copy-2");
       }
 
+    timer_output.enter_subsection("Thresholding  and final step");
     for (size_t i = 0; i < nquad; i++)
       {
         if (std::abs(densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=
@@ -468,10 +777,7 @@ namespace dftfe
             pdecSigmaValues[3 * i + 2]        = 0.0;
             pdecTauValuesNonNN[2 * i + 1]     = 0.0;
           }
-      }
 
-    for (size_t i = 0; i < nquad; i++)
-      {
         // Evaluation of total exValue and ecValue per unit volume
         exValues[i] =
           exValues[i] * (densityValues[2 * i + 0] + densityValues[2 * i + 1]);
@@ -481,65 +787,13 @@ namespace dftfe
         pdexDensitySpinDownValues[i] = pdexDensityValuesNonNN[2 * i + 1];
         pdecDensitySpinUpValues[i]   = pdecDensityValuesNonNN[2 * i + 0];
         pdecDensitySpinDownValues[i] = pdecDensityValuesNonNN[2 * i + 1];
-
-        pdexTauSpinUpValues[i]   = pdexTauValuesNonNN[2 * i + 0];
-        pdexTauSpinDownValues[i] = pdexTauValuesNonNN[2 * i + 1];
-        pdecTauSpinUpValues[i]   = pdecTauValuesNonNN[2 * i + 0];
-        pdecTauSpinDownValues[i] = pdecTauValuesNonNN[2 * i + 1];
+        pdexTauSpinUpValues[i]       = pdexTauValuesNonNN[2 * i + 0];
+        pdexTauSpinDownValues[i]     = pdexTauValuesNonNN[2 * i + 1];
+        pdecTauSpinUpValues[i]       = pdecTauValuesNonNN[2 * i + 0];
+        pdecTauSpinDownValues[i]     = pdecTauValuesNonNN[2 * i + 1];
       }
 
-
-    for (size_t i = 0; i < outputDataAttributes.size(); i++)
-      {
-        if (outputDataAttributes[i] == xcRemainderOutputDataAttributes::e)
-          {
-            xDataOut.find(outputDataAttributes[i])->second = exValues;
-
-            cDataOut.find(outputDataAttributes[i])->second = ecValues;
-          }
-        else if (outputDataAttributes[i] ==
-                 xcRemainderOutputDataAttributes::pdeDensitySpinUp)
-          {
-            xDataOut.find(outputDataAttributes[i])->second =
-              pdexDensitySpinUpValues;
-
-            cDataOut.find(outputDataAttributes[i])->second =
-              pdecDensitySpinUpValues;
-          }
-        else if (outputDataAttributes[i] ==
-                 xcRemainderOutputDataAttributes::pdeDensitySpinDown)
-          {
-            xDataOut.find(outputDataAttributes[i])->second =
-              pdexDensitySpinDownValues;
-
-            cDataOut.find(outputDataAttributes[i])->second =
-              pdecDensitySpinDownValues;
-          }
-        else if (outputDataAttributes[i] ==
-                 xcRemainderOutputDataAttributes::pdeSigma)
-          {
-            xDataOut.find(outputDataAttributes[i])->second = pdexSigmaValues;
-
-            cDataOut.find(outputDataAttributes[i])->second = pdecSigmaValues;
-          }
-        else if (outputDataAttributes[i] ==
-                 xcRemainderOutputDataAttributes::pdeTauSpinUp)
-          {
-            xDataOut.find(outputDataAttributes[i])->second =
-              pdexTauSpinUpValues;
-
-            cDataOut.find(outputDataAttributes[i])->second =
-              pdecTauSpinUpValues;
-          }
-        else if (outputDataAttributes[i] ==
-                 xcRemainderOutputDataAttributes::pdeTauSpinDown)
-          {
-            xDataOut.find(outputDataAttributes[i])->second =
-              pdexTauSpinDownValues;
-            cDataOut.find(outputDataAttributes[i])->second =
-              pdecTauSpinDownValues;
-          }
-      }
+    timer_output.leave_subsection("Thresholding  and final step");
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
