@@ -14,11 +14,11 @@
 //
 // ---------------------------------------------------------------------
 //
-
 #ifndef DFTFE_EXCORRFUNCTIONALEVALUATOR_H
 #define DFTFE_EXCORRFUNCTIONALEVALUATOR_H
 #include <MemoryStorage.h>
-
+#include <cmath>
+#include <XCfunctionalDefs/xc_params.h>
 
 namespace dftfe
 {
@@ -27,7 +27,7 @@ namespace dftfe
   void LDAX_##NAME(                                                        \
     dftfe::uInt                                             numPoints,     \
     const dftfe::utils::MemoryStorage<double, memorySpace> &densityValues, \
-    dftfe::utils::MemoryStorage<double, memorySpace>       &excEnergyOut,  \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &exEnergyOut,   \
     dftfe::utils::MemoryStorage<double, memorySpace>       &pdexDensity);
 
 #define DFTFE_FUNCTIONALEVALUATOR_LDA_C(NAME, BODY)                        \
@@ -37,6 +37,55 @@ namespace dftfe
     const dftfe::utils::MemoryStorage<double, memorySpace> &densityValues, \
     dftfe::utils::MemoryStorage<double, memorySpace>       &corrEnergyOut, \
     dftfe::utils::MemoryStorage<double, memorySpace>       &pdecDensity);
+
+#define DFTFE_FUNCTIONALEVALUATOR_GGA_X(NAME, BODY)                        \
+  template <dftfe::utils::MemorySpace memorySpace>                         \
+  void GGAX_##NAME(                                                        \
+    dftfe::uInt                                             numPoints,     \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &densityValues, \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &sigmaValues,   \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &exEnergyOut,   \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdexDensity,   \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdexSigma);
+
+#define DFTFE_FUNCTIONALEVALUATOR_GGA_C(NAME, BODY)                        \
+  template <dftfe::utils::MemorySpace memorySpace>                         \
+  void GGAC_##NAME(                                                        \
+    dftfe::uInt                                             numPoints,     \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &densityValues, \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &sigmaValues,   \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &corrEnergyOut, \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdecDensity,   \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdecSigma);
+
+#define DFTFE_FUNCTIONALEVALUATOR_MGGA_X(NAME, BODY)                       \
+  template <dftfe::utils::MemorySpace memorySpace>                         \
+  void MGGAX_##NAME(                                                       \
+    dftfe::uInt                                             numPoints,     \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &densityValues, \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &sigmaValues,   \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &tauValues,     \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &exEnergyOut,   \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdexDensity,   \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdexSigma,     \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdexTau,       \
+    bool                                                    tauNeededX,    \
+    bool                                                    enforceFHCX);
+
+#define DFTFE_FUNCTIONALEVALUATOR_MGGA_C(NAME, BODY)                       \
+  template <dftfe::utils::MemorySpace memorySpace>                         \
+  void MGGAC_##NAME(                                                       \
+    dftfe::uInt                                             numPoints,     \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &densityValues, \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &sigmaValues,   \
+    const dftfe::utils::MemoryStorage<double, memorySpace> &tauValues,     \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &corrEnergyOut, \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdecDensity,   \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdecSigma,     \
+    dftfe::utils::MemoryStorage<double, memorySpace>       &pdecTau,       \
+    bool                                                    tauNeededC,    \
+    bool                                                    enforceFHCC);
+
 #include <exchangeCorrelationFunctionalEvaluation.def>
 
 } // namespace dftfe
@@ -44,4 +93,10 @@ namespace dftfe
 
 #undef DFTFE_FUNCTIONALEVALUATOR_LDA_X
 #undef DFTFE_FUNCTIONALEVALUATOR_LDA_C
+
+#undef DFTFE_FUNCTIONALEVALUATOR_GGA_X
+#undef DFTFE_FUNCTIONALEVALUATOR_GGA_C
+
+#undef DFTFE_FUNCTIONALEVALUATOR_MGGA_X
+#undef DFTFE_FUNCTIONALEVALUATOR_MGGA_C
 #endif // DFTFE_EXCORRFUNCTIONALEVALUATOR_H

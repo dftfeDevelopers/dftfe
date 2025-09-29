@@ -12,12 +12,14 @@ namespace dftfe
   public:
     excTauMGGAClass(std::shared_ptr<xc_func_type> &funcXPtr,
                     std::shared_ptr<xc_func_type> &funcCPtr,
-                    const bool                     useLibXC);
+                    const bool                     useLibXC,
+                    std::string                    XCType);
 
     excTauMGGAClass(std::shared_ptr<xc_func_type> &funcXPtr,
                     std::shared_ptr<xc_func_type> &funcCPtr,
                     std::string                    modelXCInputFile,
-                    const bool                     useLibXC);
+                    const bool                     useLibXC,
+                    std::string                    XCType);
 
     ~excTauMGGAClass();
 
@@ -91,7 +93,15 @@ namespace dftfe
   private:
     std::shared_ptr<xc_func_type> d_funcXPtr;
     std::shared_ptr<xc_func_type> d_funcCPtr;
-    bool d_useLibxc; ///< Flag to indicate whether to use libxc or not
+    // Flag to indicate whether to use libxc or not
+    bool        d_useLibxc;
+    std::string d_XCType;
+    bool        d_tauNeededX;
+    bool        d_tauNeededC;
+    // These extra flags are required for internal evaluation of exc related
+    // values. These checks are for enforcing Fermi Hole curvature.
+    bool d_enforceFHCX;
+    bool d_enforceFHCC;
   };
 
 } // namespace dftfe
