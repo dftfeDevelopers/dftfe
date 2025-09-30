@@ -95,7 +95,7 @@ namespace dftfe
     d_domainBoundingVectorsInverse.copyFrom(inv3(d_domainBoundingVectors));
     if (d_isGroupSymmetry)
       {
-        const dftfe::Int max_size = 500;
+        const dftfe::Int max_size = 2000;
         int              rotation[max_size][3][3];
         double           translation[max_size][3];
         double           lattice[3][3];
@@ -103,7 +103,7 @@ namespace dftfe
         int              types[d_numAtoms];
         for (dftfe::uInt iVec = 0; iVec < 3; ++iVec)
           for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-            lattice[iVec][jDim] = d_domainBoundingVectors[3 * iVec + jDim];
+            lattice[jDim][iVec] = d_domainBoundingVectors[3 * iVec + jDim];
         for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
           {
             types[iAtom] = atomLocationsFractional[iAtom][0];
@@ -118,7 +118,7 @@ namespace dftfe
                                        position,
                                        types,
                                        d_numAtoms,
-                                       1e-5);
+                                       1e-8);
         else
           {
             int    equivalent_atoms[d_numAtoms];
@@ -136,25 +136,25 @@ namespace dftfe
                                                              types,
                                                              spins,
                                                              d_numAtoms,
-                                                             1e-5);
+                                                             1e-8);
           }
         d_symmMat.reserve(d_numSymm);
         d_symmMatInverse.reserve(d_numSymm);
         d_translation.reserve(d_numSymm);
         dftfe::uInt numSymm = 0;
         for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
-          if (std::abs(translation[iSymm][0]) < 1e-8 &&
-              std::abs(translation[iSymm][1]) < 1e-8 &&
-              std::abs(translation[iSymm][2]) < 1e-8)
-            {
-              d_symmMat.push_back(std::vector<double>(9, 0.0));
-              d_translation.push_back(std::vector<double>(3, 0.0));
-              for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+          {
+            d_symmMat.push_back(std::vector<double>(9, 0.0));
+            d_translation.push_back(std::vector<double>(3, 0.0));
+            for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
+              {
+                d_translation.back()[jDim] = translation[iSymm][jDim];
                 for (dftfe::uInt kDim = 0; kDim < 3; ++kDim)
                   d_symmMat.back()[kDim * 3 + jDim] =
                     static_cast<double>(rotation[iSymm][jDim][kDim]);
-              d_symmMatInverse.push_back(inv3(d_symmMat.back()));
-            }
+              }
+            d_symmMatInverse.push_back(inv3(d_symmMat.back()));
+          }
         d_symmMat.shrink_to_fit();
         d_symmMatInverse.shrink_to_fit();
         d_translation.shrink_to_fit();
@@ -262,7 +262,7 @@ namespace dftfe
               for (int kDim = 0; kDim < 3; ++kDim)
                 dot += m[iDim * 3 + kDim] * m[jDim * 3 + kDim];
               double orthoVal = iDim == jDim ? 1.0 : 0.0;
-              if (std::fabs(dot - orthoVal) > 1e-6)
+              if (std::fabs(dot - orthoVal) > 1e-8)
                 return false;
             }
         }
@@ -295,7 +295,7 @@ namespace dftfe
     std::vector<dftfe::Int> kPointSymmetryMap(numKPoints, -1);
     auto                    wrap = [](double x) {
       double r = std::remainder(x, 1.0);
-      return (r <= -0.5 ? 0.5 : r);
+      return (r >= 0.5 ? r - 1.0 : r);
     };
     auto periodicDist = [](double a, double b) noexcept {
       double d = std::fabs(a - b);
@@ -384,7 +384,9 @@ namespace dftfe
     requiredPointCoordinates.clear();
     requiredPointCoordinates.reserve(d_numSymm * nodalCoordinates.size());
     localDoFIndexToPointIndexMap.clear();
-    localDoFIndexToPointIndexMap.resize(d_numSymm);
+    localDoFIndexToPointIndexMap.resize(
+      d_numSymm, std::vector<dftfe::uInt>(dofHandler.n_locally_owned_dofs()));
+    std::map<std::array<std::int64_t, 3>, dftfe::uInt> pointToPointIndexMap;
     for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
       for (dealii::IndexSet::ElementIterator it = locallyOwnedNodes.begin();
            it != locallyOwnedNodes.end();
@@ -409,7 +411,7 @@ namespace dftfe
             for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
               transformedNodeCoordinatesFrac[iDim] +=
                 d_symmMatInverse[iSymm][jDim * 3 + iDim] *
-                currentNodeCoordinatesFrac[jDim];
+                (currentNodeCoordinatesFrac[jDim] - d_translation[iSymm][jDim]);
           for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
             transformedNodeCoordinatesFrac[iDim] =
               transformedNodeCoordinatesFrac[iDim] -
@@ -421,10 +423,30 @@ namespace dftfe
               transformedNodeCoordinatesCart[iDim] +=
                 d_domainBoundingVectors[3 * jDim + iDim] *
                 transformedNodeCoordinatesFrac[jDim];
-          requiredPointCoordinates.push_back(transformedNodeCoordinatesCart);
-          localDoFIndexToPointIndexMap[iSymm][locallyOwnedNodes
-                                                .index_within_set(*it)] =
-            requiredPointCoordinates.size() - 1;
+          std::array<std::int64_t, 3> roundedCoords;
+          roundedCoords[0] =
+            std::llround(transformedNodeCoordinatesCart[0] * 1e8);
+          roundedCoords[1] =
+            std::llround(transformedNodeCoordinatesCart[1] * 1e8);
+          roundedCoords[2] =
+            std::llround(transformedNodeCoordinatesCart[2] * 1e8);
+          auto pointIterator = pointToPointIndexMap.find(roundedCoords);
+          if (pointIterator != pointToPointIndexMap.end())
+            {
+              localDoFIndexToPointIndexMap[iSymm][locallyOwnedNodes
+                                                    .index_within_set(*it)] =
+                pointIterator->second;
+            }
+          else
+            {
+              requiredPointCoordinates.push_back(
+                transformedNodeCoordinatesCart);
+              localDoFIndexToPointIndexMap[iSymm][locallyOwnedNodes
+                                                    .index_within_set(*it)] =
+                requiredPointCoordinates.size() - 1;
+              pointToPointIndexMap[roundedCoords] =
+                requiredPointCoordinates.size() - 1;
+            }
         }
     requiredPointCoordinates.shrink_to_fit();
     remotePointCache.reinit(requiredPointCoordinates,
@@ -454,14 +476,15 @@ namespace dftfe
     for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
       for (dftfe::uInt iPoint = 0; iPoint < numPoints; ++iPoint)
         {
-          std::vector<double> transformedPoint = d_translation[iSymm];
+          std::vector<double> transformedPoint = {0.0, 0.0, 0.0};
           for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
-            transformedPoint[jDim] += d_symmMatInverse[iSymm][0 * 3 + jDim] *
-                                        globalPointCoords[3 * iPoint + 0] +
-                                      d_symmMatInverse[iSymm][1 * 3 + jDim] *
-                                        globalPointCoords[3 * iPoint + 1] +
-                                      d_symmMatInverse[iSymm][2 * 3 + jDim] *
-                                        globalPointCoords[3 * iPoint + 2];
+            transformedPoint[jDim] =
+              d_symmMatInverse[iSymm][0 * 3 + jDim] *
+                (globalPointCoords[3 * iPoint + 0] - d_translation[iSymm][0]) +
+              d_symmMatInverse[iSymm][1 * 3 + jDim] *
+                (globalPointCoords[3 * iPoint + 1] - d_translation[iSymm][1]) +
+              d_symmMatInverse[iSymm][2 * 3 + jDim] *
+                (globalPointCoords[3 * iPoint + 2] - d_translation[iSymm][2]);
           for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
             transformedPoint[jDim] =
               transformedPoint[jDim] - std::floor(transformedPoint[jDim]);
@@ -500,8 +523,7 @@ namespace dftfe
       for (dftfe::uInt iDoF = 0; iDoF < scalarField.locally_owned_size();
            ++iDoF)
         scalarField.local_element(iDoF) +=
-          pointValues[localDoFIndexToPointIndexMap[iSymm].find(iDoF)->second] /
-          d_numSymm;
+          pointValues[localDoFIndexToPointIndexMap[iSymm][iDoF]] / d_numSymm;
   }
 
   void

@@ -122,8 +122,7 @@ namespace dftfe
     const bool d_isTimeReversal;
     const bool d_isGroupSymmetry;
 
-    std::vector<std::map<dftfe::uInt, dftfe::uInt>>
-      localDoFIndexToPointIndexMap;
+    std::vector<std::vector<dftfe::uInt>> localDoFIndexToPointIndexMap;
     mutable dealii::Utilities::MPI::RemotePointEvaluation<3, 3>
                                   remotePointCache;
     std::vector<dealii::Point<3>> requiredPointCoordinates;
