@@ -22,16 +22,8 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
-
-#include <deal.II/base/timer.h>
 namespace dftfe
 {
-  // Declaration only; definition lives in a single .cc file to avoid
-  // multiple definitions across translation units.
-  extern dealii::TimerOutput timer_output;
-
-  extern dealii::ConditionalOStream pcout_new;
-
   enum class ExcFamilyType
   {
     /*

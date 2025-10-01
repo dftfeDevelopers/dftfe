@@ -446,10 +446,8 @@ namespace dftfe
     dealii::ConditionalOStream pcout;
 
     // compute-time logger
-  public:
     dealii::TimerOutput computing_timer;
 
-  protected:
     std::shared_ptr<hubbard<dataTypes::number, memorySpace>> d_hubbardClassPtr;
     bool                                                     d_useHubbard;
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>

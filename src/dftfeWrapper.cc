@@ -1084,14 +1084,4 @@ namespace dftfe
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     d_dftfeBasePtr->writeDomainAndAtomCoordinates(Path);
   }
-
-  // Define the global TimerOutput declared in ExcSSDFunctionalBaseClass.h
-  dealii::ConditionalOStream
-                      pcout_new(std::cout,
-              (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-  dealii::TimerOutput timer_output(MPI_COMM_WORLD,
-                                   pcout_new,
-                                   dealii::TimerOutput::never,
-                                   dealii::TimerOutput::wall_times);
-
 } // namespace dftfe

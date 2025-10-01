@@ -155,7 +155,6 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       wfcDescriptorData;
 
-    // timer_output.enter_subsection("resize-1");
     for (size_t i = 0; i < this->d_densityDescriptorAttributesList.size(); i++)
       {
         if (this->d_densityDescriptorAttributesList[i] ==
@@ -187,15 +186,11 @@ namespace dftfe
                                         dftfe::utils::MemorySpace::HOST>(nquad,
                                                                          0.0);
       }
-    // timer_output.leave_subsection("resize-1");
-
-    // timer_output.enter_subsection("applyLocalOperations");
 
     auxDensityMatrix.applyLocalOperations(quadIndexRange,
                                           densityDescriptorData);
     auxDensityMatrix.applyLocalOperations(quadIndexRange, wfcDescriptorData);
 
-    // timer_output.leave_subsection("applyLocalOperations");
 
     auto &densityValuesSpinUp =
       densityDescriptorData.find(DensityDescriptorDataAttributes::valuesSpinUp)
@@ -217,7 +212,6 @@ namespace dftfe
     auto &tauValuesSpinDown =
       wfcDescriptorData.find(WfcDescriptorDataAttributes::tauSpinDown)->second;
 
-    // timer_output.enter_subsection("resize-2");
 
     if (this->s_densityValues.size() != 2 * nquad)
       this->s_densityValues.resize(2 * nquad);
@@ -351,9 +345,6 @@ namespace dftfe
     if (pdecTauSpinDownValues.size() != nquad)
       pdecTauSpinDownValues.resize(nquad);
 
-    // timer_output.leave_subsection("resize-2");
-
-    // timer_output.enter_subsection("rhoTaufill");
     dftfe::internal::fillRhoSigmaTauVector(nquad,
                                            densityValuesSpinUp,
                                            densityValuesSpinDown,
@@ -367,7 +358,6 @@ namespace dftfe
                                            rhoThresholdMgga,
                                            sigmaThresholdMgga,
                                            tauThresholdMgga);
-    // timer_output.leave_subsection("rhoTaufill");
 
     if (d_useLibxc)
       {
@@ -391,7 +381,6 @@ namespace dftfe
         pdexTauValuesNonNN.setValue(0.0);
         pdecTauValuesNonNN.setValue(0.0);
 
-        // timer_output.enter_subsection("libXC");
         xc_mgga_exc_vxc(d_funcXPtr.get(),
                         nquad,
                         &densityValues[0],
@@ -414,7 +403,6 @@ namespace dftfe
                         &pdecSigmaValues[0],
                         &pdecLaplacianValues[0],
                         &pdecTauValuesNonNN[0]);
-        // timer_output.leave_subsection("libXC");
       }
     else
       {
@@ -462,7 +450,6 @@ namespace dftfe
         //           << std::endl;
         // std::cout << "tau_thresholdC: " << d_funcCPtr->tau_threshold
         //           << std::endl;
-        // timer_output.enter_subsection("copy-1");
 
 #if defined(DFTFE_WITH_DEVICE)
         const std::size_t bytesDensity = densityValues.size() * sizeof(double);
@@ -549,9 +536,6 @@ namespace dftfe
         auto &pdecTauValuesTemp   = pdecTauValuesNonNN;
         auto &pdexTauValuesTemp   = pdexTauValuesNonNN;
 #endif
-        // timer_output.leave_subsection("copy-1");
-
-        // timer_output.enter_subsection("libXC");
 
         if (d_XCType == "MGGA-R2SCAN")
           {
@@ -604,9 +588,6 @@ namespace dftfe
             dftfe::utils::throwException(
               "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the M-GGA functional.");
           }
-        // timer_output.leave_subsection("libXC");
-
-        // timer_output.enter_subsection("copy-2");
 #if defined(DFTFE_WITH_DEVICE)
 
         if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
@@ -677,10 +658,8 @@ namespace dftfe
             pdecTauValuesNonNN.copyFrom(pdecTauValuesTemp);
           }
 #endif
-        // timer_output.leave_subsection("copy-2");
       }
 
-    // timer_output.enter_subsection("Thresholding  and final step");
     for (size_t i = 0; i < nquad; i++)
       {
         if (std::abs(densityValues[2 * i + 0] + densityValues[2 * i + 1]) <=
@@ -723,8 +702,6 @@ namespace dftfe
         pdecTauSpinUpValues[i]       = pdecTauValuesNonNN[2 * i + 0];
         pdecTauSpinDownValues[i]     = pdecTauValuesNonNN[2 * i + 1];
       }
-
-    // timer_output.leave_subsection("Thresholding  and final step");
   }
 
   template <dftfe::utils::MemorySpace memorySpace>
