@@ -315,10 +315,9 @@ namespace dftfe
 
             std::memcpy(p_density, &densityValues[0], bytesDensity);
 
-            dftfe::utils::deviceMemcpyAsyncH2D(&this->s_densityValuesTemp[0],
-                                               p_density,
-                                               bytesDensity);
-            dftfe::utils::deviceSynchronize();
+            dftfe::utils::deviceMemcpyH2D(&this->s_densityValuesTemp[0],
+                                          p_density,
+                                          bytesDensity);
           }
         else
           {
@@ -373,7 +372,6 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
         if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
           {
-            dftfe::utils::deviceSynchronize();
             const std::size_t bytesEx = exValues.size() * sizeof(double);
             const std::size_t bytesEc = ecValues.size() * sizeof(double);
             const std::size_t bytesPxDensity =
@@ -382,23 +380,22 @@ namespace dftfe
               pdecDensityValuesNonNN.size() * sizeof(double);
 
             if (bytesEx)
-              dftfe::utils::deviceMemcpyAsyncD2H(&exValues[0],
-                                                 &exValuesTemp[0],
-                                                 bytesEx);
+              dftfe::utils::deviceMemcpyD2H(&exValues[0],
+                                            &exValuesTemp[0],
+                                            bytesEx);
             if (bytesPxDensity)
-              dftfe::utils::deviceMemcpyAsyncD2H(&pdexDensityValuesNonNN[0],
-                                                 &pdexDensityTemp[0],
-                                                 bytesPxDensity);
+              dftfe::utils::deviceMemcpyD2H(&pdexDensityValuesNonNN[0],
+                                            &pdexDensityTemp[0],
+                                            bytesPxDensity);
 
             if (bytesEc)
-              dftfe::utils::deviceMemcpyAsyncD2H(&ecValues[0],
-                                                 &ecValuesTemp[0],
-                                                 bytesEc);
+              dftfe::utils::deviceMemcpyD2H(&ecValues[0],
+                                            &ecValuesTemp[0],
+                                            bytesEc);
             if (bytesPcDensity)
-              dftfe::utils::deviceMemcpyAsyncD2H(&pdecDensityValuesNonNN[0],
-                                                 &pdecDensityTemp[0],
-                                                 bytesPcDensity);
-            dftfe::utils::deviceSynchronize();
+              dftfe::utils::deviceMemcpyD2H(&pdecDensityValuesNonNN[0],
+                                            &pdecDensityTemp[0],
+                                            bytesPcDensity);
           }
         else
           {

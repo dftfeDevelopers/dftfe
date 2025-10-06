@@ -363,13 +363,12 @@ namespace dftfe
             std::memcpy(p_density, &densityValues[0], bytesDensity);
             std::memcpy(p_sigma, &sigmaValues[0], bytesSigma);
 
-            dftfe::utils::deviceMemcpyAsyncH2D(&this->s_densityValuesTemp[0],
-                                               p_density,
-                                               bytesDensity);
-            dftfe::utils::deviceMemcpyAsyncH2D(&this->s_sigmaValuesTemp[0],
-                                               p_sigma,
-                                               bytesSigma);
-            dftfe::utils::deviceSynchronize();
+            dftfe::utils::deviceMemcpyH2D(&this->s_densityValuesTemp[0],
+                                          p_density,
+                                          bytesDensity);
+            dftfe::utils::deviceMemcpyH2D(&this->s_sigmaValuesTemp[0],
+                                          p_sigma,
+                                          bytesSigma);
           }
         else
           {
@@ -454,7 +453,6 @@ namespace dftfe
 #if defined(DFTFE_WITH_DEVICE)
         if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
           {
-            dftfe::utils::deviceSynchronize();
             const std::size_t bytesEx = exValues.size() * sizeof(double);
             const std::size_t bytesEc = ecValues.size() * sizeof(double);
             const std::size_t bytesPxDensity =
@@ -468,30 +466,30 @@ namespace dftfe
               pdecSigmaValues.size() * sizeof(double);
 
             if (bytesEx)
-              dftfe::utils::deviceMemcpyAsyncD2H(&exValues[0],
-                                                 &exValuesTemp[0],
-                                                 bytesEx);
+              dftfe::utils::deviceMemcpyD2H(&exValues[0],
+                                            &exValuesTemp[0],
+                                            bytesEx);
             if (bytesPxDensity)
-              dftfe::utils::deviceMemcpyAsyncD2H(&pdexDensityValuesNonNN[0],
-                                                 &pdexDensityTemp[0],
-                                                 bytesPxDensity);
+              dftfe::utils::deviceMemcpyD2H(&pdexDensityValuesNonNN[0],
+                                            &pdexDensityTemp[0],
+                                            bytesPxDensity);
             if (bytesPxSigma)
-              dftfe::utils::deviceMemcpyAsyncD2H(&pdexSigmaValues[0],
-                                                 &pdexSigmaValuesTemp[0],
-                                                 bytesPxSigma);
+              dftfe::utils::deviceMemcpyD2H(&pdexSigmaValues[0],
+                                            &pdexSigmaValuesTemp[0],
+                                            bytesPxSigma);
 
             if (bytesEc)
-              dftfe::utils::deviceMemcpyAsyncD2H(&ecValues[0],
-                                                 &ecValuesTemp[0],
-                                                 bytesEc);
+              dftfe::utils::deviceMemcpyD2H(&ecValues[0],
+                                            &ecValuesTemp[0],
+                                            bytesEc);
             if (bytesPcDensity)
-              dftfe::utils::deviceMemcpyAsyncD2H(&pdecDensityValuesNonNN[0],
-                                                 &pdecDensityTemp[0],
-                                                 bytesPcDensity);
+              dftfe::utils::deviceMemcpyD2H(&pdecDensityValuesNonNN[0],
+                                            &pdecDensityTemp[0],
+                                            bytesPcDensity);
             if (bytesPcSigma)
-              dftfe::utils::deviceMemcpyAsyncD2H(&pdecSigmaValues[0],
-                                                 &pdecSigmaValuesTemp[0],
-                                                 bytesPcSigma);
+              dftfe::utils::deviceMemcpyD2H(&pdecSigmaValues[0],
+                                            &pdecSigmaValuesTemp[0],
+                                            bytesPcSigma);
             dftfe::utils::deviceSynchronize();
           }
         else
