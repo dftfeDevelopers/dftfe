@@ -221,6 +221,29 @@ namespace dftfe
 
     ExcFamilyType     d_ExcFamilyType;
     densityFamilyType d_densityFamilyType;
+
+    mutable dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      s_densityValues, s_sigmaValues, s_tauValues;
+
+    mutable dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      s_pdexDensityValuesNonNN, s_pdecDensityValuesNonNN, s_pdexTauValuesNonNN,
+      s_pdecTauValuesNonNN;
+
+    mutable dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      s_exValues, s_ecValues, s_pdexDensitySpinUpValues,
+      s_pdexDensitySpinDownValues, s_pdecDensitySpinUpValues,
+      s_pdecDensitySpinDownValues, s_pdexSigmaValues, s_pdecSigmaValues,
+      s_pdexTauSpinUpValues, s_pdexTauSpinDownValues, s_pdecTauSpinUpValues,
+      s_pdecTauSpinDownValues;
+
+    mutable dftfe::utils::MemoryStorage<double, memorySpace>
+      s_densityValuesTemp, s_sigmaValuesTemp, s_tauValuesTemp, s_exValuesTemp,
+      s_ecValuesTemp, s_pdecDensityTemp, s_pdexDensityTemp,
+      s_pdecSigmaValuesTemp, s_pdexSigmaValuesTemp, s_pdexTauValuesTemp,
+      s_pdecTauValuesTemp;
+
+    mutable void  *s_pinnedBuf = nullptr;
+    mutable size_t s_pinnedCap = 0;
   };
 } // namespace dftfe
 

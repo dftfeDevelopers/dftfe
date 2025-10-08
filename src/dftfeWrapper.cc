@@ -1084,7 +1084,4 @@ namespace dftfe
         "DFT-FE Error: dftfeWrapper cannot be used on MPI_COMM_NULL."));
     d_dftfeBasePtr->writeDomainAndAtomCoordinates(Path);
   }
-
-
-
 } // namespace dftfe
