@@ -425,17 +425,19 @@ namespace dftfe
                   numberElementsInAtomCompactSupport);
               }
           }
+        const dftfe::uInt nCellsPerBatch = 4;
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::HOST>
-          sphericalFunctionBasisTimesJxWHost(
-            numberElementsInAtomCompactSupport * NumTotalSphericalFunctions *
-              numberQuadraturePoints * maxkPoints,
-            0.0);
+          sphericalFunctionBasisTimesJxWHost(nCellsPerBatch *
+                                               NumTotalSphericalFunctions *
+                                               numberQuadraturePoints *
+                                               maxkPoints,
+                                             0.0);
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::HOST>
           sphericalFunctionBasisWithDistanceTimesJxWHost(
-            numberElementsInAtomCompactSupport * NumTotalSphericalFunctions *
-              3 * numberQuadraturePoints * maxkPoints,
+            nCellsPerBatch * NumTotalSphericalFunctions * 3 *
+              numberQuadraturePoints * maxkPoints,
             0.0);
         std::vector<dataTypes::number>
           inverseJacobianTimesGradientShapeFnForChargeId;
@@ -448,7 +450,6 @@ namespace dftfe
           }
 
         const char              transA = 'N', transB = 'N';
-        const dftfe::uInt       nCellsPerBatch   = 4;
         const dataTypes::number scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
         const dftfe::uInt       inc = 1;
         const dftfe::uInt       n =
@@ -641,7 +642,7 @@ namespace dftfe
                                           [iCell * NumTotalSphericalFunctions *
                                              numberQuadraturePoints +
                                            kPoint * NumTotalSphericalFunctions *
-                                             numberElementsInAtomCompactSupport *
+                                             nCellsPerBatch *
                                              numberQuadraturePoints +
                                            (startIndex + tempIndex) *
                                              numberQuadraturePoints +
@@ -662,7 +663,7 @@ namespace dftfe
                                           sphericalFunctionBasisWithDistanceTimesJxWHost
                                             [kPoint *
                                                NumTotalSphericalFunctions *
-                                               numberElementsInAtomCompactSupport *
+                                               nCellsPerBatch *
                                                numberQuadraturePoints * 3 +
                                              iCell *
                                                NumTotalSphericalFunctions *
@@ -960,8 +961,7 @@ namespace dftfe
                         {
                           const dftfe::uInt flattenedIndex =
                             kPoint * NumTotalSphericalFunctions *
-                              d_numberNodesPerElement *
-                              numberElementsInAtomCompactSupport +
+                              d_numberNodesPerElement * nCellsPerBatch +
                             iCell * NumTotalSphericalFunctions *
                               d_numberNodesPerElement +
                             beta * d_numberNodesPerElement + iNode;
@@ -985,7 +985,7 @@ namespace dftfe
                                   const dftfe::uInt flattenedIndexForD =
                                     kPoint * NumTotalSphericalFunctions *
                                       d_numberNodesPerElement * 3 *
-                                      numberElementsInAtomCompactSupport +
+                                      nCellsPerBatch +
                                     iCell * NumTotalSphericalFunctions * 3 *
                                       d_numberNodesPerElement +
                                     beta * 3 * d_numberNodesPerElement +
@@ -1008,7 +1008,7 @@ namespace dftfe
                                   const dftfe::uInt flattenedIndexForD =
                                     kPoint * NumTotalSphericalFunctions *
                                       d_numberNodesPerElement * 9 *
-                                      numberElementsInAtomCompactSupport +
+                                      nCellsPerBatch +
                                     iCell * NumTotalSphericalFunctions * 9 *
                                       d_numberNodesPerElement +
                                     beta * 9 * d_numberNodesPerElement +
@@ -1028,7 +1028,7 @@ namespace dftfe
                                   const dftfe::uInt flattenedIndexForD =
                                     kPoint * NumTotalSphericalFunctions *
                                       d_numberNodesPerElement * 3 *
-                                      numberElementsInAtomCompactSupport +
+                                      nCellsPerBatch +
                                     iCell * NumTotalSphericalFunctions * 3 *
                                       d_numberNodesPerElement +
                                     beta * 3 * d_numberNodesPerElement +
