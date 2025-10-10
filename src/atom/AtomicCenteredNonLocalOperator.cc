@@ -2884,23 +2884,24 @@ namespace dftfe
             "DFT-FE Error: Inconsistent X called. Make sure the input X is correct."));
         const ValueType scalarCoeffAlpha = ValueType(1.0),
                         scalarCoeffBeta  = ValueType(0.0);
-        for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-          d_BLASWrapperPtr->xgemmBatched(
-            'N',
-            'N',
-            d_numberWaveFunctions,
-            d_maxSingleAtomContribution,
-            d_numberNodesPerElement,
-            &scalarCoeffAlpha,
-            (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
-            d_numberWaveFunctions,
-            (const ValueType **)
-              devicePointerCRDaggerInCellRange[iDim][iCellBatch],
-            d_numberNodesPerElement,
-            &scalarCoeffBeta,
-            devicePointerCRDaggerOutTempInCellRange[iDim][iCellBatch],
-            d_numberWaveFunctions,
-            d_nonLocalElementsInCellRange[iCellBatch]);
+        if (d_nonLocalElementsInCellRange[iCellBatch] > 0)
+          for (dftfe::Int iDim = 0; iDim < 3; iDim++)
+            d_BLASWrapperPtr->xgemmBatched(
+              'N',
+              'N',
+              d_numberWaveFunctions,
+              d_maxSingleAtomContribution,
+              d_numberNodesPerElement,
+              &scalarCoeffAlpha,
+              (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
+              d_numberWaveFunctions,
+              (const ValueType **)
+                devicePointerCRDaggerInCellRange[iDim][iCellBatch],
+              d_numberNodesPerElement,
+              &scalarCoeffBeta,
+              devicePointerCRDaggerOutTempInCellRange[iDim][iCellBatch],
+              d_numberWaveFunctions,
+              d_nonLocalElementsInCellRange[iCellBatch]);
         if (iCellBatch == d_numCellBatches - 1)
           {
             d_sphericalFnTimesXTimesWavefunctionMatrix.setValue(ValueType(0.0));
