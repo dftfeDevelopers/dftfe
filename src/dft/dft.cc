@@ -4466,11 +4466,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     data_outEigen.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "waveFunctionOutputFolder";
@@ -4540,11 +4537,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     dataOutRho.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "densityOutputFolder";
@@ -5086,11 +5080,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     dataOutRho.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "meshOutputFolder";

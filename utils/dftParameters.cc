@@ -1855,7 +1855,7 @@ namespace dftfe
     if (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
         verbosity >= 1 && printParams)
       {
-        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortText);
+        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortPRM);
       }
 
     //
