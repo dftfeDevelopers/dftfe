@@ -101,7 +101,7 @@ namespace dftfe
 
 
         std::string errMsg =
-          "xcRemainderOutputDataAttributes do not matched allowed choices for the family type.";
+          "xcRemainderOutputDataAttributes do not match the allowed choices for the family type.";
         dftfe::utils::throwException(isFound, errMsg);
       }
   }
@@ -155,25 +155,69 @@ namespace dftfe
 
 
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      densityValues(2 * nquad, 0);
+    if (this->s_densityValues.size() != 2 * nquad)
+      this->s_densityValues.resize(2 * nquad);
 
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      exValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      ecValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexDensityValuesNonNN(2 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecDensityValuesNonNN(2 * nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexDensitySpinUpValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdexDensitySpinDownValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecDensitySpinUpValues(nquad, 0);
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      pdecDensitySpinDownValues(nquad, 0);
+
+    auto &densityValues = this->s_densityValues;
+
+    if (this->s_pdexDensityValuesNonNN.size() != 2 * nquad)
+      this->s_pdexDensityValuesNonNN.resize(2 * nquad);
+    if (this->s_pdecDensityValuesNonNN.size() != 2 * nquad)
+      this->s_pdecDensityValuesNonNN.resize(2 * nquad);
+
+    auto &pdexDensityValuesNonNN = this->s_pdexDensityValuesNonNN;
+    auto &pdecDensityValuesNonNN = this->s_pdecDensityValuesNonNN;
+
+    auto &exValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::e) != xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::e)->second :
+        this->s_exValues;
+    auto &ecValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::e) != cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::e)->second :
+        this->s_ecValues;
+
+    auto &pdexDensitySpinUpValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinUp) !=
+       xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinUp)
+          ->second :
+        this->s_pdexDensitySpinUpValues;
+    auto &pdexDensitySpinDownValues =
+      (xDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinDown) !=
+       xDataOut.end()) ?
+        xDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinDown)
+          ->second :
+        this->s_pdexDensitySpinDownValues;
+    auto &pdecDensitySpinUpValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinUp) !=
+       cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinUp)
+          ->second :
+        this->s_pdecDensitySpinUpValues;
+    auto &pdecDensitySpinDownValues =
+      (cDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinDown) !=
+       cDataOut.end()) ?
+        cDataOut.find(xcRemainderOutputDataAttributes::pdeDensitySpinDown)
+          ->second :
+        this->s_pdecDensitySpinDownValues;
+
+    if (exValues.size() != nquad)
+      exValues.resize(nquad);
+    if (ecValues.size() != nquad)
+      ecValues.resize(nquad);
+    if (pdexDensitySpinUpValues.size() != nquad)
+      pdexDensitySpinUpValues.resize(nquad);
+
+    if (pdexDensitySpinDownValues.size() != nquad)
+      pdexDensitySpinDownValues.resize(nquad);
+
+    if (pdecDensitySpinUpValues.size() != nquad)
+      pdecDensitySpinUpValues.resize(nquad);
+
+    if (pdecDensitySpinDownValues.size() != nquad)
+      pdecDensitySpinDownValues.resize(nquad);
 
     dftfe::internal::fillRhoVector(nquad,
                                    densityValuesSpinUp,
@@ -222,6 +266,12 @@ namespace dftfe
         // std::cout << "zeta_thresholdC: " << d_funcCPtr->zeta_threshold
         //           << std::endl;
 
+        exValues.setValue(0.0);
+        ecValues.setValue(0.0);
+
+        pdexDensityValuesNonNN.setValue(0.0);
+        pdecDensityValuesNonNN.setValue(0.0);
+
         xc_lda_exc_vxc(d_funcXPtr.get(),
                        nquad,
                        densityValues.data(),
@@ -236,18 +286,51 @@ namespace dftfe
     else
       {
 #if defined(DFTFE_WITH_DEVICE)
-        dftfe::utils::MemoryStorage<double, memorySpace> densityValuesTemp;
-        dftfe::utils::MemoryStorage<double, memorySpace> ecValuesTemp,
-          exValuesTemp;
-        dftfe::utils::MemoryStorage<double, memorySpace> pdecDensityTemp,
-          pdexDensityTemp;
 
-        densityValuesTemp.resize(densityValues.size());
-        densityValuesTemp.copyFrom(densityValues);
-        ecValuesTemp.resize(ecValues.size());
-        pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
-        exValuesTemp.resize(exValues.size());
-        pdexDensityTemp.resize(pdexDensityValuesNonNN.size());
+        const std::size_t bytesDensity = densityValues.size() * sizeof(double);
+        const std::size_t bytesPhase1  = bytesDensity;
+
+        if (this->s_densityValuesTemp.size() != densityValues.size())
+          {
+            this->s_densityValuesTemp.resize(densityValues.size());
+            this->s_exValuesTemp.resize(exValues.size());
+            this->s_ecValuesTemp.resize(ecValues.size());
+            this->s_pdexDensityTemp.resize(pdexDensityValuesNonNN.size());
+            this->s_pdecDensityTemp.resize(pdecDensityValuesNonNN.size());
+          }
+
+        if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+          {
+            auto ensurePinnedCapacity = [&](std::size_t needBytes) {
+              if (this->s_pinnedCap < needBytes)
+                {
+                  if (this->s_pinnedBuf)
+                    dftfe::utils::deviceHostFree(this->s_pinnedBuf);
+                  dftfe::utils::deviceHostMalloc(&this->s_pinnedBuf, needBytes);
+                  this->s_pinnedCap = needBytes;
+                }
+            };
+            ensurePinnedCapacity(bytesPhase1);
+            double *p_density = static_cast<double *>(this->s_pinnedBuf);
+
+            std::memcpy(p_density, &densityValues[0], bytesDensity);
+
+            dftfe::utils::deviceMemcpyH2D(&this->s_densityValuesTemp[0],
+                                          p_density,
+                                          bytesDensity);
+          }
+        else
+          {
+            std::memcpy(&this->s_densityValuesTemp[0],
+                        &densityValues[0],
+                        bytesDensity);
+          }
+
+        auto &densityValuesTemp = this->s_densityValuesTemp;
+        auto &exValuesTemp      = this->s_exValuesTemp;
+        auto &ecValuesTemp      = this->s_ecValuesTemp;
+        auto &pdecDensityTemp   = this->s_pdecDensityTemp;
+        auto &pdexDensityTemp   = this->s_pdexDensityTemp;
 #else
         auto &densityValuesTemp = densityValues;
         auto &exValuesTemp      = exValues;
@@ -287,11 +370,41 @@ namespace dftfe
               "xc_func_type name is not implemented in DFT-FE. Use LIBXC to compute the LDA functional.");
           }
 #if defined(DFTFE_WITH_DEVICE)
-        exValues.copyFrom(exValuesTemp);
-        pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+        if (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+          {
+            const std::size_t bytesEx = exValues.size() * sizeof(double);
+            const std::size_t bytesEc = ecValues.size() * sizeof(double);
+            const std::size_t bytesPxDensity =
+              pdexDensityValuesNonNN.size() * sizeof(double);
+            const std::size_t bytesPcDensity =
+              pdecDensityValuesNonNN.size() * sizeof(double);
 
-        ecValues.copyFrom(ecValuesTemp);
-        pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+            if (bytesEx)
+              dftfe::utils::deviceMemcpyD2H(&exValues[0],
+                                            &exValuesTemp[0],
+                                            bytesEx);
+            if (bytesPxDensity)
+              dftfe::utils::deviceMemcpyD2H(&pdexDensityValuesNonNN[0],
+                                            &pdexDensityTemp[0],
+                                            bytesPxDensity);
+
+            if (bytesEc)
+              dftfe::utils::deviceMemcpyD2H(&ecValues[0],
+                                            &ecValuesTemp[0],
+                                            bytesEc);
+            if (bytesPcDensity)
+              dftfe::utils::deviceMemcpyD2H(&pdecDensityValuesNonNN[0],
+                                            &pdecDensityTemp[0],
+                                            bytesPcDensity);
+          }
+        else
+          {
+            exValues.copyFrom(exValuesTemp);
+            pdexDensityValuesNonNN.copyFrom(pdexDensityTemp);
+
+            ecValues.copyFrom(ecValuesTemp);
+            pdecDensityValuesNonNN.copyFrom(pdecDensityTemp);
+          }
 #endif
       }
 
