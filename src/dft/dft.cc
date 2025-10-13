@@ -171,6 +171,8 @@ namespace dftfe
   {
     d_nOMPThreads = 1;
     d_useHubbard  = false;
+    MPI_Barrier(d_mpiCommParent);
+    d_dftfeClassStartTime = MPI_Wtime();
 #ifdef _OPENMP
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
@@ -363,7 +365,9 @@ namespace dftfe
   void
   dftClass<memorySpace>::set()
   {
-    d_BLASWrapperPtrHost = std::make_shared<
+    MPI_Barrier(d_mpiCommParent);
+    double startTimeLocal = MPI_Wtime();
+    d_BLASWrapperPtrHost  = std::make_shared<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
     d_basisOperationsPtrHost = std::make_shared<
       dftfe::basis::FEBasisOperations<dataTypes::number,
@@ -942,6 +946,16 @@ namespace dftfe
 
     d_elpaScala->processGridELPASetup(d_numEigenValues, *d_dftParamsPtr);
     MPI_Barrier(d_mpiCommParent);
+    double cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Time taken for setting up atomic system: "
+              << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till setting up atomic system: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
+
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
 
@@ -1141,34 +1155,14 @@ namespace dftfe
   dftClass<memorySpace>::init()
   {
     computingTimerStandard.enter_subsection("KSDFT problem initialization");
-
+    MPI_Barrier(d_mpiCommParent);
+    double startTimeLocal = MPI_Wtime();
     initImageChargesUpdateKPoints();
 
     calculateNearestAtomDistances();
 
     computing_timer.enter_subsection("mesh generation");
-    //
-    // generate mesh (both parallel and serial)
-    // while parallel meshes are always generated, serial meshes are only
-    // generated for following three cases: symmetrization is on, ionic
-    // optimization is on as well as reuse wfcs and density from previous ionic
-    // step is on, or if serial constraints generation is on.
-    //
-    // if (d_dftParamsPtr->loadRhoData)
-    //   {
-    //     d_mesh.generateCoarseMeshesForRestart(
-    //       atomLocations,
-    //       d_imagePositionsTrunc,
-    //       d_imageIdsTrunc,
-    //       d_nearestAtomDistances,
-    //       d_domainBoundingVectors,
-    //       d_dftParamsPtr->useSymm ||
-    //         d_dftParamsPtr->createConstraintsFromSerialDofhandler);
 
-    //     loadTriaInfoAndRhoNodalData();
-    //   }
-    // else
-    //{
     d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(
       atomLocations,
       d_imagePositionsTrunc,
@@ -1259,10 +1253,22 @@ namespace dftfe
         groupSymmetryPtr->setupCommPatternForNodalField(d_dofHandlerRhoNodal);
       }
 #endif
-
+    MPI_Barrier(d_mpiCommParent);
+    double cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout
+          << "DFT-FE Timer: Time taken for initialization of Mesh and Boundary Conditions: "
+          << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till initialization of Mesh and Boundary Conditions: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
     //
     // initialize pseudopotential data for both local and nonlocal part
     //
+    MPI_Barrier(d_mpiCommParent);
+    startTimeLocal = MPI_Wtime();
     if (d_dftParamsPtr->isPseudopotential == true)
       d_oncvClassPtr->initialise(d_basisOperationsPtrHost,
 #if defined(DFTFE_WITH_DEVICE)
@@ -1469,6 +1475,16 @@ namespace dftfe
                                        d_lpspQuadratureIdElectro,
                                        d_nlpspQuadratureId,
                                        d_smearedChargeQuadratureIdElectro);
+      }
+    MPI_Barrier(d_mpiCommParent);
+    cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Time taken for PseudoPotential Initialisation: "
+              << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till PseudoPotential Initialisation: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
       }
     computingTimerStandard.leave_subsection("KSDFT problem initialization");
   }
@@ -2387,7 +2403,13 @@ namespace dftfe
         kohnShamDFTEigenOperator.computeVEffExternalPotCorr(d_pseudoVLoc);
         computingTimerStandard.leave_subsection("Init local PSP");
       }
-
+    MPI_Barrier(d_mpiCommParent);
+    double currentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Total Time taken till Start of SCF Iteration: "
+              << currentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
 
     computingTimerStandard.enter_subsection("Total scf solve");
 
@@ -4034,7 +4056,13 @@ namespace dftfe
       }
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total free energy: " << d_freeEnergy << std::endl;
-
+    MPI_Barrier(d_mpiCommParent);
+    double currentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Total Time taken till now: "
+              << currentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
     if (d_dftParamsPtr->verbosity >= 0 && d_dftParamsPtr->spinPolarized == 1)
       totalMagnetization(d_densityOutQuadValues[1]);
 
@@ -4186,6 +4214,15 @@ namespace dftfe
               d_configForcePtr->printStress();
             computingTimerStandard.leave_subsection(
               "Force and Stress computation");
+            MPI_Barrier(d_mpiCommParent);
+            double currentTime = MPI_Wtime();
+            if (d_dftParamsPtr->verbosity >= 3 &&
+                !d_dftParamsPtr->reproducible_output)
+              {
+                pcout << "DFT-FE Timer: Total Time taken till now: "
+                      << currentTime - d_dftfeClassStartTime << " seconds"
+                      << std::endl;
+              }
             computing_timer.leave_subsection("Force and Stress computation");
           }
       }

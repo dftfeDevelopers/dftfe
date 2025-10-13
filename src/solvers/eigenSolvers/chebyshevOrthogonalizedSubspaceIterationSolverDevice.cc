@@ -619,7 +619,7 @@ namespace dftfe
         computingTimerStandard.leave_subsection(
           "Chebyshev filtering on Device");
 
-        if (d_dftParams.verbosity >= 4)
+        if (d_dftParams.verbosity >= 3)
           pcout << "ChebyShev Filtering Done: " << std::endl;
       }
 
