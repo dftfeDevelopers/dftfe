@@ -4057,7 +4057,7 @@ namespace dftfe
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total free energy: " << d_freeEnergy << std::endl;
     MPI_Barrier(d_mpiCommParent);
-    double currentTime = MPI_Wtime();
+    currentTime = MPI_Wtime();
     if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
       {
         pcout << "DFT-FE Timer: Total Time taken till now: "
