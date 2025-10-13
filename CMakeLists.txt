@@ -25,6 +25,12 @@ IF("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   add_compile_options("-O2")
 ENDIF()
 
+IF (USE_64BIT_INT)
+  IF ("${GPU_VENDOR}" STREQUAL "intel")
+    add_compile_options("-fno-sycl-id-queries-fit-in-int")
+  ENDIF()
+ENDIF()
+
 PROJECT(${TARGET} LANGUAGES CXX)
 IF (WITH_GPU)
     IF ("${GPU_LANG}" STREQUAL "cuda")
@@ -361,9 +367,6 @@ ENDIF()
 
 IF (USE_64BIT_INT)
   ADD_DEFINITIONS(-DDFTFE_WITH_64BIT_INT)
-  IF ("${GPU_VENDOR}" STREQUAL "intel")
-    add_compile_options("-fno-sycl-id-queries-fit-in-int")
-  ENDIF()
 ENDIF()
 
 #
