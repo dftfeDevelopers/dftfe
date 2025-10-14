@@ -316,14 +316,16 @@ namespace functionalTest
     constraintMatrix.reinit(locallyRelevantDofs);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerTria,
                                                     constraintMatrix);
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+      dofHandlerTria, constraintMatrix);
     constraintMatrix.close();
 
     constraintMatrixVxc.clear();
     constraintMatrix.reinit(locallyRelevantDofsVxc);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerTriaVxc,
                                                     constraintMatrixVxc);
-
-
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+      dofHandlerTriaVxc, constraintMatrixVxc);
     constraintMatrixVxc.close();
 
     // create quadrature

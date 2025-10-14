@@ -110,6 +110,8 @@ namespace dftfe
 
         dealii::DoFTools::make_periodicity_constraints<3, 3>(
           periodicity_vectorForce, d_affineConstraintsForce);
+        dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+          d_dofHandlerForce, d_affineConstraintsForce);
         d_affineConstraintsForce.close();
         if (d_dftParams.createConstraintsFromSerialDofhandler)
           {

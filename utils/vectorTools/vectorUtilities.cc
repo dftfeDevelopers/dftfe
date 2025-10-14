@@ -27,6 +27,23 @@ namespace dftfe
   namespace vectorTools
   {
     void
+    makeAffineConstraintsConsistentInParallel(
+      const dealii::DoFHandler<3>       &dofHandlerPar,
+      dealii::AffineConstraints<double> &constraints)
+    {
+      if (!constraints.is_consistent_in_parallel(
+            dealii::Utilities::MPI::all_gather(
+              dofHandlerPar.get_communicator(),
+              dofHandlerPar.locally_owned_dofs()),
+            dealii::DoFTools::extract_locally_active_dofs(dofHandlerPar),
+            dofHandlerPar.get_communicator()))
+        constraints.make_consistent_in_parallel(
+          dofHandlerPar.locally_owned_dofs(),
+          constraints.get_local_lines(),
+          dofHandlerPar.get_communicator());
+    }
+
+    void
     createParallelConstraintMatrixFromSerial(
       const dealii::Triangulation<3, 3>      &serTria,
       const dealii::DoFHandler<3>            &dofHandlerPar,

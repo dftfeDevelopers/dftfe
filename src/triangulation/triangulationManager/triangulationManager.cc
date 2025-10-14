@@ -27,7 +27,7 @@
 #include <fileReaders.h>
 #include <meshGenUtils.h>
 #include <triangulationManager.h>
-
+#include <vectorUtilities.h>
 #include "generateMesh.cc"
 #include "restartUtils.cc"
 

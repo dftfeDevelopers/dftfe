@@ -1307,11 +1307,15 @@ namespace dftfe
           onlyHangingNodeConstraints,
           dealii::AffineConstraints<
             double>::MergeConflictBehavior::left_object_wins);
+        dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+          dofHandler, d_vselfBinConstraintMatrices[4 * iBin]);
         d_vselfBinConstraintMatrices[4 * iBin].close();
         d_vselfBinConstraintMatrices[4 * iBin].merge(
           constraintMatrix,
           dealii::AffineConstraints<
             double>::MergeConflictBehavior::left_object_wins);
+        dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+          dofHandler, d_vselfBinConstraintMatrices[4 * iBin]);
         d_vselfBinConstraintMatrices[4 * iBin].close();
         constraintsVector.push_back(&(d_vselfBinConstraintMatrices[4 * iBin]));
 
@@ -1335,11 +1339,15 @@ namespace dftfe
               onlyHangingNodeConstraints,
               dealii::AffineConstraints<
                 double>::MergeConflictBehavior::left_object_wins);
+            dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+              dofHandler, d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
             d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
             d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
               constraintMatrix,
               dealii::AffineConstraints<
                 double>::MergeConflictBehavior::left_object_wins);
+            dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+              dofHandler, d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
             d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
             constraintsVector.push_back(
               &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
@@ -1564,11 +1572,15 @@ namespace dftfe
               onlyHangingNodeConstraints,
               dealii::AffineConstraints<
                 double>::MergeConflictBehavior::left_object_wins);
+            dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+              dofHandler, d_vselfBinConstraintMatrices[4 * iBin]);
             d_vselfBinConstraintMatrices[4 * iBin].close();
             d_vselfBinConstraintMatrices[4 * iBin].merge(
               constraintMatrix,
               dealii::AffineConstraints<
                 double>::MergeConflictBehavior::left_object_wins);
+            dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+              dofHandler, d_vselfBinConstraintMatrices[4 * iBin]);
             d_vselfBinConstraintMatrices[4 * iBin].close();
             constraintsVector.push_back(
               &(d_vselfBinConstraintMatrices[4 * iBin]));
@@ -1601,11 +1613,19 @@ namespace dftfe
                       onlyHangingNodeConstraints,
                       dealii::AffineConstraints<
                         double>::MergeConflictBehavior::left_object_wins);
+                    dftfe::vectorTools::
+                      makeAffineConstraintsConsistentInParallel(
+                        dofHandler,
+                        d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
                     d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
                     d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
                       constraintMatrix,
                       dealii::AffineConstraints<
                         double>::MergeConflictBehavior::left_object_wins);
+                    dftfe::vectorTools::
+                      makeAffineConstraintsConsistentInParallel(
+                        dofHandler,
+                        d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
                     d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
                     constraintsVector.push_back(
                       &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
