@@ -49,7 +49,7 @@ namespace dftfe
       dealii::TimerOutput computing_timer(mpiComm,
                                           pcout,
                                           dftParams.reproducible_output ||
-                                              dftParams.verbosity < 4 ?
+                                              dftParams.verbosity < 3 ?
                                             dealii::TimerOutput::never :
                                             dealii::TimerOutput::summary,
                                           dealii::TimerOutput::wall_times);
