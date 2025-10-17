@@ -67,12 +67,12 @@ namespace dftfe
     d_dofHandlerForce.distribute_dofs(FEForce);
     if (!d_dftParams.floatingNuclearCharges)
       {
-        dealii::IndexSet locally_relevant_dofsForce;
         d_locally_owned_dofsForce = d_dofHandlerForce.locally_owned_dofs();
-        dealii::DoFTools::extract_locally_relevant_dofs(
-          d_dofHandlerForce, locally_relevant_dofsForce);
+        dealii::IndexSet locally_relevant_dofsForce =
+          dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce);
         d_affineConstraintsForce.clear();
-        d_affineConstraintsForce.reinit(locally_relevant_dofsForce);
+        d_affineConstraintsForce.reinit(d_locally_owned_dofsForce,
+                                        locally_relevant_dofsForce);
         dealii::DoFTools::make_hanging_node_constraints(
           d_dofHandlerForce, d_affineConstraintsForce);
         std::vector<dealii::Tensor<1, 3>> offsetVectors(3);
@@ -112,7 +112,6 @@ namespace dftfe
           periodicity_vectorForce, d_affineConstraintsForce);
         dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
           d_dofHandlerForce, d_affineConstraintsForce);
-        d_affineConstraintsForce.close();
         if (d_dftParams.createConstraintsFromSerialDofhandler)
           {
             dealii::AffineConstraints<double> dummy;
@@ -226,6 +225,7 @@ namespace dftfe
     const std::vector<distributedCPUVec<double>>
                       &vselfFieldGateauxDerStrainFDBins,
     const dftfe::uInt &binsStartDofHandlerIndexElectro,
+    const dftfe::uInt &phiExtDofHandlerIndexElectro,
     const std::map<dealii::CellId, std::vector<dftfe::Int>>
       &bQuadAtomIdsAllAtoms,
     const std::map<dealii::CellId, std::vector<dftfe::Int>>
@@ -242,10 +242,9 @@ namespace dftfe
     d_dofHandlerForce.distribute_dofs(FEForce);
     if (!floatingNuclearCharges)
       {
-        dealii::IndexSet locally_relevant_dofsForce;
         d_locally_owned_dofsForce = d_dofHandlerForce.locally_owned_dofs();
-        dealii::DoFTools::extract_locally_relevant_dofs(
-          d_dofHandlerForce, locally_relevant_dofsForce);
+        dealii::IndexSet locally_relevant_dofsForce =
+          dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce);
         d_configForceContribsLinFE.reinit(d_locally_owned_dofsForce,
                                           locally_relevant_dofsForce,
                                           d_mpiCommDomain);
@@ -418,7 +417,8 @@ namespace dftfe
                         floatingNuclearCharges,
                         computeForce,
                         computeStress);
-    createBinObjectsForce(dofHandlerRhoNodal,
+    createBinObjectsForce(phiExtDofHandlerIndexElectro,
+                          dofHandlerRhoNodal,
                           vselfBinsManager,
                           d_cellsVselfBallsDofHandlerElectro,
                           d_cellsVselfBallsDofHandlerForceElectro,
@@ -4288,6 +4288,7 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   void
   configurationalForceClass<memorySpace>::createBinObjectsForce(
+    const dftfe::uInt           &phiExtDofHandlerIndexElectro,
     const dealii::DoFHandler<3> &dofHandlerRhoNodal,
     const vselfBinsManager      &vselfBinsManager,
     std::vector<std::vector<dealii::DoFHandler<3>::active_cell_iterator>>
@@ -4306,9 +4307,9 @@ namespace dftfe
   {
     const dealii::DoFHandler<3> &dofHandler =
       d_basisOperationsPtrElectroHost->getDofHandler();
-    const dealii::AffineConstraints<double> &hangingPlusPBCConstraints =
+    const dealii::AffineConstraints<double> &onlyHangingNodeConstraints =
       d_basisOperationsPtrElectroHost->matrixFreeData().get_affine_constraints(
-        d_basisOperationsPtrElectroHost->d_dofHandlerID);
+        phiExtDofHandlerIndexElectro);
 
     const dftfe::uInt faces_per_cell = dealii::GeometryInfo<3>::faces_per_cell;
     const dftfe::uInt dofs_per_cell  = dofHandler.get_fe().dofs_per_cell;
@@ -4363,7 +4364,7 @@ namespace dftfe
                       {
                         const dealii::types::global_dof_index nodeId =
                           iFaceGlobalDofIndices[iFaceDof];
-                        if (!hangingPlusPBCConstraints.is_constrained(nodeId))
+                        if (!onlyHangingNodeConstraints.is_constrained(nodeId))
                           {
                             Assert(boundaryNodeMap.find(nodeId) !=
                                      boundaryNodeMap.end(),
@@ -4389,7 +4390,7 @@ namespace dftfe
                             const std::vector<
                               std::pair<dealii::types::global_dof_index,
                                         double>> *rowData =
-                              hangingPlusPBCConstraints.get_constraint_entries(
+                              onlyHangingNodeConstraints.get_constraint_entries(
                                 nodeId);
                             for (dftfe::uInt j = 0; j < rowData->size(); ++j)
                               {

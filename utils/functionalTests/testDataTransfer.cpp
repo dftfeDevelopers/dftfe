@@ -303,30 +303,30 @@ namespace functionalTest
 
     dealii::AffineConstraints<double> constraintMatrix, constraintMatrixVxc;
 
-    dealii::IndexSet locallyRelevantDofs, locallyRelevantDofsVxc;
 
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerTria,
-                                                    locallyRelevantDofs);
+    dealii::IndexSet locallyRelevantDofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerTria);
+    dealii::IndexSet locallyOwnedDofs = dofHandlerTria.locally_owned_dofs();
 
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerTriaVxc,
-                                                    locallyRelevantDofsVxc);
+    dealii::IndexSet locallyRelevantDofsVxc =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerTriaVxc);
+    dealii::IndexSet locallyOwnedDofsVxc =
+      dofHandlerTriaVxc.locally_owned_dofs();
 
 
     constraintMatrix.clear();
-    constraintMatrix.reinit(locallyRelevantDofs);
+    constraintMatrix.reinit(locallyOwnedDofs, locallyRelevantDofs);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerTria,
                                                     constraintMatrix);
     dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
       dofHandlerTria, constraintMatrix);
-    constraintMatrix.close();
 
     constraintMatrixVxc.clear();
-    constraintMatrix.reinit(locallyRelevantDofsVxc);
+    constraintMatrix.reinit(locallyOwnedDofsVxc, locallyRelevantDofsVxc);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerTriaVxc,
                                                     constraintMatrixVxc);
     dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
       dofHandlerTriaVxc, constraintMatrixVxc);
-    constraintMatrixVxc.close();
 
     // create quadrature
 
@@ -373,9 +373,8 @@ namespace functionalTest
 
 
     std::map<dealii::types::global_dof_index, dealii::Point<3, double>>
-      dof_coord;
-    dealii::DoFTools::map_dofs_to_support_points<3, 3>(
-      dealii::MappingQ1<3, 3>(), dofHandlerTria, dof_coord);
+      dof_coord = dealii::DoFTools::map_dofs_to_support_points<3, 3>(
+        dealii::MappingQ1<3, 3>(), dofHandlerTria);
 
 
     dealii::types::global_dof_index numberDofsParent = dofHandlerTria.n_dofs();
@@ -560,9 +559,8 @@ namespace functionalTest
 
 
     std::map<dealii::types::global_dof_index, dealii::Point<3, double>>
-      dof_coord_child;
-    dealii::DoFTools::map_dofs_to_support_points<3, 3>(
-      dealii::MappingQ1<3, 3>(), dofHandlerTriaVxc, dof_coord_child);
+      dof_coord_child = dealii::DoFTools::map_dofs_to_support_points<3, 3>(
+        dealii::MappingQ1<3, 3>(), dofHandlerTriaVxc);
 
 
     dealii::types::global_dof_index numberDofsChild =

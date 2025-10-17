@@ -124,19 +124,19 @@ namespace dftfe
     // extract locally owned dofs
     //
     locally_owned_dofs = dofHandler.locally_owned_dofs();
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
-                                                    locally_relevant_dofs);
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 dofHandler,
-                                                 d_supportPoints);
+    locally_relevant_dofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler);
+    d_supportPoints =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   dofHandler);
 
 
     locally_owned_dofsEigen = dofHandlerEigen.locally_owned_dofs();
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerEigen,
-                                                    locally_relevant_dofsEigen);
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 dofHandlerEigen,
-                                                 d_supportPointsEigen);
+    locally_relevant_dofsEigen =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerEigen);
+    d_supportPointsEigen =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   dofHandlerEigen);
 
 
     //
@@ -187,8 +187,9 @@ namespace dftfe
     //
     constraintsNone.clear();
     constraintsNoneEigen.clear();
-    constraintsNone.reinit(locally_relevant_dofs);
-    constraintsNoneEigen.reinit(locally_relevant_dofsEigen);
+    constraintsNone.reinit(locally_owned_dofs, locally_relevant_dofs);
+    constraintsNoneEigen.reinit(locally_owned_dofsEigen,
+                                locally_relevant_dofsEigen);
     dealii::DoFTools::make_hanging_node_constraints(dofHandler,
                                                     constraintsNone);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerEigen,
@@ -244,16 +245,15 @@ namespace dftfe
       dofHandler, constraintsNone);
     dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
       dofHandlerEigen, constraintsNoneEigen);
-    constraintsNone.close();
-    constraintsNoneEigen.close();
 
     //
     // create a constraint matrix without only hanging node constraints
     //
     d_noConstraints.clear();
     dealii::AffineConstraints<double> noConstraintsEigen;
-    d_noConstraints.reinit(locally_relevant_dofs);
-    noConstraintsEigen.reinit(locally_relevant_dofsEigen);
+    d_noConstraints.reinit(locally_owned_dofs, locally_relevant_dofs);
+    noConstraintsEigen.reinit(locally_owned_dofsEigen,
+                              locally_relevant_dofsEigen);
     dealii::DoFTools::make_hanging_node_constraints(dofHandler,
                                                     d_noConstraints);
     dealii::DoFTools::make_hanging_node_constraints(dofHandlerEigen,
@@ -262,8 +262,6 @@ namespace dftfe
       dofHandler, d_noConstraints);
     dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
       dofHandlerEigen, noConstraintsEigen);
-    d_noConstraints.close();
-    noConstraintsEigen.close();
 
     if (d_dftParamsPtr->createConstraintsFromSerialDofhandler)
       {
@@ -307,14 +305,14 @@ namespace dftfe
           d_dftParamsPtr->periodicY,
           d_dftParamsPtr->periodicZ);
         constraintsNoneEigen.clear();
-        constraintsNoneEigen.reinit(locally_relevant_dofs);
+        constraintsNoneEigen.reinit(locally_owned_dofs, locally_relevant_dofs);
         constraintsNoneEigen.merge(constraintsNone,
                                    dealii::AffineConstraints<double>::
                                      MergeConflictBehavior::right_object_wins);
         constraintsNoneEigen.close();
 
         noConstraintsEigen.clear();
-        noConstraintsEigen.reinit(locally_relevant_dofs);
+        noConstraintsEigen.reinit(locally_owned_dofs, locally_relevant_dofs);
         noConstraintsEigen.merge(d_noConstraints,
                                  dealii::AffineConstraints<double>::
                                    MergeConflictBehavior::right_object_wins);

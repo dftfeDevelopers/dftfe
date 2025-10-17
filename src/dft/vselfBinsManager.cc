@@ -547,14 +547,12 @@ namespace dftfe
     dealii::BoundingBox<3> boundingBoxTria(
       vectorTools::createBoundingBoxTriaLocallyOwned(dofHandler));
 
-    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints;
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 dofHandler,
-                                                 supportPoints);
+    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   dofHandler);
 
-    dealii::IndexSet locally_relevant_dofs;
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
-                                                    locally_relevant_dofs);
+    dealii::IndexSet locally_relevant_dofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler);
 
     computing_timer.leave_subsection("create bins: initial overheads");
 
@@ -849,10 +847,11 @@ namespace dftfe
         //
         // create constraint matrix for current bin
         //
-        d_vselfBinConstraintMatrices[4 * iBin].reinit(locally_relevant_dofs);
+        d_vselfBinConstraintMatrices[4 * iBin].reinit(locally_owned_dofs,
+                                                      locally_relevant_dofs);
         for (dftfe::uInt idim = 0; idim < 3; idim++)
           d_vselfBinConstraintMatrices[4 * iBin + idim + 1].reinit(
-            locally_relevant_dofs);
+            locally_owned_dofs, locally_relevant_dofs);
 
 
         std::map<dealii::types::global_dof_index,
@@ -1181,7 +1180,8 @@ namespace dftfe
                         {
                           const dealii::types::global_dof_index nodeId =
                             iFaceGlobalDofIndices[iFaceDof];
-                          if (!constraintMatrix.is_constrained(nodeId))
+                          if (!onlyHangingNodeConstraints.is_constrained(
+                                nodeId))
                             {
                               Assert(boundaryNodeMap.find(nodeId) !=
                                        boundaryNodeMap.end(),
@@ -1206,7 +1206,8 @@ namespace dftfe
                               const std::vector<
                                 std::pair<dealii::types::global_dof_index,
                                           double>> *rowData =
-                                constraintMatrix.get_constraint_entries(nodeId);
+                                onlyHangingNodeConstraints
+                                  .get_constraint_entries(nodeId);
                               for (dftfe::uInt j = 0; j < rowData->size(); ++j)
                                 {
                                   if (d_dftParams
@@ -1309,14 +1310,12 @@ namespace dftfe
             double>::MergeConflictBehavior::left_object_wins);
         dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
           dofHandler, d_vselfBinConstraintMatrices[4 * iBin]);
-        d_vselfBinConstraintMatrices[4 * iBin].close();
         d_vselfBinConstraintMatrices[4 * iBin].merge(
           constraintMatrix,
           dealii::AffineConstraints<
             double>::MergeConflictBehavior::left_object_wins);
         dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
           dofHandler, d_vselfBinConstraintMatrices[4 * iBin]);
-        d_vselfBinConstraintMatrices[4 * iBin].close();
         constraintsVector.push_back(&(d_vselfBinConstraintMatrices[4 * iBin]));
 
         for (dftfe::uInt idim = 0; idim < 3; idim++)
@@ -1341,14 +1340,12 @@ namespace dftfe
                 double>::MergeConflictBehavior::left_object_wins);
             dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
               dofHandler, d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
-            d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
             d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
               constraintMatrix,
               dealii::AffineConstraints<
                 double>::MergeConflictBehavior::left_object_wins);
             dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
               dofHandler, d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
-            d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
             constraintsVector.push_back(
               &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
           }
@@ -1414,14 +1411,12 @@ namespace dftfe
       dofHandler.locally_owned_dofs();
 
 
-    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints;
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 dofHandler,
-                                                 supportPoints);
+    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   dofHandler);
 
-    dealii::IndexSet locally_relevant_dofs;
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
-                                                    locally_relevant_dofs);
+    dealii::IndexSet locally_relevant_dofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler);
 
     dealii::IndexSet ghost_indices = locally_relevant_dofs;
     ghost_indices.subtract_set(locally_owned_dofs);
@@ -1554,7 +1549,7 @@ namespace dftfe
         if (hasHangingNodes)
           {
             d_vselfBinConstraintMatrices[4 * iBin].reinit(
-              locally_relevant_dofs);
+              locally_owned_dofs, locally_relevant_dofs);
 
             inhomogBoundaryVec.update_ghost_values();
             for (auto index : locally_relevant_dofs)
@@ -1574,14 +1569,12 @@ namespace dftfe
                 double>::MergeConflictBehavior::left_object_wins);
             dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
               dofHandler, d_vselfBinConstraintMatrices[4 * iBin]);
-            d_vselfBinConstraintMatrices[4 * iBin].close();
             d_vselfBinConstraintMatrices[4 * iBin].merge(
               constraintMatrix,
               dealii::AffineConstraints<
                 double>::MergeConflictBehavior::left_object_wins);
             dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
               dofHandler, d_vselfBinConstraintMatrices[4 * iBin]);
-            d_vselfBinConstraintMatrices[4 * iBin].close();
             constraintsVector.push_back(
               &(d_vselfBinConstraintMatrices[4 * iBin]));
 
@@ -1589,7 +1582,7 @@ namespace dftfe
               {
                 for (dftfe::uInt idim = 0; idim < 3; idim++)
                   d_vselfBinConstraintMatrices[4 * iBin + idim + 1].reinit(
-                    locally_relevant_dofs);
+                    locally_owned_dofs, locally_relevant_dofs);
 
                 for (dftfe::uInt idim = 0; idim < 3; idim++)
                   {
@@ -1617,7 +1610,6 @@ namespace dftfe
                       makeAffineConstraintsConsistentInParallel(
                         dofHandler,
                         d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
-                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
                     d_vselfBinConstraintMatrices[4 * iBin + idim + 1].merge(
                       constraintMatrix,
                       dealii::AffineConstraints<
@@ -1626,7 +1618,6 @@ namespace dftfe
                       makeAffineConstraintsConsistentInParallel(
                         dofHandler,
                         d_vselfBinConstraintMatrices[4 * iBin + idim + 1]);
-                    d_vselfBinConstraintMatrices[4 * iBin + idim + 1].close();
                     constraintsVector.push_back(
                       &(d_vselfBinConstraintMatrices[4 * iBin + idim + 1]));
                   }
