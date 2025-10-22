@@ -22,6 +22,111 @@
 #include <feevaluationWrapper.h>
 namespace dftfe
 {
+  namespace internalForce
+  {
+    template <typename T>
+    void
+    transformNonColinDensityToSpinPolarizedDensity(
+      const std::shared_ptr<
+        dftfe::basis::
+          FEBasisOperations<T, double, dftfe::utils::MemorySpace::HOST>>
+                        &basisOperationsPtr,
+      const unsigned int quadratureId,
+      bool               isGGA,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &nonColinDensityValues,
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &nonColinGradDensityValues,
+      std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &spinPolarizedDensityValues,
+      std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &spinPolarizedGradDensityValues)
+    {
+      spinPolarizedDensityValues.clear();
+      spinPolarizedGradDensityValues.clear();
+      spinPolarizedDensityValues.resize(2);
+      spinPolarizedGradDensityValues.resize(isGGA ? 2 : 0);
+      spinPolarizedDensityValues[0] = nonColinDensityValues[0];
+      spinPolarizedDensityValues[1].resize(spinPolarizedDensityValues[0].size(),
+                                           0.0);
+      if (isGGA)
+        {
+          spinPolarizedGradDensityValues[0] = nonColinGradDensityValues[0];
+          spinPolarizedGradDensityValues[1].resize(
+            spinPolarizedGradDensityValues[0].size(), 0.0);
+        }
+      basisOperationsPtr->reinit(0, 0, quadratureId, false);
+      const unsigned int  nQuadsPerCell = basisOperationsPtr->nQuadsPerCell();
+      std::vector<double> cellMagAxisVals(isGGA ? nQuadsPerCell * 3 : 0, 0.0);
+      for (unsigned int iCell = 0; iCell < basisOperationsPtr->nCells();
+           ++iCell)
+        {
+          const double *cellRhoValues =
+            nonColinDensityValues[0].data() + iCell * nQuadsPerCell;
+          const double *cellMagZValues =
+            nonColinDensityValues[1].data() + iCell * nQuadsPerCell;
+          const double *cellMagYValues =
+            nonColinDensityValues[2].data() + iCell * nQuadsPerCell;
+          const double *cellMagXValues =
+            nonColinDensityValues[3].data() + iCell * nQuadsPerCell;
+          double *cellMagNormValues =
+            spinPolarizedDensityValues[1].data() + iCell * nQuadsPerCell;
+
+          for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+            cellMagNormValues[iQuad] =
+              std::sqrt(cellMagZValues[iQuad] * cellMagZValues[iQuad] +
+                        cellMagYValues[iQuad] * cellMagYValues[iQuad] +
+                        cellMagXValues[iQuad] * cellMagXValues[iQuad]);
+          if (isGGA)
+            {
+              const double *cellGradRhoValues =
+                nonColinGradDensityValues[0].data() + 3 * iCell * nQuadsPerCell;
+              const double *cellGradMagZValues =
+                nonColinGradDensityValues[1].data() + 3 * iCell * nQuadsPerCell;
+              const double *cellGradMagYValues =
+                nonColinGradDensityValues[2].data() + 3 * iCell * nQuadsPerCell;
+              const double *cellGradMagXValues =
+                nonColinGradDensityValues[3].data() + 3 * iCell * nQuadsPerCell;
+              double *cellGradMagNormValues =
+                spinPolarizedGradDensityValues[1].data() +
+                3 * iCell * nQuadsPerCell;
+              double *cellMagAxisValues = cellMagAxisVals.data();
+              for (unsigned int iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                {
+                  if (cellMagNormValues[iQuad] > 1e-12)
+                    {
+                      cellMagAxisValues[3 * iQuad + 0] =
+                        cellMagXValues[iQuad] / cellMagNormValues[iQuad];
+                      cellMagAxisValues[3 * iQuad + 1] =
+                        cellMagYValues[iQuad] / cellMagNormValues[iQuad];
+                      cellMagAxisValues[3 * iQuad + 2] =
+                        cellMagZValues[iQuad] / cellMagNormValues[iQuad];
+                    }
+                  else
+                    {
+                      cellMagAxisValues[3 * iQuad + 0] = 0.0;
+                      cellMagAxisValues[3 * iQuad + 1] = 0.0;
+                      cellMagAxisValues[3 * iQuad + 2] = 0.0;
+                    }
+                  for (unsigned int idim = 0; idim < 3; ++idim)
+                    {
+                      cellGradMagNormValues[iQuad * 3 + idim] =
+                        cellMagAxisValues[3 * iQuad + 2] *
+                          cellGradMagZValues[3 * iQuad + idim] +
+                        cellMagAxisValues[3 * iQuad + 1] *
+                          cellGradMagYValues[3 * iQuad + idim] +
+                        cellMagAxisValues[3 * iQuad + 0] *
+                          cellGradMagXValues[3 * iQuad + idim];
+                    }
+                }
+            }
+        }
+    }
+  } // namespace internalForce
   template <dftfe::utils::MemorySpace memorySpace>
   configurationalForceClass<memorySpace>::configurationalForceClass(
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
@@ -267,7 +372,7 @@ namespace dftfe
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       tauOutValuesSpinPolarized = tauOutValues;
 
-    if (d_dftParams.spinPolarized == 0)
+    if (!d_dftParams.noncolin && d_dftParams.spinPolarized == 0)
       densityOutValuesSpinPolarized.push_back(
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>(
           densityOutValues[0].size(), 0.0));
@@ -284,11 +389,22 @@ namespace dftfe
       {
         gradDensityOutValuesSpinPolarized = gradDensityOutValues;
 
-        if (d_dftParams.spinPolarized == 0)
+        if (!d_dftParams.noncolin && d_dftParams.spinPolarized == 0)
           gradDensityOutValuesSpinPolarized.push_back(
             dftfe::utils::MemoryStorage<double,
                                         dftfe::utils::MemorySpace::HOST>(
               gradDensityOutValues[0].size(), 0.0));
+      }
+    if (d_dftParams.noncolin)
+      {
+        internalForce::transformNonColinDensityToSpinPolarizedDensity(
+          d_basisOperationsPtrElectroHost,
+          d_densityQuadratureIdElectro,
+          isIntegrationByPartsGradDensityDependenceVxc,
+          densityOutValues,
+          gradDensityOutValues,
+          densityOutValuesSpinPolarized,
+          gradDensityOutValuesSpinPolarized);
       }
 
     if (isTauMGGA)
@@ -316,7 +432,9 @@ namespace dftfe
         if (floatingNuclearCharges)
           computeWfcContribNloc(
             d_pseudopotentialClassPtr->getNonLocalOperator(),
-            CouplingStructure::diagonal,
+            d_pseudopotentialClassPtr->hasSOC() ?
+              CouplingStructure::blockDiagonal :
+              CouplingStructure::diagonal,
             couplingMatrixPtrs,
             d_pseudopotentialClassPtr->getPSPAtomIdToGlobalIdMap(),
             numEigenValues,
@@ -331,7 +449,9 @@ namespace dftfe
         else
           computeWfcContribNlocAtomOnNode(
             d_pseudopotentialClassPtr->getNonLocalOperator(),
-            CouplingStructure::diagonal,
+            d_pseudopotentialClassPtr->hasSOC() ?
+              CouplingStructure::blockDiagonal :
+              CouplingStructure::diagonal,
             couplingMatrixPtrs,
             d_pseudopotentialClassPtr->getPSPAtomIdToGlobalIdMap(),
             numEigenValues,
@@ -721,19 +841,26 @@ namespace dftfe
                bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
-      (d_dftParams.spinPolarized == 1) ? 1.0 : 2.0;
+      (d_dftParams.spinPolarized == 1 || d_dftParams.noncolin ||
+       d_dftParams.hasSOC) ?
+        1.0 :
+        2.0;
+    const dftfe::uInt spinorFactor =
+      d_dftParams.noncolin || d_dftParams.hasSOC ? 2 : 1;
     const dftfe::uInt numSpinComponents =
       (d_dftParams.spinPolarized == 1) ? 2 : 1;
 
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      cellWaveFunctionMatrix(cellsBlockSize * nDofsPerCell * wfcBlockSize);
+      cellWaveFunctionMatrix(cellsBlockSize * nDofsPerCell * wfcBlockSize *
+                             spinorFactor);
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      cellWaveFunctionQuadData(cellsBlockSize * nQuadsPerCell * wfcBlockSize);
+      cellWaveFunctionQuadData(cellsBlockSize * nQuadsPerCell * wfcBlockSize *
+                               spinorFactor);
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       cellGradWaveFunctionQuadData(cellsBlockSize * nQuadsPerCell *
-                                   wfcBlockSize * 3);
+                                   wfcBlockSize * spinorFactor * 3);
     dftfe::utils::MemoryStorage<double, memorySpace> eshelbyContributions(
-      cellsBlockSize * nQuadsPerCell * wfcBlockSize * 9, 0.0);
+      cellsBlockSize * nQuadsPerCell * wfcBlockSize * spinorFactor * 9, 0.0);
     dftfe::utils::MemoryStorage<double, memorySpace> eshelbyTensor(
       cellsBlockSize * nQuadsPerCell * 9, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -742,9 +869,9 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       *flattenedArrayBlock;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      partialOccupVecHost(wfcBlockSize, 0.0);
+      partialOccupVecHost(wfcBlockSize * spinorFactor, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      eigenValuesVecHost(wfcBlockSize, 0.0);
+      eigenValuesVecHost(wfcBlockSize * spinorFactor, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       kCoordHost(3, 0.0);
 #if defined(DFTFE_WITH_DEVICE)
@@ -772,8 +899,8 @@ namespace dftfe
               {
                 const dftfe::uInt currentBlockSize =
                   std::min(wfcBlockSize, numEigenValues - jvec);
-                flattenedArrayBlock =
-                  &(d_basisOperationsPtr->getMultiVector(currentBlockSize, 0));
+                flattenedArrayBlock = &(d_basisOperationsPtr->getMultiVector(
+                  currentBlockSize * spinorFactor, 0));
                 if ((jvec + currentBlockSize) <=
                       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
                     (jvec + currentBlockSize) >
@@ -782,16 +909,23 @@ namespace dftfe
                     for (dftfe::uInt iEigenVec = 0;
                          iEigenVec < currentBlockSize;
                          ++iEigenVec)
-                      partialOccupVecHost[iEigenVec] =
-                        partialOccupancies[kPoint][numEigenValues * spinIndex +
-                                                   jvec + iEigenVec] *
-                        kPointWeights[kPoint] * spinPolarizedFactor;
+                      for (unsigned int iSpinor = 0; iSpinor < spinorFactor;
+                           ++iSpinor)
+                        partialOccupVecHost[iSpinor * currentBlockSize +
+                                            iEigenVec] =
+                          partialOccupancies[kPoint]
+                                            [numEigenValues * spinIndex + jvec +
+                                             iEigenVec] *
+                          kPointWeights[kPoint] * spinPolarizedFactor;
                     for (dftfe::uInt iEigenVec = 0;
                          iEigenVec < currentBlockSize;
                          ++iEigenVec)
-                      eigenValuesVecHost[iEigenVec] =
-                        eigenValues[kPoint][numEigenValues * spinIndex + jvec +
-                                            iEigenVec];
+                      for (unsigned int iSpinor = 0; iSpinor < spinorFactor;
+                           ++iSpinor)
+                        eigenValuesVecHost[iSpinor * currentBlockSize +
+                                           iEigenVec] =
+                          eigenValues[kPoint][numEigenValues * spinIndex +
+                                              jvec + iEigenVec];
 
 #if defined(DFTFE_WITH_DEVICE)
                     partialOccupVec.copyFrom(partialOccupVecHost);
@@ -801,14 +935,15 @@ namespace dftfe
                     d_BLASWrapperPtr->stridedCopyToBlockConstantStride(
                       currentBlockSize,
                       numEigenValues,
-                      numLocalDofs,
+                      numLocalDofs * spinorFactor,
                       jvec,
                       eigenVectors.data() +
-                        numLocalDofs * numEigenValues *
+                        numLocalDofs * spinorFactor * numEigenValues *
                           (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock->data());
 
-                    d_basisOperationsPtr->reinit(currentBlockSize,
+                    d_basisOperationsPtr->reinit(currentBlockSize *
+                                                   spinorFactor,
                                                  cellsBlockSize,
                                                  d_densityQuadratureId,
                                                  true);
@@ -831,7 +966,8 @@ namespace dftfe
                               startingCellId,
                               startingCellId + currentCellsBlockSize);
                             std::pair<dftfe::uInt, dftfe::uInt> vecRange(
-                              jvec, jvec + currentBlockSize);
+                              jvec * spinorFactor,
+                              (jvec + currentBlockSize) * spinorFactor);
                             d_basisOperationsPtr->extractToCellNodalDataKernel(
                               *(flattenedArrayBlock),
                               cellWaveFunctionMatrix.data(),
@@ -3023,16 +3159,24 @@ namespace dftfe
                bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
-      (d_dftParams.spinPolarized == 1) ? 1.0 : 2.0;
+      (d_dftParams.spinPolarized == 1 || d_dftParams.noncolin ||
+       d_dftParams.hasSOC) ?
+        1.0 :
+        2.0;
+    const dftfe::uInt spinorFactor =
+      d_dftParams.noncolin || d_dftParams.hasSOC ? 2 : 1;
     const dftfe::uInt numSpinComponents =
       (d_dftParams.spinPolarized == 1) ? 2 : 1;
 
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      cellWaveFunctionMatrix(cellsBlockSize * nDofsPerCell * wfcBlockSize);
+      cellWaveFunctionMatrix(cellsBlockSize * nDofsPerCell * wfcBlockSize *
+                             spinorFactor);
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      cellWaveFunctionQuadData(nCells * nQuadsPerCell * wfcBlockSize);
+      cellWaveFunctionQuadData(nCells * nQuadsPerCell * wfcBlockSize *
+                               spinorFactor);
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      cellGradWaveFunctionQuadData(nCells * nQuadsPerCell * wfcBlockSize * 3);
+      cellGradWaveFunctionQuadData(nCells * nQuadsPerCell * wfcBlockSize *
+                                   spinorFactor * 3);
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       couplingMatrixTimesNonLocalProjectorTimesVectorPsiContraction(
         nProjectorsAllCells * nQuadsPerCell, 0.0);
@@ -3056,10 +3200,10 @@ namespace dftfe
                ->getSphericalFnTimesVectorFlattenedVectorLocalIds()[0]));
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       nlpContractionContribution(blockSizeNlp * nQuadsPerCell * 3 *
-                                   wfcBlockSize,
+                                   wfcBlockSize * spinorFactor,
                                  dataTypes::number(0.0));
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace> onesVecNLP(
-      wfcBlockSize, dataTypes::number(1.0));
+      wfcBlockSize * spinorFactor, dataTypes::number(1.0));
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
       nlpContractionGradPsiQuadsContributionBlock(
         nProjectorsAllCells > 0 ? blockSizeNlp * nQuadsPerCell * 3 : 0,
@@ -3082,7 +3226,7 @@ namespace dftfe
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       couplingMatrixTimesNonLocalProjectorTimesVectorBlock;
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      sqrtPartialOccupVecHost(wfcBlockSize, 0.0);
+      sqrtPartialOccupVecHost(wfcBlockSize * spinorFactor, 0.0);
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       kCoordHost(3, 0.0);
 #if defined(DFTFE_WITH_DEVICE)
@@ -3106,7 +3250,7 @@ namespace dftfe
         nonLocalOperator->initialiseOperatorActionOnX(
           kPoint, nonLocalContractionVectorType::CconjTransX);
         nonLocalOperator->initialiseFlattenedDataStructure(
-          wfcBlockSize,
+          wfcBlockSize * spinorFactor,
           couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
           nonLocalContractionVectorType::CconjTransX);
         if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
@@ -3138,8 +3282,8 @@ namespace dftfe
               {
                 const dftfe::uInt currentBlockSize =
                   std::min(wfcBlockSize, numEigenValues - jvec);
-                flattenedArrayBlock =
-                  &(d_basisOperationsPtr->getMultiVector(currentBlockSize, 0));
+                flattenedArrayBlock = &(d_basisOperationsPtr->getMultiVector(
+                  currentBlockSize * spinorFactor, 0));
                 if ((jvec + currentBlockSize) <=
                       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
                     (jvec + currentBlockSize) >
@@ -3153,7 +3297,7 @@ namespace dftfe
                         if (wfcBlockSize != currentBlockSize)
                           {
                             nonLocalOperator->initialiseFlattenedDataStructure(
-                              currentBlockSize,
+                              currentBlockSize * spinorFactor,
                               couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
                               nonLocalContractionVectorType::CconjTransX);
                           }
@@ -3173,21 +3317,22 @@ namespace dftfe
                     d_BLASWrapperPtr->stridedCopyToBlockConstantStride(
                       currentBlockSize,
                       numEigenValues,
-                      numLocalDofs,
+                      numLocalDofs * spinorFactor,
                       jvec,
                       eigenVectors.data() +
-                        numLocalDofs * numEigenValues *
+                        numLocalDofs * spinorFactor * numEigenValues *
                           (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock->data());
 
-                    d_basisOperationsPtr->reinit(currentBlockSize,
+                    d_basisOperationsPtr->reinit(currentBlockSize *
+                                                   spinorFactor,
                                                  cellsBlockSize,
                                                  d_nlpspQuadratureId,
                                                  true);
 
                     d_BLASWrapperPtr->rightDiagonalScale(
-                      flattenedArrayBlock->numVectors(),
-                      flattenedArrayBlock->locallyOwnedSize(),
+                      flattenedArrayBlock->numVectors() / spinorFactor,
+                      flattenedArrayBlock->locallyOwnedSize() * spinorFactor,
                       flattenedArrayBlock->data(),
                       sqrtPartialOccupVec.data());
 
@@ -3216,10 +3361,10 @@ namespace dftfe
                               cellWaveFunctionMatrix.data(),
                               cellWaveFunctionQuadData.data() +
                                 startingCellId * nQuadsPerCell *
-                                  currentBlockSize,
+                                  currentBlockSize * spinorFactor,
                               cellGradWaveFunctionQuadData.data() +
                                 startingCellId * nQuadsPerCell *
-                                  currentBlockSize * 3,
+                                  currentBlockSize * spinorFactor * 3,
                               cellRange);
                             if (nonLocalOperator->isGlobalCMatrix())
                               nonLocalOperator->applyCconjtransOnX(
@@ -3261,7 +3406,7 @@ namespace dftfe
                               {
                                 nlpWfcContractionContribution(
                                   d_BLASWrapperPtr,
-                                  currentBlockSize,
+                                  currentBlockSize * spinorFactor,
                                   currentBlockSizeNlp,
                                   nQuadsPerCell * 3,
                                   startingIdNlp,
@@ -3280,12 +3425,12 @@ namespace dftfe
                                   'N',
                                   1,
                                   currentBlockSizeNlp * 3 * nQuadsPerCell,
-                                  currentBlockSize,
+                                  currentBlockSize * spinorFactor,
                                   &scalarCoeffAlpha,
                                   onesVecNLP.data(),
                                   1,
                                   nlpContractionContribution.data(),
-                                  currentBlockSize,
+                                  currentBlockSize * spinorFactor,
                                   &scalarCoeffBeta,
                                   nlpContractionGradPsiQuadsContributionBlock
                                     .data(),
@@ -3312,7 +3457,7 @@ namespace dftfe
 #ifdef USE_COMPLEX
                                 nlpWfcContractionContribution(
                                   d_BLASWrapperPtr,
-                                  currentBlockSize,
+                                  currentBlockSize * spinorFactor,
                                   currentBlockSizeNlp,
                                   nQuadsPerCell,
                                   startingIdNlp,
@@ -3329,12 +3474,12 @@ namespace dftfe
                                   'N',
                                   1,
                                   currentBlockSizeNlp * nQuadsPerCell,
-                                  currentBlockSize,
+                                  currentBlockSize * spinorFactor,
                                   &scalarCoeffAlpha,
                                   onesVecNLP.data(),
                                   1,
                                   nlpContractionContribution.data(),
-                                  currentBlockSize,
+                                  currentBlockSize * spinorFactor,
                                   &scalarCoeffBeta,
                                   nlpContractionPsiQuadsContributionBlock
                                     .data(),
@@ -3735,12 +3880,18 @@ namespace dftfe
                bandGroupLowHighPlusOneIndices[1]);
 
     const double spinPolarizedFactor =
-      (d_dftParams.spinPolarized == 1) ? 1.0 : 2.0;
+      (d_dftParams.spinPolarized == 1 || d_dftParams.noncolin ||
+       d_dftParams.hasSOC) ?
+        1.0 :
+        2.0;
+    const dftfe::uInt spinorFactor =
+      d_dftParams.noncolin || d_dftParams.hasSOC ? 2 : 1;
     const dftfe::uInt numSpinComponents =
       (d_dftParams.spinPolarized == 1) ? 2 : 1;
 
     dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
-      cellWaveFunctionMatrix(cellsBlockSize * nDofsPerCell * wfcBlockSize);
+      cellWaveFunctionMatrix(cellsBlockSize * nDofsPerCell * wfcBlockSize *
+                             spinorFactor);
 
     dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace>
       *flattenedArrayBlock;
@@ -3788,7 +3939,7 @@ namespace dftfe
         nonLocalOperator->initialiseOperatorActionOnX(
           kPoint, nonLocalContractionVectorType::CconjTransX);
         nonLocalOperator->initialiseFlattenedDataStructure(
-          wfcBlockSize,
+          wfcBlockSize * spinorFactor,
           couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
           nonLocalContractionVectorType::CconjTransX);
         if (computeForce)
@@ -3796,7 +3947,7 @@ namespace dftfe
             nonLocalOperator->initialiseOperatorActionOnX(
               kPoint, nonLocalContractionVectorType::DconjTransX);
             nonLocalOperator->initialiseFlattenedDataStructure(
-              wfcBlockSize,
+              wfcBlockSize * spinorFactor,
               nonLocalProjectorTimesGradientVectorBlock,
               nonLocalContractionVectorType::DconjTransX);
           }
@@ -3805,7 +3956,7 @@ namespace dftfe
             nonLocalOperator->initialiseOperatorActionOnX(
               kPoint, nonLocalContractionVectorType::DDyadicRconjTransX);
             nonLocalOperator->initialiseFlattenedDataStructure(
-              wfcBlockSize,
+              wfcBlockSize * spinorFactor,
               nonLocalProjectorTimesRDyadicGradientVectorBlock,
               nonLocalContractionVectorType::DDyadicRconjTransX);
             if (!isGammaPoint)
@@ -3813,7 +3964,7 @@ namespace dftfe
                 nonLocalOperator->initialiseOperatorActionOnX(
                   kPoint, nonLocalContractionVectorType::CRconjTransX);
                 nonLocalOperator->initialiseFlattenedDataStructure(
-                  wfcBlockSize,
+                  wfcBlockSize * spinorFactor,
                   nonLocalProjectorTimesXTimesVectorBlock,
                   nonLocalContractionVectorType::CRconjTransX);
               }
@@ -3833,8 +3984,8 @@ namespace dftfe
               {
                 const dftfe::uInt currentBlockSize =
                   std::min(wfcBlockSize, numEigenValues - jvec);
-                flattenedArrayBlock =
-                  &(d_basisOperationsPtr->getMultiVector(currentBlockSize, 0));
+                flattenedArrayBlock = &(d_basisOperationsPtr->getMultiVector(
+                  currentBlockSize * spinorFactor, 0));
                 if ((jvec + currentBlockSize) <=
                       bandGroupLowHighPlusOneIndices[2 * bandGroupTaskId + 1] &&
                     (jvec + currentBlockSize) >
@@ -3862,27 +4013,27 @@ namespace dftfe
                         if (wfcBlockSize != currentBlockSize)
                           {
                             nonLocalOperator->initialiseFlattenedDataStructure(
-                              currentBlockSize,
+                              currentBlockSize * spinorFactor,
                               couplingMatrixTimesNonLocalProjectorTimesVectorBlock,
                               nonLocalContractionVectorType::CconjTransX);
                             if (computeForce)
                               nonLocalOperator
                                 ->initialiseFlattenedDataStructure(
-                                  currentBlockSize,
+                                  currentBlockSize * spinorFactor,
                                   nonLocalProjectorTimesGradientVectorBlock,
                                   nonLocalContractionVectorType::DconjTransX);
                             if (computeStress)
                               {
                                 nonLocalOperator
                                   ->initialiseFlattenedDataStructure(
-                                    currentBlockSize,
+                                    currentBlockSize * spinorFactor,
                                     nonLocalProjectorTimesRDyadicGradientVectorBlock,
                                     nonLocalContractionVectorType::
                                       DDyadicRconjTransX);
                                 if (!isGammaPoint)
                                   nonLocalOperator
                                     ->initialiseFlattenedDataStructure(
-                                      currentBlockSize,
+                                      currentBlockSize * spinorFactor,
                                       nonLocalProjectorTimesXTimesVectorBlock,
                                       nonLocalContractionVectorType::
                                         CRconjTransX);
@@ -3904,21 +4055,22 @@ namespace dftfe
                     d_BLASWrapperPtr->stridedCopyToBlockConstantStride(
                       currentBlockSize,
                       numEigenValues,
-                      numLocalDofs,
+                      numLocalDofs * spinorFactor,
                       jvec,
                       eigenVectors.data() +
-                        numLocalDofs * numEigenValues *
+                        numLocalDofs * numEigenValues * spinorFactor *
                           (numSpinComponents * kPoint + spinIndex),
                       flattenedArrayBlock->data());
 
-                    d_basisOperationsPtr->reinit(currentBlockSize,
+                    d_basisOperationsPtr->reinit(currentBlockSize *
+                                                   spinorFactor,
                                                  cellsBlockSize,
                                                  d_nlpspQuadratureId,
                                                  false);
 
                     d_BLASWrapperPtr->rightDiagonalScale(
-                      flattenedArrayBlock->numVectors(),
-                      flattenedArrayBlock->locallyOwnedSize(),
+                      flattenedArrayBlock->numVectors() / spinorFactor,
+                      flattenedArrayBlock->locallyOwnedSize() * spinorFactor,
                       flattenedArrayBlock->data(),
                       sqrtPartialOccupVec.data());
 

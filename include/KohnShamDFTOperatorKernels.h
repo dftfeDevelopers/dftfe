@@ -43,6 +43,26 @@ namespace dftfe
 
     template <dftfe::utils::MemorySpace memorySpace>
     void
+    computeVeffBeffJxWEntries(
+      const std::pair<dftfe::uInt, dftfe::uInt>               cellRange,
+      const dftfe::uInt                                       numQuadsPerCell,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &phiVector,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &pdecVectorSpinUp,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &pdecVectorSpinDown,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &pdexVectorSpinUp,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &pdexVectorSpinDown,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &magAxis,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &jxwVector,
+      dftfe::utils::MemoryStorage<double, memorySpace>       &VeffJxW,
+      dftfe::utils::MemoryStorage<double, memorySpace>       &BeffxJxW,
+      dftfe::utils::MemoryStorage<double, memorySpace>       &BeffyJxW,
+      dftfe::utils::MemoryStorage<double, memorySpace>       &BeffzJxW);
+
+
+    template <dftfe::utils::MemorySpace memorySpace>
+    void
     computeInvJacderExcWithSigmaTimesGradRhoJxWEntries(
       const std::pair<dftfe::uInt, dftfe::uInt>               cellRange,
       const dftfe::uInt                                       numQuadsPerCell,
@@ -59,6 +79,31 @@ namespace dftfe
         &gradientRhoOtherSpinIndex,
       dftfe::utils::MemoryStorage<double, memorySpace>
         &invJacderExcWithSigmaTimesGradRhoJxW);
+
+    template <dftfe::utils::MemorySpace memorySpace>
+    void
+    computeInvJacderExcWithSigmaTimesGradRhoMagJxWEntries(
+      const std::pair<dftfe::uInt, dftfe::uInt>               cellRange,
+      const dftfe::uInt                                       numQuadsPerCell,
+      const dftfe::Int                                        spinIndex,
+      const dftfe::Int                                        cellsTypeFlag,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &pdecVector,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &pdexVector,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &magAxis,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &jxwVector,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &invJacobianEntries,
+      const dftfe::utils::MemoryStorage<double, memorySpace> &gradientRhoSpinUp,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &gradientRhoSpinDown,
+      dftfe::utils::MemoryStorage<double, memorySpace>
+        &invJacderExcWithSigmaTimesGradRhoJxW,
+      dftfe::utils::MemoryStorage<double, memorySpace>
+        &invJacderExcWithSigmaTimesMagXTimesGradRhoJxWHost,
+      dftfe::utils::MemoryStorage<double, memorySpace>
+        &invJacderExcWithSigmaTimesMagYTimesGradRhoJxWHost,
+      dftfe::utils::MemoryStorage<double, memorySpace>
+        &invJacderExcWithSigmaTimesMagZTimesGradRhoJxWHost);
 
     template <dftfe::utils::MemorySpace memorySpace>
     void
@@ -90,6 +135,23 @@ namespace dftfe
         &halfKSquareTimesDerExcwithTauJxW,
       dftfe::utils::MemoryStorage<double, memorySpace>
         &invJacKpointTimesderExcwithTauJxW);
+    template <dftfe::utils::MemorySpace memorySpace>
+    void
+    computeCellHamiltonianMatrixNonCollinearFromBlocks(
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                         nDofsPerCell,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &tempHamMatrixRealBlock,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &tempHamMatrixImagBlock,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &tempHamMatrixBZBlockNonCollin,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &tempHamMatrixBYBlockNonCollin,
+      const dftfe::utils::MemoryStorage<double, memorySpace>
+        &tempHamMatrixBXBlockNonCollin,
+      dftfe::utils::MemoryStorage<std::complex<double>, memorySpace>
+        &cellHamiltonianMatrix);
   }; // namespace internal
 } // namespace dftfe
 #endif

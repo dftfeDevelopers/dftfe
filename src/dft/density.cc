@@ -35,17 +35,15 @@ namespace dftfe
     const bool isTauMGGA =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
        ExcFamilyType::TauMGGA);
-
+    const dftfe::uInt numDensityComponents =
+      d_dftParamsPtr->noncolin ? 4 :
+                                 (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
     if (d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_KERKER" ||
         d_dftParamsPtr->mixingMethod == "ANDERSON_WITH_RESTA" ||
         d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ||
         d_dftParamsPtr->useSymm)
       {
         computeRhoNodalFromPSI();
-        d_basisOperationsPtrHost->reinit(0, 0, d_densityQuadratureId, false);
-        const dftfe::uInt nQuadsPerCell =
-          d_basisOperationsPtrHost->nQuadsPerCell();
-        const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
 
         // normalize rho
         const double charge =
@@ -59,10 +57,6 @@ namespace dftfe
              ++iComp)
           d_densityOutNodalValues[iComp] *= scalingFactor;
 
-        std::vector<
-          dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-          dummy;
-        dummy.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
         // interpolate nodal rhoOut data to quadrature data
         for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
              ++iComp)
@@ -77,8 +71,19 @@ namespace dftfe
 
         if (isTauMGGA || (d_dftParamsPtr->printKE && isGroundState))
           {
-            d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
-                                                                           1);
+            d_basisOperationsPtrHost->reinit(0,
+                                             0,
+                                             d_densityQuadratureId,
+                                             false);
+            const dftfe::uInt nQuadsPerCell =
+              d_basisOperationsPtrHost->nQuadsPerCell();
+            const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
+            std::vector<
+              dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>>
+              dummy;
+            dummy.resize(numDensityComponents);
+            d_tauOutQuadValues.resize(numDensityComponents);
             for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
                  ++iComp)
               {
@@ -169,13 +174,11 @@ namespace dftfe
         const dftfe::uInt nQuadsPerCell =
           d_basisOperationsPtrHost->nQuadsPerCell();
         const dftfe::uInt nCells = d_basisOperationsPtrHost->nCells();
-        d_densityOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
-                                                                           1);
+        d_densityOutQuadValues.resize(numDensityComponents);
         if (isGradDensityDataDependent ||
             (d_dftParamsPtr->printKE && isGroundState))
           {
-            d_gradDensityOutQuadValues.resize(
-              d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+            d_gradDensityOutQuadValues.resize(numDensityComponents);
           }
         for (dftfe::uInt iComp = 0; iComp < d_densityOutQuadValues.size();
              ++iComp)
@@ -187,8 +190,7 @@ namespace dftfe
 
         if (isTauMGGA || (d_dftParamsPtr->printKE && isGroundState))
           {
-            d_tauOutQuadValues.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 :
-                                                                           1);
+            d_tauOutQuadValues.resize(numDensityComponents);
             for (dftfe::uInt iComp = 0; iComp < d_tauOutQuadValues.size();
                  ++iComp)
               {
@@ -278,7 +280,7 @@ namespace dftfe
           d_dftParamsPtr->solverMode == "GEOOPT") ||
          (d_dftParamsPtr->extrapolateDensity == 2 &&
           d_dftParamsPtr->solverMode == "MD")) &&
-        d_dftParamsPtr->spinPolarized != 1)
+        d_dftParamsPtr->spinPolarized != 1 && !d_dftParamsPtr->noncolin)
       {
         d_rhoOutNodalValuesSplit = d_densityOutNodalValues[0];
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -432,8 +434,11 @@ namespace dftfe
       }
 
     // allocate the storage to compute 2p nodal values from wavefunctions
-    densityPRefinedNodalData.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
-    dummy.resize(d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    const dftfe::uInt numDensityComponents =
+      d_dftParamsPtr->noncolin ? 4 :
+                                 (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+    densityPRefinedNodalData.resize(numDensityComponents);
+    dummy.resize(numDensityComponents);
 
     // compute rho from wavefunctions at nodal locations of 2p DoFHandler
     // nodes in each cell
@@ -479,41 +484,13 @@ namespace dftfe
                         *d_dftParamsPtr);
 
     // copy Lobatto quadrature data to fill in 2p DoFHandler nodal data
-    dealii::DoFHandler<3>::active_cell_iterator cellP = d_dofHandlerRhoNodal
-                                                          .begin_active(),
-                                                endcP =
-                                                  d_dofHandlerRhoNodal.end();
-    dftfe::uInt iCell = 0;
-    for (; cellP != endcP; ++cellP)
+    for (dftfe::uInt iComp = 0; iComp < densityPRefinedNodalData.size();
+         ++iComp)
       {
-        if (cellP->is_locally_owned())
-          {
-            std::vector<dealii::types::global_dof_index> cell_dof_indices(
-              dofs_per_cell);
-            cellP->get_dof_indices(cell_dof_indices);
-            const double *nodalValues =
-              densityPRefinedNodalData[0].data() + iCell * dofs_per_cell;
-
-            for (dftfe::uInt iNode = 0; iNode < dofs_per_cell; ++iNode)
-              {
-                const dealii::types::global_dof_index nodeID =
-                  cell_dof_indices[iNode];
-                if (!d_constraintsRhoNodal.is_constrained(nodeID))
-                  {
-                    if (locallyOwnedDofs.is_element(nodeID))
-                      d_densityOutNodalValues[0](nodeID) =
-                        nodalValues[renumberingMap[iNode]];
-                  }
-              }
-            ++iCell;
-          }
-      }
-
-    cellP = d_dofHandlerRhoNodal.begin_active();
-    endcP = d_dofHandlerRhoNodal.end();
-    iCell = 0;
-    if (d_dftParamsPtr->spinPolarized == 1)
-      {
+        dealii::DoFHandler<3>::active_cell_iterator
+          cellP           = d_dofHandlerRhoNodal.begin_active(),
+          endcP           = d_dofHandlerRhoNodal.end();
+        dftfe::uInt iCell = 0;
         for (; cellP != endcP; ++cellP)
           {
             if (cellP->is_locally_owned())
@@ -522,7 +499,8 @@ namespace dftfe
                   dofs_per_cell);
                 cellP->get_dof_indices(cell_dof_indices);
                 const double *nodalValues =
-                  densityPRefinedNodalData[1].data() + iCell * dofs_per_cell;
+                  densityPRefinedNodalData[iComp].data() +
+                  iCell * dofs_per_cell;
 
                 for (dftfe::uInt iNode = 0; iNode < dofs_per_cell; ++iNode)
                   {
@@ -531,10 +509,8 @@ namespace dftfe
                     if (!d_constraintsRhoNodal.is_constrained(nodeID))
                       {
                         if (locallyOwnedDofs.is_element(nodeID))
-                          {
-                            d_densityOutNodalValues[1](nodeID) =
-                              nodalValues[renumberingMap[iNode]];
-                          }
+                          d_densityOutNodalValues[iComp](nodeID) =
+                            nodalValues[renumberingMap[iNode]];
                       }
                   }
                 ++iCell;

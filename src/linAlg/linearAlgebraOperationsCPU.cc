@@ -1592,15 +1592,15 @@ namespace dftfe
                   }
 
               operatorMatrix.HX(*XBlock, 1.0, -1.0, 0.0, *HXBlock);
-              if (dftParams.approxOverlapMatrix)
-                {
-                  BLASWrapperPtr->stridedBlockScale(
-                    B,
-                    localVectorSize,
-                    1.0,
-                    operatorMatrix.getInverseSqrtMassVector().data(),
-                    HXBlock->data());
-                }
+              // if (dftParams.approxOverlapMatrix)
+              //   {
+              //     BLASWrapperPtr->stridedBlockScale(
+              //       B,
+              //       localVectorSize,
+              //       1.0,
+              //       operatorMatrix.getInverseSqrtMassVector().data(),
+              //       HXBlock->data());
+              //   }
               //   pointWiseScaleWithDiagonal(
               //     operatorMatrix.getInverseSqrtMassVector().data(),
               //     B,

@@ -165,6 +165,27 @@ namespace dftfe
     xmltoSummaryFile(std::string file_path_in, std::string file_path_out)
     {
       // List of momentum values
+      bool socFlag = false;
+      {
+        std::vector<std::string> header_tag;
+        std::vector<std::string> attr_type;
+        std::vector<std::string> attr_value;
+        header_tag.push_back("PP_HEADER");
+        XmlTagReaderAttr(header_tag, file_path_in, &attr_type, &attr_value);
+        std::string to_search = "has_so";
+        dftfe::uInt index     = 0;
+        auto it = std::find(attr_type.begin(), attr_type.end(), to_search);
+        if (it == attr_type.end())
+          {
+            throw std::invalid_argument(
+              "spin orbit coupling attribute not found");
+          }
+        else
+          {
+            index = std::distance(attr_type.begin(), it);
+          }
+        socFlag = attr_value[index] == "T";
+      }
       std::vector<std::string> tag_name_parent;
       tag_name_parent.push_back("PP_NONLOCAL");
       std::vector<dftfe::Int> ang_mom_list;
@@ -213,6 +234,37 @@ namespace dftfe
           ang_mom_unique_list = ang_mom_list;
         }
 
+      std::vector<double> tot_ang_mom_list;
+      if (socFlag)
+        {
+          std::vector<std::string> tag_name_parent;
+          tag_name_parent.push_back("PP_SPIN_ORB");
+          for (int i = 1; i < ang_mom_list.size() + 1; i++)
+            {
+              std::string pp_beta_str = "PP_RELBETA.";
+              pp_beta_str += std::to_string(i);
+              std::vector<std::string> tag_name;
+              tag_name.push_back("PP_SPIN_ORB");
+              tag_name.push_back(pp_beta_str);
+              std::vector<std::string> attr_type;
+              std::vector<std::string> attr_value;
+              XmlTagReaderAttr(tag_name, file_path_in, &attr_type, &attr_value);
+              dftfe::uInt index     = 0;
+              std::string to_search = "jjj";
+              auto        it =
+                std::find(attr_type.begin(), attr_type.end(), to_search);
+              if (it == attr_type.end())
+                {
+                  throw std::invalid_argument(
+                    "total angular momentum attribute not found");
+                }
+              else
+                {
+                  index = std::distance(attr_type.begin(), it);
+                  tot_ang_mom_list.push_back(std::stod(attr_value[index]));
+                }
+            }
+        }
       // Multiplicity of unique angular momentum values
       std::vector<dftfe::Int> ang_mom_multiplicity_list;
       for (dftfe::Int i = 0; i < ang_mom_unique_list.size(); i++)
@@ -227,9 +279,9 @@ namespace dftfe
             }
           ang_mom_multiplicity_list.push_back(count);
         }
-      dftfe::Int                           row_index = 0;
-      dftfe::Int                           index     = 0;
-      std::vector<std::vector<dftfe::Int>> out_proj_arr;
+      dftfe::Int                       row_index = 0;
+      dftfe::Int                       index     = 0;
+      std::vector<std::vector<double>> out_proj_arr;
       for (dftfe::Int i = 0; i < ang_mom_unique_list.size(); i++)
         {
           dftfe::Int l = ang_mom_unique_list[i];
@@ -238,9 +290,11 @@ namespace dftfe
               dftfe::Int m = -l;
               for (dftfe::Int k = 0; k < 2 * l + 1; k++)
                 {
-                  out_proj_arr.push_back((std::vector<dftfe::Int>()));
+                  out_proj_arr.push_back((std::vector<double>()));
                   out_proj_arr[row_index].push_back(index);
                   out_proj_arr[row_index].push_back(l);
+                  if (socFlag)
+                    out_proj_arr[row_index].push_back(tot_ang_mom_list[index]);
                   out_proj_arr[row_index].push_back(m);
                   m++;
                   row_index++;
@@ -257,6 +311,7 @@ namespace dftfe
         {
           // Total projector
           file << out_proj_arr.size() << std::endl;
+          file << socFlag << std::endl;
           // Projector data
           dftfe::Int m = out_proj_arr.size();
           dftfe::Int n = out_proj_arr[0].size();

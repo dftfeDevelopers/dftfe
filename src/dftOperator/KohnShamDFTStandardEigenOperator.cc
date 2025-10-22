@@ -36,6 +36,9 @@ namespace dftfe
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         BLASWrapperPtr,
       std::shared_ptr<
+        dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>
+        BLASWrapperPtrHost,
+      std::shared_ptr<
         dftfe::basis::FEBasisOperations<dataTypes::number, double, memorySpace>>
         basisOperationsPtr,
       std::shared_ptr<
@@ -54,6 +57,7 @@ namespace dftfe
       const MPI_Comm                          &mpi_comm_parent,
       const MPI_Comm                          &mpi_comm_domain)
     : KohnShamDFTBaseOperator<memorySpace>(BLASWrapperPtr,
+                                           BLASWrapperPtrHost,
                                            basisOperationsPtr,
                                            basisOperationsPtrHost,
                                            pseudopotentialClassPtr,
@@ -261,12 +265,13 @@ namespace dftfe
   {
     const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
     const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const dftfe::uInt numberWavefunctions = src.numVectors();
-    if (d_numVectorsInternal != numberWavefunctions)
-      reinitNumberWavefunctions(numberWavefunctions);
+    const dftfe::uInt spinorFactor   = d_dftParamsPtr->noncolin ? 2 : 1;
+    const dftfe::uInt numberWavefunctions = src.numVectors() / spinorFactor;
+    if (d_numVectorsInternal != numberWavefunctions * spinorFactor)
+      reinitNumberWavefunctions(numberWavefunctions * spinorFactor);
 
-    if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
-      d_basisOperationsPtr->reinit(numberWavefunctions,
+    if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
+      d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
                                    d_densityQuadratureID,
                                    false,
@@ -300,7 +305,7 @@ namespace dftfe
             std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
             d_BLASWrapperPtr->stridedBlockScaleCopy(
-              numberWavefunctions,
+              numberWavefunctions * spinorFactor,
               numDoFsPerCell * (cellRange.second - cellRange.first),
               1.0,
               d_basisOperationsPtr->cellInverseMassVectorBasisData().data() +
@@ -309,7 +314,8 @@ namespace dftfe
               d_cellWaveFunctionMatrixSrc.data() +
                 (d_dftParamsPtr->memOptMode ?
                    0 :
-                   cellRange.first * numDoFsPerCell * numberWavefunctions),
+                   cellRange.first * numDoFsPerCell * numberWavefunctions *
+                     spinorFactor),
               d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
                   .data() +
                 cellRange.first * numDoFsPerCell);
@@ -319,7 +325,8 @@ namespace dftfe
                 d_cellWaveFunctionMatrixSrc.data() +
                   (d_dftParamsPtr->memOptMode ?
                      0 :
-                     cellRange.first * numDoFsPerCell * numberWavefunctions),
+                     cellRange.first * numDoFsPerCell * numberWavefunctions *
+                       spinorFactor),
                 cellRange);
           }
       }
@@ -361,7 +368,8 @@ namespace dftfe
             d_pseudopotentialNonLocalProjectorTimesVectorBlock
               .updateGhostValuesEnd();
             d_pseudopotentialNonLocalOperator->applyVOnCconjtransX(
-              CouplingStructure::diagonal,
+              d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
+                                       CouplingStructure::diagonal,
               d_pseudopotentialClassPtr->getCouplingMatrix(),
               d_pseudopotentialNonLocalProjectorTimesVectorBlock,
               true);
@@ -378,7 +386,7 @@ namespace dftfe
             if (d_dftParamsPtr->memOptMode)
               {
                 d_BLASWrapperPtr->stridedBlockScaleCopy(
-                  numberWavefunctions,
+                  numberWavefunctions * spinorFactor,
                   numDoFsPerCell * (cellRange.second - cellRange.first),
                   1.0,
                   d_basisOperationsPtr->cellInverseMassVectorBasisData()
@@ -395,40 +403,42 @@ namespace dftfe
               'N',
               'N',
               numberWavefunctions,
-              numDoFsPerCell,
-              numDoFsPerCell,
+              numDoFsPerCell * spinorFactor,
+              numDoFsPerCell * spinorFactor,
               &scalarCoeffAlpha,
               d_cellWaveFunctionMatrixSrc.data() +
                 (d_dftParamsPtr->memOptMode ?
                    0 :
-                   cellRange.first * numDoFsPerCell * numberWavefunctions),
+                   cellRange.first * numDoFsPerCell * spinorFactor *
+                     numberWavefunctions),
               numberWavefunctions,
-              numDoFsPerCell * numberWavefunctions,
+              numDoFsPerCell * spinorFactor * numberWavefunctions,
               d_cellHamiltonianMatrix[d_HamiltonianIndex].data() +
-                cellRange.first * numDoFsPerCell * numDoFsPerCell,
-              numDoFsPerCell,
-              numDoFsPerCell * numDoFsPerCell,
+                cellRange.first * numDoFsPerCell * spinorFactor *
+                  numDoFsPerCell * spinorFactor,
+              numDoFsPerCell * spinorFactor,
+              numDoFsPerCell * spinorFactor * numDoFsPerCell * spinorFactor,
               &scalarCoeffBeta,
               d_cellWaveFunctionMatrixDst.data() +
                 omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-                  numberWavefunctions,
+                  spinorFactor * numberWavefunctions,
               numberWavefunctions,
-              numDoFsPerCell * numberWavefunctions,
+              numDoFsPerCell * spinorFactor * numberWavefunctions,
               cellRange.second - cellRange.first);
             if (hasNonlocalComponents)
               d_pseudopotentialNonLocalOperator->applyCOnVCconjtransX(
                 d_cellWaveFunctionMatrixDst.data() +
                   omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-                    numberWavefunctions,
+                    spinorFactor * numberWavefunctions,
                 cellRange);
 #pragma omp critical(hxc_assembly)
             d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
-              numberWavefunctions,
+              numberWavefunctions * spinorFactor,
               numDoFsPerCell * (cellRange.second - cellRange.first),
               scalarHX,
               d_cellWaveFunctionMatrixDst.data() +
                 omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-                  numberWavefunctions,
+                  numberWavefunctions * spinorFactor,
               dst.data(),
               d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
                   .data() +
@@ -503,7 +513,8 @@ namespace dftfe
   {
     const dftfe::uInt numCells       = d_basisOperationsPtr->nCells();
     const dftfe::uInt numDoFsPerCell = d_basisOperationsPtr->nDofsPerCell();
-    const dftfe::uInt numberWavefunctions = src.numVectors();
+    const dftfe::uInt spinorFactor   = d_dftParamsPtr->noncolin ? 2 : 1;
+    const dftfe::uInt numberWavefunctions = src.numVectors() / spinorFactor;
 #if defined(DFTFE_WITH_DEVICE)
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {
@@ -515,11 +526,11 @@ namespace dftfe
             dftfe::linearAlgebra::tensorOpDataType::bf16);
       }
 #endif
-    if (d_numVectorsInternal != numberWavefunctions)
-      reinitNumberWavefunctions(numberWavefunctions);
+    if (d_numVectorsInternal != numberWavefunctions * spinorFactor)
+      reinitNumberWavefunctions(numberWavefunctions * spinorFactor);
 
-    if (d_basisOperationsPtr->d_nVectors != numberWavefunctions)
-      d_basisOperationsPtr->reinit(numberWavefunctions,
+    if (d_basisOperationsPtr->d_nVectors != numberWavefunctions * spinorFactor)
+      d_basisOperationsPtr->reinit(numberWavefunctions * spinorFactor,
                                    d_cellsBlockSizeHX,
                                    d_densityQuadratureID,
                                    false,
@@ -548,7 +559,7 @@ namespace dftfe
             std::pair<dftfe::uInt, dftfe::uInt> cellRange(
               iCell, std::min(iCell + d_cellsBlockSizeHX, numCells));
             d_BLASWrapperPtr->stridedBlockScaleCopy(
-              numberWavefunctions,
+              numberWavefunctions * spinorFactor,
               numDoFsPerCell * (cellRange.second - cellRange.first),
               1.0,
               d_basisOperationsPtr->cellInverseMassVectorBasisData().data() +
@@ -557,7 +568,8 @@ namespace dftfe
               d_cellWaveFunctionMatrixSrcSinglePrec.data() +
                 (d_dftParamsPtr->memOptMode ?
                    0 :
-                   cellRange.first * numDoFsPerCell * numberWavefunctions),
+                   cellRange.first * numDoFsPerCell * numberWavefunctions *
+                     spinorFactor),
               d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
                   .data() +
                 cellRange.first * numDoFsPerCell);
@@ -567,7 +579,8 @@ namespace dftfe
                 d_cellWaveFunctionMatrixSrcSinglePrec.data() +
                   (d_dftParamsPtr->memOptMode ?
                      0 :
-                     cellRange.first * numDoFsPerCell * numberWavefunctions),
+                     cellRange.first * numDoFsPerCell * numberWavefunctions *
+                       spinorFactor),
                 cellRange);
           }
       }
@@ -611,7 +624,8 @@ namespace dftfe
             d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec
               .updateGhostValuesEnd();
             d_pseudopotentialNonLocalOperatorSinglePrec->applyVOnCconjtransX(
-              CouplingStructure::diagonal,
+              d_dftParamsPtr->hasSOC ? CouplingStructure::blockDiagonal :
+                                       CouplingStructure::diagonal,
               d_pseudopotentialClassPtr->getCouplingMatrixSinglePrec(),
               d_pseudopotentialNonLocalProjectorTimesVectorBlockSinglePrec,
               true);
@@ -628,7 +642,7 @@ namespace dftfe
             if (d_dftParamsPtr->memOptMode)
               {
                 d_BLASWrapperPtr->stridedBlockScaleCopy(
-                  numberWavefunctions,
+                  numberWavefunctions * spinorFactor,
                   numDoFsPerCell * (cellRange.second - cellRange.first),
                   1.0,
                   d_basisOperationsPtr->cellInverseMassVectorBasisData()
@@ -645,40 +659,42 @@ namespace dftfe
               'N',
               'N',
               numberWavefunctions,
-              numDoFsPerCell,
-              numDoFsPerCell,
+              numDoFsPerCell * spinorFactor,
+              numDoFsPerCell * spinorFactor,
               &scalarCoeffAlpha,
               d_cellWaveFunctionMatrixSrcSinglePrec.data() +
                 (d_dftParamsPtr->memOptMode ?
                    0 :
-                   cellRange.first * numDoFsPerCell * numberWavefunctions),
+                   cellRange.first * numDoFsPerCell * spinorFactor *
+                     numberWavefunctions),
               numberWavefunctions,
-              numDoFsPerCell * numberWavefunctions,
+              numDoFsPerCell * spinorFactor * numberWavefunctions,
               d_cellHamiltonianMatrixSinglePrec[d_HamiltonianIndex].data() +
-                cellRange.first * numDoFsPerCell * numDoFsPerCell,
-              numDoFsPerCell,
-              numDoFsPerCell * numDoFsPerCell,
+                cellRange.first * numDoFsPerCell * spinorFactor *
+                  numDoFsPerCell * spinorFactor,
+              numDoFsPerCell * spinorFactor,
+              numDoFsPerCell * spinorFactor * numDoFsPerCell * spinorFactor,
               &scalarCoeffBeta,
               d_cellWaveFunctionMatrixDstSinglePrec.data() +
                 omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-                  numberWavefunctions,
+                  spinorFactor * numberWavefunctions,
               numberWavefunctions,
-              numDoFsPerCell * numberWavefunctions,
+              numDoFsPerCell * spinorFactor * numberWavefunctions,
               cellRange.second - cellRange.first);
             if (hasNonlocalComponents)
               d_pseudopotentialNonLocalOperatorSinglePrec->applyCOnVCconjtransX(
                 d_cellWaveFunctionMatrixDstSinglePrec.data() +
                   omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-                    numberWavefunctions,
+                    spinorFactor * numberWavefunctions,
                 cellRange);
 #pragma omp critical(hxc_assembly)
             d_BLASWrapperPtr->axpyStridedBlockAtomicAdd(
-              numberWavefunctions,
+              numberWavefunctions * spinorFactor,
               numDoFsPerCell * (cellRange.second - cellRange.first),
               scalarHX,
               d_cellWaveFunctionMatrixDstSinglePrec.data() +
                 omp_get_thread_num() * d_cellsBlockSizeHX * numDoFsPerCell *
-                  numberWavefunctions,
+                  numberWavefunctions * spinorFactor,
               dst.data(),
               d_basisOperationsPtr->d_flattenedCellDofIndexToProcessDofIndexMap
                   .data() +

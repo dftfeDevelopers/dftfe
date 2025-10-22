@@ -1128,6 +1128,12 @@ namespace dftfe
       const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
         &magQuadValues);
 
+    void
+    totalNonCollinearMagnetization(
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityQuadValues);
+
     /**
      *@brief normalize the input electron density
      */
@@ -1709,7 +1715,8 @@ namespace dftfe
       d_rhoOutNodalValuesDistributed;
 
 
-    distributedCPUVec<double> d_magInNodalValuesRead;
+    distributedCPUVec<double> d_magZInNodalValuesRead, d_magYInNodalValuesRead,
+      d_magXInNodalValuesRead;
 
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>

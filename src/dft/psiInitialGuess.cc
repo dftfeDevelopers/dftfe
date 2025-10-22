@@ -420,8 +420,7 @@ namespace dftfe
 
         if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom) !=
             dealii::NeighborType::not_neighbors)
-          ;
-        waveFunctionsVectorTruncated.push_back(*it);
+          waveFunctionsVectorTruncated.push_back(*it);
       }
 
     boost::math::normal normDist;
@@ -529,32 +528,96 @@ namespace dftfe
                               // spherical part
                               if (it->m > 0)
                                 {
-                                  d_eigenVectorsFlattenedHost
-                                    [kPoint * d_numEigenValues * numberDofs +
-                                     dof * d_numEigenValues + waveId] +=
-                                    dataTypes::number(
-                                      R * std::sqrt(2) *
-                                      boost::math::spherical_harmonic_r(
-                                        it->l, it->m, theta, phi));
+                                  if ((d_dftParamsPtr->noncolin ||
+                                       d_dftParamsPtr->hasSOC))
+                                    {
+                                      d_eigenVectorsFlattenedHost
+                                        [kPoint * d_numEigenValues *
+                                           numberDofs * 2 +
+                                         2 * dof * d_numEigenValues + waveId] +=
+                                        dataTypes::number(
+                                          R * boost::math::spherical_harmonic_r(
+                                                it->l, it->m, theta, phi));
+                                      d_eigenVectorsFlattenedHost
+                                        [kPoint * d_numEigenValues *
+                                           numberDofs * 2 +
+                                         2 * dof * d_numEigenValues +
+                                         d_numEigenValues + waveId] +=
+                                        dataTypes::number(
+                                          R * boost::math::spherical_harmonic_r(
+                                                it->l, it->m, theta, phi));
+                                    }
+                                  else
+                                    d_eigenVectorsFlattenedHost
+                                      [kPoint * d_numEigenValues * numberDofs +
+                                       dof * d_numEigenValues + waveId] +=
+                                      dataTypes::number(
+                                        R * std::sqrt(2) *
+                                        boost::math::spherical_harmonic_r(
+                                          it->l, it->m, theta, phi));
                                 }
                               else if (it->m == 0)
                                 {
-                                  d_eigenVectorsFlattenedHost
-                                    [kPoint * d_numEigenValues * numberDofs +
-                                     dof * d_numEigenValues + waveId] +=
-                                    dataTypes::number(
-                                      R * boost::math::spherical_harmonic_r(
-                                            it->l, it->m, theta, phi));
+                                  if ((d_dftParamsPtr->noncolin ||
+                                       d_dftParamsPtr->hasSOC))
+                                    {
+                                      d_eigenVectorsFlattenedHost
+                                        [kPoint * d_numEigenValues *
+                                           numberDofs * 2 +
+                                         2 * dof * d_numEigenValues + waveId] +=
+                                        dataTypes::number(
+                                          R *
+                                          boost::math::spherical_harmonic_r(
+                                            it->l, it->m, theta, phi) /
+                                          std::sqrt(2.0));
+                                      d_eigenVectorsFlattenedHost
+                                        [kPoint * d_numEigenValues *
+                                           numberDofs * 2 +
+                                         2 * dof * d_numEigenValues +
+                                         d_numEigenValues + waveId] +=
+                                        dataTypes::number(
+                                          R *
+                                          boost::math::spherical_harmonic_r(
+                                            it->l, it->m, theta, phi) /
+                                          std::sqrt(2.0));
+                                    }
+                                  else
+                                    d_eigenVectorsFlattenedHost
+                                      [kPoint * d_numEigenValues * numberDofs +
+                                       dof * d_numEigenValues + waveId] +=
+                                      dataTypes::number(
+                                        R * boost::math::spherical_harmonic_r(
+                                              it->l, it->m, theta, phi));
                                 }
                               else
                                 {
-                                  d_eigenVectorsFlattenedHost
-                                    [kPoint * d_numEigenValues * numberDofs +
-                                     dof * d_numEigenValues + waveId] +=
-                                    dataTypes::number(
-                                      R * std::sqrt(2) *
-                                      boost::math::spherical_harmonic_i(
-                                        it->l, -(it->m), theta, phi));
+                                  if ((d_dftParamsPtr->noncolin ||
+                                       d_dftParamsPtr->hasSOC))
+                                    {
+                                      d_eigenVectorsFlattenedHost
+                                        [kPoint * d_numEigenValues *
+                                           numberDofs * 2 +
+                                         2 * dof * d_numEigenValues + waveId] +=
+                                        dataTypes::number(
+                                          R * boost::math::spherical_harmonic_r(
+                                                it->l, -(it->m), theta, phi));
+                                      d_eigenVectorsFlattenedHost
+                                        [kPoint * d_numEigenValues *
+                                           numberDofs * 2 +
+                                         2 * dof * d_numEigenValues +
+                                         d_numEigenValues + waveId] +=
+                                        dataTypes::number(
+                                          R * boost::math::spherical_harmonic_r(
+                                                it->l, -(it->m), theta, phi));
+                                    }
+                                  else
+                                    d_eigenVectorsFlattenedHost
+                                      [kPoint * d_numEigenValues * numberDofs +
+                                       dof * d_numEigenValues + waveId] +=
+                                      dataTypes::number(
+                                        R * std::sqrt(2) *
+                                        boost::math::spherical_harmonic_i(
+                                          it->l, -(it->m), theta, phi));
                                 }
                             }
                         }
@@ -575,23 +638,59 @@ namespace dftfe
 
                       dataTypes::number *temp =
                         d_eigenVectorsFlattenedHost.data() +
-                        kPoint * d_numEigenValues * numberDofs;
+                        kPoint * d_numEigenValues * numberDofs *
+                          ((d_dftParamsPtr->noncolin ||
+                            d_dftParamsPtr->hasSOC) ?
+                             2 :
+                             1);
                       for (dftfe::uInt iWave = waveFunctionsVector.size();
                            iWave < d_numEigenValues;
                            ++iWave)
                         {
-                          double z =
-                            (-0.5 + ((double)randomIntGenerator() -
-                                     (double)randomIntGenerator.min()) /
-                                      ((double)randomIntGenerator.max() -
-                                       (double)randomIntGenerator.min())) *
-                            3.0;
-                          double value = boost::math::pdf(normDist, z);
-                          if (randomIntGenerator() % 2 == 0)
-                            value = -1.0 * value;
+                          if ((d_dftParamsPtr->noncolin ||
+                               d_dftParamsPtr->hasSOC))
+                            {
+                              double z =
+                                (-0.5 + ((double)randomIntGenerator() -
+                                         (double)randomIntGenerator.min()) /
+                                          ((double)randomIntGenerator.max() -
+                                           (double)randomIntGenerator.min())) *
+                                3.0;
+                              double value = boost::math::pdf(normDist, z);
+                              if (randomIntGenerator() % 2 == 0)
+                                value = -1.0 * value;
 
-                          temp[dof * d_numEigenValues + iWave] =
-                            dataTypes::number(value);
+                              temp[2 * dof * d_numEigenValues + iWave] =
+                                dataTypes::number(value);
+                              z =
+                                (-0.5 + ((double)randomIntGenerator() -
+                                         (double)randomIntGenerator.min()) /
+                                          ((double)randomIntGenerator.max() -
+                                           (double)randomIntGenerator.min())) *
+                                3.0;
+                              value = boost::math::pdf(normDist, z);
+                              if (randomIntGenerator() % 2 == 0)
+                                value = -1.0 * value;
+
+                              temp[2 * dof * d_numEigenValues +
+                                   d_numEigenValues + iWave] =
+                                dataTypes::number(value);
+                            }
+                          else
+                            {
+                              double z =
+                                (-0.5 + ((double)randomIntGenerator() -
+                                         (double)randomIntGenerator.min()) /
+                                          ((double)randomIntGenerator.max() -
+                                           (double)randomIntGenerator.min())) *
+                                3.0;
+                              double value = boost::math::pdf(normDist, z);
+                              if (randomIntGenerator() % 2 == 0)
+                                value = -1.0 * value;
+
+                              temp[dof * d_numEigenValues + iWave] =
+                                dataTypes::number(value);
+                            }
                         }
                     }
                 }
@@ -607,12 +706,19 @@ namespace dftfe
           numKpoints = 1;
         for (dftfe::uInt kPoint = 1; kPoint < numKpoints; ++kPoint)
           {
-            dataTypes::number *temp1 = d_eigenVectorsFlattenedHost.data() +
-                                       kPoint * d_numEigenValues * numberDofs;
+            dataTypes::number *temp1 =
+              d_eigenVectorsFlattenedHost.data() +
+              kPoint * d_numEigenValues * numberDofs *
+                ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 : 1);
 
             dataTypes::number *temp2 = d_eigenVectorsFlattenedHost.data();
 
-            for (dftfe::uInt idof = 0; idof < numberDofs; idof++)
+            for (dftfe::uInt idof = 0;
+                 idof <
+                 numberDofs *
+                   ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 2 :
+                                                                           1);
+                 idof++)
               for (dftfe::uInt iwave = 0; iwave < d_numEigenValues; iwave++)
                 temp1[idof * d_numEigenValues + iwave] =
                   temp2[idof * d_numEigenValues + iwave];

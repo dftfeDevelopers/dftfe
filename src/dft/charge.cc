@@ -240,6 +240,66 @@ namespace dftfe
       pcout << std::setprecision(default_precision);
   }
 
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  dftClass<memorySpace>::totalNonCollinearMagnetization(
+    const std::vector<
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+      &densityQuadValues)
+  {
+    double                       normValue = 0.0;
+    double                       xsum      = 0.0;
+    double                       ysum      = 0.0;
+    double                       zsum      = 0.0;
+    const dealii::Quadrature<3> &quadrature_formula =
+      matrix_free_data.get_quadrature(d_densityQuadratureId);
+    dealii::FEValues<3> fe_values(FE,
+                                  quadrature_formula,
+                                  dealii::update_JxW_values);
+    const dftfe::uInt   dofs_per_cell = FE.dofs_per_cell;
+    const dftfe::uInt   n_q_points    = quadrature_formula.size();
+
+    dealii::DoFHandler<3>::active_cell_iterator cell =
+                                                  dofHandler.begin_active(),
+                                                endc = dofHandler.end();
+    dftfe::uInt iCell                                = 0;
+    for (; cell != endc; ++cell)
+      {
+        if (cell->is_locally_owned())
+          {
+            fe_values.reinit(cell);
+            const double *rhoValues =
+              densityQuadValues[0].data() + iCell * n_q_points;
+            const double *magXValues =
+              densityQuadValues[3].data() + iCell * n_q_points;
+            const double *magYValues =
+              densityQuadValues[2].data() + iCell * n_q_points;
+            const double *magZValues =
+              densityQuadValues[1].data() + iCell * n_q_points;
+            for (dftfe::uInt q_point = 0; q_point < n_q_points; ++q_point)
+              {
+                const double magX = magXValues[q_point];
+                const double magY = magYValues[q_point];
+                const double magZ = magZValues[q_point];
+                xsum += magX * fe_values.JxW(q_point);
+                ysum += magY * fe_values.JxW(q_point);
+                zsum += magZ * fe_values.JxW(q_point);
+                normValue +=
+                  std::sqrt(magX * magX + magY * magY + magZ * magZ) *
+                  fe_values.JxW(q_point);
+              }
+            ++iCell;
+          }
+      }
+    pcout << "magnetization vector : "
+          << dealii::Utilities::MPI::sum(xsum, mpi_communicator) << " "
+          << dealii::Utilities::MPI::sum(ysum, mpi_communicator) << " "
+          << dealii::Utilities::MPI::sum(zsum, mpi_communicator) << std::endl;
+    pcout << "Absolute magentization : "
+          << dealii::Utilities::MPI::sum(normValue, mpi_communicator)
+          << std::endl;
+  }
+
   //
   // compute field l2 norm
   //

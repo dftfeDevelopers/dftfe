@@ -53,7 +53,8 @@ namespace dftfe
     std::string auxBasisDataXC;
     bool        useLiXCForXCEvaluation;
 
-    double radiusAtomBall, mixingParameter, spinMixingEnhancementFactor;
+    double radiusAtomBall, mixingParameter, inverseKerkerMixingParameter,
+      spinMixingEnhancementFactor;
     bool   adaptAndersonMixingParameter;
     double absLinearSolverTolerance, selfConsistentSolverTolerance, TVal,
       selfConsistentSolverEnergyTolerance, tot_magnetization,
@@ -183,6 +184,8 @@ namespace dftfe
     bool        memOptMode;
     bool        approxOverlapMatrix;
     bool        useReformulatedChFSI;
+    bool        noncolin;
+    bool        hasSOC;
 
     dftfe::uInt dc_dispersioncorrectiontype;
     dftfe::uInt dc_d3dampingtype;

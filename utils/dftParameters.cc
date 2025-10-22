@@ -722,7 +722,17 @@ namespace dftfe
           dealii::Patterns::Integer(0, 1),
           "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
+        prm.declare_entry(
+          "NONCOLLINEAR SPIN",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Perform a noncollinear spin calculation. Default option is false.");
 
+        prm.declare_entry(
+          "SPIN-ORBIT COUPLING",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Perform a an SOC calculation, requires fully relativistic pseudopotentials. Default option is false.");
 
         prm.declare_entry(
           "TOTAL MAGNETIZATION",
@@ -846,6 +856,12 @@ namespace dftfe
           "0.0",
           dealii::Patterns::Double(-1e-12, 1.0),
           "[Standard] Mixing parameter to be used in density mixing schemes. For default value of 0.0, it is heuristically set for different mixing schemes (0.2 for Anderson, and 0.5 for Kerker and LRD.");
+
+        prm.declare_entry(
+          "INVERSE KERKER MIXING PARAMETER",
+          "0.0",
+          dealii::Patterns::Double(-1e-12, 1000.0),
+          "[Standard] Mixing parameter to be used in for gradient of potential in density mixing schemes.");
 
         prm.declare_entry(
           "SPIN MIXING ENHANCEMENT FACTOR",
@@ -1706,7 +1722,10 @@ namespace dftfe
       XCType                 = prm.get("EXCHANGE CORRELATION TYPE");
       useLiXCForXCEvaluation = true;
       //  prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
-      spinPolarized     = prm.get_integer("SPIN POLARIZATION");
+      noncolin = prm.get_bool("NONCOLLINEAR SPIN");
+      hasSOC   = prm.get_bool("SPIN-ORBIT COUPLING");
+      spinPolarized =
+        noncolin || hasSOC ? 0 : prm.get_integer("SPIN POLARIZATION");
       modelXCInputFile  = prm.get("MODEL XC INPUT FILE");
       auxBasisTypeXC    = prm.get("AUX BASIS TYPE");
       auxBasisDataXC    = prm.get("AUX BASIS DATA");
@@ -1732,6 +1751,8 @@ namespace dftfe
       selfConsistentSolverEnergyTolerance = prm.get_double("ENERGY TOLERANCE");
       mixingHistory                       = prm.get_integer("MIXING HISTORY");
       mixingParameter                     = prm.get_double("MIXING PARAMETER");
+      inverseKerkerMixingParameter =
+        prm.get_double("INVERSE KERKER MIXING PARAMETER");
       spinMixingEnhancementFactor =
         prm.get_double("SPIN MIXING ENHANCEMENT FACTOR");
       adaptAndersonMixingParameter =

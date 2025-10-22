@@ -578,37 +578,48 @@ namespace dftfe
               << d_numEigenValues << std::endl;
           }
       }
-    else if (d_dftParamsPtr->numberEigenValues <= numElectrons / 2.0 ||
+    else if (d_dftParamsPtr->numberEigenValues <=
+               numElectrons /
+                 ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 1.0 :
+                                                                         2.0) ||
              d_dftParamsPtr->numberEigenValues == 0)
       {
         if (d_dftParamsPtr->verbosity >= 1)
           {
             pcout
               << " Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or"
-                 "equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions"
-                 "to half the number of electrons with a 20 percent buffer to avoid convergence issues in"
-                 "SCF iterations"
+                 "equal to the value required for the number of electrons in the system."
+                 "Setting the Kohn-Sham wavefunctions to the required value with a 20 percent buffer"
+                 "to avoid convergence issues in SCF iterations"
               << std::endl;
           }
         d_numEigenValues =
-          (numElectrons / 2.0) +
-          std::max((d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ?
-                      0.22 :
-                      0.2) *
-                     (numElectrons / 2.0),
-                   20.0);
+          (numElectrons /
+           ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 1.0 : 2.0)) +
+          std::max(
+            (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ? 0.22 :
+                                                                          0.2) *
+              (numElectrons /
+               ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 1.0 :
+                                                                       2.0)),
+            20.0);
 
         // start with 17-20% buffer to leave room for additional modifications
         // due to block size restrictions
 #ifdef DFTFE_WITH_DEVICE
         if (d_dftParamsPtr->useDevice && d_dftParamsPtr->autoDeviceBlockSizes)
           d_numEigenValues =
-            (numElectrons / 2.0) + std::max((d_dftParamsPtr->mixingMethod ==
-                                                 "LOW_RANK_DIELECM_PRECOND" ?
-                                               0.2 :
-                                               0.17) *
-                                              (numElectrons / 2.0),
-                                            20.0);
+            (numElectrons /
+             ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 1.0 :
+                                                                     2.0)) +
+            std::max(
+              (d_dftParamsPtr->mixingMethod == "LOW_RANK_DIELECM_PRECOND" ?
+                 0.2 :
+                 0.17) *
+                (numElectrons /
+                 ((d_dftParamsPtr->noncolin || d_dftParamsPtr->hasSOC) ? 1.0 :
+                                                                         2.0)),
+              20.0);
 #endif
 
         if (d_dftParamsPtr->verbosity >= 1)
@@ -2073,6 +2084,7 @@ namespace dftfe
       d_kohnShamDFTOperatorPtr =
         new KohnShamDFTStandardEigenOperator<memorySpace>(
           d_BLASWrapperPtr,
+          d_BLASWrapperPtrHost,
           d_basisOperationsPtrDevice,
           d_basisOperationsPtrHost,
           d_oncvClassPtr,
@@ -2087,6 +2099,7 @@ namespace dftfe
 #endif
       d_kohnShamDFTOperatorPtr =
         new KohnShamDFTStandardEigenOperator<memorySpace>(
+          d_BLASWrapperPtrHost,
           d_BLASWrapperPtrHost,
           d_basisOperationsPtrHost,
           d_basisOperationsPtrHost,
@@ -2421,6 +2434,36 @@ namespace dftfe
     const bool isTauMGGA =
       (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
        ExcFamilyType::TauMGGA);
+    std::vector<mixingVariable> mixingVariables;
+    std::vector<mixingVariable> tauMixingVariables;
+    std::vector<mixingVariable> gradMixingVariables;
+    mixingVariables.push_back(mixingVariable::rho);
+    gradMixingVariables.push_back(mixingVariable::gradRho);
+    if (isTauMGGA)
+      tauMixingVariables.push_back(mixingVariable::tau);
+    if (d_dftParamsPtr->spinPolarized == 1)
+      {
+        mixingVariables.push_back(mixingVariable::magZ);
+        gradMixingVariables.push_back(mixingVariable::gradMagZ);
+        if (isTauMGGA)
+          tauMixingVariables.push_back(mixingVariable::tauMagZ);
+      }
+    if (d_dftParamsPtr->noncolin)
+      {
+        mixingVariables.push_back(mixingVariable::magZ);
+        gradMixingVariables.push_back(mixingVariable::gradMagZ);
+        mixingVariables.push_back(mixingVariable::magY);
+        gradMixingVariables.push_back(mixingVariable::gradMagY);
+        mixingVariables.push_back(mixingVariable::magX);
+        gradMixingVariables.push_back(mixingVariable::gradMagX);
+        if (isTauMGGA)
+          {
+            tauMixingVariables.push_back(mixingVariable::tauMagZ);
+            tauMixingVariables.push_back(mixingVariable::tauMagY);
+            tauMixingVariables.push_back(mixingVariable::tauMagX);
+          }
+      }
+
     // call the mixing scheme with the mixing variables
     // Have to be called once for each variable
     // initialise the variables in the mixing scheme
@@ -2431,40 +2474,47 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           rhoNodalMassVec;
         computeRhoNodalMassVector(rhoNodalMassVec);
-        d_mixingScheme.addMixingVariable(
-          mixingVariable::rho,
-          rhoNodalMassVec,
-          true, // call MPI REDUCE while computing dot products
-          d_dftParamsPtr->mixingParameter,
-          d_dftParamsPtr->adaptAndersonMixingParameter);
-        if (d_dftParamsPtr->spinPolarized == 1)
+        for (dftfe::uInt iMix = 0; iMix < mixingVariables.size(); ++iMix)
           d_mixingScheme.addMixingVariable(
-            mixingVariable::magZ,
+            mixingVariables[iMix],
             rhoNodalMassVec,
             true, // call MPI REDUCE while computing dot products
             d_dftParamsPtr->mixingParameter *
-              d_dftParamsPtr->spinMixingEnhancementFactor,
+              (iMix > 0 ? d_dftParamsPtr->spinMixingEnhancementFactor : 1.0),
             d_dftParamsPtr->adaptAndersonMixingParameter);
 
         if (isTauMGGA)
           {
             d_basisOperationsPtrElectroHost->reinit(
               0, 0, d_densityQuadratureIdElectro, false);
+            for (dftfe::uInt iMix = 0; iMix < tauMixingVariables.size(); ++iMix)
+              d_mixingScheme.addMixingVariable(
+                tauMixingVariables[iMix],
+                d_basisOperationsPtrElectroHost->JxWBasisData(),
+                true, // call MPI REDUCE while computing dot products
+                d_dftParamsPtr->mixingParameter *
+                  (iMix > 0 ? d_dftParamsPtr->spinMixingEnhancementFactor :
+                              1.0),
+                d_dftParamsPtr->adaptAndersonMixingParameter);
+          }
+        if (d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
+          {
+            d_basisOperationsPtrElectroHost->reinit(
+              0, 0, d_densityQuadratureIdElectro, false);
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              gradRhoJxW;
+            gradRhoJxW.resize(
+              d_basisOperationsPtrElectroHost->JxWBasisData().size() * 3, 0.0);
+            for (dftfe::uInt i = 0; i < gradRhoJxW.size(); ++i)
+              gradRhoJxW[i] =
+                d_basisOperationsPtrElectroHost->JxWBasisData()[i / 3] *
+                d_dftParamsPtr->inverseKerkerMixingParameter;
             d_mixingScheme.addMixingVariable(
-              mixingVariable::tau,
-              d_basisOperationsPtrElectroHost->JxWBasisData(),
+              mixingVariable::gradPhi,
+              gradRhoJxW,
               true,
               d_dftParamsPtr->mixingParameter,
               d_dftParamsPtr->adaptAndersonMixingParameter);
-            if (d_dftParamsPtr->spinPolarized == 1)
-              {
-                d_mixingScheme.addMixingVariable(
-                  mixingVariable::tauMagZ,
-                  d_basisOperationsPtrElectroHost->JxWBasisData(),
-                  true,
-                  d_dftParamsPtr->mixingParameter,
-                  d_dftParamsPtr->adaptAndersonMixingParameter);
-              }
           }
       }
     else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
@@ -2473,64 +2523,56 @@ namespace dftfe
                                                 0,
                                                 d_densityQuadratureIdElectro,
                                                 false);
-        d_mixingScheme.addMixingVariable(
-          mixingVariable::rho,
-          d_basisOperationsPtrElectroHost->JxWBasisData(),
-          true, // call MPI REDUCE while computing dot products
-          d_dftParamsPtr->mixingParameter,
-          d_dftParamsPtr->adaptAndersonMixingParameter);
-        if (d_dftParamsPtr->spinPolarized == 1)
+        for (dftfe::uInt iMix = 0; iMix < mixingVariables.size(); ++iMix)
           d_mixingScheme.addMixingVariable(
-            mixingVariable::magZ,
+            mixingVariables[iMix],
             d_basisOperationsPtrElectroHost->JxWBasisData(),
             true, // call MPI REDUCE while computing dot products
             d_dftParamsPtr->mixingParameter *
-              d_dftParamsPtr->spinMixingEnhancementFactor,
+              (iMix > 0 ? d_dftParamsPtr->spinMixingEnhancementFactor : 1.0),
             d_dftParamsPtr->adaptAndersonMixingParameter);
         if (isGradDensityDataDependent)
           {
             dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
               gradRhoJxW;
             gradRhoJxW.resize(0);
-            d_mixingScheme.addMixingVariable(
-              mixingVariable::gradRho,
-              gradRhoJxW, // this is just a dummy variable to make it
-                          // compatible with rho
-              false,      // call MPI REDUCE while computing dot products
-              d_dftParamsPtr->mixingParameter,
-              d_dftParamsPtr->adaptAndersonMixingParameter);
-            if (d_dftParamsPtr->spinPolarized == 1)
+            for (dftfe::uInt iMix = 0; iMix < gradMixingVariables.size();
+                 ++iMix)
               d_mixingScheme.addMixingVariable(
-                mixingVariable::gradMagZ,
+                gradMixingVariables[iMix],
                 gradRhoJxW,
                 false, // call MPI REDUCE while computing dot products
                 d_dftParamsPtr->mixingParameter *
-                  d_dftParamsPtr->spinMixingEnhancementFactor,
+                  (iMix > 0 ? d_dftParamsPtr->spinMixingEnhancementFactor :
+                              1.0),
                 d_dftParamsPtr->adaptAndersonMixingParameter);
           }
-
-        if (isTauMGGA)
+        if (d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
           {
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              gradRhoJxW;
+            gradRhoJxW.resize(
+              d_basisOperationsPtrElectroHost->JxWBasisData().size() * 3, 0.0);
+            for (dftfe::uInt i = 0; i < gradRhoJxW.size(); ++i)
+              gradRhoJxW[i] =
+                d_basisOperationsPtrElectroHost->JxWBasisData()[i / 3] *
+                d_dftParamsPtr->inverseKerkerMixingParameter;
             d_mixingScheme.addMixingVariable(
-              mixingVariable::tau,
-              d_basisOperationsPtrElectroHost->JxWBasisData(),
+              mixingVariable::gradPhi,
+              gradRhoJxW,
               true,
-              d_dftParamsPtr->mixingParameter *
-                d_dftParamsPtr->spinMixingEnhancementFactor,
+              d_dftParamsPtr->mixingParameter,
               d_dftParamsPtr->adaptAndersonMixingParameter);
-            if (d_dftParamsPtr->spinPolarized == 1)
-              {
-                d_mixingScheme.addMixingVariable(
-                  mixingVariable::tauMagZ,
-                  d_basisOperationsPtrElectroHost->JxWBasisData(),
-                  true,
-                  d_dftParamsPtr->mixingParameter *
-                    d_dftParamsPtr->spinMixingEnhancementFactor,
-                  d_dftParamsPtr->adaptAndersonMixingParameter);
-              }
           }
-
-
+        if (isTauMGGA)
+          for (dftfe::uInt iMix = 0; iMix < tauMixingVariables.size(); ++iMix)
+            d_mixingScheme.addMixingVariable(
+              tauMixingVariables[iMix],
+              d_basisOperationsPtrElectroHost->JxWBasisData(),
+              true, // call MPI REDUCE while computing dot products
+              d_dftParamsPtr->mixingParameter *
+                (iMix > 0 ? d_dftParamsPtr->spinMixingEnhancementFactor : 1.0),
+              d_dftParamsPtr->adaptAndersonMixingParameter);
         if (d_useHubbard)
           {
             dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
@@ -2599,9 +2641,13 @@ namespace dftfe
               {
                 // Fill in New Kerker framework here
                 std::vector<double> norms(
-                  d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+                  d_dftParamsPtr->noncolin ?
+                    4 :
+                    (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1));
                 std::vector<double> normsTau(
-                  d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+                  d_dftParamsPtr->noncolin ?
+                    4 :
+                    (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1));
                 if (scfIter == 1)
                   d_densityResidualNodalValues.resize(
                     d_densityOutNodalValues.size());
@@ -2619,22 +2665,40 @@ namespace dftfe
                      ++iComp)
                   {
                     d_mixingScheme.addVariableToInHist(
-                      iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
+                      mixingVariables[iComp],
                       d_densityInNodalValues[iComp].begin(),
                       d_densityInNodalValues[iComp].locally_owned_size());
                     d_mixingScheme.addVariableToResidualHist(
-                      iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
+                      mixingVariables[iComp],
                       d_densityResidualNodalValues[iComp].begin(),
                       d_densityResidualNodalValues[iComp].locally_owned_size());
                   }
-
+                if (d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
+                  {
+                    if (scfIter == 1)
+                      d_gradPhiResQuadValues.resize(
+                        d_gradPhiOutQuadValues.size());
+                    d_basisOperationsPtrElectroHost->reinit(
+                      0, 0, d_densityQuadratureIdElectro, false);
+                    computeResidualQuadData(
+                      d_gradPhiOutQuadValues,
+                      d_gradPhiInQuadValues,
+                      d_gradPhiResQuadValues,
+                      d_basisOperationsPtrElectroHost->JxWBasisData(),
+                      false);
+                    d_mixingScheme.addVariableToInHist(
+                      mixingVariable::gradPhi,
+                      d_gradPhiInQuadValues.data(),
+                      d_gradPhiInQuadValues.size());
+                    d_mixingScheme.addVariableToResidualHist(
+                      mixingVariable::gradPhi,
+                      d_gradPhiResQuadValues.data(),
+                      d_gradPhiResQuadValues.size());
+                  }
                 if (isTauMGGA)
                   {
                     if (scfIter == 1)
-                      {
-                        d_tauResidualQuadValues.resize(
-                          d_tauOutQuadValues.size());
-                      }
+                      d_tauResidualQuadValues.resize(d_tauOutQuadValues.size());
 
                     for (dftfe::uInt iComp = 0;
                          iComp < d_tauOutQuadValues.size();
@@ -2653,13 +2717,11 @@ namespace dftfe
                           d_basisOperationsPtrElectroHost->JxWBasisData(),
                           true);
                         d_mixingScheme.addVariableToInHist(
-                          iComp == 0 ? mixingVariable::tau :
-                                       mixingVariable::tauMagZ,
+                          tauMixingVariables[iComp],
                           d_tauInQuadValues[iComp].data(),
                           d_tauInQuadValues[iComp].size());
                         d_mixingScheme.addVariableToResidualHist(
-                          iComp == 0 ? mixingVariable::tau :
-                                       mixingVariable::tauMagZ,
+                          tauMixingVariables[iComp],
                           d_tauResidualQuadValues[iComp].data(),
                           d_tauResidualQuadValues[iComp].size());
                       }
@@ -2668,23 +2730,19 @@ namespace dftfe
                 // Delete old history if it exceeds a pre-described
                 // length
                 d_mixingScheme.popOldHistory(d_dftParamsPtr->mixingHistory);
+                std::vector<mixingVariable> andersonMixingVariables =
+                  mixingVariables;
+                andersonMixingVariables.insert(andersonMixingVariables.end(),
+                                               tauMixingVariables.begin(),
+                                               tauMixingVariables.end());
+                if (d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
+                  andersonMixingVariables[0] = mixingVariable::gradPhi;
 
                 // Compute the mixing coefficients
                 d_mixingScheme.computeAndersonMixingCoeff(
-                  d_dftParamsPtr->spinPolarized == 1 ?
-                    (isTauMGGA ?
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::tau,
-                                                   mixingVariable::magZ,
-                                                   mixingVariable::tauMagZ} :
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::magZ}) :
-                    (isTauMGGA ?
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::tau} :
-                       std::vector<mixingVariable>{mixingVariable::rho}));
+                  andersonMixingVariables);
                 d_mixingScheme.getOptimizedResidual(
-                  mixingVariable::rho,
+                  mixingVariables[0],
                   d_densityResidualNodalValues[0].begin(),
                   d_densityResidualNodalValues[0].locally_owned_size());
 
@@ -2702,7 +2760,7 @@ namespace dftfe
                       d_preCondTotalDensityResidualVector);
 
                     d_mixingScheme.mixPreconditionedResidual(
-                      mixingVariable::rho,
+                      mixingVariables[0],
                       d_preCondTotalDensityResidualVector.begin(),
                       d_densityInNodalValues[0].begin(),
                       d_densityInNodalValues[0].locally_owned_size());
@@ -2710,7 +2768,7 @@ namespace dftfe
                 else
                   {
                     d_mixingScheme.mixVariable(
-                      mixingVariable::rho,
+                      mixingVariables[0],
                       d_densityInNodalValues[0].begin(),
                       d_densityInNodalValues[0].locally_owned_size());
                   }
@@ -2718,7 +2776,7 @@ namespace dftfe
                 for (dftfe::uInt iComp = 1; iComp < norms.size(); ++iComp)
                   {
                     d_mixingScheme.mixVariable(
-                      iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
+                      mixingVariables[iComp],
                       d_densityInNodalValues[iComp].begin(),
                       d_densityInNodalValues[iComp].locally_owned_size());
                   }
@@ -2727,8 +2785,7 @@ namespace dftfe
                     for (dftfe::uInt iComp = 0; iComp < norms.size(); ++iComp)
                       {
                         d_mixingScheme.mixVariable(
-                          iComp == 0 ? mixingVariable::tau :
-                                       mixingVariable::tauMagZ,
+                          tauMixingVariables[iComp],
                           d_tauInQuadValues[iComp].data(),
                           d_tauInQuadValues[iComp].size());
                       }
@@ -2779,9 +2836,13 @@ namespace dftfe
             else if (d_dftParamsPtr->mixingMethod == "ANDERSON")
               {
                 std::vector<double> norms(
-                  d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+                  d_dftParamsPtr->noncolin ?
+                    4 :
+                    (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1));
                 std::vector<double> normsTau(
-                  d_dftParamsPtr->spinPolarized == 1 ? 2 : 1);
+                  d_dftParamsPtr->noncolin ?
+                    4 :
+                    (d_dftParamsPtr->spinPolarized == 1 ? 2 : 1));
                 // Update the history of mixing variables
                 if (scfIter == 1)
                   d_densityResidualQuadValues.resize(
@@ -2802,11 +2863,11 @@ namespace dftfe
                       d_basisOperationsPtrElectroHost->JxWBasisData(),
                       true);
                     d_mixingScheme.addVariableToInHist(
-                      iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
+                      mixingVariables[iComp],
                       d_densityInQuadValues[iComp].data(),
                       d_densityInQuadValues[iComp].size());
                     d_mixingScheme.addVariableToResidualHist(
-                      iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
+                      mixingVariables[iComp],
                       d_densityResidualQuadValues[iComp].data(),
                       d_densityResidualQuadValues[iComp].size());
                   }
@@ -2829,25 +2890,42 @@ namespace dftfe
                           d_basisOperationsPtrElectroHost->JxWBasisData(),
                           false);
                         d_mixingScheme.addVariableToInHist(
-                          iComp == 0 ? mixingVariable::gradRho :
-                                       mixingVariable::gradMagZ,
+                          gradMixingVariables[iComp],
                           d_gradDensityInQuadValues[iComp].data(),
                           d_gradDensityInQuadValues[iComp].size());
                         d_mixingScheme.addVariableToResidualHist(
-                          iComp == 0 ? mixingVariable::gradRho :
-                                       mixingVariable::gradMagZ,
+                          gradMixingVariables[iComp],
                           d_gradDensityResidualQuadValues[iComp].data(),
                           d_gradDensityResidualQuadValues[iComp].size());
                       }
+                  }
+                if (d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
+                  {
+                    d_basisOperationsPtrElectroHost->reinit(
+                      0, 0, d_densityQuadratureIdElectro, false);
+                    if (scfIter == 1)
+                      d_gradPhiResQuadValues.resize(
+                        d_gradPhiOutQuadValues.size());
+                    computeResidualQuadData(
+                      d_gradPhiOutQuadValues,
+                      d_gradPhiInQuadValues,
+                      d_gradPhiResQuadValues,
+                      d_basisOperationsPtrElectroHost->JxWBasisData(),
+                      false);
+                    d_mixingScheme.addVariableToInHist(
+                      mixingVariable::gradPhi,
+                      d_gradPhiInQuadValues.data(),
+                      d_gradPhiInQuadValues.size());
+                    d_mixingScheme.addVariableToResidualHist(
+                      mixingVariable::gradPhi,
+                      d_gradPhiResQuadValues.data(),
+                      d_gradPhiResQuadValues.size());
                   }
 
                 if (isTauMGGA)
                   {
                     if (scfIter == 1)
-                      {
-                        d_tauResidualQuadValues.resize(
-                          d_tauOutQuadValues.size());
-                      }
+                      d_tauResidualQuadValues.resize(d_tauOutQuadValues.size());
 
                     for (dftfe::uInt iComp = 0;
                          iComp < d_tauOutQuadValues.size();
@@ -2866,18 +2944,15 @@ namespace dftfe
                           d_basisOperationsPtrElectroHost->JxWBasisData(),
                           true);
                         d_mixingScheme.addVariableToInHist(
-                          iComp == 0 ? mixingVariable::tau :
-                                       mixingVariable::tauMagZ,
+                          tauMixingVariables[iComp],
                           d_tauInQuadValues[iComp].data(),
                           d_tauInQuadValues[iComp].size());
                         d_mixingScheme.addVariableToResidualHist(
-                          iComp == 0 ? mixingVariable::tau :
-                                       mixingVariable::tauMagZ,
+                          tauMixingVariables[iComp],
                           d_tauResidualQuadValues[iComp].data(),
                           d_tauResidualQuadValues[iComp].size());
                       }
                   }
-
                 if (d_useHubbard == true)
                   {
                     dftfe::utils::MemoryStorage<double,
@@ -2905,25 +2980,20 @@ namespace dftfe
                 d_mixingScheme.popOldHistory(d_dftParamsPtr->mixingHistory);
 
                 // Compute the mixing coefficients
+                std::vector<mixingVariable> andersonMixingVariables =
+                  mixingVariables;
+                andersonMixingVariables.insert(andersonMixingVariables.end(),
+                                               tauMixingVariables.begin(),
+                                               tauMixingVariables.end());
+                if (d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
+                  andersonMixingVariables[0] = mixingVariable::gradPhi;
                 d_mixingScheme.computeAndersonMixingCoeff(
-                  d_dftParamsPtr->spinPolarized == 1 ?
-                    (isTauMGGA ?
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::tau,
-                                                   mixingVariable::magZ,
-                                                   mixingVariable::tauMagZ} :
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::magZ}) :
-                    (isTauMGGA ?
-                       std::vector<mixingVariable>{mixingVariable::rho,
-                                                   mixingVariable::tau} :
-                       std::vector<mixingVariable>{mixingVariable::rho}));
-
+                  andersonMixingVariables);
 
                 // update the mixing variables
                 for (dftfe::uInt iComp = 0; iComp < norms.size(); ++iComp)
                   d_mixingScheme.mixVariable(
-                    iComp == 0 ? mixingVariable::rho : mixingVariable::magZ,
+                    mixingVariables[iComp],
                     d_densityInQuadValues[iComp].data(),
                     d_densityInQuadValues[iComp].size());
                 norm = 0.0;
@@ -2939,8 +3009,7 @@ namespace dftfe
                   {
                     for (dftfe::uInt iComp = 0; iComp < norms.size(); ++iComp)
                       d_mixingScheme.mixVariable(
-                        iComp == 0 ? mixingVariable::gradRho :
-                                     mixingVariable::gradMagZ,
+                        gradMixingVariables[iComp],
                         d_gradDensityInQuadValues[iComp].data(),
                         d_gradDensityInQuadValues[iComp].size());
                   }
@@ -2950,8 +3019,7 @@ namespace dftfe
                     for (dftfe::uInt iComp = 0; iComp < norms.size(); ++iComp)
                       {
                         d_mixingScheme.mixVariable(
-                          iComp == 0 ? mixingVariable::tau :
-                                       mixingVariable::tauMagZ,
+                          tauMixingVariables[iComp],
                           d_tauInQuadValues[iComp].data(),
                           d_tauInQuadValues[iComp].size());
                       }
@@ -3001,11 +3069,14 @@ namespace dftfe
               }
 
             if (d_dftParamsPtr->verbosity >= 1 &&
-                (d_dftParamsPtr->spinPolarized == 1 || isTauMGGA))
+                (d_dftParamsPtr->spinPolarized == 1 || isTauMGGA ||
+                 d_dftParamsPtr->noncolin))
               pcout << d_dftParamsPtr->mixingMethod
                     << " mixing, L2 norm of total density difference: " << norm
                     << std::endl;
           }
+        if (d_dftParamsPtr->verbosity >= 1 && d_dftParamsPtr->noncolin)
+          totalNonCollinearMagnetization(d_densityInQuadValues);
 
         if (d_dftParamsPtr->computeEnergyEverySCF)
           d_phiTotRhoIn = d_phiTotRhoOut;
@@ -3176,8 +3247,9 @@ namespace dftfe
           d_phiTotDofHandlerIndexElectro,
           d_densityQuadratureIdElectro,
           d_phiInQuadValues,
+          d_gradPhiInQuadValues,
           dummy,
-          dummy);
+          true);
 
         if (d_dftParamsPtr->confiningPotential)
           {
@@ -3390,12 +3462,15 @@ namespace dftfe
           }
         if (d_dftParamsPtr->verbosity > 0 && d_dftParamsPtr->spinPolarized == 1)
           totalMagnetization(d_densityOutQuadValues[1]);
+        if (d_dftParamsPtr->verbosity > 0 && d_dftParamsPtr->noncolin)
+          totalNonCollinearMagnetization(d_densityOutQuadValues);
 
         //
         // phiTot with rhoOut
         //
         if (d_dftParamsPtr->computeEnergyEverySCF ||
-            d_dftParamsPtr->useEnergyResidualTolerance)
+            d_dftParamsPtr->useEnergyResidualTolerance ||
+            d_dftParamsPtr->inverseKerkerMixingParameter > 0.0)
           {
             if (d_dftParamsPtr->verbosity >= 2)
               pcout
@@ -3495,8 +3570,9 @@ namespace dftfe
               d_phiTotDofHandlerIndexElectro,
               d_densityQuadratureIdElectro,
               d_phiOutQuadValues,
+              d_gradPhiOutQuadValues,
               dummy,
-              dummy);
+              true);
             computing_timer.leave_subsection("phiTot solve");
           }
 
@@ -3630,9 +3706,15 @@ namespace dftfe
         if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
             d_dftParamsPtr->solverMode == "GS")
           {
-            std::vector<std::string> field     = {"RHO", "MAG_Z"};
-            std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
-            std::vector<std::string> field2    = {"TAU", "TAUMAG_Z"};
+            std::vector<std::string> field = {"RHO", "MAG_Z", "MAG_Y", "MAG_X"};
+            std::vector<std::string> Gradfield = {"gradRHO",
+                                                  "gradMAG_Z",
+                                                  "gradMAG_Y",
+                                                  "gradMAG_X"};
+            std::vector<std::string> field2    = {"TAU",
+                                                  "TAUMAG_Z",
+                                                  "TAUMAG_Y",
+                                                  "TAUMAG_X"};
             for (dftfe::Int i = 0; i < d_densityOutQuadValues.size(); i++)
               {
                 saveQuadratureData(d_basisOperationsPtrHost,
@@ -3695,9 +3777,15 @@ namespace dftfe
     if (d_dftParamsPtr->saveQuadData &&
         !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
       {
-        std::vector<std::string> field     = {"RHO", "MAG_Z"};
-        std::vector<std::string> Gradfield = {"gradRHO", "gradMAG_Z"};
-        std::vector<std::string> field2    = {"TAU", "TAUMAG_Z"};
+        std::vector<std::string> field     = {"RHO", "MAG_Z", "MAG_Y", "MAG_X"};
+        std::vector<std::string> Gradfield = {"gradRHO",
+                                              "gradMAG_Z",
+                                              "gradMAG_Y",
+                                              "gradMAG_X"};
+        std::vector<std::string> field2    = {"TAU",
+                                              "TAUMAG_Z",
+                                              "TAUMAG_Y",
+                                              "TAUMAG_X"};
         for (dftfe::Int i = 0; i < d_densityOutQuadValues.size(); i++)
           {
             saveQuadratureData(d_basisOperationsPtrHost,
@@ -4507,20 +4595,53 @@ namespace dftfe
     d_constraintsRhoNodal.distribute(rhoNodalField);
     rhoNodalField.update_ghost_values();
 
-    distributedCPUVec<double> magNodalField;
+    distributedCPUVec<double> magNodalFieldz, magNodalFieldy, magNodalFieldx;
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        magNodalField.reinit(rhoNodalField);
-        magNodalField = 0;
+        magNodalFieldz.reinit(rhoNodalField);
+        magNodalFieldz = 0;
         l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
                                 d_constraintsRhoNodal,
                                 d_densityDofHandlerIndexElectro,
                                 d_densityQuadratureIdElectro,
                                 d_densityOutQuadValues[1],
-                                magNodalField);
+                                magNodalFieldz);
 
-        d_constraintsRhoNodal.distribute(magNodalField);
-        magNodalField.update_ghost_values();
+        d_constraintsRhoNodal.distribute(magNodalFieldz);
+        magNodalFieldz.update_ghost_values();
+      }
+    else if (d_dftParamsPtr->noncolin)
+      {
+        magNodalFieldz.reinit(rhoNodalField);
+        magNodalFieldz = 0;
+        l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                d_constraintsRhoNodal,
+                                d_densityDofHandlerIndexElectro,
+                                d_densityQuadratureIdElectro,
+                                d_densityOutQuadValues[1],
+                                magNodalFieldz);
+        d_constraintsRhoNodal.distribute(magNodalFieldz);
+        magNodalFieldz.update_ghost_values();
+        magNodalFieldy.reinit(rhoNodalField);
+        magNodalFieldy = 0;
+        l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                d_constraintsRhoNodal,
+                                d_densityDofHandlerIndexElectro,
+                                d_densityQuadratureIdElectro,
+                                d_densityOutQuadValues[2],
+                                magNodalFieldy);
+        d_constraintsRhoNodal.distribute(magNodalFieldy);
+        magNodalFieldy.update_ghost_values();
+        magNodalFieldx.reinit(rhoNodalField);
+        magNodalFieldx = 0;
+        l2ProjectionQuadToNodal(d_basisOperationsPtrElectroHost,
+                                d_constraintsRhoNodal,
+                                d_densityDofHandlerIndexElectro,
+                                d_densityQuadratureIdElectro,
+                                d_densityOutQuadValues[3],
+                                magNodalFieldx);
+        d_constraintsRhoNodal.distribute(magNodalFieldx);
+        magNodalFieldx.update_ghost_values();
       }
 
     //
@@ -4531,7 +4652,13 @@ namespace dftfe
     dataOutRho.add_data_vector(rhoNodalField, std::string("chargeDensity"));
     if (d_dftParamsPtr->spinPolarized == 1)
       {
-        dataOutRho.add_data_vector(magNodalField, std::string("magDensity"));
+        dataOutRho.add_data_vector(magNodalFieldz, std::string("magDensity"));
+      }
+    else if (d_dftParamsPtr->noncolin)
+      {
+        dataOutRho.add_data_vector(magNodalFieldz, std::string("magDensityZ"));
+        dataOutRho.add_data_vector(magNodalFieldy, std::string("magDensityY"));
+        dataOutRho.add_data_vector(magNodalFieldx, std::string("magDensityX"));
       }
     dataOutRho.set_flags(dealii::DataOutBase::VtkFlags(
       std::numeric_limits<double>::min(),
@@ -5555,8 +5682,57 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           &densityValsForXC = densityProjectionInputs["densityFunc"];
         densityValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell, 0);
-
-        if (spinPolarizedFactor == 1)
+        if (d_dftParamsPtr->noncolin)
+          {
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              &magAxisVals = densityProjectionInputs["magAxis"];
+            dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+              cellMagNormValues(nQuadsPerCell, 0.0);
+            magAxisVals.resize(totalLocallyOwnedCells * nQuadsPerCell * 3, 0.0);
+            for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
+              {
+                const double *cellRhoValues =
+                  densityQuadValues[0].data() + iCell * nQuadsPerCell;
+                const double *cellMagZValues =
+                  densityQuadValues[1].data() + iCell * nQuadsPerCell;
+                const double *cellMagYValues =
+                  densityQuadValues[2].data() + iCell * nQuadsPerCell;
+                const double *cellMagXValues =
+                  densityQuadValues[3].data() + iCell * nQuadsPerCell;
+                double *cellMagAxisValues =
+                  magAxisVals.data() + 3 * iCell * nQuadsPerCell;
+                for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                  {
+                    const double rhoByTwo = cellRhoValues[iQuad] / 2.0;
+                    cellMagNormValues[iQuad] =
+                      std::sqrt(cellMagZValues[iQuad] * cellMagZValues[iQuad] +
+                                cellMagYValues[iQuad] * cellMagYValues[iQuad] +
+                                cellMagXValues[iQuad] * cellMagXValues[iQuad]);
+                    if (cellMagNormValues[iQuad] > 1e-12)
+                      {
+                        cellMagAxisValues[3 * iQuad + 0] =
+                          cellMagXValues[iQuad] / cellMagNormValues[iQuad];
+                        cellMagAxisValues[3 * iQuad + 1] =
+                          cellMagYValues[iQuad] / cellMagNormValues[iQuad];
+                        cellMagAxisValues[3 * iQuad + 2] =
+                          cellMagZValues[iQuad] / cellMagNormValues[iQuad];
+                      }
+                    else
+                      {
+                        cellMagAxisValues[3 * iQuad + 0] = 0.0;
+                        cellMagAxisValues[3 * iQuad + 1] = 0.0;
+                        cellMagAxisValues[3 * iQuad + 2] = 0.0;
+                      }
+                    const double magByTwo = cellMagNormValues[iQuad] / 2.0;
+                    densityValsForXC[iCell * nQuadsPerCell + iQuad] =
+                      rhoByTwo + magByTwo;
+                    densityValsForXC[totalLocallyOwnedCells * nQuadsPerCell +
+                                     iCell * nQuadsPerCell + iQuad] =
+                      rhoByTwo - magByTwo;
+                  }
+              }
+          }
+        else if (spinPolarizedFactor == 1)
           {
             for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells; ++iCell)
               {
@@ -5623,7 +5799,55 @@ namespace dftfe
                                         0);
 
 
-            if (spinPolarizedFactor == 1)
+            if (d_dftParamsPtr->noncolin)
+              {
+                dftfe::utils::MemoryStorage<double,
+                                            dftfe::utils::MemorySpace::HOST>
+                  &magAxisVals = densityProjectionInputs["magAxis"];
+                for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells;
+                     ++iCell)
+                  {
+                    const double *cellGradRhoValues =
+                      gradDensityQuadValues[0].data() +
+                      3 * iCell * nQuadsPerCell;
+                    const double *cellGradMagZValues =
+                      gradDensityQuadValues[1].data() +
+                      3 * iCell * nQuadsPerCell;
+                    const double *cellGradMagYValues =
+                      gradDensityQuadValues[2].data() +
+                      3 * iCell * nQuadsPerCell;
+                    const double *cellGradMagXValues =
+                      gradDensityQuadValues[3].data() +
+                      3 * iCell * nQuadsPerCell;
+                    const double *cellMagAxisValues =
+                      magAxisVals.data() + 3 * iCell * nQuadsPerCell;
+                    for (dftfe::uInt iQuad = 0; iQuad < nQuadsPerCell; ++iQuad)
+                      {
+                        for (dftfe::uInt idim = 0; idim < 3; ++idim)
+                          {
+                            const double gradRhoByTwo =
+                              cellGradRhoValues[3 * iQuad + idim] / 2.0;
+                            double gradMagByTwo =
+                              (cellMagAxisValues[3 * iQuad + 2] *
+                                 cellGradMagZValues[3 * iQuad + idim] +
+                               cellMagAxisValues[3 * iQuad + 1] *
+                                 cellGradMagYValues[3 * iQuad + idim] +
+                               cellMagAxisValues[3 * iQuad + 0] *
+                                 cellGradMagXValues[3 * iQuad + idim]) /
+                              2.0;
+                            gradDensityValsForXC[iCell * nQuadsPerCell * 3 +
+                                                 iQuad * 3 + idim] =
+                              gradRhoByTwo + gradMagByTwo;
+                            gradDensityValsForXC[totalLocallyOwnedCells *
+                                                   nQuadsPerCell * 3 +
+                                                 iCell * nQuadsPerCell * 3 +
+                                                 iQuad * 3 + idim] =
+                              gradRhoByTwo - gradMagByTwo;
+                          }
+                      }
+                  }
+              }
+            else if (spinPolarizedFactor == 1)
               {
                 for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells;
                      ++iCell)
@@ -5709,7 +5933,10 @@ namespace dftfe
             dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
               &tauValsForXC = densityProjectionInputs["tauFunc"];
             tauValsForXC.resize(2 * totalLocallyOwnedCells * nQuadsPerCell, 0);
-            if (spinPolarizedFactor == 1)
+            if (d_dftParamsPtr->noncolin)
+              {
+              }
+            else if (spinPolarizedFactor == 1)
               {
                 for (dftfe::uInt iCell = 0; iCell < totalLocallyOwnedCells;
                      ++iCell)

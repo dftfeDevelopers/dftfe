@@ -182,11 +182,13 @@ namespace dftfe
       const bool          approxOverlapMatrix)
     {
       double e, c, sigma, sigma1, sigma2, gamma, alpha1Old, alpha2Old;
-      e      = (b - a) / 2.0;
-      c      = (b + a) / 2.0;
-      sigma  = e / (a0 - c);
-      sigma1 = sigma;
-      gamma  = 2.0 / sigma1;
+      e                              = (b - a) / 2.0;
+      c                              = (b + a) / 2.0;
+      sigma                          = e / (a0 - c);
+      sigma1                         = sigma;
+      gamma                          = 2.0 / sigma1;
+      const dftfe::uInt numEigVals   = eigenvalues.size() / 2;
+      const dftfe::uInt spinorFactor = X1.numVectors() / numEigVals;
 
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
         eigenValuesFiltered, eigenValuesFiltered1, eigenValuesFiltered2;
@@ -203,8 +205,8 @@ namespace dftfe
 
       operatorMatrix.overlapMatrixTimesX(
         X1, 1.0, 0.0, 0.0, Y1, approxOverlapMatrix);
-      BLASWrapperPtr->rightDiagonalScale(Y1.numVectors(),
-                                         Y1.locallyOwnedSize(),
+      BLASWrapperPtr->rightDiagonalScale(Y1.numVectors() / spinorFactor,
+                                         Y1.locallyOwnedSize() * spinorFactor,
                                          Y1.data(),
                                          eigenValuesFiltered.data());
       operatorMatrix.HX(X1, 1.0, -1.0, 0.0, Y1);
@@ -212,11 +214,11 @@ namespace dftfe
 
       operatorMatrix.overlapMatrixTimesX(
         X2, 1.0, 0.0, 0.0, Y2, approxOverlapMatrix);
-      BLASWrapperPtr->rightDiagonalScale(Y1.numVectors(),
-                                         Y1.locallyOwnedSize(),
+      BLASWrapperPtr->rightDiagonalScale(Y1.numVectors() / spinorFactor,
+                                         Y1.locallyOwnedSize() * spinorFactor,
                                          Y2.data(),
                                          eigenValuesFiltered.data() +
-                                           X1.numVectors());
+                                           numEigVals);
       operatorMatrix.HX(X2, 1.0, -1.0, 0.0, Y2);
 
       //
@@ -305,13 +307,12 @@ namespace dftfe
             {
               X2_SP.accumulateAddLocallyOwnedEnd();
               X2_SP.zeroOutGhosts();
-              BLASWrapperPtr->ApaBD(X2_SP.locallyOwnedSize(),
-                                    X2_SP.numVectors(),
+              BLASWrapperPtr->ApaBD(X2_SP.locallyOwnedSize() * spinorFactor,
+                                    X2_SP.numVectors() / spinorFactor,
                                     alpha1Old,
                                     X2_SP.data(),
                                     Y2.data(),
-                                    eigenValuesFiltered2.data() +
-                                      X1_SP.numVectors(),
+                                    eigenValuesFiltered2.data() + numEigVals,
                                     X2_SP.data());
 
               BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
@@ -365,8 +366,8 @@ namespace dftfe
                                  true);
           X1_SP.accumulateAddLocallyOwnedEnd();
           X1_SP.zeroOutGhosts();
-          BLASWrapperPtr->ApaBD(X1_SP.locallyOwnedSize(),
-                                X1_SP.numVectors(),
+          BLASWrapperPtr->ApaBD(X1_SP.locallyOwnedSize() * spinorFactor,
+                                X1_SP.numVectors() / spinorFactor,
                                 alpha1,
                                 X1_SP.data(),
                                 Y1.data(),
@@ -391,13 +392,12 @@ namespace dftfe
                                      false);
               X2_SP.accumulateAddLocallyOwned();
               X2_SP.zeroOutGhosts();
-              BLASWrapperPtr->ApaBD(X2_SP.locallyOwnedSize(),
-                                    X2_SP.numVectors(),
+              BLASWrapperPtr->ApaBD(X2_SP.locallyOwnedSize() * spinorFactor,
+                                    X2_SP.numVectors() / spinorFactor,
                                     alpha1,
                                     X2_SP.data(),
                                     Y2.data(),
-                                    eigenValuesFiltered2.data() +
-                                      X1_SP.numVectors(),
+                                    eigenValuesFiltered2.data() + numEigVals,
                                     X2_SP.data());
               BLASWrapperPtr->axpby(eigenValuesFiltered2.size(),
                                     -c * alpha1,
@@ -423,20 +423,20 @@ namespace dftfe
       operatorMatrix.overlapInverseMatrixTimesX(Y1_SP, 1.0, 0.0, 0.0, X1_SP);
       operatorMatrix.overlapInverseMatrixTimesX(Y2_SP, 1.0, 0.0, 0.0, X2_SP);
       // copy back YArray to XArray
-      BLASWrapperPtr->ApaBD(X1.locallyOwnedSize(),
-                            X1.numVectors(),
+      BLASWrapperPtr->ApaBD(X1.locallyOwnedSize() * spinorFactor,
+                            X1.numVectors() / spinorFactor,
                             1.0,
                             X1_SP.data(),
                             X1.data(),
                             eigenValuesFiltered2.data(),
                             X1.data());
 
-      BLASWrapperPtr->ApaBD(X2.locallyOwnedSize(),
-                            X2.numVectors(),
+      BLASWrapperPtr->ApaBD(X2.locallyOwnedSize() * spinorFactor,
+                            X2.numVectors() / spinorFactor,
                             1.0,
                             X2_SP.data(),
                             X2.data(),
-                            eigenValuesFiltered2.data() + X1.numVectors(),
+                            eigenValuesFiltered2.data() + numEigVals,
                             X2.data());
     }
 
@@ -3451,15 +3451,15 @@ namespace dftfe
 
 
                   operatorMatrix.HX(XBlock, 1.0, -1.0, 0.0, HXBlock);
-                  if (dftParams.approxOverlapMatrix)
-                    {
-                      BLASWrapperPtr->stridedBlockScale(
-                        chebyBlockSize,
-                        M,
-                        1.0,
-                        operatorMatrix.getInverseSqrtMassVector().data(),
-                        HXBlock.data());
-                    }
+                  // if (dftParams.approxOverlapMatrix)
+                  //   {
+                  //     BLASWrapperPtr->stridedBlockScale(
+                  //       chebyBlockSize,
+                  //       M,
+                  //       1.0,
+                  //       operatorMatrix.getInverseSqrtMassVector().data(),
+                  //       HXBlock.data());
+                  //   }
                   BLASWrapperPtr->stridedCopyFromBlockConstantStride(
                     B,
                     chebyBlockSize,

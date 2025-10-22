@@ -25,6 +25,80 @@
 #include <BLASWrapper.h>
 namespace dftfe
 {
+  namespace
+  {
+    DFTFE_CREATE_KERNEL(
+      void,
+      computeCellHamiltonianMatrixNonCollinearFromBlocksDeviceKernel,
+      {
+        const dftfe::uInt numberEntries =
+          numCells * nDofsPerCell * nDofsPerCell;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            const dftfe::uInt jDoF   = index % nDofsPerCell;
+            const dftfe::uInt iBlock = index / nDofsPerCell;
+            const dftfe::uInt iDoF   = iBlock % nDofsPerCell;
+            const dftfe::uInt iCell  = cellStartIndex + iBlock / nDofsPerCell;
+            const dftfe::uInt iCellBlock = iBlock / nDofsPerCell;
+            const double      H_realIJ =
+              tempHamMatrixRealBlock[jDoF + nDofsPerCell * iDoF +
+                                     iCellBlock * nDofsPerCell * nDofsPerCell];
+            const double H_imagIJ =
+              tempHamMatrixImagBlock[jDoF + nDofsPerCell * iDoF +
+                                     iCellBlock * nDofsPerCell * nDofsPerCell];
+            const double H_bzIJ =
+              tempHamMatrixBZBlockNonCollin[jDoF + nDofsPerCell * iDoF +
+                                            iCellBlock * nDofsPerCell *
+                                              nDofsPerCell];
+            const double H_byIJ =
+              tempHamMatrixBYBlockNonCollin[jDoF + nDofsPerCell * iDoF +
+                                            iCellBlock * nDofsPerCell *
+                                              nDofsPerCell];
+            const double H_bxIJ =
+              tempHamMatrixBXBlockNonCollin[jDoF + nDofsPerCell * iDoF +
+                                            iCellBlock * nDofsPerCell *
+                                              nDofsPerCell];
+            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
+                                  2 * nDofsPerCell * (2 * iDoF + 1) + 2 * jDoF +
+                                  1]
+              .x = H_realIJ - H_bzIJ;
+            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
+                                  2 * nDofsPerCell * (2 * iDoF + 1) + 2 * jDoF +
+                                  1]
+              .y = H_imagIJ;
+            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
+                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF]
+              .x = H_realIJ + H_bzIJ;
+            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
+                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF]
+              .y = H_imagIJ;
+            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
+                                  2 * nDofsPerCell * (2 * iDoF + 1) + 2 * jDoF]
+              .x = H_bxIJ;
+            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
+                                  2 * nDofsPerCell * (2 * iDoF + 1) + 2 * jDoF]
+              .y = H_byIJ;
+            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
+                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF + 1]
+              .x = H_bxIJ;
+            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
+                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF + 1]
+              .y = -H_byIJ;
+          }
+      },
+      const dftfe::uInt                  numCells,
+      const dftfe::uInt                  nDofsPerCell,
+      const dftfe::uInt                  cellStartIndex,
+      const double                      *tempHamMatrixRealBlock,
+      const double                      *tempHamMatrixImagBlock,
+      const double                      *tempHamMatrixBZBlockNonCollin,
+      const double                      *tempHamMatrixBYBlockNonCollin,
+      const double                      *tempHamMatrixBXBlockNonCollin,
+      dftfe::utils::deviceDoubleComplex *cellHamiltonianMatrix);
+  } // namespace
+
   namespace internal
   {
 
@@ -133,6 +207,60 @@ namespace dftfe
         &invJacKpointTimesderExcwithTauJxW)
     {
       // Not yet implemented
+    }
+    template <>
+    void
+    computeCellHamiltonianMatrixNonCollinearFromBlocks(
+      const std::pair<dftfe::uInt, dftfe::uInt> cellRange,
+      const dftfe::uInt                         nDofsPerCell,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &tempHamMatrixRealBlock,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &tempHamMatrixImagBlock,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &tempHamMatrixBZBlockNonCollin,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &tempHamMatrixBYBlockNonCollin,
+      const dftfe::utils::MemoryStorage<double,
+                                        dftfe::utils::MemorySpace::DEVICE>
+        &tempHamMatrixBXBlockNonCollin,
+      dftfe::utils::MemoryStorage<std::complex<double>,
+                                  dftfe::utils::MemorySpace::DEVICE>
+        &cellHamiltonianMatrix)
+    {
+      const dftfe::uInt nCells       = cellRange.second - cellRange.first;
+      auto tempHamMatrixRealBlockPtr = tempHamMatrixRealBlock.data();
+      auto tempHamMatrixImagBlockPtr = tempHamMatrixImagBlock.data();
+      auto tempHamMatrixBZBlockNonCollinPtr =
+        tempHamMatrixBZBlockNonCollin.data();
+      auto tempHamMatrixBYBlockNonCollinPtr =
+        tempHamMatrixBYBlockNonCollin.data();
+      auto tempHamMatrixBXBlockNonCollinPtr =
+        tempHamMatrixBXBlockNonCollin.data();
+      auto cellHamiltonianMatrixPtr = cellHamiltonianMatrix.data();
+      DFTFE_LAUNCH_KERNEL(
+        computeCellHamiltonianMatrixNonCollinearFromBlocksDeviceKernel,
+        (nCells * nDofsPerCell * nDofsPerCell) /
+            dftfe::utils::DEVICE_BLOCK_SIZE +
+          1,
+        dftfe::utils::DEVICE_BLOCK_SIZE,
+        dftfe::utils::defaultStream,
+        nCells,
+        nDofsPerCell,
+        cellRange.first,
+        dftfe::utils::makeDataTypeDeviceCompatible(tempHamMatrixRealBlockPtr),
+        dftfe::utils::makeDataTypeDeviceCompatible(tempHamMatrixImagBlockPtr),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          tempHamMatrixBZBlockNonCollinPtr),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          tempHamMatrixBYBlockNonCollinPtr),
+        dftfe::utils::makeDataTypeDeviceCompatible(
+          tempHamMatrixBXBlockNonCollinPtr),
+        dftfe::utils::makeDataTypeDeviceCompatible(cellHamiltonianMatrixPtr));
     }
   }; // namespace internal
 } // namespace dftfe

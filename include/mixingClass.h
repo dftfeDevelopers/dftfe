@@ -34,9 +34,16 @@ namespace dftfe
     gradRho,
     magZ,
     gradMagZ,
+    magY,
+    gradMagY,
+    magX,
+    gradMagX,
+    gradPhi,
     hubbardOccupation,
     tau,
-    tauMagZ
+    tauMagZ,
+    tauMagY,
+    tauMagX
   };
 
   /**
