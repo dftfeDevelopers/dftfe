@@ -365,8 +365,8 @@ namespace dftfe
   dftClass<memorySpace>::readPSIRadialValues()
   {
     const dealii::IndexSet &locallyOwnedSet = dofHandler.locally_owned_dofs();
-    std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs;
-    locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
+    std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs =
+      locallyOwnedSet.get_index_vector();
     dftfe::uInt numberDofs = locallyOwnedDOFs.size();
 
     std::fill(d_eigenVectorsFlattenedHost.begin(),

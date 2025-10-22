@@ -885,10 +885,10 @@ namespace dftfe
         d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
           ->local_range();
 
-      std::vector<unsigned long int> ghostIndices;
-      (d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
-         ->ghost_indices())
-        .fill_index_vector(ghostIndices);
+      std::vector<unsigned long int> ghostIndices =
+        (d_matrixFreeDataPtr->get_vector_partitioner(d_dofHandlerID)
+           ->ghost_indices())
+          .get_index_vector();
 
       mpiPatternP2P =
         std::make_shared<dftfe::utils::mpi::MPIPatternP2P<memorySpace>>(

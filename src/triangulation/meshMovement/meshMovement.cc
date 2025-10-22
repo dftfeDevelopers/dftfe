@@ -129,11 +129,11 @@ namespace dftfe
     d_locally_owned_dofs.clear();
     d_locally_relevant_dofs.clear();
     d_locally_owned_dofs = d_dofHandlerMoveMesh.locally_owned_dofs();
-    dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh,
-                                                    d_locally_relevant_dofs);
+    d_locally_relevant_dofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh);
 
     d_constraintsMoveMesh.clear();
-    d_constraintsMoveMesh.reinit(d_locally_relevant_dofs);
+    d_constraintsMoveMesh.reinit(d_locally_owned_dofs, d_locally_relevant_dofs);
     dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh,
                                                     d_constraintsMoveMesh);
     d_periodicity_vector.clear();
@@ -170,7 +170,8 @@ namespace dftfe
 
     dealii::DoFTools::make_periodicity_constraints<3, 3>(d_periodicity_vector,
                                                          d_constraintsMoveMesh);
-    d_constraintsMoveMesh.close();
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(
+      d_dofHandlerMoveMesh, d_constraintsMoveMesh);
 
     if (d_dftParams.createConstraintsFromSerialDofhandler)
       {

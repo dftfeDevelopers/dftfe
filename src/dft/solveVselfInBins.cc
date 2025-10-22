@@ -422,11 +422,9 @@ namespace dftfe
     poissonSolverProblemWrapperClass vselfSolverProblem(
       d_dftParams.finiteElementPolynomialOrderElectrostatics, mpi_communicator);
 
-    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints;
-    dealii::DoFTools::map_dofs_to_support_points(
-      dealii::MappingQ1<3, 3>(),
-      matrix_free_data.get_dof_handler(offset),
-      supportPoints);
+    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints =
+      dealii::DoFTools::map_dofs_to_support_points(
+        dealii::MappingQ1<3, 3>(), matrix_free_data.get_dof_handler(offset));
 
     std::map<dealii::types::global_dof_index, dftfe::Int>::iterator iterMap;
     std::map<dealii::types::global_dof_index, double>::iterator     iterMapVal;

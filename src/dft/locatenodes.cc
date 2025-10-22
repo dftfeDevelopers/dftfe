@@ -41,10 +41,9 @@ namespace dftfe
 
     dealii::IndexSet locallyOwnedDofs = _dofHandler.locally_owned_dofs();
 
-    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints;
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 _dofHandler,
-                                                 supportPoints);
+    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   _dofHandler);
 
     // locating atom nodes
     const dftfe::uInt     numAtoms = atomLocations.size();
@@ -155,15 +154,13 @@ namespace dftfe
     const dftfe::Int           numberGlobalAtoms  = atomLocations.size();
     const dftfe::Int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
-    dealii::IndexSet locallyRelevantDofs;
-    dealii::DoFTools::extract_locally_relevant_dofs(_dofHandler,
-                                                    locallyRelevantDofs);
+    dealii::IndexSet locallyRelevantDofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(_dofHandler);
     dealii::IndexSet locallyOwnedDofs = _dofHandler.locally_owned_dofs();
 
-    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints;
-    dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                 _dofHandler,
-                                                 supportPoints);
+    std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPoints =
+      dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
+                                                   _dofHandler);
 
     //
     // find vertex furthest from all nuclear charges

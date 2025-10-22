@@ -195,14 +195,12 @@ namespace dftfe
       {
         const dealii::IndexSet &locallyOwnedSet =
           d_dofHandlerRhoNodal.locally_owned_dofs();
-        std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs;
-        locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
+        std::vector<dealii::IndexSet::size_type> locallyOwnedDOFs =
+          locallyOwnedSet.get_index_vector();
         dftfe::uInt numberDofs = locallyOwnedDOFs.size();
         std::map<dealii::types::global_dof_index, dealii::Point<3>>
-          supportPointsRhoNodal;
-        dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3, 3>(),
-                                                     d_dofHandlerRhoNodal,
-                                                     supportPointsRhoNodal);
+          supportPointsRhoNodal = dealii::DoFTools::map_dofs_to_support_points(
+            dealii::MappingQ1<3, 3>(), d_dofHandlerRhoNodal);
 
         dealii::BoundingBox<3> boundingBoxTria(
           vectorTools::createBoundingBoxTriaLocallyOwned(d_dofHandlerRhoNodal));

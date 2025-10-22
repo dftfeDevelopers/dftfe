@@ -749,13 +749,13 @@ namespace dftfe
     dealii::DoFHandler<3> dofHandler;
     dofHandler.reinit(parallelTriangulation);
     dofHandler.distribute_dofs(FE);
-    dealii::IndexSet locally_relevant_dofs;
-    dealii::DoFTools::extract_locally_relevant_dofs(dofHandler,
-                                                    locally_relevant_dofs);
+    dealii::IndexSet locally_relevant_dofs =
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandler);
+    dealii::IndexSet locally_owned_dofs = dofHandler.locally_owned_dofs();
 
     dealii::AffineConstraints<double> constraints;
     constraints.clear();
-    constraints.reinit(locally_relevant_dofs);
+    constraints.reinit(locally_owned_dofs, locally_relevant_dofs);
     dealii::DoFTools::make_hanging_node_constraints(dofHandler, constraints);
     std::vector<dealii::GridTools::PeriodicFacePair<
       typename dealii::DoFHandler<3>::cell_iterator>>
@@ -801,11 +801,11 @@ namespace dftfe
 
     dealii::DoFTools::make_periodicity_constraints<3, 3>(periodicity_vector,
                                                          constraints);
-    constraints.close();
+    dftfe::vectorTools::makeAffineConstraintsConsistentInParallel(dofHandler,
+                                                                  constraints);
 
-    dealii::IndexSet locally_active_dofs_debug;
-    dealii::DoFTools::extract_locally_active_dofs(dofHandler,
-                                                  locally_active_dofs_debug);
+    dealii::IndexSet locally_active_dofs_debug =
+      dealii::DoFTools::extract_locally_active_dofs(dofHandler);
 
     const std::vector<dealii::IndexSet> &locally_owned_dofs_debug =
       dealii::Utilities::MPI::all_gather(mpi_communicator,
