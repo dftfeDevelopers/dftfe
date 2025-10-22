@@ -1494,6 +1494,7 @@ namespace dftfe
     dftfe::uInt d_densityQuadratureIdElectro;
     dftfe::uInt d_sparsityPatternQuadratureId;
     dftfe::uInt d_nOMPThreads;
+    double      d_dftfeClassStartTime;
     dealii::MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,

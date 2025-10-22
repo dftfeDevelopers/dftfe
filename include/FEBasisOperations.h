@@ -165,7 +165,8 @@ namespace dftfe
              const dftfe::uInt &cellBlockSize,
              const dftfe::uInt &quadratureID,
              const bool         isResizeTempStorageForInerpolation = true,
-             const bool         isResizeTempStorageForCellMatrices = false);
+             const bool         isResizeTempStorageForCellMatrices = false,
+             const bool isResizeTempStorageForIntegralEvaluations  = false);
 
       dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::HOST> &
@@ -246,6 +247,8 @@ namespace dftfe
         const std::vector<dftfe::uInt> &cellIndices,
         const dftfe::uInt              &noKpoints,
         const dftfe::uInt              &noOfVectors,
+        const dftfe::uInt              &totalElements,
+        const dftfe::uInt              &iElemStart,
         const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &scalarField,
         dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
@@ -256,6 +259,8 @@ namespace dftfe
         const std::vector<dftfe::uInt> &cellIndices,
         const dftfe::uInt              &noKpoints,
         const dftfe::uInt              &noOfVectors,
+        const dftfe::uInt              &totalElements,
+        const dftfe::uInt              &iElemStart,
         const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &scalarField,
         dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
@@ -266,6 +271,8 @@ namespace dftfe
         const std::vector<dftfe::uInt> &cellIndices,
         const dftfe::uInt              &noKpoints,
         const dftfe::uInt              &noOfVectors,
+        const dftfe::uInt              &totalElements,
+        const dftfe::uInt              &iElemStart,
         const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
           &vectorField,
         dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
@@ -316,7 +323,8 @@ namespace dftfe
        */
       void
       resizeTempStorage(const bool isResizeTempStorageForInerpolation,
-                        const bool isResizeTempStorageForCellMatrices);
+                        const bool isResizeTempStorageForCellMatrices,
+                        const bool isResizeTempStorageForIntegralEvaluations);
 
       /**
        * @brief Number of quadrature points per cell for the quadratureID set in reinit.

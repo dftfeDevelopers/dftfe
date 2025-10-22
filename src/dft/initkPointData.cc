@@ -456,7 +456,8 @@ namespace dftfe
     groupSymmetryPtr->reduceKPointGrid(d_kPointCoordinatesFrac,
                                        d_kPointWeights);
     maxkPoints = d_kPointWeights.size();
-    if (!d_dftParamsPtr->reproducible_output && d_dftParamsPtr->useSymm)
+    if (!d_dftParamsPtr->reproducible_output &&
+        (d_dftParamsPtr->useSymm || d_dftParamsPtr->timeReversal))
       {
         pcout << " number of irreducible k-points " << maxkPoints << std::endl;
         pcout << "Reduced k-Point-coordinates and weights: " << std::endl;

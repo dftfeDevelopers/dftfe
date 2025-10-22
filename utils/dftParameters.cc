@@ -128,7 +128,7 @@ namespace dftfe
           "WRITE DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Computes density of states using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true' in 'GS' calculation) and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
+          "[Standard] Computes density of states using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE QUAD DATA = true' in 'GS' calculation) and second column indicating the density of states. In case of collinear spin polarization, the second and third columns indicate the spin-up and spin-down density of states.");
 
         prm.declare_entry(
           "WRITE LOCAL DENSITY OF STATES",
@@ -140,7 +140,7 @@ namespace dftfe
           "WRITE PROJECTED DENSITY OF STATES",
           "false",
           dealii::Patterns::Bool(),
-          R"([Standard] Computes projected density of states on each atomic orbital using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as the broadening parameter. Outputs files with name format 'pdosData_atom#{atom number}_wfc#{wfc number}({wfc name}).out'. For colinear, spin-unpolarized case, each of these file contain columns with format 'E sumPDOS  PDOS_0 .... PDOS_(2l)', where E: the energy is eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE RHO DATA = true'in 'GS' calculation),l: azimuthal quantum number, sumPDOS: PDOS_0 + .. +PDOS_(2l).
+          R"([Standard] Computes projected density of states on each atomic orbital using Gaussian smearing. Uses specified 'DOS SMEAR TEMPERATURE' as the broadening parameter. Outputs files with name format 'pdosData_atom#{atom number}_wfc#{wfc number}({wfc name}).out'. For colinear, spin-unpolarized case, each of these file contain columns with format 'E sumPDOS  PDOS_0 .... PDOS_(2l)', where E: the energy is eV (without shift wrt Fermi energy. Fermi energy can be obtained from the file'fermiEnergy.out' that is generated when 'SAVE QUAD DATA = true'in 'GS' calculation),l: azimuthal quantum number, sumPDOS: PDOS_0 + .. +PDOS_(2l).
           For colinear, spin-polarized case, the columns has format 'E sumPDOS_up sumPDOS_down PDOS_0_up PDOS_0_down .... PDOS_(2l)_up PDOS_(2l)_down', where 'up' and 'down' refer to the spin up and spin down case with all other terms having the same meaning as of the spin-unpolarized case.)");
 
         prm.declare_entry(
@@ -212,7 +212,7 @@ namespace dftfe
           "SAVE QUAD DATA",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Saves the various variables involved in the SCF fixed point interation to restart file. Default value is false.");
+          "[Standard] Saves the various variables involved in the SCF fixed point interation to restart file at the end of each ground state calculation. Default value is false.");
 
         prm.declare_entry(
           "LOAD QUAD DATA",
@@ -672,16 +672,11 @@ namespace dftfe
           dealii::Patterns::Bool(),
           "[Developer] Boolean parameter specifying the explicit path of pseudopotential upf format files used for ctests");
 
-        // prm.declare_entry(
-        //   "USE LIBXC FOR XC FUNCTIONAL EVALUATION",
-        //   "true",
-        //   dealii::Patterns::Bool(),
-        //   "[Developer] Boolean parameter specifying whether LIBXC should be
-        //   used to evaluate the exchange-correlation functional. If set to
-        //   true, the LIBXC library is used to evaluate the
-        //   exchange-correlation functional. If set to false, the
-        //   exchange-correlation functional is evaluated using the internal
-        //   implementation wchih can leverage GPUs");
+        prm.declare_entry(
+          "USE LIBXC FOR XC FUNCTIONAL EVALUATION",
+          "true",
+          dealii::Patterns::Bool(),
+          "[Developer] Boolean parameter specifying whether LIBXC should be used to evaluate the exchange-correlation functional. If set to true, the LIBXC library is used to evaluate the exchange-correlation functional. If set to false, the exchange-correlation functional is evaluated using the internal implementation which can leverage GPUs");
 
         prm.declare_entry(
           "PSEUDOPOTENTIAL FILE NAMES LIST",
@@ -1291,7 +1286,7 @@ namespace dftfe
     n_refinement_steps                         = 1;
     numberEigenValues                          = 1;
     XCType                                     = "GGA-PBE";
-    useLiXCForXCEvaluation                     = true;
+    useLibXCForXCEvaluation                    = true;
     spinPolarized                              = 0;
     modelXCInputFile                           = "";
     auxBasisTypeXC                             = "";
@@ -1716,12 +1711,12 @@ namespace dftfe
         dc_d3cutoffCN               = prm.get_double("CN CUTOFF");
       }
       prm.leave_subsection();
-      isPseudopotential      = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-      pseudoTestsFlag        = prm.get_bool("PSEUDO TESTS FLAG");
-      pseudoPotentialFile    = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
-      XCType                 = prm.get("EXCHANGE CORRELATION TYPE");
-      useLiXCForXCEvaluation = true;
-      //  prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
+      isPseudopotential   = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+      pseudoTestsFlag     = prm.get_bool("PSEUDO TESTS FLAG");
+      pseudoPotentialFile = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
+      XCType              = prm.get("EXCHANGE CORRELATION TYPE");
+      useLibXCForXCEvaluation =
+        prm.get_bool("USE LIBXC FOR XC FUNCTIONAL EVALUATION");
       noncolin = prm.get_bool("NONCOLLINEAR SPIN");
       hasSOC   = prm.get_bool("SPIN-ORBIT COUPLING");
       spinPolarized =
@@ -1881,7 +1876,7 @@ namespace dftfe
     if (dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0 &&
         verbosity >= 1 && printParams)
       {
-        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortText);
+        prm.print_parameters(std::cout, dealii::ParameterHandler::ShortPRM);
       }
 
     //
@@ -1990,15 +1985,6 @@ namespace dftfe
           "DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
     if (XCType.substr(0, 4) == "MGGA")
       {
-        AssertThrow(
-          !isCellStress,
-          dealii::ExcMessage(
-            "DFT-FE Error: Computation of CELL STRESS with MGGA functional is not completed yet."));
-        if (!floatingNuclearCharges)
-          AssertThrow(
-            !isIonForce,
-            dealii::ExcMessage(
-              "DFT-FE Error: Computation of ION FORCE with MGGA functional in all-electron calculation is not completed yet."));
         AssertThrow(
           mixingMethod != "LOW_RANK_DIELECM_PRECOND",
           dealii::ExcMessage(

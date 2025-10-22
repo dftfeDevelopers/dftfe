@@ -53,7 +53,7 @@ namespace dftfe
         dftUtils::verifyCheckpointFileExists(filename1);
         try
           {
-            d_serialTriangulationUnmoved.load(filename1.c_str(), false);
+            d_serialTriangulationUnmoved.load(filename1.c_str());
           }
         catch (...)
           {

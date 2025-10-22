@@ -171,6 +171,8 @@ namespace dftfe
   {
     d_nOMPThreads = 1;
     d_useHubbard  = false;
+    MPI_Barrier(d_mpiCommParent);
+    d_dftfeClassStartTime = MPI_Wtime();
 #ifdef _OPENMP
     if (const char *penv = std::getenv("DFTFE_NUM_THREADS"))
       {
@@ -363,7 +365,9 @@ namespace dftfe
   void
   dftClass<memorySpace>::set()
   {
-    d_BLASWrapperPtrHost = std::make_shared<
+    MPI_Barrier(d_mpiCommParent);
+    double startTimeLocal = MPI_Wtime();
+    d_BLASWrapperPtrHost  = std::make_shared<
       dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::HOST>>();
     d_basisOperationsPtrHost = std::make_shared<
       dftfe::basis::FEBasisOperations<dataTypes::number,
@@ -953,6 +957,16 @@ namespace dftfe
 
     d_elpaScala->processGridELPASetup(d_numEigenValues, *d_dftParamsPtr);
     MPI_Barrier(d_mpiCommParent);
+    double cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Time taken for setting up atomic system: "
+              << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till setting up atomic system: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
+
     computingTimerStandard.leave_subsection("Atomic system initialization");
   }
 
@@ -1152,34 +1166,14 @@ namespace dftfe
   dftClass<memorySpace>::init()
   {
     computingTimerStandard.enter_subsection("KSDFT problem initialization");
-
+    MPI_Barrier(d_mpiCommParent);
+    double startTimeLocal = MPI_Wtime();
     initImageChargesUpdateKPoints();
 
     calculateNearestAtomDistances();
 
     computing_timer.enter_subsection("mesh generation");
-    //
-    // generate mesh (both parallel and serial)
-    // while parallel meshes are always generated, serial meshes are only
-    // generated for following three cases: symmetrization is on, ionic
-    // optimization is on as well as reuse wfcs and density from previous ionic
-    // step is on, or if serial constraints generation is on.
-    //
-    // if (d_dftParamsPtr->loadRhoData)
-    //   {
-    //     d_mesh.generateCoarseMeshesForRestart(
-    //       atomLocations,
-    //       d_imagePositionsTrunc,
-    //       d_imageIdsTrunc,
-    //       d_nearestAtomDistances,
-    //       d_domainBoundingVectors,
-    //       d_dftParamsPtr->useSymm ||
-    //         d_dftParamsPtr->createConstraintsFromSerialDofhandler);
 
-    //     loadTriaInfoAndRhoNodalData();
-    //   }
-    // else
-    //{
     d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(
       atomLocations,
       d_imagePositionsTrunc,
@@ -1270,10 +1264,22 @@ namespace dftfe
         groupSymmetryPtr->setupCommPatternForNodalField(d_dofHandlerRhoNodal);
       }
 #endif
-
+    MPI_Barrier(d_mpiCommParent);
+    double cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout
+          << "DFT-FE Timer: Time taken for initialization of Mesh and Boundary Conditions: "
+          << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till initialization of Mesh and Boundary Conditions: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
     //
     // initialize pseudopotential data for both local and nonlocal part
     //
+    MPI_Barrier(d_mpiCommParent);
+    startTimeLocal = MPI_Wtime();
     if (d_dftParamsPtr->isPseudopotential == true)
       d_oncvClassPtr->initialise(d_basisOperationsPtrHost,
 #if defined(DFTFE_WITH_DEVICE)
@@ -1480,6 +1486,16 @@ namespace dftfe
                                        d_lpspQuadratureIdElectro,
                                        d_nlpspQuadratureId,
                                        d_smearedChargeQuadratureIdElectro);
+      }
+    MPI_Barrier(d_mpiCommParent);
+    cuttentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Time taken for PseudoPotential Initialisation: "
+              << cuttentTime - startTimeLocal << " seconds" << std::endl;
+        pcout
+          << "DFT-FE Timer: Total Time taken till PseudoPotential Initialisation: "
+          << cuttentTime - d_dftfeClassStartTime << " seconds" << std::endl;
       }
     computingTimerStandard.leave_subsection("KSDFT problem initialization");
   }
@@ -2400,7 +2416,13 @@ namespace dftfe
         kohnShamDFTEigenOperator.computeVEffExternalPotCorr(d_pseudoVLoc);
         computingTimerStandard.leave_subsection("Init local PSP");
       }
-
+    MPI_Barrier(d_mpiCommParent);
+    double currentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Total Time taken till Start of SCF Iteration: "
+              << currentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
 
     computingTimerStandard.enter_subsection("Total scf solve");
 
@@ -3376,7 +3398,7 @@ namespace dftfe
                             *d_elpaScala,
                             d_subspaceIterationSolverDevice,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                            maxPasses > 1,
+                            true,
                             0,
                             true,
                             scfIter == 0);
@@ -3390,7 +3412,7 @@ namespace dftfe
                             *d_elpaScala,
                             d_subspaceIterationSolver,
                             residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-                            maxPasses > 1,
+                            true,
                             true,
                             scfIter == 0);
                       }
@@ -3703,66 +3725,66 @@ namespace dftfe
         //         d_hubbardClassPtr->writeHubbOccToFile();
         //       }
         //   }
-        if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
-            d_dftParamsPtr->solverMode == "GS")
-          {
-            std::vector<std::string> field = {"RHO", "MAG_Z", "MAG_Y", "MAG_X"};
-            std::vector<std::string> Gradfield = {"gradRHO",
-                                                  "gradMAG_Z",
-                                                  "gradMAG_Y",
-                                                  "gradMAG_X"};
-            std::vector<std::string> field2    = {"TAU",
-                                                  "TAUMAG_Z",
-                                                  "TAUMAG_Y",
-                                                  "TAUMAG_X"};
-            for (dftfe::Int i = 0; i < d_densityOutQuadValues.size(); i++)
-              {
-                saveQuadratureData(d_basisOperationsPtrHost,
-                                   d_densityQuadratureId,
-                                   d_densityOutQuadValues[i],
-                                   1,
-                                   field[i],
-                                   d_dftParamsPtr->restartFolder,
-                                   d_mpiCommParent,
-                                   mpi_communicator,
-                                   interpoolcomm,
-                                   interBandGroupComm);
-                bool isGradDensityDataDependent =
-                  (d_excManagerPtr->getExcSSDFunctionalObj()
-                     ->getDensityBasedFamilyType() == densityFamilyType::GGA);
-                if (isGradDensityDataDependent)
-                  {
-                    saveQuadratureData(d_basisOperationsPtrHost,
-                                       d_densityQuadratureId,
-                                       d_gradDensityOutQuadValues[i],
-                                       3,
-                                       Gradfield[i],
-                                       d_dftParamsPtr->restartFolder,
-                                       d_mpiCommParent,
-                                       mpi_communicator,
-                                       interpoolcomm,
-                                       interBandGroupComm);
-                  }
-              }
-            if (isTauMGGA)
-              for (dftfe::Int i = 0; i < d_tauOutQuadValues.size(); i++)
-                {
-                  saveQuadratureData(d_basisOperationsPtrHost,
-                                     d_densityQuadratureId,
-                                     d_tauOutQuadValues[i],
-                                     1,
-                                     field2[i],
-                                     d_dftParamsPtr->restartFolder,
-                                     d_mpiCommParent,
-                                     mpi_communicator,
-                                     interpoolcomm,
-                                     interBandGroupComm);
-                }
-            if (d_useHubbard)
-              {
-                d_hubbardClassPtr->writeHubbOccToFile();
-              }
-          }
+        // if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
+        //     d_dftParamsPtr->solverMode == "GS")
+        //   {
+        //     std::vector<std::string> field = {"RHO", "MAG_Z", "MAG_Y", "MAG_X"};
+        //     std::vector<std::string> Gradfield = {"gradRHO",
+        //                                           "gradMAG_Z",
+        //                                           "gradMAG_Y",
+        //                                           "gradMAG_X"};
+        //     std::vector<std::string> field2    = {"TAU",
+        //                                           "TAUMAG_Z",
+        //                                           "TAUMAG_Y",
+        //                                           "TAUMAG_X"};
+        //     for (dftfe::Int i = 0; i < d_densityOutQuadValues.size(); i++)
+        //       {
+        //         saveQuadratureData(d_basisOperationsPtrHost,
+        //                            d_densityQuadratureId,
+        //                            d_densityOutQuadValues[i],
+        //                            1,
+        //                            field[i],
+        //                            d_dftParamsPtr->restartFolder,
+        //                            d_mpiCommParent,
+        //                            mpi_communicator,
+        //                            interpoolcomm,
+        //                            interBandGroupComm);
+        //         bool isGradDensityDataDependent =
+        //           (d_excManagerPtr->getExcSSDFunctionalObj()
+        //              ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+        //         if (isGradDensityDataDependent)
+        //           {
+        //             saveQuadratureData(d_basisOperationsPtrHost,
+        //                                d_densityQuadratureId,
+        //                                d_gradDensityOutQuadValues[i],
+        //                                3,
+        //                                Gradfield[i],
+        //                                d_dftParamsPtr->restartFolder,
+        //                                d_mpiCommParent,
+        //                                mpi_communicator,
+        //                                interpoolcomm,
+        //                                interBandGroupComm);
+        //           }
+        //       }
+        //     if (isTauMGGA)
+        //       for (dftfe::Int i = 0; i < d_tauOutQuadValues.size(); i++)
+        //         {
+        //           saveQuadratureData(d_basisOperationsPtrHost,
+        //                              d_densityQuadratureId,
+        //                              d_tauOutQuadValues[i],
+        //                              1,
+        //                              field2[i],
+        //                              d_dftParamsPtr->restartFolder,
+        //                              d_mpiCommParent,
+        //                              mpi_communicator,
+        //                              interpoolcomm,
+        //                              interBandGroupComm);
+        //         }
+        //     if (d_useHubbard)
+        //       {
+        //         d_hubbardClassPtr->writeHubbOccToFile();
+        //       }
+        //   }
       }
 
     // if (d_dftParamsPtr->saveRhoData &&
@@ -3774,8 +3796,8 @@ namespace dftfe
     //         d_hubbardClassPtr->writeHubbOccToFile();
     //       }
     //   }
-    if (d_dftParamsPtr->saveQuadData &&
-        !(d_dftParamsPtr->solverMode == "GS" && scfIter % 10 == 0))
+
+    if (d_dftParamsPtr->saveQuadData)
       {
         std::vector<std::string> field     = {"RHO", "MAG_Z", "MAG_Y", "MAG_X"};
         std::vector<std::string> Gradfield = {"gradRHO",
@@ -4119,7 +4141,13 @@ namespace dftfe
       }
     if (d_dftParamsPtr->verbosity >= 1)
       pcout << "Total free energy: " << d_freeEnergy << std::endl;
-
+    MPI_Barrier(d_mpiCommParent);
+    currentTime = MPI_Wtime();
+    if (d_dftParamsPtr->verbosity >= 3 && !d_dftParamsPtr->reproducible_output)
+      {
+        pcout << "DFT-FE Timer: Total Time taken till now: "
+              << currentTime - d_dftfeClassStartTime << " seconds" << std::endl;
+      }
     if (d_dftParamsPtr->verbosity >= 0 && d_dftParamsPtr->spinPolarized == 1)
       totalMagnetization(d_densityOutQuadValues[1]);
 
@@ -4271,6 +4299,15 @@ namespace dftfe
               d_configForcePtr->printStress();
             computingTimerStandard.leave_subsection(
               "Force and Stress computation");
+            MPI_Barrier(d_mpiCommParent);
+            double currentTime = MPI_Wtime();
+            if (d_dftParamsPtr->verbosity >= 3 &&
+                !d_dftParamsPtr->reproducible_output)
+              {
+                pcout << "DFT-FE Timer: Total Time taken till now: "
+                      << currentTime - d_dftfeClassStartTime << " seconds"
+                      << std::endl;
+              }
             computing_timer.leave_subsection("Force and Stress computation");
           }
       }
@@ -4551,11 +4588,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     data_outEigen.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "waveFunctionOutputFolder";
@@ -4664,11 +4698,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     dataOutRho.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "densityOutputFolder";
@@ -5210,11 +5241,8 @@ namespace dftfe
       std::numeric_limits<double>::min(),
       std::numeric_limits<dftfe::uInt>::min(),
       true,
-      dealii::DataOutBase::VtkFlags::ZlibCompressionLevel::
-        best_speed, // This flag is version dependent for dealII 9.5.0 it
-                    // is
-                    // dealii::DataOutBase::CompressionLevel::best_speed
-      true));       // higher order cells set to true
+      dealii::DataOutBase::CompressionLevel::best_speed,
+      true)); // higher order cells set to true
     dataOutRho.build_patches(d_dftParamsPtr->finiteElementPolynomialOrder);
 
     std::string tempFolder = "meshOutputFolder";

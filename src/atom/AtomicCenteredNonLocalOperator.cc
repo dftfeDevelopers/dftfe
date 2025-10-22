@@ -211,17 +211,7 @@ namespace dftfe
       basisOperationsPtr->nQuadsPerCell();
     d_numberNodesPerElement    = basisOperationsPtr->nDofsPerCell();
     const dftfe::uInt numCells = d_locallyOwnedCells;
-    const dftfe::utils::MemoryStorage<
-      dataTypes::number, // ValueType for complex
-      dftfe::utils::MemorySpace::HOST> &shapeValQuads =
-      basisOperationsPtr
-        ->shapeFunctionData(); // shapeFunctionData() for complex
-    const dftfe::utils::MemoryStorage<double,
-                                      dftfe::utils::MemorySpace::HOST>
-      &shapeGradQuads =
-        basisOperationsPtr
-          ->shapeFunctionGradientBasisData(); // shapeFunctionGradientData()
-                                              // for complex
+
     const dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
       quadraturePointsVector = basisOperationsPtr->quadPoints();
     const dftfe::utils::MemoryStorage<dataTypes::number,
@@ -391,17 +381,15 @@ namespace dftfe
               }
           }
       }
-
-
     for (dftfe::uInt iAtom = 0; iAtom < d_totalAtomsInCurrentProc; ++iAtom)
       {
         dftfe::uInt      ChargeId = atomIdsInProc[iAtom];
         dealii::Point<3> nuclearCoordinates(atomCoordinates[3 * ChargeId + 0],
                                             atomCoordinates[3 * ChargeId + 1],
                                             atomCoordinates[3 * ChargeId + 2]);
-        std::vector<dftfe::uInt> cellIndexes;
-        const dftfe::uInt        atomId = ChargeId;
-        std::vector<double>      imageCoordinates =
+
+        const dftfe::uInt   atomId = ChargeId;
+        std::vector<double> imageCoordinates =
           periodicImageCoord.find(atomId)->second;
         const dftfe::uInt Znum = atomicNumber[ChargeId];
         const dftfe::uInt NumRadialSphericalFunctions =
@@ -437,17 +425,19 @@ namespace dftfe
                   numberElementsInAtomCompactSupport);
               }
           }
+        const dftfe::uInt nCellsPerBatch = 4;
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::HOST>
-          sphericalFunctionBasisTimesJxW(numberElementsInAtomCompactSupport *
-                                           NumTotalSphericalFunctions *
-                                           numberQuadraturePoints * maxkPoints,
-                                         0.0);
+          sphericalFunctionBasisTimesJxWHost(nCellsPerBatch *
+                                               NumTotalSphericalFunctions *
+                                               numberQuadraturePoints *
+                                               maxkPoints,
+                                             0.0);
         dftfe::utils::MemoryStorage<dataTypes::number,
                                     dftfe::utils::MemorySpace::HOST>
-          sphericalFunctionBasisWithDistanceTimesJxW(
-            numberElementsInAtomCompactSupport * NumTotalSphericalFunctions *
-              3 * numberQuadraturePoints * maxkPoints,
+          sphericalFunctionBasisWithDistanceTimesJxWHost(
+            nCellsPerBatch * NumTotalSphericalFunctions * 3 *
+              numberQuadraturePoints * maxkPoints,
             0.0);
         std::vector<dataTypes::number>
           inverseJacobianTimesGradientShapeFnForChargeId;
@@ -459,522 +449,645 @@ namespace dftfe
               d_numberNodesPerElement);
           }
 
+        const char              transA = 'N', transB = 'N';
+        const dataTypes::number scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+        const dftfe::uInt       inc = 1;
+        const dftfe::uInt       n =
+          nCellsPerBatch * maxkPoints * NumTotalSphericalFunctions;
+        const dftfe::uInt m = d_numberNodesPerElement;
+        const dftfe::uInt k = numberQuadraturePoints;
+        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+          projectorTimesXMatrices;
+        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+          gradientProjectorMatrices;
+        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+          gradientProjectorDyadicXMatrices;
+
+        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+          projectorMatrices;
+#if defined(DFTFE_WITH_DEVICE)
+        dftfe::utils::MemoryStorage<dataTypes::number, memorySpace>
+          sphericalFunctionBasisTimesJxW,
+          sphericalFunctionBasisWithDistanceTimesJxW;
+        dftfe::utils::MemoryStorage<dataTypes::number,
+                                    dftfe::utils::MemorySpace::HOST>
+          projectorTimesXMatricesHost, gradientProjectorDyadicXMatricesHost,
+          projectorMatricesHost, gradientProjectorMatricesHost;
+        projectorMatricesHost.resize(m * n, 0.0);
+
+        if (d_computeCellStress)
+          {
+            projectorTimesXMatricesHost.resize(3 * m * n, 0.0);
+            gradientProjectorDyadicXMatricesHost.resize(9 * m * n, 0.0);
+          }
+        if (d_computeIonForces)
+          gradientProjectorMatricesHost.resize(3 * m * n, 0.0);
+
+#else
+        auto &sphericalFunctionBasisTimesJxW =
+          sphericalFunctionBasisTimesJxWHost;
+        auto &sphericalFunctionBasisWithDistanceTimesJxW =
+          sphericalFunctionBasisWithDistanceTimesJxWHost;
+        auto &projectorMatricesHost         = projectorMatrices;
+        auto &projectorTimesXMatricesHost   = projectorTimesXMatrices;
+        auto &gradientProjectorMatricesHost = gradientProjectorMatrices;
+        auto &gradientProjectorDyadicXMatricesHost =
+          gradientProjectorDyadicXMatrices;
+#endif
+        dftfe::uInt kptBatch               = 1;
+        dftfe::uInt projectorMatrixSizeOld = 0;
+
+        sphericalFunctionBasisTimesJxW.resize(nCellsPerBatch *
+                                                numberQuadraturePoints *
+                                                kptBatch *
+                                                NumTotalSphericalFunctions,
+                                              0.0);
+        if (d_computeCellStress)
+          sphericalFunctionBasisWithDistanceTimesJxW.resize(
+            3 * nCellsPerBatch * numberQuadraturePoints * kptBatch *
+              NumTotalSphericalFunctions,
+            0.0);
         for (dftfe::Int iElemComp = 0;
              iElemComp < numberElementsInAtomCompactSupport;
-             ++iElemComp)
+             iElemComp += nCellsPerBatch)
           {
-            const dftfe::uInt elementIndex =
-              elementIndexesInAtomCompactSupport[iElemComp];
-            cellIndexes.push_back(elementIndex);
-            const double *quadPointsInElement =
-              quadraturePointsVector.data() +
-              elementIndex * numberQuadraturePoints * 3;
-            const dataTypes::number *JxwInElement =
-              JxwVector.data() + elementIndex * numberQuadraturePoints;
-
-            for (dftfe::uInt alpha = 0; alpha < NumRadialSphericalFunctions;
-                 ++alpha)
+            std::vector<dftfe::uInt> cellIndexes;
+            cellIndexes.clear();
+            sphericalFunctionBasisTimesJxWHost.setValue(0.0);
+            if (d_computeCellStress)
+              sphericalFunctionBasisWithDistanceTimesJxWHost.setValue(0.0);
+            for (dftfe::Int iCell = 0; iCell < nCellsPerBatch; iCell++)
               {
-                std::shared_ptr<AtomCenteredSphericalFunctionBase> sphFn =
-                  sphericalFunction.find(std::make_pair(Znum, alpha))->second;
-                dftfe::uInt       lQuantumNumber = sphFn->getQuantumNumberl();
-                const dftfe::uInt startIndex =
-                  d_atomCenteredSphericalFunctionContainer
-                    ->getTotalSphericalFunctionIndexStart(Znum, alpha);
-                dftfe::uInt endIndex = startIndex + 2 * lQuantumNumber + 1;
-                std::vector<dataTypes::number> sphericalFunctionBasis(
-                  maxkPoints * numberQuadraturePoints *
-                    (2 * lQuantumNumber + 1),
-                  ValueType(0.0));
-                std::vector<dataTypes::number>
-                  sphericalFunctionBasisTimesImageDist(
-                    maxkPoints * numberQuadraturePoints *
-                      (2 * lQuantumNumber + 1) * 3,
-                    ValueType(0.0));
-                for (dftfe::Int iImageAtomCount = 0;
-                     iImageAtomCount < imageIdsSize;
-                     ++iImageAtomCount)
+                if ((iElemComp + iCell) >= numberElementsInAtomCompactSupport)
+                  break;
+                const dftfe::uInt elementIndex =
+                  elementIndexesInAtomCompactSupport[iElemComp + iCell];
+                cellIndexes.push_back(elementIndex);
+                const double *quadPointsInElement =
+                  quadraturePointsVector.data() +
+                  elementIndex * numberQuadraturePoints * 3;
+                const dataTypes::number *JxwInElement =
+                  JxwVector.data() + elementIndex * numberQuadraturePoints;
+                for (dftfe::uInt alpha = 0; alpha < NumRadialSphericalFunctions;
+                     ++alpha)
                   {
-                    dealii::Point<3> chargePoint(0.0, 0.0, 0.0);
-                    if (iImageAtomCount == 0)
+                    std::shared_ptr<AtomCenteredSphericalFunctionBase> sphFn =
+                      sphericalFunction.find(std::make_pair(Znum, alpha))
+                        ->second;
+                    dftfe::uInt lQuantumNumber = sphFn->getQuantumNumberl();
+                    const dftfe::uInt startIndex =
+                      d_atomCenteredSphericalFunctionContainer
+                        ->getTotalSphericalFunctionIndexStart(Znum, alpha);
+                    dftfe::uInt endIndex = startIndex + 2 * lQuantumNumber + 1;
+                    std::vector<dataTypes::number> sphericalFunctionBasis(
+                      maxkPoints * numberQuadraturePoints *
+                        (2 * lQuantumNumber + 1),
+                      ValueType(0.0));
+                    std::vector<dataTypes::number>
+                      sphericalFunctionBasisTimesImageDist(
+                        maxkPoints * numberQuadraturePoints *
+                          (2 * lQuantumNumber + 1) * 3,
+                        ValueType(0.0));
+                    for (dftfe::Int iImageAtomCount = 0;
+                         iImageAtomCount < imageIdsSize;
+                         ++iImageAtomCount)
                       {
-                        chargePoint = nuclearCoordinates;
-                      }
-                    else
-                      {
-                        chargePoint[0] =
-                          imageCoordinates[3 * iImageAtomCount + 0];
-                        chargePoint[1] =
-                          imageCoordinates[3 * iImageAtomCount + 1];
-                        chargePoint[2] =
-                          imageCoordinates[3 * iImageAtomCount + 2];
-                      }
-                    double x[3], pointMinusLatticeVector[3];
-                    double sphericalHarmonicVal, radialVal,
-                      sphericalFunctionValue;
-                    double r, theta, phi, angle;
-
-                    for (dftfe::uInt iQuadPoint = 0;
-                         iQuadPoint < numberQuadraturePoints;
-                         ++iQuadPoint)
-                      {
-                        x[0] = quadPointsInElement[3 * iQuadPoint + 0] -
-                               chargePoint[0];
-                        x[1] = quadPointsInElement[3 * iQuadPoint + 1] -
-                               chargePoint[1];
-                        x[2] = quadPointsInElement[3 * iQuadPoint + 2] -
-                               chargePoint[2];
-                        sphericalHarmonicUtils::convertCartesianToSpherical(
-                          x, r, theta, phi);
-                        if (r <= sphFn->getRadialCutOff())
+                        dealii::Point<3> chargePoint(0.0, 0.0, 0.0);
+                        if (iImageAtomCount == 0)
                           {
-                            radialVal = sphFn->getRadialValue(r);
+                            chargePoint = nuclearCoordinates;
+                          }
+                        else
+                          {
+                            chargePoint[0] =
+                              imageCoordinates[3 * iImageAtomCount + 0];
+                            chargePoint[1] =
+                              imageCoordinates[3 * iImageAtomCount + 1];
+                            chargePoint[2] =
+                              imageCoordinates[3 * iImageAtomCount + 2];
+                          }
+                        double x[3], pointMinusLatticeVector[3];
+                        double sphericalHarmonicVal, radialVal,
+                          sphericalFunctionValue;
+                        double r, theta, phi, angle;
 
-                            dftfe::uInt tempIndex = 0;
-                            for (dftfe::Int mQuantumNumber =
-                                   dftfe::Int(-lQuantumNumber);
-                                 mQuantumNumber <= dftfe::Int(lQuantumNumber);
-                                 mQuantumNumber++)
+                        for (dftfe::uInt iQuadPoint = 0;
+                             iQuadPoint < numberQuadraturePoints;
+                             ++iQuadPoint)
+                          {
+                            x[0] = quadPointsInElement[3 * iQuadPoint + 0] -
+                                   chargePoint[0];
+                            x[1] = quadPointsInElement[3 * iQuadPoint + 1] -
+                                   chargePoint[1];
+                            x[2] = quadPointsInElement[3 * iQuadPoint + 2] -
+                                   chargePoint[2];
+                            sphericalHarmonicUtils::convertCartesianToSpherical(
+                              x, r, theta, phi);
+                            if (r <= sphFn->getRadialCutOff())
                               {
-                                sphericalHarmonicUtils::getSphericalHarmonicVal(
-                                  theta,
-                                  phi,
-                                  lQuantumNumber,
-                                  mQuantumNumber,
-                                  sphericalHarmonicVal);
-
-                                sphericalFunctionValue =
-                                  radialVal * sphericalHarmonicVal;
-
-
-
-                                //
-                                // kpoint loop
-                                //
-#ifdef USE_COMPLEX
-                                pointMinusLatticeVector[0] =
-                                  x[0] + nuclearCoordinates[0];
-                                pointMinusLatticeVector[1] =
-                                  x[1] + nuclearCoordinates[1];
-                                pointMinusLatticeVector[2] =
-                                  x[2] + nuclearCoordinates[2];
-                                for (dftfe::Int kPoint = 0; kPoint < maxkPoints;
-                                     ++kPoint)
+                                radialVal = sphFn->getRadialValue(r);
+                                dftfe::uInt tempIndex = 0;
+                                for (dftfe::Int mQuantumNumber =
+                                       dftfe::Int(-lQuantumNumber);
+                                     mQuantumNumber <=
+                                     dftfe::Int(lQuantumNumber);
+                                     mQuantumNumber++)
                                   {
-                                    angle =
-                                      d_kPointCoordinates[3 * kPoint + 0] *
-                                        pointMinusLatticeVector[0] +
-                                      d_kPointCoordinates[3 * kPoint + 1] *
-                                        pointMinusLatticeVector[1] +
-                                      d_kPointCoordinates[3 * kPoint + 2] *
-                                        pointMinusLatticeVector[2];
-                                    dataTypes::number tempValue =
-                                      dataTypes::number(
-                                        cos(angle) * sphericalFunctionValue,
-                                        -sin(angle) * sphericalFunctionValue);
+                                    sphericalHarmonicUtils::
+                                      getSphericalHarmonicVal(
+                                        theta,
+                                        phi,
+                                        lQuantumNumber,
+                                        mQuantumNumber,
+                                        sphericalHarmonicVal);
 
+                                    sphericalFunctionValue =
+                                      radialVal * sphericalHarmonicVal;
+
+
+
+                                    //
+                                    // kpoint loop
+                                    //
+#ifdef USE_COMPLEX
+                                    pointMinusLatticeVector[0] =
+                                      x[0] + nuclearCoordinates[0];
+                                    pointMinusLatticeVector[1] =
+                                      x[1] + nuclearCoordinates[1];
+                                    pointMinusLatticeVector[2] =
+                                      x[2] + nuclearCoordinates[2];
+                                    for (dftfe::Int kPoint = 0;
+                                         kPoint < maxkPoints;
+                                         ++kPoint)
+                                      {
+                                        angle =
+                                          d_kPointCoordinates[3 * kPoint + 0] *
+                                            pointMinusLatticeVector[0] +
+                                          d_kPointCoordinates[3 * kPoint + 1] *
+                                            pointMinusLatticeVector[1] +
+                                          d_kPointCoordinates[3 * kPoint + 2] *
+                                            pointMinusLatticeVector[2];
+                                        dataTypes::number tempValue =
+                                          dataTypes::number(
+                                            cos(angle) * sphericalFunctionValue,
+                                            -sin(angle) *
+                                              sphericalFunctionValue);
+
+                                        sphericalFunctionBasis
+                                          [kPoint * numberQuadraturePoints *
+                                             (2 * lQuantumNumber + 1) +
+                                           tempIndex * numberQuadraturePoints +
+                                           iQuadPoint] += tempValue;
+                                        sphericalFunctionBasisTimesJxWHost
+                                          [iCell * NumTotalSphericalFunctions *
+                                             numberQuadraturePoints +
+                                           kPoint * NumTotalSphericalFunctions *
+                                             nCellsPerBatch *
+                                             numberQuadraturePoints +
+                                           (startIndex + tempIndex) *
+                                             numberQuadraturePoints +
+                                           iQuadPoint] +=
+                                          tempValue *
+                                          std::real(JxwInElement[iQuadPoint]);
+                                        for (dftfe::uInt iDim = 0; iDim < 3;
+                                             ++iDim)
+                                          sphericalFunctionBasisTimesImageDist
+                                            [kPoint * numberQuadraturePoints *
+                                               (2 * lQuantumNumber + 1) * 3 +
+                                             tempIndex *
+                                               numberQuadraturePoints * 3 +
+                                             iQuadPoint * 3 + iDim] +=
+                                            tempValue * x[iDim];
+                                        for (dftfe::uInt iDim = 0; iDim < 3;
+                                             ++iDim)
+                                          sphericalFunctionBasisWithDistanceTimesJxWHost
+                                            [kPoint *
+                                               NumTotalSphericalFunctions *
+                                               nCellsPerBatch *
+                                               numberQuadraturePoints * 3 +
+                                             iCell *
+                                               NumTotalSphericalFunctions *
+                                               numberQuadraturePoints * 3 +
+                                             (startIndex + tempIndex) *
+                                               numberQuadraturePoints * 3 +
+                                             iDim * numberQuadraturePoints +
+                                             iQuadPoint] +=
+                                            tempValue * x[iDim] *
+                                            std::real(JxwInElement[iQuadPoint]);
+                                      } // k-Point Loop
+#else
                                     sphericalFunctionBasis
-                                      [kPoint * numberQuadraturePoints *
-                                         (2 * lQuantumNumber + 1) +
-                                       tempIndex * numberQuadraturePoints +
-                                       iQuadPoint] += tempValue;
-                                    sphericalFunctionBasisTimesJxW
-                                      [iElemComp * NumTotalSphericalFunctions *
-                                         numberQuadraturePoints +
-                                       kPoint * NumTotalSphericalFunctions *
-                                         numberElementsInAtomCompactSupport *
+                                      [tempIndex * numberQuadraturePoints +
+                                       iQuadPoint] += sphericalFunctionValue;
+                                    sphericalFunctionBasisTimesJxWHost
+                                      [iCell * NumTotalSphericalFunctions *
                                          numberQuadraturePoints +
                                        (startIndex + tempIndex) *
                                          numberQuadraturePoints +
-                                       iQuadPoint] +=
-                                      tempValue *
-                                      std::real(JxwInElement[iQuadPoint]);
+                                       iQuadPoint] += sphericalFunctionValue *
+                                                      JxwInElement[iQuadPoint];
                                     for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
                                       sphericalFunctionBasisTimesImageDist
-                                        [kPoint * numberQuadraturePoints *
-                                           (2 * lQuantumNumber + 1) * 3 +
-                                         tempIndex * numberQuadraturePoints *
+                                        [tempIndex * numberQuadraturePoints *
                                            3 +
                                          iQuadPoint * 3 + iDim] +=
-                                        tempValue * x[iDim];
+                                        sphericalFunctionValue * x[iDim];
                                     for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                                      sphericalFunctionBasisWithDistanceTimesJxW
-                                        [kPoint * NumTotalSphericalFunctions *
-                                           numberElementsInAtomCompactSupport *
-                                           numberQuadraturePoints * 3 +
-                                         iElemComp *
-                                           NumTotalSphericalFunctions *
+                                      sphericalFunctionBasisWithDistanceTimesJxWHost
+                                        [iCell * NumTotalSphericalFunctions *
                                            numberQuadraturePoints * 3 +
                                          (startIndex + tempIndex) *
                                            numberQuadraturePoints * 3 +
                                          iDim * numberQuadraturePoints +
                                          iQuadPoint] +=
-                                        tempValue * x[iDim] *
-                                        std::real(JxwInElement[iQuadPoint]);
-                                  } // k-Point Loop
-#else
-                                sphericalFunctionBasis
-                                  [tempIndex * numberQuadraturePoints +
-                                   iQuadPoint] += sphericalFunctionValue;
-                                sphericalFunctionBasisTimesJxW
-                                  [iElemComp * NumTotalSphericalFunctions *
-                                     numberQuadraturePoints +
-                                   (startIndex + tempIndex) *
-                                     numberQuadraturePoints +
-                                   iQuadPoint] += sphericalFunctionValue *
-                                                  JxwInElement[iQuadPoint];
-                                for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                                  sphericalFunctionBasisTimesImageDist
-                                    [tempIndex * numberQuadraturePoints * 3 +
-                                     iQuadPoint * 3 + iDim] +=
-                                    sphericalFunctionValue * x[iDim];
-                                for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                                  sphericalFunctionBasisWithDistanceTimesJxW
-                                    [iElemComp * NumTotalSphericalFunctions *
-                                       numberQuadraturePoints * 3 +
-                                     (startIndex + tempIndex) *
-                                       numberQuadraturePoints * 3 +
-                                     iDim * numberQuadraturePoints +
-                                     iQuadPoint] +=
-                                    sphericalFunctionValue * x[iDim] *
-                                    (JxwInElement[iQuadPoint]);
+                                        sphericalFunctionValue * x[iDim] *
+                                        (JxwInElement[iQuadPoint]);
 
 #endif
-                                tempIndex++;
-                              } // Angular momentum m loop
-                          }     // inside r <= Rmax
+                                    tempIndex++;
+                                  } // Angular momentum m loop
+                              }     // inside r <= Rmax
 
-                      } // quad loop
+                          } // quad loop
 
-                  } // image atom loop
-                const dftfe::uInt startIndex1 =
-                  d_nonTrivialSphericalFnsCellStartIndex
-                    [elementIndex]; // extract the location of first projector
-                                    // in the elementIndex
-                const dftfe::uInt startIndex2 =
-                  globalAtomIdToNonTrivialSphericalFnsCellStartIndex
-                    [ChargeId]
-                    [elementIndex]; // extract the location of the ChargeId's
-                                    // first projector in the cell
-                if (!d_floatingNuclearCharges)
-                  {
-                    for (dftfe::Int kPoint = 0; kPoint < maxkPoints; ++kPoint)
+                      } // image atom loop
+                    const dftfe::uInt startIndex1 =
+                      d_nonTrivialSphericalFnsCellStartIndex
+                        [elementIndex]; // extract the location of first
+                                        // projector in the elementIndex
+                    const dftfe::uInt startIndex2 =
+                      globalAtomIdToNonTrivialSphericalFnsCellStartIndex
+                        [ChargeId][elementIndex]; // extract the location of the
+                                                  // ChargeId's first projector
+                                                  // in the cell
+                    if (!d_floatingNuclearCharges)
                       {
-                        for (dftfe::uInt tempIndex = startIndex;
-                             tempIndex < endIndex;
-                             tempIndex++)
+                        for (dftfe::Int kPoint = 0; kPoint < maxkPoints;
+                             ++kPoint)
                           {
-                            for (dftfe::Int iQuadPoint = 0;
-                                 iQuadPoint < numberQuadraturePoints;
-                                 ++iQuadPoint)
-                              d_atomCenteredKpointIndexedSphericalFnQuadValues
-                                [kPoint *
-                                   d_sumNonTrivialSphericalFnOverAllCells *
-                                   numberQuadraturePoints +
-                                 startIndex1 * numberQuadraturePoints +
-                                 (startIndex2 + tempIndex) *
-                                   numberQuadraturePoints +
-                                 iQuadPoint] = sphericalFunctionBasis
-                                  [kPoint * numberQuadraturePoints *
-                                     (2 * lQuantumNumber + 1) +
-                                   (tempIndex - startIndex) *
-                                     numberQuadraturePoints +
-                                   iQuadPoint];
-
-                            for (dftfe::Int iQuadPoint = 0;
-                                 iQuadPoint < numberQuadraturePoints;
-                                 ++iQuadPoint)
-                              for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                                d_atomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues
-                                  [kPoint *
-                                     d_sumNonTrivialSphericalFnOverAllCells *
-                                     numberQuadraturePoints * 3 +
-                                   startIndex1 * numberQuadraturePoints * 3 +
-                                   (startIndex2 + tempIndex) *
-                                     numberQuadraturePoints * 3 +
-                                   iQuadPoint * 3 + iDim] =
-                                    sphericalFunctionBasisTimesImageDist
+                            for (dftfe::uInt tempIndex = startIndex;
+                                 tempIndex < endIndex;
+                                 tempIndex++)
+                              {
+                                for (dftfe::Int iQuadPoint = 0;
+                                     iQuadPoint < numberQuadraturePoints;
+                                     ++iQuadPoint)
+                                  d_atomCenteredKpointIndexedSphericalFnQuadValues
+                                    [kPoint *
+                                       d_sumNonTrivialSphericalFnOverAllCells *
+                                       numberQuadraturePoints +
+                                     startIndex1 * numberQuadraturePoints +
+                                     (startIndex2 + tempIndex) *
+                                       numberQuadraturePoints +
+                                     iQuadPoint] = sphericalFunctionBasis
                                       [kPoint * numberQuadraturePoints *
-                                         (2 * lQuantumNumber + 1) * 3 +
+                                         (2 * lQuantumNumber + 1) +
                                        (tempIndex - startIndex) *
+                                         numberQuadraturePoints +
+                                       iQuadPoint];
+
+                                for (dftfe::Int iQuadPoint = 0;
+                                     iQuadPoint < numberQuadraturePoints;
+                                     ++iQuadPoint)
+                                  for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                                    d_atomCenteredKpointTimesSphericalFnTimesDistFromAtomQuadValues
+                                      [kPoint *
+                                         d_sumNonTrivialSphericalFnOverAllCells *
                                          numberQuadraturePoints * 3 +
-                                       iQuadPoint * 3 + iDim];
-                          } // tempIndex
-                      }
-                  }
-              } // alpha loop
-
-
-          } // element loop
-
-        const char              transA = 'N', transB = 'N';
-        const dataTypes::number scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
-        const dftfe::uInt       inc = 1;
-        const dftfe::uInt n = numberElementsInAtomCompactSupport * maxkPoints *
-                              NumTotalSphericalFunctions;
-        const dftfe::uInt m = d_numberNodesPerElement;
-        const dftfe::uInt m1 =
-          d_numberNodesPerElement * numberElementsInAtomCompactSupport;
-        const dftfe::uInt k = numberQuadraturePoints;
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::HOST>
-          projectorTimesXMatrices;
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::HOST>
-          gradientProjectorMatrices;
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::HOST>
-          gradientProjectorDyadicXMatrices;
-        if (d_computeIonForces)
-          {
-            gradientProjectorMatrices.resize(3 * m * n, 0.0);
-          }
-        if (d_computeCellStress)
-          {
-            projectorTimesXMatrices.resize(3 * m * n, 0.0);
-            gradientProjectorDyadicXMatrices.resize(3 * 3 * m * n, 0.0);
-          }
-
-
-        dftfe::utils::MemoryStorage<dataTypes::number,
-                                    dftfe::utils::MemorySpace::HOST>
-          projectorMatrices(m * n, 0.0);
-        basisOperationsPtr->reinit(NumTotalSphericalFunctions,
-                                   cellIndexes.size(),
-                                   quadratureIndex,
-                                   false,
-                                   true);
-
-        basisOperationsPtr->computeScalarFieldTimesShapeFunctionIntegral(
-          cellIndexes,
-          maxkPoints,
-          NumTotalSphericalFunctions,
-          sphericalFunctionBasisTimesJxW,
-          projectorMatrices);
-
-        if (d_computeIonForces)
-          basisOperationsPtr
-            ->computeScalarFieldTimesGradientShapeFunctionIntegral(
-              cellIndexes,
-              maxkPoints,
-              NumTotalSphericalFunctions,
-              sphericalFunctionBasisTimesJxW,
-              gradientProjectorMatrices);
-        if (d_computeCellStress)
-          {
-            basisOperationsPtr
-              ->computeVectorFieldDyadicGradientShapeFunctionIntegral(
-                cellIndexes,
-                maxkPoints,
-                NumTotalSphericalFunctions,
-                sphericalFunctionBasisWithDistanceTimesJxW,
-                gradientProjectorDyadicXMatrices);
-            basisOperationsPtr->computeScalarFieldTimesShapeFunctionIntegral(
-              cellIndexes,
-              maxkPoints,
-              NumTotalSphericalFunctions * 3,
-              sphericalFunctionBasisWithDistanceTimesJxW,
-              projectorTimesXMatrices);
-          }
-
-
-        for (dftfe::Int iElemComp = 0;
-             iElemComp < numberElementsInAtomCompactSupport;
-             ++iElemComp)
-          {
-            d_CMatrixEntriesConjugate[ChargeId][iElemComp].resize(
-              d_numberNodesPerElement * NumTotalSphericalFunctions * maxkPoints,
-              ValueType(0.0));
-            d_CMatrixEntriesTranspose[ChargeId][iElemComp].resize(
-              d_numberNodesPerElement * NumTotalSphericalFunctions * maxkPoints,
-              ValueType(0.0));
-            if (d_computeIonForces)
-              {
-                d_DMatrixEntriesConjugate[ChargeId][iElemComp].resize(
-                  d_numberNodesPerElement * NumTotalSphericalFunctions *
-                    maxkPoints * 3,
-                  ValueType(0.0));
-              }
-            if (d_computeCellStress)
-              {
-                d_DDyadicRMatrixEntriesConjugate[ChargeId][iElemComp].resize(
-                  d_numberNodesPerElement * NumTotalSphericalFunctions *
-                    maxkPoints * 9,
-                  ValueType(0.0));
-                d_CRMatrixEntriesConjugate[ChargeId][iElemComp].resize(
-                  d_numberNodesPerElement * NumTotalSphericalFunctions *
-                    maxkPoints * 3,
-                  ValueType(0.0));
-              }
-            std::vector<ValueType> &CMatrixEntriesConjugateAtomElem =
-              d_CMatrixEntriesConjugate[ChargeId][iElemComp];
-
-            std::vector<ValueType> *DMatrixEntriesConjugateAtomElem =
-              d_computeIonForces ?
-                &d_DMatrixEntriesConjugate[ChargeId][iElemComp] :
-                nullptr;
-
-            std::vector<ValueType> *DDyadicRMatrixEntriesConjugateAtomElem =
-              d_computeCellStress ?
-                &d_DDyadicRMatrixEntriesConjugate[ChargeId][iElemComp] :
-                nullptr;
-
-            std::vector<ValueType> *CRMatrixEntriesConjugateAtomElem =
-              d_computeCellStress ?
-                &d_CRMatrixEntriesConjugate[ChargeId][iElemComp] :
-                nullptr;
-
-            std::vector<ValueType> &CMatrixEntriesTransposeAtomElem =
-              d_CMatrixEntriesTranspose[ChargeId][iElemComp];
-
-
-
-            for (dftfe::Int kPoint = 0; kPoint < maxkPoints; ++kPoint)
-              {
-                for (dftfe::Int beta = 0; beta < NumTotalSphericalFunctions;
-                     ++beta)
-                  for (dftfe::Int iNode = 0; iNode < d_numberNodesPerElement;
-                       ++iNode)
-                    {
-                      const dftfe::uInt flattenedIndex =
-                        kPoint * NumTotalSphericalFunctions *
-                          d_numberNodesPerElement *
-                          numberElementsInAtomCompactSupport +
-                        iElemComp * NumTotalSphericalFunctions *
-                          d_numberNodesPerElement +
-                        beta * d_numberNodesPerElement + iNode;
-
-                      const dataTypes::number temp =
-                        projectorMatrices[flattenedIndex];
-#ifdef USE_COMPLEX
-                      CMatrixEntriesConjugateAtomElem
-                        [kPoint * d_numberNodesPerElement *
-                           NumTotalSphericalFunctions +
-                         d_numberNodesPerElement * beta + iNode] =
-                          std::conj(temp);
-                      CMatrixEntriesTransposeAtomElem
-                        [kPoint * d_numberNodesPerElement *
-                           NumTotalSphericalFunctions +
-                         NumTotalSphericalFunctions * iNode + beta] = temp;
-                      if (d_computeIonForces)
-                        {
-                          for (dftfe::Int iDim = 0; iDim < 3; ++iDim)
-                            {
-                              const dftfe::uInt flattenedIndexForD =
-                                kPoint * NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement * 3 *
-                                  numberElementsInAtomCompactSupport +
-                                iDim * numberElementsInAtomCompactSupport *
-                                  NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement +
-                                iElemComp * NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement +
-                                beta * d_numberNodesPerElement + iNode;
-                              (*DMatrixEntriesConjugateAtomElem)
-                                [kPoint * d_numberNodesPerElement *
-                                   NumTotalSphericalFunctions * 3 +
-                                 iDim * d_numberNodesPerElement *
-                                   NumTotalSphericalFunctions +
-                                 beta * d_numberNodesPerElement + iNode] =
-                                  std::conj(gradientProjectorMatrices
-                                              [flattenedIndexForD]);
-                            }
-                        }
-                      if (d_computeCellStress)
-                        {
-                          for (dftfe::Int iDim = 0; iDim < 9; ++iDim)
-                            {
-                              const dftfe::uInt flattenedIndexForD =
-                                kPoint * NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement * 9 *
-                                  numberElementsInAtomCompactSupport +
-                                iDim * numberElementsInAtomCompactSupport *
-                                  NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement +
-                                iElemComp * NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement +
-                                beta * d_numberNodesPerElement + iNode;
-                              (*DDyadicRMatrixEntriesConjugateAtomElem)
-                                [kPoint * d_numberNodesPerElement *
-                                   NumTotalSphericalFunctions * 9 +
-                                 iDim * d_numberNodesPerElement *
-                                   NumTotalSphericalFunctions +
-                                 beta * d_numberNodesPerElement + iNode] =
-                                  std::conj(gradientProjectorDyadicXMatrices
-                                              [flattenedIndexForD]);
-                            }
-                          for (dftfe::Int iDim = 0; iDim < 3; ++iDim)
-                            {
-                              const dftfe::uInt flattenedIndexForD =
-                                kPoint * NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement * 3 *
-                                  numberElementsInAtomCompactSupport +
-                                iElemComp * NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement * 3 +
-                                beta * d_numberNodesPerElement * 3 +
-                                iDim * d_numberNodesPerElement + iNode;
-                              (*CRMatrixEntriesConjugateAtomElem)
-                                [kPoint * d_numberNodesPerElement *
-                                   NumTotalSphericalFunctions * 3 +
-                                 iDim * d_numberNodesPerElement *
-                                   NumTotalSphericalFunctions +
-                                 beta * d_numberNodesPerElement + iNode] =
-                                  std::conj(projectorTimesXMatrices
-                                              [flattenedIndexForD]);
-                            }
-                        }
-
-
-#else
-                      CMatrixEntriesConjugateAtomElem[d_numberNodesPerElement *
-                                                        beta +
-                                                      iNode] = temp;
-                      if (d_computeIonForces)
-                        {
-                          for (dftfe::Int iDim = 0; iDim < 3; ++iDim)
-                            {
-                              const dftfe::uInt flattenedIndexForD =
-                                iDim * numberElementsInAtomCompactSupport *
-                                  NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement +
-                                iElemComp * NumTotalSphericalFunctions *
-                                  d_numberNodesPerElement +
-                                beta * d_numberNodesPerElement + iNode;
-                              (*DMatrixEntriesConjugateAtomElem)
-                                [iDim * d_numberNodesPerElement *
-                                   NumTotalSphericalFunctions +
-                                 beta * d_numberNodesPerElement + iNode] =
-                                  (gradientProjectorMatrices
-                                     [flattenedIndexForD]);
-                            }
-                        }
-                      if (d_computeCellStress)
-                        for (dftfe::Int iDim = 0; iDim < 9; ++iDim)
-                          {
-                            const dftfe::uInt flattenedIndexForD =
-                              iDim * numberElementsInAtomCompactSupport *
-                                NumTotalSphericalFunctions *
-                                d_numberNodesPerElement +
-                              iElemComp * NumTotalSphericalFunctions *
-                                d_numberNodesPerElement +
-                              beta * d_numberNodesPerElement + iNode;
-                            (*DDyadicRMatrixEntriesConjugateAtomElem)
-                              [iDim * d_numberNodesPerElement *
-                                 NumTotalSphericalFunctions +
-                               beta * d_numberNodesPerElement + iNode] =
-                                (gradientProjectorDyadicXMatrices
-                                   [flattenedIndexForD]);
+                                       startIndex1 * numberQuadraturePoints *
+                                         3 +
+                                       (startIndex2 + tempIndex) *
+                                         numberQuadraturePoints * 3 +
+                                       iQuadPoint * 3 + iDim] =
+                                        sphericalFunctionBasisTimesImageDist
+                                          [kPoint * numberQuadraturePoints *
+                                             (2 * lQuantumNumber + 1) * 3 +
+                                           (tempIndex - startIndex) *
+                                             numberQuadraturePoints * 3 +
+                                           iQuadPoint * 3 + iDim];
+                              } // tempIndex
                           }
+                      }
+                  } // alpha loop
+              }     // iCell
 
 
-                      CMatrixEntriesTransposeAtomElem
-                        [NumTotalSphericalFunctions * iNode + beta] = temp;
+
+            for (dftfe::uInt iKpt = 0; iKpt < maxkPoints; iKpt += kptBatch)
+              {
+                for (dftfe::uInt iCell = 0; iCell < cellIndexes.size();
+                     iCell += nCellsPerBatch)
+                  {
+                    dftfe::uInt cellBatchSize =
+                      std::min(dftfe::uInt(nCellsPerBatch),
+                               dftfe::uInt(cellIndexes.size() - iCell));
+                    dftfe::uInt projectorMatrixSize =
+                      cellBatchSize * kptBatch * NumTotalSphericalFunctions *
+                      d_numberNodesPerElement;
+                    if (projectorMatrixSize != projectorMatrixSizeOld)
+                      {
+                        projectorMatrices.resize(projectorMatrixSize);
+                        gradientProjectorMatrices.resize(3 *
+                                                         projectorMatrixSize);
+                        projectorTimesXMatrices.resize(3 * projectorMatrixSize);
+                        gradientProjectorDyadicXMatrices.resize(
+                          9 * projectorMatrixSize);
+                        projectorMatrixSizeOld = projectorMatrixSize;
+                      }
+                    dftfe::uInt srcOffset = iKpt * nCellsPerBatch *
+                                            NumTotalSphericalFunctions *
+                                            numberQuadraturePoints;
+                    sphericalFunctionBasisTimesJxW.copyFrom(
+                      sphericalFunctionBasisTimesJxWHost,
+                      cellBatchSize * numberQuadraturePoints * kptBatch *
+                        NumTotalSphericalFunctions,
+                      srcOffset,
+                      0);
+                    if (d_computeCellStress)
+                      {
+                        sphericalFunctionBasisWithDistanceTimesJxW.copyFrom(
+                          sphericalFunctionBasisWithDistanceTimesJxWHost,
+                          cellBatchSize * numberQuadraturePoints * kptBatch *
+                            NumTotalSphericalFunctions * 3,
+                          3 * srcOffset,
+                          0);
+                      }
+
+                    d_basisOperatorPtr->reinit(NumTotalSphericalFunctions,
+                                               cellIndexes.size(),
+                                               quadratureIndex,
+                                               false,
+                                               false,
+                                               true);
+                    d_basisOperatorPtr
+                      ->computeScalarFieldTimesShapeFunctionIntegral(
+                        cellIndexes,
+                        kptBatch,
+                        NumTotalSphericalFunctions,
+                        cellIndexes.size(),
+                        0,
+                        sphericalFunctionBasisTimesJxW,
+                        projectorMatrices);
+                    if (d_computeIonForces)
+                      d_basisOperatorPtr
+                        ->computeScalarFieldTimesGradientShapeFunctionIntegral(
+                          cellIndexes,
+                          kptBatch,
+                          NumTotalSphericalFunctions,
+                          cellIndexes.size(),
+                          0,
+                          sphericalFunctionBasisTimesJxW,
+                          gradientProjectorMatrices);
+                    if (d_computeCellStress)
+                      {
+                        d_basisOperatorPtr
+                          ->computeVectorFieldDyadicGradientShapeFunctionIntegral(
+                            cellIndexes,
+                            kptBatch,
+                            NumTotalSphericalFunctions,
+                            cellIndexes.size(),
+                            0,
+                            sphericalFunctionBasisWithDistanceTimesJxW,
+                            gradientProjectorDyadicXMatrices);
+                        d_basisOperatorPtr
+                          ->computeScalarFieldTimesShapeFunctionIntegral(
+                            cellIndexes,
+                            kptBatch,
+                            NumTotalSphericalFunctions * 3,
+                            cellIndexes.size(),
+                            0,
+                            sphericalFunctionBasisWithDistanceTimesJxW,
+                            projectorTimesXMatrices);
+                      }
+                    dftfe::uInt dstOffset = iKpt * nCellsPerBatch *
+                                            NumTotalSphericalFunctions *
+                                            d_numberNodesPerElement;
+#if defined(DFTFE_WITH_DEVICE)
+                    projectorMatricesHost.copyFrom(projectorMatrices,
+                                                   projectorMatrixSize,
+                                                   0,
+                                                   dstOffset);
+
+                    if (d_computeIonForces)
+                      {
+                        gradientProjectorMatricesHost.copyFrom(
+                          gradientProjectorMatrices,
+                          3 * projectorMatrixSize,
+                          0,
+                          3 * dstOffset);
+                      }
+                    if (d_computeCellStress)
+                      {
+                        projectorTimesXMatricesHost.copyFrom(
+                          projectorTimesXMatrices,
+                          3 * projectorMatrixSize,
+                          0,
+                          3 * dstOffset);
+                        gradientProjectorDyadicXMatricesHost.copyFrom(
+                          gradientProjectorDyadicXMatrices,
+                          9 * projectorMatrixSize,
+                          0,
+                          9 * dstOffset);
+                      }
 #endif
-                    } // node loop
-              }       // k point loop
-          }           // non-trivial element loop
+                  }
+              }
 
 
+
+            for (dftfe::Int iCell = 0; iCell < nCellsPerBatch; iCell++)
+              {
+                if (iElemComp + iCell >= numberElementsInAtomCompactSupport)
+                  break;
+                d_CMatrixEntriesConjugate[ChargeId][iElemComp + iCell].resize(
+                  d_numberNodesPerElement * NumTotalSphericalFunctions *
+                    maxkPoints,
+                  ValueType(0.0));
+                d_CMatrixEntriesTranspose[ChargeId][iElemComp + iCell].resize(
+                  d_numberNodesPerElement * NumTotalSphericalFunctions *
+                    maxkPoints,
+                  ValueType(0.0));
+
+                if (d_computeIonForces)
+                  {
+                    d_DMatrixEntriesConjugate[ChargeId][iElemComp + iCell]
+                      .resize(d_numberNodesPerElement *
+                                NumTotalSphericalFunctions * maxkPoints * 3,
+                              ValueType(0.0));
+                  }
+                if (d_computeCellStress)
+                  {
+                    d_DDyadicRMatrixEntriesConjugate[ChargeId][iElemComp +
+                                                               iCell]
+                      .resize(d_numberNodesPerElement *
+                                NumTotalSphericalFunctions * maxkPoints * 9,
+                              ValueType(0.0));
+                    d_CRMatrixEntriesConjugate[ChargeId][iElemComp + iCell]
+                      .resize(d_numberNodesPerElement *
+                                NumTotalSphericalFunctions * maxkPoints * 3,
+                              ValueType(0.0));
+                  }
+                std::vector<ValueType> &CMatrixEntriesConjugateAtomElem =
+                  d_CMatrixEntriesConjugate[ChargeId][iElemComp + iCell];
+
+                std::vector<ValueType> *DMatrixEntriesConjugateAtomElem =
+                  d_computeIonForces ?
+                    &d_DMatrixEntriesConjugate[ChargeId][iElemComp + iCell] :
+                    nullptr;
+
+                std::vector<ValueType> *DDyadicRMatrixEntriesConjugateAtomElem =
+                  d_computeCellStress ?
+                    &d_DDyadicRMatrixEntriesConjugate[ChargeId]
+                                                     [iElemComp + iCell] :
+                    nullptr;
+
+                std::vector<ValueType> *CRMatrixEntriesConjugateAtomElem =
+                  d_computeCellStress ?
+                    &d_CRMatrixEntriesConjugate[ChargeId][iElemComp + iCell] :
+                    nullptr;
+
+                std::vector<ValueType> &CMatrixEntriesTransposeAtomElem =
+                  d_CMatrixEntriesTranspose[ChargeId][iElemComp + iCell];
+
+
+
+                for (dftfe::Int kPoint = 0; kPoint < maxkPoints; ++kPoint)
+                  {
+                    for (dftfe::Int beta = 0; beta < NumTotalSphericalFunctions;
+                         ++beta)
+                      for (dftfe::Int iNode = 0;
+                           iNode < d_numberNodesPerElement;
+                           ++iNode)
+                        {
+                          const dftfe::uInt flattenedIndex =
+                            kPoint * NumTotalSphericalFunctions *
+                              d_numberNodesPerElement * nCellsPerBatch +
+                            iCell * NumTotalSphericalFunctions *
+                              d_numberNodesPerElement +
+                            beta * d_numberNodesPerElement + iNode;
+
+                          const dataTypes::number temp =
+                            projectorMatricesHost[flattenedIndex];
+#ifdef USE_COMPLEX
+                          CMatrixEntriesConjugateAtomElem
+                            [kPoint * d_numberNodesPerElement *
+                               NumTotalSphericalFunctions +
+                             d_numberNodesPerElement * beta + iNode] =
+                              std::conj(temp);
+                          CMatrixEntriesTransposeAtomElem
+                            [kPoint * d_numberNodesPerElement *
+                               NumTotalSphericalFunctions +
+                             NumTotalSphericalFunctions * iNode + beta] = temp;
+                          if (d_computeIonForces)
+                            {
+                              for (dftfe::Int iDim = 0; iDim < 3; ++iDim)
+                                {
+                                  const dftfe::uInt flattenedIndexForD =
+                                    kPoint * NumTotalSphericalFunctions *
+                                      d_numberNodesPerElement * 3 *
+                                      nCellsPerBatch +
+                                    iCell * NumTotalSphericalFunctions * 3 *
+                                      d_numberNodesPerElement +
+                                    beta * 3 * d_numberNodesPerElement +
+                                    iDim * d_numberNodesPerElement + iNode;
+
+                                  (*DMatrixEntriesConjugateAtomElem)
+                                    [kPoint * d_numberNodesPerElement *
+                                       NumTotalSphericalFunctions * 3 +
+                                     iDim * d_numberNodesPerElement *
+                                       NumTotalSphericalFunctions +
+                                     beta * d_numberNodesPerElement + iNode] =
+                                      std::conj(gradientProjectorMatricesHost
+                                                  [flattenedIndexForD]);
+                                }
+                            }
+                          if (d_computeCellStress)
+                            {
+                              for (dftfe::Int iDim = 0; iDim < 9; ++iDim)
+                                {
+                                  const dftfe::uInt flattenedIndexForD =
+                                    kPoint * NumTotalSphericalFunctions *
+                                      d_numberNodesPerElement * 9 *
+                                      nCellsPerBatch +
+                                    iCell * NumTotalSphericalFunctions * 9 *
+                                      d_numberNodesPerElement +
+                                    beta * 9 * d_numberNodesPerElement +
+                                    iDim * d_numberNodesPerElement + iNode;
+                                  (*DDyadicRMatrixEntriesConjugateAtomElem)
+                                    [kPoint * d_numberNodesPerElement *
+                                       NumTotalSphericalFunctions * 9 +
+                                     iDim * d_numberNodesPerElement *
+                                       NumTotalSphericalFunctions +
+                                     beta * d_numberNodesPerElement + iNode] =
+                                      std::conj(
+                                        gradientProjectorDyadicXMatricesHost
+                                          [flattenedIndexForD]);
+                                }
+                              for (dftfe::Int iDim = 0; iDim < 3; ++iDim)
+                                {
+                                  const dftfe::uInt flattenedIndexForD =
+                                    kPoint * NumTotalSphericalFunctions *
+                                      d_numberNodesPerElement * 3 *
+                                      nCellsPerBatch +
+                                    iCell * NumTotalSphericalFunctions * 3 *
+                                      d_numberNodesPerElement +
+                                    beta * 3 * d_numberNodesPerElement +
+                                    iDim * d_numberNodesPerElement + iNode;
+                                  (*CRMatrixEntriesConjugateAtomElem)
+                                    [kPoint * d_numberNodesPerElement *
+                                       NumTotalSphericalFunctions * 3 +
+                                     iDim * d_numberNodesPerElement *
+                                       NumTotalSphericalFunctions +
+                                     beta * d_numberNodesPerElement + iNode] =
+                                      std::conj(projectorTimesXMatricesHost
+                                                  [flattenedIndexForD]);
+                                }
+                            }
+#else
+                          CMatrixEntriesConjugateAtomElem
+                            [d_numberNodesPerElement * beta + iNode] = temp;
+                          if (d_computeIonForces)
+                            {
+                              for (dftfe::Int iDim = 0; iDim < 3; ++iDim)
+                                {
+                                  const dftfe::uInt flattenedIndexForD =
+                                    iCell * NumTotalSphericalFunctions * 3 *
+                                      d_numberNodesPerElement +
+                                    beta * 3 * d_numberNodesPerElement +
+                                    iDim * d_numberNodesPerElement + iNode;
+                                  (*DMatrixEntriesConjugateAtomElem)
+                                    [iDim * d_numberNodesPerElement *
+                                       NumTotalSphericalFunctions +
+                                     beta * d_numberNodesPerElement + iNode] =
+                                      (gradientProjectorMatricesHost
+                                         [flattenedIndexForD]);
+                                }
+                            }
+                          if (d_computeCellStress)
+                            for (dftfe::Int iDim = 0; iDim < 9; ++iDim)
+                              {
+                                const dftfe::uInt flattenedIndexForD =
+                                  iCell * NumTotalSphericalFunctions * 9 *
+                                    d_numberNodesPerElement +
+                                  beta * 9 * d_numberNodesPerElement +
+                                  iDim * d_numberNodesPerElement + iNode;
+                                (*DDyadicRMatrixEntriesConjugateAtomElem)
+                                  [iDim * d_numberNodesPerElement *
+                                     NumTotalSphericalFunctions +
+                                   beta * d_numberNodesPerElement + iNode] =
+                                    (gradientProjectorDyadicXMatricesHost
+                                       [flattenedIndexForD]);
+                              }
+
+
+                          CMatrixEntriesTransposeAtomElem
+                            [NumTotalSphericalFunctions * iNode + beta] = temp;
+#endif
+                        } // node loop
+                  }       // k point loop
+
+              } // non-trivial element loop
+          }
 
       } // ChargeId loop
     if constexpr (dftfe::utils::MemorySpace::HOST == memorySpace)
@@ -2858,23 +2971,24 @@ namespace dftfe
             "DFT-FE Error: Inconsistent X called. Make sure the input X is correct."));
         const ValueType scalarCoeffAlpha = ValueType(1.0),
                         scalarCoeffBeta  = ValueType(0.0);
-        for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-          d_BLASWrapperPtr->xgemmBatched(
-            'N',
-            'N',
-            d_numberWaveFunctions,
-            d_maxSingleAtomContribution,
-            d_numberNodesPerElement,
-            &scalarCoeffAlpha,
-            (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
-            d_numberWaveFunctions,
-            (const ValueType **)
-              devicePointerCRDaggerInCellRange[iDim][iCellBatch],
-            d_numberNodesPerElement,
-            &scalarCoeffBeta,
-            devicePointerCRDaggerOutTempInCellRange[iDim][iCellBatch],
-            d_numberWaveFunctions,
-            d_nonLocalElementsInCellRange[iCellBatch]);
+        if (d_nonLocalElementsInCellRange[iCellBatch] > 0)
+          for (dftfe::Int iDim = 0; iDim < 3; iDim++)
+            d_BLASWrapperPtr->xgemmBatched(
+              'N',
+              'N',
+              d_numberWaveFunctions,
+              d_maxSingleAtomContribution,
+              d_numberNodesPerElement,
+              &scalarCoeffAlpha,
+              (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
+              d_numberWaveFunctions,
+              (const ValueType **)
+                devicePointerCRDaggerInCellRange[iDim][iCellBatch],
+              d_numberNodesPerElement,
+              &scalarCoeffBeta,
+              devicePointerCRDaggerOutTempInCellRange[iDim][iCellBatch],
+              d_numberWaveFunctions,
+              d_nonLocalElementsInCellRange[iCellBatch]);
         if (iCellBatch == d_numCellBatches - 1)
           {
             d_sphericalFnTimesXTimesWavefunctionMatrix.setValue(ValueType(0.0));
@@ -2986,23 +3100,24 @@ namespace dftfe
             "DFT-FE Error: Inconsistent X called. Make sure the input X is correct."));
         const ValueType scalarCoeffAlpha = ValueType(1.0),
                         scalarCoeffBeta  = ValueType(0.0);
-        for (dftfe::Int iDim = 0; iDim < 3; iDim++)
-          d_BLASWrapperPtr->xgemmBatched(
-            'N',
-            'N',
-            d_numberWaveFunctions,
-            d_maxSingleAtomContribution,
-            d_numberNodesPerElement,
-            &scalarCoeffAlpha,
-            (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
-            d_numberWaveFunctions,
-            (const ValueType **)
-              devicePointerDDaggerInCellRange[iDim][iCellBatch],
-            d_numberNodesPerElement,
-            &scalarCoeffBeta,
-            devicePointerDDaggerOutTempInCellRange[iDim][iCellBatch],
-            d_numberWaveFunctions,
-            d_nonLocalElementsInCellRange[iCellBatch]);
+        if (d_nonLocalElementsInCellRange[iCellBatch] > 0)
+          for (dftfe::Int iDim = 0; iDim < 3; iDim++)
+            d_BLASWrapperPtr->xgemmBatched(
+              'N',
+              'N',
+              d_numberWaveFunctions,
+              d_maxSingleAtomContribution,
+              d_numberNodesPerElement,
+              &scalarCoeffAlpha,
+              (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
+              d_numberWaveFunctions,
+              (const ValueType **)
+                devicePointerDDaggerInCellRange[iDim][iCellBatch],
+              d_numberNodesPerElement,
+              &scalarCoeffBeta,
+              devicePointerDDaggerOutTempInCellRange[iDim][iCellBatch],
+              d_numberWaveFunctions,
+              d_nonLocalElementsInCellRange[iCellBatch]);
         if (iCellBatch == d_numCellBatches - 1)
           {
             d_sphericalFnTimesGradientWavefunctionMatrix.setValue(
@@ -3115,23 +3230,24 @@ namespace dftfe
             "DFT-FE Error: Inconsistent X called. Make sure the input X is correct."));
         const ValueType scalarCoeffAlpha = ValueType(1.0),
                         scalarCoeffBeta  = ValueType(0.0);
-        for (dftfe::Int iDim = 0; iDim < 9; iDim++)
-          d_BLASWrapperPtr->xgemmBatched(
-            'N',
-            'N',
-            d_numberWaveFunctions,
-            d_maxSingleAtomContribution,
-            d_numberNodesPerElement,
-            &scalarCoeffAlpha,
-            (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
-            d_numberWaveFunctions,
-            (const ValueType **)
-              devicePointerDdyadicRDaggerInCellRange[iDim][iCellBatch],
-            d_numberNodesPerElement,
-            &scalarCoeffBeta,
-            devicePointerDdyadicRDaggerOutTempInCellRange[iDim][iCellBatch],
-            d_numberWaveFunctions,
-            d_nonLocalElementsInCellRange[iCellBatch]);
+        if (d_nonLocalElementsInCellRange[iCellBatch] > 0)
+          for (dftfe::Int iDim = 0; iDim < 9; iDim++)
+            d_BLASWrapperPtr->xgemmBatched(
+              'N',
+              'N',
+              d_numberWaveFunctions,
+              d_maxSingleAtomContribution,
+              d_numberNodesPerElement,
+              &scalarCoeffAlpha,
+              (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
+              d_numberWaveFunctions,
+              (const ValueType **)
+                devicePointerDdyadicRDaggerInCellRange[iDim][iCellBatch],
+              d_numberNodesPerElement,
+              &scalarCoeffBeta,
+              devicePointerDdyadicRDaggerOutTempInCellRange[iDim][iCellBatch],
+              d_numberWaveFunctions,
+              d_nonLocalElementsInCellRange[iCellBatch]);
         if (iCellBatch == d_numCellBatches - 1)
           {
             d_sphericalFnTimesGradientWavefunctionDyadicXMatrix.setValue(
@@ -3235,21 +3351,22 @@ namespace dftfe
             "DFT-FE Error: Inconsistent X called. Make sure the input X is correct."));
         const ValueType scalarCoeffAlpha = ValueType(1.0),
                         scalarCoeffBeta  = ValueType(0.0);
-        d_BLASWrapperPtr->xgemmBatched(
-          'N',
-          'N',
-          d_numberWaveFunctions,
-          d_maxSingleAtomContribution,
-          d_numberNodesPerElement,
-          &scalarCoeffAlpha,
-          (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
-          d_numberWaveFunctions,
-          (const ValueType **)devicePointerCDaggerInCellRange[iCellBatch],
-          d_numberNodesPerElement,
-          &scalarCoeffBeta,
-          devicePointerCDaggerOutTempInCellRange[iCellBatch],
-          d_numberWaveFunctions,
-          d_nonLocalElementsInCellRange[iCellBatch]);
+        if (d_nonLocalElementsInCellRange[iCellBatch] > 0)
+          d_BLASWrapperPtr->xgemmBatched(
+            'N',
+            'N',
+            d_numberWaveFunctions,
+            d_maxSingleAtomContribution,
+            d_numberNodesPerElement,
+            &scalarCoeffAlpha,
+            (const ValueType **)deviceWfcPointersInCellRange[iCellBatch],
+            d_numberWaveFunctions,
+            (const ValueType **)devicePointerCDaggerInCellRange[iCellBatch],
+            d_numberNodesPerElement,
+            &scalarCoeffBeta,
+            devicePointerCDaggerOutTempInCellRange[iCellBatch],
+            d_numberWaveFunctions,
+            d_nonLocalElementsInCellRange[iCellBatch]);
         if (iCellBatch == d_numCellBatches - 1)
           {
             d_sphericalFnTimesWavefunctionMatrix.setValue(ValueType(0.0));
@@ -3832,7 +3949,8 @@ namespace dftfe
   {
     if constexpr (dftfe::utils::MemorySpace::DEVICE == memorySpace)
       {
-        d_cellsBlockSize                 = cellsBlockSize;
+        d_cellsBlockSize = cellsBlockSize;
+        freeDeviceVectors(NonLocalContractionVectorType);
         const dftfe::uInt numCells       = d_locallyOwnedCells;
         dftfe::uInt       numCellBatches = d_locallyOwnedCells / cellsBlockSize;
         const dftfe::uInt cellRemSize    = d_locallyOwnedCells % cellsBlockSize;

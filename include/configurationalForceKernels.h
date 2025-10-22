@@ -47,6 +47,9 @@ namespace dftfe
     double                                   *eshelbyContributions,
     double                                   *eshelbyTensor,
     const bool                                floatingNuclearCharges,
+    const bool                                isTauMGGA,
+    double                                   *pdexTauLocallyOwnedCellsBlock,
+    double                                   *pdecTauLocallyOwnedCellsBlock,
     const bool                                computeForce,
     const bool                                computeStress);
 
