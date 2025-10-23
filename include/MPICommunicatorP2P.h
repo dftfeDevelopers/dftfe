@@ -34,6 +34,8 @@
 #    include <nccl.h>
 #  elif defined(DFTFE_WITH_HIP_RCCL)
 #    include <rccl.h>
+#  elif defined(DFTFE_WITH_SYCL_ONECCL)
+#    include <oneapi/ccl.hpp>
 #  endif
 #endif
 
