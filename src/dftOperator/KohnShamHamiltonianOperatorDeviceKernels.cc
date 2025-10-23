@@ -62,30 +62,19 @@ namespace dftfe
                                               nDofsPerCell];
             cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
                                   2 * nDofsPerCell * (2 * iDoF + 1) + 2 * jDoF +
-                                  1]
-              .x = H_realIJ - H_bzIJ;
+                                  1] =
+              dftfe::utils::makeComplex(H_realIJ - H_bzIJ, H_imagIJ);
             cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
-                                  2 * nDofsPerCell * (2 * iDoF + 1) + 2 * jDoF +
-                                  1]
-              .y = H_imagIJ;
+                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF] =
+              dftfe::utils::makeComplex(H_realIJ + H_bzIJ, H_imagIJ);
             cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
-                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF]
-              .x = H_realIJ + H_bzIJ;
+                                  2 * nDofsPerCell * (2 * iDoF + 1) +
+                                  2 * jDoF] =
+              dftfe::utils::makeComplex(H_bxIJ, H_byIJ);
             cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
-                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF]
-              .y = H_imagIJ;
-            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
-                                  2 * nDofsPerCell * (2 * iDoF + 1) + 2 * jDoF]
-              .x = H_bxIJ;
-            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
-                                  2 * nDofsPerCell * (2 * iDoF + 1) + 2 * jDoF]
-              .y = H_byIJ;
-            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
-                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF + 1]
-              .x = H_bxIJ;
-            cellHamiltonianMatrix[iCell * nDofsPerCell * nDofsPerCell * 4 +
-                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF + 1]
-              .y = -H_byIJ;
+                                  2 * nDofsPerCell * (2 * iDoF) + 2 * jDoF +
+                                  1] =
+              dftfe::utils::makeComplex(H_bxIJ, -H_byIJ);
           }
       },
       const dftfe::uInt                  numCells,
