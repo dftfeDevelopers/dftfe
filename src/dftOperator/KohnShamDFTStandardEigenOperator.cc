@@ -224,6 +224,31 @@ namespace dftfe
       scalarOinvX,
       dst.data());
   }
+
+  template <dftfe::utils::MemorySpace memorySpace>
+  void
+  KohnShamDFTStandardEigenOperator<memorySpace>::overlapSqrtInverseMatrixTimesX(
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+    const double scalarOinvX,
+    const double scalarY,
+    const double scalarX,
+    dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst)
+  {
+    const dftfe::uInt blockSize = src.numVectors();
+    d_BLASWrapperPtr->axpby(src.locallyOwnedSize() * blockSize,
+                            scalarX,
+                            src.data(),
+                            scalarY,
+                            dst.data());
+    d_BLASWrapperPtr->stridedBlockAxpy(
+      blockSize,
+      src.locallyOwnedSize(),
+      src.data(),
+      d_basisOperationsPtr->inverseSqrtMassVectorBasisData().data(),
+      scalarOinvX,
+      dst.data());
+  }
+
   template <dftfe::utils::MemorySpace memorySpace>
   void
   KohnShamDFTStandardEigenOperator<memorySpace>::overlapInverseMatrixTimesX(

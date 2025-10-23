@@ -48,7 +48,8 @@ namespace dftfe
     std::vector<std::vector<double>> &atomLocationsFractional,
     std::vector<std::vector<double>> &domainBoundingVectors,
     std::vector<bool>                &periodicBoundaryConditions,
-    const bool                        isCollinearSpin)
+    const bool                        isCollinearSpin,
+    const bool                        isNonCollinearSpin)
   {
     d_numAtoms = atomLocationsFractional.size();
     d_atomicCoordsFrac.clear();
@@ -110,7 +111,7 @@ namespace dftfe
             for (dftfe::uInt jDim = 0; jDim < 3; ++jDim)
               position[iAtom][jDim] = d_atomicCoordsFrac[iAtom * 3 + jDim];
           }
-        if (!isCollinearSpin)
+        if (!isCollinearSpin && !isNonCollinearSpin)
           d_numSymm = spg_get_symmetry(rotation,
                                        translation,
                                        max_size,
@@ -119,12 +120,12 @@ namespace dftfe
                                        types,
                                        d_numAtoms,
                                        1e-8);
-        else
+        else if (isCollinearSpin)
           {
             int    equivalent_atoms[d_numAtoms];
             double spins[d_numAtoms];
             for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
-              spins[iAtom] = atomLocationsFractional[iAtom].size() == 6 ?
+              spins[iAtom] = atomLocationsFractional[iAtom].size() >= 6 ?
                                atomLocationsFractional[iAtom][5] :
                                0.0;
             d_numSymm = spg_get_symmetry_with_collinear_spin(rotation,
@@ -137,6 +138,51 @@ namespace dftfe
                                                              spins,
                                                              d_numAtoms,
                                                              1e-8);
+          }
+        else if (isNonCollinearSpin)
+          {
+            int    equivalent_atoms[d_numAtoms];
+            int    spin_flips[d_numAtoms];
+            double primitive_lattice[3][3];
+            double tensors[d_numAtoms * 3];
+            for (dftfe::uInt iAtom = 0; iAtom < d_numAtoms; ++iAtom)
+              {
+                if (atomLocationsFractional[iAtom].size() >= 8)
+                  {
+                    tensors[3 * iAtom + 0] =
+                      atomLocationsFractional[iAtom][5] *
+                      std::sin(atomLocationsFractional[iAtom][6]) *
+                      std::cos(atomLocationsFractional[iAtom][7]);
+                    tensors[3 * iAtom + 1] =
+                      atomLocationsFractional[iAtom][5] *
+                      std::sin(atomLocationsFractional[iAtom][6]) *
+                      std::sin(atomLocationsFractional[iAtom][7]);
+                    tensors[3 * iAtom + 2] =
+                      atomLocationsFractional[iAtom][5] *
+                      std::cos(atomLocationsFractional[iAtom][6]);
+                  }
+                else
+                  {
+                    tensors[3 * iAtom + 0] = 0.0;
+                    tensors[3 * iAtom + 1] = 0.0;
+                    tensors[3 * iAtom + 2] = 0.0;
+                  }
+              }
+            d_numSymm = spg_get_symmetry_with_site_tensors(rotation,
+                                                           translation,
+                                                           equivalent_atoms,
+                                                           primitive_lattice,
+                                                           spin_flips,
+                                                           max_size,
+                                                           lattice,
+                                                           position,
+                                                           types,
+                                                           tensors,
+                                                           1,
+                                                           d_numAtoms,
+                                                           0,
+                                                           1,
+                                                           1e-8);
           }
         d_symmMat.reserve(d_numSymm);
         d_symmMatInverse.reserve(d_numSymm);
@@ -524,6 +570,60 @@ namespace dftfe
            ++iDoF)
         scalarField.local_element(iDoF) +=
           pointValues[localDoFIndexToPointIndexMap[iSymm][iDoF]] / d_numSymm;
+  }
+
+  void
+  groupSymmetryClass::symmetrizeVectorFieldFromLocalValues(
+    distributedCPUVec<double>   &vectorFieldComponentx,
+    distributedCPUVec<double>   &vectorFieldComponenty,
+    distributedCPUVec<double>   &vectorFieldComponentz,
+    const dealii::DoFHandler<3> &dofHandler)
+  {
+    const std::vector<double> &pointValuesx =
+      dealii::VectorTools::point_values<1>(remotePointCache,
+                                           dofHandler,
+                                           vectorFieldComponentx);
+    const std::vector<double> &pointValuesy =
+      dealii::VectorTools::point_values<1>(remotePointCache,
+                                           dofHandler,
+                                           vectorFieldComponenty);
+    const std::vector<double> &pointValuesz =
+      dealii::VectorTools::point_values<1>(remotePointCache,
+                                           dofHandler,
+                                           vectorFieldComponentz);
+    vectorFieldComponentx *= 0;
+    vectorFieldComponenty *= 0;
+    vectorFieldComponentz *= 0;
+    for (dftfe::uInt iSymm = 0; iSymm < d_numSymm; ++iSymm)
+      for (dftfe::uInt iDoF = 0;
+           iDoF < vectorFieldComponentz.locally_owned_size();
+           ++iDoF)
+        {
+          vectorFieldComponentx.local_element(iDoF) +=
+            (d_symmMatCart[iSymm][0 * 3 + 0] *
+               pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+             d_symmMatCart[iSymm][1 * 3 + 0] *
+               pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+             d_symmMatCart[iSymm][2 * 3 + 0] *
+               pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
+            d_numSymm;
+          vectorFieldComponenty.local_element(iDoF) +=
+            (d_symmMatCart[iSymm][0 * 3 + 1] *
+               pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+             d_symmMatCart[iSymm][1 * 3 + 1] *
+               pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+             d_symmMatCart[iSymm][2 * 3 + 1] *
+               pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
+            d_numSymm;
+          vectorFieldComponentz.local_element(iDoF) +=
+            (d_symmMatCart[iSymm][0 * 3 + 2] *
+               pointValuesx[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+             d_symmMatCart[iSymm][1 * 3 + 2] *
+               pointValuesy[localDoFIndexToPointIndexMap[iSymm][iDoF]] +
+             d_symmMatCart[iSymm][2 * 3 + 2] *
+               pointValuesz[localDoFIndexToPointIndexMap[iSymm][iDoF]]) /
+            d_numSymm;
+        }
   }
 
   void

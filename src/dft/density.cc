@@ -518,16 +518,39 @@ namespace dftfe
           }
       }
     if (d_dftParamsPtr->useSymm)
-      for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
-           ++iComp)
+      if (d_dftParamsPtr->noncolin)
         {
-          d_constraintsRhoNodal.distribute(d_densityOutNodalValues[iComp]);
-          d_densityOutNodalValues[iComp].update_ghost_values();
+          for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
+               ++iComp)
+            {
+              d_constraintsRhoNodal.distribute(d_densityOutNodalValues[iComp]);
+              d_densityOutNodalValues[iComp].update_ghost_values();
+            }
           groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
-            d_densityOutNodalValues[iComp], d_dofHandlerRhoNodal);
-          d_constraintsRhoNodal.set_zero(d_densityOutNodalValues[iComp]);
-          d_densityOutNodalValues[iComp].zero_out_ghost_values();
+            d_densityOutNodalValues[0], d_dofHandlerRhoNodal);
+          groupSymmetryPtr->symmetrizeVectorFieldFromLocalValues(
+            d_densityOutNodalValues[3],
+            d_densityOutNodalValues[2],
+            d_densityOutNodalValues[1],
+            d_dofHandlerRhoNodal);
+          for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
+               ++iComp)
+            {
+              d_constraintsRhoNodal.set_zero(d_densityOutNodalValues[iComp]);
+              d_densityOutNodalValues[iComp].zero_out_ghost_values();
+            }
         }
+      else
+        for (dftfe::uInt iComp = 0; iComp < d_densityOutNodalValues.size();
+             ++iComp)
+          {
+            d_constraintsRhoNodal.distribute(d_densityOutNodalValues[iComp]);
+            d_densityOutNodalValues[iComp].update_ghost_values();
+            groupSymmetryPtr->symmetrizeScalarFieldFromLocalValues(
+              d_densityOutNodalValues[iComp], d_dofHandlerRhoNodal);
+            d_constraintsRhoNodal.set_zero(d_densityOutNodalValues[iComp]);
+            d_densityOutNodalValues[iComp].zero_out_ghost_values();
+          }
   }
 #include "dft.inst.cc"
 

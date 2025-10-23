@@ -1592,15 +1592,11 @@ namespace dftfe
                   }
 
               operatorMatrix.HX(*XBlock, 1.0, -1.0, 0.0, *HXBlock);
-              // if (dftParams.approxOverlapMatrix)
-              //   {
-              //     BLASWrapperPtr->stridedBlockScale(
-              //       B,
-              //       localVectorSize,
-              //       1.0,
-              //       operatorMatrix.getInverseSqrtMassVector().data(),
-              //       HXBlock->data());
-              //   }
+              if (dftParams.approxOverlapMatrix)
+                {
+                  operatorMatrix.overlapSqrtInverseMatrixTimesX(
+                    *HXBlock, 1.0, 0.0, 0.0, *XBlock);
+                }
               //   pointWiseScaleWithDiagonal(
               //     operatorMatrix.getInverseSqrtMassVector().data(),
               //     B,
@@ -1611,7 +1607,7 @@ namespace dftfe
                 for (dftfe::uInt iWave = 0; iWave < B; iWave++)
                   {
                     const double temp =
-                      std::abs(HXBlock->data()[B * iDof + iWave]);
+                      std::abs(XBlock->data()[B * iDof + iWave]);
                     residualNormSquare[jvec + iWave] += temp * temp;
                   }
             }

@@ -866,7 +866,8 @@ namespace dftfe
     groupSymmetryPtr->initGroupSymmetry(atomLocationsFractional,
                                         d_domainBoundingVectors,
                                         periodicBc,
-                                        d_dftParamsPtr->spinPolarized == 1);
+                                        d_dftParamsPtr->spinPolarized == 1,
+                                        d_dftParamsPtr->noncolin);
     if (d_dftParamsPtr->solverMode == "BANDS")
       readkPointData();
     else
@@ -3728,8 +3729,8 @@ namespace dftfe
         // if (d_dftParamsPtr->saveQuadData && scfIter % 10 == 0 &&
         //     d_dftParamsPtr->solverMode == "GS")
         //   {
-        //     std::vector<std::string> field = {"RHO", "MAG_Z", "MAG_Y", "MAG_X"};
-        //     std::vector<std::string> Gradfield = {"gradRHO",
+        //     std::vector<std::string> field = {"RHO", "MAG_Z", "MAG_Y",
+        //     "MAG_X"}; std::vector<std::string> Gradfield = {"gradRHO",
         //                                           "gradMAG_Z",
         //                                           "gradMAG_Y",
         //                                           "gradMAG_X"};
@@ -3751,7 +3752,8 @@ namespace dftfe
         //                            interBandGroupComm);
         //         bool isGradDensityDataDependent =
         //           (d_excManagerPtr->getExcSSDFunctionalObj()
-        //              ->getDensityBasedFamilyType() == densityFamilyType::GGA);
+        //              ->getDensityBasedFamilyType() ==
+        //              densityFamilyType::GGA);
         //         if (isGradDensityDataDependent)
         //           {
         //             saveQuadratureData(d_basisOperationsPtrHost,
@@ -3796,6 +3798,11 @@ namespace dftfe
     //         d_hubbardClassPtr->writeHubbOccToFile();
     //       }
     //   }
+    if (d_dftParamsPtr->verbosity > 0 && d_dftParamsPtr->noncolin)
+      localNonCollinearMagnetizationDensity(d_densityOutQuadValues);
+
+    if (d_dftParamsPtr->verbosity > 0 && d_dftParamsPtr->spinPolarized)
+      localCollinearMagnetizationDensity(d_densityOutQuadValues);
 
     if (d_dftParamsPtr->saveQuadData)
       {

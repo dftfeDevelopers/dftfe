@@ -3451,21 +3451,17 @@ namespace dftfe
 
 
                   operatorMatrix.HX(XBlock, 1.0, -1.0, 0.0, HXBlock);
-                  // if (dftParams.approxOverlapMatrix)
-                  //   {
-                  //     BLASWrapperPtr->stridedBlockScale(
-                  //       chebyBlockSize,
-                  //       M,
-                  //       1.0,
-                  //       operatorMatrix.getInverseSqrtMassVector().data(),
-                  //       HXBlock.data());
-                  //   }
+                  if (dftParams.approxOverlapMatrix)
+                    {
+                      operatorMatrix.overlapSqrtInverseMatrixTimesX(
+                        HXBlock, 1.0, 0.0, 0.0, XBlock);
+                    }
                   BLASWrapperPtr->stridedCopyFromBlockConstantStride(
                     B,
                     chebyBlockSize,
                     M,
                     k - jvec,
-                    HXBlock.begin(),
+                    XBlock.begin(),
                     HXBlockFull.begin());
                 }
 

@@ -161,6 +161,8 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &spinPolarizedGradDensityValues)
     {
+      spinPolarizedDensityValues.clear();
+      spinPolarizedGradDensityValues.clear();
       spinPolarizedDensityValues.resize(2);
       spinPolarizedGradDensityValues.resize(isGGA ? 2 : 0);
       spinPolarizedDensityValues[0] = nonColinDensityValues[0];
@@ -766,7 +768,7 @@ namespace dftfe
       densityOutQuadValuesSpinPolarized = densityOutValues;
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
-      gradDensityOutQuadValuesSpinPolarized;
+      gradDensityOutQuadValuesSpinPolarized = gradDensityOutValues;
     std::vector<
       dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
       tauOutQuadValuesSpinPolarized = tauOutValues;

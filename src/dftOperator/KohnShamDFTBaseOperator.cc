@@ -1230,8 +1230,7 @@ namespace dftfe
         if (isGGA || d_dftParamsPtr->noncolin)
           auxDensityXCRepresentation->applyLocalOperations(
             std::make_pair(iCell * numberQuadraturePointsPerCell,
-                           (iCell + numCells) *
-                             numberQuadraturePointsPerCell),
+                           (iCell + numCells) * numberQuadraturePointsPerCell),
             densityData);
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
           &gradDensitySpinUp =

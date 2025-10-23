@@ -106,6 +106,23 @@ namespace dftfe
       dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst);
 
     /**
+     * @brief Computing Y = scalarOinvX*O^{-1/2}X + scalarX*X + scalarY*Y for a given X and Y in full precision
+     *
+     * @param src X vector
+     * @param scalarOinvX scalar for O^{-1}X
+     * @param scalarY scalar for Y
+     * @param scalarX scalar for X
+     * @param dst Y vector
+     */
+    void
+    overlapSqrtInverseMatrixTimesX(
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &src,
+      const double scalarOinvX,
+      const double scalarY,
+      const double scalarX,
+      dftfe::linearAlgebra::MultiVector<dataTypes::number, memorySpace> &dst);
+
+    /**
      * @brief Computing Y = scalarOinvX*O^{-1}X + scalarX*X + scalarY*Y for a given X and Y in Reduced precision
      *
      * @param src X vector

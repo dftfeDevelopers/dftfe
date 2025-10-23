@@ -1134,6 +1134,18 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
         &densityQuadValues);
 
+    void
+    localCollinearMagnetizationDensity(
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityQuadValues);
+
+    void
+    localNonCollinearMagnetizationDensity(
+      const std::vector<
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>>
+        &densityQuadValues);
+
     /**
      *@brief normalize the input electron density
      */

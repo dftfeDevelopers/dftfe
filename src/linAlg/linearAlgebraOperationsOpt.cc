@@ -240,7 +240,7 @@ namespace dftfe
           operatorMatrix.getMPICommunicatorDomain());
 
       const dftfe::uInt lanczosIterations =
-        dftParams.reproducible_output ? 60 : 50;
+        dftParams.reproducible_output ? 60 : 20;
       double beta, betaNeg;
       T      betaTemp;
 
