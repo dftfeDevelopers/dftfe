@@ -3455,14 +3455,24 @@ namespace dftfe
                     {
                       operatorMatrix.overlapSqrtInverseMatrixTimesX(
                         HXBlock, 1.0, 0.0, 0.0, XBlock);
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        chebyBlockSize,
+                        M,
+                        k - jvec,
+                        XBlock.begin(),
+                        HXBlockFull.begin());
                     }
-                  BLASWrapperPtr->stridedCopyFromBlockConstantStride(
-                    B,
-                    chebyBlockSize,
-                    M,
-                    k - jvec,
-                    XBlock.begin(),
-                    HXBlockFull.begin());
+                  else
+                    {
+                      BLASWrapperPtr->stridedCopyFromBlockConstantStride(
+                        B,
+                        chebyBlockSize,
+                        M,
+                        k - jvec,
+                        HXBlock.begin(),
+                        HXBlockFull.begin());
+                    }
                 }
 
               computeGeneralisedResidualDevice(

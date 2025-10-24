@@ -1596,6 +1596,23 @@ namespace dftfe
                 {
                   operatorMatrix.overlapSqrtInverseMatrixTimesX(
                     *HXBlock, 1.0, 0.0, 0.0, *XBlock);
+                  for (dftfe::uInt iDof = 0; iDof < localVectorSize; ++iDof)
+                    for (dftfe::uInt iWave = 0; iWave < B; iWave++)
+                      {
+                        const double temp =
+                          std::abs(XBlock->data()[B * iDof + iWave]);
+                        residualNormSquare[jvec + iWave] += temp * temp;
+                      }
+                }
+              else
+                {
+                  for (dftfe::uInt iDof = 0; iDof < localVectorSize; ++iDof)
+                    for (dftfe::uInt iWave = 0; iWave < B; iWave++)
+                      {
+                        const double temp =
+                          std::abs(HXBlock->data()[B * iDof + iWave]);
+                        residualNormSquare[jvec + iWave] += temp * temp;
+                      }
                 }
               //   pointWiseScaleWithDiagonal(
               //     operatorMatrix.getInverseSqrtMassVector().data(),
@@ -1603,13 +1620,6 @@ namespace dftfe
               //     localVectorSize,
               //     HXBlock->data());
               // compute residual norms:
-              for (dftfe::uInt iDof = 0; iDof < localVectorSize; ++iDof)
-                for (dftfe::uInt iWave = 0; iWave < B; iWave++)
-                  {
-                    const double temp =
-                      std::abs(XBlock->data()[B * iDof + iWave]);
-                    residualNormSquare[jvec + iWave] += temp * temp;
-                  }
             }
         }
 
