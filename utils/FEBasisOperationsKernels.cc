@@ -250,6 +250,7 @@ namespace dftfe
                   reshapeFromNonAffineLayoutHost(
                     d_nVectors,
                     d_nQuadsPerCell[d_quadratureIndex],
+                    3,
                     (cellRange.second - cellRange.first),
                     tempQuadratureGradientsDataNonAffine.data(),
                     quadratureGradients);
@@ -258,6 +259,7 @@ namespace dftfe
                   reshapeFromNonAffineLayoutDevice(
                     d_nVectors,
                     d_nQuadsPerCell[d_quadratureIndex],
+                    3,
                     (cellRange.second - cellRange.first),
                     tempQuadratureGradientsDataNonAffine.data(),
                     quadratureGradients);
@@ -371,6 +373,7 @@ namespace dftfe
                   reshapeToNonAffineLayoutHost(
                     d_nVectors,
                     d_nQuadsPerCell[d_quadratureIndex],
+                    3,
                     (cellRange.second - cellRange.first),
                     quadratureGradients,
                     tempQuadratureGradientsDataNonAffine.data());
@@ -379,6 +382,7 @@ namespace dftfe
                   reshapeToNonAffineLayoutDevice(
                     d_nVectors,
                     d_nQuadsPerCell[d_quadratureIndex],
+                    3,
                     (cellRange.second - cellRange.first),
                     quadratureGradients,
                     tempQuadratureGradientsDataNonAffine.data());

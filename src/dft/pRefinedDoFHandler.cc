@@ -55,23 +55,13 @@ namespace dftfe
     dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerPRefined,
                                                     d_constraintsPRefined);
 
-    std::vector<std::vector<double>> unitVectorsXYZ;
-    unitVectorsXYZ.resize(3);
-
-    for (dftfe::uInt i = 0; i < 3; ++i)
-      {
-        unitVectorsXYZ[i].resize(3, 0.0);
-        unitVectorsXYZ[i][i] = 0.0;
-      }
-
     std::vector<dealii::Tensor<1, 3>> offsetVectors;
     // resize offset vectors
     offsetVectors.resize(3);
 
     for (dftfe::uInt i = 0; i < 3; ++i)
       for (dftfe::uInt j = 0; j < 3; ++j)
-        offsetVectors[i][j] =
-          unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
+        offsetVectors[i][j] = -d_domainBoundingVectors[i][j];
 
     std::vector<dealii::GridTools::PeriodicFacePair<
       typename dealii::DoFHandler<3>::cell_iterator>>
@@ -362,11 +352,6 @@ namespace dftfe
     for (dftfe::uInt i = 3; i < d_constraintsVectorElectro.size(); ++i)
       matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerPRefined);
 
-    forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
-                        d_constraintsVectorElectro,
-                        true);
-    d_forceDofHandlerIndexElectro = d_constraintsVectorElectro.size() - 1;
-
     std::vector<dealii::Quadrature<1>> quadratureVector;
     quadratureVector.push_back(
       dealii::QGauss<1>(d_dftParamsPtr->densityQuadratureRule));
@@ -416,10 +401,17 @@ namespace dftfe
 
             dftfe::basis::UpdateFlags updateFlagsDensity =
               dftfe::basis::update_values | dftfe::basis::update_jxw;
+            if (d_dftParamsPtr->isCellStress)
+              updateFlagsDensity =
+                updateFlagsDensity | dftfe::basis::update_quadpoints;
 
             dftfe::basis::UpdateFlags updateFlagsLPSP =
               dftfe::basis::update_values | dftfe::basis::update_jxw |
               dftfe::basis::update_quadpoints;
+
+            dftfe::basis::UpdateFlags updateFlagsSmearedCharge =
+              dftfe::basis::update_quadpoints | dftfe::basis::update_values |
+              dftfe::basis::update_jxw;
 
             dftfe::basis::UpdateFlags updateFlagsphiTotAX =
               d_dftParamsPtr->useDevice &&
@@ -440,14 +432,15 @@ namespace dftfe
             std::vector<dftfe::basis::UpdateFlags> updateFlags{
               updateFlagsDensity,
               updateFlagsLPSP,
-              dftfe::basis::update_quadpoints,
+              updateFlagsSmearedCharge,
               updateFlagsphiTotAX,
               updateFlagsKerkerAX};
-            d_basisOperationsPtrElectroHost->init(d_matrixFreeDataPRefined,
-                                                  d_constraintsVectorElectro,
-                                                  d_baseDofHandlerIndexElectro,
-                                                  quadratureIndices,
-                                                  updateFlags);
+            d_basisOperationsPtrElectroHost->init(
+              d_matrixFreeDataPRefined,
+              d_constraintsVectorElectro,
+              d_phiTotDofHandlerIndexElectro,
+              quadratureIndices,
+              updateFlags);
           }
       }
     else
@@ -480,7 +473,7 @@ namespace dftfe
             d_basisOperationsPtrElectroDevice->init(
               d_matrixFreeDataPRefined,
               d_constraintsVectorElectro,
-              d_baseDofHandlerIndexElectro,
+              d_phiTotDofHandlerIndexElectro,
               quadratureIndices,
               updateFlags);
             if (d_dftParamsPtr->finiteElementPolynomialOrder !=

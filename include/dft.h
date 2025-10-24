@@ -26,6 +26,7 @@
 #include <FEBasisOperations.h>
 #include <BLASWrapper.h>
 #include <AuxDensityMatrix.h>
+#include <configurationalForce.h>
 
 #include <complex>
 #include <deque>
@@ -57,7 +58,6 @@
 #include <vselfBinsManager.h>
 #include <excManager.h>
 #include <dftd.h>
-#include <force.h>
 #include "dftBase.h"
 #ifdef USE_PETSC
 #  include <petsc.h>
@@ -93,9 +93,6 @@ namespace dftfe
     alglib::spline1dinterpolant psi;
   };
 
-  /* code that must be skipped by Doxygen */
-  template <dftfe::utils::MemorySpace memory>
-  class forceClass;
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
   /**
@@ -108,8 +105,6 @@ namespace dftfe
   template <dftfe::utils::MemorySpace memorySpace>
   class dftClass : public dftBase
   {
-    friend class forceClass<memorySpace>;
-
   public:
     /**
      * @brief dftClass constructor
@@ -202,9 +197,6 @@ namespace dftfe
     solve(const bool computeForces                 = true,
           const bool computestress                 = true,
           const bool restartGroundStateCalcFromChk = false);
-
-    void
-    computeStress();
 
     void
     trivialSolveForStress();
@@ -755,11 +747,6 @@ namespace dftfe
     void
     initHubbardOperator();
 
-    void
-    determineAtomsOfInterstPseudopotential(
-      const std::vector<std::vector<double>> &atomCoordinates);
-
-
     /**
      *@brief project ground state electron density from previous mesh into
      * the new mesh to be used as initial guess for the new ground state solve
@@ -876,8 +863,6 @@ namespace dftfe
     //
     // generate mesh using a-posteriori error estimates
     //
-    void
-    aposterioriMeshGenerate();
     dataTypes::number
     computeTraceXtHX(dftfe::uInt numberWaveFunctionsEstimate);
     double
@@ -1320,9 +1305,6 @@ namespace dftfe
     /// FIXME: remove atom type atributes from atomLocations
     std::vector<std::vector<double>> atomLocations, atomLocationsFractional,
       d_reciprocalLatticeVectors, d_domainBoundingVectors, d_meshSizes;
-    std::vector<std::vector<double>> d_atomLocationsInterestPseudopotential;
-    std::map<dftfe::uInt, dftfe::uInt>
-                                     d_atomIdPseudopotentialInterestToGlobalId;
     std::vector<std::vector<double>> d_atomLocationsAutoMesh;
     std::vector<std::vector<double>> d_imagePositionsAutoMesh;
 
@@ -1485,29 +1467,28 @@ namespace dftfe
     dealii::FESystem<3>   FE, FEEigen;
     dealii::DoFHandler<3> dofHandler, dofHandlerEigen, d_dofHandlerPRefined,
       d_dofHandlerRhoNodal;
-    dftfe::uInt d_eigenDofHandlerIndex, d_phiExtDofHandlerIndexElectro,
-      d_forceDofHandlerIndex;
-    dftfe::uInt                   d_densityDofHandlerIndex;
-    dftfe::uInt                   d_densityDofHandlerIndexElectro;
-    dftfe::uInt                   d_nonPeriodicDensityDofHandlerIndexElectro;
-    dftfe::uInt                   d_baseDofHandlerIndexElectro;
-    dftfe::uInt                   d_forceDofHandlerIndexElectro;
-    dftfe::uInt                   d_smearedChargeQuadratureIdElectro;
-    dftfe::uInt                   d_nlpspQuadratureId;
-    dftfe::uInt                   d_lpspQuadratureId;
-    dftfe::uInt                   d_feOrderPlusOneQuadratureId;
-    dftfe::uInt                   d_lpspQuadratureIdElectro;
-    dftfe::uInt                   d_gllQuadratureId;
-    dftfe::uInt                   d_phiTotDofHandlerIndexElectro;
-    dftfe::uInt                   d_phiPrimeDofHandlerIndexElectro;
-    dftfe::uInt                   d_phiTotAXQuadratureIdElectro;
-    dftfe::uInt                   d_kerkerAXQuadratureIdElectro;
-    dftfe::uInt                   d_helmholtzDofHandlerIndexElectro;
-    dftfe::uInt                   d_binsStartDofHandlerIndexElectro;
-    dftfe::uInt                   d_densityQuadratureId;
-    dftfe::uInt                   d_densityQuadratureIdElectro;
-    dftfe::uInt                   d_sparsityPatternQuadratureId;
-    dftfe::uInt                   d_nOMPThreads;
+    dftfe::uInt d_eigenDofHandlerIndex, d_phiExtDofHandlerIndexElectro;
+    dftfe::uInt d_densityDofHandlerIndex;
+    dftfe::uInt d_densityDofHandlerIndexElectro;
+    dftfe::uInt d_nonPeriodicDensityDofHandlerIndexElectro;
+    dftfe::uInt d_baseDofHandlerIndexElectro;
+    dftfe::uInt d_smearedChargeQuadratureIdElectro;
+    dftfe::uInt d_nlpspQuadratureId;
+    dftfe::uInt d_lpspQuadratureId;
+    dftfe::uInt d_feOrderPlusOneQuadratureId;
+    dftfe::uInt d_lpspQuadratureIdElectro;
+    dftfe::uInt d_gllQuadratureId;
+    dftfe::uInt d_phiTotDofHandlerIndexElectro;
+    dftfe::uInt d_phiPrimeDofHandlerIndexElectro;
+    dftfe::uInt d_phiTotAXQuadratureIdElectro;
+    dftfe::uInt d_kerkerAXQuadratureIdElectro;
+    dftfe::uInt d_helmholtzDofHandlerIndexElectro;
+    dftfe::uInt d_binsStartDofHandlerIndexElectro;
+    dftfe::uInt d_densityQuadratureId;
+    dftfe::uInt d_densityQuadratureIdElectro;
+    dftfe::uInt d_sparsityPatternQuadratureId;
+    dftfe::uInt d_nOMPThreads;
+    double      d_dftfeClassStartTime;
     dealii::MatrixFree<3, double> matrix_free_data, d_matrixFreeDataPRefined;
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
@@ -1576,8 +1557,8 @@ namespace dftfe
       localProc_dof_indicesImag;
     std::vector<bool> selectedDofsHanging;
 
-    forceClass<memorySpace>                   *forcePtr;
-    std::shared_ptr<dftfe::groupSymmetryClass> groupSymmetryPtr;
+    std::shared_ptr<dftfe::groupSymmetryClass>              groupSymmetryPtr;
+    std::shared_ptr<configurationalForceClass<memorySpace>> d_configForcePtr;
 
     elpaScalaManager *d_elpaScala;
 

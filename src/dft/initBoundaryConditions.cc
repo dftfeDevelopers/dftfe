@@ -239,30 +239,6 @@ namespace dftfe
     d_feOrderPlusOneQuadratureId  = 4;
     d_sparsityPatternQuadratureId = 5;
 
-    double init_force;
-    MPI_Barrier(d_mpiCommParent);
-    init_force = MPI_Wtime();
-    //
-    //
-    //
-    forcePtr->initMoved(dofHandlerVector, d_constraintsVector, false);
-    d_forceDofHandlerIndex = d_constraintsVector.size() - 1;
-    /*
-    forcePtr->initMoved(dofHandlerVector,
-        d_constraintsVector,
-        true);
-    */
-
-    if (d_dftParamsPtr->verbosity >= 4)
-      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-                                        "Called force init moved");
-
-    MPI_Barrier(d_mpiCommParent);
-    init_force = MPI_Wtime() - init_force;
-    if (d_dftParamsPtr->verbosity >= 4)
-      pcout << "initBoundaryConditions: Time taken for force init moved: "
-            << init_force << std::endl;
-
 
     double init_mf;
     MPI_Barrier(d_mpiCommParent);
@@ -284,8 +260,7 @@ namespace dftfe
               dftfe::basis::update_gradients | dftfe::basis::update_quadpoints;
             dftfe::basis::UpdateFlags updateFlagsGLL =
               dftfe::basis::update_values | dftfe::basis::update_jxw;
-            if (d_dftParamsPtr->auxBasisTypeXC == "SlaterAE" ||
-                d_dftParamsPtr->useSymm)
+            if (d_dftParamsPtr->auxBasisTypeXC == "SlaterAE")
               updateFlagsGLL = updateFlagsGLL | dftfe::basis::update_quadpoints;
             dftfe::basis::UpdateFlags updateFlagsLPSP =
               dftfe::basis::update_values | dftfe::basis::update_jxw;

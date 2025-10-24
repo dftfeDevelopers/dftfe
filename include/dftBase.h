@@ -74,9 +74,6 @@ namespace dftfe
           const bool isRestartGroundStateCalcFromChk = false) = 0;
 
     virtual void
-    computeStress() = 0;
-
-    virtual void
     trivialSolveForStress() = 0;
 
     virtual double

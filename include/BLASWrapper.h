@@ -219,6 +219,14 @@ namespace dftfe
            const double     *Y,
            const dftfe::uInt INCY,
            double           *result);
+      // Real dot product
+      void
+      xdot(const dftfe::uInt N,
+           const float      *X,
+           const dftfe::uInt INCX,
+           const float      *Y,
+           const dftfe::uInt INCY,
+           float            *result);
       // Real dot proeuct with all Reduce call
       void
       xdot(const dftfe::uInt N,
@@ -237,7 +245,14 @@ namespace dftfe
            const std::complex<double> *Y,
            const dftfe::uInt           INCY,
            std::complex<double>       *result);
-
+      // Complex dot product
+      void
+      xdot(const dftfe::uInt          N,
+           const std::complex<float> *X,
+           const dftfe::uInt          INCX,
+           const std::complex<float> *Y,
+           const dftfe::uInt          INCY,
+           std::complex<float>       *result);
       // Complex dot proeuct with all Reduce call
       void
       xdot(const dftfe::uInt           N,
@@ -899,7 +914,14 @@ namespace dftfe
            const double     *Y,
            const dftfe::uInt INCY,
            double           *result);
-
+      // Real dot product
+      void
+      xdot(const dftfe::uInt N,
+           const float      *X,
+           const dftfe::uInt INCX,
+           const float      *Y,
+           const dftfe::uInt INCY,
+           float            *result);
       //
       // Real dot product
       void
@@ -919,7 +941,14 @@ namespace dftfe
            const std::complex<double> *Y,
            const dftfe::uInt           INCY,
            std::complex<double>       *result);
-
+      // Complex dot product
+      void
+      xdot(const dftfe::uInt          N,
+           const std::complex<float> *X,
+           const dftfe::uInt          INCX,
+           const std::complex<float> *Y,
+           const dftfe::uInt          INCY,
+           std::complex<float>       *result);
       // Complex dot product
       void
       xdot(const dftfe::uInt           N,

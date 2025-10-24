@@ -42,8 +42,7 @@ namespace dftfe
       offsetFlagZ;
     dftfe::uInt densityQuadratureRule;
     dftfe::uInt chebyshevOrder, numPass, numSCFIterations,
-      maxLinearSolverIterations, mixingHistory, npool,
-      numberWaveFunctionsForEstimate, numLevels,
+      maxLinearSolverIterations, mixingHistory, npool, numLevels,
       maxLinearSolverIterationsHelmholtz;
 
     bool        poissonGPU;
@@ -99,8 +98,8 @@ namespace dftfe
 
     std::string hubbardFileName;
     bool        isIonForce, isCellStress, isBOMD;
-    bool        nonSelfConsistentForce, meshAdaption;
-    double      forceRelaxTol, stressRelaxTol, toleranceKinetic;
+    bool        nonSelfConsistentForce;
+    double      forceRelaxTol, stressRelaxTol;
     dftfe::uInt cellConstraintType;
 
     dftfe::Int  verbosity;

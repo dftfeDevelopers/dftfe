@@ -28,7 +28,8 @@ namespace dftfe
       void,
       reshapeFromNonAffineDeviceKernel,
       {
-        const dftfe::uInt numberEntries = numQuads * numCells * numVecs * 3;
+        const dftfe::uInt numberEntries =
+          numQuads * numCells * numVecs * numDims;
 
         for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += nThreadsPerBlock * nThreadBlock)
@@ -37,16 +38,17 @@ namespace dftfe
             dftfe::uInt iVec        = index - blockIndex * numVecs;
             dftfe::uInt blockIndex2 = blockIndex / numQuads;
             dftfe::uInt iQuad       = blockIndex - blockIndex2 * numQuads;
-            dftfe::uInt iCell       = blockIndex2 / 3;
-            dftfe::uInt iDim        = blockIndex2 - iCell * 3;
+            dftfe::uInt iCell       = blockIndex2 / numDims;
+            dftfe::uInt iDim        = blockIndex2 - iCell * numDims;
             dftfe::utils::copyValue(
               copyToVec + index,
-              copyFromVec[iVec + iDim * numVecs + iQuad * 3 * numVecs +
-                          iCell * 3 * numQuads * numVecs]);
+              copyFromVec[iVec + iDim * numVecs + iQuad * numDims * numVecs +
+                          iCell * numDims * numQuads * numVecs]);
           }
       },
       const dftfe::uInt numVecs,
       const dftfe::uInt numQuads,
+      const dftfe::uInt numDims,
       const dftfe::uInt numCells,
       const ValueType  *copyFromVec,
       ValueType        *copyToVec);
@@ -57,7 +59,8 @@ namespace dftfe
       void,
       reshapeToNonAffineDeviceKernel,
       {
-        const dftfe::uInt numberEntries = numQuads * numCells * numVecs * 3;
+        const dftfe::uInt numberEntries =
+          numQuads * numCells * numVecs * numDims;
 
         for (dftfe::uInt index = globalThreadId; index < numberEntries;
              index += nThreadsPerBlock * nThreadBlock)
@@ -66,19 +69,63 @@ namespace dftfe
             dftfe::uInt iVec        = index - blockIndex * numVecs;
             dftfe::uInt blockIndex2 = blockIndex / numQuads;
             dftfe::uInt iQuad       = blockIndex - blockIndex2 * numQuads;
-            dftfe::uInt iCell       = blockIndex2 / 3;
-            dftfe::uInt iDim        = blockIndex2 - iCell * 3;
+            dftfe::uInt iCell       = blockIndex2 / numDims;
+            dftfe::uInt iDim        = blockIndex2 - iCell * numDims;
             dftfe::utils::copyValue(copyToVec + iVec + iDim * numVecs +
-                                      iQuad * 3 * numVecs +
-                                      iCell * 3 * numQuads * numVecs,
+                                      iQuad * numDims * numVecs +
+                                      iCell * numDims * numQuads * numVecs,
                                     copyFromVec[index]);
           }
       },
       const dftfe::uInt numVecs,
       const dftfe::uInt numQuads,
+      const dftfe::uInt numDims,
       const dftfe::uInt numCells,
       const ValueType  *copyFromVec,
       ValueType        *copyToVec);
+
+    template <typename ValueType>
+
+    DFTFE_CREATE_KERNEL(
+      void,
+      scaleQuadratureDataWithDiagonalJacobianDeviceKernel,
+      {
+        const dftfe::uInt numberEntries =
+          numberOfElements * numDoFsPerCell * numQuadsPerCell * 3;
+
+        for (dftfe::uInt index = globalThreadId; index < numberEntries;
+             index += nThreadsPerBlock * nThreadBlock)
+          {
+            dftfe::uInt iElem = index / (numDoFsPerCell * numQuadsPerCell * 3);
+            dftfe::uInt rem1  = index % (numDoFsPerCell * numQuadsPerCell * 3);
+
+            dftfe::uInt iQuad = rem1 / (numDoFsPerCell * 3);
+            dftfe::uInt rem2  = rem1 % (numDoFsPerCell * 3);
+
+            dftfe::uInt iDim = rem2 / numDoFsPerCell;
+            dftfe::uInt iDof = rem2 % numDoFsPerCell;
+
+            dftfe::uInt cellIndex  = cellIndices[iElem];
+            dftfe::uInt cellOffset = cellIndex * 3;
+
+            ValueType alpha = inverseJacobiansEntries[cellOffset + iDim];
+            dftfe::utils::copyValue(
+              gradientData + index,
+              dftfe::utils::mult(
+                gradientDataBlockCoeff[iDof + iDim * numDoFsPerCell +
+                                       iQuad * 3 * numDoFsPerCell],
+                alpha));
+          }
+      },
+      const dftfe::uInt  numberOfElements,
+      const dftfe::uInt  numDoFsPerCell,
+      const dftfe::uInt  numQuadsPerCell,
+      const ValueType   *inverseJacobiansEntries,
+      const ValueType   *gradientDataBlockCoeff,
+      ValueType         *gradientData,
+      const dftfe::uInt *cellIndices);
+
+
 
   } // namespace
   namespace basis
@@ -90,19 +137,21 @@ namespace dftfe
       void
       reshapeFromNonAffineLayoutDevice(const dftfe::uInt numVecs,
                                        const dftfe::uInt numQuads,
+                                       const dftfe::uInt numDims,
                                        const dftfe::uInt numCells,
                                        const ValueType  *copyFromVec,
                                        ValueType        *copyToVec)
       {
         DFTFE_LAUNCH_KERNEL(
           reshapeFromNonAffineDeviceKernel,
-          (numVecs * numCells * numQuads * 3) /
+          (numVecs * numCells * numQuads * numDims) /
               dftfe::utils::DEVICE_BLOCK_SIZE +
             1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
           dftfe::utils::defaultStream,
           numVecs,
           numQuads,
+          numDims,
           numCells,
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
           dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
@@ -111,32 +160,62 @@ namespace dftfe
       void
       reshapeToNonAffineLayoutDevice(const dftfe::uInt numVecs,
                                      const dftfe::uInt numQuads,
+                                     const dftfe::uInt numDims,
                                      const dftfe::uInt numCells,
                                      const ValueType  *copyFromVec,
                                      ValueType        *copyToVec)
       {
         DFTFE_LAUNCH_KERNEL(
           reshapeToNonAffineDeviceKernel,
-          (numVecs * numCells * numQuads * 3) /
+          (numVecs * numCells * numQuads * numDims) /
               dftfe::utils::DEVICE_BLOCK_SIZE +
             1,
           dftfe::utils::DEVICE_BLOCK_SIZE,
           dftfe::utils::defaultStream,
           numVecs,
           numQuads,
+          numDims,
           numCells,
           dftfe::utils::makeDataTypeDeviceCompatible(copyFromVec),
           dftfe::utils::makeDataTypeDeviceCompatible(copyToVec));
       }
+      template <typename ValueType>
+      void
+      scaleQuadratureDataWithDiagonalJacobianDevice(
+        const dftfe::uInt  numberOfElements,
+        const dftfe::uInt  nDoFsPerCell,
+        const dftfe::uInt  nQuadsPerCell,
+        const ValueType   *inverseJacobiansEntries,
+        const ValueType   *gradientDataBlockCoeff,
+        ValueType         *gradientData,
+        const dftfe::uInt *cellIndices)
+      {
+        DFTFE_LAUNCH_KERNEL(
+          scaleQuadratureDataWithDiagonalJacobianDeviceKernel,
+          (numberOfElements * nDoFsPerCell * nQuadsPerCell * 3) /
+              dftfe::utils::DEVICE_BLOCK_SIZE +
+            1,
+          dftfe::utils::DEVICE_BLOCK_SIZE,
+          dftfe::utils::defaultStream,
+          numberOfElements,
+          nDoFsPerCell,
+          nQuadsPerCell,
+          dftfe::utils::makeDataTypeDeviceCompatible(inverseJacobiansEntries),
+          dftfe::utils::makeDataTypeDeviceCompatible(gradientDataBlockCoeff),
+          dftfe::utils::makeDataTypeDeviceCompatible(gradientData),
+          cellIndices);
+      }
       template void
       reshapeFromNonAffineLayoutDevice(const dftfe::uInt numVecs,
                                        const dftfe::uInt numQuads,
+                                       const dftfe::uInt numDims,
                                        const dftfe::uInt numCells,
                                        const double     *copyFromVec,
                                        double           *copyToVec);
       template void
       reshapeFromNonAffineLayoutDevice(const dftfe::uInt           numVecs,
                                        const dftfe::uInt           numQuads,
+                                       const dftfe::uInt           numDims,
                                        const dftfe::uInt           numCells,
                                        const std::complex<double> *copyFromVec,
                                        std::complex<double>       *copyToVec);
@@ -144,15 +223,37 @@ namespace dftfe
       template void
       reshapeToNonAffineLayoutDevice(const dftfe::uInt numVecs,
                                      const dftfe::uInt numQuads,
+                                     const dftfe::uInt numDims,
                                      const dftfe::uInt numCells,
                                      const double     *copyFromVec,
                                      double           *copyToVec);
       template void
       reshapeToNonAffineLayoutDevice(const dftfe::uInt           numVecs,
                                      const dftfe::uInt           numQuads,
+                                     const dftfe::uInt           numDims,
                                      const dftfe::uInt           numCells,
                                      const std::complex<double> *copyFromVec,
                                      std::complex<double>       *copyToVec);
+
+      template void
+      scaleQuadratureDataWithDiagonalJacobianDevice(
+        const dftfe::uInt  numberOfElements,
+        const dftfe::uInt  nDoFsPerCell,
+        const dftfe::uInt  nQuadsPerCell,
+        const double      *inverseJacobiansEntries,
+        const double      *gradientDataBlockCoeff,
+        double            *gradientData,
+        const dftfe::uInt *cellIndices);
+
+      template void
+      scaleQuadratureDataWithDiagonalJacobianDevice(
+        const dftfe::uInt           numberOfElements,
+        const dftfe::uInt           nDoFsPerCell,
+        const dftfe::uInt           nQuadsPerCell,
+        const std::complex<double> *inverseJacobiansEntries,
+        const std::complex<double> *gradientDataBlockCoeff,
+        std::complex<double>       *gradientData,
+        const dftfe::uInt          *cellIndices);
 
     } // namespace FEBasisOperationsKernelsInternal
   }   // namespace basis

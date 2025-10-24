@@ -93,7 +93,7 @@ namespace dftfe
       mutable dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace>
         zeroIndexVec;
       mutable dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
-        tempCellValuesBlockCoeff;
+        tempCellValuesBlockCoeff, tempCellGradientsBlockCoeff;
       std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
         d_BLASWrapperPtr;
 
@@ -163,7 +163,8 @@ namespace dftfe
              const dftfe::uInt &cellBlockSize,
              const dftfe::uInt &quadratureID,
              const bool         isResizeTempStorageForInerpolation = true,
-             const bool         isResizeTempStorageForCellMatrices = false);
+             const bool         isResizeTempStorageForCellMatrices = false,
+             const bool isResizeTempStorageForIntegralEvaluations  = false);
 
       dftfe::utils::MemoryStorage<dftfe::uInt,
                                   dftfe::utils::MemorySpace::HOST> &
@@ -240,6 +241,42 @@ namespace dftfe
           &weightedCellMassMatrix) const;
 
       void
+      computeScalarFieldTimesShapeFunctionIntegral(
+        const std::vector<dftfe::uInt> &cellIndices,
+        const dftfe::uInt              &noKpoints,
+        const dftfe::uInt              &noOfVectors,
+        const dftfe::uInt              &totalElements,
+        const dftfe::uInt              &iElemStart,
+        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &scalarField,
+        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &scalarFieldTimesShapeFunctionIntegral) const;
+
+      void
+      computeScalarFieldTimesGradientShapeFunctionIntegral(
+        const std::vector<dftfe::uInt> &cellIndices,
+        const dftfe::uInt              &noKpoints,
+        const dftfe::uInt              &noOfVectors,
+        const dftfe::uInt              &totalElements,
+        const dftfe::uInt              &iElemStart,
+        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &scalarField,
+        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &scalarFieldTimesGradientShapeFunctionIntegral) const;
+
+      void
+      computeVectorFieldDyadicGradientShapeFunctionIntegral(
+        const std::vector<dftfe::uInt> &cellIndices,
+        const dftfe::uInt              &noKpoints,
+        const dftfe::uInt              &noOfVectors,
+        const dftfe::uInt              &totalElements,
+        const dftfe::uInt              &iElemStart,
+        const dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &vectorField,
+        dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
+          &vectorFieldDyadicGradientShapeFunctionIntegral) const;
+
+      void
       computeWeightedCellNjGradNiMatrix(
         const std::pair<dftfe::uInt, dftfe::uInt> cellRangeTotal,
         dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace> &weights,
@@ -284,7 +321,8 @@ namespace dftfe
        */
       void
       resizeTempStorage(const bool isResizeTempStorageForInerpolation,
-                        const bool isResizeTempStorageForCellMatrices);
+                        const bool isResizeTempStorageForCellMatrices,
+                        const bool isResizeTempStorageForIntegralEvaluations);
 
       /**
        * @brief Number of quadrature points per cell for the quadratureID set in reinit.
@@ -1061,7 +1099,23 @@ namespace dftfe
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                   &quadratureHessianValueData,
         const bool isEvaluateGradData    = false,
-        const bool isEvaluateHessianData = false) const;
+        const bool isEvaluateHessianData = false,
+        const bool isEvaluateData        = true) const;
+
+      void
+      interpolateNoConstraints(
+        const distributedCPUVec<double> &nodalField,
+        const dftfe::uInt                dofHandlerId,
+        const dftfe::uInt                quadratureId,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &quadratureValueData,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+          &quadratureGradValueData,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                  &quadratureHessianValueData,
+        const bool isEvaluateGradData    = false,
+        const bool isEvaluateHessianData = false,
+        const bool isEvaluateData        = true) const;
 
       /**
        * @brief Interpolate process level nodal data to cell level quadrature data.

@@ -294,10 +294,10 @@ namespace dftfe
 
         const int mpi_tag =
           dealii::Utilities::MPI::internal::Tags::scalapack_copy_to2;
-        ierr = dealii::Utilities::MPI::create_group(MPI_COMM_WORLD,
-                                                    group_union,
-                                                    mpi_tag,
-                                                    &mpi_communicator_union);
+        ierr = MPI_Comm_create_group(MPI_COMM_WORLD,
+                                     group_union,
+                                     mpi_tag,
+                                     &mpi_communicator_union);
         AssertThrowMPI(ierr);
 
         /*

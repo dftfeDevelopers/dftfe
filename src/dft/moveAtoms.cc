@@ -495,13 +495,11 @@ namespace dftfe
             MPI_Barrier(d_mpiCommParent);
             resetmesh_time = MPI_Wtime();
 
-            if (d_dftParamsPtr->useSymm ||
-                d_dftParamsPtr->createConstraintsFromSerialDofhandler)
+            if (d_dftParamsPtr->createConstraintsFromSerialDofhandler)
               {
                 d_mesh.generateResetMeshes(
                   d_domainBoundingVectors,
-                  d_dftParamsPtr->useSymm ||
-                    d_dftParamsPtr->createConstraintsFromSerialDofhandler);
+                  d_dftParamsPtr->createConstraintsFromSerialDofhandler);
 
                 // initUnmovedTriangulation(d_mesh.getParallelMeshMoved());
 
@@ -524,16 +522,10 @@ namespace dftfe
                 d_dofHandlerRhoNodal.distribute_dofs(
                   dealii::FE_Q<3>(dealii::QGaussLobatto<1>(
                     d_dftParamsPtr->finiteElementPolynomialOrderRhoNodal + 1)));
-
-                forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
-                                      d_mesh.getSerialMeshUnmoved(),
-                                      d_domainBoundingVectors,
-                                      false);
-
-                forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
-                                      d_mesh.getSerialMeshUnmoved(),
-                                      d_domainBoundingVectors,
-                                      true);
+                d_configForcePtr->setUnmovedTriangulation(
+                  d_mesh.getParallelMeshMoved(),
+                  d_mesh.getSerialMeshUnmoved(),
+                  d_domainBoundingVectors);
 
                 // meshMovementGaussianClass gaussianMove(mpi_communicator);
                 d_gaussianMovePar.init(d_mesh.getParallelMeshMoved(),

@@ -37,6 +37,7 @@ namespace dftfe
        * d_nQuadsPerCell * d_nVectors + iQuad * d_nVectors + iVec].
        * @param[in] numVecs number of vectors.
        * @param[in] numQuads number of quadrature points per cell.
+       * @param[in] nDims number of dimensions of vector.
        * @param[in] numCells number of locally owned cells.
        * @param[in] copyFromVec source data pointer.
        * @param[out] copyToVec destination data pointer.
@@ -45,6 +46,7 @@ namespace dftfe
       void
       reshapeFromNonAffineLayoutDevice(const dftfe::uInt numVecs,
                                        const dftfe::uInt numQuads,
+                                       const dftfe::uInt nDims,
                                        const dftfe::uInt numCells,
                                        const ValueType  *copyFromVec,
                                        ValueType        *copyToVec);
@@ -53,6 +55,7 @@ namespace dftfe
       void
       reshapeFromNonAffineLayoutHost(const dftfe::uInt numVecs,
                                      const dftfe::uInt numQuads,
+                                     const dftfe::uInt nDims,
                                      const dftfe::uInt numCells,
                                      const ValueType  *copyFromVec,
                                      ValueType        *copyToVec);
@@ -70,6 +73,7 @@ namespace dftfe
       void
       reshapeToNonAffineLayoutDevice(const dftfe::uInt numVecs,
                                      const dftfe::uInt numQuads,
+                                     const dftfe::uInt nDims,
                                      const dftfe::uInt numCells,
                                      const ValueType  *copyFromVec,
                                      ValueType        *copyToVec);
@@ -78,9 +82,32 @@ namespace dftfe
       void
       reshapeToNonAffineLayoutHost(const dftfe::uInt numVecs,
                                    const dftfe::uInt numQuads,
+                                   const dftfe::uInt nDims,
                                    const dftfe::uInt numCells,
                                    const ValueType  *copyFromVec,
                                    ValueType        *copyToVec);
+
+      template <typename ValueType>
+      void
+      scaleQuadratureDataWithDiagonalJacobianDevice(
+        const dftfe::uInt  numberOfElements,
+        const dftfe::uInt  nDoFsPerCell,
+        const dftfe::uInt  nQuadsPerCell,
+        const ValueType   *inverseJacobiansEntries,
+        const ValueType   *gradientDataBlockCoeff,
+        ValueType         *gradientData,
+        const dftfe::uInt *cellIndices);
+
+      template <typename ValueType>
+      void
+      scaleQuadratureDataWithDiagonalJacobianHost(
+        const dftfe::uInt  numberOfElements,
+        const dftfe::uInt  nDoFsPerCell,
+        const dftfe::uInt  nQuadsPerCell,
+        const ValueType   *inverseJacobiansEntries,
+        const ValueType   *gradientDataBlockCoeff,
+        ValueType         *gradientData,
+        const dftfe::uInt *cellIndices);
 
     } // namespace FEBasisOperationsKernelsInternal
   }   // namespace basis

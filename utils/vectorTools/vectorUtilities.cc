@@ -140,19 +140,13 @@ namespace dftfe
           double>::MergeConflictBehavior::right_object_wins);
       constraintsHangingSer.close();
 
-      // create unitVectorsXYZ
-      std::vector<std::vector<double>> unitVectorsXYZ(3,
-                                                      std::vector<double>(3,
-                                                                          0.0));
-
       std::vector<dealii::Tensor<1, 3>> offsetVectors;
       // resize offset vectors
       offsetVectors.resize(3);
 
       for (dftfe::Int i = 0; i < 3; ++i)
         for (dftfe::Int j = 0; j < 3; ++j)
-          offsetVectors[i][j] =
-            unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
+          offsetVectors[i][j] = -domainBoundingVectors[i][j];
 
       std::vector<dealii::GridTools::PeriodicFacePair<
         typename dealii::DoFHandler<3>::cell_iterator>>
