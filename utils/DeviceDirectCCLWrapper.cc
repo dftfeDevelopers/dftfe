@@ -26,13 +26,6 @@
 #  include <DeviceKernelLauncherHelpers.h>
 #  include <DeviceAPICalls.h>
 #  include <Exceptions.h>
-#  if defined(DFTFE_WITH_CUDA_NCCL)
-#    include <nccl.h>
-#  elif defined(DFTFE_WITH_HIP_RCCL)
-#    include <rccl.h>
-#  elif defined(DFTFE_WITH_SYCL_ONECCL)
-#    include <oneapi/ccl.hpp>
-#  endif
 
 namespace dftfe
 {
@@ -68,20 +61,30 @@ namespace dftfe
 #  if defined(DFTFE_WITH_SYCL_ONECCL)
       if (!dcclCommInit && useDCCL)
         {
-          ccl::kvs::address_type kvs_addr;
+          ccl::kvs::address_type onecclIdAddr;
           if (myRank == 0)
             {
-              kvsPtr   = ccl::create_main_kvs();
-              kvs_addr = kvsPtr->get_address();
+              onecclIdPtr  = ccl::create_main_kvs();
+              onecclIdAddr = onecclIdPtr->get_address();
+              MPICHECK(MPI_Bcast(onecclIdAddr.data(),
+                                 onecclIdAddr.size(),
+                                 MPI_BYTE,
+                                 0,
+                                 d_mpiComm));
             }
-          MPICHECK(MPI_Bcast(
-            kvs_addr.data(), kvs_addr.size(), MPI_BYTE, 0, d_mpiComm));
-          if (myRank != 0)
+          else
             {
-              kvsPtr = ccl::create_kvs(kvs_addr);
+              MPICHECK(MPI_Bcast(onecclIdAddr.data(),
+                                 onecclIdAddr.size(),
+                                 MPI_BYTE,
+                                 0,
+                                 d_mpiComm));
+              onecclIdPtr = ccl::create_kvs(onecclIdAddr);
             }
-          commPtr = std::make_shared<ccl::communicator>(
-            ccl::create_communicator(totalRanks, myRank, kvsPtr));
+          onecclCommPtr = std::make_shared<ccl::communicator>(
+            ccl::create_communicator(totalRanks, myRank, onecclIdPtr));
+          d_deviceCCLCommStream = ccl::create_stream(
+            dftfe::utils::queueRegistry.at(d_deviceCommStream));
           dcclCommInit = true;
         }
 #  endif
@@ -107,11 +110,10 @@ namespace dftfe
 #  endif
 
 #  if defined(DFTFE_WITH_SYCL_ONECCL)
-      // For oneCCL, shared_ptr handles cleanup automatically
       if (dcclCommInit)
         {
-          commPtr.reset(); // optional, explicitly release communicator
-          kvsPtr.reset();  // optional, explicitly release KVS
+          onecclCommPtr.reset();
+          onecclIdPtr.reset();
         }
 #  endif
 
@@ -144,13 +146,13 @@ namespace dftfe
         {
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
-          CCLCHECK(ccl::allreduce((const void *)send,
-                                  (void *)recv,
-                                  size,
-                                  ccl::datatype::float32,
-                                  ccl::reduction::sum,
-                                  *commPtr,
-                                  devStream));
+          ONECCLCHECK(ccl::allreduce((const void *)send,
+                                     (void *)recv,
+                                     size,
+                                     ccl::datatype::float32,
+                                     ccl::reduction::sum,
+                                     *onecclCommPtr,
+                                     devStream));
         }
 #  endif
 
@@ -201,13 +203,13 @@ namespace dftfe
         {
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
-          CCLCHECK(ccl::allreduce((const void *)send,
-                                  (void *)recv,
-                                  size,
-                                  ccl::datatype::float64,
-                                  ccl::reduction::sum,
-                                  *commPtr,
-                                  devStream));
+          ONECCLCHECK(ccl::allreduce((const void *)send,
+                                     (void *)recv,
+                                     size,
+                                     ccl::datatype::float64,
+                                     ccl::reduction::sum,
+                                     *onecclCommPtr,
+                                     devStream));
         }
 #  endif
 
@@ -260,13 +262,13 @@ namespace dftfe
         {
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
-          CCLCHECK(ccl::allreduce((const void *)send,
-                                  (void *)recv,
-                                  size * 2,
-                                  ccl::datatype::float64,
-                                  ccl::reduction::sum,
-                                  *commPtr,
-                                  devStream));
+          ONECCLCHECK(ccl::allreduce((const void *)send,
+                                     (void *)recv,
+                                     size * 2,
+                                     ccl::datatype::float64,
+                                     ccl::reduction::sum,
+                                     *onecclCommPtr,
+                                     devStream));
         }
 #  endif
 
@@ -320,13 +322,13 @@ namespace dftfe
         {
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
-          CCLCHECK(ccl::allreduce((const void *)send,
-                                  (void *)recv,
-                                  size * 2,
-                                  ccl::datatype::float32,
-                                  ccl::reduction::sum,
-                                  *commPtr,
-                                  devStream));
+          ONECCLCHECK(ccl::allreduce((const void *)send,
+                                     (void *)recv,
+                                     size * 2,
+                                     ccl::datatype::float32,
+                                     ccl::reduction::sum,
+                                     *onecclCommPtr,
+                                     devStream));
         }
 #  endif
 
@@ -392,26 +394,26 @@ namespace dftfe
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
 
-          CCLCHECK(ccl::group_start());
+          ONECCLCHECK(ccl::group_start());
 
-          CCLCHECK(ccl::allreduce((const void *)send1,
-                                  (void *)recv1,
-                                  size1,
-                                  ccl::datatype::float64,
-                                  ccl::reduction::sum,
-                                  *commPtr,
-                                  devStream));
+          ONECCLCHECK(ccl::allreduce((const void *)send1,
+                                     (void *)recv1,
+                                     size1,
+                                     ccl::datatype::float64,
+                                     ccl::reduction::sum,
+                                     *onecclCommPtr,
+                                     devStream));
 
-          CCLCHECK(ccl::allreduce((const void *)send2,
-                                  (void *)recv2,
-                                  size2,
-                                  ccl::datatype::float32,
-                                  ccl::reduction::sum,
-                                  *commPtr,
-                                  devStream));
+          ONECCLCHECK(ccl::allreduce((const void *)send2,
+                                     (void *)recv2,
+                                     size2,
+                                     ccl::datatype::float32,
+                                     ccl::reduction::sum,
+                                     *onecclCommPtr,
+                                     devStream));
 
 
-          CCLCHECK(ccl::group_end());
+          ONECCLCHECK(ccl::group_end());
         }
 #  endif
 
@@ -494,24 +496,24 @@ namespace dftfe
           auto devStream =
             ccl::create_stream(dftfe::utils::queueRegistry.at(stream));
 
-          CCLCHECK(ccl::group_start());
+          ONECCLCHECK(ccl::group_start());
 
-          CCLCHECK(ccl::allreduce((const void *)send1,
-                                  (void *)recv1,
-                                  size1 * 2,
-                                  ccl::datatype::float64,
-                                  ccl::reduction::sum,
-                                  *commPtr,
-                                  devStream));
+          ONECCLCHECK(ccl::allreduce((const void *)send1,
+                                     (void *)recv1,
+                                     size1 * 2,
+                                     ccl::datatype::float64,
+                                     ccl::reduction::sum,
+                                     *onecclCommPtr,
+                                     devStream));
 
-          CCLCHECK(ccl::allreduce((const void *)send2,
-                                  (void *)recv2,
-                                  size2 * 2,
-                                  ccl::datatype::float32,
-                                  ccl::reduction::sum,
-                                  *commPtr,
-                                  devStream));
-          CCLCHECK(ccl::group_end());
+          ONECCLCHECK(ccl::allreduce((const void *)send2,
+                                     (void *)recv2,
+                                     size2 * 2,
+                                     ccl::datatype::float32,
+                                     ccl::reduction::sum,
+                                     *onecclCommPtr,
+                                     devStream));
+          ONECCLCHECK(ccl::group_end());
         }
 #  endif
 

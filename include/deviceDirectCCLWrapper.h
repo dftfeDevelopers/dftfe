@@ -18,12 +18,10 @@
 #if defined(DFTFE_WITH_DEVICE)
 #  ifndef deviceDirectCCLWrapper_h
 #    define deviceDirectCCLWrapper_h
-
 #    include <complex>
 #    include <mpi.h>
 #    include <TypeConfig.h>
 #    include <DeviceTypeConfig.h>
-
 #    if defined(DFTFE_WITH_CUDA_NCCL)
 #      include <nccl.h>
 #      include <DeviceTypeConfig.h>
@@ -56,7 +54,7 @@ namespace dftfe
 #    endif
 
 #    if defined(DFTFE_WITH_SYCL_ONECCL)
-#      define CCLCHECK(cmd)                                 \
+#      define ONECCLCHECK(cmd)                              \
         do                                                  \
           {                                                 \
             try                                             \
@@ -143,8 +141,9 @@ namespace dftfe
 #    endif
 
 #    if defined(DFTFE_WITH_SYCL_ONECCL)
-      inline static std::shared_ptr<ccl::kvs>          kvsPtr;
-      inline static std::shared_ptr<ccl::communicator> commPtr;
+      inline static std::shared_ptr<ccl::kvs>          onecclIdPtr;
+      inline static std::shared_ptr<ccl::communicator> onecclCommPtr;
+      inline static ccl::stream d_deviceCCLCommStream = ccl::create_stream();
 #    endif
 
       inline static bool                         dcclCommInit;

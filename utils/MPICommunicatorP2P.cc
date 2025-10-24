@@ -18,13 +18,13 @@
 /*
  * @author Sambit Das.
  */
-
 #include <MPICommunicatorP2P.h>
 #include <MPICommunicatorP2PKernels.h>
 #include <MPITags.h>
 #include <Exceptions.h>
 #include <DeviceAPICalls.h>
 #include <deviceDirectCCLWrapper.h>
+
 namespace dftfe
 {
   namespace utils
@@ -46,7 +46,8 @@ namespace dftfe
         if (memorySpace == MemorySpace::DEVICE)
           d_commProtocol = communicationProtocol::mpiDevice;
 #endif
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL) || \
+  defined(DFTFE_WITH_SYCL_ONECCL)
         if (memorySpace == MemorySpace::DEVICE &&
             dftfe::utils::DeviceCCLWrapper::dcclCommInit)
           d_commProtocol = communicationProtocol::nccl;
@@ -444,6 +445,64 @@ namespace dftfe
                         d_blockSize;
                     }
                   NCCLCHECK(ncclGroupEnd());
+                }
+#  endif
+#  if defined(DFTFE_WITH_SYCL_ONECCL)
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              if (d_commProtocol == communicationProtocol::nccl)
+                {
+                  ONECCLCHECK(ccl::group_start());
+                  for (dftfe::uInt i = 0;
+                       i < (d_mpiPatternP2P->getTargetProcIds()).size();
+                       ++i)
+                    {
+                      if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                            .data()[i] > 0)
+                        ONECCLCHECK(ccl::send(
+                          reinterpret_cast<float *>(sendArrayStartPtr),
+                          d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                              .data()[i] *
+                            d_blockSize * (sizeof(ValueType) / 4),
+                          ccl::datatype::float32,
+                          d_mpiPatternP2P->getTargetProcIds().data()[i],
+                          *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
+                          dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
+
+                      sendArrayStartPtr +=
+                        d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                          .data()[i] *
+                        d_blockSize;
+                    }
+                  for (dftfe::uInt i = 0;
+                       i < (d_mpiPatternP2P->getGhostProcIds()).size();
+                       ++i)
+                    {
+                      if ((d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                             .data()[2 * i + 1] -
+                           d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                             .data()[2 * i]) > 0)
+                        ONECCLCHECK(ccl::recv(
+                          reinterpret_cast<float *>(recvArrayStartPtr),
+                          (d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                             .data()[2 * i + 1] -
+                           d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                             .data()[2 * i]) *
+                            d_blockSize * (sizeof(ValueType) / 4),
+                          ccl::datatype::float32,
+                          d_mpiPatternP2P->getGhostProcIds().data()[i],
+                          *dftfe::utils::DeviceCCLWrapper::onecclCommPtr,
+                          dftfe::utils::DeviceCCLWrapper::
+                            d_deviceCCLCommStream));
+
+                      recvArrayStartPtr +=
+                        (d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                           .data()[2 * i + 1] -
+                         d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                           .data()[2 * i]) *
+                        d_blockSize;
+                    }
+                  ONECCLCHECK(ccl::group_end());
                 }
 #  endif
 #endif
@@ -866,7 +925,8 @@ namespace dftfe
         MemoryStorage<ValueType, memorySpace> &dataArray)
       {
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL) || \
+  defined(DFTFE_WITH_SYCL_ONECCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::nccl)
             dftfe::utils::deviceStreamSynchronize(
@@ -1533,7 +1593,8 @@ namespace dftfe
         MemoryStorage<ValueType, memorySpace> &dataArray)
       {
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL) || \
+  defined(DFTFE_WITH_SYCL_ONECCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::nccl)
             dftfe::utils::deviceStreamSynchronize(
@@ -2054,7 +2115,8 @@ namespace dftfe
           MemoryStorage<ValueType, memorySpace> &dataArray)
       {
         // wait for all send and recv requests to be completed
-#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+#if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL) || \
+  defined(DFTFE_WITH_SYCL_ONECCL)
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::nccl)
             dftfe::utils::deviceStreamSynchronize(
