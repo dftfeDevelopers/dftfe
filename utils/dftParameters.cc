@@ -2222,7 +2222,6 @@ namespace dftfe
     useELPADeviceKernel = false;
 #endif
 #if defined(DFTFE_WITH_DEVICE_LANG_SYCL)
-    useDCCL             = false;
     useELPADeviceKernel = false;
 #endif
 
@@ -2235,10 +2234,11 @@ namespace dftfe
       }
 
 #if !defined(DFTFE_WITH_CUDA_NCCL) && !defined(DFTFE_WITH_HIP_RCCL) && \
-  !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
+  !defined(DFTFE_WITH_SYCL_ONECCL) && !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
     useDeviceDirectAllReduce = false;
 #endif
-#if !defined(DFTFE_WITH_CUDA_NCCL) && !defined(DFTFE_WITH_HIP_RCCL)
+#if !defined(DFTFE_WITH_CUDA_NCCL) && !defined(DFTFE_WITH_HIP_RCCL) && \
+  !defined(DFTFE_WITH_SYCL_ONECCL)
     useDCCL = false;
 #endif
 #if !defined(DFTFE_WITH_DEVICE_AWARE_MPI)
