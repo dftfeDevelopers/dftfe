@@ -225,7 +225,25 @@ namespace dftfe
           "RESTART SP FROM NO SP",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is used in conjuction with LOAD QUAD DATA or LOAD RHO DATA. Default false.");
+          "[Standard] Enables ground-state solve for SPIN POLARIZED case reading the SPIN UNPOLARIZED density from the checkpoint files, and use the TOTAL MAGNETIZATION to compute the spin up and spin down densities. This option is used in conjuction with LOAD QUAD DATA. Default false.");
+
+        prm.declare_entry(
+          "RESTART NONCOLLINEAR FROM COLLINEAR",
+          "false",
+          dealii::Patterns::Bool(),
+          "[Standard] Enables ground-state solve for NONCOLLINEAR case reading the COLLINEAR SPIN POLARIZED charge and magnetization densities from the checkpoint files, and use the MAG PHI and MAG THETA variable to rotate the collinear magentization density. This option is used in conjuction with LOAD QUAD DATA. Default false.");
+
+        prm.declare_entry(
+          "MAG PHI",
+          "0",
+          dealii::Patterns::Double(0),
+          "[Standard] The angle (in degrees) with z-axis for rotating the COLLINEAR SPIN POLARIZED magnetization density when using RESTART NONCOLLINEAR FROM COLLINEAR. Default 0");
+
+        prm.declare_entry(
+          "MAG THETA",
+          "0",
+          dealii::Patterns::Double(0),
+          "[Standard] The angle (in degrees) with between the projection of the magnetization density onto the xy plane and the x-axis for rotating the COLLINEAR SPIN POLARIZED magnetization density when using RESTART NONCOLLINEAR FROM COLLINEAR. Default 0");
       }
       prm.leave_subsection();
 
@@ -1567,6 +1585,10 @@ namespace dftfe
       saveQuadData          = prm.get_bool("SAVE QUAD DATA");
       loadQuadData          = prm.get_bool("LOAD QUAD DATA");
       restartSpinFromNoSpin = prm.get_bool("RESTART SP FROM NO SP");
+      restartNonCollinartFromCollinear =
+        prm.get_bool("RESTART NONCOLLINEAR FROM COLLINEAR");
+      magPhi   = prm.get_double("MAG PHI");
+      magTheta = prm.get_double("MAG THETA");
       if (solverMode == "NEB")
         saveQuadData = true;
     }

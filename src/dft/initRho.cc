@@ -324,30 +324,40 @@ namespace dftfe
                             if (atomLocations[chargeId].size() == 8)
                               {
                                 magZAtomFactor =
-                                  std::cos(atomLocations[chargeId][6]) *
+                                  std::cos(M_PI / 180.0 *
+                                           atomLocations[chargeId][6]) *
                                   atomLocations[chargeId][5];
                                 magYAtomFactor =
-                                  std::sin(atomLocations[chargeId][6]) *
-                                  std::sin(atomLocations[chargeId][7]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[chargeId][6]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[chargeId][7]) *
                                   atomLocations[chargeId][5];
                                 magXAtomFactor =
-                                  std::sin(atomLocations[chargeId][6]) *
-                                  std::cos(atomLocations[chargeId][7]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[chargeId][6]) *
+                                  std::cos(M_PI / 180.0 *
+                                           atomLocations[chargeId][7]) *
                                   atomLocations[chargeId][5];
                               }
                             else if (atomLocations[chargeId].size() == 9)
                               {
                                 rhoAtomFactor = atomLocations[chargeId][8];
                                 magZAtomFactor =
-                                  std::cos(atomLocations[chargeId][6]) *
+                                  std::cos(M_PI / 180.0 *
+                                           atomLocations[chargeId][6]) *
                                   atomLocations[chargeId][5];
                                 magYAtomFactor =
-                                  std::sin(atomLocations[chargeId][6]) *
-                                  std::sin(atomLocations[chargeId][7]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[chargeId][6]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[chargeId][7]) *
                                   atomLocations[chargeId][5];
                                 magXAtomFactor =
-                                  std::sin(atomLocations[chargeId][6]) *
-                                  std::cos(atomLocations[chargeId][7]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[chargeId][6]) *
+                                  std::cos(M_PI / 180.0 *
+                                           atomLocations[chargeId][7]) *
                                   atomLocations[chargeId][5];
                               }
                           }
@@ -575,26 +585,32 @@ namespace dftfe
                       {
                         if (atomLocations[n].size() == 8)
                           {
-                            magZAtomFactor = std::cos(atomLocations[n][6]) *
-                                             atomLocations[n][5];
-                            magYAtomFactor = std::sin(atomLocations[n][6]) *
-                                             std::sin(atomLocations[n][7]) *
-                                             atomLocations[n][5];
-                            magXAtomFactor = std::sin(atomLocations[n][6]) *
-                                             std::cos(atomLocations[n][7]) *
-                                             atomLocations[n][5];
+                            magZAtomFactor =
+                              std::cos(M_PI / 180.0 * atomLocations[n][6]) *
+                              atomLocations[n][5];
+                            magYAtomFactor =
+                              std::sin(M_PI / 180.0 * atomLocations[n][6]) *
+                              std::sin(M_PI / 180.0 * atomLocations[n][7]) *
+                              atomLocations[n][5];
+                            magXAtomFactor =
+                              std::sin(M_PI / 180.0 * atomLocations[n][6]) *
+                              std::cos(M_PI / 180.0 * atomLocations[n][7]) *
+                              atomLocations[n][5];
                           }
                         else if (atomLocations[n].size() == 9)
                           {
-                            rhoAtomFactor  = atomLocations[n][8];
-                            magZAtomFactor = std::cos(atomLocations[n][6]) *
-                                             atomLocations[n][5];
-                            magYAtomFactor = std::sin(atomLocations[n][6]) *
-                                             std::sin(atomLocations[n][7]) *
-                                             atomLocations[n][5];
-                            magXAtomFactor = std::sin(atomLocations[n][6]) *
-                                             std::cos(atomLocations[n][7]) *
-                                             atomLocations[n][5];
+                            rhoAtomFactor = atomLocations[n][8];
+                            magZAtomFactor =
+                              std::cos(M_PI / 180.0 * atomLocations[n][6]) *
+                              atomLocations[n][5];
+                            magYAtomFactor =
+                              std::sin(M_PI / 180.0 * atomLocations[n][6]) *
+                              std::sin(M_PI / 180.0 * atomLocations[n][7]) *
+                              atomLocations[n][5];
+                            magXAtomFactor =
+                              std::sin(M_PI / 180.0 * atomLocations[n][6]) *
+                              std::cos(M_PI / 180.0 * atomLocations[n][7]) *
+                              atomLocations[n][5];
                           }
                       }
                     else
@@ -659,30 +675,40 @@ namespace dftfe
                         if (atomLocations[masterAtomId].size() == 8)
                           {
                             magZAtomFactor =
-                              std::cos(atomLocations[masterAtomId][6]) *
+                              std::cos(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][6]) *
                               atomLocations[masterAtomId][5];
                             magYAtomFactor =
-                              std::sin(atomLocations[masterAtomId][6]) *
-                              std::sin(atomLocations[masterAtomId][7]) *
+                              std::sin(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][6]) *
+                              std::sin(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][7]) *
                               atomLocations[masterAtomId][5];
                             magXAtomFactor =
-                              std::sin(atomLocations[masterAtomId][6]) *
-                              std::cos(atomLocations[masterAtomId][7]) *
+                              std::sin(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][6]) *
+                              std::cos(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][7]) *
                               atomLocations[masterAtomId][5];
                           }
                         else if (atomLocations[masterAtomId].size() == 9)
                           {
                             rhoAtomFactor = atomLocations[masterAtomId][8];
                             magZAtomFactor =
-                              std::cos(atomLocations[masterAtomId][6]) *
+                              std::cos(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][6]) *
                               atomLocations[masterAtomId][5];
                             magYAtomFactor =
-                              std::sin(atomLocations[masterAtomId][6]) *
-                              std::sin(atomLocations[masterAtomId][7]) *
+                              std::sin(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][6]) *
+                              std::sin(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][7]) *
                               atomLocations[masterAtomId][5];
                             magXAtomFactor =
-                              std::sin(atomLocations[masterAtomId][6]) *
-                              std::cos(atomLocations[masterAtomId][7]) *
+                              std::sin(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][6]) *
+                              std::cos(M_PI / 180.0 *
+                                       atomLocations[masterAtomId][7]) *
                               atomLocations[masterAtomId][5];
                           }
                       }
@@ -813,26 +839,32 @@ namespace dftfe
                           {
                             if (atomLocations[n].size() == 8)
                               {
-                                magZAtomFactor = std::cos(atomLocations[n][6]) *
-                                                 atomLocations[n][5];
-                                magYAtomFactor = std::sin(atomLocations[n][6]) *
-                                                 std::sin(atomLocations[n][7]) *
-                                                 atomLocations[n][5];
-                                magXAtomFactor = std::sin(atomLocations[n][6]) *
-                                                 std::cos(atomLocations[n][7]) *
-                                                 atomLocations[n][5];
+                                magZAtomFactor =
+                                  std::cos(M_PI / 180.0 * atomLocations[n][6]) *
+                                  atomLocations[n][5];
+                                magYAtomFactor =
+                                  std::sin(M_PI / 180.0 * atomLocations[n][6]) *
+                                  std::sin(M_PI / 180.0 * atomLocations[n][7]) *
+                                  atomLocations[n][5];
+                                magXAtomFactor =
+                                  std::sin(M_PI / 180.0 * atomLocations[n][6]) *
+                                  std::cos(M_PI / 180.0 * atomLocations[n][7]) *
+                                  atomLocations[n][5];
                               }
                             else if (atomLocations[n].size() == 9)
                               {
-                                rhoAtomFactor  = atomLocations[n][8];
-                                magZAtomFactor = std::cos(atomLocations[n][6]) *
-                                                 atomLocations[n][5];
-                                magYAtomFactor = std::sin(atomLocations[n][6]) *
-                                                 std::sin(atomLocations[n][7]) *
-                                                 atomLocations[n][5];
-                                magXAtomFactor = std::sin(atomLocations[n][6]) *
-                                                 std::cos(atomLocations[n][7]) *
-                                                 atomLocations[n][5];
+                                rhoAtomFactor = atomLocations[n][8];
+                                magZAtomFactor =
+                                  std::cos(M_PI / 180.0 * atomLocations[n][6]) *
+                                  atomLocations[n][5];
+                                magYAtomFactor =
+                                  std::sin(M_PI / 180.0 * atomLocations[n][6]) *
+                                  std::sin(M_PI / 180.0 * atomLocations[n][7]) *
+                                  atomLocations[n][5];
+                                magXAtomFactor =
+                                  std::sin(M_PI / 180.0 * atomLocations[n][6]) *
+                                  std::cos(M_PI / 180.0 * atomLocations[n][7]) *
+                                  atomLocations[n][5];
                               }
                           }
                         else
@@ -937,30 +969,40 @@ namespace dftfe
                             if (atomLocations[masterAtomId].size() == 8)
                               {
                                 magZAtomFactor =
-                                  std::cos(atomLocations[masterAtomId][6]) *
+                                  std::cos(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][6]) *
                                   atomLocations[masterAtomId][5];
                                 magYAtomFactor =
-                                  std::sin(atomLocations[masterAtomId][6]) *
-                                  std::sin(atomLocations[masterAtomId][7]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][6]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][7]) *
                                   atomLocations[masterAtomId][5];
                                 magXAtomFactor =
-                                  std::sin(atomLocations[masterAtomId][6]) *
-                                  std::cos(atomLocations[masterAtomId][7]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][6]) *
+                                  std::cos(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][7]) *
                                   atomLocations[masterAtomId][5];
                               }
                             else if (atomLocations[masterAtomId].size() == 9)
                               {
                                 rhoAtomFactor = atomLocations[masterAtomId][8];
                                 magZAtomFactor =
-                                  std::cos(atomLocations[masterAtomId][6]) *
+                                  std::cos(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][6]) *
                                   atomLocations[masterAtomId][5];
                                 magYAtomFactor =
-                                  std::sin(atomLocations[masterAtomId][6]) *
-                                  std::sin(atomLocations[masterAtomId][7]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][6]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][7]) *
                                   atomLocations[masterAtomId][5];
                                 magXAtomFactor =
-                                  std::sin(atomLocations[masterAtomId][6]) *
-                                  std::cos(atomLocations[masterAtomId][7]) *
+                                  std::sin(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][6]) *
+                                  std::cos(M_PI / 180.0 *
+                                           atomLocations[masterAtomId][7]) *
                                   atomLocations[masterAtomId][5];
                               }
                           }
@@ -1857,7 +1899,8 @@ namespace dftfe
                                           "gradMAG_X"};
     for (dftfe::Int i = 0; i < d_densityInQuadValues.size(); i++)
       {
-        if (!(i > 0 && d_dftParamsPtr->restartSpinFromNoSpin))
+        if (!(i > 0 && d_dftParamsPtr->restartSpinFromNoSpin) &&
+            !(i > 1 && d_dftParamsPtr->restartNonCollinartFromCollinear))
           loadQuadratureData(d_basisOperationsPtrHost,
                              d_densityQuadratureId,
                              d_densityInQuadValues[i],
@@ -1868,17 +1911,41 @@ namespace dftfe
                              mpi_communicator,
                              interpoolcomm,
                              interBandGroupComm);
-        else
+        if (i == 0 && d_dftParamsPtr->restartSpinFromNoSpin)
           {
             for (dftfe::uInt index = 0; index < d_densityInQuadValues[i].size();
                  index++)
-              d_densityInQuadValues[i][index] =
+              d_densityInQuadValues[1][index] =
                 d_dftParamsPtr->tot_magnetization *
                 d_densityInQuadValues[0][index];
           }
+        if (i == 1 && d_dftParamsPtr->restartNonCollinartFromCollinear)
+          {
+            const double magZFactor =
+              std::cos(M_PI / 180.0 * d_dftParamsPtr->magPhi);
+            const double magYFactor =
+              std::sin(M_PI / 180.0 * d_dftParamsPtr->magPhi) *
+              std::sin(M_PI / 180.0 * d_dftParamsPtr->magTheta);
+            const double magXFactor =
+              std::sin(M_PI / 180.0 * d_dftParamsPtr->magPhi) *
+              std::cos(M_PI / 180.0 * d_dftParamsPtr->magTheta);
+            for (dftfe::uInt index = 0; index < d_densityInQuadValues[1].size();
+                 index++)
+              d_densityInQuadValues[3][index] =
+                d_densityInQuadValues[1][index] * magXFactor;
+            for (dftfe::uInt index = 0; index < d_densityInQuadValues[1].size();
+                 index++)
+              d_densityInQuadValues[2][index] =
+                d_densityInQuadValues[1][index] * magYFactor;
+            for (dftfe::uInt index = 0; index < d_densityInQuadValues[1].size();
+                 index++)
+              d_densityInQuadValues[1][index] =
+                d_densityInQuadValues[1][index] * magZFactor;
+          }
         if (isGradDensityDataDependent)
           {
-            if (!(i > 0 && d_dftParamsPtr->restartSpinFromNoSpin))
+            if (!(i > 0 && d_dftParamsPtr->restartSpinFromNoSpin) &&
+                !(i > 1 && d_dftParamsPtr->restartNonCollinartFromCollinear))
               loadQuadratureData(d_basisOperationsPtrHost,
                                  d_densityQuadratureId,
                                  d_gradDensityInQuadValues[i],
@@ -1889,14 +1956,40 @@ namespace dftfe
                                  mpi_communicator,
                                  interpoolcomm,
                                  interBandGroupComm);
-            else
+            if (i == 0 && d_dftParamsPtr->restartSpinFromNoSpin)
               {
                 for (dftfe::uInt index = 0;
                      index < d_gradDensityInQuadValues[i].size();
                      index++)
-                  d_gradDensityInQuadValues[i][index] =
+                  d_gradDensityInQuadValues[1][index] =
                     d_dftParamsPtr->tot_magnetization *
                     d_gradDensityInQuadValues[0][index];
+              }
+            if (i == 1 && d_dftParamsPtr->restartNonCollinartFromCollinear)
+              {
+                const double magZFactor =
+                  std::cos(M_PI / 180.0 * d_dftParamsPtr->magPhi);
+                const double magYFactor =
+                  std::sin(M_PI / 180.0 * d_dftParamsPtr->magPhi) *
+                  std::sin(M_PI / 180.0 * d_dftParamsPtr->magTheta);
+                const double magXFactor =
+                  std::sin(M_PI / 180.0 * d_dftParamsPtr->magPhi) *
+                  std::cos(M_PI / 180.0 * d_dftParamsPtr->magTheta);
+                for (dftfe::uInt index = 0;
+                     index < d_gradDensityInQuadValues[1].size();
+                     index++)
+                  d_gradDensityInQuadValues[3][index] =
+                    d_gradDensityInQuadValues[1][index] * magXFactor;
+                for (dftfe::uInt index = 0;
+                     index < d_gradDensityInQuadValues[1].size();
+                     index++)
+                  d_gradDensityInQuadValues[2][index] =
+                    d_gradDensityInQuadValues[1][index] * magYFactor;
+                for (dftfe::uInt index = 0;
+                     index < d_gradDensityInQuadValues[1].size();
+                     index++)
+                  d_gradDensityInQuadValues[1][index] =
+                    d_gradDensityInQuadValues[1][index] * magZFactor;
               }
           }
       }
@@ -1908,7 +2001,8 @@ namespace dftfe
       {
         for (dftfe::Int i = 0; i < d_tauInQuadValues.size(); i++)
           {
-            if (!(i > 1 && d_dftParamsPtr->restartSpinFromNoSpin))
+            if (!(i > 0 && d_dftParamsPtr->restartSpinFromNoSpin) &&
+                !(i > 1 && d_dftParamsPtr->restartNonCollinartFromCollinear))
               loadQuadratureData(d_basisOperationsPtrHost,
                                  d_densityQuadratureId,
                                  d_tauInQuadValues[i],
@@ -1919,13 +2013,36 @@ namespace dftfe
                                  mpi_communicator,
                                  interpoolcomm,
                                  interBandGroupComm);
-            else
+            if (i == 0 && d_dftParamsPtr->restartSpinFromNoSpin)
               {
                 for (dftfe::uInt index = 0; index < d_tauInQuadValues[i].size();
                      index++)
                   d_tauInQuadValues[i][index] =
                     d_dftParamsPtr->tot_magnetization *
                     d_tauInQuadValues[0][index];
+              }
+            if (i == 1 && d_dftParamsPtr->restartNonCollinartFromCollinear)
+              {
+                const double magZFactor =
+                  std::cos(M_PI / 180.0 * d_dftParamsPtr->magPhi);
+                const double magYFactor =
+                  std::sin(M_PI / 180.0 * d_dftParamsPtr->magPhi) *
+                  std::sin(M_PI / 180.0 * d_dftParamsPtr->magTheta);
+                const double magXFactor =
+                  std::sin(M_PI / 180.0 * d_dftParamsPtr->magPhi) *
+                  std::cos(M_PI / 180.0 * d_dftParamsPtr->magTheta);
+                for (dftfe::uInt index = 0; index < d_tauInQuadValues[1].size();
+                     index++)
+                  d_tauInQuadValues[3][index] =
+                    d_tauInQuadValues[1][index] * magXFactor;
+                for (dftfe::uInt index = 0; index < d_tauInQuadValues[1].size();
+                     index++)
+                  d_tauInQuadValues[2][index] =
+                    d_tauInQuadValues[1][index] * magYFactor;
+                for (dftfe::uInt index = 0; index < d_tauInQuadValues[1].size();
+                     index++)
+                  d_tauInQuadValues[1][index] =
+                    d_tauInQuadValues[1][index] * magZFactor;
               }
           }
       }

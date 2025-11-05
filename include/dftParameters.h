@@ -109,8 +109,9 @@ namespace dftfe
     bool        saveQuadData;
     bool        loadQuadData;
     bool        restartSpinFromNoSpin;
-
-    bool reproducible_output;
+    bool        restartNonCollinartFromCollinear;
+    double      magPhi, magTheta;
+    bool        reproducible_output;
 
     bool writeWfcSolutionFields;
     bool printKE;

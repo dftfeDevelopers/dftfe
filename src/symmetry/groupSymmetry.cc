@@ -151,15 +151,20 @@ namespace dftfe
                   {
                     tensors[3 * iAtom + 0] =
                       atomLocationsFractional[iAtom][5] *
-                      std::sin(atomLocationsFractional[iAtom][6]) *
-                      std::cos(atomLocationsFractional[iAtom][7]);
+                      std::sin(M_PI / 180.0 *
+                               atomLocationsFractional[iAtom][6]) *
+                      std::cos(M_PI / 180.0 *
+                               atomLocationsFractional[iAtom][7]);
                     tensors[3 * iAtom + 1] =
                       atomLocationsFractional[iAtom][5] *
-                      std::sin(atomLocationsFractional[iAtom][6]) *
-                      std::sin(atomLocationsFractional[iAtom][7]);
+                      std::sin(M_PI / 180.0 *
+                               atomLocationsFractional[iAtom][6]) *
+                      std::sin(M_PI / 180.0 *
+                               atomLocationsFractional[iAtom][7]);
                     tensors[3 * iAtom + 2] =
                       atomLocationsFractional[iAtom][5] *
-                      std::cos(atomLocationsFractional[iAtom][6]);
+                      std::cos(M_PI / 180.0 *
+                               atomLocationsFractional[iAtom][6]);
                   }
                 else
                   {
