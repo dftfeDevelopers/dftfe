@@ -344,6 +344,14 @@ namespace dftfe
     const bool                                           computeForce,
     const bool                                           computeStress)
   {
+    dealii::TimerOutput computingTimerStandard(
+      d_mpiCommDomain,
+      pcout,
+      d_dftParams.reproducible_output || d_dftParams.verbosity < 2 ?
+        dealii::TimerOutput::never :
+        dealii::TimerOutput::every_call_and_summary,
+      dealii::TimerOutput::wall_times);
+
     d_dofHandlerForce.distribute_dofs(FEForce);
     if (!floatingNuclearCharges)
       {
@@ -419,6 +427,8 @@ namespace dftfe
           }
       }
 
+    computingTimerStandard.enter_subsection(
+      "Non-local Pseudopotenital contributuion");
     if (d_dftParams.isPseudopotential)
       {
         const dftfe::uInt numSpinComponents =
@@ -465,9 +475,13 @@ namespace dftfe
             computeForce,
             computeStress);
       }
+    computingTimerStandard.leave_subsection(
+      "Non-local Pseudopotenital contributuion");
     if (d_excManagerPtr->getExcSSDFunctionalObj()->getExcFamilyType() ==
         ExcFamilyType::DFTPlusU)
       {
+        computingTimerStandard.enter_subsection(
+          "Non-local Hubbard contributuion");
         std::shared_ptr<ExcDFTPlusU<dataTypes::number, memorySpace>>
           excHubbPtr = std::dynamic_pointer_cast<
             ExcDFTPlusU<dataTypes::number, memorySpace>>(
@@ -511,18 +525,28 @@ namespace dftfe
             floatingNuclearCharges,
             computeForce,
             computeStress);
+        computingTimerStandard.leave_subsection(
+          "Non-local Hubbard contributuion");
       }
     if (!floatingNuclearCharges || computeStress)
-      computeWfcContribLocal(numEigenValues,
-                             kPointCoords,
-                             kPointWeights,
-                             eigenVectors,
-                             eigenValues,
-                             partialOccupancies,
-                             floatingNuclearCharges,
-                             auxDensityXCOutRepresentationPtr,
-                             computeForce,
-                             computeStress);
+      {
+        computingTimerStandard.enter_subsection(
+          "Local wavefunction contributuion");
+        computeWfcContribLocal(numEigenValues,
+                               kPointCoords,
+                               kPointWeights,
+                               eigenVectors,
+                               eigenValues,
+                               partialOccupancies,
+                               floatingNuclearCharges,
+                               auxDensityXCOutRepresentationPtr,
+                               computeForce,
+                               computeStress);
+        computingTimerStandard.leave_subsection(
+          "Local wavefunction contributuion");
+      }
+    computingTimerStandard.enter_subsection(
+      "exchange-correlation contributuion");
     computeXCContribAll(atomLocations,
                         imageIds,
                         imagePositions,
@@ -537,6 +561,9 @@ namespace dftfe
                         floatingNuclearCharges,
                         computeForce,
                         computeStress);
+    computingTimerStandard.leave_subsection(
+      "exchange-correlation contributuion");
+    computingTimerStandard.enter_subsection("setup vself bins");
     createBinObjectsForce(phiExtDofHandlerIndexElectro,
                           dofHandlerRhoNodal,
                           vselfBinsManager,
@@ -546,42 +573,55 @@ namespace dftfe
                           d_AtomIdBinIdLocalDofHandlerElectro,
                           d_cellFacesVselfBallSurfacesDofHandlerElectro,
                           d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
+    computingTimerStandard.leave_subsection("setup vself bins");
     if (d_dftParams.isPseudopotential || d_dftParams.smearedNuclearCharges)
-      computeLPSPContribAll(atomLocations,
-                            imageIds,
-                            imageCharges,
-                            imagePositions,
-                            rhoOutNodalValues,
-                            rhoTotalOutValuesLpsp,
-                            gradRhoTotalOutValuesLpsp,
-                            pseudoVLocValues,
-                            pseudoVLocAtoms,
-                            dofHandlerRhoNodal,
-                            vselfBinsManager,
-                            vselfFieldGateauxDerStrainFDBins,
-                            smearedChargeWidths,
-                            smearedChargeScaling,
-                            floatingNuclearCharges,
-                            computeForce,
-                            computeStress);
+      {
+        computingTimerStandard.enter_subsection(
+          "Local Pseudopotential contribution");
+        computeLPSPContribAll(atomLocations,
+                              imageIds,
+                              imageCharges,
+                              imagePositions,
+                              rhoOutNodalValues,
+                              rhoTotalOutValuesLpsp,
+                              gradRhoTotalOutValuesLpsp,
+                              pseudoVLocValues,
+                              pseudoVLocAtoms,
+                              dofHandlerRhoNodal,
+                              vselfBinsManager,
+                              vselfFieldGateauxDerStrainFDBins,
+                              smearedChargeWidths,
+                              smearedChargeScaling,
+                              floatingNuclearCharges,
+                              computeForce,
+                              computeStress);
+        computingTimerStandard.leave_subsection(
+          "Local Pseudopotential contribution");
+      }
     if (d_dftParams.smearedNuclearCharges)
-      computeSmearedContribAll(atomLocations,
-                               imagePositions,
-                               vselfBinsManager,
-                               binsStartDofHandlerIndexElectro,
-                               phiTotRhoOutValues,
-                               bQuadAtomIdsAllAtoms,
-                               bQuadAtomIdsAllAtomsImages,
-                               bQuadValuesAllAtoms,
-                               floatingNuclearCharges,
-                               computeForce,
-                               computeStress);
+      {
+        computingTimerStandard.enter_subsection("Smeared charge contribution");
+        computeSmearedContribAll(atomLocations,
+                                 imagePositions,
+                                 vselfBinsManager,
+                                 binsStartDofHandlerIndexElectro,
+                                 phiTotRhoOutValues,
+                                 bQuadAtomIdsAllAtoms,
+                                 bQuadAtomIdsAllAtomsImages,
+                                 bQuadValuesAllAtoms,
+                                 floatingNuclearCharges,
+                                 computeForce,
+                                 computeStress);
+        computingTimerStandard.leave_subsection("Smeared charge contribution");
+      }
+    computingTimerStandard.enter_subsection("Electro Eshelby contribution");
     computeElectroContribEshelby(phiTotRhoOutValues,
                                  densityOutValuesSpinPolarized[0],
                                  floatingNuclearCharges,
                                  computeForce,
                                  computeStress);
-    /// Eqn 32 full
+    computingTimerStandard.leave_subsection("Electro Eshelby contribution");
+    computingTimerStandard.enter_subsection("ESelf Eshelby contribution");
     computeESelfContribEshelby(atomLocations,
                                imageIds,
                                imageCharges,
@@ -590,6 +630,7 @@ namespace dftfe
                                floatingNuclearCharges,
                                computeForce,
                                computeStress);
+    computingTimerStandard.leave_subsection("ESelf Eshelby contribution");
     if (!floatingNuclearCharges && computeForce)
       {
         d_configForceContribsLinFE.compress(dealii::VectorOperation::add);
