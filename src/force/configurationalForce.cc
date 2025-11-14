@@ -243,14 +243,14 @@ namespace dftfe
     if (!floatingNuclearCharges)
       {
         d_locally_owned_dofsForce = d_dofHandlerForce.locally_owned_dofs();
-        dealii::IndexSet locally_relevant_dofsForce =
-          dealii::DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce);
-        d_configForceContribsLinFE.reinit(d_locally_owned_dofsForce,
-                                          locally_relevant_dofsForce,
-                                          d_mpiCommDomain);
-        d_configForceContribsWfcLinFE.reinit(d_locally_owned_dofsForce,
-                                             locally_relevant_dofsForce,
-                                             d_mpiCommDomain);
+        d_configForceContribsLinFE.reinit(
+          d_locally_owned_dofsForce,
+          d_affineConstraintsForce.get_local_lines(),
+          d_mpiCommDomain);
+        d_configForceContribsWfcLinFE.reinit(
+          d_locally_owned_dofsForce,
+          d_affineConstraintsForce.get_local_lines(),
+          d_mpiCommDomain);
       }
     d_forceTotal.clear();
     d_stressTotal.clear();
@@ -505,6 +505,15 @@ namespace dftfe
 
         if (d_dftParams.useSymm)
           groupSymmetryPtr->symmetrizeForce(d_forceTotal);
+        std::vector<double> netForce(3, 0.0);
+        for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
+          for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+            netForce[iDim] += d_forceTotal[iAtom * 3 + iDim];
+        for (dftfe::uInt iAtom = 0; iAtom < d_dftParams.natoms; iAtom++)
+          for (dftfe::uInt iDim = 0; iDim < 3; iDim++)
+            d_forceTotal[iAtom * 3 + iDim] -=
+              netForce[iDim] / d_dftParams.natoms;
+
         d_forceTotal.copyTo(d_forceVector);
       }
 

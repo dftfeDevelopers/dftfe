@@ -203,9 +203,7 @@ namespace dftfe
   void
   meshMovementClass::initIncrementField()
   {
-    // d_incrementalDisplacement.reinit(d_locally_relevant_dofs.size());
-    // d_incrementalDisplacement=0;
-    dealii::IndexSet ghost_indices = d_locally_relevant_dofs;
+    dealii::IndexSet ghost_indices = d_constraintsMoveMesh.get_local_lines();
     ghost_indices.subtract_set(d_locally_owned_dofs);
 
     d_incrementalDisplacement.reinit(d_locally_owned_dofs,
