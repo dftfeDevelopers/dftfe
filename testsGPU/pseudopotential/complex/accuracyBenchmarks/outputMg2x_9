@@ -66,79 +66,79 @@ Starting SCF iterations....
 Energy residual  : 9.0617e-01
 Energy residual  : 6.3686e-01
 Energy residual  : 1.9503e+00
-Energy residual  : 8.8890e-01
+Energy residual  : 8.8891e-01
 Energy residual  : 2.8528e-01
 Energy residual  : 7.8813e-02
-Energy residual  : 1.0603e-04
-Energy residual  : 2.8720e-04
-Energy residual  : 9.0920e-05
-Energy residual  : 1.8272e-04
-Energy residual  : 4.5042e-05
-Energy residual  : 1.4465e-04
-Energy residual  : 3.7204e-05
-Energy residual  : 1.8178e-06
-Energy residual  : 6.2037e-05
-Energy residual  : 1.4655e-05
-Energy residual  : 7.5435e-07
-Energy residual  : 6.2784e-06
-Energy residual  : 1.5602e-07
-Energy residual  : 1.8920e-08
-Energy residual  : 1.6727e-08
-Energy residual  : 6.3666e-08
-Energy residual  : 9.0406e-08
-Energy residual  : 7.1403e-08
-Energy residual  : 7.6090e-10
-Energy residual  : 3.4012e-09
-Energy residual  : 2.8920e-09
-Energy residual  : 2.6514e-09
-Energy residual  : 4.2458e-10
-Energy residual  : 1.1629e-09
-Energy residual  : 8.1181e-10
-Energy residual  : 4.5670e-10
-Energy residual  : 2.1073e-10
-Energy residual  : 7.4064e-10
-Energy residual  : 4.9743e-10
-Energy residual  : 8.1301e-10
-Energy residual  : 2.9176e-11
+Energy residual  : 1.0598e-04
+Energy residual  : 2.8708e-04
+Energy residual  : 9.0905e-05
+Energy residual  : 1.8260e-04
+Energy residual  : 4.4927e-05
+Energy residual  : 1.4457e-04
+Energy residual  : 3.7224e-05
+Energy residual  : 1.8187e-06
+Energy residual  : 6.1917e-05
+Energy residual  : 1.4709e-05
+Energy residual  : 7.4994e-07
+Energy residual  : 6.2765e-06
+Energy residual  : 1.5453e-07
+Energy residual  : 1.9832e-08
+Energy residual  : 1.5525e-08
+Energy residual  : 6.2768e-08
+Energy residual  : 8.9163e-08
+Energy residual  : 7.1449e-08
+Energy residual  : 7.5418e-10
+Energy residual  : 3.3838e-09
+Energy residual  : 2.5711e-09
+Energy residual  : 2.4533e-09
+Energy residual  : 3.9682e-10
+Energy residual  : 1.1273e-09
+Energy residual  : 8.4786e-10
+Energy residual  : 3.2283e-10
+Energy residual  : 1.5875e-10
+Energy residual  : 7.7491e-10
+Energy residual  : 2.7018e-10
+Energy residual  : 8.3775e-10
+Energy residual  : 3.5272e-11
 SCF iterations converged to the specified tolerance after: 37 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:       -1673.56610063
+             Total energy:       -1673.56610064
 Absolute magnetization: 5.344
 Net magnetization     : -5.342
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000821,0.001892,0.012176
-AtomId    1:  0.001957,0.000001,0.000543
-AtomId    2:  0.000000,0.001558,0.141588
-AtomId    3:  0.000051,0.000001,0.001171
-AtomId    4:  0.000591,0.001198,0.010670
-AtomId    5:  0.002144,0.000001,0.000841
-AtomId    6:  0.000000,0.000889,0.144485
-AtomId    7:  0.000007,0.000001,0.001078
-AtomId    8:  0.000821,0.001892,0.012176
-AtomId    9:  0.000298,0.000001,0.001856
-AtomId   10:  0.000000,0.001558,0.141588
-AtomId   11:  0.000007,0.000001,0.000028
-AtomId   12:  0.000591,0.001198,0.010670
-AtomId   13:  0.000615,0.000001,0.002028
-AtomId   14:  0.000000,0.000890,0.144486
-AtomId   15:  0.000048,0.000001,0.001311
-AtomId   16:  0.000821,0.001892,0.012176
-AtomId   17:  0.001957,0.000001,0.000543
-AtomId   18:  0.000059,0.001057,0.143328
-AtomId   19:  0.000039,0.000001,0.000263
-AtomId   20:  0.000591,0.001198,0.010670
-AtomId   21:  0.002144,0.000001,0.000841
-AtomId   22:  0.000059,0.001257,0.144064
-AtomId   23:  0.000007,0.000001,0.000710
-AtomId   24:  0.000821,0.001892,0.012176
-AtomId   25:  0.000298,0.000001,0.001856
-AtomId   26:  0.000059,0.001056,0.143328
-AtomId   27:  0.000007,0.000001,0.000170
-AtomId   28:  0.000591,0.001198,0.010670
-AtomId   29:  0.000615,0.000001,0.002028
-AtomId   30:  0.000059,0.001257,0.144064
+AtomId    0:  0.000812,0.001892,0.046152
+AtomId    1:  0.001949,0.000001,0.033432
+AtomId    2:  0.000008,0.001558,0.107612
+AtomId    3:  0.000043,0.000001,0.035146
+AtomId    4:  0.000599,0.001198,0.044646
+AtomId    5:  0.002136,0.000001,0.034817
+AtomId    6:  0.000008,0.000889,0.110510
+AtomId    7:  0.000015,0.000001,0.035053
+AtomId    8:  0.000812,0.001892,0.046152
+AtomId    9:  0.000306,0.000001,0.035832
+AtomId   10:  0.000008,0.001558,0.107612
+AtomId   11:  0.000015,0.000000,0.033948
+AtomId   12:  0.000599,0.001198,0.044646
+AtomId   13:  0.000623,0.000001,0.031948
+AtomId   14:  0.000008,0.000889,0.110510
+AtomId   15:  0.000056,0.000001,0.032664
+AtomId   16:  0.000829,0.001892,0.046152
+AtomId   17:  0.001965,0.000001,0.033432
+AtomId   18:  0.000051,0.001057,0.109353
+AtomId   19:  0.000030,0.000001,0.034238
+AtomId   20:  0.000583,0.001198,0.044646
+AtomId   21:  0.002152,0.000001,0.034817
+AtomId   22:  0.000051,0.001257,0.110089
+AtomId   23:  0.000015,0.000001,0.034685
+AtomId   24:  0.000829,0.001892,0.046152
+AtomId   25:  0.000290,0.000001,0.035832
+AtomId   26:  0.000051,0.001056,0.109353
+AtomId   27:  0.000015,0.000000,0.034146
+AtomId   28:  0.000583,0.001198,0.044646
+AtomId   29:  0.000607,0.000001,0.031948
+AtomId   30:  0.000051,0.001257,0.110089
 --------------------------------------------------------------------------------------------
