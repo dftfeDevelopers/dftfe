@@ -99,7 +99,7 @@ namespace dftfe
     const dftfe::uInt numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
     const dftfe::uInt remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
-    basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
+    basisOperationsPtr->reinit(BVec, cellsBlockSize, 6);
     const dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
@@ -232,7 +232,7 @@ namespace dftfe
 
                     basisOperationsPtr->reinit(currentBlockSize,
                                                cellsBlockSize,
-                                               quadratureIndex,
+                                               6,
                                                false);
 
 
@@ -380,6 +380,41 @@ namespace dftfe
                         interBandGroupComm);
       }
 
+
+    basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      rho_vxcQuad;
+
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      gradRho_vxcQuad;
+
+    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+      tau_vxcQuad;
+
+    basisOperationsPtr->interpolateQ1ToQ2(rhoHost,
+                                          basisOperationsPtr->d_dofHandlerID,
+                                          6,
+                                          quadratureIndex,
+                                          rho_vxcQuad,
+                                          1);
+    if (isEvaluateGradRho)
+      basisOperationsPtr->interpolateQ1ToQ2(gradRhoHost,
+                                            basisOperationsPtr->d_dofHandlerID,
+                                            6,
+                                            quadratureIndex,
+                                            gradRho_vxcQuad,
+                                            3);
+    if (isEvaluateTau)
+      basisOperationsPtr->interpolateQ1ToQ2(tauHost,
+                                            basisOperationsPtr->d_dofHandlerID,
+                                            6,
+                                            quadratureIndex,
+                                            tau_vxcQuad,
+                                            1);
+
+
     if (dftParams.spinPolarized == 1)
       {
         densityValues[0].resize(totalLocallyOwnedCells * numQuadPoints);
@@ -438,12 +473,17 @@ namespace dftfe
       }
     else
       {
-        densityValues[0] = rhoHost;
+        densityValues[0].resize(rho_vxcQuad.size());
+        densityValues[0] = rho_vxcQuad;
         if (isEvaluateGradRho)
-          gradDensityValues[0] = gradRhoHost;
+          {
+            gradDensityValues[0].resize(gradRho_vxcQuad.size());
+            gradDensityValues[0] = gradRho_vxcQuad;
+          }
         if (isEvaluateTau)
           {
-            tauValues[0] = tauHost;
+            tauValues[0].resize(tau_vxcQuad.size());
+            tauValues[0] = tau_vxcQuad;
           }
       }
 

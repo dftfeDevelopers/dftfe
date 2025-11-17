@@ -473,6 +473,10 @@ namespace dftfe
           "0",
           dealii::Patterns::Integer(0, 24),
           "[Standard] The quadrtaure rule used for computing the electron density. It is automatically set to 16 for MGGA exchange-correlation functional or max of POLYNOMIAL ORDER DENSITY NODAL +1 for other exchange-correlation functionals if DENSITY QUADTRATURE RULE set to default value of zero.");
+        prm.declare_entry("TEMP DENSITY QUADRATURE RULE",
+                          "0",
+                          dealii::Patterns::Integer(0, 24),
+                          "To be filled");
         prm.enter_subsection("Auto mesh generation parameters");
         {
           prm.declare_entry(
@@ -1628,6 +1632,10 @@ namespace dftfe
              finiteElementPolynomialOrderElectrostatics) :
           prm.get_integer("POLYNOMIAL ORDER DENSITY NODAL");
       densityQuadratureRule = prm.get_integer("DENSITY QUADRATURE RULE");
+      tempDensityQuadratureRule =
+        prm.get_integer("TEMP DENSITY QUADRATURE RULE") == 0 ?
+          2 * finiteElementPolynomialOrder + 1 :
+          prm.get_integer("TEMP DENSITY QUADRATURE RULE");
       prm.enter_subsection("Auto mesh generation parameters");
       {
         outerAtomBallRadius   = prm.get_double("ATOM BALL RADIUS");

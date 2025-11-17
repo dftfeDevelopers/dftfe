@@ -232,12 +232,15 @@ namespace dftfe
       C_num1DQuad(d_dftParamsPtr->finiteElementPolynomialOrder)));
     // SparsityPattern VEctor
     quadratureVector.push_back(dealii::QGauss<1>(8));
+    quadratureVector.push_back(
+      dealii::QGauss<1>(d_dftParamsPtr->tempDensityQuadratureRule));
     d_densityQuadratureId         = 0;
     d_nlpspQuadratureId           = 1;
     d_gllQuadratureId             = 2;
     d_lpspQuadratureId            = 3;
     d_feOrderPlusOneQuadratureId  = 4;
     d_sparsityPatternQuadratureId = 5;
+    d_tempDensityQuadratureId     = 6;
 
 
     double init_mf;
@@ -279,14 +282,16 @@ namespace dftfe
               d_gllQuadratureId,
               d_lpspQuadratureId,
               d_feOrderPlusOneQuadratureId,
-              d_sparsityPatternQuadratureId};
+              d_sparsityPatternQuadratureId,
+              d_tempDensityQuadratureId};
             std::vector<dftfe::basis::UpdateFlags> updateFlags{
               updateFlagsAll,
               updateFlagsAll,
               updateFlagsGLL,
               updateFlagsLPSP,
               updateFlagsfeOrderPlusOne,
-              updateFlagssparsityPattern};
+              updateFlagssparsityPattern,
+              updateFlagsAll};
             d_basisOperationsPtrHost->init(matrix_free_data,
                                            d_constraintsVector,
                                            d_densityDofHandlerIndex,
@@ -393,11 +398,13 @@ namespace dftfe
             std::vector<dftfe::uInt> quadratureIndices{
               d_nlpspQuadratureId,
               d_densityQuadratureId,
-              d_feOrderPlusOneQuadratureId};
+              d_feOrderPlusOneQuadratureId,
+              d_tempDensityQuadratureId};
             std::vector<dftfe::basis::UpdateFlags> updateFlags{
               updateFlagsAll,
               updateFlagsAll,
-              updateFlagsGradientsAndInvJacobians};
+              updateFlagsGradientsAndInvJacobians,
+              updateFlagsAll};
             d_basisOperationsPtrDevice->init(matrix_free_data,
                                              d_constraintsVector,
                                              d_densityDofHandlerIndex,

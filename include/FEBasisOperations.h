@@ -1216,6 +1216,19 @@ namespace dftfe
         ValueTypeBasisCoeff                      *quadratureGradients,
         const std::pair<dftfe::uInt, dftfe::uInt> cellRange) const;
 
+
+      void
+      interpolateQ1ToQ2(
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>
+                         &Q1Field,
+        const dftfe::uInt dofHandlerId,
+        const dftfe::uInt quadRule1,
+        const dftfe::uInt quadRule2,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                         &quadratureValueData,
+        const dftfe::uInt numComponents) const;
+
       // FIXME Untested function
       /**
        * @brief Integrate cell level quadrature data times shape functions to process level nodal data.

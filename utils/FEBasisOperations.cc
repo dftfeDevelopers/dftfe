@@ -3791,6 +3791,107 @@ namespace dftfe
         }
     }
 
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      interpolateQ1ToQ2(
+        const dftfe::utils::MemoryStorage<double,
+                                          dftfe::utils::MemorySpace::HOST>
+                         &Q1Field,
+        const dftfe::uInt dofHandlerId,
+        const dftfe::uInt quadId1,
+        const dftfe::uInt quadId2,
+        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+                         &quadratureValueData,
+        const dftfe::uInt numComponents) const
+    {
+      AssertThrow(
+        numComponents == 1 || numComponents == 3,
+        dealii::ExcMessage(
+          "Number of compnents for interpolateQ1ToQ2 should be either 1 or 3."));
+
+      auto itr = std::find(d_quadratureIDsVector.begin(),
+                           d_quadratureIDsVector.end(),
+                           quadId2);
+      AssertThrow(
+        itr != d_quadratureIDsVector.end(),
+        dealii::ExcMessage(
+          "DFT-FE Error: FEBasisOperations Class not initialized with this quadrature Index."));
+
+      dealii::FE_DGQArbitraryNodes<3> fe_dgq(
+        d_matrixFreeDataPtr->get_shape_info(dofHandlerId, quadId1)
+          .get_shape_data()
+          .quadrature);
+
+      dealii::FEValues<3> fe_values_collocation(
+        fe_dgq,
+        d_matrixFreeDataPtr->get_quadrature(quadId2),
+        dealii::update_values);
+
+      const dftfe::uInt numQuads =
+        d_matrixFreeDataPtr->get_quadrature(quadId2).size();
+
+      const dftfe::uInt dofsPerCell = fe_dgq.dofs_per_cell;
+
+      const dftfe::uInt nCells = this->nCells();
+
+      const std::size_t expectedQ1Size = nCells * dofsPerCell * numComponents;
+      AssertThrow(
+        Q1Field.size() == expectedQ1Size,
+        dealii::ExcMessage(
+          "interpolateQ1ToQ2: Q1Field size mismatch with nCells*dofsPerCell*numComponents."));
+
+      quadratureValueData.clear();
+      quadratureValueData.resize(numComponents * numQuads * nCells);
+
+      auto cellPtr =
+        d_matrixFreeDataPtr->get_dof_handler(dofHandlerId).begin_active();
+      auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(dofHandlerId).end();
+
+      for (; cellPtr != endcPtr; ++cellPtr)
+        if (cellPtr->is_locally_owned())
+          {
+            fe_values_collocation.reinit(cellPtr);
+            dftfe::uInt cellIdx = cellIndex(cellPtr->id());
+
+            const dftfe::uInt q1CellBase =
+              cellIdx * dofsPerCell * numComponents;
+
+            for (dftfe::uInt qPoint = 0; qPoint < numQuads; ++qPoint)
+              {
+                if (numComponents == 1)
+                  {
+                    double localVal = 0.0;
+                    for (dftfe::uInt i = 0; i < dofsPerCell; ++i)
+                      {
+                        localVal +=
+                          fe_values_collocation.shape_value(i, qPoint) *
+                          Q1Field[q1CellBase + i];
+                      }
+                    quadratureValueData[cellIdx * numQuads + qPoint] = localVal;
+                  }
+                else if (numComponents == 3)
+                  {
+                    for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                      {
+                        double localVal = 0.0;
+                        for (dftfe::uInt i = 0; i < dofsPerCell; ++i)
+                          {
+                            localVal +=
+                              fe_values_collocation.shape_value(i, qPoint) *
+                              Q1Field[q1CellBase + i * 3 + iDim];
+                          }
+                        quadratureValueData[cellIdx * numQuads * 3 +
+                                            qPoint * 3 + iDim] = localVal;
+                      }
+                  }
+              }
+          }
+    }
+
     template class FEBasisOperations<double,
                                      double,
                                      dftfe::utils::MemorySpace::HOST>;
