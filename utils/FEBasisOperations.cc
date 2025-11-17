@@ -3806,7 +3806,8 @@ namespace dftfe
         const dftfe::uInt quadId2,
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                          &quadratureValueData,
-        const dftfe::uInt numComponents) const
+        const dftfe::uInt numComponents,
+        const dftfe::uInt numSpinComponents) const
     {
       AssertThrow(
         numComponents == 1 || numComponents == 3,
@@ -3838,14 +3839,16 @@ namespace dftfe
 
       const dftfe::uInt nCells = this->nCells();
 
-      const std::size_t expectedQ1Size = nCells * dofsPerCell * numComponents;
+      const std::size_t expectedQ1Size =
+        nCells * dofsPerCell * numComponents * numSpinComponents;
       AssertThrow(
         Q1Field.size() == expectedQ1Size,
         dealii::ExcMessage(
-          "interpolateQ1ToQ2: Q1Field size mismatch with nCells*dofsPerCell*numComponents."));
+          "interpolateQ1ToQ2: Q1Field size mismatch with nCells * dofsPerCell * numComponents * numSpinComponents."));
 
       quadratureValueData.clear();
-      quadratureValueData.resize(numComponents * numQuads * nCells);
+      quadratureValueData.resize(numComponents * numQuads * nCells *
+                                 numSpinComponents);
 
       auto cellPtr =
         d_matrixFreeDataPtr->get_dof_handler(dofHandlerId).begin_active();
@@ -3857,35 +3860,43 @@ namespace dftfe
             fe_values_collocation.reinit(cellPtr);
             dftfe::uInt cellIdx = cellIndex(cellPtr->id());
 
-            const dftfe::uInt q1CellBase =
-              cellIdx * dofsPerCell * numComponents;
-
-            for (dftfe::uInt qPoint = 0; qPoint < numQuads; ++qPoint)
+            for (int spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
               {
-                if (numComponents == 1)
+                const dftfe::uInt q1CellBase =
+                  spinIndex * nCells * dofsPerCell * numComponents +
+                  cellIdx * dofsPerCell * numComponents;
+
+                for (dftfe::uInt qPoint = 0; qPoint < numQuads; ++qPoint)
                   {
-                    double localVal = 0.0;
-                    for (dftfe::uInt i = 0; i < dofsPerCell; ++i)
-                      {
-                        localVal +=
-                          fe_values_collocation.shape_value(i, qPoint) *
-                          Q1Field[q1CellBase + i];
-                      }
-                    quadratureValueData[cellIdx * numQuads + qPoint] = localVal;
-                  }
-                else if (numComponents == 3)
-                  {
-                    for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                    if (numComponents == 1)
                       {
                         double localVal = 0.0;
                         for (dftfe::uInt i = 0; i < dofsPerCell; ++i)
                           {
                             localVal +=
                               fe_values_collocation.shape_value(i, qPoint) *
-                              Q1Field[q1CellBase + i * 3 + iDim];
+                              Q1Field[q1CellBase + i];
                           }
-                        quadratureValueData[cellIdx * numQuads * 3 +
-                                            qPoint * 3 + iDim] = localVal;
+                        quadratureValueData[spinIndex * nCells * numQuads +
+                                            cellIdx * numQuads + qPoint] =
+                          localVal;
+                      }
+                    else if (numComponents == 3)
+                      {
+                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
+                          {
+                            double localVal = 0.0;
+                            for (dftfe::uInt i = 0; i < dofsPerCell; ++i)
+                              {
+                                localVal +=
+                                  fe_values_collocation.shape_value(i, qPoint) *
+                                  Q1Field[q1CellBase + i * 3 + iDim];
+                              }
+                            quadratureValueData[spinIndex * nCells * numQuads *
+                                                  3 +
+                                                cellIdx * numQuads * 3 +
+                                                qPoint * 3 + iDim] = localVal;
+                          }
                       }
                   }
               }

@@ -1227,7 +1227,8 @@ namespace dftfe
         const dftfe::uInt quadRule2,
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
                          &quadratureValueData,
-        const dftfe::uInt numComponents) const;
+        const dftfe::uInt numComponents,
+        const dftfe::uInt numSpinComponents) const;
 
       // FIXME Untested function
       /**
