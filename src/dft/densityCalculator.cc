@@ -105,7 +105,7 @@ namespace dftfe
     basisOperationsPtr->reinit(BVec,
                                cellsBlockSize,
                                tempDensityQuadratureIndex);
-    dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
+    const dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
     dftfe::utils::MemoryStorage<NumberType, memorySpace> gradWfcQuadPointData;
@@ -387,115 +387,140 @@ namespace dftfe
 
 
     basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
-    numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      rho_densityQuad;
+      tempVal(totalLocallyOwnedCells * numQuadPoints, 0.0);
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      gradRho_densityQuad;
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      tau_densityQuad;
-
-    basisOperationsPtr->interpolateQ1ToQ2(rhoHost,
-                                          basisOperationsPtr->d_dofHandlerID,
-                                          6,
-                                          quadratureIndex,
-                                          rho_densityQuad,
-                                          1,
-                                          numSpinComponents);
-    if (isEvaluateGradRho)
-      basisOperationsPtr->interpolateQ1ToQ2(gradRhoHost,
-                                            basisOperationsPtr->d_dofHandlerID,
-                                            6,
-                                            quadratureIndex,
-                                            gradRho_densityQuad,
-                                            3,
-                                            numSpinComponents);
-    if (isEvaluateTau)
-      basisOperationsPtr->interpolateQ1ToQ2(tauHost,
-                                            basisOperationsPtr->d_dofHandlerID,
-                                            6,
-                                            quadratureIndex,
-                                            tau_densityQuad,
-                                            1,
-                                            numSpinComponents);
-
+      tempGradVal(totalLocallyOwnedCells * numQuadPoints * 3, 0.0);
 
     if (dftParams.spinPolarized == 1)
       {
-        densityValues[0].resize(totalLocallyOwnedCells * numQuadPoints);
-        densityValues[1].resize(totalLocallyOwnedCells * numQuadPoints);
-        std::transform(rho_densityQuad.begin(),
-                       rho_densityQuad.begin() +
-                         totalLocallyOwnedCells * numQuadPoints,
-                       rho_densityQuad.begin() +
-                         totalLocallyOwnedCells * numQuadPoints,
-                       densityValues[0].begin(),
+        std::transform(rhoHost.begin(),
+                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       tempVal.begin(),
                        std::plus<>{});
-        std::transform(rho_densityQuad.begin(),
-                       rho_densityQuad.begin() +
-                         totalLocallyOwnedCells * numQuadPoints,
-                       rho_densityQuad.begin() +
-                         totalLocallyOwnedCells * numQuadPoints,
-                       densityValues[1].begin(),
+
+        basisOperationsPtr->interpolateQ1ToQ2(
+          tempVal,
+          basisOperationsPtr->d_dofHandlerID,
+          tempDensityQuadratureIndex,
+          quadratureIndex,
+          densityValues[0],
+          1);
+        std::transform(rhoHost.begin(),
+                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
+                       tempVal.begin(),
                        std::minus<>{});
+
+        basisOperationsPtr->interpolateQ1ToQ2(
+          tempVal,
+          basisOperationsPtr->d_dofHandlerID,
+          tempDensityQuadratureIndex,
+          quadratureIndex,
+          densityValues[1],
+          1);
+
         if (isEvaluateGradRho)
           {
-            gradDensityValues[0].resize(3 * totalLocallyOwnedCells *
-                                        numQuadPoints);
-            gradDensityValues[1].resize(3 * totalLocallyOwnedCells *
-                                        numQuadPoints);
-            std::transform(gradRho_densityQuad.begin(),
-                           gradRho_densityQuad.begin() +
+            std::transform(gradRhoHost.begin(),
+                           gradRhoHost.begin() +
                              3 * totalLocallyOwnedCells * numQuadPoints,
-                           gradRho_densityQuad.begin() +
+                           gradRhoHost.begin() +
                              3 * totalLocallyOwnedCells * numQuadPoints,
-                           gradDensityValues[0].begin(),
+                           tempGradVal.begin(),
                            std::plus<>{});
-            std::transform(gradRho_densityQuad.begin(),
-                           gradRho_densityQuad.begin() +
+
+            basisOperationsPtr->interpolateQ1ToQ2(
+              tempGradVal,
+              basisOperationsPtr->d_dofHandlerID,
+              tempDensityQuadratureIndex,
+              quadratureIndex,
+              gradDensityValues[0],
+              3);
+
+            std::transform(gradRhoHost.begin(),
+                           gradRhoHost.begin() +
                              3 * totalLocallyOwnedCells * numQuadPoints,
-                           gradRho_densityQuad.begin() +
+                           gradRhoHost.begin() +
                              3 * totalLocallyOwnedCells * numQuadPoints,
-                           gradDensityValues[1].begin(),
+                           tempGradVal.begin(),
                            std::minus<>{});
+
+            basisOperationsPtr->interpolateQ1ToQ2(
+              tempGradVal,
+              basisOperationsPtr->d_dofHandlerID,
+              tempDensityQuadratureIndex,
+              quadratureIndex,
+              gradDensityValues[1],
+              3);
           }
 
         if (isEvaluateTau)
           {
-            tauValues[0].resize(totalLocallyOwnedCells * numQuadPoints);
-            tauValues[1].resize(totalLocallyOwnedCells * numQuadPoints);
-            std::transform(tau_densityQuad.begin(),
-                           tau_densityQuad.begin() +
+            std::transform(tauHost.begin(),
+                           tauHost.begin() +
                              totalLocallyOwnedCells * numQuadPoints,
-                           tau_densityQuad.begin() +
+                           tauHost.begin() +
                              totalLocallyOwnedCells * numQuadPoints,
-                           tauValues[0].begin(),
+                           tempVal.begin(),
                            std::plus<>{});
-            std::transform(tau_densityQuad.begin(),
-                           tau_densityQuad.begin() +
+
+            basisOperationsPtr->interpolateQ1ToQ2(
+              tempVal,
+              basisOperationsPtr->d_dofHandlerID,
+              tempDensityQuadratureIndex,
+              quadratureIndex,
+              tauValues[0],
+              1);
+
+            std::transform(tauHost.begin(),
+                           tauHost.begin() +
                              totalLocallyOwnedCells * numQuadPoints,
-                           tau_densityQuad.begin() +
+                           tauHost.begin() +
                              totalLocallyOwnedCells * numQuadPoints,
-                           tauValues[1].begin(),
+                           tempVal.begin(),
                            std::minus<>{});
+
+            basisOperationsPtr->interpolateQ1ToQ2(
+              tempVal,
+              basisOperationsPtr->d_dofHandlerID,
+              tempDensityQuadratureIndex,
+              quadratureIndex,
+              tauValues[1],
+              1);
           }
       }
     else
       {
-        densityValues[0].resize(rho_densityQuad.size());
-        densityValues[0] = rho_densityQuad;
+        basisOperationsPtr->interpolateQ1ToQ2(
+          rhoHost,
+          basisOperationsPtr->d_dofHandlerID,
+          tempDensityQuadratureIndex,
+          quadratureIndex,
+          densityValues[0],
+          1);
         if (isEvaluateGradRho)
           {
-            gradDensityValues[0].resize(gradRho_densityQuad.size());
-            gradDensityValues[0] = gradRho_densityQuad;
+            basisOperationsPtr->interpolateQ1ToQ2(
+              gradRhoHost,
+              basisOperationsPtr->d_dofHandlerID,
+              tempDensityQuadratureIndex,
+              quadratureIndex,
+              gradDensityValues[0],
+              3);
           }
         if (isEvaluateTau)
           {
-            tauValues[0].resize(tau_densityQuad.size());
-            tauValues[0] = tau_densityQuad;
+            basisOperationsPtr->interpolateQ1ToQ2(
+              tauHost,
+              basisOperationsPtr->d_dofHandlerID,
+              tempDensityQuadratureIndex,
+              quadratureIndex,
+              tauValues[0],
+              1);
           }
       }
 

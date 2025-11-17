@@ -3805,9 +3805,8 @@ namespace dftfe
         const dftfe::uInt quadId1,
         const dftfe::uInt quadId2,
         dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                         &quadratureValueData,
-        const dftfe::uInt numComponents,
-        const dftfe::uInt numSpinComponents) const
+                         &quadratureValueDataHost,
+        const dftfe::uInt numComponents) const
     {
       AssertThrow(
         numComponents == 1 || numComponents == 3,
@@ -3839,16 +3838,41 @@ namespace dftfe
 
       const dftfe::uInt nCells = this->nCells();
 
-      const std::size_t expectedQ1Size =
-        nCells * dofsPerCell * numComponents * numSpinComponents;
+      const std::size_t expectedQ1Size = nCells * dofsPerCell * numComponents;
       AssertThrow(
         Q1Field.size() == expectedQ1Size,
         dealii::ExcMessage(
-          "interpolateQ1ToQ2: Q1Field size mismatch with nCells * dofsPerCell * numComponents * numSpinComponents."));
+          "interpolateQ1ToQ2: Q1Field size mismatch with nCells * dofsPerCell * numComponents."));
 
-      quadratureValueData.clear();
-      quadratureValueData.resize(numComponents * numQuads * nCells *
-                                 numSpinComponents);
+      quadratureValueDataHost.clear();
+      quadratureValueDataHost.resize(numComponents * numQuads * nCells);
+
+
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        shapeFnValuesHost(numQuads * dofsPerCell);
+
+      for (dftfe::uInt iQuad = 0; iQuad < numQuads; iQuad++)
+        {
+          for (dftfe::uInt iNode = 0; iNode < dofsPerCell; iNode++)
+            {
+              shapeFnValuesHost[iNode * numQuads + iQuad] =
+                fe_values_collocation.shape_value(iNode, iQuad);
+            }
+        }
+
+      dftfe::utils::MemoryStorage<double, memorySpace> shapeFnValues(
+        numQuads * dofsPerCell, 0.0);
+
+      dftfe::utils::MemoryStorage<double, memorySpace> Q1FieldCell(
+        dofsPerCell * nCells * numComponents, 0.0);
+      dftfe::utils::MemoryStorage<double, memorySpace> quadratureValueDataCell(
+        numComponents * numQuads, 0.0);
+
+      shapeFnValues.copyFrom(shapeFnValuesHost);
+
+      const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
+
+      Q1FieldCell.copyFrom(Q1Field);
 
       auto cellPtr =
         d_matrixFreeDataPtr->get_dof_handler(dofHandlerId).begin_active();
@@ -3860,45 +3884,48 @@ namespace dftfe
             fe_values_collocation.reinit(cellPtr);
             dftfe::uInt cellIdx = cellIndex(cellPtr->id());
 
-            for (int spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
+            if (numComponents == 1)
               {
-                const dftfe::uInt q1CellBase =
-                  spinIndex * nCells * dofsPerCell * numComponents +
-                  cellIdx * dofsPerCell * numComponents;
+                d_BLASWrapperPtr->xgemm('N',
+                                        'N',
+                                        numQuads,
+                                        1,
+                                        dofsPerCell,
+                                        &scalarCoeffAlpha,
+                                        shapeFnValues.data(),
+                                        numQuads,
+                                        Q1FieldCell.data() +
+                                          cellIdx * dofsPerCell,
+                                        dofsPerCell,
+                                        &scalarCoeffBeta,
+                                        quadratureValueDataCell.data(),
+                                        numQuads);
+                quadratureValueDataHost.copyFrom(quadratureValueDataCell,
+                                                 numQuads,
+                                                 0,
+                                                 cellIdx * numQuads);
+              }
+            else if (numComponents == 3)
+              {
+                d_BLASWrapperPtr->xgemm('N',
+                                        'T',
+                                        3,
+                                        numQuads,
+                                        dofsPerCell,
+                                        &scalarCoeffAlpha,
+                                        Q1FieldCell.data() +
+                                          cellIdx * dofsPerCell * 3,
+                                        3,
+                                        shapeFnValues.data(),
+                                        numQuads,
+                                        &scalarCoeffBeta,
+                                        quadratureValueDataCell.data(),
+                                        3);
 
-                for (dftfe::uInt qPoint = 0; qPoint < numQuads; ++qPoint)
-                  {
-                    if (numComponents == 1)
-                      {
-                        double localVal = 0.0;
-                        for (dftfe::uInt i = 0; i < dofsPerCell; ++i)
-                          {
-                            localVal +=
-                              fe_values_collocation.shape_value(i, qPoint) *
-                              Q1Field[q1CellBase + i];
-                          }
-                        quadratureValueData[spinIndex * nCells * numQuads +
-                                            cellIdx * numQuads + qPoint] =
-                          localVal;
-                      }
-                    else if (numComponents == 3)
-                      {
-                        for (dftfe::uInt iDim = 0; iDim < 3; ++iDim)
-                          {
-                            double localVal = 0.0;
-                            for (dftfe::uInt i = 0; i < dofsPerCell; ++i)
-                              {
-                                localVal +=
-                                  fe_values_collocation.shape_value(i, qPoint) *
-                                  Q1Field[q1CellBase + i * 3 + iDim];
-                              }
-                            quadratureValueData[spinIndex * nCells * numQuads *
-                                                  3 +
-                                                cellIdx * numQuads * 3 +
-                                                qPoint * 3 + iDim] = localVal;
-                          }
-                      }
-                  }
+                quadratureValueDataHost.copyFrom(quadratureValueDataCell,
+                                                 3 * numQuads,
+                                                 0,
+                                                 cellIdx * numQuads * 3);
               }
           }
     }
