@@ -156,7 +156,7 @@ namespace dftfe
                       pcout,
                       dftParams.reproducible_output || dftParams.verbosity < 4 ?
                         dealii::TimerOutput::never :
-                        dealii::TimerOutput::every_call_and_summary,
+                        dealii::TimerOutput::summary,
                       dealii::TimerOutput::wall_times)
   {}
 
@@ -621,16 +621,19 @@ namespace dftfe
                                  computeForce,
                                  computeStress);
     computingTimerStandard.leave_subsection("Electro Eshelby contribution");
-    computingTimerStandard.enter_subsection("ESelf Eshelby contribution");
-    computeESelfContribEshelby(atomLocations,
-                               imageIds,
-                               imageCharges,
-                               imagePositions,
-                               vselfBinsManager,
-                               floatingNuclearCharges,
-                               computeForce,
-                               computeStress);
-    computingTimerStandard.leave_subsection("ESelf Eshelby contribution");
+    if (!floatingNuclearCharges || computeStress)
+      {
+        computingTimerStandard.enter_subsection("ESelf Eshelby contribution");
+        computeESelfContribEshelby(atomLocations,
+                                   imageIds,
+                                   imageCharges,
+                                   imagePositions,
+                                   vselfBinsManager,
+                                   floatingNuclearCharges,
+                                   computeForce,
+                                   computeStress);
+        computingTimerStandard.leave_subsection("ESelf Eshelby contribution");
+      }
     if (!floatingNuclearCharges && computeForce)
       {
         d_configForceContribsLinFE.compress(dealii::VectorOperation::add);
