@@ -22,6 +22,14 @@ namespace dftfe
 {
   namespace basis
   {
+    dealii::ConditionalOStream pcout_debug(
+      std::cout,
+      dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0);
+
+    dealii::TimerOutput timer_debug1(MPI_COMM_WORLD,
+                                     pcout_debug,
+                                     dealii::TimerOutput::summary,
+                                     dealii::TimerOutput::wall_times);
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
@@ -340,6 +348,45 @@ namespace dftfe
               }
           }
     }
+
+    template <typename ValueTypeBasisCoeff,
+              typename ValueTypeBasisData,
+              dftfe::utils::MemorySpace memorySpace>
+    void
+    FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
+      createShapeFnsTempDensityQuad(const dftfe::uInt tempDensityquadId,
+                                    const dftfe::uInt densityquadId)
+    {
+      dealii::FE_DGQArbitraryNodes<3> fe_dgq(
+        d_matrixFreeDataPtr->get_shape_info(d_dofHandlerID, tempDensityquadId)
+          .get_shape_data()
+          .quadrature);
+
+      dealii::FEValues<3> feCollocTempDensityToDensityQuad(
+        fe_dgq,
+        d_matrixFreeDataPtr->get_quadrature(densityquadId),
+        dealii::update_values);
+
+      const dftfe::uInt numQuads =
+        d_matrixFreeDataPtr->get_quadrature(densityquadId).size();
+      const dftfe::uInt dofsPerCell = fe_dgq.dofs_per_cell;
+
+      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
+        shapeFnValuesHost(numQuads * dofsPerCell);
+
+      d_shapeFnValTempDensityToDensityQuad.resize(numQuads * dofsPerCell);
+
+      for (dftfe::uInt iQuad = 0; iQuad < numQuads; iQuad++)
+        {
+          for (dftfe::uInt iNode = 0; iNode < dofsPerCell; iNode++)
+            {
+              shapeFnValuesHost[iNode * numQuads + iQuad] =
+                feCollocTempDensityToDensityQuad.shape_value(iNode, iQuad);
+            }
+        }
+      d_shapeFnValTempDensityToDensityQuad.copyFrom(shapeFnValuesHost);
+    }
+
 
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
@@ -3798,20 +3845,18 @@ namespace dftfe
     void
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       interpolateQ1ToQ2(
-        const dftfe::utils::MemoryStorage<double,
-                                          dftfe::utils::MemorySpace::HOST>
-                         &Q1Field,
-        const dftfe::uInt dofHandlerId,
-        const dftfe::uInt quadId1,
-        const dftfe::uInt quadId2,
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                         &quadratureValueDataHost,
-        const dftfe::uInt numComponents) const
+        const dftfe::utils::MemoryStorage<double, memorySpace> &Q1Field,
+        const dftfe::uInt                                       dofHandlerId,
+        const dftfe::uInt                                       quadId1,
+        const dftfe::uInt                                       quadId2,
+        dftfe::utils::MemoryStorage<double, memorySpace> &quadratureValueData,
+        const dftfe::uInt                                 numComponents,
+        const dftfe::uInt numSpinComponents) const
     {
       AssertThrow(
         numComponents == 1 || numComponents == 3,
         dealii::ExcMessage(
-          "Number of compnents for interpolateQ1ToQ2 should be either 1 or 3."));
+          "Number of components for interpolateQ1ToQ2 should be either 1 or 3."));
 
       auto itr = std::find(d_quadratureIDsVector.begin(),
                            d_quadratureIDsVector.end(),
@@ -3821,113 +3866,84 @@ namespace dftfe
         dealii::ExcMessage(
           "DFT-FE Error: FEBasisOperations Class not initialized with this quadrature Index."));
 
-      dealii::FE_DGQArbitraryNodes<3> fe_dgq(
-        d_matrixFreeDataPtr->get_shape_info(dofHandlerId, quadId1)
-          .get_shape_data()
-          .quadrature);
-
-      dealii::FEValues<3> fe_values_collocation(
-        fe_dgq,
-        d_matrixFreeDataPtr->get_quadrature(quadId2),
-        dealii::update_values);
-
       const dftfe::uInt numQuads =
         d_matrixFreeDataPtr->get_quadrature(quadId2).size();
-
-      const dftfe::uInt dofsPerCell = fe_dgq.dofs_per_cell;
-
+      const dftfe::uInt dofsPerCell =
+        d_matrixFreeDataPtr->get_quadrature(quadId1).size();
       const dftfe::uInt nCells = this->nCells();
+      const std::size_t expectedQ1Size =
+        nCells * dofsPerCell * numComponents * numSpinComponents;
 
-      const std::size_t expectedQ1Size = nCells * dofsPerCell * numComponents;
       AssertThrow(
         Q1Field.size() == expectedQ1Size,
         dealii::ExcMessage(
-          "interpolateQ1ToQ2: Q1Field size mismatch with nCells * dofsPerCell * numComponents."));
+          "interpolateQ1ToQ2: Q1Field size mismatch with nCells * dofsPerCell * numComponents * numSpinComponents."));
 
-      quadratureValueDataHost.clear();
-      quadratureValueDataHost.resize(numComponents * numQuads * nCells);
+      quadratureValueData.resize(numComponents * numQuads * nCells *
+                                 numSpinComponents);
 
-
-      dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-        shapeFnValuesHost(numQuads * dofsPerCell);
-
-      for (dftfe::uInt iQuad = 0; iQuad < numQuads; iQuad++)
-        {
-          for (dftfe::uInt iNode = 0; iNode < dofsPerCell; iNode++)
-            {
-              shapeFnValuesHost[iNode * numQuads + iQuad] =
-                fe_values_collocation.shape_value(iNode, iQuad);
-            }
-        }
-
-      dftfe::utils::MemoryStorage<double, memorySpace> shapeFnValues(
-        numQuads * dofsPerCell, 0.0);
-
-      dftfe::utils::MemoryStorage<double, memorySpace> Q1FieldCell(
-        dofsPerCell * nCells * numComponents, 0.0);
-      dftfe::utils::MemoryStorage<double, memorySpace> quadratureValueDataCell(
-        numComponents * numQuads, 0.0);
-
-      shapeFnValues.copyFrom(shapeFnValuesHost);
 
       const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
-      Q1FieldCell.copyFrom(Q1Field);
-
-      auto cellPtr =
-        d_matrixFreeDataPtr->get_dof_handler(dofHandlerId).begin_active();
-      auto endcPtr = d_matrixFreeDataPtr->get_dof_handler(dofHandlerId).end();
-
-      for (; cellPtr != endcPtr; ++cellPtr)
-        if (cellPtr->is_locally_owned())
+      dftfe::utils::deviceSynchronize();
+      timer_debug1.enter_subsection("cell loop");
+      for (int spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
+        {
+          dftfe::uInt cellIdx = 0;
+          // for (dftfe::uInt cellIdx = 0; cellIdx < 1; cellIdx++)
           {
-            fe_values_collocation.reinit(cellPtr);
-            dftfe::uInt cellIdx = cellIndex(cellPtr->id());
-
             if (numComponents == 1)
               {
-                d_BLASWrapperPtr->xgemm('N',
-                                        'N',
-                                        numQuads,
-                                        1,
-                                        dofsPerCell,
-                                        &scalarCoeffAlpha,
-                                        shapeFnValues.data(),
-                                        numQuads,
-                                        Q1FieldCell.data() +
-                                          cellIdx * dofsPerCell,
-                                        dofsPerCell,
-                                        &scalarCoeffBeta,
-                                        quadratureValueDataCell.data(),
-                                        numQuads);
-                quadratureValueDataHost.copyFrom(quadratureValueDataCell,
-                                                 numQuads,
-                                                 0,
-                                                 cellIdx * numQuads);
+                dftfe::utils::deviceSynchronize();
+                timer_debug1.enter_subsection("comp-1");
+                d_BLASWrapperPtr->xgemm(
+                  'N',
+                  'N',
+                  numQuads,
+                  nCells,
+                  dofsPerCell,
+                  &scalarCoeffAlpha,
+                  d_shapeFnValTempDensityToDensityQuad.data(),
+                  numQuads,
+                  Q1Field.data() + spinIndex * nCells * dofsPerCell,
+                  dofsPerCell,
+                  &scalarCoeffBeta,
+                  quadratureValueData.data() + spinIndex * nCells * numQuads,
+                  numQuads);
+                dftfe::utils::deviceSynchronize();
+                timer_debug1.leave_subsection("comp-1");
               }
             else if (numComponents == 3)
               {
-                d_BLASWrapperPtr->xgemm('N',
-                                        'T',
-                                        3,
-                                        numQuads,
-                                        dofsPerCell,
-                                        &scalarCoeffAlpha,
-                                        Q1FieldCell.data() +
-                                          cellIdx * dofsPerCell * 3,
-                                        3,
-                                        shapeFnValues.data(),
-                                        numQuads,
-                                        &scalarCoeffBeta,
-                                        quadratureValueDataCell.data(),
-                                        3);
-
-                quadratureValueDataHost.copyFrom(quadratureValueDataCell,
-                                                 3 * numQuads,
-                                                 0,
-                                                 cellIdx * numQuads * 3);
+                dftfe::utils::deviceSynchronize();
+                timer_debug1.enter_subsection("comp-3");
+                d_BLASWrapperPtr->xgemmStridedBatched(
+                  'N',
+                  'T',
+                  3,
+                  numQuads,
+                  dofsPerCell,
+                  &scalarCoeffAlpha,
+                  Q1Field.data() + spinIndex * nCells * dofsPerCell * 3,
+                  3,
+                  3 * dofsPerCell,
+                  d_shapeFnValTempDensityToDensityQuad.data(),
+                  numQuads,
+                  0,
+                  &scalarCoeffBeta,
+                  quadratureValueData.data() +
+                    spinIndex * nCells * numQuads * 3,
+                  3,
+                  3 * numQuads,
+                  nCells);
+                dftfe::utils::deviceSynchronize();
+                timer_debug1.leave_subsection("comp-3");
               }
           }
+        }
+
+      dftfe::utils::deviceSynchronize();
+      timer_debug1.leave_subsection("cell loop");
     }
 
     template class FEBasisOperations<double,

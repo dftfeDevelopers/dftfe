@@ -27,6 +27,14 @@
 
 namespace dftfe
 {
+  dealii::ConditionalOStream
+    pcout_debug(std::cout,
+                dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0);
+
+  dealii::TimerOutput timer_debug(MPI_COMM_WORLD,
+                                  pcout_debug,
+                                  dealii::TimerOutput::summary,
+                                  dealii::TimerOutput::wall_times);
   template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
   void
   computeRhoFromPSI(
@@ -100,11 +108,20 @@ namespace dftfe
     const dftfe::uInt numCellBlocks = totalLocallyOwnedCells / cellsBlockSize;
     const dftfe::uInt remCellBlockSize =
       totalLocallyOwnedCells - numCellBlocks * cellsBlockSize;
-    // Use the passed temporary density quadrature index instead of
-    // hard-coded 6.
+    const dftfe::uInt numQuadsquadratureIndex =
+      basisOperationsPtr->d_matrixFreeDataPtr->get_quadrature(quadratureIndex)
+        .size();
+    const dftfe::uInt numQuadstempDensityQuadratureIndex =
+      basisOperationsPtr->d_matrixFreeDataPtr
+        ->get_quadrature(tempDensityQuadratureIndex)
+        .size();
+
+    const bool refineQuadrature =
+      (numQuadsquadratureIndex > numQuadstempDensityQuadratureIndex);
     basisOperationsPtr->reinit(BVec,
                                cellsBlockSize,
-                               tempDensityQuadratureIndex);
+                               refineQuadrature ? tempDensityQuadratureIndex :
+                                                  quadratureIndex);
     const dftfe::uInt numQuadPoints = basisOperationsPtr->nQuadsPerCell();
 
     dftfe::utils::MemoryStorage<NumberType, memorySpace> wfcQuadPointData;
@@ -237,13 +254,18 @@ namespace dftfe
 
                     basisOperationsPtr->reinit(currentBlockSize,
                                                cellsBlockSize,
-                                               tempDensityQuadratureIndex,
+                                               refineQuadrature ?
+                                                 tempDensityQuadratureIndex :
+                                                 quadratureIndex,
                                                false);
 
 
                     flattenedArrayBlock->updateGhostValues();
                     basisOperationsPtr->distribute(*(flattenedArrayBlock));
 
+                    dftfe::utils::deviceSynchronize();
+                    timer_debug.enter_subsection(
+                      "interpolateKernel and quad pt eval");
                     for (dftfe::Int iblock = 0; iblock < (numCellBlocks + 1);
                          iblock++)
                       {
@@ -254,7 +276,6 @@ namespace dftfe
                           {
                             const dftfe::uInt startingCellId =
                               iblock * cellsBlockSize;
-
                             basisOperationsPtr->interpolateKernel(
                               *(flattenedArrayBlock),
                               wfcQuadPointData.data(),
@@ -305,24 +326,76 @@ namespace dftfe
                               }
                           } // non-trivial cell block check
                       }     // cells block loop
+                    dftfe::utils::deviceSynchronize();
+                    timer_debug.leave_subsection(
+                      "interpolateKernel and quad pt eval");
                   }
               }
           }
       }
-#if defined(DFTFE_WITH_DEVICE)
-    rhoHost.resize(rho.size());
+    dftfe::utils::deviceSynchronize();
+    timer_debug.enter_subsection("interpolateQ1ToQ2");
 
-    rhoHost.copyFrom(rho);
+
+    dftfe::utils::MemoryStorage<double, memorySpace> rhoRefinedStorage;
+    dftfe::utils::MemoryStorage<double, memorySpace> gradRhoRefinedStorage;
+    dftfe::utils::MemoryStorage<double, memorySpace> tauRefinedStorage;
+
+    auto &rhoRefined     = refineQuadrature ? rhoRefinedStorage : rho;
+    auto &gradRhoRefined = refineQuadrature ? gradRhoRefinedStorage : gradRho;
+    auto &tauRefined     = refineQuadrature ? tauRefinedStorage : tau;
+
+    if (refineQuadrature)
+      {
+        basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
+
+        basisOperationsPtr->interpolateQ1ToQ2(
+          rho,
+          basisOperationsPtr->d_dofHandlerID,
+          tempDensityQuadratureIndex,
+          quadratureIndex,
+          rhoRefined,
+          1,
+          numSpinComponents);
+        if (isEvaluateGradRho)
+          basisOperationsPtr->interpolateQ1ToQ2(
+            gradRho,
+            basisOperationsPtr->d_dofHandlerID,
+            tempDensityQuadratureIndex,
+            quadratureIndex,
+            gradRhoRefined,
+            3,
+            numSpinComponents);
+        if (isEvaluateTau)
+          basisOperationsPtr->interpolateQ1ToQ2(
+            tau,
+            basisOperationsPtr->d_dofHandlerID,
+            tempDensityQuadratureIndex,
+            quadratureIndex,
+            tauRefined,
+            1,
+            numSpinComponents);
+      }
+    dftfe::utils::deviceSynchronize();
+    timer_debug.leave_subsection("interpolateQ1ToQ2");
+
+    timer_debug.enter_subsection("post quad pt evaluation");
+
+    const dftfe::uInt numQuadPointsNew = basisOperationsPtr->nQuadsPerCell();
+#if defined(DFTFE_WITH_DEVICE)
+    rhoHost.resize(rhoRefined.size());
+
+    rhoHost.copyFrom(rhoRefined);
 
     if (isEvaluateGradRho)
       {
-        gradRhoHost.resize(gradRho.size());
-        gradRhoHost.copyFrom(gradRho);
+        gradRhoHost.resize(gradRhoRefined.size());
+        gradRhoHost.copyFrom(gradRhoRefined);
       }
     if (isEvaluateTau)
       {
-        tauHost.resize(tau.size());
-        tauHost.copyFrom(tau);
+        tauHost.resize(tauRefined.size());
+        tauHost.copyFrom(tauRefined);
       }
 
 #endif
@@ -333,7 +406,7 @@ namespace dftfe
       {
         MPI_Allreduce(MPI_IN_PLACE,
                       rhoHost.data(),
-                      totalLocallyOwnedCells * numQuadPoints *
+                      totalLocallyOwnedCells * numQuadPointsNew *
                         numSpinComponents,
                       dataTypes::mpi_type_id(rhoHost.data()),
                       MPI_SUM,
@@ -341,7 +414,7 @@ namespace dftfe
         if (isEvaluateGradRho)
           MPI_Allreduce(MPI_IN_PLACE,
                         gradRhoHost.data(),
-                        totalLocallyOwnedCells * numQuadPoints *
+                        totalLocallyOwnedCells * numQuadPointsNew *
                           numSpinComponents * 3,
                         dataTypes::mpi_type_id(gradRhoHost.data()),
                         MPI_SUM,
@@ -349,7 +422,7 @@ namespace dftfe
         if (isEvaluateTau)
           MPI_Allreduce(MPI_IN_PLACE,
                         tauHost.data(),
-                        totalLocallyOwnedCells * numQuadPoints *
+                        totalLocallyOwnedCells * numQuadPointsNew *
                           numSpinComponents,
                         dataTypes::mpi_type_id(tauHost.data()),
                         MPI_SUM,
@@ -361,7 +434,7 @@ namespace dftfe
       {
         MPI_Allreduce(MPI_IN_PLACE,
                       rhoHost.data(),
-                      totalLocallyOwnedCells * numQuadPoints *
+                      totalLocallyOwnedCells * numQuadPointsNew *
                         numSpinComponents,
                       dataTypes::mpi_type_id(rhoHost.data()),
                       MPI_SUM,
@@ -369,7 +442,7 @@ namespace dftfe
         if (isEvaluateGradRho)
           MPI_Allreduce(MPI_IN_PLACE,
                         gradRhoHost.data(),
-                        totalLocallyOwnedCells * numQuadPoints *
+                        totalLocallyOwnedCells * numQuadPointsNew *
                           numSpinComponents * 3,
                         dataTypes::mpi_type_id(gradRhoHost.data()),
                         MPI_SUM,
@@ -378,151 +451,86 @@ namespace dftfe
         if (isEvaluateTau)
           MPI_Allreduce(MPI_IN_PLACE,
                         tauHost.data(),
-                        totalLocallyOwnedCells * numQuadPoints *
+                        totalLocallyOwnedCells * numQuadPointsNew *
                           numSpinComponents,
                         dataTypes::mpi_type_id(tauHost.data()),
                         MPI_SUM,
                         interBandGroupComm);
       }
 
-
-    basisOperationsPtr->reinit(BVec, cellsBlockSize, quadratureIndex);
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      tempVal(totalLocallyOwnedCells * numQuadPoints, 0.0);
-
-    dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-      tempGradVal(totalLocallyOwnedCells * numQuadPoints * 3, 0.0);
-
     if (dftParams.spinPolarized == 1)
       {
+        densityValues[0].resize(totalLocallyOwnedCells * numQuadPointsNew);
+        densityValues[1].resize(totalLocallyOwnedCells * numQuadPointsNew);
         std::transform(rhoHost.begin(),
-                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
-                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
-                       tempVal.begin(),
+                       rhoHost.begin() +
+                         totalLocallyOwnedCells * numQuadPointsNew,
+                       rhoHost.begin() +
+                         totalLocallyOwnedCells * numQuadPointsNew,
+                       densityValues[0].begin(),
                        std::plus<>{});
-
-        basisOperationsPtr->interpolateQ1ToQ2(
-          tempVal,
-          basisOperationsPtr->d_dofHandlerID,
-          tempDensityQuadratureIndex,
-          quadratureIndex,
-          densityValues[0],
-          1);
         std::transform(rhoHost.begin(),
-                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
-                       rhoHost.begin() + totalLocallyOwnedCells * numQuadPoints,
-                       tempVal.begin(),
+                       rhoHost.begin() +
+                         totalLocallyOwnedCells * numQuadPointsNew,
+                       rhoHost.begin() +
+                         totalLocallyOwnedCells * numQuadPointsNew,
+                       densityValues[1].begin(),
                        std::minus<>{});
-
-        basisOperationsPtr->interpolateQ1ToQ2(
-          tempVal,
-          basisOperationsPtr->d_dofHandlerID,
-          tempDensityQuadratureIndex,
-          quadratureIndex,
-          densityValues[1],
-          1);
-
         if (isEvaluateGradRho)
           {
+            gradDensityValues[0].resize(3 * totalLocallyOwnedCells *
+                                        numQuadPointsNew);
+            gradDensityValues[1].resize(3 * totalLocallyOwnedCells *
+                                        numQuadPointsNew);
             std::transform(gradRhoHost.begin(),
                            gradRhoHost.begin() +
-                             3 * totalLocallyOwnedCells * numQuadPoints,
+                             3 * totalLocallyOwnedCells * numQuadPointsNew,
                            gradRhoHost.begin() +
-                             3 * totalLocallyOwnedCells * numQuadPoints,
-                           tempGradVal.begin(),
+                             3 * totalLocallyOwnedCells * numQuadPointsNew,
+                           gradDensityValues[0].begin(),
                            std::plus<>{});
-
-            basisOperationsPtr->interpolateQ1ToQ2(
-              tempGradVal,
-              basisOperationsPtr->d_dofHandlerID,
-              tempDensityQuadratureIndex,
-              quadratureIndex,
-              gradDensityValues[0],
-              3);
-
             std::transform(gradRhoHost.begin(),
                            gradRhoHost.begin() +
-                             3 * totalLocallyOwnedCells * numQuadPoints,
+                             3 * totalLocallyOwnedCells * numQuadPointsNew,
                            gradRhoHost.begin() +
-                             3 * totalLocallyOwnedCells * numQuadPoints,
-                           tempGradVal.begin(),
+                             3 * totalLocallyOwnedCells * numQuadPointsNew,
+                           gradDensityValues[1].begin(),
                            std::minus<>{});
-
-            basisOperationsPtr->interpolateQ1ToQ2(
-              tempGradVal,
-              basisOperationsPtr->d_dofHandlerID,
-              tempDensityQuadratureIndex,
-              quadratureIndex,
-              gradDensityValues[1],
-              3);
           }
 
         if (isEvaluateTau)
           {
+            tauValues[0].resize(totalLocallyOwnedCells * numQuadPointsNew);
+            tauValues[1].resize(totalLocallyOwnedCells * numQuadPointsNew);
             std::transform(tauHost.begin(),
                            tauHost.begin() +
-                             totalLocallyOwnedCells * numQuadPoints,
+                             totalLocallyOwnedCells * numQuadPointsNew,
                            tauHost.begin() +
-                             totalLocallyOwnedCells * numQuadPoints,
-                           tempVal.begin(),
+                             totalLocallyOwnedCells * numQuadPointsNew,
+                           tauValues[0].begin(),
                            std::plus<>{});
-
-            basisOperationsPtr->interpolateQ1ToQ2(
-              tempVal,
-              basisOperationsPtr->d_dofHandlerID,
-              tempDensityQuadratureIndex,
-              quadratureIndex,
-              tauValues[0],
-              1);
-
             std::transform(tauHost.begin(),
                            tauHost.begin() +
-                             totalLocallyOwnedCells * numQuadPoints,
+                             totalLocallyOwnedCells * numQuadPointsNew,
                            tauHost.begin() +
-                             totalLocallyOwnedCells * numQuadPoints,
-                           tempVal.begin(),
+                             totalLocallyOwnedCells * numQuadPointsNew,
+                           tauValues[1].begin(),
                            std::minus<>{});
-
-            basisOperationsPtr->interpolateQ1ToQ2(
-              tempVal,
-              basisOperationsPtr->d_dofHandlerID,
-              tempDensityQuadratureIndex,
-              quadratureIndex,
-              tauValues[1],
-              1);
           }
       }
     else
       {
-        basisOperationsPtr->interpolateQ1ToQ2(
-          rhoHost,
-          basisOperationsPtr->d_dofHandlerID,
-          tempDensityQuadratureIndex,
-          quadratureIndex,
-          densityValues[0],
-          1);
+        densityValues[0] = rhoHost;
         if (isEvaluateGradRho)
-          {
-            basisOperationsPtr->interpolateQ1ToQ2(
-              gradRhoHost,
-              basisOperationsPtr->d_dofHandlerID,
-              tempDensityQuadratureIndex,
-              quadratureIndex,
-              gradDensityValues[0],
-              3);
-          }
+          gradDensityValues[0] = gradRhoHost;
         if (isEvaluateTau)
           {
-            basisOperationsPtr->interpolateQ1ToQ2(
-              tauHost,
-              basisOperationsPtr->d_dofHandlerID,
-              tempDensityQuadratureIndex,
-              quadratureIndex,
-              tauValues[0],
-              1);
+            tauValues[0] = tauHost;
           }
       }
+
+    dftfe::utils::deviceSynchronize();
+    timer_debug.leave_subsection("post quad pt evaluation");
 
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)

@@ -147,6 +147,12 @@ namespace dftfe
                                    ValueTypeBasisData,
                                    memorySpaceSrc> &basisOperationsSrc);
 
+      /*The shape functions centered at the quadrature points drived from TEMP
+       * DENSITY QUADRATURE RULE evaluated at DENSITY QUADRATURE RULE */
+      void
+      createShapeFnsTempDensityQuad(const dftfe::uInt tempDensityquadId,
+                                    const dftfe::uInt densityquadId);
+
       /**
        * @brief sets internal variables and optionally resizes internal temp storage for interpolation operations
        * @param[in] vecBlockSize block size to used for operations on vectors,
@@ -1059,7 +1065,8 @@ namespace dftfe
         d_stiffnessVectorCoeffType;
       dftfe::utils::MemoryStorage<ValueTypeBasisCoeff, memorySpace>
         d_inverseStiffnessVectorCoeffType;
-
+      dftfe::utils::MemoryStorage<ValueTypeBasisData, memorySpace>
+        d_shapeFnValTempDensityToDensityQuad;
 
       mutable std::map<
         dftfe::uInt,
@@ -1219,15 +1226,13 @@ namespace dftfe
 
       void
       interpolateQ1ToQ2(
-        const dftfe::utils::MemoryStorage<double,
-                                          dftfe::utils::MemorySpace::HOST>
-                         &Q1Field,
-        const dftfe::uInt dofHandlerId,
-        const dftfe::uInt quadRule1,
-        const dftfe::uInt quadRule2,
-        dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::HOST>
-                         &quadratureValueDataHost,
-        const dftfe::uInt numComponents) const;
+        const dftfe::utils::MemoryStorage<double, memorySpace> &Q1Field,
+        const dftfe::uInt                                       dofHandlerId,
+        const dftfe::uInt                                       quadRule1,
+        const dftfe::uInt                                       quadRule2,
+        dftfe::utils::MemoryStorage<double, memorySpace> &quadratureValueData,
+        const dftfe::uInt                                 numComponents,
+        const dftfe::uInt numSpinComponents) const;
 
       // FIXME Untested function
       /**

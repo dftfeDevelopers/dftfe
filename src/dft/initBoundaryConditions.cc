@@ -352,6 +352,8 @@ namespace dftfe
           {
             d_basisOperationsPtrDevice->clear();
             d_basisOperationsPtrDevice->init(*d_basisOperationsPtrHost);
+            d_basisOperationsPtrDevice->createShapeFnsTempDensityQuad(
+              d_tempDensityQuadratureId, d_densityQuadratureId);
             const dftfe::uInt BVec =
               std::min(d_dftParamsPtr->chebyWfcBlockSize, d_numEigenValues);
 
@@ -410,6 +412,8 @@ namespace dftfe
                                              d_densityDofHandlerIndex,
                                              quadratureIndices,
                                              updateFlags);
+            d_basisOperationsPtrDevice->createShapeFnsTempDensityQuad(
+              d_tempDensityQuadratureId, d_densityQuadratureId);
             if (d_dftParamsPtr->finiteElementPolynomialOrder ==
                 d_dftParamsPtr->finiteElementPolynomialOrderElectrostatics)
               d_basisOperationsPtrDevice->computeCellStiffnessMatrix(

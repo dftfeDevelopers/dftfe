@@ -2263,6 +2263,11 @@ namespace dftfe
                                   finiteElementPolynomialOrderRhoNodal + 1;
       }
 
+    if (tempDensityQuadratureRule == 0)
+      {
+        densityQuadratureRule = densityQuadratureRule;
+      }
+
 
     // checking if the XC type is compatible with
     // overlap compute communication cheby
