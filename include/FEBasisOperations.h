@@ -147,7 +147,7 @@ namespace dftfe
                                    ValueTypeBasisData,
                                    memorySpaceSrc> &basisOperationsSrc);
 
-      /*The shape functions centered at the quadrature points drived from TEMP
+      /*The shape functions centered at the quadrature points derived from TEMP
        * DENSITY QUADRATURE RULE evaluated at DENSITY QUADRATURE RULE */
       void
       createShapeFnsTempDensityQuad(const dftfe::uInt tempDensityquadId,
@@ -1227,7 +1227,6 @@ namespace dftfe
       void
       interpolateQ1ToQ2(
         const dftfe::utils::MemoryStorage<double, memorySpace> &Q1Field,
-        const dftfe::uInt                                       dofHandlerId,
         const dftfe::uInt                                       quadRule1,
         const dftfe::uInt                                       quadRule2,
         dftfe::utils::MemoryStorage<double, memorySpace> &quadratureValueData,

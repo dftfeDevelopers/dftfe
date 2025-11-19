@@ -27,14 +27,6 @@
 
 namespace dftfe
 {
-  dealii::ConditionalOStream
-    pcout_debug(std::cout,
-                dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0);
-
-  dealii::TimerOutput timer_debug(MPI_COMM_WORLD,
-                                  pcout_debug,
-                                  dealii::TimerOutput::summary,
-                                  dealii::TimerOutput::wall_times);
   template <typename NumberType, dftfe::utils::MemorySpace memorySpace>
   void
   computeRhoFromPSI(
@@ -263,9 +255,6 @@ namespace dftfe
                     flattenedArrayBlock->updateGhostValues();
                     basisOperationsPtr->distribute(*(flattenedArrayBlock));
 
-                    dftfe::utils::deviceSynchronize();
-                    timer_debug.enter_subsection(
-                      "interpolateKernel and quad pt eval");
                     for (dftfe::Int iblock = 0; iblock < (numCellBlocks + 1);
                          iblock++)
                       {
@@ -326,16 +315,10 @@ namespace dftfe
                               }
                           } // non-trivial cell block check
                       }     // cells block loop
-                    dftfe::utils::deviceSynchronize();
-                    timer_debug.leave_subsection(
-                      "interpolateKernel and quad pt eval");
                   }
               }
           }
       }
-    dftfe::utils::deviceSynchronize();
-    timer_debug.enter_subsection("interpolateQ1ToQ2");
-
 
     dftfe::utils::MemoryStorage<double, memorySpace> rhoRefinedStorage;
     dftfe::utils::MemoryStorage<double, memorySpace> gradRhoRefinedStorage;
@@ -351,7 +334,6 @@ namespace dftfe
 
         basisOperationsPtr->interpolateQ1ToQ2(
           rho,
-          basisOperationsPtr->d_dofHandlerID,
           tempDensityQuadratureIndex,
           quadratureIndex,
           rhoRefined,
@@ -360,7 +342,6 @@ namespace dftfe
         if (isEvaluateGradRho)
           basisOperationsPtr->interpolateQ1ToQ2(
             gradRho,
-            basisOperationsPtr->d_dofHandlerID,
             tempDensityQuadratureIndex,
             quadratureIndex,
             gradRhoRefined,
@@ -369,17 +350,12 @@ namespace dftfe
         if (isEvaluateTau)
           basisOperationsPtr->interpolateQ1ToQ2(
             tau,
-            basisOperationsPtr->d_dofHandlerID,
             tempDensityQuadratureIndex,
             quadratureIndex,
             tauRefined,
             1,
             numSpinComponents);
       }
-    dftfe::utils::deviceSynchronize();
-    timer_debug.leave_subsection("interpolateQ1ToQ2");
-
-    timer_debug.enter_subsection("post quad pt evaluation");
 
     const dftfe::uInt numQuadPointsNew = basisOperationsPtr->nQuadsPerCell();
 #if defined(DFTFE_WITH_DEVICE)
@@ -528,9 +504,6 @@ namespace dftfe
             tauValues[0] = tauHost;
           }
       }
-
-    dftfe::utils::deviceSynchronize();
-    timer_debug.leave_subsection("post quad pt evaluation");
 
 #if defined(DFTFE_WITH_DEVICE)
     if (memorySpace == dftfe::utils::MemorySpace::DEVICE)

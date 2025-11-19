@@ -22,14 +22,6 @@ namespace dftfe
 {
   namespace basis
   {
-    dealii::ConditionalOStream pcout_debug(
-      std::cout,
-      dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0);
-
-    dealii::TimerOutput timer_debug1(MPI_COMM_WORLD,
-                                     pcout_debug,
-                                     dealii::TimerOutput::summary,
-                                     dealii::TimerOutput::wall_times);
     template <typename ValueTypeBasisCoeff,
               typename ValueTypeBasisData,
               dftfe::utils::MemorySpace memorySpace>
@@ -3846,7 +3838,6 @@ namespace dftfe
     FEBasisOperations<ValueTypeBasisCoeff, ValueTypeBasisData, memorySpace>::
       interpolateQ1ToQ2(
         const dftfe::utils::MemoryStorage<double, memorySpace> &Q1Field,
-        const dftfe::uInt                                       dofHandlerId,
         const dftfe::uInt                                       quadId1,
         const dftfe::uInt                                       quadId2,
         dftfe::utils::MemoryStorage<double, memorySpace> &quadratureValueData,
@@ -3885,8 +3876,6 @@ namespace dftfe
 
       const double scalarCoeffAlpha = 1.0, scalarCoeffBeta = 0.0;
 
-      dftfe::utils::deviceSynchronize();
-      timer_debug1.enter_subsection("cell loop");
       for (int spinIndex = 0; spinIndex < numSpinComponents; spinIndex++)
         {
           dftfe::uInt cellIdx = 0;
@@ -3894,8 +3883,6 @@ namespace dftfe
           {
             if (numComponents == 1)
               {
-                dftfe::utils::deviceSynchronize();
-                timer_debug1.enter_subsection("comp-1");
                 d_BLASWrapperPtr->xgemm(
                   'N',
                   'N',
@@ -3910,13 +3897,9 @@ namespace dftfe
                   &scalarCoeffBeta,
                   quadratureValueData.data() + spinIndex * nCells * numQuads,
                   numQuads);
-                dftfe::utils::deviceSynchronize();
-                timer_debug1.leave_subsection("comp-1");
               }
             else if (numComponents == 3)
               {
-                dftfe::utils::deviceSynchronize();
-                timer_debug1.enter_subsection("comp-3");
                 d_BLASWrapperPtr->xgemmStridedBatched(
                   'N',
                   'T',
@@ -3936,14 +3919,9 @@ namespace dftfe
                   3,
                   3 * numQuads,
                   nCells);
-                dftfe::utils::deviceSynchronize();
-                timer_debug1.leave_subsection("comp-3");
               }
           }
         }
-
-      dftfe::utils::deviceSynchronize();
-      timer_debug1.leave_subsection("cell loop");
     }
 
     template class FEBasisOperations<double,
