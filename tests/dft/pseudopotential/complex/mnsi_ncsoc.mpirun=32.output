@@ -1,0 +1,67 @@
+number of atoms: 8
+number of atoms types: 2
+Total number of k-points 8
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 8.541698154778680774e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 8.541698154778680774e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.541698154778680774e+00
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  3.634829448999999935e-01 1.365156046999999873e-01 8.634824657999999875e-01
+AtomId 1:  1.365170551000000065e-01 8.634843952999999850e-01 3.634824657999999875e-01
+AtomId 2:  8.634829448999999935e-01 3.634843952999999850e-01 1.365175342000000125e-01
+AtomId 3:  6.365170551000000065e-01 6.365156047000000150e-01 6.365175342000000125e-01
+AtomId 4:  6.548145176999999872e-01 8.451871623000000167e-01 1.548139497000000087e-01
+AtomId 5:  8.451854823000000128e-01 1.548128377000000111e-01 6.548139496999999531e-01
+AtomId 6:  1.548145176999999872e-01 6.548128376999999833e-01 8.451860503000000469e-01
+AtomId 7:  3.451854823000000128e-01 3.451871623000000167e-01 3.451860502999999913e-01
+-----------------------------------------------------------------------------------------
+Number Image Charges  2552
+
+Finite element mesh information
+-------------------------------------------------
+FE interpolating polynomial order for Kohn-Sham eigenvalue problem: 3
+FE interpolating polynomial order for electrostatics solve: 3
+FE interpolating polynomial order for nodal electron density computation: 5
+quadrature rule for electron density and kinetic energy density computation: 6
+number of elements: 512
+number of degrees of freedom for the Kohn-Sham eigenvalue problem : 15625
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+=============================================================================================================================
+number of electrons: 7.600000000000000000e+01
+number of eigen values: 96
+=============================================================================================================================
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Reading data for core electron-density to be used in nonlinear core-correction.....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 29 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:        -449.24028058
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.331595,0.331591,0.331504
+AtomId    1:  0.331595,0.331495,0.331599
+AtomId    2:  0.331501,0.331591,0.331599
+AtomId    3:  0.331349,0.331342,0.331351
+AtomId    4:  0.003863,0.003776,0.003859
+AtomId    5:  0.003779,0.003859,0.003861
+AtomId    6:  0.003861,0.003860,0.003776
+AtomId    7:  0.003791,0.003789,0.003790
+--------------------------------------------------------------------------------------------
+
+Absolute value of cell stress (Hartree/Bohr^3)
+------------------------------------------------------------------------
+0.006336  0.000008  0.000007
+0.000007  0.006336  0.000008
+0.000008  0.000007  0.006336
+------------------------------------------------------------------------
