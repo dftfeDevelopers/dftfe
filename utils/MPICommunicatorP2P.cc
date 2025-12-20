@@ -983,9 +983,7 @@ namespace dftfe
                              .data()[2 * i + 1] -
                            d_mpiPatternP2P->getGhostLocalIndicesRanges()
                              .data()[2 * i]) > 0)
-                        ONECCLCHECK(
-                          ccl
-                          : recv(reinterpret_cast<char *>(recvArrayStartPtr),
+                        ONECCLCHECK(ccl::recv(reinterpret_cast<char *>(recvArrayStartPtr),
                                  (d_mpiPatternP2P->getGhostLocalIndicesRanges()
                                     .data()[2 * i + 1] -
                                   d_mpiPatternP2P->getGhostLocalIndicesRanges()
