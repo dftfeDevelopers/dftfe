@@ -695,7 +695,7 @@ namespace dftfe
                   NCCLCHECK(ncclGroupEnd());
                 }
 #  endif
-#  if defined(DFTFE_WITH_SYCL_ONENCCL)
+#  if defined(DFTFE_WITH_SYCL_ONECCL)
             if constexpr (memorySpace == MemorySpace::DEVICE)
               if (d_commProtocol == communicationProtocol::nccl)
                 {
