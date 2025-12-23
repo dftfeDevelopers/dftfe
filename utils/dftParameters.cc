@@ -745,7 +745,7 @@ namespace dftfe
           "SPIN-ORBIT COUPLING",
           "false",
           dealii::Patterns::Bool(),
-          "[Standard] Perform a an SOC calculation, requires fully relativistic pseudopotentials. Default option is false.");
+          "[Standard] Perform a an SOC calculation, requires fully relativistic pseudopotentials. Recommended pseudopotential databases are http://www.quantum-simulation.org/potentials/sg15\_oncv or http://www.pseudo-dojo.org/. Default option is false.");
 
         prm.declare_entry(
           "TOTAL MAGNETIZATION",
@@ -1937,6 +1937,10 @@ namespace dftfe
     AssertThrow(solverMode != "BANDS",
                 dealii::ExcMessage(
                   "DFT-FE Error: Real executable cannot be used for bands."));
+    AssertThrow(
+      !(noncolin || hasSOC),
+      dealii::ExcMessage(
+        "DFT-FE Error: Real executable cannot be used noncollinear magnetism and spin-orbit coupling."));
 #endif
     if (numberEigenValues != 0)
       AssertThrow(
