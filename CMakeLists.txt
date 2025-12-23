@@ -123,6 +123,7 @@ SET(TARGET_SRC
   ./src/symmetry/groupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/geoOpt/geoOptCell.cc
+  ./src/matrixFree/MatrixFree.cc
   ./src/solvers/nonlinearSolverProblem.cc
   ./src/solvers/nonLinearSolver.cc
   ./src/solvers/linearSolver.cc
@@ -234,13 +235,14 @@ SET(DEVICE_SRC
   ./utils/BLASWrapperDevice.cc
   ./utils/MPICommunicatorP2PKernelsDevice.cc
   ./src/solvers/linearSolverCGDeviceKernels.cc
+  ./src/matrixFree/MatrixFreeDevice.cc
   ./utils/matrixFreeDeviceKernels.cc
   ./utils/FEBasisOperationsKernelsInternalDevice.cc
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/force/configurationalForceKernels.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
-  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc  
+  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
   )
 ELSEIF ("${GPU_LANG}" STREQUAL "hip")
 SET(DEVICE_SRC
@@ -283,7 +285,7 @@ SET(DEVICE_SRC
   ./src/atom/AtomicCenteredNonLocalOperatorKernelsDevice.cc
   ./src/dftOperator/KohnShamHamiltonianOperatorDeviceKernels.cc
   ./src/excManager/excManagerDeviceKernels.cc
-  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc  
+  ./src/excManager/exchangeCorrelationFunctionalEvaluatorDevice.cc
   ./src/force/configurationalForceKernels.cc
   )
 
@@ -305,7 +307,7 @@ IF (WITH_GPU)
     ENDIF()
 ENDIF()
 IF (WITH_GPU)
-  LIST(APPEND TARGET_SRC 
+  LIST(APPEND TARGET_SRC
   ./src/linAlg/linearAlgebraOperationsDevice.cc
   ./utils/constraintMatrixInfoDevice.cc
   ./src/dft/solveVselfInBinsDevice.cc

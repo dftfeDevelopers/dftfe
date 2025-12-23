@@ -154,10 +154,58 @@ namespace dftfe
             matrixFreeVectorComponent),
           constraintMatrix);
 
-        // Setup MatrixFree Mesh
-        setupMatrixFree();
+        enum operatorList
+        {
+          Laplace   = 1,
+          Helmholtz = 2,
+          LDA       = 3,
+          GGA       = 4
+        };
+
+        // Setup MatrixFree
+        const int    FeOrder   = 7;
+        unsigned int nVectors  = 1;
+        const bool   useDevice = true;
+
+        constexpr int batchSize    = 1;
+        constexpr int subBatchSize = 1;
+
+        // if (FeOrder == 7)
+        //   d_matrixFreeHandle = dftfe::make_matrix_free_handle(
+        //     new dftfe::MatrixFree<double,
+        //                           dftfe::utils::MemorySpace::DEVICE,
+        //                           8,
+        //                           8,
+        //                           batchSize,
+        //                           subBatchSize>(
+        //       mpi_communicator,
+        //       d_basisOperationsPtr,
+        //       d_BLASWrapperPtr,
+        //       useDevice,
+        //       operatorList::Laplace,
+        //       d_matrixFreeQuadratureComponentAX,
+        //       nVectors));
+
+        // Setup MatrixFree
+        // d_matrixFreeHandle.init();
+
+        // auto d_matrixFree =
+        //   std::make_unique<dftfe::MatrixFree<double,
+        //                                      dftfe::utils::MemorySpace::DEVICE,
+        //                                      8,
+        //                                      8,
+        //                                      batchSize,
+        //                                      subBatchSize>>(
+        //     mpi_communicator,
+        //     d_basisOperationsPtr,
+        //     d_BLASWrapperPtr,
+        //     useDevice,
+        //     operatorList::Laplace,
+        //     d_matrixFreeQuadratureComponentAX,
+        //     nVectors);
 
         // Setup MatrixFree Constraints
+        setupMatrixFree();
         setupConstraints();
 
         d_isFastConstraintsInitialized       = true;
@@ -823,7 +871,6 @@ namespace dftfe
   }
 
 
-
   template <dftfe::uInt FEOrderElectro>
   void
   poissonSolverProblemDevice<FEOrderElectro>::setupMatrixFree()
@@ -974,7 +1021,10 @@ namespace dftfe
 
     d_constraintsTotalPotentialInfo.distribute(x);
 
-    matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
+    // d_matrixFreeHandle.computeAX(Ax.data(), x.data());
+
+    matrixFreeDeviceKernels<double, p * p, q, p,
+    dim>::computeAXDevicePoisson(
       blocks,
       threads,
       smem,
@@ -983,7 +1033,6 @@ namespace dftfe
       d_shapeFunctionPtr,
       d_jacobianFactorPtr,
       d_mapPtr);
-
 
     d_constraintsTotalPotentialInfo.set_zero(x);
 

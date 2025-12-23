@@ -26,6 +26,7 @@
 #    include <headers.h>
 #    include "FEBasisOperations.h"
 #    include "BLASWrapper.h"
+#    include <MatrixFree.h>
 
 namespace dftfe
 {
@@ -216,18 +217,15 @@ namespace dftfe
     // locally owned and total degrees of freedom including ghost
     dftfe::Int d_nLocalCells, d_xLocalDof, d_xLen;
 
-    // shape function value, gradient, jacobian and map for matrixfree
+    dftfe::MatrixFreeHandle d_matrixFreeHandle;
+
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunction, d_jacobianFactor;
     dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
       d_map;
-
-    // Pointers to shape function value, gradient, jacobian and map for
-    // matrixfree
     double     *d_shapeFunctionPtr;
     double     *d_jacobianFactorPtr;
     dftfe::Int *d_mapPtr;
-
 
     // constraints
     dftUtils::constraintMatrixInfo<dftfe::utils::MemorySpace::DEVICE>

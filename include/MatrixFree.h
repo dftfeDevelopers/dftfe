@@ -1,0 +1,182 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2022  The Regents of the University of Michigan and DFT-FE
+// authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+// @author Gourab Panigrahi
+//
+
+#ifndef MatrixFree_H_
+#define MatrixFree_H_
+#include <FEBasisOperations.h>
+#include <linearAlgebraOperations.h>
+#include <MatrixFreeHandle.h>
+#include <MatrixFreeDevice.h>
+
+#ifdef _OPENMP
+#  include <omp.h>
+#else
+#  define omp_get_thread_num() 0
+#endif
+
+namespace dftfe
+{
+  /**
+   * @brief MatrixFree class template. template parameter nDofsPerDim
+   * is the finite element polynomial order. nQuadPointsPerDim is the order of
+   * the Gauss quadrature rule. batchSize is the size of batch tuned to hardware
+   *
+   * @author Gourab Panigrahi
+   */
+  template <typename T,
+            dftfe::utils::MemorySpace memorySpace,
+            unsigned int              nDofsPerDim,
+            unsigned int              nQuadPointsPerDim,
+            unsigned int              batchSize,
+            unsigned int              subBatchSize>
+  class MatrixFree
+  {
+  public:
+    static constexpr bool d_isComplex =
+      std::is_same_v<dataTypes::number, std::complex<double>>;
+
+    typedef std::conditional_t<d_isComplex, std::complex<T>, T> DataType;
+
+    /// Constructor
+    MatrixFree(const MPI_Comm                       &mpi_comm,
+               std::shared_ptr<dftfe::basis::FEBasisOperations<
+                 dataTypes::number,
+                 double,
+                 dftfe::utils::MemorySpace::HOST>>   basisOperationsPtrHost,
+               std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
+                 dftfe::utils::MemorySpace::DEVICE>> BLASWrapperPtr,
+               const bool                            useDevice,
+               const unsigned int                    operatorId,
+               const unsigned int                    quadratureID,
+               const unsigned int                    nVectors);
+
+    /**
+     * @brief Initialize data structures for MatrixFree class
+     *
+     */
+    void
+    init();
+
+    /**
+     * @brief Compute Laplace operator multipled by X
+     *
+     */
+    inline void
+    computeAX(T *dst, T *src);
+
+    inline void
+    constraintsDistribute(T *src);
+
+    inline void
+    constraintsDistributeTranspose(T *dst, T *src);
+
+    inline void
+    constraintsSetZero(T *src);
+
+  private:
+    /**
+     * @brief Initialize optimized constraints
+     *
+     */
+    void
+    initConstraints();
+
+    void
+    setupConstraints(const dealii::IndexSet &indexSet);
+
+#ifdef DFTFE_WITH_DEVICE
+    std::unique_ptr<dftfe::MatrixFreeDevice<T,
+                                            nDofsPerDim,
+                                            nQuadPointsPerDim,
+                                            std::is_same_v<T, double> ? 1 : 1>>
+      d_MatrixFreeDevice;
+
+    std::unique_ptr<utils::mpi::MPICommunicatorP2P<DataType, memorySpace>>
+      d_mpiCommunicatorP2P;
+#endif
+
+    enum operatorList
+    {
+      Laplace   = 1,
+      Helmholtz = 2,
+      LDA       = 3,
+      GGA       = 4
+    };
+
+    const bool         d_useDevice;
+    const unsigned int d_operatorID, d_quadratureID, d_nVectors, d_nBatch,
+      d_nDofsPerCell, d_nQuadsPerCell;
+
+    unsigned int d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
+      d_localBlockSize, d_localSize, d_ghostBlockSize, d_ghostSize,
+      d_nOMPThreads;
+
+    static constexpr unsigned int d_quadODim = nQuadPointsPerDim / 2;
+    static constexpr unsigned int d_quadEDim =
+      nQuadPointsPerDim % 2 == 1 ? d_quadODim + 1 : d_quadODim;
+    static constexpr unsigned int d_dofODim = nDofsPerDim / 2;
+    static constexpr unsigned int d_dofEDim =
+      nDofsPerDim % 2 == 1 ? d_dofODim + 1 : d_dofODim;
+
+    std::array<T, d_quadEDim * d_dofEDim + d_quadODim * d_dofODim>
+      nodalShapeFunctionValuesAtQuadPointsEO;
+    std::array<T, 2 * d_quadODim * d_quadEDim>
+                                     quadShapeFunctionGradientsAtQuadPointsEO;
+    std::array<T, nQuadPointsPerDim> quadratureWeights;
+
+    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::HOST>
+      d_singleVectorGlobalToLocalMap;
+    dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
+      d_jacobianFactor;
+
+    std::vector<std::vector<unsigned int>> d_constrainingNodeBuckets,
+      d_constrainedNodeBuckets;
+    std::vector<std::vector<T>> d_weightMatrixList;
+    std::vector<T>              d_inhomogenityList;
+
+    std::shared_ptr<
+      dftfe::basis::FEBasisOperations<dataTypes::number,
+                                      double,
+                                      dftfe::utils::MemorySpace::HOST>>
+      d_basisOperationsPtrHost;
+
+    /// pointer to dealii MatrixFree object
+    const dealii::MatrixFree<3, double> *d_matrixFreeDataPtr;
+
+    /// pointer to dealii dealii::AffineConstraints<double> object
+    const dealii::AffineConstraints<double> *d_constraintMatrixPtr;
+
+    std::shared_ptr<
+      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
+      d_BLASWrapperPtr;
+
+    std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
+      d_singleVectorPartitioner, d_singleBatchPartitioner;
+
+    dealii::ConditionalOStream pcout;
+    const MPI_Comm             mpi_communicator;
+    const unsigned int         n_mpi_processes;
+    const unsigned int         this_mpi_process;
+    std::vector<T>             tempGhostStorage, tempCompressStorage;
+    std::vector<MPI_Request>   mpiRequestsGhost;
+    std::vector<MPI_Request>   mpiRequestsCompress;
+  };
+
+} // namespace dftfe
+#endif // MatrixFree_H_
