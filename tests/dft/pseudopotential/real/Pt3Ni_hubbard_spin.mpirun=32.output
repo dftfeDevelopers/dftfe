@@ -35,18 +35,18 @@ Pseudopotential initalization....
 Reading data for core electron-density to be used in nonlinear core-correction.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 43 iterations.
+SCF iterations converged to the specified tolerance after: 44 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -533.25604286
+             Total energy:        -533.25604282
 Absolute magnetization: 2.059
 Net magnetization     : -1.988
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000638,0.000638,0.000638
-AtomId    1:  0.299655,0.299655,0.009108
-AtomId    2:  0.009108,0.299655,0.299655
-AtomId    3:  0.299655,0.009108,0.299655
+AtomId    0:  0.148029,0.148029,0.148029
+AtomId    1:  0.152263,0.152263,0.156498
+AtomId    2:  0.156498,0.152263,0.152263
+AtomId    3:  0.152263,0.156498,0.152263
 --------------------------------------------------------------------------------------------

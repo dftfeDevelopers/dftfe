@@ -32,6 +32,11 @@ namespace dftfe
    */
   namespace vectorTools
   {
+    void
+    makeAffineConstraintsConsistentInParallel(
+      const dealii::DoFHandler<3>       &dofHandlerPar,
+      dealii::AffineConstraints<double> &constraints);
+
     /** @brief Create constraint matrix using serial mesh.
      *  Temporary fix for a bug (Issue #7053) in deal.ii until it is resolved.
      *

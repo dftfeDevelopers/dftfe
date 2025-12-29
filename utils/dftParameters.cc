@@ -846,7 +846,7 @@ namespace dftfe
           "SPIN MIXING ENHANCEMENT FACTOR",
           "1.0",
           dealii::Patterns::Double(-1e-12, 100.0),
-          "[Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.");
+          R"([Standard] Scales the mixing parameter for the spin densities as SPIN MIXING ENHANCEMENT FACTOR times MIXING PARAMETER. This parameter is not used for LOW\_RANK\_DIELECM\_PRECOND mixing method.)");
 
         prm.declare_entry(
           "ADAPT ANDERSON MIXING PARAMETER",
@@ -2121,7 +2121,7 @@ namespace dftfe
       }
     else if (!isPseudopotential && orthogType == "Auto" && !useDevice)
       {
-#ifdef USE_PETSC;
+#ifdef USE_PETSC
         if (verbosity >= 1 &&
             dealii::Utilities::MPI::this_mpi_process(mpi_comm_parent) == 0)
           std::cout
@@ -2141,7 +2141,7 @@ namespace dftfe
       }
     else if (orthogType == "GS" && !useDevice)
       {
-#ifndef USE_PETSC;
+#ifndef USE_PETSC
         AssertThrow(
           orthogType != "GS",
           dealii::ExcMessage(
