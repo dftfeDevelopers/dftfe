@@ -170,39 +170,30 @@ namespace dftfe
         constexpr int batchSize    = 1;
         constexpr int subBatchSize = 1;
 
-        // if (FeOrder == 7)
-        //   d_matrixFreeHandle = dftfe::make_matrix_free_handle(
-        //     new dftfe::MatrixFree<double,
-        //                           dftfe::utils::MemorySpace::DEVICE,
-        //                           8,
-        //                           8,
-        //                           batchSize,
-        //                           subBatchSize>(
-        //       mpi_communicator,
-        //       d_basisOperationsPtr,
-        //       d_BLASWrapperPtr,
-        //       useDevice,
-        //       operatorList::Laplace,
-        //       d_matrixFreeQuadratureComponentAX,
-        //       nVectors));
+        pcout << "Debug!! 1" << std::endl;
+
+        if (FeOrder == 7)
+          d_matrixFreeHandle = dftfe::make_matrix_free_handle(
+            new dftfe::MatrixFree<double,
+                                  dftfe::utils::MemorySpace::DEVICE,
+                                  8,
+                                  8,
+                                  batchSize,
+                                  subBatchSize>(
+              mpi_communicator,
+              d_basisOperationsPtr,
+              d_BLASWrapperPtr,
+              useDevice,
+              operatorList::Laplace,
+              d_matrixFreeQuadratureComponentAX,
+              1));
+
+        pcout << "Debug!! 2" << std::endl;
 
         // Setup MatrixFree
-        // d_matrixFreeHandle.init();
+        d_matrixFreeHandle.init();
 
-        // auto d_matrixFree =
-        //   std::make_unique<dftfe::MatrixFree<double,
-        //                                      dftfe::utils::MemorySpace::DEVICE,
-        //                                      8,
-        //                                      8,
-        //                                      batchSize,
-        //                                      subBatchSize>>(
-        //     mpi_communicator,
-        //     d_basisOperationsPtr,
-        //     d_BLASWrapperPtr,
-        //     useDevice,
-        //     operatorList::Laplace,
-        //     d_matrixFreeQuadratureComponentAX,
-        //     nVectors);
+        pcout << "Debug!! 3" << std::endl;
 
         // Setup MatrixFree Constraints
         setupMatrixFree();
@@ -1023,8 +1014,7 @@ namespace dftfe
 
     // d_matrixFreeHandle.computeAX(Ax.data(), x.data());
 
-    matrixFreeDeviceKernels<double, p * p, q, p,
-    dim>::computeAXDevicePoisson(
+    matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
       blocks,
       threads,
       smem,

@@ -54,17 +54,17 @@ namespace dftfe
     typedef std::conditional_t<d_isComplex, std::complex<T>, T> DataType;
 
     /// Constructor
-    MatrixFree(const MPI_Comm                       &mpi_comm,
+    MatrixFree(const MPI_Comm                     &mpi_comm,
                std::shared_ptr<dftfe::basis::FEBasisOperations<
                  dataTypes::number,
                  double,
-                 dftfe::utils::MemorySpace::HOST>>   basisOperationsPtrHost,
-               std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<
-                 dftfe::utils::MemorySpace::DEVICE>> BLASWrapperPtr,
-               const bool                            useDevice,
-               const unsigned int                    operatorId,
-               const unsigned int                    quadratureID,
-               const unsigned int                    nVectors);
+                 dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
+               std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+                                  BLASWrapperPtr,
+               const bool         useDevice,
+               const unsigned int operatorId,
+               const unsigned int quadratureID,
+               const unsigned int nVectors);
 
     /**
      * @brief Initialize data structures for MatrixFree class
@@ -100,17 +100,6 @@ namespace dftfe
     void
     setupConstraints(const dealii::IndexSet &indexSet);
 
-#ifdef DFTFE_WITH_DEVICE
-    std::unique_ptr<dftfe::MatrixFreeDevice<T,
-                                            nDofsPerDim,
-                                            nQuadPointsPerDim,
-                                            std::is_same_v<T, double> ? 1 : 1>>
-      d_MatrixFreeDevice;
-
-    std::unique_ptr<utils::mpi::MPICommunicatorP2P<DataType, memorySpace>>
-      d_mpiCommunicatorP2P;
-#endif
-
     enum operatorList
     {
       Laplace   = 1,
@@ -140,15 +129,25 @@ namespace dftfe
                                      quadShapeFunctionGradientsAtQuadPointsEO;
     std::array<T, nQuadPointsPerDim> quadratureWeights;
 
-    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::HOST>
-      d_singleVectorGlobalToLocalMap;
-    dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
-      d_jacobianFactor;
+    dftfe::utils::MemoryStorage<T, memorySpace>            d_jacobianFactor;
+    dftfe::utils::MemoryStorage<unsigned int, memorySpace> d_map;
 
+    // HOST only Data Structures
     std::vector<std::vector<unsigned int>> d_constrainingNodeBuckets,
       d_constrainedNodeBuckets;
     std::vector<std::vector<T>> d_weightMatrixList;
     std::vector<T>              d_inhomogenityList;
+
+    // Device only Data Structures
+#ifdef DFTFE_WITH_DEVICE
+    dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::DEVICE>
+      d_weightMatrixListDevice, d_inhomogenityListDevice;
+
+    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
+      d_constrainingNodeBucketsDevice, d_constrainedNodeBucketsDevice,
+      d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
+      d_weightMatrixOffsetDevice;
+#endif
 
     std::shared_ptr<
       dftfe::basis::FEBasisOperations<dataTypes::number,
@@ -156,15 +155,14 @@ namespace dftfe
                                       dftfe::utils::MemorySpace::HOST>>
       d_basisOperationsPtrHost;
 
+    std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
+      d_BLASWrapperPtr;
+
     /// pointer to dealii MatrixFree object
     const dealii::MatrixFree<3, double> *d_matrixFreeDataPtr;
 
     /// pointer to dealii dealii::AffineConstraints<double> object
     const dealii::AffineConstraints<double> *d_constraintMatrixPtr;
-
-    std::shared_ptr<
-      dftfe::linearAlgebra::BLASWrapper<dftfe::utils::MemorySpace::DEVICE>>
-      d_BLASWrapperPtr;
 
     std::shared_ptr<const dealii::Utilities::MPI::Partitioner>
       d_singleVectorPartitioner, d_singleBatchPartitioner;

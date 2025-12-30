@@ -23,55 +23,48 @@
 
 namespace dftfe
 {
-  template <typename T,
-            unsigned int nDofsPerDim,
-            unsigned int nQuadPointsPerDim,
-            unsigned int batchSize>
-  class MatrixFreeDevice
+  namespace MatrixFreeInternal
   {
-  public:
-    MatrixFreeDevice(const unsigned int nVectors,
-                     const unsigned int nCells,
-                     const unsigned int nOwnedDofs,
-                     const unsigned int nGhostDofs);
-
+    template <typename T,
+              unsigned int nDofsPerDim,
+              unsigned int nQuadPointsPerDim,
+              unsigned int batchSize>
     void
-    init(T           *constMemDataHost,
-         unsigned int constMemDataSize,
-         dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
-           &jacobianFactor,
-         dftfe::utils::MemoryStorage<unsigned int,
-                                     dftfe::utils::MemorySpace::HOST> &map,
-         std::vector<std::vector<unsigned int>> &constrainingNodeBuckets,
-         std::vector<std::vector<unsigned int>> &constrainedNodeBuckets,
-         std::vector<std::vector<T>>            &weightMatrixList);
+    init(T *constMemDataHost, std::size_t constMemDataSize);
 
+    template <typename T,
+              unsigned int nDofsPerDim,
+              unsigned int nQuadPointsPerDim,
+              unsigned int batchSize>
     inline void
-    computeLaplaceX(T *dst, T *src);
+    computeLaplaceX(T           *dst,
+                    T           *src,
+                    T           *jacobianFactor,
+                    dftfe::uInt *map,
+                    dftfe::uInt  nCells,
+                    dftfe::uInt  nBatch);
 
+    template <typename T,
+              unsigned int nDofsPerDim,
+              unsigned int nQuadPointsPerDim,
+              unsigned int batchSize>
     inline void
     constraintsDistribute(T *src);
 
+    template <typename T,
+              unsigned int nDofsPerDim,
+              unsigned int nQuadPointsPerDim,
+              unsigned int batchSize>
     inline void
     constraintsDistributeTranspose(T *dst, T *src);
 
+    template <typename T,
+              unsigned int nDofsPerDim,
+              unsigned int nQuadPointsPerDim,
+              unsigned int batchSize>
     inline void
     constraintsSetZero(T *src);
 
-#ifdef DFTFE_WITH_DEVICE
-    dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::DEVICE>
-      d_jacobianFactor, d_cellInverseMassVector, d_cellInverseSqrtMassVector,
-      d_weightMatrixList, d_inhomogenityList;
-
-    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
-      d_map, d_ghostMap, d_constrainingNodeBuckets, d_constrainedNodeBuckets,
-      d_constrainingNodeOffset, d_constrainedNodeOffset, d_weightMatrixOffset;
-#endif
-
-  private:
-    const unsigned int d_nVectors, d_nBatch, d_nCells, d_nOwnedDofs,
-      d_nGhostDofs;
-  };
-
+  } // namespace MatrixFreeInternal
 } // namespace dftfe
 #endif // matrixFreeDevice_H_

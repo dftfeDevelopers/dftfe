@@ -222,7 +222,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunction, d_jacobianFactor;
     dftfe::utils::MemoryStorage<dftfe::Int, dftfe::utils::MemorySpace::DEVICE>
-      d_map;
+                d_map;
     double     *d_shapeFunctionPtr;
     double     *d_jacobianFactorPtr;
     dftfe::Int *d_mapPtr;
