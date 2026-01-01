@@ -14,8 +14,11 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Gourab Panigrahi
-//
+
+/**
+ * @author Gourab Panigrahi
+ *
+ */
 
 #include <poissonSolverProblemDevice.h>
 #include <MemoryTransfer.h>
@@ -154,46 +157,23 @@ namespace dftfe
             matrixFreeVectorComponent),
           constraintMatrix);
 
-        enum operatorList
-        {
-          Laplace   = 1,
-          Helmholtz = 2,
-          LDA       = 3,
-          GGA       = 4
-        };
+        // Setup MatrixFree
+        unsigned int nVectors = 1;
+
+        d_matrixFreeWrapperDevice = std::make_unique<
+          dftfe::MatrixFreeWrapperClass<double,
+                                        dftfe::utils::MemorySpace::DEVICE>>(
+          dftfe::floatingPointList::FP64,
+          FEOrderElectro + 1,
+          mpi_communicator,
+          d_basisOperationsPtr,
+          d_BLASWrapperPtr,
+          dftfe::operatorList::Laplace,
+          d_matrixFreeQuadratureComponentAX,
+          nVectors);
 
         // Setup MatrixFree
-        const int    FeOrder   = 7;
-        unsigned int nVectors  = 1;
-        const bool   useDevice = true;
-
-        constexpr int batchSize    = 1;
-        constexpr int subBatchSize = 1;
-
-        pcout << "Debug!! 1" << std::endl;
-
-        if (FeOrder == 7)
-          d_matrixFreeHandle = dftfe::make_matrix_free_handle(
-            new dftfe::MatrixFree<double,
-                                  dftfe::utils::MemorySpace::DEVICE,
-                                  8,
-                                  8,
-                                  batchSize,
-                                  subBatchSize>(
-              mpi_communicator,
-              d_basisOperationsPtr,
-              d_BLASWrapperPtr,
-              useDevice,
-              operatorList::Laplace,
-              d_matrixFreeQuadratureComponentAX,
-              1));
-
-        pcout << "Debug!! 2" << std::endl;
-
-        // Setup MatrixFree
-        d_matrixFreeHandle.init();
-
-        pcout << "Debug!! 3" << std::endl;
+        d_matrixFreeWrapperDevice->init();
 
         // Setup MatrixFree Constraints
         setupMatrixFree();
@@ -1012,17 +992,18 @@ namespace dftfe
 
     d_constraintsTotalPotentialInfo.distribute(x);
 
-    // d_matrixFreeHandle.computeAX(Ax.data(), x.data());
+    d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
 
-    matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
-      blocks,
-      threads,
-      smem,
-      Ax.begin(),
-      x.begin(),
-      d_shapeFunctionPtr,
-      d_jacobianFactorPtr,
-      d_mapPtr);
+    // matrixFreeDeviceKernels<double, p * p, q, p,
+    // dim>::computeAXDevicePoisson(
+    //   blocks,
+    //   threads,
+    //   smem,
+    //   Ax.begin(),
+    //   x.begin(),
+    //   d_shapeFunctionPtr,
+    //   d_jacobianFactorPtr,
+    //   d_mapPtr);
 
     d_constraintsTotalPotentialInfo.set_zero(x);
 

@@ -14,8 +14,11 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Gourab Panigrahi
-//
+
+/**
+ * @author Gourab Panigrahi
+ *
+ */
 
 #include <MatrixFree.h>
 
@@ -23,10 +26,10 @@ namespace dftfe
 {
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   MatrixFree<T,
              memorySpace,
              nDofsPerDim,
@@ -39,11 +42,10 @@ namespace dftfe
                  double,
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                  BLASWrapperPtr,
-               const bool         useDevice,
-               const unsigned int operatorID,
-               const unsigned int quadratureID,
-               const unsigned int nVectors)
+                                 BLASWrapperPtr,
+               const dftfe::uInt operatorID,
+               const dftfe::uInt quadratureID,
+               const dftfe::uInt nVectors)
     : mpi_communicator(mpi_comm)
     , n_mpi_processes(dealii::Utilities::MPI::n_mpi_processes(mpi_comm))
     , this_mpi_process(dealii::Utilities::MPI::this_mpi_process(mpi_comm))
@@ -51,7 +53,6 @@ namespace dftfe
             (dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0))
     , d_basisOperationsPtrHost(basisOperationsPtrHost)
     , d_BLASWrapperPtr(BLASWrapperPtr)
-    , d_useDevice(useDevice)
     , d_operatorID(operatorID)
     , d_quadratureID(quadratureID)
     , d_nVectors(nVectors)
@@ -80,10 +81,10 @@ namespace dftfe
 
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   void
   MatrixFree<T,
              memorySpace,
@@ -92,21 +93,10 @@ namespace dftfe
              batchSize,
              subBatchSize>::init()
   {
-    pcout << "Debug Inside init - 0" << std::endl;
-    MPI_Barrier(mpi_communicator);
-
     d_basisOperationsPtrHost->reinit(0, 0, d_quadratureID);
-
-    MPI_Barrier(mpi_communicator);
-    pcout << "Debug Inside init - 0.5" << std::endl;
-
-    MPI_Barrier(mpi_communicator);
-    exit(0);
 
     d_matrixFreeDataPtr = &(d_basisOperationsPtrHost->matrixFreeData());
     d_nCells            = d_basisOperationsPtrHost->nCells();
-
-    pcout << "Debug Inside init - 1" << std::endl;
 
     auto dofInfo = d_matrixFreeDataPtr->get_dof_info(
       d_basisOperationsPtrHost->d_dofHandlerID);
@@ -122,8 +112,6 @@ namespace dftfe
     d_constraintMatrixPtr =
       (*(d_basisOperationsPtrHost
            ->d_constraintsVector))[d_basisOperationsPtrHost->d_dofHandlerID];
-
-    pcout << "Debug Inside init - 2" << std::endl;
 
     // Initialize shape and gradient functions
     std::array<double, nDofsPerDim * nQuadPointsPerDim>
@@ -166,8 +154,6 @@ namespace dftfe
                               1);
 #endif
 
-    pcout << "Debug Inside init - 3" << std::endl;
-
     for (dftfe::uInt iDoF = 0; iDoF < d_dofEDim; iDoF++)
       for (dftfe::uInt iQuad = 0; iQuad < d_quadEDim; iQuad++)
         nodalShapeFunctionValuesAtQuadPointsEO[iQuad + iDoF * d_quadEDim] =
@@ -208,8 +194,6 @@ namespace dftfe
              [iQuad1 + (nQuadPointsPerDim - 1 - iQuad2) * nQuadPointsPerDim]) *
           0.5;
 
-    pcout << "Debug Inside init - 4" << std::endl;
-
     // Construct cellIndexToMacroCellSubCellIndexMap
     auto d_nMacroCells = d_matrixFreeDataPtr->n_cell_batches();
     auto cellPtr       = d_matrixFreeDataPtr
@@ -221,8 +205,6 @@ namespace dftfe
 
     std::map<dealii::CellId, dftfe::uInt> cellIdToCellIndexMap;
     std::vector<dftfe::uInt> cellIndexToMacroCellSubCellIndexMap(d_nCells);
-
-    pcout << "Debug Inside init - 5" << std::endl;
 
     dftfe::uInt iCell = 0;
     for (; cellPtr != endcPtr; cellPtr++)
@@ -256,18 +238,16 @@ namespace dftfe
 
     switch (d_operatorID)
       {
-        case Laplace:
+        case operatorList::Laplace:
           coeff = 1.0 / (4.0 * M_PI);
           break;
-        case Helmholtz:
+        case operatorList::Helmholtz:
           coeff = 1.0;
           break;
         default:
           coeff = 1.0;
           break;
       }
-
-    pcout << "Debug Inside init - 6" << std::endl;
 
     // Initialize Jacobian matrix
     constexpr dftfe::uInt dim = 3;
@@ -295,8 +275,6 @@ namespace dftfe
 
     d_jacobianFactor.resize(jacobianFactor.size());
     d_jacobianFactor.copyFrom(jacobianFactor);
-
-    pcout << "Debug Inside init - 7" << std::endl;
 
     // for (dftfe::uInt iCell = 0; iCell < d_nCells; iCell++)
     //   for (dftfe::uInt iDim = 0; iDim < dim * dim; iDim++)
@@ -328,10 +306,8 @@ namespace dftfe
                                    falseClause + d_nDofsPerCell,
                        singleVectorGlobalToLocalMapTemp.data() +
                          iCell * d_nDofsPerCell,
-                       [](unsigned int &v) { return v; });
+                       [](dftfe::uInt &v) { return v; });
       }
-
-    pcout << "Debug Inside init - 8" << std::endl;
 
     // Reorder cell numbering to cell-matrix order
     for (auto iCell = 0; iCell < d_nCells; iCell++)
@@ -346,214 +322,188 @@ namespace dftfe
     // Initialize constraints
     initConstraints();
 
-    pcout << "Debug Inside init - 9" << std::endl;
-
     d_nOwnedDofs    = d_basisOperationsPtrHost->nOwnedDofs();
     d_nRelaventDofs = d_basisOperationsPtrHost->nRelaventDofs();
     d_nGhostDofs    = d_nRelaventDofs - d_nOwnedDofs;
 
     if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
       {
-        if (d_useDevice)
-          {
-            pcout << "Debug Inside init GPU - 1" << std::endl;
-            pcout << "d_nVectors: " << d_nVectors << std::endl;
-            pcout << "d_nCells: " << d_nCells << std::endl;
-            pcout << "d_nOwnedDofs: " << d_nOwnedDofs << std::endl;
-            pcout << "d_nGhostDofs: " << d_nGhostDofs << std::endl;
-            pcout << "nDofsPerDim: " << nDofsPerDim << std::endl;
-            pcout << "nQuadPointsPerDim: " << nQuadPointsPerDim << std::endl;
+        dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
+          shapeFunctionValueGradient(
+            2 * d_quadEDim * d_dofEDim + 2 * d_quadODim * d_dofODim +
+            4 * d_quadEDim * d_quadODim + nQuadPointsPerDim * nDofsPerDim +
+            nQuadPointsPerDim);
 
-            pcout << "Debug Inside init GPU - 2" << std::endl;
+        for (dftfe::uInt iDoF = 0; iDoF < d_dofEDim; iDoF++)
+          for (dftfe::uInt iQuad = 0; iQuad < d_quadEDim; iQuad++)
+            {
+              shapeFunctionValueGradient[iQuad + iDoF * d_quadEDim] =
+                nodalShapeFunctionValuesAtQuadPointsEO[iQuad +
+                                                       iDoF * d_quadEDim];
 
-            dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::HOST>
-              shapeFunctionValueGradient(
-                2 * d_quadEDim * d_dofEDim + 2 * d_quadODim * d_dofODim +
-                4 * d_quadEDim * d_quadODim + nQuadPointsPerDim * nDofsPerDim +
-                nQuadPointsPerDim);
+              shapeFunctionValueGradient[iDoF + iQuad * d_dofEDim +
+                                         d_quadEDim * d_dofEDim +
+                                         d_quadODim * d_dofODim +
+                                         2 * d_quadEDim * d_quadODim] =
+                nodalShapeFunctionValuesAtQuadPointsEO[iQuad +
+                                                       iDoF * d_quadEDim];
+            }
 
-            pcout << "Debug Inside init GPU - 3" << std::endl;
+        for (dftfe::uInt iDoF = 0; iDoF < d_dofODim; iDoF++)
+          for (dftfe::uInt iQuad = 0; iQuad < d_quadODim; iQuad++)
+            {
+              shapeFunctionValueGradient[iQuad + iDoF * d_quadODim +
+                                         d_quadEDim * d_dofEDim] =
+                nodalShapeFunctionValuesAtQuadPointsEO[iQuad +
+                                                       iDoF * d_quadODim +
+                                                       d_quadEDim * d_dofEDim];
+              shapeFunctionValueGradient[iDoF + iQuad * d_dofODim +
+                                         2 * d_quadEDim * d_dofEDim +
+                                         d_quadODim * d_dofODim +
+                                         2 * d_quadEDim * d_quadODim] =
+                nodalShapeFunctionValuesAtQuadPointsEO[iQuad +
+                                                       iDoF * d_quadODim +
+                                                       d_quadEDim * d_dofEDim];
+            }
 
-            for (dftfe::uInt iDoF = 0; iDoF < d_dofEDim; iDoF++)
-              for (dftfe::uInt iQuad = 0; iQuad < d_quadEDim; iQuad++)
-                {
-                  shapeFunctionValueGradient[iQuad + iDoF * d_quadEDim] =
-                    nodalShapeFunctionValuesAtQuadPointsEO[iQuad +
-                                                           iDoF * d_quadEDim];
+        for (dftfe::uInt iQuad1 = 0; iQuad1 < d_quadEDim; iQuad1++)
+          for (dftfe::uInt iQuad2 = 0; iQuad2 < d_quadODim; iQuad2++)
+            {
+              shapeFunctionValueGradient[iQuad2 + iQuad1 * d_quadODim +
+                                         d_quadEDim * d_dofEDim +
+                                         d_quadODim * d_dofODim] =
+                quadShapeFunctionGradientsAtQuadPointsEO[iQuad1 +
+                                                         iQuad2 * d_quadODim];
 
-                  shapeFunctionValueGradient[iDoF + iQuad * d_dofEDim +
-                                             d_quadEDim * d_dofEDim +
-                                             d_quadODim * d_dofODim +
-                                             2 * d_quadEDim * d_quadODim] =
-                    nodalShapeFunctionValuesAtQuadPointsEO[iQuad +
-                                                           iDoF * d_quadEDim];
-                }
-
-            pcout << "Debug Inside init GPU - 4" << std::endl;
-
-            for (dftfe::uInt iDoF = 0; iDoF < d_dofODim; iDoF++)
-              for (dftfe::uInt iQuad = 0; iQuad < d_quadODim; iQuad++)
-                {
-                  shapeFunctionValueGradient[iQuad + iDoF * d_quadODim +
-                                             d_quadEDim * d_dofEDim] =
-                    nodalShapeFunctionValuesAtQuadPointsEO
-                      [iQuad + iDoF * d_quadODim + d_quadEDim * d_dofEDim];
-                  shapeFunctionValueGradient[iDoF + iQuad * d_dofODim +
-                                             2 * d_quadEDim * d_dofEDim +
-                                             d_quadODim * d_dofODim +
-                                             2 * d_quadEDim * d_quadODim] =
-                    nodalShapeFunctionValuesAtQuadPointsEO
-                      [iQuad + iDoF * d_quadODim + d_quadEDim * d_dofEDim];
-                }
-
-            pcout << "Debug Inside init GPU - 5" << std::endl;
-
-            for (dftfe::uInt iQuad1 = 0; iQuad1 < d_quadEDim; iQuad1++)
-              for (dftfe::uInt iQuad2 = 0; iQuad2 < d_quadODim; iQuad2++)
-                {
-                  shapeFunctionValueGradient[iQuad2 + iQuad1 * d_quadODim +
-                                             d_quadEDim * d_dofEDim +
-                                             d_quadODim * d_dofODim] =
-                    quadShapeFunctionGradientsAtQuadPointsEO[iQuad1 +
-                                                             iQuad2 *
-                                                               d_quadODim];
-
-                  shapeFunctionValueGradient[iQuad1 + iQuad2 * d_quadEDim +
-                                             2 * d_quadEDim * d_dofEDim +
-                                             2 * d_quadODim * d_dofODim +
-                                             2 * d_quadEDim * d_quadODim] =
-                    quadShapeFunctionGradientsAtQuadPointsEO[iQuad1 +
-                                                             iQuad2 *
-                                                               d_quadODim];
-                }
-
-            for (dftfe::uInt iQuad1 = 0; iQuad1 < d_quadODim; iQuad1++)
-              for (dftfe::uInt iQuad2 = 0; iQuad2 < d_quadEDim; iQuad2++)
-                {
-                  shapeFunctionValueGradient[iQuad2 + iQuad1 * d_quadEDim +
-                                             d_quadEDim * d_dofEDim +
-                                             d_quadODim * d_dofODim +
-                                             d_quadEDim * d_quadODim] =
-                    quadShapeFunctionGradientsAtQuadPointsEO
-                      [iQuad1 + iQuad2 * d_quadEDim + d_quadEDim * d_quadODim];
-
-                  shapeFunctionValueGradient[iQuad1 + iQuad2 * d_quadODim +
-                                             2 * d_quadEDim * d_dofEDim +
-                                             2 * d_quadODim * d_dofODim +
-                                             3 * d_quadEDim * d_quadODim] =
-                    quadShapeFunctionGradientsAtQuadPointsEO
-                      [iQuad1 + iQuad2 * d_quadEDim + d_quadEDim * d_quadODim];
-                }
-
-            for (dftfe::uInt iDoF = 0; iDoF < nDofsPerDim; iDoF++)
-              for (dftfe::uInt iQuad = 0; iQuad < nQuadPointsPerDim; iQuad++)
-                shapeFunctionValueGradient[iQuad + iDoF * nQuadPointsPerDim +
-                                           2 * d_quadEDim * d_dofEDim +
-                                           2 * d_quadODim * d_dofODim +
-                                           4 * d_quadEDim * d_quadODim] =
-                  nodalShapeFunctionValuesAtQuadPoints[iQuad +
-                                                       iDoF *
-                                                         nQuadPointsPerDim];
-
-            for (dftfe::uInt iQuad = 0; iQuad < nQuadPointsPerDim; iQuad++)
-              shapeFunctionValueGradient[iQuad + 2 * d_quadEDim * d_dofEDim +
+              shapeFunctionValueGradient[iQuad1 + iQuad2 * d_quadEDim +
+                                         2 * d_quadEDim * d_dofEDim +
                                          2 * d_quadODim * d_dofODim +
-                                         4 * d_quadEDim * d_quadODim +
-                                         nQuadPointsPerDim * nDofsPerDim] =
-                quadratureWeights[iQuad];
+                                         2 * d_quadEDim * d_quadODim] =
+                quadShapeFunctionGradientsAtQuadPointsEO[iQuad1 +
+                                                         iQuad2 * d_quadODim];
+            }
 
-            pcout << "Debug Inside init GPU - 6" << std::endl;
+        for (dftfe::uInt iQuad1 = 0; iQuad1 < d_quadODim; iQuad1++)
+          for (dftfe::uInt iQuad2 = 0; iQuad2 < d_quadEDim; iQuad2++)
+            {
+              shapeFunctionValueGradient[iQuad2 + iQuad1 * d_quadEDim +
+                                         d_quadEDim * d_dofEDim +
+                                         d_quadODim * d_dofODim +
+                                         d_quadEDim * d_quadODim] =
+                quadShapeFunctionGradientsAtQuadPointsEO
+                  [iQuad1 + iQuad2 * d_quadEDim + d_quadEDim * d_quadODim];
 
-            dftfe::utils::MemoryStorage<dftfe::uInt,
-                                        dftfe::utils::MemorySpace::HOST>
-              constrainingNodeOffset(d_constrainingNodeBuckets.size() + 1),
-              constrainedNodeOffset(d_constrainedNodeBuckets.size() + 1),
-              weightMatrixOffset(d_weightMatrixList.size() + 1);
+              shapeFunctionValueGradient[iQuad1 + iQuad2 * d_quadODim +
+                                         2 * d_quadEDim * d_dofEDim +
+                                         2 * d_quadODim * d_dofODim +
+                                         3 * d_quadEDim * d_quadODim] =
+                quadShapeFunctionGradientsAtQuadPointsEO
+                  [iQuad1 + iQuad2 * d_quadEDim + d_quadEDim * d_quadODim];
+            }
 
-            dftfe::uInt k = 0;
+        for (dftfe::uInt iDoF = 0; iDoF < nDofsPerDim; iDoF++)
+          for (dftfe::uInt iQuad = 0; iQuad < nQuadPointsPerDim; iQuad++)
+            shapeFunctionValueGradient[iQuad + iDoF * nQuadPointsPerDim +
+                                       2 * d_quadEDim * d_dofEDim +
+                                       2 * d_quadODim * d_dofODim +
+                                       4 * d_quadEDim * d_quadODim] =
+              nodalShapeFunctionValuesAtQuadPoints[iQuad +
+                                                   iDoF * nQuadPointsPerDim];
 
-            for (dftfe::uInt i = 0; i < d_constrainingNodeBuckets.size(); i++)
-              {
-                constrainingNodeOffset[i] = k;
-                k += d_constrainingNodeBuckets[i].size();
-              }
+        for (dftfe::uInt iQuad = 0; iQuad < nQuadPointsPerDim; iQuad++)
+          shapeFunctionValueGradient[iQuad + 2 * d_quadEDim * d_dofEDim +
+                                     2 * d_quadODim * d_dofODim +
+                                     4 * d_quadEDim * d_quadODim +
+                                     nQuadPointsPerDim * nDofsPerDim] =
+            quadratureWeights[iQuad];
 
-            constrainingNodeOffset[d_constrainingNodeBuckets.size()] = k;
-            d_constrainingNodeBucketsDevice.resize(k);
+        dftfe::utils::MemoryStorage<dftfe::uInt,
+                                    dftfe::utils::MemorySpace::HOST>
+          constrainingNodeOffset(d_constrainingNodeBuckets.size() + 1),
+          constrainedNodeOffset(d_constrainedNodeBuckets.size() + 1),
+          weightMatrixOffset(d_weightMatrixList.size() + 1);
 
-            for (dftfe::uInt i = 0; i < d_constrainingNodeBuckets.size(); i++)
-              dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
-                                           dftfe::utils::MemorySpace::HOST>::
-                copy(d_constrainingNodeBuckets[i].size(),
-                     d_constrainingNodeBucketsDevice.data() +
-                       constrainingNodeOffset[i],
-                     d_constrainingNodeBuckets[i].data());
+        dftfe::uInt k = 0;
 
-            k = 0;
-
-            for (dftfe::uInt i = 0; i < d_constrainedNodeBuckets.size(); i++)
-              {
-                constrainedNodeOffset[i] = k;
-                k += d_constrainedNodeBuckets[i].size();
-              }
-
-            constrainedNodeOffset[d_constrainedNodeBuckets.size()] = k;
-            d_constrainedNodeBucketsDevice.resize(k);
-
-            for (dftfe::uInt i = 0; i < d_constrainedNodeBuckets.size(); i++)
-              dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
-                                           dftfe::utils::MemorySpace::HOST>::
-                copy(d_constrainedNodeBuckets[i].size(),
-                     d_constrainedNodeBucketsDevice.data() +
-                       constrainedNodeOffset[i],
-                     d_constrainedNodeBuckets[i].data());
-
-            k = 0;
-
-            for (dftfe::uInt i = 0; i < d_weightMatrixList.size(); i++)
-              {
-                weightMatrixOffset[i] = k;
-                k += d_weightMatrixList[i].size();
-              }
-
-            weightMatrixOffset[d_weightMatrixList.size()] = k;
-            d_weightMatrixListDevice.resize(k);
-
-            for (dftfe::uInt i = 0; i < d_weightMatrixList.size(); i++)
-              dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
-                                           dftfe::utils::MemorySpace::HOST>::
-                copy(d_weightMatrixList[i].size(),
-                     d_weightMatrixListDevice.data() + weightMatrixOffset[i],
-                     d_weightMatrixList[i].data());
-
-            d_constrainingNodeOffsetDevice.resize(
-              constrainingNodeOffset.size());
-            d_constrainingNodeOffsetDevice.copyFrom(constrainingNodeOffset);
-
-            d_constrainedNodeOffsetDevice.resize(constrainedNodeOffset.size());
-            d_constrainedNodeOffsetDevice.copyFrom(constrainedNodeOffset);
-
-            d_weightMatrixOffsetDevice.resize(weightMatrixOffset.size());
-            d_weightMatrixOffsetDevice.copyFrom(weightMatrixOffset);
-
-            d_inhomogenityListDevice.resize(d_inhomogenityList.size());
-            d_inhomogenityListDevice.copyFrom(d_inhomogenityList);
-
-            // dftfe::MatrixFreeInternal::init(shapeFunctionValueGradient.data(),
-            //                                 shapeFunctionValueGradient.size());
-
-            pcout << "Debug Inside init GPU - 7" << std::endl;
+        for (dftfe::uInt i = 0; i < d_constrainingNodeBuckets.size(); i++)
+          {
+            constrainingNodeOffset[i] = k;
+            k += d_constrainingNodeBuckets[i].size();
           }
+
+        constrainingNodeOffset[d_constrainingNodeBuckets.size()] = k;
+        d_constrainingNodeBucketsDevice.resize(k);
+
+        for (dftfe::uInt i = 0; i < d_constrainingNodeBuckets.size(); i++)
+          dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
+                                       dftfe::utils::MemorySpace::HOST>::
+            copy(d_constrainingNodeBuckets[i].size(),
+                 d_constrainingNodeBucketsDevice.data() +
+                   constrainingNodeOffset[i],
+                 d_constrainingNodeBuckets[i].data());
+
+        k = 0;
+
+        for (dftfe::uInt i = 0; i < d_constrainedNodeBuckets.size(); i++)
+          {
+            constrainedNodeOffset[i] = k;
+            k += d_constrainedNodeBuckets[i].size();
+          }
+
+        constrainedNodeOffset[d_constrainedNodeBuckets.size()] = k;
+        d_constrainedNodeBucketsDevice.resize(k);
+
+        for (dftfe::uInt i = 0; i < d_constrainedNodeBuckets.size(); i++)
+          dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
+                                       dftfe::utils::MemorySpace::HOST>::
+            copy(d_constrainedNodeBuckets[i].size(),
+                 d_constrainedNodeBucketsDevice.data() +
+                   constrainedNodeOffset[i],
+                 d_constrainedNodeBuckets[i].data());
+
+        k = 0;
+
+        for (dftfe::uInt i = 0; i < d_weightMatrixList.size(); i++)
+          {
+            weightMatrixOffset[i] = k;
+            k += d_weightMatrixList[i].size();
+          }
+
+        weightMatrixOffset[d_weightMatrixList.size()] = k;
+        d_weightMatrixListDevice.resize(k);
+
+        for (dftfe::uInt i = 0; i < d_weightMatrixList.size(); i++)
+          dftfe::utils::MemoryTransfer<dftfe::utils::MemorySpace::DEVICE,
+                                       dftfe::utils::MemorySpace::HOST>::
+            copy(d_weightMatrixList[i].size(),
+                 d_weightMatrixListDevice.data() + weightMatrixOffset[i],
+                 d_weightMatrixList[i].data());
+
+        d_constrainingNodeOffsetDevice.resize(constrainingNodeOffset.size());
+        d_constrainingNodeOffsetDevice.copyFrom(constrainingNodeOffset);
+
+        d_constrainedNodeOffsetDevice.resize(constrainedNodeOffset.size());
+        d_constrainedNodeOffsetDevice.copyFrom(constrainedNodeOffset);
+
+        d_weightMatrixOffsetDevice.resize(weightMatrixOffset.size());
+        d_weightMatrixOffsetDevice.copyFrom(weightMatrixOffset);
+
+        d_inhomogenityListDevice.resize(d_inhomogenityList.size());
+        d_inhomogenityListDevice.copyFrom(d_inhomogenityList);
+
+        dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+          init(shapeFunctionValueGradient.data(),
+               shapeFunctionValueGradient.size());
       }
   }
 
 
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   void
   MatrixFree<T,
              memorySpace,
@@ -581,10 +531,10 @@ namespace dftfe
 
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   void
   MatrixFree<T,
              memorySpace,
@@ -603,7 +553,7 @@ namespace dftfe
           const std::vector<std::pair<dealii::types::global_dof_index, double>>
             *rowData = d_constraintMatrixPtr->get_constraint_entries(lineDof);
 
-          for (unsigned int j = 0; j < rowData->size(); j++)
+          for (dftfe::uInt j = 0; j < rowData->size(); j++)
             {
               if (!(d_matrixFreeDataPtr
                       ->get_vector_partitioner(
@@ -622,8 +572,8 @@ namespace dftfe
           if (isConstraintRhsExpandingOutOfIndexSet)
             continue;
 
-          std::vector<unsigned int> constrainingData(rowData->size());
-          std::vector<T>            weightData(rowData->size());
+          std::vector<dftfe::uInt> constrainingData(rowData->size());
+          std::vector<T>           weightData(rowData->size());
 
           for (auto i = 0; i < rowData->size(); i++)
             {
@@ -636,8 +586,8 @@ namespace dftfe
               weightData[i] = (*rowData)[i].second;
             }
 
-          bool         constraintExists = false;
-          unsigned int constraintIndex  = 0;
+          bool        constraintExists = false;
+          dftfe::uInt constraintIndex  = 0;
           T inhomogenity = d_constraintMatrixPtr->get_inhomogeneity(lineDof);
 
           for (auto i = 0; i < d_constrainingNodeBuckets.size(); i++)
@@ -664,7 +614,7 @@ namespace dftfe
             }
           else
             {
-              d_constrainedNodeBuckets.push_back(std::vector<unsigned int>(
+              d_constrainedNodeBuckets.push_back(std::vector<dftfe::uInt>(
                 1,
                 d_matrixFreeDataPtr
                   ->get_vector_partitioner(
@@ -681,10 +631,10 @@ namespace dftfe
 
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   inline void
   MatrixFree<T,
              memorySpace,
@@ -695,18 +645,18 @@ namespace dftfe
   {
     // if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
     //   {
-    //     if (d_useDevice)
-    //       dftfe::MatrixFreeInternal::constraintsDistribute(src);
+    //       dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim,
+    //       batchSize>::constraintsDistribute(src);
     //   }
   }
 
 
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   inline void
   MatrixFree<T,
              memorySpace,
@@ -717,19 +667,18 @@ namespace dftfe
   {
     // if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
     //   {
-    //     if (d_useDevice)
-    //       dftfe::MatrixFreeInternal::constraintsDistributeTranspose(dst,
-    //       src);
+    //       dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim,
+    //       batchSize>::constraintsDistributeTranspose(dst, src);
     //   }
   }
 
 
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   inline void
   MatrixFree<T,
              memorySpace,
@@ -740,18 +689,18 @@ namespace dftfe
   {
     // if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
     //   {
-    //     if (d_useDevice)
-    //       dftfe::MatrixFreeInternal::constraintsSetZero(src);
+    //       dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim,
+    //       batchSize>::constraintsSetZero(src);
     //   }
   }
 
 
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   inline void
   MatrixFree<T,
              memorySpace,
@@ -759,24 +708,34 @@ namespace dftfe
              nQuadPointsPerDim,
              batchSize,
              subBatchSize>::computeAX(T *dst, T *src)
-
   {
-    // if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-    //   {
-    //     if (d_useDevice)
-    //       {
-    //         switch (d_operatorID)
-    //           {
-    //             case Laplace:
-    //               dftfe::MatrixFreeInternal::computeLaplaceX(dst, src);
-    //               break;
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      {
+        switch (d_operatorID)
+          {
+            case Laplace:
+              dftfe::
+                MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+                  computeLaplaceX(dst,
+                                  src,
+                                  d_jacobianFactor.data(),
+                                  d_map.data(),
+                                  d_nCells,
+                                  d_nBatch);
+              break;
 
-    //             case Helmholtz:
-    //               dftfe::MatrixFreeInternal::computeLaplaceX(dst, src);
-    //               break;
-    //           }
-    //       }
-    //   }
+            case Helmholtz:
+              dftfe::
+                MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+                  computeLaplaceX(dst,
+                                  src,
+                                  d_jacobianFactor.data(),
+                                  d_map.data(),
+                                  d_nCells,
+                                  d_nBatch);
+              break;
+          }
+      }
   }
 
 #include "MatrixFree.inst.cc"

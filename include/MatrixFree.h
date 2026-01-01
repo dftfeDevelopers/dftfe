@@ -14,14 +14,19 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Gourab Panigrahi
-//
+
+/**
+ * @author Gourab Panigrahi
+ *
+ */
 
 #ifndef MatrixFree_H_
 #define MatrixFree_H_
+#include <type_traits>
+#include <memory>
+#include <dftfeDataTypes.h>
+#include <MemorySpaceType.h>
 #include <FEBasisOperations.h>
-#include <linearAlgebraOperations.h>
-#include <MatrixFreeHandle.h>
 #include <MatrixFreeDevice.h>
 
 #ifdef _OPENMP
@@ -41,10 +46,10 @@ namespace dftfe
    */
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            unsigned int              nDofsPerDim,
-            unsigned int              nQuadPointsPerDim,
-            unsigned int              batchSize,
-            unsigned int              subBatchSize>
+            dftfe::uInt               nDofsPerDim,
+            dftfe::uInt               nQuadPointsPerDim,
+            dftfe::uInt               batchSize,
+            dftfe::uInt               subBatchSize>
   class MatrixFree
   {
   public:
@@ -60,11 +65,10 @@ namespace dftfe
                  double,
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                  BLASWrapperPtr,
-               const bool         useDevice,
-               const unsigned int operatorId,
-               const unsigned int quadratureID,
-               const unsigned int nVectors);
+                                 BLASWrapperPtr,
+               const dftfe::uInt operatorID,
+               const dftfe::uInt quadratureID,
+               const dftfe::uInt nVectors);
 
     /**
      * @brief Initialize data structures for MatrixFree class
@@ -100,27 +104,18 @@ namespace dftfe
     void
     setupConstraints(const dealii::IndexSet &indexSet);
 
-    enum operatorList
-    {
-      Laplace   = 1,
-      Helmholtz = 2,
-      LDA       = 3,
-      GGA       = 4
-    };
-
-    const bool         d_useDevice;
-    const unsigned int d_operatorID, d_quadratureID, d_nVectors, d_nBatch,
+    const dftfe::uInt d_operatorID, d_quadratureID, d_nVectors, d_nBatch,
       d_nDofsPerCell, d_nQuadsPerCell;
 
-    unsigned int d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
+    dftfe::uInt d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
       d_localBlockSize, d_localSize, d_ghostBlockSize, d_ghostSize,
       d_nOMPThreads;
 
-    static constexpr unsigned int d_quadODim = nQuadPointsPerDim / 2;
-    static constexpr unsigned int d_quadEDim =
+    static constexpr dftfe::uInt d_quadODim = nQuadPointsPerDim / 2;
+    static constexpr dftfe::uInt d_quadEDim =
       nQuadPointsPerDim % 2 == 1 ? d_quadODim + 1 : d_quadODim;
-    static constexpr unsigned int d_dofODim = nDofsPerDim / 2;
-    static constexpr unsigned int d_dofEDim =
+    static constexpr dftfe::uInt d_dofODim = nDofsPerDim / 2;
+    static constexpr dftfe::uInt d_dofEDim =
       nDofsPerDim % 2 == 1 ? d_dofODim + 1 : d_dofODim;
 
     std::array<T, d_quadEDim * d_dofEDim + d_quadODim * d_dofODim>
@@ -129,11 +124,11 @@ namespace dftfe
                                      quadShapeFunctionGradientsAtQuadPointsEO;
     std::array<T, nQuadPointsPerDim> quadratureWeights;
 
-    dftfe::utils::MemoryStorage<T, memorySpace>            d_jacobianFactor;
-    dftfe::utils::MemoryStorage<unsigned int, memorySpace> d_map;
+    dftfe::utils::MemoryStorage<T, memorySpace>           d_jacobianFactor;
+    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> d_map;
 
     // HOST only Data Structures
-    std::vector<std::vector<unsigned int>> d_constrainingNodeBuckets,
+    std::vector<std::vector<dftfe::uInt>> d_constrainingNodeBuckets,
       d_constrainedNodeBuckets;
     std::vector<std::vector<T>> d_weightMatrixList;
     std::vector<T>              d_inhomogenityList;
@@ -143,7 +138,7 @@ namespace dftfe
     dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::DEVICE>
       d_weightMatrixListDevice, d_inhomogenityListDevice;
 
-    dftfe::utils::MemoryStorage<unsigned int, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
       d_constrainingNodeBucketsDevice, d_constrainedNodeBucketsDevice,
       d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
       d_weightMatrixOffsetDevice;
@@ -169,11 +164,27 @@ namespace dftfe
 
     dealii::ConditionalOStream pcout;
     const MPI_Comm             mpi_communicator;
-    const unsigned int         n_mpi_processes;
-    const unsigned int         this_mpi_process;
+    const dftfe::uInt          n_mpi_processes;
+    const dftfe::uInt          this_mpi_process;
     std::vector<T>             tempGhostStorage, tempCompressStorage;
     std::vector<MPI_Request>   mpiRequestsGhost;
     std::vector<MPI_Request>   mpiRequestsCompress;
+  };
+
+  // List of operators
+  enum operatorList
+  {
+    Laplace   = 1,
+    Helmholtz = 2,
+    LDA       = 3,
+    GGA       = 4
+  };
+
+  // List of floating point representations
+  enum floatingPointList
+  {
+    FP64 = 1,
+    FP32 = 2
   };
 
 } // namespace dftfe

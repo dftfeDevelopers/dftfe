@@ -15,6 +15,11 @@
 // ---------------------------------------------------------------------
 //
 
+/**
+ * @author Gourab Panigrahi
+ *
+ */
+
 #if defined(DFTFE_WITH_DEVICE)
 #  ifndef poissonSolverProblemDevice_H_
 #    define poissonSolverProblemDevice_H_
@@ -26,7 +31,7 @@
 #    include <headers.h>
 #    include "FEBasisOperations.h"
 #    include "BLASWrapper.h"
-#    include <MatrixFree.h>
+#    include "MatrixFreeWrapper.h"
 
 namespace dftfe
 {
@@ -217,7 +222,9 @@ namespace dftfe
     // locally owned and total degrees of freedom including ghost
     dftfe::Int d_nLocalCells, d_xLocalDof, d_xLen;
 
-    dftfe::MatrixFreeHandle d_matrixFreeHandle;
+    std::unique_ptr<
+      dftfe::MatrixFreeWrapperClass<double, dftfe::utils::MemorySpace::DEVICE>>
+      d_matrixFreeWrapperDevice;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
       d_shapeFunction, d_jacobianFactor;

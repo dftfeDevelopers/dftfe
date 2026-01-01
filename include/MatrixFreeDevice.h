@@ -15,28 +15,27 @@
 // ---------------------------------------------------------------------
 //
 
+/**
+ * @author Gourab Panigrahi
+ *
+ */
 
 #ifndef matrixFreeDevice_H_
 #define matrixFreeDevice_H_
-
-#include <MemoryStorage.h>
+#include <TypeConfig.h>
 
 namespace dftfe
 {
-  namespace MatrixFreeInternal
+  template <typename T,
+            dftfe::uInt nDofsPerDim,
+            dftfe::uInt nQuadPointsPerDim,
+            dftfe::uInt batchSize>
+  struct MatrixFreeDevice
   {
-    template <typename T,
-              unsigned int nDofsPerDim,
-              unsigned int nQuadPointsPerDim,
-              unsigned int batchSize>
-    void
+    static inline void
     init(T *constMemDataHost, std::size_t constMemDataSize);
 
-    template <typename T,
-              unsigned int nDofsPerDim,
-              unsigned int nQuadPointsPerDim,
-              unsigned int batchSize>
-    inline void
+    static inline void
     computeLaplaceX(T           *dst,
                     T           *src,
                     T           *jacobianFactor,
@@ -44,27 +43,15 @@ namespace dftfe
                     dftfe::uInt  nCells,
                     dftfe::uInt  nBatch);
 
-    template <typename T,
-              unsigned int nDofsPerDim,
-              unsigned int nQuadPointsPerDim,
-              unsigned int batchSize>
-    inline void
+    static inline void
     constraintsDistribute(T *src);
 
-    template <typename T,
-              unsigned int nDofsPerDim,
-              unsigned int nQuadPointsPerDim,
-              unsigned int batchSize>
-    inline void
+    static inline void
     constraintsDistributeTranspose(T *dst, T *src);
 
-    template <typename T,
-              unsigned int nDofsPerDim,
-              unsigned int nQuadPointsPerDim,
-              unsigned int batchSize>
-    inline void
+    static inline void
     constraintsSetZero(T *src);
+  };
 
-  } // namespace MatrixFreeInternal
 } // namespace dftfe
 #endif // matrixFreeDevice_H_
