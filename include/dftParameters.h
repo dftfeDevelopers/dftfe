@@ -149,6 +149,7 @@ namespace dftfe
     bool        allowFullCPUMemSubspaceRot;
     std::string communPrecCheby;
     bool        useSinglePrecCheby;
+    dftfe::uInt compressionBitRate;
     bool        overlapComputeCommunCheby;
     bool        overlapComputeCommunOrthoRR;
     bool        autoDeviceBlockSizes;

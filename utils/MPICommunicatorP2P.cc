@@ -69,8 +69,39 @@ namespace dftfe
           d_mpiPatternP2P->getGhostProcIds().size() +
           d_mpiPatternP2P->getTargetProcIds().size());
 
-
 #ifdef DFTFE_WITH_DEVICE
+
+        for (dftfe::uInt i = 0;
+             i < (d_mpiPatternP2P->getTargetProcIds()).size();
+             ++i)
+          {
+            dftfe::uInt dataSize =
+              d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs().data()[i] *
+              d_blockSize;
+            if (dataSize == 0)
+              continue;
+            dftfe::uInt numBlocks        = (dataSize + 3) / 4;
+            dftfe::uInt totalBits        = dataSize * 16;
+            dftfe::uInt totalBytes       = (totalBits + 7) / 8;
+            void       *compressedBuffer = std::malloc(totalBytes);
+            d_sendBufferCompressed.push_back(compressedBuffer);
+          }
+        for (dftfe::uInt i = 0; i < (d_mpiPatternP2P->getGhostProcIds()).size();
+             ++i)
+          {
+            dftfe::uInt dataSize =
+              (d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i + 1] -
+               d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i]) *
+              d_blockSize;
+            if (dataSize == 0)
+              continue;
+            dftfe::uInt numBlocks        = (dataSize + 3) / 4;
+            dftfe::uInt totalBits        = dataSize * 16;
+            dftfe::uInt totalBytes       = (totalBits + 7) / 8;
+            void       *compressedBuffer = std::malloc(totalBytes);
+            d_recvBufferCompressed.push_back(compressedBuffer);
+          }
+
         if constexpr (memorySpace == MemorySpace::DEVICE)
           if (d_commProtocol == communicationProtocol::mpiHost)
             {
@@ -313,6 +344,99 @@ namespace dftfe
                 dftfe::utils::deviceSynchronize();
               }
 #endif
+
+            /* destination pointer starts after locally owned data */
+            ValueType *recvArrayPtr =
+              dataArray.data() +
+              d_mpiPatternP2P->localOwnedSize() * d_blockSize;
+
+            /* create ZFP stream */
+            zfp_stream *zfp = zfp_stream_open(nullptr);
+            if (!zfp)
+              throwException(false, "zfp_stream_open failed");
+
+            /* configure ZFP stream (MUST match sender) */
+            if constexpr (std::is_same_v<ValueType, double>)
+              {
+                zfp_stream_set_rate(zfp, 16, zfp_type_double, 1, 0);
+              }
+            else if constexpr (std::is_same_v<ValueType, float>)
+              {
+                zfp_stream_set_rate(zfp, 16, zfp_type_float, 1, 0);
+              }
+            else
+              {
+                throwException(false, "Unsupported ValueType for ZFP");
+              }
+
+            /* execution policy MUST match memory location */
+            zfp_stream_set_execution(zfp, zfp_exec_cuda);
+
+            /* iterate in EXACT same order as sender */
+            for (dftfe::uInt i = 0;
+                 i < d_mpiPatternP2P->getTargetProcIds().size();
+                 ++i)
+              {
+                /* number of logical entries */
+                const dftfe::uInt count =
+                  d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                    .data()[2 * i + 1] -
+                  d_mpiPatternP2P->getGhostLocalIndicesRanges().data()[2 * i];
+
+                /* total scalar count */
+                const dftfe::uInt dataSize = count * d_blockSize;
+
+                if (dataSize == 0)
+                  continue;
+
+                /* create ZFP field (DESTINATION buffer) */
+                zfp_field *field = nullptr;
+                if constexpr (std::is_same_v<ValueType, double>)
+                  {
+                    field =
+                      zfp_field_1d(recvArrayPtr, zfp_type_double, dataSize);
+                  }
+                else
+                  {
+                    field =
+                      zfp_field_1d(recvArrayPtr, zfp_type_float, dataSize);
+                  }
+
+                if (!field)
+                  throwException(false, "zfp_field_1d failed");
+
+                /* open bitstream using ACTUAL compressed byte count */
+                bitstream *bs = stream_open(d_recvBufferCompressed[i],
+                                            dataSize);
+
+                if (!bs)
+                  throwException(false, "stream_open failed");
+
+                /* attach bitstream to ZFP stream */
+                zfp_stream_set_bit_stream(zfp, bs);
+                zfp_stream_rewind(zfp);
+
+                /* decompress (returns 1 on success, 0 on failure) */
+                if (!zfp_decompress(zfp, field))
+                  {
+                    stream_close(bs);
+                    zfp_field_free(field);
+                    throwException(false, "zfp_decompress failed");
+                  }
+
+                /* cleanup per-message state */
+                stream_close(bs);
+                zfp_field_free(field);
+
+                /* advance destination pointer */
+                recvArrayPtr += dataSize;
+              }
+
+            /* destroy ZFP stream */
+            
+
+
+
             if (d_commProtocol != communicationProtocol::nccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getGhostProcIds()).size();
@@ -447,6 +571,75 @@ namespace dftfe
                 }
 #  endif
 #endif
+
+            ValueType *sendArrayPtr = d_sendRecvBuffer.data();
+
+            /* create and configure ZFP stream */
+            zfp = zfp_stream_open(nullptr);
+            // AssertThrow(zfp != nullptr, ExcInternalError());
+
+            if constexpr (std::is_same_v<ValueType, double>)
+              zfp_stream_set_rate(zfp, 16, zfp_type_double, 1, 0);
+            else if constexpr (std::is_same_v<ValueType, float>)
+              zfp_stream_set_rate(zfp, 16, zfp_type_float, 1, 0);
+            // else
+            // AssertThrow(false, ExcMessage("Unsupported ValueType for ZFP"));
+
+            /* CUDA execution */
+            zfp_stream_set_execution(zfp, zfp_exec_cuda);
+
+            for (dftfe::uInt i = 0;
+                 i < d_mpiPatternP2P->getTargetProcIds().size();
+                 ++i)
+              {
+                const dftfe::uInt dataSize =
+                  d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                    .data()[i] *
+                  d_blockSize;
+
+                if (dataSize == 0)
+                  continue;
+
+                /* maximum compressed size for fixed-rate mode */
+                const dftfe::uInt totalBits  = dataSize * 16;
+                const dftfe::uInt totalBytes = (totalBits + 7) / 8;
+
+                /* create ZFP field */
+                zfp_field *field = nullptr;
+                if constexpr (std::is_same_v<ValueType, double>)
+                  field = zfp_field_1d(sendArrayPtr, zfp_type_double, dataSize);
+                else
+                  field = zfp_field_1d(sendArrayPtr, zfp_type_float, dataSize);
+
+                // AssertThrow(field != nullptr, ExcInternalError());
+
+                /* open bitstream on preallocated output buffer */
+                bitstream *bs =
+                  stream_open(d_sendBufferCompressed[i], totalBytes);
+                // AssertThrow(bs != nullptr, ExcInternalError());
+
+                /* attach and rewind stream */
+                zfp_stream_set_bit_stream(zfp, bs);
+                zfp_stream_rewind(zfp);
+
+                /* compress */
+                const size_t compressedBytes = zfp_compress(zfp, field);
+                // AssertThrow(compressedBytes > 0, ExcInternalError());
+
+                /* cleanup */
+                stream_close(bs);
+                zfp_field_free(field);
+
+                /* advance input pointer */
+                sendArrayPtr += dataSize;
+
+                /* (optional) store compressed size for MPI send */
+                // d_compressedSizes[i] = compressedBytes;
+              }
+
+            /* destroy ZFP stream */
+            zfp_stream_close(zfp);
+
             if (d_commProtocol != communicationProtocol::nccl)
               for (dftfe::uInt i = 0;
                    i < (d_mpiPatternP2P->getTargetProcIds()).size();

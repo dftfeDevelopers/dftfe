@@ -28,6 +28,7 @@
 #include <MemoryStorage.h>
 #include <DataTypeOverloads.h>
 #include <dftfeDataTypes.h>
+#include <zfp.h>
 #ifdef DFTFE_WITH_DEVICE
 #  include <DeviceTypeConfig.h>
 #  if defined(DFTFE_WITH_CUDA_NCCL)
@@ -53,9 +54,10 @@ namespace dftfe
 
       enum class communicationPrecision
       {
-        half,    // explicitly BF16
-        single,  // explicitly FP32
-        standard // same as valueType
+        compressed, // compressed
+        half,       // explicitly BF16
+        single,     // explicitly FP32
+        standard    // same as valueType
       };
 
       template <typename ValueType, MemorySpace memorySpace>
@@ -173,6 +175,9 @@ namespace dftfe
           typename dftfe::dataTypes::halfPrecType<ValueType>::type,
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferHalfPrecHostPinnedPtr;
+
+        std::vector<void *> d_sendBufferCompressed;
+        std::vector<void *> d_recvBufferCompressed;
 
 #endif // DFTFE_WITH_DEVICE
 

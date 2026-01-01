@@ -1085,8 +1085,14 @@ namespace dftfe
           prm.declare_entry(
             "COMMUN PREC CHEBY",
             "STANDARD",
-            dealii::Patterns::Selection("STANDARD|FP32|BF16"),
-            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32 and BF16 are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
+            dealii::Patterns::Selection("STANDARD|FP32|BF16|COMPRESSED"),
+            "[Advanced] Sets communication precision for residual based Chebyshev filtering. Default setting is STANDARD. FP32, BF16 and COMPRESSED are ignored if USE SINGLE PREC CHEBY and USE GPU are false.");
+
+          prm.declare_entry(
+            "COMPRESSION BIT RATE",
+            "16",
+            dealii::Patterns::Integer(0, 64),
+            "[Advanced] Sets compressed bits per value (ZFP fixed rate mode) for residual based Chebyshev filtering. Default setting is 16. This parameter is only used if COMMUN PREC CHEBY is set to COMPRESSED.");
 
           prm.declare_entry(
             "USE MIXED PREC COMMUN ONLY XTOX XTHX",
@@ -1781,6 +1787,7 @@ namespace dftfe
           prm.get_bool("USE MIXED PREC COMMUN ONLY XTOX XTHX");
         communPrecCheby    = prm.get("COMMUN PREC CHEBY");
         useSinglePrecCheby = prm.get_bool("USE SINGLE PREC CHEBY");
+        compressionBitRate = prm.get_integer("COMPRESSION BIT RATE");
         tensorOpType       = prm.get("TENSOR OP TYPE SINGLE PREC CHEBY");
         overlapComputeCommunCheby =
           prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
