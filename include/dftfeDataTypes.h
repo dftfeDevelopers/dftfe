@@ -153,6 +153,36 @@ namespace dftfe
     {
       typedef std::complex<uint16_t> type;
     };
+
+    template <typename T>
+    struct compressType
+    {
+      typedef T type;
+    };
+
+    template <>
+    struct compressType<double>
+    {
+      typedef uint8_t type;
+    };
+
+    template <>
+    struct compressType<std::complex<double>>
+    {
+      typedef std::complex<uint8_t> type;
+    };
+
+    template <>
+    struct compressType<float>
+    {
+      typedef uint8_t type;
+    };
+
+    template <>
+    struct compressType<std::complex<float>>
+    {
+      typedef std::complex<uint8_t> type;
+    };
   } // namespace dataTypes
 } // namespace dftfe
 

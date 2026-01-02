@@ -406,8 +406,8 @@ namespace dftfe
                   throwException(false, "zfp_field_1d failed");
 
                 /* open bitstream using ACTUAL compressed byte count */
-                bitstream *bs = stream_open(d_recvBufferCompressed[i],
-                                            dataSize);
+                bitstream *bs =
+                  stream_open(d_recvBufferCompressed[i], dataSize);
 
                 if (!bs)
                   throwException(false, "stream_open failed");
@@ -433,7 +433,6 @@ namespace dftfe
               }
 
             /* destroy ZFP stream */
-            
 
 
 

@@ -54,10 +54,10 @@ namespace dftfe
 
       enum class communicationPrecision
       {
-        compressed, // compressed
-        half,       // explicitly BF16
-        single,     // explicitly FP32
-        standard    // same as valueType
+        compress, // compressed
+        half,     // explicitly BF16
+        single,   // explicitly FP32
+        standard  // same as valueType
       };
 
       template <typename ValueType, MemorySpace memorySpace>
@@ -149,6 +149,14 @@ namespace dftfe
                       memorySpace>
           d_ghostDataCopyHalfPrec;
 
+        MemoryStorage<typename dftfe::dataTypes::compressType<ValueType>::type,
+                      memorySpace>
+          d_sendRecvBufferCompress;
+
+        MemoryStorage<typename dftfe::dataTypes::compressType<ValueType>::type,
+                      memorySpace>
+          d_ghostDataCopyCompress;
+
 #ifdef DFTFE_WITH_DEVICE
         std::shared_ptr<MemoryStorage<ValueType, MemorySpace::HOST_PINNED>>
           d_ghostDataCopyHostPinnedPtr;
@@ -176,8 +184,19 @@ namespace dftfe
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferHalfPrecHostPinnedPtr;
 
+        std::shared_ptr<MemoryStorage<
+          typename dftfe::dataTypes::compressType<ValueType>::type,
+          MemorySpace::HOST_PINNED>>
+          d_ghostDataCopyCompressHostPinnedPtr;
+
+        std::shared_ptr<MemoryStorage<
+          typename dftfe::dataTypes::compressType<ValueType>::type,
+          MemorySpace::HOST_PINNED>>
+          d_sendRecvBufferCompressHostPinnedPtr;
+
         std::vector<void *> d_sendBufferCompressed;
         std::vector<void *> d_recvBufferCompressed;
+        dftfe::uInt         d_bitsPerValue = 16;
 
 #endif // DFTFE_WITH_DEVICE
 
