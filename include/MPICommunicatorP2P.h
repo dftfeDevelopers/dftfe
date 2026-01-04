@@ -194,19 +194,15 @@ namespace dftfe
           MemorySpace::HOST_PINNED>>
           d_sendRecvBufferCompressHostPinnedPtr;
 
-        std::vector<void *> d_sendBufferCompressed;
-        std::vector<void *> d_recvBufferCompressed;
-        zfp_stream         *d_zfpCompressStream       = nullptr;
-        zfp_stream         *d_zfpDecompressStream     = nullptr;
-        zfp_field          *d_zfpCompressField        = nullptr;
-        zfp_field          *d_zfpDecompressField      = nullptr;
-        bitstream          *d_zfpCompressBitstream    = nullptr;
-        bitstream          *d_zfpDecompressBitstream  = nullptr;
-        dftfe::uInt         d_bitsPerValue            = 16;
-        dftfe::uInt         d_maxCompressSize         = 0;
-        dftfe::uInt         d_maxCompressSizePadded   = 0;
-        dftfe::uInt         d_maxDecompressSize       = 0;
-        dftfe::uInt         d_maxDecompressSizePadded = 0;
+        zfp_stream *d_zfpCompressStream       = nullptr;
+        zfp_stream *d_zfpDecompressStream     = nullptr;
+        zfp_field  *d_zfpCompressField        = nullptr;
+        zfp_field  *d_zfpDecompressField      = nullptr;
+        bitstream  *d_zfpCompressBitstream    = nullptr;
+        bitstream  *d_zfpDecompressBitstream  = nullptr;
+        dftfe::uInt d_bitsPerValue            = 16; // default bits per value for compression
+        dftfe::uInt d_maxCompressSize         = 0;  // in bytes
+        dftfe::uInt d_maxDecompressSize       = 0;  // in bytes
 
 #endif // DFTFE_WITH_DEVICE
 

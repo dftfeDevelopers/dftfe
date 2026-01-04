@@ -116,25 +116,26 @@ namespace dftfe
 
               d_bitsPerValue = 16;
 
-              d_maxCompressSize = d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                                  d_blockSize * d_bitsPerValue / 8;
+              d_maxCompressSize =
+                d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                d_blockSize * d_bitsPerValue / 8;
 
-              d_maxCompressSizePadded = ((d_maxCompressSize + 7) / 8) * 8;
+              d_maxCompressSize = ((d_maxCompressSize + 7) / 8) * 8;
 
               d_maxDecompressSize = d_mpiPatternP2P->localGhostSize() *
                                     d_blockSize * d_bitsPerValue / 8;
 
-              d_maxDecompressSizePadded = ((d_maxDecompressSize + 7) / 8) * 8;
+              d_maxDecompressSize = ((d_maxDecompressSize + 7) / 8) * 8;
 
               d_ghostDataCopyCompressHostPinnedPtr =
                 std::make_shared<MemoryStorage<
                   typename dftfe::dataTypes::compressType<ValueType>::type,
-                  MemorySpace::HOST_PINNED>>(d_maxDecompressSizePadded, 0.0);
+                  MemorySpace::HOST_PINNED>>(d_maxDecompressSize, 0.0);
 
               d_sendRecvBufferCompressHostPinnedPtr =
                 std::make_shared<MemoryStorage<
                   typename dftfe::dataTypes::compressType<ValueType>::type,
-                  MemorySpace::HOST_PINNED>>(d_maxCompressSizePadded, 0.0);
+                  MemorySpace::HOST_PINNED>>(d_maxCompressSize, 0.0);
             }
 #endif
       }
@@ -303,21 +304,22 @@ namespace dftfe
 
         else if (precision == communicationPrecision::compress)
           {
-            d_maxCompressSize = d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                                d_blockSize * d_bitsPerValue / 8;
+            d_maxCompressSize =
+              d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+              d_blockSize * d_bitsPerValue / 8;
 
-            d_maxCompressSizePadded = ((d_maxCompressSize + 7) / 8) * 8;
+            d_maxCompressSize = ((d_maxCompressSize + 7) / 8) * 8;
 
             d_maxDecompressSize = d_mpiPatternP2P->localGhostSize() *
                                   d_blockSize * d_bitsPerValue / 8;
 
-            d_maxDecompressSizePadded = ((d_maxDecompressSize + 7) / 8) * 8;
+            d_maxDecompressSize = ((d_maxDecompressSize + 7) / 8) * 8;
 
-            if (d_sendRecvBufferCompress.size() != d_maxCompressSizePadded)
-              d_sendRecvBufferCompress.resize(d_maxCompressSizePadded, 0.0);
+            if (d_sendRecvBufferCompress.size() != d_maxCompressSize)
+              d_sendRecvBufferCompress.resize(d_maxCompressSize, 0.0);
 
-            if (d_ghostDataCopyCompress.size() != d_maxDecompressSizePadded)
-              d_ghostDataCopyCompress.resize(d_maxDecompressSizePadded, 0.0);
+            if (d_ghostDataCopyCompress.size() != d_maxDecompressSize)
+              d_ghostDataCopyCompress.resize(d_maxDecompressSize, 0.0);
 
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -328,30 +330,30 @@ namespace dftfe
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxDecompressSizePadded, 0.0);
+                      d_maxDecompressSize, 0.0);
 
                   if (!d_sendRecvBufferCompressHostPinnedPtr)
                     d_sendRecvBufferCompressHostPinnedPtr = std::make_shared<
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressSizePadded, 0.0);
+                      d_maxCompressSize, 0.0);
 
                   if (d_ghostDataCopyCompressHostPinnedPtr->size() !=
-                      d_maxDecompressSizePadded)
+                      d_maxDecompressSize)
                     d_ghostDataCopyCompressHostPinnedPtr = std::make_shared<
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxDecompressSizePadded, 0.0);
+                      d_maxDecompressSize, 0.0);
 
                   if (d_sendRecvBufferCompressHostPinnedPtr->size() !=
-                      d_maxCompressSizePadded)
+                      d_maxCompressSize)
                     d_sendRecvBufferCompressHostPinnedPtr = std::make_shared<
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressSizePadded, 0.0);
+                      d_maxCompressSize, 0.0);
                 }
 #endif
           }
@@ -935,101 +937,238 @@ namespace dftfe
 
         else if (d_commPrecision == communicationPrecision::compress)
           {
+            typename dftfe::dataTypes::compressType<ValueType>::type
+              *recvArrayStartPtr = d_ghostDataCopyCompress.data();
+
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              {
+                if (d_commProtocol == communicationProtocol::mpiHost)
+                  recvArrayStartPtr =
+                    d_ghostDataCopyCompressHostPinnedPtr->begin();
+                dftfe::utils::deviceSynchronize();
+              }
+#endif
+            if (d_commProtocol != communicationProtocol::nccl)
+              for (dftfe::uInt i = 0;
+                   i < (d_mpiPatternP2P->getGhostProcIds()).size();
+                   ++i)
+                {
+                  const dftfe::Int err =
+                    MPI_Irecv(recvArrayStartPtr,
+                              (d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                                 .data()[2 * i + 1] -
+                               d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                                 .data()[2 * i]) *
+                                d_blockSize * d_bitsPerValue *
+                                sizeof(typename dftfe::dataTypes::compressType<
+                                       ValueType>::type) /
+                                8,
+                              MPI_BYTE,
+                              d_mpiPatternP2P->getGhostProcIds().data()[i],
+                              static_cast<dftfe::uInt>(
+                                MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
+                                communicationChannel,
+                              d_mpiCommunicator,
+                              &d_requestsUpdateGhostValues[i]);
+
+                  std::string errMsg = "Error occured while using MPI_Irecv. "
+                                       "Error code: " +
+                                       std::to_string(err);
+                  throwException(err == MPI_SUCCESS, errMsg);
+
+                  recvArrayStartPtr +=
+                    (d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                       .data()[2 * i + 1] -
+                     d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                       .data()[2 * i]) *
+                    d_blockSize * d_bitsPerValue / 8;
+                }
             // gather locally owned entries into a contiguous send buffer
             if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size()) >
                 0)
-              {
 #ifdef DFTFE_WITH_DEVICE
-                if constexpr (memorySpace == MemorySpace::DEVICE)
-                  MPICommunicatorP2PKernels<ValueType, memorySpace>::
-                    gatherLocallyOwnedEntriesSendBufferToTargetProcs(
-                      dataArray,
-                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-                      d_blockSize,
-                      d_sendRecvBuffer,
-                      dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
-                else
+              if constexpr (memorySpace == MemorySpace::DEVICE)
+                MPICommunicatorP2PKernels<ValueType, memorySpace>::
+                  gatherLocallyOwnedEntriesSendBufferToTargetProcs(
+                    dataArray,
+                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
+                    d_blockSize,
+                    d_sendRecvBuffer,
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+              else
 #endif
-                  MPICommunicatorP2PKernels<ValueType, memorySpace>::
-                    gatherLocallyOwnedEntriesSendBufferToTargetProcs(
-                      dataArray,
-                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-                      d_blockSize,
-                      d_sendRecvBuffer);
+                {
+                  std::string errMsg = "Not Implemented";
+                  throwException(false, errMsg);
+                }
 
-                // initiate non-blocking sends to target processors
-                ValueType *sendArrayStartPtr = d_sendRecvBuffer.data();
-
-
-
-                if constexpr (std::is_same_v<ValueType, double>)
-                  {
-                    zfp_stream_set_rate(d_zfpCompressStream,
-                                        d_bitsPerValue,
-                                        zfp_type_double,
-                                        1,
-                                        0);
-                  }
-                else if constexpr (std::is_same_v<ValueType, float>)
-                  {
-                    zfp_stream_set_rate(d_zfpCompressStream,
-                                        d_bitsPerValue,
-                                        zfp_type_float,
-                                        1,
-                                        0);
-                  }
-                else
-                  {
-                  }
-
-                zfp_stream_set_execution(d_zfpCompressStream, zfp_exec_cuda);
-
-                if constexpr (std::is_same_v<ValueType, double>)
-                  {
-                    d_zfpCompressField =
-                      zfp_field_1d(d_sendRecvBuffer.data(),
-                                   zfp_type_double,
-                                   d_mpiPatternP2P
-                                       ->getOwnedLocalIndicesForTargetProcs()
-                                       .size() *
-                                     d_blockSize);
-                  }
-                else if constexpr (std::is_same_v<ValueType, float>)
-                  {
-                    d_zfpCompressField =
-                      zfp_field_1d(d_sendRecvBuffer.data(),
-                                   zfp_type_float,
-                                   d_mpiPatternP2P
-                                       ->getOwnedLocalIndicesForTargetProcs()
-                                       .size() *
-                                     d_blockSize);
-                  }
-                else
-                  {
-                  }
-
-                // AssertThrow(field != nullptr, ExcInternalError());
-
-                /* open bitstream on preallocated output buffer */
-                d_zfpCompressBitstream = stream_open(
-                  d_sendRecvBufferCompressHostPinnedPtr->data(),
-                  d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                    d_blockSize * d_bitsPerValue / 8);
-                // AssertThrow(bs != nullptr, ExcInternalError());
-
-                /* attach and rewind stream */
-                zfp_stream_set_bit_stream(d_zfpCompressStream,
-                                          d_zfpCompressBitstream);
-                zfp_stream_rewind(d_zfpCompressStream);
-
-                zfp_compress(d_zfpCompressStream, d_zfpCompressField);
-
-
-                /* cleanup */
-                stream_close(d_zfpCompressBitstream);
-                zfp_field_free(d_zfpCompressField);
-                zfp_stream_close(d_zfpCompressStream);
+            // Begin Compression
+            if constexpr (std::is_same_v<ValueType, double>)
+              {
+                zfp_stream_set_rate(
+                  d_zfpCompressStream, d_bitsPerValue, zfp_type_double, 1, 0);
               }
+
+            else if constexpr (std::is_same_v<ValueType, float>)
+              {
+                zfp_stream_set_rate(
+                  d_zfpCompressStream, d_bitsPerValue, zfp_type_float, 1, 0);
+              }
+
+            zfp_stream_set_execution(d_zfpCompressStream, zfp_exec_cuda);
+
+            if constexpr (std::is_same_v<ValueType, double>)
+              {
+                d_zfpCompressField = zfp_field_1d(
+                  d_sendRecvBuffer.data(),
+                  zfp_type_double,
+                  d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                    d_blockSize);
+              }
+
+            else if constexpr (std::is_same_v<ValueType, float>)
+              {
+                d_zfpCompressField = zfp_field_1d(
+                  d_sendRecvBuffer.data(),
+                  zfp_type_float,
+                  d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
+                    d_blockSize);
+              }
+
+            d_zfpCompressBitstream =
+              stream_open(d_sendRecvBufferCompress.data(), d_maxCompressSize);
+            zfp_stream_set_bit_stream(d_zfpCompressStream,
+                                      d_zfpCompressBitstream);
+            zfp_stream_rewind(d_zfpCompressStream);
+            zfp_compress(d_zfpCompressStream, d_zfpCompressField);
+            stream_close(d_zfpCompressBitstream);
+            zfp_field_free(d_zfpCompressField);
+            zfp_stream_close(d_zfpCompressStream);
+            // End Compression
+
+            // initiate non-blocking sends to target processors
+            typename dftfe::dataTypes::compressType<ValueType>::type
+              *sendArrayStartPtr = d_sendRecvBufferCompress.data();
+
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              {
+                if (d_commProtocol != communicationProtocol::nccl)
+                  dftfe::utils::deviceStreamSynchronize(
+                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+                if (d_commProtocol == communicationProtocol::mpiHost)
+                  {
+                    MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
+                      memoryTransfer;
+
+                    if (d_sendRecvBufferCompressHostPinnedPtr->size() > 0)
+                      memoryTransfer.copy(
+                        d_sendRecvBufferCompressHostPinnedPtr->size(),
+                        d_sendRecvBufferCompressHostPinnedPtr->begin(),
+                        d_sendRecvBufferCompress.begin());
+
+                    sendArrayStartPtr =
+                      d_sendRecvBufferCompressHostPinnedPtr->begin();
+                  }
+              }
+
+#  if defined(DFTFE_WITH_CUDA_NCCL) || defined(DFTFE_WITH_HIP_RCCL)
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              if (d_commProtocol == communicationProtocol::nccl)
+                {
+                  NCCLCHECK(ncclGroupStart());
+                  for (dftfe::uInt i = 0;
+                       i < (d_mpiPatternP2P->getTargetProcIds()).size();
+                       ++i)
+                    {
+                      if (d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                            .data()[i] > 0)
+                        NCCLCHECK(ncclSend(
+                          reinterpret_cast<char *>(sendArrayStartPtr),
+                          d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                              .data()[i] *
+                            d_blockSize * d_bitsPerValue *
+                            sizeof(typename dftfe::dataTypes::compressType<
+                                   ValueType>::type) /
+                            8,
+                          ncclChar,
+                          d_mpiPatternP2P->getTargetProcIds().data()[i],
+                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
+
+                      sendArrayStartPtr +=
+                        d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                          .data()[i] *
+                        d_blockSize * d_bitsPerValue / 8;
+                    }
+                  for (dftfe::uInt i = 0;
+                       i < (d_mpiPatternP2P->getGhostProcIds()).size();
+                       ++i)
+                    {
+                      if ((d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                             .data()[2 * i + 1] -
+                           d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                             .data()[2 * i]) > 0)
+                        NCCLCHECK(ncclRecv(
+                          reinterpret_cast<char *>(recvArrayStartPtr),
+                          (d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                             .data()[2 * i + 1] -
+                           d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                             .data()[2 * i]) *
+                            d_blockSize * d_bitsPerValue *
+                            sizeof(typename dftfe::dataTypes::compressType<
+                                   ValueType>::type) /
+                            8,
+                          ncclChar,
+                          d_mpiPatternP2P->getGhostProcIds().data()[i],
+                          *dftfe::utils::DeviceCCLWrapper::ncclCommPtr,
+                          dftfe::utils::DeviceCCLWrapper::d_deviceCommStream));
+
+                      recvArrayStartPtr +=
+                        (d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                           .data()[2 * i + 1] -
+                         d_mpiPatternP2P->getGhostLocalIndicesRanges()
+                           .data()[2 * i]) *
+                        d_blockSize * d_bitsPerValue / 8;
+                    }
+                  NCCLCHECK(ncclGroupEnd());
+                }
+#  endif
+#endif
+            if (d_commProtocol != communicationProtocol::nccl)
+              for (dftfe::uInt i = 0;
+                   i < (d_mpiPatternP2P->getTargetProcIds()).size();
+                   ++i)
+                {
+                  const int err = MPI_Isend(
+                    sendArrayStartPtr,
+                    d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                        .data()[i] *
+                      d_blockSize * d_bitsPerValue *
+                      sizeof(typename dftfe::dataTypes::compressType<
+                             ValueType>::type) /
+                      8,
+                    MPI_BYTE,
+                    d_mpiPatternP2P->getTargetProcIds().data()[i],
+                    static_cast<dftfe::uInt>(
+                      MPITags::MPI_P2P_COMMUNICATOR_SCATTER_TAG) +
+                      communicationChannel,
+
+                    d_mpiCommunicator,
+                    &d_requestsUpdateGhostValues
+                      [d_mpiPatternP2P->getGhostProcIds().size() + i]);
+
+                  std::string errMsg = "Error occured while using MPI_Isend. "
+                                       "Error code: " +
+                                       std::to_string(err);
+                  throwException(err == MPI_SUCCESS, errMsg);
+
+                  sendArrayStartPtr +=
+                    d_mpiPatternP2P->getNumOwnedIndicesForTargetProcs()
+                      .data()[i] *
+                    d_blockSize * d_bitsPerValue / 8;
+                }
           }
       }
 
@@ -1086,7 +1225,7 @@ namespace dftfe
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
-                  if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                  if (d_ghostDataCopySinglePrecHostPinnedPtr->size() > 0)
                     memoryTransfer.copy(
                       d_ghostDataCopySinglePrecHostPinnedPtr->size(),
                       d_ghostDataCopySinglePrec.data(),
@@ -1123,7 +1262,7 @@ namespace dftfe
                 {
                   MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
                     memoryTransfer;
-                  if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                  if (d_ghostDataCopyHalfPrecHostPinnedPtr->size() > 0)
                     memoryTransfer.copy(
                       d_ghostDataCopyHalfPrecHostPinnedPtr->size(),
                       d_ghostDataCopyHalfPrec.data(),
@@ -1137,6 +1276,86 @@ namespace dftfe
                   dataArray.begin() +
                     d_mpiPatternP2P->localOwnedSize() * d_blockSize,
                   dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+            else
+#endif
+              {
+                std::string errMsg = "Not Implemented";
+                throwException(false, errMsg);
+              }
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              dftfe::utils::deviceStreamSynchronize(
+                dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+#endif
+          }
+
+        else if (d_commPrecision == communicationPrecision::compress)
+          {
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              if (d_commProtocol == communicationProtocol::mpiHost)
+                {
+                  MemoryTransfer<memorySpace, MemorySpace::HOST_PINNED>
+                    memoryTransfer;
+                  if (d_ghostDataCopyCompressHostPinnedPtr->size() > 0)
+                    memoryTransfer.copy(
+                      d_ghostDataCopyCompressHostPinnedPtr->size(),
+                      d_ghostDataCopyCompress.data(),
+                      d_ghostDataCopyCompressHostPinnedPtr->data());
+                }
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              {
+                // Begin Decompression
+                if constexpr (std::is_same_v<ValueType, double>)
+                  {
+                    zfp_stream_set_rate(d_zfpDecompressStream,
+                                        d_bitsPerValue,
+                                        zfp_type_double,
+                                        1,
+                                        0);
+                  }
+
+                else if constexpr (std::is_same_v<ValueType, float>)
+                  {
+                    zfp_stream_set_rate(d_zfpDecompressStream,
+                                        d_bitsPerValue,
+                                        zfp_type_float,
+                                        1,
+                                        0);
+                  }
+
+                zfp_stream_set_execution(d_zfpDecompressStream, zfp_exec_cuda);
+
+                if constexpr (std::is_same_v<ValueType, double>)
+                  {
+                    d_zfpDecompressField = zfp_field_1d(
+                      dataArray.data() +
+                        d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                      zfp_type_double,
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize);
+                  }
+
+                else if constexpr (std::is_same_v<ValueType, float>)
+                  {
+                    d_zfpDecompressField = zfp_field_1d(
+                      dataArray.data() +
+                        d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                      zfp_type_float,
+                      d_mpiPatternP2P->localGhostSize() * d_blockSize);
+                  }
+
+                d_zfpDecompressBitstream =
+                  stream_open(d_ghostDataCopyCompress.data(),
+                              d_maxDecompressSize);
+                zfp_stream_set_bit_stream(d_zfpDecompressStream,
+                                          d_zfpDecompressBitstream);
+                zfp_stream_rewind(d_zfpDecompressStream);
+                zfp_decompress(d_zfpDecompressStream, d_zfpDecompressField);
+                stream_close(d_zfpDecompressBitstream);
+                zfp_field_free(d_zfpDecompressField);
+                zfp_stream_close(d_zfpDecompressStream);
+                // End Decompression
+              }
             else
 #endif
               {
@@ -1403,7 +1622,7 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-                    if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                    if (d_ghostDataCopySinglePrecHostPinnedPtr->size() > 0)
                       memoryTransfer.copy(
                         d_ghostDataCopySinglePrecHostPinnedPtr->size(),
                         d_ghostDataCopySinglePrecHostPinnedPtr->begin(),
@@ -1592,7 +1811,7 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-                    if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                    if (d_ghostDataCopyHalfPrecHostPinnedPtr->size() > 0)
                       memoryTransfer.copy(
                         d_ghostDataCopyHalfPrecHostPinnedPtr->size(),
                         d_ghostDataCopyHalfPrecHostPinnedPtr->begin(),
@@ -2109,7 +2328,7 @@ namespace dftfe
                   {
                     MemoryTransfer<MemorySpace::HOST_PINNED, memorySpace>
                       memoryTransfer;
-                    if (d_ghostDataCopyHostPinnedPtr->size() > 0)
+                    if (d_ghostDataCopySinglePrecHostPinnedPtr->size() > 0)
                       memoryTransfer.copy(
                         d_ghostDataCopySinglePrecHostPinnedPtr->size(),
                         d_ghostDataCopySinglePrecHostPinnedPtr->begin(),
