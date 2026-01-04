@@ -196,7 +196,17 @@ namespace dftfe
 
         std::vector<void *> d_sendBufferCompressed;
         std::vector<void *> d_recvBufferCompressed;
-        dftfe::uInt         d_bitsPerValue = 16;
+        zfp_stream         *d_zfpCompressStream       = nullptr;
+        zfp_stream         *d_zfpDecompressStream     = nullptr;
+        zfp_field          *d_zfpCompressField        = nullptr;
+        zfp_field          *d_zfpDecompressField      = nullptr;
+        bitstream          *d_zfpCompressBitstream    = nullptr;
+        bitstream          *d_zfpDecompressBitstream  = nullptr;
+        dftfe::uInt         d_bitsPerValue            = 16;
+        dftfe::uInt         d_maxCompressSize         = 0;
+        dftfe::uInt         d_maxCompressSizePadded   = 0;
+        dftfe::uInt         d_maxDecompressSize       = 0;
+        dftfe::uInt         d_maxDecompressSizePadded = 0;
 
 #endif // DFTFE_WITH_DEVICE
 
