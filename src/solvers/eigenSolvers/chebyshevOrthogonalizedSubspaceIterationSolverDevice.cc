@@ -416,6 +416,27 @@ namespace dftfe
                           .setCommunicationPrecision(
                             dftfe::utils::mpi::communicationPrecision::half);
                       }
+
+                    else if (useMixedPrecOverall &&
+                             d_dftParams.communPrecCheby == "COMPRESSED")
+                      {
+                        (*XBlockFP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              compress);
+                        (*HXBlockFP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              compress);
+                        (*XBlock2FP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              compress);
+                        (*HXBlock2FP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              compress);
+                      }
                     linearAlgebraOperationsDevice::
                       reformulatedChebyshevFilterOverlapComputeCommunication(
                         BLASWrapperPtr,
@@ -454,6 +475,27 @@ namespace dftfe
                             dftfe::utils::mpi::communicationPrecision::
                               standard);
                       }
+
+                    else if (useMixedPrecOverall &&
+                             d_dftParams.communPrecCheby == "COMPRESSED")
+                      {
+                        (*XBlockFP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              standard);
+                        (*HXBlockFP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              standard);
+                        (*XBlock2FP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              standard);
+                        (*HXBlock2FP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              standard);
+                      }
                   }
                 else
                   {
@@ -471,6 +513,19 @@ namespace dftfe
                           .setCommunicationPrecision(
                             dftfe::utils::mpi::communicationPrecision::half);
                       }
+
+                    else if (useMixedPrecOverall &&
+                             d_dftParams.communPrecCheby == "COMPRESSED")
+                      {
+                        (*XBlockFP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              compress);
+                        (*HXBlockFP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              compress);
+                      }
                     linearAlgebraOperations::reformulatedChebyshevFilter(
                       BLASWrapperPtr,
                       operatorMatrix,
@@ -487,6 +542,18 @@ namespace dftfe
 
                     if (useMixedPrecOverall &&
                         d_dftParams.communPrecCheby == "BF16")
+                      {
+                        (*XBlockFP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              standard);
+                        (*HXBlockFP32)
+                          .setCommunicationPrecision(
+                            dftfe::utils::mpi::communicationPrecision::
+                              standard);
+                      }
+                    else if (useMixedPrecOverall &&
+                             d_dftParams.communPrecCheby == "COMPRESSED")
                       {
                         (*XBlockFP32)
                           .setCommunicationPrecision(

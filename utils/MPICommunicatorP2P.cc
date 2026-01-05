@@ -995,70 +995,82 @@ namespace dftfe
                 0)
 #ifdef DFTFE_WITH_DEVICE
               if constexpr (memorySpace == MemorySpace::DEVICE)
-                MPICommunicatorP2PKernels<ValueType, memorySpace>::
-                  gatherLocallyOwnedEntriesSendBufferToTargetProcs(
-                    dataArray,
-                    d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
-                    d_blockSize,
-                    d_sendRecvBuffer,
-                    dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+                {
+                  MPICommunicatorP2PKernels<ValueType, memorySpace>::
+                    gatherLocallyOwnedEntriesSendBufferToTargetProcs(
+                      dataArray,
+                      d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs(),
+                      d_blockSize,
+                      d_sendRecvBuffer,
+                      dftfe::utils::DeviceCCLWrapper::d_deviceCommStream);
+
+                  // Begin Compression
+                  if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                         .size()) > 0)
+                    {
+                      d_zfpCompressStream = zfp_stream_open(nullptr);
+                      if constexpr (std::is_same_v<ValueType, double>)
+                        {
+                          zfp_stream_set_rate(d_zfpCompressStream,
+                                              d_compressBitsPerValue,
+                                              zfp_type_double,
+                                              1,
+                                              0);
+                        }
+
+                      else if constexpr (std::is_same_v<ValueType, float>)
+                        {
+                          zfp_stream_set_rate(d_zfpCompressStream,
+                                              d_compressBitsPerValue,
+                                              zfp_type_float,
+                                              1,
+                                              0);
+                        }
+
+                      zfp_stream_set_execution(d_zfpCompressStream,
+                                               zfp_exec_cuda);
+
+                      if constexpr (std::is_same_v<ValueType, double>)
+                        {
+                          d_zfpCompressField = zfp_field_1d(
+                            d_sendRecvBuffer.data(),
+                            zfp_type_double,
+                            d_mpiPatternP2P
+                                ->getOwnedLocalIndicesForTargetProcs()
+                                .size() *
+                              d_blockSize);
+                        }
+
+                      else if constexpr (std::is_same_v<ValueType, float>)
+                        {
+                          d_zfpCompressField = zfp_field_1d(
+                            d_sendRecvBuffer.data(),
+                            zfp_type_float,
+                            d_mpiPatternP2P
+                                ->getOwnedLocalIndicesForTargetProcs()
+                                .size() *
+                              d_blockSize);
+                        }
+
+                      d_zfpCompressBitstream =
+                        stream_open(d_sendRecvBufferCompress.data(),
+                                    d_maxCompressedTargetBytes);
+                      zfp_stream_set_bit_stream(d_zfpCompressStream,
+                                                d_zfpCompressBitstream);
+                      zfp_stream_rewind(d_zfpCompressStream);
+                      zfp_compress(d_zfpCompressStream, d_zfpCompressField);
+                      stream_close(d_zfpCompressBitstream);
+                      zfp_field_free(d_zfpCompressField);
+                      zfp_stream_close(d_zfpCompressStream);
+                    }
+                  // End Compression
+                }
               else
 #endif
                 {
                   std::string errMsg = "Not Implemented";
                   throwException(false, errMsg);
                 }
-
-            // Begin Compression
-            if constexpr (std::is_same_v<ValueType, double>)
-              {
-                zfp_stream_set_rate(d_zfpCompressStream,
-                                    d_compressBitsPerValue,
-                                    zfp_type_double,
-                                    1,
-                                    0);
-              }
-
-            else if constexpr (std::is_same_v<ValueType, float>)
-              {
-                zfp_stream_set_rate(d_zfpCompressStream,
-                                    d_compressBitsPerValue,
-                                    zfp_type_float,
-                                    1,
-                                    0);
-              }
-
-            zfp_stream_set_execution(d_zfpCompressStream, zfp_exec_cuda);
-
-            if constexpr (std::is_same_v<ValueType, double>)
-              {
-                d_zfpCompressField = zfp_field_1d(
-                  d_sendRecvBuffer.data(),
-                  zfp_type_double,
-                  d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                    d_blockSize);
-              }
-
-            else if constexpr (std::is_same_v<ValueType, float>)
-              {
-                d_zfpCompressField = zfp_field_1d(
-                  d_sendRecvBuffer.data(),
-                  zfp_type_float,
-                  d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size() *
-                    d_blockSize);
-              }
-
-            d_zfpCompressBitstream =
-              stream_open(d_sendRecvBufferCompress.data(),
-                          d_maxCompressedTargetBytes);
-            zfp_stream_set_bit_stream(d_zfpCompressStream,
-                                      d_zfpCompressBitstream);
-            zfp_stream_rewind(d_zfpCompressStream);
-            zfp_compress(d_zfpCompressStream, d_zfpCompressField);
-            stream_close(d_zfpCompressBitstream);
-            zfp_field_free(d_zfpCompressField);
-            zfp_stream_close(d_zfpCompressStream);
-            // End Compression
 
             // initiate non-blocking sends to target processors
             typename dftfe::dataTypes::compressType<ValueType>::type
@@ -1184,8 +1196,6 @@ namespace dftfe
                 }
           }
       }
-
-
 
       template <typename ValueType, dftfe::utils::MemorySpace memorySpace>
       void
@@ -1319,54 +1329,59 @@ namespace dftfe
             if constexpr (memorySpace == MemorySpace::DEVICE)
               {
                 // Begin Decompression
-                if constexpr (std::is_same_v<ValueType, double>)
+                if (d_ghostDataCopyCompressHostPinnedPtr->size() > 0)
                   {
-                    zfp_stream_set_rate(d_zfpDecompressStream,
-                                        d_compressBitsPerValue,
-                                        zfp_type_double,
-                                        1,
-                                        0);
+                    d_zfpDecompressStream = zfp_stream_open(nullptr);
+                    if constexpr (std::is_same_v<ValueType, double>)
+                      {
+                        zfp_stream_set_rate(d_zfpDecompressStream,
+                                            d_compressBitsPerValue,
+                                            zfp_type_double,
+                                            1,
+                                            0);
+                      }
+
+                    else if constexpr (std::is_same_v<ValueType, float>)
+                      {
+                        zfp_stream_set_rate(d_zfpDecompressStream,
+                                            d_compressBitsPerValue,
+                                            zfp_type_float,
+                                            1,
+                                            0);
+                      }
+
+                    zfp_stream_set_execution(d_zfpDecompressStream,
+                                             zfp_exec_cuda);
+
+                    if constexpr (std::is_same_v<ValueType, double>)
+                      {
+                        d_zfpDecompressField = zfp_field_1d(
+                          dataArray.data() +
+                            d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                          zfp_type_double,
+                          d_mpiPatternP2P->localGhostSize() * d_blockSize);
+                      }
+
+                    else if constexpr (std::is_same_v<ValueType, float>)
+                      {
+                        d_zfpDecompressField = zfp_field_1d(
+                          dataArray.data() +
+                            d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                          zfp_type_float,
+                          d_mpiPatternP2P->localGhostSize() * d_blockSize);
+                      }
+
+                    d_zfpDecompressBitstream =
+                      stream_open(d_ghostDataCopyCompress.data(),
+                                  d_maxCompressedGhostBytes);
+                    zfp_stream_set_bit_stream(d_zfpDecompressStream,
+                                              d_zfpDecompressBitstream);
+                    zfp_stream_rewind(d_zfpDecompressStream);
+                    zfp_decompress(d_zfpDecompressStream, d_zfpDecompressField);
+                    stream_close(d_zfpDecompressBitstream);
+                    zfp_field_free(d_zfpDecompressField);
+                    zfp_stream_close(d_zfpDecompressStream);
                   }
-
-                else if constexpr (std::is_same_v<ValueType, float>)
-                  {
-                    zfp_stream_set_rate(d_zfpDecompressStream,
-                                        d_compressBitsPerValue,
-                                        zfp_type_float,
-                                        1,
-                                        0);
-                  }
-
-                zfp_stream_set_execution(d_zfpDecompressStream, zfp_exec_cuda);
-
-                if constexpr (std::is_same_v<ValueType, double>)
-                  {
-                    d_zfpDecompressField = zfp_field_1d(
-                      dataArray.data() +
-                        d_mpiPatternP2P->localOwnedSize() * d_blockSize,
-                      zfp_type_double,
-                      d_mpiPatternP2P->localGhostSize() * d_blockSize);
-                  }
-
-                else if constexpr (std::is_same_v<ValueType, float>)
-                  {
-                    d_zfpDecompressField = zfp_field_1d(
-                      dataArray.data() +
-                        d_mpiPatternP2P->localOwnedSize() * d_blockSize,
-                      zfp_type_float,
-                      d_mpiPatternP2P->localGhostSize() * d_blockSize);
-                  }
-
-                d_zfpDecompressBitstream =
-                  stream_open(d_ghostDataCopyCompress.data(),
-                              d_maxCompressedGhostBytes);
-                zfp_stream_set_bit_stream(d_zfpDecompressStream,
-                                          d_zfpDecompressBitstream);
-                zfp_stream_rewind(d_zfpDecompressStream);
-                zfp_decompress(d_zfpDecompressStream, d_zfpDecompressField);
-                stream_close(d_zfpDecompressBitstream);
-                zfp_field_free(d_zfpDecompressField);
-                zfp_stream_close(d_zfpDecompressStream);
                 // End Decompression
               }
             else
@@ -1983,58 +1998,71 @@ namespace dftfe
                     d_blockSize * d_compressBitsPerValue / 8;
                 }
 
-            // Begin Compression
-            if constexpr (std::is_same_v<ValueType, double>)
+#ifdef DFTFE_WITH_DEVICE
+            if constexpr (memorySpace == MemorySpace::DEVICE)
               {
-                zfp_stream_set_rate(d_zfpCompressStream,
-                                    d_compressBitsPerValue,
-                                    zfp_type_double,
-                                    1,
-                                    0);
-              }
+                // Begin Compression
+                if (d_mpiPatternP2P->localGhostSize() > 0)
+                  {
+                    d_zfpCompressStream = zfp_stream_open(nullptr);
+                    if constexpr (std::is_same_v<ValueType, double>)
+                      {
+                        zfp_stream_set_rate(d_zfpCompressStream,
+                                            d_compressBitsPerValue,
+                                            zfp_type_double,
+                                            1,
+                                            0);
+                      }
 
-            else if constexpr (std::is_same_v<ValueType, float>)
+                    else if constexpr (std::is_same_v<ValueType, float>)
+                      {
+                        zfp_stream_set_rate(d_zfpCompressStream,
+                                            d_compressBitsPerValue,
+                                            zfp_type_float,
+                                            1,
+                                            0);
+                      }
+
+                    zfp_stream_set_execution(d_zfpCompressStream,
+                                             zfp_exec_cuda);
+
+                    if constexpr (std::is_same_v<ValueType, double>)
+                      {
+                        d_zfpCompressField = zfp_field_1d(
+                          dataArray.data() +
+                            d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                          zfp_type_double,
+                          d_mpiPatternP2P->localGhostSize() * d_blockSize);
+                      }
+
+                    else if constexpr (std::is_same_v<ValueType, float>)
+                      {
+                        d_zfpCompressField = zfp_field_1d(
+                          dataArray.data() +
+                            d_mpiPatternP2P->localOwnedSize() * d_blockSize,
+                          zfp_type_float,
+                          d_mpiPatternP2P->localGhostSize() * d_blockSize);
+                      }
+
+                    d_zfpCompressBitstream =
+                      stream_open(d_ghostDataCopyCompress.data(),
+                                  d_maxCompressedGhostBytes);
+                    zfp_stream_set_bit_stream(d_zfpCompressStream,
+                                              d_zfpCompressBitstream);
+                    zfp_stream_rewind(d_zfpCompressStream);
+                    zfp_compress(d_zfpCompressStream, d_zfpCompressField);
+                    stream_close(d_zfpCompressBitstream);
+                    zfp_field_free(d_zfpCompressField);
+                    zfp_stream_close(d_zfpCompressStream);
+                  }
+                // End Compression
+              }
+            else
+#endif
               {
-                zfp_stream_set_rate(d_zfpCompressStream,
-                                    d_compressBitsPerValue,
-                                    zfp_type_float,
-                                    1,
-                                    0);
+                std::string errMsg = "Not Implemented";
+                throwException(false, errMsg);
               }
-
-            zfp_stream_set_execution(d_zfpCompressStream, zfp_exec_cuda);
-
-            if constexpr (std::is_same_v<ValueType, double>)
-              {
-                d_zfpCompressField =
-                  zfp_field_1d(dataArray.data() +
-                                 d_mpiPatternP2P->localOwnedSize() *
-                                   d_blockSize,
-                               zfp_type_double,
-                               d_mpiPatternP2P->localGhostSize() * d_blockSize);
-              }
-
-            else if constexpr (std::is_same_v<ValueType, float>)
-              {
-                d_zfpCompressField =
-                  zfp_field_1d(dataArray.data() +
-                                 d_mpiPatternP2P->localOwnedSize() *
-                                   d_blockSize,
-                               zfp_type_float,
-                               d_mpiPatternP2P->localGhostSize() * d_blockSize);
-              }
-
-            d_zfpCompressBitstream = stream_open(d_ghostDataCopyCompress.data(),
-                                                 d_maxCompressedGhostBytes);
-            zfp_stream_set_bit_stream(d_zfpCompressStream,
-                                      d_zfpCompressBitstream);
-            zfp_stream_rewind(d_zfpCompressStream);
-            zfp_compress(d_zfpCompressStream, d_zfpCompressField);
-            stream_close(d_zfpCompressBitstream);
-            zfp_field_free(d_zfpCompressField);
-            zfp_stream_close(d_zfpCompressStream);
-            // End Compression
-
 
             // initiate non-blocking sends to ghost processors
             typename dftfe::dataTypes::compressType<ValueType>::type
@@ -2146,7 +2174,6 @@ namespace dftfe
                     d_mpiCommunicator,
                     &d_requestsAccumulateAddLocallyOwned
                       [(d_mpiPatternP2P->getTargetProcIds()).size() + i]);
-
 
                   std::string errMsg = "Error occured while using MPI_Isend. "
                                        "Error code: " +
@@ -2321,78 +2348,72 @@ namespace dftfe
                       d_sendRecvBufferCompress.data(),
                       d_sendRecvBufferCompressHostPinnedPtr->data());
                 }
+            if constexpr (memorySpace == MemorySpace::DEVICE)
+              {
+                // Begin Decompression
+                if (d_sendRecvBufferCompressHostPinnedPtr->size() > 0)
+                  {
+                    d_zfpDecompressStream = zfp_stream_open(nullptr);
+                    if constexpr (std::is_same_v<ValueType, double>)
+                      {
+                        zfp_stream_set_rate(d_zfpDecompressStream,
+                                            d_compressBitsPerValue,
+                                            zfp_type_double,
+                                            1,
+                                            0);
+                      }
+
+                    else if constexpr (std::is_same_v<ValueType, float>)
+                      {
+                        zfp_stream_set_rate(d_zfpDecompressStream,
+                                            d_compressBitsPerValue,
+                                            zfp_type_float,
+                                            1,
+                                            0);
+                      }
+
+                    zfp_stream_set_execution(d_zfpDecompressStream,
+                                             zfp_exec_cuda);
+
+                    if constexpr (std::is_same_v<ValueType, double>)
+                      {
+                        d_zfpDecompressField = zfp_field_1d(
+                          d_sendRecvBuffer.data(),
+                          zfp_type_double,
+                          d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                              .size() *
+                            d_blockSize);
+                      }
+
+                    else if constexpr (std::is_same_v<ValueType, float>)
+                      {
+                        d_zfpDecompressField = zfp_field_1d(
+                          d_sendRecvBuffer.data(),
+                          zfp_type_float,
+                          d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs()
+                              .size() *
+                            d_blockSize);
+                      }
+
+                    d_zfpDecompressBitstream =
+                      stream_open(d_sendRecvBufferCompress.data(),
+                                  d_maxCompressedTargetBytes);
+                    zfp_stream_set_bit_stream(d_zfpDecompressStream,
+                                              d_zfpDecompressBitstream);
+                    zfp_stream_rewind(d_zfpDecompressStream);
+                    zfp_decompress(d_zfpDecompressStream, d_zfpDecompressField);
+                    stream_close(d_zfpDecompressBitstream);
+                    zfp_field_free(d_zfpDecompressField);
+                    zfp_stream_close(d_zfpDecompressStream);
+                  }
+                // End Decompression
+              }
+            else
 #endif
-            // accumulate add into locally owned entries from recv buffer
-
-            // accumulate add into locally owned entries from recv buffer
-            if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size()) >
-                0)
-#ifdef DFTFE_WITH_DEVICE
-
-              if constexpr (memorySpace == MemorySpace::DEVICE)
-                {
-                  // Begin Decompression
-                  if constexpr (std::is_same_v<ValueType, double>)
-                    {
-                      zfp_stream_set_rate(d_zfpDecompressStream,
-                                          d_compressBitsPerValue,
-                                          zfp_type_double,
-                                          1,
-                                          0);
-                    }
-
-                  else if constexpr (std::is_same_v<ValueType, float>)
-                    {
-                      zfp_stream_set_rate(d_zfpDecompressStream,
-                                          d_compressBitsPerValue,
-                                          zfp_type_float,
-                                          1,
-                                          0);
-                    }
-
-                  zfp_stream_set_execution(d_zfpDecompressStream,
-                                           zfp_exec_cuda);
-
-                  if constexpr (std::is_same_v<ValueType, double>)
-                    {
-                      d_zfpDecompressField =
-                        zfp_field_1d(d_sendRecvBuffer.data(),
-                                     zfp_type_double,
-                                     d_mpiPatternP2P
-                                         ->getOwnedLocalIndicesForTargetProcs()
-                                         .size() *
-                                       d_blockSize);
-                    }
-
-                  else if constexpr (std::is_same_v<ValueType, float>)
-                    {
-                      d_zfpDecompressField =
-                        zfp_field_1d(d_sendRecvBuffer.data(),
-                                     zfp_type_float,
-                                     d_mpiPatternP2P
-                                         ->getOwnedLocalIndicesForTargetProcs()
-                                         .size() *
-                                       d_blockSize);
-                    }
-
-                  d_zfpDecompressBitstream =
-                    stream_open(d_sendRecvBufferCompress.data(),
-                                d_maxCompressedTargetBytes);
-                  zfp_stream_set_bit_stream(d_zfpDecompressStream,
-                                            d_zfpDecompressBitstream);
-                  zfp_stream_rewind(d_zfpDecompressStream);
-                  zfp_decompress(d_zfpDecompressStream, d_zfpDecompressField);
-                  stream_close(d_zfpDecompressBitstream);
-                  zfp_field_free(d_zfpDecompressField);
-                  zfp_stream_close(d_zfpDecompressStream);
-                  // End Decompression
-                }
-              else
-#endif
-                {
-                  std::string errMsg = "Not Implemented";
-                  throwException(false, errMsg);
-                }
+              {
+                std::string errMsg = "Not Implemented";
+                throwException(false, errMsg);
+              }
 
             if ((d_mpiPatternP2P->getOwnedLocalIndicesForTargetProcs().size()) >
                 0)
