@@ -22,40 +22,53 @@ namespace dftfe
 {
   namespace utils
   {
-    inline float
-    makeDataTypeDeviceCompatible(uint8_t)
+    struct ComplexU8
     {
-      return 0.0f;
+      uint8_t real;
+      uint8_t imag;
+
+      __forceinline__ __device__ constexpr ComplexU8(uint8_t r = 0,
+                                                     uint8_t i = 0)
+        : real(r)
+        , imag(i)
+      {}
+    };
+
+    inline uint8_t
+    makeDataTypeDeviceCompatible(uint8_t a)
+    {
+      return a;
     }
 
-    inline float *
-    makeDataTypeDeviceCompatible(uint8_t *)
+    inline uint8_t *
+    makeDataTypeDeviceCompatible(uint8_t *a)
     {
-      return nullptr;
+      return a;
     }
 
-    inline const float *
-    makeDataTypeDeviceCompatible(const uint8_t *)
+    inline const uint8_t *
+    makeDataTypeDeviceCompatible(const uint8_t *a)
     {
-      return nullptr;
+      return a;
     }
 
-    inline cuFloatComplex
+    inline ComplexU8
     makeDataTypeDeviceCompatible(std::complex<uint8_t> a)
     {
-      return make_cuFloatComplex(0.0f, 0.0f);
+      return ComplexU8{static_cast<uint8_t>(a.real()),
+                       static_cast<uint8_t>(a.imag())};
     }
 
-    inline cuFloatComplex *
-    makeDataTypeDeviceCompatible(std::complex<uint8_t> *)
+    inline ComplexU8 *
+    makeDataTypeDeviceCompatible(std::complex<uint8_t> *a)
     {
-      return nullptr;
+      return reinterpret_cast<ComplexU8 *>(a);
     }
 
-    inline const cuFloatComplex *
-    makeDataTypeDeviceCompatible(const std::complex<uint8_t> *)
+    inline const ComplexU8 *
+    makeDataTypeDeviceCompatible(const std::complex<uint8_t> *a)
     {
-      return nullptr;
+      return reinterpret_cast<const ComplexU8 *>(a);
     }
   } // namespace utils
 } // namespace dftfe

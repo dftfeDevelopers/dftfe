@@ -133,12 +133,12 @@ namespace dftfe
               d_ghostDataCopyCompressHostPinnedPtr =
                 std::make_shared<MemoryStorage<
                   typename dftfe::dataTypes::compressType<ValueType>::type,
-                  MemorySpace::HOST_PINNED>>(d_maxCompressedGhostBytes, 0.0);
+                  MemorySpace::HOST_PINNED>>(d_maxCompressedGhostBytes, 0);
 
               d_sendRecvBufferCompressHostPinnedPtr =
                 std::make_shared<MemoryStorage<
                   typename dftfe::dataTypes::compressType<ValueType>::type,
-                  MemorySpace::HOST_PINNED>>(d_maxCompressedTargetBytes, 0.0);
+                  MemorySpace::HOST_PINNED>>(d_maxCompressedTargetBytes, 0);
             }
 #endif
       }
@@ -322,10 +322,10 @@ namespace dftfe
               ((d_maxCompressedGhostBytes + 7) / 8) * 8;
 
             if (d_sendRecvBufferCompress.size() != d_maxCompressedTargetBytes)
-              d_sendRecvBufferCompress.resize(d_maxCompressedTargetBytes, 0.0);
+              d_sendRecvBufferCompress.resize(d_maxCompressedTargetBytes, 0);
 
             if (d_ghostDataCopyCompress.size() != d_maxCompressedGhostBytes)
-              d_ghostDataCopyCompress.resize(d_maxCompressedGhostBytes, 0.0);
+              d_ghostDataCopyCompress.resize(d_maxCompressedGhostBytes, 0);
 
 #ifdef DFTFE_WITH_DEVICE
             if constexpr (memorySpace == MemorySpace::DEVICE)
@@ -336,14 +336,14 @@ namespace dftfe
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressedGhostBytes, 0.0);
+                      d_maxCompressedGhostBytes, 0);
 
                   if (!d_sendRecvBufferCompressHostPinnedPtr)
                     d_sendRecvBufferCompressHostPinnedPtr = std::make_shared<
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressedTargetBytes, 0.0);
+                      d_maxCompressedTargetBytes, 0);
 
                   if (d_ghostDataCopyCompressHostPinnedPtr->size() !=
                       d_maxCompressedGhostBytes)
@@ -351,7 +351,7 @@ namespace dftfe
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressedGhostBytes, 0.0);
+                      d_maxCompressedGhostBytes, 0);
 
                   if (d_sendRecvBufferCompressHostPinnedPtr->size() !=
                       d_maxCompressedTargetBytes)
@@ -359,7 +359,7 @@ namespace dftfe
                       MemoryStorage<typename dftfe::dataTypes::compressType<
                                       ValueType>::type,
                                     MemorySpace::HOST_PINNED>>(
-                      d_maxCompressedTargetBytes, 0.0);
+                      d_maxCompressedTargetBytes, 0);
                 }
 #endif
           }
