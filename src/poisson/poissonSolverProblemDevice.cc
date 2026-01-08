@@ -985,34 +985,33 @@ namespace dftfe
 
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
 
-    if (d_isMeanValueConstraintComputed)
-      meanValueConstraintDistribute(x);
+    // if (d_isMeanValueConstraintComputed)
+    //   meanValueConstraintDistribute(x);
 
-    x.updateGhostValues();
+    // x.updateGhostValues();
 
-    d_constraintsTotalPotentialInfo.distribute(x);
+    // d_constraintsTotalPotentialInfo.distribute(x);
 
     d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
 
-    // matrixFreeDeviceKernels<double, p * p, q, p,
-    // dim>::computeAXDevicePoisson(
-    //   blocks,
-    //   threads,
-    //   smem,
-    //   Ax.begin(),
-    //   x.begin(),
-    //   d_shapeFunctionPtr,
-    //   d_jacobianFactorPtr,
-    //   d_mapPtr);
+    /*matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
+      blocks,
+      threads,
+      smem,
+      Ax.begin(),
+      x.begin(),
+      d_shapeFunctionPtr,
+      d_jacobianFactorPtr,
+      d_mapPtr); //*/
 
-    d_constraintsTotalPotentialInfo.set_zero(x);
+    // d_constraintsTotalPotentialInfo.set_zero(x);
 
-    d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax);
+    // d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax);
 
-    Ax.accumulateAddLocallyOwned();
+    // Ax.accumulateAddLocallyOwned();
 
-    if (d_isMeanValueConstraintComputed)
-      meanValueConstraintDistributeSlaveToMaster(Ax);
+    // if (d_isMeanValueConstraintComputed)
+    //   meanValueConstraintDistributeSlaveToMaster(Ax);
   }
 
 #include "poissonSolverProblemDevice.inst.cc"

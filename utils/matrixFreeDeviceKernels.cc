@@ -34,6 +34,7 @@ namespace dftfe
                              i += nThreadsPerBlock) sharedP[i] = P[i];
 
       SYNCTHREADS;
+
       //////////////////////////////////////////////////////////////
       // Interpolation combined with Extraction
       // V -> UPPP
@@ -62,6 +63,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 2nd GEMM of P
       // Y Direction
       for (dftfe::Int i = threadId; i < K * N; i += nThreadsPerBlock)
@@ -86,6 +88,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 3rd GEMM of P
       // X Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -107,6 +110,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 1st GEMM of D
       // Z Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -181,6 +185,7 @@ namespace dftfe
                              i += nThreadsPerBlock) sharedJ[i] = J[i + JShift];
 
       SYNCTHREADS;
+
       // Gemm with Jacobian Factor
       _Pragma("unroll") for (dftfe::Int i = threadId; i < N * N * N;
                              i += nThreadsPerBlock)
@@ -197,6 +202,7 @@ namespace dftfe
       }
 
       SYNCTHREADS;
+
       // Integration
       // Z -> Z(DT)z
       // Y -> Y(DT)y
@@ -224,6 +230,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 2nd GEMM of DT
       // Y Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -248,6 +255,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 3rd GEMM of DT
       // X Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -269,6 +277,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 1st GEMM of PT
       // Z Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -290,6 +299,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 2nd GEMM of PT
       // Y Direction
       for (dftfe::Int i = threadId; i < N * K; i += nThreadsPerBlock)
@@ -314,6 +324,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 3rd GEMM of PT
       // X Direction
       for (dftfe::Int i = threadId; i < M; i += nThreadsPerBlock)
@@ -374,6 +385,7 @@ namespace dftfe
                              i += nThreadsPerBlock) sharedP[i] = P[i];
 
       SYNCTHREADS;
+
       //////////////////////////////////////////////////////////////
       // Interpolation combined with Extraction
       // V -> UPPP
@@ -402,6 +414,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 2nd GEMM of P
       // Y Direction
       for (dftfe::Int i = threadId; i < K * N; i += nThreadsPerBlock)
@@ -426,6 +439,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 3rd GEMM of P
       // X Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -447,6 +461,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 1st GEMM of D
       // Z Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -544,6 +559,7 @@ namespace dftfe
       }
 
       SYNCTHREADS;
+
       // Integration
       // Z -> Z(DT)z
       // Y -> Y(DT)y
@@ -574,6 +590,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 2nd GEMM of DT
       // Y Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -598,6 +615,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 3rd GEMM of DT
       // X Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -619,6 +637,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 1st GEMM of PT
       // Z Direction
       for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
@@ -640,6 +659,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 2nd GEMM of PT
       // Y Direction
       for (dftfe::Int i = threadId; i < N * K; i += nThreadsPerBlock)
@@ -664,6 +684,7 @@ namespace dftfe
         }
 
       SYNCTHREADS;
+
       // 3rd GEMM of PT
       // X Direction
       for (dftfe::Int i = threadId; i < M; i += nThreadsPerBlock)

@@ -46,10 +46,10 @@ namespace dftfe
    */
   template <typename T,
             dftfe::utils::MemorySpace memorySpace,
-            dftfe::uInt               nDofsPerDim,
-            dftfe::uInt               nQuadPointsPerDim,
-            dftfe::uInt               batchSize,
-            dftfe::uInt               subBatchSize>
+            std::uint32_t             nDofsPerDim,
+            std::uint32_t             nQuadPointsPerDim,
+            std::uint32_t             batchSize,
+            std::uint32_t             subBatchSize>
   class MatrixFree
   {
   public:
@@ -65,10 +65,10 @@ namespace dftfe
                  double,
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
-                                 BLASWrapperPtr,
-               const dftfe::uInt operatorID,
-               const dftfe::uInt quadratureID,
-               const dftfe::uInt nVectors);
+                                   BLASWrapperPtr,
+               const std::uint32_t operatorID,
+               const std::uint32_t quadratureID,
+               const std::uint32_t nVectors);
 
     /**
      * @brief Initialize data structures for MatrixFree class
@@ -104,18 +104,18 @@ namespace dftfe
     void
     setupConstraints(const dealii::IndexSet &indexSet);
 
-    const dftfe::uInt d_operatorID, d_quadratureID, d_nVectors, d_nBatch,
+    const std::uint32_t d_operatorID, d_quadratureID, d_nVectors, d_nBatch,
       d_nDofsPerCell, d_nQuadsPerCell;
 
-    dftfe::uInt d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
+    std::uint32_t d_nOwnedDofs, d_nRelaventDofs, d_nGhostDofs, d_nCells,
       d_localBlockSize, d_localSize, d_ghostBlockSize, d_ghostSize,
       d_nOMPThreads;
 
-    static constexpr dftfe::uInt d_quadODim = nQuadPointsPerDim / 2;
-    static constexpr dftfe::uInt d_quadEDim =
+    static constexpr std::uint32_t d_quadODim = nQuadPointsPerDim / 2;
+    static constexpr std::uint32_t d_quadEDim =
       nQuadPointsPerDim % 2 == 1 ? d_quadODim + 1 : d_quadODim;
-    static constexpr dftfe::uInt d_dofODim = nDofsPerDim / 2;
-    static constexpr dftfe::uInt d_dofEDim =
+    static constexpr std::uint32_t d_dofODim = nDofsPerDim / 2;
+    static constexpr std::uint32_t d_dofEDim =
       nDofsPerDim % 2 == 1 ? d_dofODim + 1 : d_dofODim;
 
     std::array<T, d_quadEDim * d_dofEDim + d_quadODim * d_dofODim>
@@ -124,11 +124,11 @@ namespace dftfe
                                      quadShapeFunctionGradientsAtQuadPointsEO;
     std::array<T, nQuadPointsPerDim> quadratureWeights;
 
-    dftfe::utils::MemoryStorage<T, memorySpace>           d_jacobianFactor;
-    dftfe::utils::MemoryStorage<dftfe::uInt, memorySpace> d_map;
+    dftfe::utils::MemoryStorage<T, memorySpace>             d_jacobianFactor;
+    dftfe::utils::MemoryStorage<std::uint32_t, memorySpace> d_map;
 
     // HOST only Data Structures
-    std::vector<std::vector<dftfe::uInt>> d_constrainingNodeBuckets,
+    std::vector<std::vector<std::uint32_t>> d_constrainingNodeBuckets,
       d_constrainedNodeBuckets;
     std::vector<std::vector<T>> d_weightMatrixList;
     std::vector<T>              d_inhomogenityList;
@@ -138,7 +138,8 @@ namespace dftfe
     dftfe::utils::MemoryStorage<T, dftfe::utils::MemorySpace::DEVICE>
       d_weightMatrixListDevice, d_inhomogenityListDevice;
 
-    dftfe::utils::MemoryStorage<dftfe::uInt, dftfe::utils::MemorySpace::DEVICE>
+    dftfe::utils::MemoryStorage<std::uint32_t,
+                                dftfe::utils::MemorySpace::DEVICE>
       d_constrainingNodeBucketsDevice, d_constrainedNodeBucketsDevice,
       d_constrainingNodeOffsetDevice, d_constrainedNodeOffsetDevice,
       d_weightMatrixOffsetDevice;
@@ -164,8 +165,8 @@ namespace dftfe
 
     dealii::ConditionalOStream pcout;
     const MPI_Comm             mpi_communicator;
-    const dftfe::uInt          n_mpi_processes;
-    const dftfe::uInt          this_mpi_process;
+    const std::uint32_t        n_mpi_processes;
+    const std::uint32_t        this_mpi_process;
     std::vector<T>             tempGhostStorage, tempCompressStorage;
     std::vector<MPI_Request>   mpiRequestsGhost;
     std::vector<MPI_Request>   mpiRequestsCompress;

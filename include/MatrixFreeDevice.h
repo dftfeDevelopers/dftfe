@@ -22,26 +22,27 @@
 
 #ifndef matrixFreeDevice_H_
 #define matrixFreeDevice_H_
-#include <TypeConfig.h>
+#include <cstdint>
+#include <DeviceTypeConfig.h>
 
 namespace dftfe
 {
   template <typename T,
-            dftfe::uInt nDofsPerDim,
-            dftfe::uInt nQuadPointsPerDim,
-            dftfe::uInt batchSize>
+            std::uint32_t nDofsPerDim,
+            std::uint32_t nQuadPointsPerDim,
+            std::uint32_t batchSize>
   struct MatrixFreeDevice
   {
     static inline void
     init(T *constMemDataHost, std::size_t constMemDataSize);
 
     static inline void
-    computeLaplaceX(T           *dst,
-                    T           *src,
-                    T           *jacobianFactor,
-                    dftfe::uInt *map,
-                    dftfe::uInt  nCells,
-                    dftfe::uInt  nBatch);
+    computeLaplaceX(T             *dst,
+                    T             *src,
+                    T             *jacobianFactor,
+                    std::uint32_t *map,
+                    std::uint32_t  nCells,
+                    std::uint32_t  nBatch);
 
     static inline void
     constraintsDistribute(T *src);
