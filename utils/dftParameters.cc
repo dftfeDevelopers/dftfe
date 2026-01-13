@@ -874,7 +874,7 @@ namespace dftfe
           "INVERSE KERKER MIXING PARAMETER",
           "0.0",
           dealii::Patterns::Double(-1e-12, 1000.0),
-          "[Standard] Mixing parameter to be used in for gradient of potential in density mixing schemes.");
+          "[Standard] Mixing parameter to be used in for gradient of potential in density mixing schemes. Setting this parameter to a non-zero value enables the use of inner products of gradient of the electrostatic potential similiar to the inverse Kerker metric in VASP. For default value of 0.0, this feature is disabled.");
 
         prm.declare_entry(
           "SPIN MIXING ENHANCEMENT FACTOR",
@@ -1942,6 +1942,16 @@ namespace dftfe
       dealii::ExcMessage(
         "DFT-FE Error: Real executable cannot be used noncollinear magnetism and spin-orbit coupling."));
 #endif
+    if (noncolin || hasSOC)
+      AssertThrow(
+        mixingMethod != "LOW_RANK_DIELECM_PRECOND",
+        dealii::ExcMessage(
+          "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
+    if (noncolin || hasSOC)
+      AssertThrow(
+        mixingMethod != "LOW_RANK_DIELECM_PRECOND",
+        dealii::ExcMessage(
+          "DFT-FE Error: LRDM mixing scheme for noncollinear magnetism and spin-orbit coupling is not implemented yet."));
     if (numberEigenValues != 0)
       AssertThrow(
         nbandGrps <= numberEigenValues,
@@ -2015,6 +2025,10 @@ namespace dftfe
           mixingMethod != "LOW_RANK_DIELECM_PRECOND",
           dealii::ExcMessage(
             "DFT-FE Error: LRDM mixing scheme in MGGA functional is not completed yet."));
+        AssertThrow(
+          !(noncolin || hasSOC),
+          dealii::ExcMessage(
+            "DFT-FE Error: Non-collinear magnetism and spin-orbit coupling with MGGA functional is not implemented yet."));
       }
 
     bool isHubbard = (XCType.substr(XCType.size() - 2) == "+U");
@@ -2030,6 +2044,12 @@ namespace dftfe
         !(useSymm),
         dealii::ExcMessage(
           "DFT-FE Error: Group symmetry for Hubbard is not implemented yet."));
+
+    if (isHubbard)
+      AssertThrow(
+        !(noncolin || hasSOC),
+        dealii::ExcMessage(
+          "DFT-FE Error: Non-collinear magnetism and spin-orbit coupling with Hubbard is not implemented yet."));
 
     if (dc_dispersioncorrectiontype == 1 || dc_dispersioncorrectiontype == 2)
       {

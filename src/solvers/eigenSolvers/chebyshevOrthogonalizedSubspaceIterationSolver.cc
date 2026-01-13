@@ -179,6 +179,8 @@ namespace dftfe
         if (d_dftParams.orthogType.compare("CGS") == 0 &&
             !d_dftParams.isPseudopotential)
           chebyshevOrder *= 0.5;
+        if (d_dftParams.noncolin || d_dftParams.hasSOC)
+          chebyshevOrder *= 2.0;
       }
 
     chebyshevOrder =
@@ -269,8 +271,6 @@ namespace dftfe
           NULL;
 
     std::vector<double> eigenValuesBlock(vectorsBlockSize);
-    /// storage for cell wavefunction matrix
-    std::vector<dataTypes::number> cellWaveFunctionMatrix;
 
     dftfe::Int startIndexBandParal = totalNumberWaveFunctions;
     dftfe::Int numVectorsBandParal = 0;

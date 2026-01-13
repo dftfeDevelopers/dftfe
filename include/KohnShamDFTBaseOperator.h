@@ -232,17 +232,6 @@ namespace dftfe
       AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
       d_pseudopotentialNonLocalOperator;
 
-
-    /*
-     * TODO  ------------------------------
-     * TODO For debugging Purposes:  remove afterwards
-     * TODO --------------------------------
-     */
-
-    // std::shared_ptr<
-    //  AtomicCenteredNonLocalOperator<dataTypes::number, memorySpace>>
-    //  d_HubbnonLocalOperator;
-
     std::shared_ptr<
       AtomicCenteredNonLocalOperator<dataTypes::numberFP32, memorySpace>>
       d_pseudopotentialNonLocalOperatorSinglePrec;
