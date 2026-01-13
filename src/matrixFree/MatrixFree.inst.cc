@@ -4,6 +4,7 @@ constexpr int subBatchSizeDeviceFP64 = 1;
 #ifdef DFTFE_WITH_DEVICE
 #  define MatrixFreeTemplates(T)                                        \
     template class dftfe::MatrixFree<double,                            \
+                                     double,                            \
                                      dftfe::utils::MemorySpace::DEVICE, \
                                      T,                                 \
                                      T,                                 \

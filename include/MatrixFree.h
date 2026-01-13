@@ -45,6 +45,7 @@ namespace dftfe
    * @author Gourab Panigrahi
    */
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -53,15 +54,10 @@ namespace dftfe
   class MatrixFree
   {
   public:
-    static constexpr bool d_isComplex =
-      std::is_same_v<dataTypes::number, std::complex<double>>;
-
-    typedef std::conditional_t<d_isComplex, std::complex<T>, T> DataType;
-
     /// Constructor
     MatrixFree(const MPI_Comm                     &mpi_comm,
                std::shared_ptr<dftfe::basis::FEBasisOperations<
-                 dataTypes::number,
+                 TypeFEBasis,
                  double,
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
@@ -103,6 +99,10 @@ namespace dftfe
 
     void
     setupConstraints(const dealii::IndexSet &indexSet);
+
+    static constexpr bool d_isComplex =
+      std::is_same_v<TypeFEBasis, std::complex<double>>;
+    typedef std::conditional_t<d_isComplex, std::complex<T>, T> DataType;
 
     const std::uint32_t d_operatorID, d_quadratureID, d_nVectors, d_nBatch,
       d_nDofsPerCell, d_nQuadsPerCell;
@@ -146,9 +146,8 @@ namespace dftfe
 #endif
 
     std::shared_ptr<
-      dftfe::basis::FEBasisOperations<dataTypes::number,
-                                      double,
-                                      dftfe::utils::MemorySpace::HOST>>
+      dftfe::basis::
+        FEBasisOperations<TypeFEBasis, double, dftfe::utils::MemorySpace::HOST>>
       d_basisOperationsPtrHost;
 
     std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>

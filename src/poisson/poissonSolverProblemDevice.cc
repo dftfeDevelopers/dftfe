@@ -162,6 +162,7 @@ namespace dftfe
 
         d_matrixFreeWrapperDevice = std::make_unique<
           dftfe::MatrixFreeWrapperClass<double,
+                                        double,
                                         dftfe::utils::MemorySpace::DEVICE>>(
           dftfe::floatingPointList::FP64,
           FEOrderElectro + 1,
@@ -1003,6 +1004,16 @@ namespace dftfe
       d_shapeFunctionPtr,
       d_jacobianFactorPtr,
       d_mapPtr); //*/
+
+    double normSrc = 0, normDst = 0;
+    d_BLASWrapperPtr->xnrm2(
+      d_xLocalDof, x.begin(), 1, mpi_communicator, &normSrc);
+    d_BLASWrapperPtr->xnrm2(
+      d_xLocalDof, Ax.begin(), 1, mpi_communicator, &normDst);
+
+    pcout << "After AX: "
+          << "norm of x = " << normSrc << ", norm of Ax = " << normDst
+          << std::endl;
 
     // d_constraintsTotalPotentialInfo.set_zero(x);
 

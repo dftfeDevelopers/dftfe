@@ -25,12 +25,14 @@
 namespace dftfe
 {
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
             std::uint32_t             batchSize,
             std::uint32_t             subBatchSize>
   MatrixFree<T,
+             TypeFEBasis,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -38,7 +40,7 @@ namespace dftfe
              subBatchSize>::
     MatrixFree(const MPI_Comm                     &mpi_comm,
                std::shared_ptr<dftfe::basis::FEBasisOperations<
-                 dataTypes::number,
+                 TypeFEBasis,
                  double,
                  dftfe::utils::MemorySpace::HOST>> basisOperationsPtrHost,
                std::shared_ptr<dftfe::linearAlgebra::BLASWrapper<memorySpace>>
@@ -80,6 +82,7 @@ namespace dftfe
 
 
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -87,6 +90,7 @@ namespace dftfe
             std::uint32_t             subBatchSize>
   void
   MatrixFree<T,
+             TypeFEBasis,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -497,6 +501,7 @@ namespace dftfe
 
 
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -504,6 +509,7 @@ namespace dftfe
             std::uint32_t             subBatchSize>
   void
   MatrixFree<T,
+             TypeFEBasis,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -528,6 +534,7 @@ namespace dftfe
 
 
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -535,6 +542,7 @@ namespace dftfe
             std::uint32_t             subBatchSize>
   void
   MatrixFree<T,
+             TypeFEBasis,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -628,6 +636,7 @@ namespace dftfe
 
 
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -635,6 +644,7 @@ namespace dftfe
             std::uint32_t             subBatchSize>
   inline void
   MatrixFree<T,
+             TypeFEBasis,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -650,6 +660,7 @@ namespace dftfe
 
 
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -657,6 +668,7 @@ namespace dftfe
             std::uint32_t             subBatchSize>
   inline void
   MatrixFree<T,
+             TypeFEBasis,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -672,6 +684,7 @@ namespace dftfe
 
 
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -679,6 +692,7 @@ namespace dftfe
             std::uint32_t             subBatchSize>
   inline void
   MatrixFree<T,
+             TypeFEBasis,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,
@@ -694,6 +708,7 @@ namespace dftfe
 
 
   template <typename T,
+            typename TypeFEBasis,
             dftfe::utils::MemorySpace memorySpace,
             std::uint32_t             nDofsPerDim,
             std::uint32_t             nQuadPointsPerDim,
@@ -701,6 +716,7 @@ namespace dftfe
             std::uint32_t             subBatchSize>
   inline void
   MatrixFree<T,
+             TypeFEBasis,
              memorySpace,
              nDofsPerDim,
              nQuadPointsPerDim,

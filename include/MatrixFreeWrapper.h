@@ -39,12 +39,22 @@ namespace dftfe
    */
 
   using MatrixFreeObject = std::variant<
-#define MatrixFreeWrapperTemplates(T) \
-  std::shared_ptr<                    \
-    dftfe::MatrixFree<double, dftfe::utils::MemorySpace::DEVICE, T, T, 1, 1>>,
-#define MatrixFreeWrapperTemplatesL(T) \
-  std::shared_ptr<                     \
-    dftfe::MatrixFree<double, dftfe::utils::MemorySpace::DEVICE, T, T, 1, 1>>
+#define MatrixFreeWrapperTemplates(T)                                  \
+  std::shared_ptr<dftfe::MatrixFree<double,                            \
+                                    double,                            \
+                                    dftfe::utils::MemorySpace::DEVICE, \
+                                    T,                                 \
+                                    T,                                 \
+                                    1,                                 \
+                                    1>>,
+#define MatrixFreeWrapperTemplatesL(T)                                 \
+  std::shared_ptr<dftfe::MatrixFree<double,                            \
+                                    double,                            \
+                                    dftfe::utils::MemorySpace::DEVICE, \
+                                    T,                                 \
+                                    T,                                 \
+                                    1,                                 \
+                                    1>>
 #include "MatrixFreeWrapper.def"
 #undef MatrixFreeWrapperTemplates
 #undef MatrixFreeWrapperTemplatesL
@@ -70,20 +80,26 @@ namespace dftfe
       {
         switch (key)
           {
-#define MatrixFreeWrapperTemplates(T)                                         \
-  case encodeKey(1, T):                                                       \
-    return MatrixFreeObject(                                                  \
-      std::make_shared<                                                       \
-        dftfe::                                                               \
-          MatrixFree<double, dftfe::utils::MemorySpace::DEVICE, T, T, 1, 1>>( \
-        std::forward<Args>(args)...));
-#define MatrixFreeWrapperTemplatesL(T)                                        \
-  case encodeKey(1, T):                                                       \
-    return MatrixFreeObject(                                                  \
-      std::make_shared<                                                       \
-        dftfe::                                                               \
-          MatrixFree<double, dftfe::utils::MemorySpace::DEVICE, T, T, 1, 1>>( \
-        std::forward<Args>(args)...));
+#define MatrixFreeWrapperTemplates(T)                                       \
+  case encodeKey(1, T):                                                     \
+    return MatrixFreeObject(                                                \
+      std::make_shared<dftfe::MatrixFree<double,                            \
+                                         double,                            \
+                                         dftfe::utils::MemorySpace::DEVICE, \
+                                         T,                                 \
+                                         T,                                 \
+                                         1,                                 \
+                                         1>>(std::forward<Args>(args)...));
+#define MatrixFreeWrapperTemplatesL(T)                                      \
+  case encodeKey(1, T):                                                     \
+    return MatrixFreeObject(                                                \
+      std::make_shared<dftfe::MatrixFree<double,                            \
+                                         double,                            \
+                                         dftfe::utils::MemorySpace::DEVICE, \
+                                         T,                                 \
+                                         T,                                 \
+                                         1,                                 \
+                                         1>>(std::forward<Args>(args)...));
 #include "MatrixFreeWrapper.def"
 #undef MatrixFreeWrapperTemplates
 #undef MatrixFreeWrapperTemplatesL
@@ -94,7 +110,9 @@ namespace dftfe
   }
 
 
-  template <typename T, dftfe::utils::MemorySpace memorySpace>
+  template <typename T,
+            typename TypeFEBasis,
+            dftfe::utils::MemorySpace memorySpace>
   class MatrixFreeWrapperClass
   {
   public:
@@ -104,7 +122,7 @@ namespace dftfe
       dftfe::uInt     nDofsPerDim,
       const MPI_Comm &mpi_comm,
       std::shared_ptr<
-        dftfe::basis::FEBasisOperations<dataTypes::number,
+        dftfe::basis::FEBasisOperations<TypeFEBasis,
                                         double,
                                         dftfe::utils::MemorySpace::HOST>>
         basisOperationsPtrHost,

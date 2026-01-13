@@ -89,106 +89,124 @@ namespace dftfe
 
       SYNCTHREADS;
 
+      for (dftfe::Int i = threadId; i < M; i += nThreadsPerBlock)
+        {
+          _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++)
+            dftfe::utils::atomicAddWrapper(&V[map[i + j * M + mapShift]],
+                                           sharedY[i + j * M]);
+        }
+
       // 3rd GEMM of P
       // X Direction
-      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      /*for (dftfe::Int i = threadId; i < N * N; i +=
+      nThreadsPerBlock)
         {
           Type x[N], y[K];
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) x[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) x[j] = 0.0;
 
           for (dftfe::Int k = 0; k < K; k++)
             {
               y[k] = sharedY[k + i * K];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) x[j] +=
-                sharedP[j + k * N] * y[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < N; j++) x[j] += sharedP[j + k * N] * y[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++)
-            sharedX[j + i * N] = x[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) sharedX[j + i * N] = x[j];
         }
 
       SYNCTHREADS;
 
       // 1st GEMM of D
       // Z Direction
-      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * N; i +=
+      nThreadsPerBlock)
         {
           Type y[N], x[N];
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) y[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) y[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               x[k] = sharedX[i + k * N * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) y[j] +=
-                sharedD[j + k * N] * x[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < N; j++) y[j] += sharedD[j + k * N] * x[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++)
-            sharedY[i + j * N * N] = y[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) sharedY[i + j * N * N] = y[j];
         }
 
       // 2nd GEMM of D
       // Y Direction
-      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * N; i +=
+      nThreadsPerBlock)
         {
           Type z[N], x[N];
 
           dftfe::Int a = i % N;
           dftfe::Int b = i / N;
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) z[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) z[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               x[k] = sharedX[a + (k + b * N) * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) z[j] +=
-                sharedD[j + k * N] * x[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < N; j++) z[j] += sharedD[j + k * N] * x[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++)
-            sharedZ[a + (j + b * N) * N] = z[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) sharedZ[a + (j + b * N) * N] = z[j];
         }
 
       // 3rd GEMM of D
       // X Direction
-      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * N; i +=
+      nThreadsPerBlock)
         {
           Type t[N], x[N];
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) t[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) t[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               x[k] = sharedX[k + i * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) t[j] +=
-                sharedD[j + k * N] * x[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < N; j++) t[j] += sharedD[j + k * N] * x[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++)
-            sharedT[j + i * N] = t[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) sharedT[j + i * N] = t[j];
         }
 
       //////////////////////////////////////////////////////////////////
-      // sharedT, sharedZ, sharedY have the respective gemms of X, Y, Z
-      // directions
+      // sharedT, sharedZ, sharedY have the respective
+      gemms of X, Y,
+        Z
+        // directions
 
-      const dftfe::Int JShift = blockId * dim * dim;
+        const dftfe::Int JShift = blockId * dim * dim;
 
       // Copy Jacobian Factor to shared memory
-      _Pragma("unroll") for (dftfe::Int i = threadId; i < dim * dim;
-                             i += nThreadsPerBlock) sharedJ[i] = J[i + JShift];
+      _Pragma("unroll") for (dftfe::Int i = threadId; i
+      < dim * dim; i += nThreadsPerBlock) sharedJ[i] =
+      J[i + JShift];
 
       SYNCTHREADS;
 
       // Gemm with Jacobian Factor
-      _Pragma("unroll") for (dftfe::Int i = threadId; i < N * N * N;
-                             i += nThreadsPerBlock)
+      _Pragma("unroll") for (dftfe::Int i = threadId; i
+      < N * N * N; i += nThreadsPerBlock)
       {
         Type v[3];
 
@@ -196,9 +214,11 @@ namespace dftfe
         v[1] = sharedZ[i];
         v[0] = sharedT[i];
 
-        sharedY[i] = sharedJ[6] * v[0] + sharedJ[7] * v[1] + sharedJ[8] * v[2];
-        sharedZ[i] = sharedJ[3] * v[0] + sharedJ[4] * v[1] + sharedJ[5] * v[2];
-        sharedT[i] = sharedJ[0] * v[0] + sharedJ[1] * v[1] + sharedJ[2] * v[2];
+        sharedY[i] = sharedJ[6] * v[0] + sharedJ[7] *
+      v[1] + sharedJ[8] * v[2]; sharedZ[i] = sharedJ[3]
+      * v[0] + sharedJ[4] * v[1] + sharedJ[5] * v[2];
+        sharedT[i] = sharedJ[0] * v[0] + sharedJ[1] *
+      v[1] + sharedJ[2] * v[2];
       }
 
       SYNCTHREADS;
@@ -211,139 +231,151 @@ namespace dftfe
 
       // 1st GEMM of DT
       // Z Direction
-      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * N; i +=
+      nThreadsPerBlock)
         {
           Type x[N], y[N];
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) x[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) x[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               y[k] = sharedY[i + k * N * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) x[j] +=
-                sharedDT[j + k * N] * y[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < N; j++) x[j] += sharedDT[j + k * N] * y[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++)
-            sharedX[i + j * N * N] = x[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) sharedX[i + j * N * N] = x[j];
         }
 
       SYNCTHREADS;
 
       // 2nd GEMM of DT
       // Y Direction
-      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * N; i +=
+      nThreadsPerBlock)
         {
           Type y[N], z[N];
 
           dftfe::Int a = i % N;
           dftfe::Int b = i / N;
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) y[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) y[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               z[k] = sharedZ[a + (k + b * N) * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) y[j] +=
-                sharedDT[j + k * N] * z[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < N; j++) y[j] += sharedDT[j + k * N] * z[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++)
-            sharedX[a + (j + b * N) * N] += y[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) sharedX[a + (j + b * N) * N] += y[j];
         }
 
       SYNCTHREADS;
 
       // 3rd GEMM of DT
       // X Direction
-      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * N; i +=
+      nThreadsPerBlock)
         {
           Type z[N], t[N];
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) z[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) z[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               t[k] = sharedT[k + i * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++) z[j] +=
-                sharedDT[j + k * N] * t[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < N; j++) z[j] += sharedDT[j + k * N] * t[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < N; j++)
-            sharedX[j + i * N] += z[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      N; j++) sharedX[j + i * N] += z[j];
         }
 
       SYNCTHREADS;
 
       // 1st GEMM of PT
       // Z Direction
-      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * N; i +=
+      nThreadsPerBlock)
         {
           Type y[K], x[N];
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++) y[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      K; j++) y[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               x[k] = sharedX[i + k * N * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++) y[j] +=
-                sharedPT[j + k * K] * x[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < K; j++) y[j] += sharedPT[j + k * K] * x[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++)
-            sharedY[i + j * N * N] = y[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      K; j++) sharedY[i + j * N * N] = y[j];
         }
 
       SYNCTHREADS;
 
       // 2nd GEMM of PT
       // Y Direction
-      for (dftfe::Int i = threadId; i < N * K; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * K; i +=
+      nThreadsPerBlock)
         {
           Type x[K], y[N];
 
           dftfe::Int a = i % N;
           dftfe::Int b = i / N;
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++) x[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      K; j++) x[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               y[k] = sharedY[a + (k + b * N) * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++) x[j] +=
-                sharedPT[j + k * K] * y[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < K; j++) x[j] += sharedPT[j + k * K] * y[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++)
-            sharedX[a + (j + b * K) * N] = x[j];
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      K; j++) sharedX[a + (j + b * K) * N] = x[j];
         }
 
       SYNCTHREADS;
 
       // 3rd GEMM of PT
       // X Direction
-      for (dftfe::Int i = threadId; i < M; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < M; i +=
+      nThreadsPerBlock)
         {
           Type y[K], x[N];
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++) y[j] = 0.0;
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      K; j++) y[j] = 0.0;
 
           for (dftfe::Int k = 0; k < N; k++)
             {
               x[k] = sharedX[k + i * N];
 
-              _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++) y[j] +=
-                sharedPT[j + k * K] * x[k];
+              _Pragma("unroll") for (dftfe::Int j = 0;
+      j < K; j++) y[j] += sharedPT[j + k * K] * x[k];
             }
 
-          _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++)
-            dftfe::utils::atomicAddWrapper(&V[map[j + i * K + mapShift]], y[j]);
-        }
+          _Pragma("unroll") for (dftfe::Int j = 0; j <
+      K; j++) dftfe::utils::atomicAddWrapper(&V[map[j +
+      i * K + mapShift]], y[j]); } //*/
     }),
     Type             *V,
     const Type       *U,

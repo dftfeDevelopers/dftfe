@@ -223,7 +223,9 @@ namespace dftfe
     dftfe::Int d_nLocalCells, d_xLocalDof, d_xLen;
 
     std::unique_ptr<
-      dftfe::MatrixFreeWrapperClass<double, dftfe::utils::MemorySpace::DEVICE>>
+      dftfe::MatrixFreeWrapperClass<double,
+                                    double,
+                                    dftfe::utils::MemorySpace::DEVICE>>
       d_matrixFreeWrapperDevice;
 
     dftfe::utils::MemoryStorage<double, dftfe::utils::MemorySpace::DEVICE>
