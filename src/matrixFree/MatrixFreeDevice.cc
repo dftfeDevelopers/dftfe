@@ -259,7 +259,6 @@ namespace dftfe
     for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
          i += blockDim.y)
       {
-        // Unroll to exclude k = 0, eliminate memset
         memset(regT, 0, nQuadPointsPerDim * sizeof(T));
 
         for (std::uint32_t k = 0; k < nDofsPerDim; k++)
@@ -342,7 +341,7 @@ namespace dftfe
         if constexpr (nQuadPointsPerDim % 2 == 1)
           {
             sharedV[threadIdx.x + a * batchSize +
-                    (qOdd)*batchSize * nDofsPerDim +
+                    qOdd * batchSize * nDofsPerDim +
                     b * batchSize * nDofsPerDim * nQuadPointsPerDim] =
               regT[qOdd];
           }
@@ -350,20 +349,9 @@ namespace dftfe
 
     __syncthreads();
 
-    for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
-         i += blockDim.y)
-      for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
-        {
-          std::uint32_t dof =
-            __ldg(&map[i + j * nDofsPerDim * nDofsPerDim + mapOffset]);
-          atomicAdd(&dst[threadIdx.x + dof],
-                    sharedV[threadIdx.x + i * batchSize +
-                            j * batchSize * nDofsPerDim * nDofsPerDim]);
-        }
-
     // 3rd GEMM of N
     // X Direction
-    /*for (std::uint32_t i = threadIdx.y;
+    for (std::uint32_t i = threadIdx.y;
          i < nQuadPointsPerDim * nQuadPointsPerDim;
          i += blockDim.y)
       {
@@ -383,11 +371,22 @@ namespace dftfe
             tempO = temp1 - temp2;
 
 #pragma unroll
+            for (std::uint32_t j = 0; j < qEven; j++)
+              regT[j] += constN[j + k * qEven] * tempE;
+
+#pragma unroll
             for (std::uint32_t j = 0; j < qOdd; j++)
-              {
-                regT[j] += constN[j + k * qOdd] * tempE;
-                regT[j + qOdd] += constN[j + k * qOdd + qOdd * pOdd] * tempO;
-              }
+              regT[j + qEven] += constN[j + k * qOdd + qEven * pEven] * tempO;
+          }
+
+        if constexpr (nDofsPerDim % 2 == 1)
+          {
+            tempE = sharedV[threadIdx.x + pOdd * batchSize +
+                            i * batchSize * nDofsPerDim];
+
+#pragma unroll
+            for (std::uint32_t j = 0; j < qEven; j++)
+              regT[j] += constN[j + pOdd * qEven] * tempE;
           }
 
 #pragma unroll
@@ -395,11 +394,17 @@ namespace dftfe
           {
             sharedU[threadIdx.x + j * batchSize +
                     i * batchSize * nQuadPointsPerDim] =
-              regT[j] + regT[j + qOdd];
+              regT[j] + regT[j + qEven];
 
             sharedU[threadIdx.x + (nQuadPointsPerDim - 1 - j) * batchSize +
                     i * batchSize * nQuadPointsPerDim] =
-              regT[j] - regT[j + qOdd];
+              regT[j] - regT[j + qEven];
+          }
+
+        if constexpr (nQuadPointsPerDim % 2 == 1)
+          {
+            sharedU[threadIdx.x + qOdd * batchSize +
+                    i * batchSize * nQuadPointsPerDim] = regT[qOdd];
           }
       }
 
@@ -437,10 +442,22 @@ namespace dftfe
 
 #pragma unroll
             for (std::uint32_t j = 0; j < qOdd; j++)
-              {
-                regT[j] += constD[j + k * qOdd] * tempE;
-                regT[j + qOdd] += constD[j + k * qOdd + qOdd * qEven] * tempO;
-              }
+              regT[j] += constD[j + k * qOdd] * tempE;
+
+#pragma unroll
+            for (std::uint32_t j = 0; j < qEven; j++)
+              regT[j + qOdd] += constD[j + k * qEven + qEven * qOdd] * tempO;
+          }
+
+        if constexpr (nQuadPointsPerDim % 2 == 1)
+          {
+            tempE =
+              sharedU[threadIdx.x + i * batchSize +
+                      qOdd * batchSize * nQuadPointsPerDim * nQuadPointsPerDim];
+
+#pragma unroll
+            for (std::uint32_t j = 0; j < qOdd; j++)
+              regT[j] += constD[j + qOdd * qOdd] * tempE;
           }
 
 #pragma unroll
@@ -449,11 +466,29 @@ namespace dftfe
             regR[j]                         = regT[j + qOdd] + regT[j];
             regR[nQuadPointsPerDim - 1 - j] = regT[j + qOdd] - regT[j];
           }
+
+        if constexpr (nQuadPointsPerDim % 2 == 1)
+          {
+            regR[qOdd] = regT[2 * qOdd];
+          }
       }
+
+    __syncthreads();
+
+    for (std::uint32_t i = threadIdx.y; i < nDofsPerDim * nDofsPerDim;
+         i += blockDim.y)
+      for (std::uint32_t j = 0; j < nQuadPointsPerDim; j++)
+        {
+          std::uint32_t dof =
+            __ldg(&map[i + j * nDofsPerDim * nDofsPerDim + mapOffset]);
+          atomicAdd(&dst[threadIdx.x + dof], regR[j]);
+          // sharedU[threadIdx.x + i * batchSize +
+          //         j * batchSize * nDofsPerDim * nDofsPerDim]);
+        }
 
     // 2nd GEMM of D
     // Y Direction
-    for (std::uint32_t i = threadIdx.y;
+    /*for (std::uint32_t i = threadIdx.y;
          i < nQuadPointsPerDim * nQuadPointsPerDim;
          i += blockDim.y)
       {
