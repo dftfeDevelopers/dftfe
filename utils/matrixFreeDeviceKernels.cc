@@ -131,18 +131,9 @@ namespace dftfe
             sharedY[i + j * N * N] = y[j];
         }
 
-      SYNCTHREADS;
-
-      for (dftfe::Int i = threadId; i < M; i += nThreadsPerBlock)
-        {
-          _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++)
-            dftfe::utils::atomicAddWrapper(&V[map[i + j * M + mapShift]],
-                                           sharedY[i + j * M]);
-        }
-
       // 2nd GEMM of D
       // Y Direction
-      /*for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
+      for (dftfe::Int i = threadId; i < N * N; i += nThreadsPerBlock)
         {
           Type z[N], x[N];
 
@@ -184,12 +175,10 @@ namespace dftfe
         }
 
       //////////////////////////////////////////////////////////////////
-      // sharedT, sharedZ, sharedY have the respective
-      gemms of X, Y,
-        Z
-        // directions
+      // sharedT, sharedZ, sharedY have the respective gemms of X, Y, Z
+      // directions
 
-        const dftfe::Int JShift = blockId * dim * dim;
+      const dftfe::Int JShift = blockId * dim * dim;
 
       // Copy Jacobian Factor to shared memory
       _Pragma("unroll") for (dftfe::Int i = threadId; i < dim * dim;
@@ -354,7 +343,7 @@ namespace dftfe
 
           _Pragma("unroll") for (dftfe::Int j = 0; j < K; j++)
             dftfe::utils::atomicAddWrapper(&V[map[j + i * K + mapShift]], y[j]);
-        } //*/
+        }
     }),
     Type             *V,
     const Type       *U,

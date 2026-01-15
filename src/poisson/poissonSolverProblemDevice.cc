@@ -986,16 +986,17 @@ namespace dftfe
 
     dftfe::utils::deviceMemset(Ax.begin(), 0, d_xLen * sizeof(double));
 
-    // if (d_isMeanValueConstraintComputed)
-    //   meanValueConstraintDistribute(x);
+    if (d_isMeanValueConstraintComputed)
+      meanValueConstraintDistribute(x);
 
-    // x.updateGhostValues();
+    x.updateGhostValues();
 
-    // d_constraintsTotalPotentialInfo.distribute(x);
+    d_constraintsTotalPotentialInfo.distribute(x);
 
     d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
 
-    /*matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
+    /*
+    matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
       blocks,
       threads,
       smem,
@@ -1005,24 +1006,14 @@ namespace dftfe
       d_jacobianFactorPtr,
       d_mapPtr); //*/
 
-    double normSrc = 0, normDst = 0;
-    d_BLASWrapperPtr->xnrm2(
-      d_xLocalDof, x.begin(), 1, mpi_communicator, &normSrc);
-    d_BLASWrapperPtr->xnrm2(
-      d_xLocalDof, Ax.begin(), 1, mpi_communicator, &normDst);
+    d_constraintsTotalPotentialInfo.set_zero(x);
 
-    pcout << "After AX: "
-          << "norm of x = " << normSrc << ", norm of Ax = " << normDst
-          << std::endl;
+    d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax);
 
-    // d_constraintsTotalPotentialInfo.set_zero(x);
+    Ax.accumulateAddLocallyOwned();
 
-    // d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax);
-
-    // Ax.accumulateAddLocallyOwned();
-
-    // if (d_isMeanValueConstraintComputed)
-    //   meanValueConstraintDistributeSlaveToMaster(Ax);
+    if (d_isMeanValueConstraintComputed)
+      meanValueConstraintDistributeSlaveToMaster(Ax);
   }
 
 #include "poissonSolverProblemDevice.inst.cc"
