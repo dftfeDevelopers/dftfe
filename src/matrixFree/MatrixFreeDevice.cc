@@ -21,7 +21,6 @@
  */
 
 #include <MatrixFreeDevice.h>
-#include <iostream>
 #include "DeviceKernelLauncherHelpers.h"
 #include "DeviceDataTypeOverloads.cu.h"
 
@@ -1068,27 +1067,52 @@ namespace dftfe
     T          *constMemHost,
     std::size_t constMemSize)
   {
+#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     constexpr std::uint32_t dim           = 3;
     constexpr std::size_t   sharedMemSize = 2 * batchSize * nQuadPointsPerDim *
                                           nQuadPointsPerDim *
                                           nQuadPointsPerDim * sizeof(T);
 
-#ifdef DFTFE_WITH_DEVICE_LANG_CUDA
-    cudaFuncSetAttribute(
-      laplaceKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>,
-      cudaFuncAttributeMaxDynamicSharedMemorySize,
-      sharedMemSize);
+    // Copy shape functions and gradients to constant memory on device
+    DEVICE_API_CHECK(cudaMemcpyToSymbol(constMem,
+                                        constMemHost,
+                                        constMemSize * sizeof(T),
+                                        0,
+                                        cudaMemcpyHostToDevice));
 
-    cudaFuncSetSharedMemConfig(
-      laplaceKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>,
-      std::is_same_v<T, double> ? cudaSharedMemBankSizeEightByte :
-                                  cudaSharedMemBankSizeFourByte);
+    int deviceId = 0;
+    DEVICE_API_CHECK(cudaGetDevice(&deviceId));
 
-    cudaMemcpyToSymbol(constMem,
-                       constMemHost,
-                       constMemSize * sizeof(T),
-                       0,
-                       cudaMemcpyHostToDevice);
+    int maxDynSharedDefault = 0;
+
+#  ifdef cudaDevAttrMaxDynamicSharedMemoryPerBlock
+    DEVICE_API_CHECK(
+      cudaDeviceGetAttribute(&maxDynSharedDefault,
+                             cudaDevAttrMaxDynamicSharedMemoryPerBlock,
+                             deviceId));
+#  else
+    // Fallback for older CUDA versions without the dynamic shared attribute
+    DEVICE_API_CHECK(cudaDeviceGetAttribute(&maxDynSharedDefault,
+                                            cudaDevAttrMaxSharedMemoryPerBlock,
+                                            deviceId));
+#  endif
+
+    int maxDynSharedOptIn = 0;
+    DEVICE_API_CHECK(cudaDeviceGetAttribute(
+      &maxDynSharedOptIn, cudaDevAttrMaxSharedMemoryPerBlockOptin, deviceId));
+
+    if (sharedMemSize > static_cast<std::size_t>(maxDynSharedDefault))
+      {
+        if (sharedMemSize > static_cast<std::size_t>(maxDynSharedOptIn))
+          throw std::runtime_error(
+            "Requested dynamic shared memory exceeds opt-in limit");
+
+        DEVICE_API_CHECK(cudaFuncSetAttribute(
+          laplaceKernel<T, nDofsPerDim, nQuadPointsPerDim, batchSize, dim>,
+          cudaFuncAttributeMaxDynamicSharedMemorySize,
+          sharedMemSize));
+      }
+
 #endif
   }
 

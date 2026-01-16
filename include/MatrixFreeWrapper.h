@@ -171,13 +171,6 @@ namespace dftfe
                  d_MatrixFreeObject);
     }
 
-    inline void
-    constraintsSetZero(T *src)
-    {
-      std::visit([&](auto &t) { t->constraintsSetZero(src); },
-                 d_MatrixFreeObject);
-    }
-
   private:
     MatrixFreeObject d_MatrixFreeObject;
   };

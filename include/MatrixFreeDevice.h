@@ -23,7 +23,9 @@
 #ifndef matrixFreeDevice_H_
 #define matrixFreeDevice_H_
 #include <cstdint>
+#include <stdexcept>
 #include <DeviceTypeConfig.h>
+#include <DeviceExceptions.cu.h>
 
 namespace dftfe
 {

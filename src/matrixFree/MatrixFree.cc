@@ -697,43 +697,19 @@ namespace dftfe
 
         dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
           constraintsDistributeTranspose(dst,
-                                src,
-                                d_constrainingNodeBucketsDevice.data(),
-                                d_constrainingNodeOffsetDevice.data(),
-                                d_constrainedNodeBucketsDevice.data(),
-                                d_constrainedNodeOffsetDevice.data(),
-                                d_weightMatrixListDevice.data(),
-                                d_weightMatrixOffsetDevice.data(),
-                                d_map.data(),
-                                d_inhomogenityListDevice.size(),
-                                d_nBatch,
-                                d_nOwnedDofs,
-                                d_nGhostDofs);
+                                         src,
+                                         d_constrainingNodeBucketsDevice.data(),
+                                         d_constrainingNodeOffsetDevice.data(),
+                                         d_constrainedNodeBucketsDevice.data(),
+                                         d_constrainedNodeOffsetDevice.data(),
+                                         d_weightMatrixListDevice.data(),
+                                         d_weightMatrixOffsetDevice.data(),
+                                         d_map.data(),
+                                         d_inhomogenityListDevice.size(),
+                                         d_nBatch,
+                                         d_nOwnedDofs,
+                                         d_nGhostDofs);
       }
-  }
-
-
-  template <typename T,
-            typename TypeFEBasis,
-            dftfe::utils::MemorySpace memorySpace,
-            std::uint32_t             nDofsPerDim,
-            std::uint32_t             nQuadPointsPerDim,
-            std::uint32_t             batchSize,
-            std::uint32_t             subBatchSize>
-  inline void
-  MatrixFree<T,
-             TypeFEBasis,
-             memorySpace,
-             nDofsPerDim,
-             nQuadPointsPerDim,
-             batchSize,
-             subBatchSize>::constraintsSetZero(T *src)
-  {
-    // if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-    //   {
-    //       dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim,
-    //       batchSize>::constraintsSetZero(src);
-    //   }
   }
 
 

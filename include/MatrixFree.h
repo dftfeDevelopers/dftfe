@@ -23,7 +23,6 @@
 #ifndef MatrixFree_H_
 #define MatrixFree_H_
 #include <type_traits>
-#include <memory>
 #include <dftfeDataTypes.h>
 #include <MemorySpaceType.h>
 #include <FEBasisOperations.h>
@@ -85,9 +84,6 @@ namespace dftfe
 
     inline void
     constraintsDistributeTranspose(T *dst, T *src);
-
-    inline void
-    constraintsSetZero(T *src);
 
   private:
     /**
