@@ -29,18 +29,18 @@ namespace dftfe
 {
   constexpr std::uint32_t maxDofsPerDim = 17;
   __constant__ double
-    constMemDevice[maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim];
+    constMem[maxDofsPerDim * maxDofsPerDim * 5 + maxDofsPerDim];
 
   __device__ inline std::uint32_t
-  getMultiVectorIndexDevice(const std::uint32_t node,
-                            const std::uint32_t batch,
-                            const std::uint32_t nLocalDofs,
-                            const std::uint32_t nGhostDofs,
-                            const std::uint32_t *__restrict__ ghostMap)
+  getMultiVectorIndex(const std::uint32_t node,
+                      const std::uint32_t batch,
+                      const std::uint32_t nOwnedDofs,
+                      const std::uint32_t nGhostDofs,
+                      const std::uint32_t *__restrict__ ghostMap)
   {
-    return (node < nLocalDofs ?
-              (node + batch * nLocalDofs) :
-              (ghostMap[node - nLocalDofs + batch * nGhostDofs]));
+    return (node < nOwnedDofs ?
+              (node + batch * nOwnedDofs) :
+              (ghostMap[node - nOwnedDofs + batch * nGhostDofs]));
   }
 
 
@@ -56,7 +56,7 @@ namespace dftfe
     const std::uint32_t *__restrict__ weightMatrixOffset,
     const T *__restrict__ inhomogenityList,
     const std::uint32_t *__restrict__ ghostMap,
-    const std::uint32_t nLocalDofs,
+    const std::uint32_t nOwnedDofs,
     const std::uint32_t nGhostDofs)
   {
     __shared__ T sharedConstrainingData[batchSize * nDofsPerDim * nDofsPerDim];
@@ -69,12 +69,17 @@ namespace dftfe
     for (std::uint32_t k = threadIdx.y; k < constrainingBucketSize;
          k += blockDim.y)
       {
-        std::uint32_t idx = getMultiVectorIndexDevice(
-          constrainingNodeBuckets[k + constrainingBucketStart],
-          blockIdx.y,
-          nLocalDofs,
-          nGhostDofs,
-          ghostMap);
+        std::uint32_t idx;
+
+        if constexpr (batchSize == 1)
+          idx = constrainingNodeBuckets[k + constrainingBucketStart];
+        else
+          idx = getMultiVectorIndex(
+            constrainingNodeBuckets[k + constrainingBucketStart],
+            blockIdx.y,
+            nOwnedDofs,
+            nGhostDofs,
+            ghostMap);
 
         sharedConstrainingData[threadIdx.x + k * batchSize] =
           x[threadIdx.x + idx * batchSize];
@@ -99,12 +104,17 @@ namespace dftfe
                                   weightMatrixStart] *
                  sharedConstrainingData[threadIdx.x + k * batchSize];
 
-        std::uint32_t idx = getMultiVectorIndexDevice(
-          constrainedNodeBuckets[j + constrainedBucketStart],
-          blockIdx.y,
-          nLocalDofs,
-          nGhostDofs,
-          ghostMap);
+        std::uint32_t idx;
+
+        if constexpr (batchSize == 1)
+          idx = constrainedNodeBuckets[j + constrainedBucketStart];
+        else
+          idx = getMultiVectorIndex(
+            constrainedNodeBuckets[j + constrainedBucketStart],
+            blockIdx.y,
+            nOwnedDofs,
+            nGhostDofs,
+            ghostMap);
 
         x[threadIdx.x + idx * batchSize] = tmp;
       }
@@ -123,7 +133,7 @@ namespace dftfe
     const T *__restrict__ weightMatrixList,
     const std::uint32_t *__restrict__ weightMatrixOffset,
     const std::uint32_t *__restrict__ ghostMap,
-    const std::uint32_t nLocalDofs,
+    const std::uint32_t nOwnedDofs,
     const std::uint32_t nGhostDofs)
   {
     __shared__ T
@@ -143,12 +153,17 @@ namespace dftfe
         for (std::uint32_t k = threadIdx.y; k < constrainedBucketSize;
              k += blockDim.y)
           {
-            std::uint32_t idx = getMultiVectorIndexDevice(
-              constrainedNodeBuckets[k + constrainedBucketStart],
-              blockIdx.y,
-              nLocalDofs,
-              nGhostDofs,
-              ghostMap);
+            std::uint32_t idx;
+
+            if constexpr (batchSize == 1)
+              idx = constrainedNodeBuckets[k + constrainedBucketStart];
+            else
+              idx = getMultiVectorIndex(
+                constrainedNodeBuckets[k + constrainedBucketStart],
+                blockIdx.y,
+                nOwnedDofs,
+                nGhostDofs,
+                ghostMap);
 
             sharedConstrainedData[threadIdx.x + k * batchSize] =
               Ax[threadIdx.x + idx * batchSize];
@@ -171,12 +186,17 @@ namespace dftfe
                                       weightMatrixStart] *
                      sharedConstrainedData[threadIdx.x + k * batchSize];
 
-            std::uint32_t idx = getMultiVectorIndexDevice(
-              constrainingNodeBuckets[j + constrainingBucketStart],
-              blockIdx.y,
-              nLocalDofs,
-              nGhostDofs,
-              ghostMap);
+            std::uint32_t idx;
+
+            if constexpr (batchSize == 1)
+              idx = constrainingNodeBuckets[j + constrainingBucketStart];
+            else
+              idx = getMultiVectorIndex(
+                constrainingNodeBuckets[j + constrainingBucketStart],
+                blockIdx.y,
+                nOwnedDofs,
+                nGhostDofs,
+                ghostMap);
 
             atomicAdd(&Ax[threadIdx.x + idx * batchSize], tmp);
           }
@@ -186,12 +206,17 @@ namespace dftfe
         for (std::uint32_t k = threadIdx.y; k < constrainedBucketSize;
              k += blockDim.y)
           {
-            std::uint32_t idx = getMultiVectorIndexDevice(
-              constrainedNodeBuckets[k + constrainedBucketStart],
-              blockIdx.y,
-              nLocalDofs,
-              nGhostDofs,
-              ghostMap);
+            std::uint32_t idx;
+
+            if constexpr (batchSize == 1)
+              idx = constrainedNodeBuckets[k + constrainedBucketStart];
+            else
+              idx = getMultiVectorIndex(
+                constrainedNodeBuckets[k + constrainedBucketStart],
+                blockIdx.y,
+                nOwnedDofs,
+                nGhostDofs,
+                ghostMap);
 
             Ax[threadIdx.x + idx * batchSize] = 0.;
             x[threadIdx.x + idx * batchSize]  = 0.;
@@ -222,7 +247,7 @@ namespace dftfe
     // NT(nDofsPerDim*nQuadPointsPerDim),
     // DT(nQuadPointsPerDim*nQuadPointsPerDim)
 
-    extern __shared__ __align__(sizeof(T)) unsigned char sharedMemory[];
+    extern __shared__ __align__(sizeof(T)) unsigned char sharedMem[];
 
     constexpr std::uint32_t padding = 0;
     constexpr std::uint32_t pOdd    = nDofsPerDim / 2;
@@ -231,12 +256,12 @@ namespace dftfe
     constexpr std::uint32_t qEven =
       nQuadPointsPerDim % 2 == 1 ? qOdd + 1 : qOdd;
 
-    T *__restrict__ sharedU = reinterpret_cast<T *>(sharedMemory);
+    T *__restrict__ sharedU = reinterpret_cast<T *>(sharedMem);
     T *__restrict__ sharedV = &sharedU[batchSize * nQuadPointsPerDim *
                                          nQuadPointsPerDim * nQuadPointsPerDim +
                                        padding];
 
-    T *__restrict__ constN      = reinterpret_cast<T *>(constMemDevice);
+    T *__restrict__ constN      = reinterpret_cast<T *>(constMem);
     T *__restrict__ constD      = &constN[qEven * pEven + qOdd * pOdd];
     T *__restrict__ constNT     = &constD[2 * qEven * qOdd];
     T *__restrict__ constDT     = &constNT[pEven * qEven + pOdd * qOdd];
@@ -1044,9 +1069,9 @@ namespace dftfe
     std::size_t constMemSize)
   {
     constexpr std::uint32_t dim           = 3;
-    constexpr size_t        sharedMemSize = 2 * batchSize * nQuadPointsPerDim *
-                                     nQuadPointsPerDim * nQuadPointsPerDim *
-                                     sizeof(T);
+    constexpr std::size_t   sharedMemSize = 2 * batchSize * nQuadPointsPerDim *
+                                          nQuadPointsPerDim *
+                                          nQuadPointsPerDim * sizeof(T);
 
 #ifdef DFTFE_WITH_DEVICE_LANG_CUDA
     cudaFuncSetAttribute(
@@ -1059,7 +1084,7 @@ namespace dftfe
       std::is_same_v<T, double> ? cudaSharedMemBankSizeEightByte :
                                   cudaSharedMemBankSizeFourByte);
 
-    cudaMemcpyToSymbol(constMemDevice,
+    cudaMemcpyToSymbol(constMem,
                        constMemHost,
                        constMemSize * sizeof(T),
                        0,
@@ -1074,29 +1099,37 @@ namespace dftfe
             std::uint32_t batchSize>
   inline void
   MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    constraintsDistribute(T *src)
+    constraintsDistribute(T                   *src,
+                          const std::uint32_t *constrainingNodeBuckets,
+                          const std::uint32_t *constrainingNodeOffset,
+                          const std::uint32_t *constrainedNodeBuckets,
+                          const std::uint32_t *constrainedNodeOffset,
+                          const T             *weightMatrixList,
+                          const std::uint32_t *weightMatrixOffset,
+                          const T             *inhomogenityList,
+                          const std::uint32_t *ghostMap,
+                          const std::uint32_t  inhomogenityListSize,
+                          const std::uint32_t  nBatch,
+                          const std::uint32_t  nOwnedDofs,
+                          const std::uint32_t  nGhostDofs)
   {
-    // if (d_constrainedNodeBucketsDevice.size() == 0)
-    //   return;
+    constexpr int yThreads = 64;
 
-    // constexpr int yThreads = 64;
-    // const int     batch    = numberWaveFunctions / d_batchsize;
+    dim3 blocks(inhomogenityListSize, nBatch, 1);
+    dim3 threads(batchSize, yThreads, 1);
 
-    // dim3 blocks(d_inhomogenityListDevice.size(), batch, 1);
-    // dim3 threads(d_batchsize, yThreads, 1);
-
-    // constraintsDistributeKernel<double, d_batchsize, d_ndofsPerDim>
-    //   <<<blocks, threads>>>(XBlock,
-    //                         constrainingNodeBuckets.data(),
-    //                         d_constrainingNodeOffsetDevice.data(),
-    //                         d_constrainedNodeBucketsDevice.data(),
-    //                         d_constrainedNodeOffsetDevice.data(),
-    //                         d_weightMatrixListDevice.data(),
-    //                         d_weightMatrixOffsetDevice.data(),
-    //                         d_inhomogenityListDevice.data(),
-    //                         ghostMapDevice.data(),
-    //                         d_nLocalDofs,
-    //                         d_nGhostDofs);
+    constraintsDistributeKernel<double, nDofsPerDim, batchSize>
+      <<<blocks, threads>>>(src,
+                            constrainingNodeBuckets,
+                            constrainingNodeOffset,
+                            constrainedNodeBuckets,
+                            constrainedNodeOffset,
+                            weightMatrixList,
+                            weightMatrixOffset,
+                            inhomogenityList,
+                            ghostMap,
+                            nOwnedDofs,
+                            nGhostDofs);
   }
 
 
@@ -1106,18 +1139,38 @@ namespace dftfe
             std::uint32_t batchSize>
   inline void
   MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    constraintsDistributeTranspose(T *dst, T *src)
-  {}
+    constraintsDistributeTranspose(T                   *dst,
+                                   T                   *src,
+                                   const std::uint32_t *constrainingNodeBuckets,
+                                   const std::uint32_t *constrainingNodeOffset,
+                                   const std::uint32_t *constrainedNodeBuckets,
+                                   const std::uint32_t *constrainedNodeOffset,
+                                   const T             *weightMatrixList,
+                                   const std::uint32_t *weightMatrixOffset,
+                                   const std::uint32_t *ghostMap,
+                                   const std::uint32_t  inhomogenityListSize,
+                                   const std::uint32_t  nBatch,
+                                   const std::uint32_t  nOwnedDofs,
+                                   const std::uint32_t  nGhostDofs)
+  {
+    constexpr int yThreads = 64;
 
+    dim3 blocks(inhomogenityListSize, nBatch, 1);
+    dim3 threads(batchSize, yThreads, 1);
 
-  template <typename T,
-            std::uint32_t nDofsPerDim,
-            std::uint32_t nQuadPointsPerDim,
-            std::uint32_t batchSize>
-  inline void
-  MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
-    constraintsSetZero(T *src)
-  {}
+    constraintsDistributeTransposeKernel<double, nDofsPerDim, batchSize>
+      <<<blocks, threads>>>(dst,
+                            src,
+                            constrainingNodeBuckets,
+                            constrainingNodeOffset,
+                            constrainedNodeBuckets,
+                            constrainedNodeOffset,
+                            weightMatrixList,
+                            weightMatrixOffset,
+                            ghostMap,
+                            nOwnedDofs,
+                            nGhostDofs);
+  }
 
 
   template <typename T,
@@ -1138,9 +1191,9 @@ namespace dftfe
       dftfe::utils::DEVICE_WARP_SIZE * ((nQuadPointsPerDim * nQuadPointsPerDim +
                                          dftfe::utils::DEVICE_WARP_SIZE - 1) /
                                         dftfe::utils::DEVICE_WARP_SIZE);
-    constexpr size_t sharedMemSize = 2 * batchSize * nQuadPointsPerDim *
-                                     nQuadPointsPerDim * nQuadPointsPerDim *
-                                     sizeof(T);
+    constexpr std::size_t sharedMemSize = 2 * batchSize * nQuadPointsPerDim *
+                                          nQuadPointsPerDim *
+                                          nQuadPointsPerDim * sizeof(T);
 
     const dim3 blocks(nCells, nBatch, 1);
     const dim3 threads(batchSize, yThreads, 1);

@@ -991,24 +991,11 @@ namespace dftfe
 
     x.updateGhostValues();
 
-    d_constraintsTotalPotentialInfo.distribute(x);
+    d_matrixFreeWrapperDevice->constraintsDistribute(x.data());
 
     d_matrixFreeWrapperDevice->computeAX(Ax.data(), x.data());
 
-    /*
-    matrixFreeDeviceKernels<double, p * p, q, p, dim>::computeAXDevicePoisson(
-      blocks,
-      threads,
-      smem,
-      Ax.begin(),
-      x.begin(),
-      d_shapeFunctionPtr,
-      d_jacobianFactorPtr,
-      d_mapPtr); //*/
-
-    d_constraintsTotalPotentialInfo.set_zero(x);
-
-    d_constraintsTotalPotentialInfo.distribute_slave_to_master(Ax);
+    d_matrixFreeWrapperDevice->constraintsDistributeTranspose(Ax.data(), x.data());
 
     Ax.accumulateAddLocallyOwned();
 

@@ -45,13 +45,34 @@ namespace dftfe
                     std::uint32_t  nBatch);
 
     static inline void
-    constraintsDistribute(T *src);
+    constraintsDistribute(T                   *src,
+                          const std::uint32_t *constrainingNodeBuckets,
+                          const std::uint32_t *constrainingNodeOffset,
+                          const std::uint32_t *constrainedNodeBuckets,
+                          const std::uint32_t *constrainedNodeOffset,
+                          const T             *weightMatrixList,
+                          const std::uint32_t *weightMatrixOffset,
+                          const T             *inhomogenityList,
+                          const std::uint32_t *ghostMap,
+                          const std::uint32_t  inhomogenityListSize,
+                          const std::uint32_t  nBatch,
+                          const std::uint32_t  nOwnedDofs,
+                          const std::uint32_t  nGhostDofs);
 
     static inline void
-    constraintsDistributeTranspose(T *dst, T *src);
-
-    static inline void
-    constraintsSetZero(T *src);
+    constraintsDistributeTranspose(T                   *dst,
+                                   T                   *src,
+                                   const std::uint32_t *constrainingNodeBuckets,
+                                   const std::uint32_t *constrainingNodeOffset,
+                                   const std::uint32_t *constrainedNodeBuckets,
+                                   const std::uint32_t *constrainedNodeOffset,
+                                   const T             *weightMatrixList,
+                                   const std::uint32_t *weightMatrixOffset,
+                                   const std::uint32_t *ghostMap,
+                                   const std::uint32_t  inhomogenityListSize,
+                                   const std::uint32_t  nBatch,
+                                   const std::uint32_t  nOwnedDofs,
+                                   const std::uint32_t  nGhostDofs);
   };
 
 } // namespace dftfe

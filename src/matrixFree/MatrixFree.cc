@@ -651,11 +651,26 @@ namespace dftfe
              batchSize,
              subBatchSize>::constraintsDistribute(T *src)
   {
-    // if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-    //   {
-    //       dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim,
-    //       batchSize>::constraintsDistribute(src);
-    //   }
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      {
+        if (d_constrainedNodeBucketsDevice.size() == 0)
+          return;
+
+        dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+          constraintsDistribute(src,
+                                d_constrainingNodeBucketsDevice.data(),
+                                d_constrainingNodeOffsetDevice.data(),
+                                d_constrainedNodeBucketsDevice.data(),
+                                d_constrainedNodeOffsetDevice.data(),
+                                d_weightMatrixListDevice.data(),
+                                d_weightMatrixOffsetDevice.data(),
+                                d_inhomogenityListDevice.data(),
+                                d_map.data(),
+                                d_inhomogenityListDevice.size(),
+                                d_nBatch,
+                                d_nOwnedDofs,
+                                d_nGhostDofs);
+      }
   }
 
 
@@ -675,11 +690,26 @@ namespace dftfe
              batchSize,
              subBatchSize>::constraintsDistributeTranspose(T *dst, T *src)
   {
-    // if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
-    //   {
-    //       dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim,
-    //       batchSize>::constraintsDistributeTranspose(dst, src);
-    //   }
+    if constexpr (memorySpace == dftfe::utils::MemorySpace::DEVICE)
+      {
+        if (d_constrainedNodeBucketsDevice.size() == 0)
+          return;
+
+        dftfe::MatrixFreeDevice<T, nDofsPerDim, nQuadPointsPerDim, batchSize>::
+          constraintsDistributeTranspose(dst,
+                                src,
+                                d_constrainingNodeBucketsDevice.data(),
+                                d_constrainingNodeOffsetDevice.data(),
+                                d_constrainedNodeBucketsDevice.data(),
+                                d_constrainedNodeOffsetDevice.data(),
+                                d_weightMatrixListDevice.data(),
+                                d_weightMatrixOffsetDevice.data(),
+                                d_map.data(),
+                                d_inhomogenityListDevice.size(),
+                                d_nBatch,
+                                d_nOwnedDofs,
+                                d_nGhostDofs);
+      }
   }
 
 
